@@ -1,6 +1,6 @@
 /* BIO ARCADE 서비스 워커: 처음 접속할 때 전체 게임을 저장해 두고, 이후에는 오프라인에서도 실행.
    파일을 바꾸면 VERSION을 올려야 사용자 기기의 캐시가 새 버전으로 교체됩니다. */
-const VERSION = 'bio-arcade-v2';
+const VERSION = 'bio-arcade-v3';
 const FONT_CACHE = 'bio-arcade-fonts';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
@@ -10,6 +10,7 @@ const CORE = [
   './assets/vessel-canyon.jpg', './assets/biotro.jpg', './assets/cell-bound.jpg',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png',
   './icons/apple-touch-icon.png', './icons/favicon-32.png',
+  './vendor/three.min.js',
 ];
 
 self.addEventListener('install', e => {

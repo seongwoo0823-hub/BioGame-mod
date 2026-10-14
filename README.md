@@ -7,8 +7,8 @@
 | --- | --- | --- |
 | BIO BEAT | 4키 리듬게임 (25곡, OX 퀴즈) | `games/bio-beat.html` |
 | 면역 특공대 IMMUNE STRIKE | 횡스크롤 런앤건 액션 | `games/immune-strike.html` |
-| 바이오 카트 레이서 | 카트 레이싱 (15트랙) | `games/bio-kart.html` |
-| 혈관 협곡 : 세포 대전 | 5대5 대전 (칼바람 모드) | `games/vessel-canyon.html` |
+| 바이오 카트 레이서 | 3D 복셀 카트 레이싱 (15트랙) | `games/bio-kart.html` |
+| 혈관 협곡 : 세포 대전 | 3D 복셀 5대5 대전 (칼바람 모드) | `games/vessel-canyon.html` |
 | BIOTRO · 세포 포커 | 포커 덱빌딩 로그라이크 | `games/biotro.html` |
 | CELL BOUND · 세포의 속박 | 방 탐험 로그라이크 슈터 | `games/cell-bound.html` |
 
@@ -16,6 +16,7 @@
 index.html        메인 화면 (게임 선택, 이 기기에 저장된 기록 표시)
 games/            게임 6종 (각각 하나의 HTML 파일)
 assets/           메인 화면 썸네일
+vendor/           three.js r128 (3D 복셀 그래픽용, MIT 라이선스)
 icons/            앱 아이콘
 manifest.webmanifest, sw.js   앱 설치(PWA) · 오프라인 실행
 ```
