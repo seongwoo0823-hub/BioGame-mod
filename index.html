@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BIO ARCADE · 생명과학 게임 아케이드</title>
-<meta name="description" content="리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전까지 — 생명과학으로 만든 픽셀 게임 4종을 한곳에서 즐기세요.">
+<meta name="description" content="리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크까지 — 생명과학으로 만든 픽셀 게임 5종을 한곳에서 즐기세요.">
 <meta name="theme-color" content="#0a0612">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -64,7 +64,7 @@ header{text-align:center;padding:48px 0 28px}
 .rec{font-size:15px;color:var(--dim);min-width:0}
 .rec b{color:var(--yolk);font-weight:400}
 .play{flex:none;font-family:var(--px);font-size:12px;padding:10px 14px;background:var(--c);color:#12081a;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),3px 3px 0 #05020a}
-.c1{--c:#2fe6ff}.c2{--c:#ff6aa8}.c3{--c:#ffd23f}.c4{--c:#ff5a5a}
+.c1{--c:#2fe6ff}.c2{--c:#ff6aa8}.c3{--c:#ffd23f}.c4{--c:#ff5a5a}.c5{--c:#b07aff}
 
 /* ---------- tips ---------- */
 .tips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:28px}
@@ -94,7 +94,7 @@ footer{text-align:center;color:#6a5a88;font-size:14px;padding:6px 0 36px}
   <header>
     <h1 class="logo">BIO <span>ARCADE</span></h1>
     <p class="tag">생명과학 게임 아케이드</p>
-    <p class="lead">세포·유전·면역·생태를 무대로 한 픽셀 게임 4종. 설치 없이 브라우저에서 바로 플레이하세요.</p>
+    <p class="lead">세포·유전·면역·생태를 무대로 한 픽셀 게임 5종. 설치 없이 브라우저에서 바로 플레이하세요.</p>
     <div class="cells" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
   </header>
 
@@ -142,6 +142,16 @@ footer{text-align:center;color:#6a5a88;font-size:14px;padding:6px 0 36px}
         <div class="foot"><span class="rec" data-rec="vessel-canyon">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
       </div>
     </a>
+    <a class="card c5" href="games/biotro.html" data-id="biotro">
+      <div class="shot"><img src="assets/biotro.jpg" alt="BIOTRO 플레이 화면: 생명과학 조커와 카드로 포커 족보 점수를 계산하는 모습" width="640" height="360"><span class="genre">CARD</span></div>
+      <div class="body">
+        <div class="title"><h2>BIOTRO</h2><small>세포 포커 로그라이크</small></div>
+        <p class="desc">포커 족보로 칩 × 배수 점수를 쌓아 블라인드를 돌파하는 덱빌딩 로그라이크. 생명과학 조커, 소기관 카드, 시약 카드로 나만의 덱을 키워요.</p>
+        <ul class="feat"><li>조커 58종</li><li>보스 블라인드 27종</li><li>태그 24종 · 무한 모드</li></ul>
+        <div class="keys">카드 클릭으로 선택 · <kbd>Enter</kbd> 핸드 플레이 · 조커와 카드는 끌어서 순서 변경</div>
+        <div class="foot"><span class="rec" data-rec="biotro">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+      </div>
+    </a>
   </main>
 
   <section class="tips" aria-label="플레이 안내">
@@ -174,6 +184,11 @@ footer{text-align:center;color:#6a5a88;font-size:14px;padding:6px 0 36px}
       const s=get('biokart');const b=s&&s.best;if(!b||typeof b!=='object')return '';
       const v=Object.values(b).filter(x=>typeof x==='number'&&isFinite(x));if(!v.length)return '';
       return `기록 보유 트랙 <b>${new Set(Object.keys(b).map(k=>k.split('-')[1])).size}</b>개 · 최단 <b>${fmtT(Math.min(...v))}</b>`;
+    },
+    'biotro'(){
+      const s=get('biotroStats');if(!s||!s.runs)return '';
+      const out=[`최고 앤티 <b>${s.bestAnte||1}</b>`];if(s.bestHand)out.push(`최고 핸드 <b>${Number(s.bestHand).toLocaleString('en-US')}</b>`);if(s.wins)out.push(`승리 <b>${s.wins}</b>회`);
+      return out.join(' · ');
     },
     'vessel-canyon'(){
       const s=get('vesselCanyonStats');if(!s||!(s.w||s.l))return '';
