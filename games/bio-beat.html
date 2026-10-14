@@ -191,6 +191,13 @@ button:focus-visible{outline:2px solid var(--yolk);outline-offset:2px}
 .hubbtn{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;z-index:5;background:rgba(7,30,42,.86);border:2px solid var(--edge);padding:6px 12px;font-size:15px;clip-path:var(--cut)}
 .hubbtn:hover{background:#0f3c4c}
 </style>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));</script>
 </head>
 <body>
 <div id="app">

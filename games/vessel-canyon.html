@@ -199,6 +199,13 @@ table.sc img{width:22px;height:22px;image-rendering:pixelated;vertical-align:mid
 }
 @media (prefers-reduced-motion:reduce){ .bigbtn{transition:none} }
 </style>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));</script>
 </head>
 <body>
 <div id="rot">가로 화면으로 돌려주세요 📱↻<br><small style="color:#c79aa6">혈관 협곡은 가로 모드에서 플레이할 수 있어요</small></div>
