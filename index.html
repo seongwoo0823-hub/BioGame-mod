@@ -187,7 +187,7 @@ footer{text-align:center;color:#6a5a88;font-size:14px;padding:6px 0 36px}
     },
     'biotro'(){
       const s=get('biotroStats');if(!s||!s.runs)return '';
-      const out=[`최고 앤티 <b>${s.bestAnte||1}</b>`];if(s.bestHand)out.push(`최고 핸드 <b>${Number(s.bestHand).toLocaleString('en-US')}</b>`);if(s.wins)out.push(`승리 <b>${s.wins}</b>회`);
+      const out=[`최고 앤티 <b>${s.bestAnte||1}</b>`];if(s.stakeWin)out.push(`<b>${['흰색','빨간색','초록색','검은색','파란색','보라색','주황색','황금색'][s.stakeWin-1]}</b> 판돈 클리어`);if(s.bestHand)out.push(`최고 핸드 <b>${Number(s.bestHand).toLocaleString('en-US')}</b>`);if(s.wins)out.push(`승리 <b>${s.wins}</b>회`);
       return out.join(' · ');
     },
     'vessel-canyon'(){
