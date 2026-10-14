@@ -187,6 +187,9 @@ img.px,.pxi{image-rendering:pixelated}
 .orow{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:20px;padding:8px 0;border-bottom:2px solid #2e2850}
 .seg{display:flex;gap:4px}.seg button{padding:4px 12px;border-radius:6px;background:#2a2542;font-family:var(--px);font-size:14px}.seg button.on{background:#e0a020;color:#1a1200}
 .orow input[type=range]{width:220px;accent-color:#e0a020}
+.vgrid{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow:auto;margin-bottom:8px}.vpair{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.vit{background:#221d38;border-radius:5px;padding:3px 7px;opacity:.55;display:flex;flex-direction:column}.vit.own{opacity:1;background:#3a2f12;box-shadow:inset 0 0 0 1px #ffcf5a}.vit b{font-weight:400;font-size:15px}
+.vit small{font-size:12px;color:var(--dim);line-height:1.2}.vit .vreq{color:#ff9a7a}
 .vlist{display:flex;flex-wrap:wrap;gap:6px}.vlist span{font-size:16px;padding:2px 8px;background:#2a2542;border-radius:5px}
 
 /* ---------- title ---------- */
@@ -640,10 +643,10 @@ const VOUCHERS=[
  {id:'tarotm',n:'시약 상인',d:'상점에 시약 카드가 더 자주 등장'},{id:'tarott',n:'시약 재벌',d:'상점에 시약 카드가 훨씬 더 자주 등장',req:'tarotm'},
  {id:'planetm',n:'소기관 상인',d:'상점에 소기관 카드가 더 자주 등장'},{id:'planett',n:'소기관 재벌',d:'상점에 소기관 카드가 훨씬 더 자주 등장',req:'planetm'},
  {id:'seed',n:'종자 은행',d:'라운드 종료 시 이자 최대치가 $10'},{id:'moneytree',n:'돈나무',d:'라운드 종료 시 이자 최대치가 $20',req:'seed'},
- {id:'blank',n:'빈 배지',d:'아무 효과도 없습니다...?'},{id:'antimatter',n:'공생 확장',d:'조커 슬롯 +1',req:'blank'},
+ {id:'blank',n:'빈 배지',d:'아무 효과도 없습니다...? (모든 바우처를 사면 이것만 등장)'},{id:'antimatter',n:'공생 확장',d:'조커 슬롯 +1',req:'blank'},
  {id:'magic',n:'세포 은행',d:'상점에서 플레이 카드를 살 수 있음'},{id:'illusion',n:'세포 공학',d:'상점의 플레이 카드에 강화·에디션·인장이 붙어 나올 수 있음',req:'magic'},
- {id:'hiero',n:'상형 문자',d:'앤티 -1, 라운드마다 핸드 -1'},{id:'petro',n:'암각화',d:'앤티 -1, 라운드마다 버리기 -1',req:'hiero'},
- {id:'director',n:'감독판',d:'앤티마다 1번, $10로 보스 블라인드 리롤'},{id:'retcon',n:'설정 변경',d:'$10로 보스 블라인드를 횟수 제한 없이 리롤',req:'director'},
+ {id:'hiero',n:'상형 문자',d:'앤티 -1 (최소 0), 라운드마다 핸드 -1'},{id:'petro',n:'암각화',d:'앤티 -1 (최소 0), 라운드마다 버리기 -1',req:'hiero'},
+ {id:'director',n:'감독판',d:'앤티마다 1번, $10로 보스 블라인드 리롤 (보스 태그를 쓴 앤티에서는 불가)'},{id:'retcon',n:'설정 변경',d:'$10로 보스 블라인드를 횟수 제한 없이 리롤',req:'director'},
  {id:'brush',n:'배양액',d:'손패 크기 +1'},{id:'palette',n:'배양 팔레트',d:'손패 크기 +1',req:'brush'},
 ];
 const VB={};VOUCHERS.forEach(v=>VB[v.id]=v);
@@ -944,7 +947,7 @@ const sumJ=k=>{let s=0;for(const J of G.jokers){const d=JD[J.id];if(d[k])s+=d[k]
 const handSize=()=>Math.max(1,G.hs+sumJ('hs')+(bossOn('manacle')?-1:0)+(G.inRound?G.juggle:0));
 const debtLimit=()=>hasJ('credit')?-20:0;
 const stencilX=()=>jokerSlots()-G.jokers.length+cntJ('stencil');
-function sellPrice(J){if(!J)return 0;if(CONS[J.id])return (CONS[J.id].kind==='spectral'?2:1)+(J.sb||0);const d=JD[J.id];return Math.max(1,Math.floor((d.cost+(J.ed?EDS[J.ed].cost:0))/2))+(J.sb||0);}
+function sellPrice(J){if(!J)return 0;if(CONS[J.id])return (CONS[J.id].kind==='spectral'?2:1)+(J.sb||0);const d=JD[J.id];return Math.max(1,Math.floor(disc(d.cost+(J.ed?EDS[J.ed].cost:0))/2))+(J.sb||0);}
 function handVal(id){const h=HI[id],lv=G.lv[id].lv;return {c:h.c+h.dc*(lv-1),m:h.m+h.dm*(lv-1)};}
 function mostPlayed(){let best='high',n=-1;for(const h of HANDS){const p=G.lv[h.id].played;if(p>=n){n=p;best=h.id;}}return n>0?best:'high';}
 function debuffed(c){if(!G||!G.inRound||G.blind!==2||bossDisabled())return false;const b=BOSS_BY[G.boss];
@@ -971,16 +974,42 @@ function newRun(st){
   const S=stats();S.runs++;saveStats(S);
 }
 function setupAnte(){G.blind=0;G.bst=['','',''];G.boss=pickBoss();G.skipTags=[rollTag(),rollTag()];G.voucherOffer=rollVoucher();G.voucherBought=false;G.dirUsed=false;
-  const S=stats();if(G.ante>S.bestAnte){S.bestAnte=G.ante;saveStats(S);}}
+  const S=stats();if(G.ante>S.bestAnte){S.bestAnte=G.ante;saveStats(S);}uMax('ante',G.ante);uBlind('small');uBlind('big');uBlind(G.boss);}
 function pickBoss(){
   if(G.ante%8===0&&G.ante>0){const f=FINALS.filter(b=>b.id!==G.boss);return pick(f).id;}
   let pool=BOSSES.filter(b=>b.min<=Math.max(1,G.ante)&&!G.bossSeen.includes(b.id)&&b.id!==G.boss);
   if(!pool.length){G.bossSeen=[];pool=BOSSES.filter(b=>b.min<=Math.max(1,G.ante)&&b.id!==G.boss);}
   const b=pick(pool);G.bossSeen.push(b.id);return b.id;
 }
-function rollTag(){const t=pick(TAGS.filter(t=>(t.min||1)<=G.ante));const o={id:t.id};if(t.id==='orbital')o.hand=pick(HANDS.filter(h=>!h.hidden)).id;return o;}
-const vOK=v=>!G.vouchers.includes(v.id)&&(!v.req||G.vouchers.includes(v.req));
-function rollVoucher(ex){const pool=VOUCHERS.filter(v=>vOK(v)&&v.id!==ex);return pool.length?pick(pool).id:null;}
+function rollTag(){const t=pick(TAGS.filter(t=>(t.min||1)<=Math.max(1,G.ante)));const o={id:t.id};if(t.id==='orbital')o.hand=pick(HANDS.filter(h=>!h.hidden)).id;return o;}
+const vOK=v=>!G.vouchers.includes(v.id)&&(!v.req||(G.vouchers.includes(v.req)&&uUnlocked(v.id)));
+// 살 수 있는 바우처를 모두 산 경우 빈 배지만 계속 등장
+function rollVoucher(ex){const pool=VOUCHERS.filter(v=>vOK(v)&&v.id!==ex);return pool.length?pick(pool).id:'blank';}
+
+/* ---------- 2단계 바우처 해금 (모든 런에 걸쳐 누적) ---------- */
+const UNLOCK={
+ overstock2:['spent',2500,'상점에서 총 $2500 사용'],liquid:['vouchers',10,'바우처 총 10개 사용'],
+ glow:['glow',5,'포일·홀로·폴리크롬(음화 포함) 조커를 동시에 5개 보유'],glut:['rerolls',100,'상점 리롤 총 100회'],
+ omen:['omenT',25,'시약 팩에서 시약 카드 총 25장 사용'],observ:['obsP',25,'소기관 팩에서 소기관 카드 총 25장 사용'],
+ nacho:['played',2500,'카드 총 2500장 플레이'],recyclo:['disc',2500,'카드 총 2500장 버리기'],
+ tarott:['tarotBuy',50,'상점에서 시약 카드 총 50장 구매'],planett:['planetBuy',50,'상점에서 소기관 카드 총 50장 구매'],
+ moneytree:['intRun',10,'10라운드 연속 최대 이자 획득'],antimatter:['blank',10,'빈 배지 총 10번 사용'],
+ illusion:['cardBuy',20,'상점에서 플레이 카드 총 20장 구매'],petro:['ante',12,'앤티 12 도달'],
+ retcon:['blinds',25,'블라인드 25종 발견'],palette:['hsLow',1,'손패 크기를 5장까지 줄이기'],
+};
+let UL=null;
+function uData(){if(!UL){try{UL=JSON.parse(localStorage.getItem('biotroUnlock')||'{}');}catch(e){UL={};}UL.un=UL.un||[];UL.bl=UL.bl||[];}return UL;}
+function uSave(){try{localStorage.setItem('biotroUnlock',JSON.stringify(uData()));}catch(e){}}
+const uUnlocked=id=>!UNLOCK[id]||uData().un.includes(id);
+function uVal(k){const U=uData();return k==='blinds'?U.bl.length:(U[k]||0);}
+function uProg(id){const [k,t]=UNLOCK[id];return Math.min(t,uVal(k))+'/'+t;}
+function uBump(k,n){const U=uData();U[k]=(U[k]||0)+(n==null?1:n);uCheck();}
+function uMax(k,v){const U=uData();if(v>(U[k]||0)){U[k]=v;uCheck();}}
+function uBlind(id){const U=uData();if(!U.bl.includes(id)){U.bl.push(id);uCheck();}}
+function uCheck(){const U=uData();
+  if(G){const ed=G.jokers.filter(J=>J.ed).length;if(ed>(U.glow||0))U.glow=ed;if(G.inRound&&handSize()<=5)U.hsLow=1;}
+  for(const id in UNLOCK){if(U.un.includes(id))continue;const [k,t]=UNLOCK[id];if(uVal(k)>=t){U.un.push(id);toast(`바우처 해금: ${VB[id].n}`);sfx('unlock');}}
+  uSave();}
 
 /* =========================================================
    족보 판정 (네 개의 손가락 · 지름길 · 혼합 염색 반영)
@@ -1043,7 +1072,7 @@ function drawN(n){
   if(G.sort)sortCards(G.hand);
   if(bossOn('cerulean'))forceSel();
 }
-function fill(after){drawN(after&&bossOn('serpent')?3:Math.max(0,handSize()-G.hand.length));}
+function fill(after){const n=after&&bossOn('serpent')?3:Math.max(0,handSize()-G.hand.length);drawN(n);if(n)sfx('deal',n);}
 function forceSel(){if(G.hand.some(c=>c.forced)||!G.hand.length)return;const c=pick(G.hand);c.forced=true;c.sel=true;}
 function crimson(){G.disabledJ=G.jokers.length?pick(G.jokers).uid:null;}
 async function startRound(){
@@ -1054,7 +1083,7 @@ async function startRound(){
   G.discUsed=0;G.handsRound=[];G.first=true;G.mouth=null;G.verdant=bossOn('verdant');G.disabledJ=null;G.houseFirst=bossOn('house');G.fishFlip=false;
   G.deck.forEach(c=>{c.sel=false;c.fd=false;c.forced=false;});
   G.draw=shuffle(G.deck.slice());G.hand=[];G.played=[];
-  drawN(handSize());
+  drawN(handSize());sfx('shuffle');setTimeout(()=>sfx('deal',handSize()),280);if(G.blind===2)sfx('boss');
   if(bossOn('crimson'))crimson();
   // 블라인드 선택 시 발동하는 조커
   const msgs=[];
@@ -1079,7 +1108,7 @@ function resolveJ(i,depth){
 function jokerHooks(k,cpOnly){const out=[];G.jokers.forEach((J,i)=>{if(G.disabledJ===J.uid||J.perished)return;const r=resolveJ(i);if(!r||!r.d[k])return;if(r.J!==J&&cpOnly&&!r.d.cp)return;out.push([r.J,r.d,J]);});return out;}
 async function addEff(S,e,el,ci,cel){
   if(cel)jig(cel);if(el)jig(el);let dy=0;
-  if(e.msg){pop(el,e.msg,'t',dy);dy-=34;}
+  if(e.msg){pop(el,e.msg,'t',dy);dy-=34;sfx(el&&el.id&&el.id[0]==='j'?'joker':'click');}
   if(e.chips){S.c+=e.chips;pop(el,'+'+fmt(e.chips),'c',dy);dy-=34;sfx('chip',ci||0);}
   if(e.mult){S.m+=e.mult;pop(el,(e.mult>0?'+':'')+e.mult+' 배수','m',dy);dy-=34;sfx('mult');}
   if(e.xmult){S.m*=e.xmult;pop(el,'×'+(+e.xmult.toFixed(2)),'x',dy);dy-=34;sfx('xmult');}
@@ -1153,7 +1182,7 @@ async function playHand(){
   if(bossOn('psychic')&&sel.length<5){toast('오량체: 반드시 카드 5장을 플레이해야 합니다');return;}
   BUSY=true;clearUI();
   G.hand=G.hand.filter(c=>!c.sel);G.played=sel;sel.forEach(c=>{c.sel=false;c.fd=false;c.forced=false;});
-  G.hands--;G.st.hands++;
+  G.hands--;G.st.hands++;uBump('played',sel.length);
   sfx('play');render();await sleep(320);
   const ev=evalHand(sel),mp=mostPlayed(),repeat=G.handsRound.includes(ev.type);
   let blocked=null,bossTrig=false;
@@ -1195,7 +1224,7 @@ async function discardSel(){
   if(BUSY||!G||G.phase!=='play'||G.discards<=0)return;
   const sel=G.hand.filter(c=>c.sel);if(!sel.length)return;
   BUSY=true;clearUI();
-  G.discards--;G.discUsed++;
+  G.discards--;G.discUsed++;uBump('disc',sel.length);
   G.hand=G.hand.filter(c=>!c.sel);sel.forEach(c=>{c.sel=false;c.forced=false;});
   sfx('discard');render();
   let money=0;const msgs=[];
@@ -1213,7 +1242,7 @@ async function reapJokers(){for(const J of G.jokers.slice()){if(J.dead){pop(EL('
    라운드 종료 · 현금 인출 · 게임 오버
    ========================================================= */
 async function winRound(saved){
-  BUSY=true;clearUI();sfx('win');bigText(saved?'골수 덕분에 생존!':'블라인드 클리어!','#7aff9a');
+  BUSY=true;clearUI();sfx(G.blind===2?'bossWin':'win');bigText(saved?'골수 덕분에 생존!':'블라인드 클리어!','#7aff9a');
   G.bst[G.blind]='done';
   const items=[[blindDef(G.blind).n+' 클리어'+(blindReward(G.blind)?'':' (빨간색 판돈: 보상 없음)'),blindReward(G.blind)]];
   if(G.hands>0)items.push([`남은 핸드 ${G.hands}개 ($1씩)`,G.hands]);
@@ -1227,6 +1256,7 @@ async function winRound(saved){
   const cap=G.vouchers.includes('moneytree')?20:G.vouchers.includes('seed')?10:5,base=Math.floor(Math.max(0,G.money)/5);
   const interest=Math.min(cap,base)+cntJ('tomoon')*base;
   if(interest>0)items.push([`이자 ($5당 $1, 최대 $${cap})`,interest]);
+  G.intRun=base>=cap?(G.intRun||0)+1:0;uMax('intRun',G.intRun);
   G.st.discUnused+=G.discards;G.juggle=0;
   await sleep(700);
   await reapJokers();
@@ -1237,7 +1267,7 @@ async function winRound(saved){
 }
 function cashOut(){
   if(!G.cash)return;
-  G.money+=G.cash.total;sfx('coin');G.cash=null;clearHandName();
+  G.money+=G.cash.total;sfx('cash');G.cash=null;clearHandName();
   if(G.blind===2){
     for(const J of G.jokers){const f=JD[J.id].bossBeaten;if(f)f(J);}
     const inv=G.tags.filter(t=>t.id==='invest').length;if(inv){G.money+=25*inv;G.tags=G.tags.filter(t=>t.id!=='invest');toast(`투자 태그: +$${25*inv}`);}
@@ -1258,7 +1288,7 @@ function gameOver(){
     <div class="mb"><button class="btn big blue" data-m="new">새 게임</button><button class="btn big" data-m="title">타이틀로</button></div>`);
 }
 function showWin(){
-  sfx('win');
+  sfx('victory');
   modal(`<h2 style="color:var(--gold)">승리!</h2><p style="text-align:center">앤티 8의 보스를 물리치고 몸을 지켜냈습니다!<br>무한 모드로 계속해서 더 높은 앤티에 도전할 수 있어요.</p>
     <table class="htab"><tr><td>최고 핸드 점수</td><td>${fmt(G.st.best)}</td></tr><tr><td>플레이한 핸드</td><td>${G.st.hands}</td></tr></table>
     <div class="mb"><button class="btn big orange" data-m="close">무한 모드 계속</button><button class="btn big" data-m="title">타이틀로</button></div>`);
@@ -1272,12 +1302,12 @@ function rerollBoss(){
   if(BUSY||G.phase!=='blind'||G.blind>2)return;
   const unlimited=G.vouchers.includes('retcon');if(!unlimited&&(!G.vouchers.includes('director')||G.dirUsed))return;
   if(G.money-10<debtLimit()){toast('돈이 부족합니다');sfx('bad');return;}
-  G.money-=10;G.dirUsed=true;G.boss=pickBoss();sfx('reroll');render();save();
+  G.money-=10;G.dirUsed=true;G.boss=pickBoss();uBlind(G.boss);sfx('boss');render();save();
 }
 function skipBlind(){
   if(BUSY||G.phase!=='blind'||G.blind>1)return;
   const t=G.skipTags[G.blind];G.st.skips++;G.bst[G.blind]='skip';G.blind++;
-  sfx('select');gainTag(t);
+  sfx('skip');gainTag(t);
   if(G.packQueue.length){const q=G.packQueue.shift();openPack(q.pk,q.size,'blind');}
   render();save();
 }
@@ -1289,7 +1319,7 @@ function gainTag(t){
 function applyTag(t){
   const n=TAG_BY[t.id].n;
   switch(t.id){
-    case 'boss':G.boss=pickBoss();toast(n+': 보스 블라인드 변경');break;
+    case 'boss':G.boss=pickBoss();G.dirUsed=true;uBlind(G.boss);toast(n+': 보스 블라인드 변경');break;
     case 'standard':G.packQueue.push({pk:'standard',size:'mega'});break;
     case 'charm':G.packQueue.push({pk:'arcana',size:'mega'});break;
     case 'meteor':G.packQueue.push({pk:'celestial',size:'mega'});break;
@@ -1357,7 +1387,7 @@ function openShop(){
   }
   G.shop.packs=[genPack(),genPack()];
   if(pend('coupon').length){[...G.shop.cards,...G.shop.packs].forEach(c=>{c.price=0;c.free=1;});}
-  if(G.voucherOffer&&!G.voucherBought&&vOK(VB[G.voucherOffer]))G.shop.vouchers.push({kind:'voucher',id:G.voucherOffer,price:disc(10)});
+  if(G.voucherOffer&&!G.voucherBought&&(vOK(VB[G.voucherOffer])||G.voucherOffer==='blank'))G.shop.vouchers.push({kind:'voucher',id:G.voucherOffer,price:disc(10)});
   for(const t of pend('voucher')){const v=rollVoucher(G.voucherOffer);if(v&&!G.shop.vouchers.some(x=>x.id===v))G.shop.vouchers.push({kind:'voucher',id:v,price:disc(10),extra:1});}
   drop(['uncommon','rare','neg','foil','holo','poly','coupon','voucher','d6']);
 }
@@ -1365,7 +1395,7 @@ function canPay(p){return G.money-p>=debtLimit();}
 function reroll(){
   if(BUSY||G.phase!=='shop')return;
   const free=G.freeRR>0;if(!free&&!canPay(G.reroll)){toast('돈이 부족합니다');sfx('bad');return;}
-  if(free)G.freeRR--;else{G.money-=G.reroll;G.reroll++;}
+  if(free)G.freeRR--;else{G.money-=G.reroll;uBump('spent',G.reroll);G.reroll++;}uBump('rerolls');
   for(const J of G.jokers){const f=JD[J.id].reroll;if(f)f(J);}
   const n=G.shopSlots+(G.vouchers.includes('overstock')?1:0)+(G.vouchers.includes('overstock2')?1:0);
   G.shop.cards=[];for(let i=0;i<n;i++)G.shop.cards.push(shopItem());
@@ -1379,7 +1409,8 @@ function buyItem(it,andUse){
   if(BUSY)return;
   if(!canPay(it.price)){toast('돈이 부족합니다');sfx('bad');return;}
   const list=it.kind==='pack'?G.shop.packs:it.kind==='voucher'?G.shop.vouchers:G.shop.cards;
-  const take=()=>{G.money-=it.price;list.splice(list.indexOf(it),1);sfx('buy');clearUI();};
+  const take=()=>{G.money-=it.price;list.splice(list.indexOf(it),1);sfx(it.kind==='voucher'?'unlock':'buy');clearUI();uBump('spent',it.price);
+    if(it.kind==='card')uBump('cardBuy');else if(CONS[it.id])uBump(CONS[it.id].kind==='tarot'?'tarotBuy':CONS[it.id].kind==='planet'?'planetBuy':'_x');};
   if(it.kind==='joker'){if(G.jokers.length>=jokerSlots()&&it.ed!=='neg'){toast('조커 슬롯이 가득 찼습니다');sfx('bad');return;}
     take();G.jokers.push(Object.assign(newJoker(it.id,it.ed),it.sk||{}));}
   else if(it.kind==='pack'){take();openPack(it.pk,it.size,'shop');}
@@ -1394,20 +1425,21 @@ function applyVoucher(id){
   if((id==='overstock'||id==='overstock2')&&G.shop)G.shop.cards.push(shopItem());
   if(id==='crystal')G.cSlots++;if(id==='grabber'||id==='nacho')G.baseHands++;if(id==='wasteful'||id==='recyclo')G.baseDisc++;if(id==='brush'||id==='palette')G.hs++;if(id==='antimatter')G.jSlots++;
   if(id==='surplus'||id==='glut')G.reroll=Math.max(0,G.reroll-2);
-  if(id==='hiero'){G.ante=Math.max(1,G.ante-1);G.baseHands--;}if(id==='petro'){G.ante=Math.max(1,G.ante-1);G.baseDisc--;}
+  if(id==='hiero'){G.ante=Math.max(0,G.ante-1);G.baseHands--;}if(id==='petro'){G.ante=Math.max(0,G.ante-1);G.baseDisc--;}
+  if(id==='blank')uBump('blank');uBump('vouchers');
   bigText(VB[id].n,'#ffcf5a');
 }
 function soldHooks(J){const f=JD[J.id].sold;if(f)f(J);for(const o of G.jokers){if(o===J)continue;const g=JD[o.id].anySold;if(g)g(o);}}
 function sellJoker(J){
   if(BUSY)return;const i=G.jokers.indexOf(J);if(i<0)return;
   if(J.et){toast('영구 조커는 판매할 수 없습니다');sfx('bad');return;}
-  G.money+=sellPrice(J);G.jokers.splice(i,1);sfx('coin');
+  G.money+=sellPrice(J);G.jokers.splice(i,1);sfx('sell');
   soldHooks(J);
   if(G.inRound&&G.verdant){G.verdant=false;toast('만성 염증이 가라앉았습니다');}
   if(G.disabledJ===J.uid)G.disabledJ=null;
   clearUI();render();save();
 }
-function sellCons(K){if(BUSY)return;const i=G.cons.indexOf(K);if(i<0)return;G.money+=sellPrice(K);G.cons.splice(i,1);sfx('coin');for(const o of G.jokers){const g=JD[o.id].anySold;if(g)g(o);}clearUI();render();save();}
+function sellCons(K){if(BUSY)return;const i=G.cons.indexOf(K);if(i<0)return;G.money+=sellPrice(K);G.cons.splice(i,1);sfx('sell');for(const o of G.jokers){const g=JD[o.id].anySold;if(g)g(o);}clearUI();render();save();}
 
 /* =========================================================
    부스터 팩
@@ -1439,7 +1471,7 @@ function pickPack(ch){
   const sel=(G.packHand||[]).filter(c=>c.sel);
   if(ch.kind==='joker'){if(G.jokers.length>=jokerSlots()&&ch.ed!=='neg'){toast('조커 슬롯이 가득 찼습니다');sfx('bad');return;}G.jokers.push(Object.assign(newJoker(ch.id,ch.ed),ch.sk||{}));sfx('buy');}
   else if(ch.kind==='card'){ch.card.fresh=true;addToDeck(ch.card);sfx('buy');toast('덱에 카드를 추가했습니다');}
-  else{if(!canUse(ch.id,sel)){const d=CONS[ch.id];toast(d.sel?`손패에서 카드를 ${d.exact?d.exact+'장':'1~'+d.sel+'장'} 선택하세요`:'지금은 사용할 수 없습니다');sfx('bad');return;}applyCons(ch.id,sel);}
+  else{if(!canUse(ch.id,sel)){const d=CONS[ch.id];toast(d.sel?`손패에서 카드를 ${d.exact?d.exact+'장':'1~'+d.sel+'장'} 선택하세요`:'지금은 사용할 수 없습니다');sfx('bad');return;}const kd=CONS[ch.id].kind;if(G.pack.pk==='arcana'&&kd==='tarot')uBump('omenT');if(G.pack.pk==='celestial'&&kd==='planet')uBump('obsP');applyCons(ch.id,sel);}
   G.pack.choices.splice(G.pack.choices.indexOf(ch),1);G.pack.left--;
   clearUI();
   if(G.pack.left<=0||!G.pack.choices.length)closePack();
@@ -1504,6 +1536,7 @@ function applyCons(id,sel){
     case 's_hex':{const J=pick(G.jokers);J.ed='poly';G.jokers.slice().forEach(o=>{if(o!==J)destroyJoker(o);});sfx('glass');break;}
     case 's_ankh':{const J=pick(G.jokers);G.jokers.slice().forEach(o=>{if(o!==J)destroyJoker(o);});const c=newJoker(J.id,J.ed==='neg'?null:J.ed);c.v=J.v;c.n=J.n;G.jokers.push(c);sfx('tarot');break;}
   }
+  if(d.kind==='spectral')sfx('spectral');
   if(d.kind==='tarot')G.st.tarots++;
   for(const J of G.jokers){const f=JD[J.id].consUsed;if(f)f(J,d);}
   if(id!=='t_fool'&&d.kind!=='spectral')G.lastCon=id;
@@ -1690,7 +1723,7 @@ function renderPlay(){
 function toggleSel(c){
   if(BUSY||c.forced)return;const list=G.phase==='pack'?G.packHand:G.hand;if(!list)return;
   if(c.sel)c.sel=false;else{if(list.filter(x=>x.sel).length>=5){toast('최대 5장까지 선택할 수 있습니다');return;}c.sel=true;}
-  sfx('sel',list.filter(x=>x.sel).length);renderHand();updateSelInfo();renderButtons();
+  if(c.sel)sfx('sel',list.filter(x=>x.sel).length);else sfx('desel');renderHand();updateSelInfo();renderButtons();
   if(UI.sel&&(UI.sel.type==='cons'||UI.sel.type==='pick'))refreshAct();
 }
 function renderButtons(){
@@ -1761,10 +1794,13 @@ function closeModal(){$('#modal').classList.add('hidden');}
 function runInfo(){
   if(!G)return;const rows=HANDS.filter(h=>!h.hidden||G.lv[h.id].played>0).reverse().map(h=>{const v=handVal(h.id);return `<tr><td>${h.n}</td><td><span class="lv">lv.${G.lv[h.id].lv}</span></td><td class="cmv"><b class="chips">${fmt(v.c)}</b> × <b class="mult">${fmt(v.m)}</b></td><td style="color:var(--dim)">${G.lv[h.id].played}회</td></tr>`;}).join('');
   modal(`<h2>런 정보</h2><p style="text-align:center"><b style="color:${STAKES[stake()-1].col};font-weight:400">● ${STAKES[stake()-1].n}</b></p><table class="htab"><tr><th>족보</th><th>레벨</th><th>칩 × 배수</th><th>플레이</th></tr>${rows}</table>
-    <h3>바우처</h3><div class="vlist">${G.vouchers.length?G.vouchers.map(v=>`<span title="${VB[v].d}">${VB[v].n}</span>`).join(''):'<span>없음</span>'}</div>
+    <h3>바우처 (보유 ${new Set(G.vouchers).size}/${VOUCHERS.length})</h3><div class="vgrid">${voucherRows()}</div>
     <h3>대기 중인 태그</h3><div class="vlist">${G.tags.length?G.tags.map(t=>`<span>${TAG_BY[t.id].n}</span>`).join(''):'<span>없음</span>'}</div>
     <div class="mb"><button class="btn" data-m="deck">덱 보기</button><button class="btn blue" data-m="close">닫기</button></div>`);
 }
+function voucherRows(){let h='';for(let i=0;i<VOUCHERS.length;i+=2){h+='<div class="vpair">'+[VOUCHERS[i],VOUCHERS[i+1]].map(v=>{
+    const own=G.vouchers.includes(v.id),lock=!uUnlocked(v.id),bl=v.id==='blank'?G.vouchers.filter(x=>x==='blank').length:0;
+    return `<div class="vit${own?' own':''}${lock?' lock':''}"><b>${lock?'🔒 ':own?'✔ ':''}${v.n}${bl>1?' ×'+bl:''}</b><small>${v.d}</small>${lock?`<small class="vreq">해금: ${UNLOCK[v.id][2]} (${uProg(v.id)})</small>`:''}</div>`;}).join('')+'</div>';}return h;}
 function deckView(){
   if(!G)return;const inPlay=new Set(G.inRound?G.draw:G.deck);const so={S:0,H:1,C:2,D:3};
   const cards=G.deck.slice().sort((a,b)=>(isStone(a)-isStone(b))||so[a.s]-so[b.s]||b.r-a.r);
@@ -1792,7 +1828,7 @@ function optModal(){
    <div class="orow"><span>음악</span><input type="range" id="oMus" min="0" max="1" step="0.05" value="${OPT.music}"></div>
    <div class="mb">${G&&!G.over?'<button class="btn" data-m="help">게임 방법</button><button class="btn" data-m="title">메인 메뉴 (저장됨)</button><button class="btn red" data-m="abandon">런 포기</button>':''}<button class="btn" onclick="location.href='../index.html'">게임 목록</button><button class="btn blue" data-m="close">닫기</button></div>`);
   $('#oSfx').oninput=e=>{OPT.sfx=+e.target.value;if(AU.sfx)AU.sfx.gain.value=OPT.sfx;saveOpt();sfx('click');};
-  $('#oMus').oninput=e=>{OPT.music=+e.target.value;if(AU.mus)AU.mus.gain.value=OPT.music*.5;saveOpt();};
+  $('#oMus').oninput=e=>{OPT.music=+e.target.value;if(AU.mus)AU.mus.gain.value=OPT.music*.55;saveOpt();};
 }
 $('#modal').addEventListener('click',e=>{
   const sk=e.target.closest('[data-stake]');if(sk){STK_SEL=+sk.dataset.stake;try{localStorage.setItem('biotroStake',STK_SEL);}catch(err){}sfx('click');stakeModal();return;}
@@ -1817,40 +1853,103 @@ function startNew(st){closeModal();newRun(st);hideTitle();clearHandName();$('#rS
 function continueRun(){if(!load()){toast('저장된 게임이 없습니다');return;}hideTitle();clearHandName();if(G.phase==='over'){showTitle();return;}render();sfx('select');}
 
 /* =========================================================
-   소리
+   소리 — 효과음 + 생성형 배경음악 (화면마다 분위기 전환)
    ========================================================= */
-const AU={c:null,m:null,sfx:null,mus:null,next:0,step:0,timer:null};
+const AU={c:null,m:null,sfx:null,mus:null,musF:null,dly:null,next:0,step:0,timer:null,mood:'title',want:'title',lastHover:0,nb:null};
 function auInit(){
   if(AU.c){if(AU.c.state==='suspended')AU.c.resume();return;}
-  try{const A=window.AudioContext||window.webkitAudioContext;AU.c=new A();AU.m=AU.c.createGain();AU.m.gain.value=.8;AU.m.connect(AU.c.destination);
-    AU.sfx=AU.c.createGain();AU.sfx.gain.value=OPT.sfx;AU.sfx.connect(AU.m);AU.mus=AU.c.createGain();AU.mus.gain.value=OPT.music*.5;AU.mus.connect(AU.m);
-    const n=AU.c.sampleRate*.5;AU.nb=AU.c.createBuffer(1,n,AU.c.sampleRate);const d=AU.nb.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
-    AU.next=AU.c.currentTime+.2;AU.timer=setInterval(music,60);}catch(e){AU.c=null;}
+  try{const A=window.AudioContext||window.webkitAudioContext,c=new A();AU.c=c;
+    AU.m=c.createGain();AU.m.gain.value=.9;const comp=c.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=3;AU.m.connect(comp);comp.connect(c.destination);
+    AU.sfx=c.createGain();AU.sfx.gain.value=OPT.sfx;AU.sfx.connect(AU.m);
+    AU.mus=c.createGain();AU.mus.gain.value=OPT.music*.55;AU.musF=c.createBiquadFilter();AU.musF.type='lowpass';AU.musF.frequency.value=16000;AU.mus.connect(AU.musF);AU.musF.connect(AU.m);
+    AU.dly=c.createDelay(1);AU.dly.delayTime.value=60/100*.75;const fb=c.createGain();fb.gain.value=.32;const wet=c.createGain();wet.gain.value=.3;AU.dly.connect(fb);fb.connect(AU.dly);AU.dly.connect(wet);wet.connect(AU.mus);
+    const n=c.sampleRate;AU.nb=c.createBuffer(1,n,c.sampleRate);const d=AU.nb.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+    AU.next=c.currentTime+.15;AU.timer=setInterval(music,50);}catch(e){AU.c=null;}
 }
-function tone(f,d,type,v,f2,dl,dest){const c=AU.c;if(!c)return;const t=c.currentTime+(dl||0),o=c.createOscillator(),g=c.createGain();o.type=type||'square';o.frequency.setValueAtTime(f,t);
-  if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.008);g.gain.exponentialRampToValueAtTime(.0005,t+d);o.connect(g);g.connect(dest||AU.sfx);o.start(t);o.stop(t+d+.02);}
-function noise(d,v,f,dl){const c=AU.c;if(!c)return;const t=c.currentTime+(dl||0),s=c.createBufferSource(),fl=c.createBiquadFilter(),g=c.createGain();s.buffer=AU.nb;fl.type='bandpass';fl.frequency.value=f||3000;
-  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0005,t+d);s.connect(fl);fl.connect(g);g.connect(AU.sfx);s.start(t);s.stop(t+d+.02);}
+const mf=n=>440*Math.pow(2,(n-69)/12);
+// 범용 악기: 엔벨로프 + 필터
+function voice(o){const c=AU.c;if(!c)return;const t=c.currentTime+(o.dl||0),d=o.d||.1,a=o.a||.005,r=o.r||.06,g=c.createGain();
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(o.v,t+a);g.gain.setValueAtTime(o.v*(o.s==null?1:o.s),t+Math.max(a,d-r));g.gain.exponentialRampToValueAtTime(.0004,t+d+r);
+  let out=g;if(o.lp){const f=c.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(o.lp,t);if(o.lp2)f.frequency.exponentialRampToValueAtTime(o.lp2,t+d);f.Q.value=o.q||.8;g.connect(f);out=f;}
+  out.connect(o.dest||AU.sfx);if(o.send)out.connect(o.send);
+  (o.det||[0]).forEach(dt=>{const os=c.createOscillator();os.type=o.type||'square';os.frequency.setValueAtTime(o.f,t);if(o.f2)os.frequency.exponentialRampToValueAtTime(o.f2,t+(o.fd||d));os.detune.value=dt;
+    if(o.vib){const l=c.createOscillator(),lg=c.createGain();l.frequency.value=5.5;lg.gain.value=o.vib;l.connect(lg);lg.connect(os.detune);l.start(t);l.stop(t+d+r+.05);}
+    os.connect(g);os.start(t);os.stop(t+d+r+.05);});}
+function nz(o){const c=AU.c;if(!c)return;const t=c.currentTime+(o.dl||0),s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=AU.nb;s.playbackRate.value=o.rate||1;
+  f.type=o.ft||'bandpass';f.frequency.setValueAtTime(o.f||3000,t);if(o.f2)f.frequency.exponentialRampToValueAtTime(o.f2,t+o.d);f.Q.value=o.q||1;
+  g.gain.setValueAtTime(o.v,t);g.gain.exponentialRampToValueAtTime(.0004,t+o.d);s.connect(f);f.connect(g);g.connect(o.dest||AU.sfx);s.start(t,Math.random()*.5);s.stop(t+o.d+.02);}
+const tone=(f,d,type,v,f2,dl,dest)=>voice({f,d,type,v,f2,dl,dest});
+const arp=(notes,gap,o)=>notes.forEach((n,i)=>voice(Object.assign({f:mf(n),d:.12,type:'square',v:.06,dl:i*gap},o||{})));
 const SFX={
-  click:()=>tone(900,.04,'square',.05),sel:n=>tone(420+(n||0)*70,.06,'triangle',.12),
-  chip:n=>tone(330*Math.pow(1.0595,Math.min(24,n||0)),.09,'square',.07),mult:()=>{tone(260,.12,'sawtooth',.08,390);},xmult:()=>{tone(180,.22,'sawtooth',.1,720);tone(360,.22,'square',.05,1440);},
-  coin:()=>{tone(988,.06,'square',.07);tone(1319,.12,'square',.07,null,.06);},buy:()=>{tone(660,.06,'square',.08);tone(990,.1,'square',.08,null,.05);},
-  play:()=>noise(.12,.25,1800),discard:()=>{noise(.1,.2,1200);noise(.1,.15,900,.06);},score:()=>tone(520,.25,'triangle',.12,1040),
-  win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.18,'square',.08,null,i*.09)),lose:()=>[392,330,262,196].forEach((f,i)=>tone(f,.3,'triangle',.12,null,i*.16)),
-  bad:()=>tone(160,.18,'square',.08,110),glass:()=>{noise(.25,.3,5000);tone(2400,.12,'triangle',.05,1200);},planet:()=>[784,988,1175,1568].forEach((f,i)=>tone(f,.25,'sine',.08,null,i*.07)),
-  tarot:()=>{tone(600,.2,'sine',.1,1200);noise(.15,.08,4000,.05);},pack:()=>{noise(.3,.2,2500);tone(400,.3,'triangle',.08,900);},tag:()=>tone(880,.12,'triangle',.1,1320),
-  reroll:()=>{for(let i=0;i<4;i++)tone(500+i*120,.05,'square',.05,null,i*.04);},select:()=>{tone(523,.08,'square',.08);tone(784,.12,'square',.08,null,.07);},
+  click:()=>voice({f:1100,d:.025,type:'square',v:.04,lp:4000}),
+  hover:()=>voice({f:1800,d:.012,type:'triangle',v:.025}),
+  sel:n=>{voice({f:mf(64+[0,2,4,7,9,12][Math.min(5,(n||1)-1)]),d:.07,type:'triangle',v:.12});nz({d:.03,v:.05,f:5000});},
+  desel:()=>voice({f:mf(60),d:.06,type:'triangle',v:.08,f2:mf(55)}),
+  deal:n=>{for(let i=0;i<Math.min(n||1,10);i++)nz({d:.045,v:.09,f:2600+i*120,q:1.5,dl:i*.045});},
+  shuffle:()=>{for(let i=0;i<12;i++)nz({d:.03,v:.05+.03*Math.random(),f:3000+Math.random()*1500,dl:i*.028});},
+  play:()=>{nz({d:.14,v:.18,f:1600,f2:600,q:.8});voice({f:220,d:.1,type:'triangle',v:.1,f2:330});},
+  discard:()=>{nz({d:.16,v:.16,f:900,f2:300});nz({d:.1,v:.08,f:2400,dl:.05});},
+  chip:n=>{const k=Math.min(24,n||0);voice({f:mf(60+k),d:.08,type:'square',v:.06,lp:3500});voice({f:mf(72+k),d:.05,type:'triangle',v:.04,dl:.01});},
+  mult:()=>{voice({f:mf(52),d:.14,type:'sawtooth',v:.07,f2:mf(59),lp:2400});voice({f:mf(64),d:.1,type:'square',v:.04,dl:.03});},
+  xmult:()=>{voice({f:mf(45),d:.28,type:'sawtooth',v:.09,f2:mf(69),lp:3000,det:[-8,8]});nz({d:.2,v:.08,f:6000,ft:'highpass'});voice({f:mf(81),d:.18,type:'square',v:.04,dl:.12});},
+  money:()=>{voice({f:mf(83),d:.05,type:'square',v:.06});voice({f:mf(88),d:.12,type:'square',v:.06,dl:.05});},
+  coin:()=>SFX.money(),
+  joker:()=>{voice({f:mf(76),d:.05,type:'triangle',v:.05,f2:mf(83)});},
+  score:()=>{arp([60,64,67,72],.04,{type:'triangle',v:.08,d:.1});voice({f:mf(84),d:.3,type:'sine',v:.06,dl:.16});},
+  win:()=>{arp([60,64,67,72,76],.07,{v:.07,d:.14});voice({f:mf(79),d:.4,type:'triangle',v:.08,dl:.36,vib:12});},
+  bossWin:()=>{arp([57,60,64,69,72,76,81],.06,{v:.07,d:.13,type:'square'});voice({f:mf(81),d:.6,type:'triangle',v:.09,dl:.42,vib:15});nz({d:.6,v:.06,f:7000,ft:'highpass',dl:.4});},
+  victory:()=>{[[60,64,67],[62,65,69],[64,67,71],[65,69,72,77]].forEach((ch,i)=>ch.forEach(n=>voice({f:mf(n),d:i===3?.9:.22,type:'square',v:.045,dl:i*.24,lp:4000})));},
+  lose:()=>{arp([67,63,60,55,51],.18,{type:'triangle',v:.1,d:.3});voice({f:mf(39),d:1,type:'sawtooth',v:.06,lp:600,dl:.8});},
+  bad:()=>voice({f:150,d:.16,type:'square',v:.07,f2:100,lp:1200}),
+  glass:()=>{nz({d:.35,v:.25,f:6000,ft:'highpass'});[2600,3400,4100].forEach((f,i)=>voice({f,d:.15,type:'sine',v:.04,dl:i*.03}));},
+  planet:()=>{arp([72,76,79,84,88],.06,{type:'sine',v:.07,d:.3});nz({d:.5,v:.04,f:8000,ft:'highpass',dl:.1});},
+  tarot:()=>{voice({f:mf(69),d:.35,type:'sine',v:.08,f2:mf(81),vib:20});nz({d:.25,v:.06,f:4500,dl:.05,q:2});},
+  spectral:()=>{voice({f:mf(57),d:.8,type:'sawtooth',v:.05,lp:900,det:[-14,14],vib:30});voice({f:mf(76),d:.6,type:'sine',v:.05,dl:.1,vib:40});},
+  pack:()=>{nz({d:.35,v:.2,f:2000,f2:6000,q:.7});arp([67,71,74],.05,{type:'triangle',v:.06,dl:.15});},
+  pick:()=>{voice({f:mf(72),d:.08,type:'square',v:.06});voice({f:mf(79),d:.14,type:'triangle',v:.07,dl:.06});},
+  tag:()=>{voice({f:mf(79),d:.1,type:'triangle',v:.08});voice({f:mf(86),d:.18,type:'triangle',v:.08,dl:.08});},
+  reroll:()=>{for(let i=0;i<5;i++)voice({f:mf(64+i*3),d:.04,type:'square',v:.045,dl:i*.035});nz({d:.15,v:.05,f:3000});},
+  select:()=>{voice({f:mf(60),d:.09,type:'square',v:.07});voice({f:mf(67),d:.14,type:'square',v:.07,dl:.08});},
+  boss:()=>{voice({f:mf(33),d:.9,type:'sawtooth',v:.08,lp:500,det:[-10,10]});voice({f:mf(39),d:.9,type:'sawtooth',v:.06,lp:500,dl:.05});nz({d:.8,v:.05,f:300,ft:'lowpass'});},
+  skip:()=>{voice({f:mf(67),d:.06,type:'triangle',v:.07});voice({f:mf(72),d:.06,type:'triangle',v:.07,dl:.05});voice({f:mf(79),d:.1,type:'triangle',v:.07,dl:.1});},
+  buy:()=>{voice({f:mf(76),d:.06,type:'square',v:.07});voice({f:mf(84),d:.12,type:'square',v:.07,dl:.06});nz({d:.08,v:.05,f:6000,dl:.05});},
+  sell:()=>{voice({f:mf(84),d:.06,type:'square',v:.06});voice({f:mf(79),d:.06,type:'square',v:.06,dl:.05});voice({f:mf(88),d:.14,type:'square',v:.06,dl:.1});},
+  cash:()=>{for(let i=0;i<6;i++)voice({f:mf(84+(i%2)*4),d:.06,type:'square',v:.05,dl:i*.06});},
+  perish:()=>{voice({f:mf(60),d:.4,type:'triangle',v:.08,f2:mf(48)});},
+  unlock:()=>{arp([72,79,84,91],.08,{type:'triangle',v:.07,d:.2});},
 };
-function sfx(n,a){if(!AU.c)return;try{if(SFX[n])SFX[n](a);}catch(e){}}
-const CHORD=[[57,60,64],[53,57,60],[60,64,67],[55,59,62]],mf=n=>440*Math.pow(2,(n-69)/12);
+function sfx(n,a){if(!AU.c)return;if(n==='hover'){const t=performance.now();if(t-AU.lastHover<45)return;AU.lastHover=t;}try{if(SFX[n])SFX[n](a);}catch(e){}}
+
+/* ---------- 배경음악 ---------- */
+const CHD={Am:[57,60,64],F:[53,57,60],C:[55,60,64],G:[55,59,62],E:[56,59,64],Bb:[58,62,65],Dm:[57,62,65],
+  Fmaj7:[53,57,60,64],Em7:[52,55,59,62],Dm7:[50,53,57,60],Cmaj7:[48,52,55,59],Am9:[57,60,64,71],Gsus:[55,60,62]};
+const MOODS_M={
+  title:{bpm:90,prog:['Am9','Fmaj7','Cmaj7','Gsus'],kick:[0,10],snare:[],hat:0,bass:[0,7,10],arp:1,lead:1,cut:2600},
+  play:{bpm:100,prog:['Am','F','C','G'],kick:[0,8],snare:[4,12],hat:2,bass:[0,3,6,8,11,14],arp:1,lead:1,cut:4200},
+  boss:{bpm:100,prog:['Am','Bb','Am','E'],kick:[0,6,8,14],snare:[4,12],hat:1,bass:[0,2,4,6,8,10,12,14],arp:2,lead:0,cut:2200},
+  shop:{bpm:104,prog:['Fmaj7','Em7','Dm7','Cmaj7'],kick:[0,7,10],snare:[12],hat:2,bass:[0,3,8,10,13],arp:1,lead:1,cut:5200},
+};
+const LEAD=[[0,0],[3,2],[6,1],[10,3],[12,2]];
 function music(){
-  const c=AU.c;if(!c||OPT.music<=0)return;if(AU.next<c.currentTime-.2)AU.next=c.currentTime+.05;const sp=60/88/2;
-  while(AU.next<c.currentTime+.25){const i=AU.step,bar=Math.floor(i/8)%4,ch=CHORD[bar],t=AU.next-c.currentTime;
-    if(i%8===0)ch.forEach(n=>tone(mf(n),sp*7.5,'triangle',.05,null,t,AU.mus));
-    if(i%2===0)tone(mf(ch[0]-24),sp*1.6,'sine',.16,null,t,AU.mus);
-    if(i%8===3||i%8===6)tone(mf(ch[(i>>1)%3]+12),sp*.9,'square',.018,null,t,AU.mus);
+  const c=AU.c;if(!c)return;
+  const muffle=!$('#modal').classList.contains('hidden');AU.musF.frequency.setTargetAtTime(muffle?1300:16000,c.currentTime,.15);
+  if(OPT.music<=0){AU.next=c.currentTime+.1;return;}
+  if(AU.next<c.currentTime-.2)AU.next=c.currentTime+.05;
+  while(AU.next<c.currentTime+.3){
+    const i=AU.step,s=i%16;if(s===0&&AU.want!==AU.mood){AU.mood=AU.want;}
+    const M=MOODS_M[AU.mood],sp=60/M.bpm/4,t=AU.next-c.currentTime,bar=Math.floor(i/16),chord=CHD[M.prog[bar%4]],D=AU.mus,sec=(bar%8)>=4;
+    if(s===0)chord.forEach((n,k)=>voice({f:mf(n),d:sp*15,type:'sawtooth',v:.022,a:.25,r:.4,lp:M.cut*.45,det:[-9,9],dl:t+k*.005,dest:D}));
+    if(M.bass.includes(s)){const oct=(s===6||s===14)&&AU.mood!=='boss'?12:0;voice({f:mf(chord[0]-24+oct),d:sp*1.6,type:'triangle',v:.16,lp:700,dl:t,dest:D});voice({f:mf(chord[0]-24),d:sp*1.2,type:'sine',v:.12,dl:t,dest:D});}
+    if(M.kick.includes(s)){voice({f:150,f2:45,fd:.12,d:.14,type:'sine',v:.32,dl:t,dest:D});}
+    if(M.snare.includes(s)){nz({d:.12,v:.11,f:1800,q:.7,dl:t,dest:D});voice({f:190,d:.06,type:'triangle',v:.05,dl:t,dest:D});}
+    if(M.hat&&s%M.hat===0)nz({d:.03,v:s%4===2?.05:.025,f:8000,ft:'highpass',dl:t,dest:D});
+    if(M.arp&&(M.arp===2||s%2===0)){const n=chord[[0,1,2,1,0,2,1,2][(s/ (M.arp===2?1:2))%8|0]%chord.length]+12+(M.arp===2&&s%4===3?12:0);voice({f:mf(n),d:sp*.8,type:'square',v:M.arp===2?.018:.022,lp:M.cut,dl:t,dest:D,send:AU.dly});}
+    if(M.lead&&sec)for(const [st,k] of LEAD)if(st===s)voice({f:mf(chord[k%chord.length]+24),d:sp*(s===12?3.5:2.2),type:'triangle',v:.045,vib:10,dl:t,dest:D,send:AU.dly});
     AU.step++;AU.next+=sp;}
 }
+function musicMood(){if(!$('#title').classList.contains('hidden')){AU.want='title';return;}if(!G){AU.want='title';return;}
+  AU.want=G.inRound&&G.blind===2?'boss':(G.phase==='shop'||G.phase==='pack')?'shop':'play';}
+setInterval(musicMood,250);
 
 /* =========================================================
    배경 (저해상도 세포질 소용돌이)
@@ -1887,6 +1986,7 @@ function stakeModal(){
 }
 $('#tCont').onclick=()=>{auInit();continueRun();};$('#tHelp').onclick=()=>{auInit();helpModal();};$('#tOpt').onclick=()=>{auInit();optModal();};
 $('#act').addEventListener('pointerdown',e=>e.stopPropagation());
+ST.addEventListener('pointerover',e=>{const t=e.target.closest('.card,button,.bopt');if(t&&t!==UI.hov){UI.hov=t;if(e.pointerType==='mouse')sfx('hover');}else if(!t)UI.hov=null;});
 ST.addEventListener('pointerdown',e=>{auInit();if(!e.target.closest('#act,#modal,.card,button'))clearUI();});
 addEventListener('keydown',e=>{
   if(e.key==='Escape'){if(!$('#modal').classList.contains('hidden')&&G&&G.phase!=='over')closeModal();else clearUI();return;}
