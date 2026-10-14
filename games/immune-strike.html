@@ -27,6 +27,13 @@ body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;
 #hub{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:60px;height:44px;padding:0 14px;border-radius:10px;background:var(--btn);border:2px solid var(--btnb);color:#fff;font:16px 'Do Hyeon',sans-serif;display:none;align-items:center;cursor:pointer;z-index:5}
 #hub.on{display:flex}
 </style>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));</script>
 </head>
 <body>
 <canvas id="c" width="480" height="270" tabindex="0" aria-label="면역 특공대 게임 화면"></canvas>
