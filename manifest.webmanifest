@@ -2,7 +2,7 @@
   "id": "./",
   "name": "BIO ARCADE · 생명과학 게임 아케이드",
   "short_name": "BIO ARCADE",
-  "description": "리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크까지 생명과학으로 만든 픽셀 게임 5종",
+  "description": "리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터까지 생명과학으로 만든 픽셀 게임 6종",
   "lang": "ko",
   "start_url": "./index.html",
   "scope": "./",
@@ -22,6 +22,7 @@
     {"name": "면역 특공대", "short_name": "런앤건", "url": "./games/immune-strike.html", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
     {"name": "바이오 카트 레이서", "short_name": "카트", "url": "./games/bio-kart.html", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
     {"name": "혈관 협곡", "short_name": "5대5 대전", "url": "./games/vessel-canyon.html", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
-    {"name": "BIOTRO", "short_name": "세포 포커", "url": "./games/biotro.html", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]}
+    {"name": "BIOTRO", "short_name": "세포 포커", "url": "./games/biotro.html", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "CELL BOUND", "short_name": "세포의 속박", "url": "./games/cell-bound.html", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]}
   ]
 }
