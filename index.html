@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BIO ARCADE · 생명과학 게임 아케이드</title>
-<meta name="description" content="리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크까지 — 생명과학으로 만든 픽셀 게임 5종을 한곳에서 즐기세요.">
+<meta name="description" content="리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터까지 — 생명과학으로 만든 픽셀 게임 6종을 한곳에서 즐기세요.">
 <meta name="theme-color" content="#0a0612">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -71,7 +71,7 @@ header{text-align:center;padding:48px 0 28px}
 .rec{font-size:15px;color:var(--dim);min-width:0}
 .rec b{color:var(--yolk);font-weight:400}
 .play{flex:none;font-family:var(--px);font-size:12px;padding:10px 14px;background:var(--c);color:#12081a;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),3px 3px 0 #05020a}
-.c1{--c:#2fe6ff}.c2{--c:#ff6aa8}.c3{--c:#ffd23f}.c4{--c:#ff5a5a}.c5{--c:#b07aff}
+.c1{--c:#2fe6ff}.c2{--c:#ff6aa8}.c3{--c:#ffd23f}.c4{--c:#ff5a5a}.c5{--c:#b07aff}.c6{--c:#ff8a3a}
 
 /* ---------- tips ---------- */
 .tips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:28px}
@@ -107,7 +107,7 @@ footer{text-align:center;color:#6a5a88;font-size:14px;padding:6px 0 36px}
   <header>
     <h1 class="logo">BIO <span>ARCADE</span></h1>
     <p class="tag">생명과학 게임 아케이드</p>
-    <p class="lead">세포·유전·면역·생태를 무대로 한 픽셀 게임 5종. 브라우저에서 바로 플레이하거나 앱으로 설치해 오프라인에서도 즐기세요.</p>
+    <p class="lead">세포·유전·면역·생태를 무대로 한 픽셀 게임 6종. 브라우저에서 바로 플레이하거나 앱으로 설치해 오프라인에서도 즐기세요.</p>
     <button id="install" type="button" hidden>📲 앱으로 설치하기</button>
     <p id="iosHint" hidden>📲 홈 화면에 설치하려면 Safari 아래쪽 <b>공유 버튼</b>을 누르고 <b>「홈 화면에 추가」</b>를 선택하세요.</p>
     <div class="cells" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -167,6 +167,16 @@ footer{text-align:center;color:#6a5a88;font-size:14px;padding:6px 0 36px}
         <div class="foot"><span class="rec" data-rec="biotro">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
       </div>
     </a>
+    <a class="card c6" href="games/cell-bound.html" data-id="cell-bound">
+      <div class="shot"><img src="assets/cell-bound.jpg" alt="CELL BOUND 플레이 화면: 세포가 눈물을 쏘며 방 안의 세균과 싸우는 모습" width="640" height="360"><span class="genre">ROGUELIKE</span></div>
+      <div class="body">
+        <div class="title"><h2>CELL BOUND</h2><small>세포의 속박 · 탐험 슈터</small></div>
+        <p class="desc">세포가 되어 세포질에서 핵까지 8개 층을 내려가는 방 탐험 슈터. 무작위로 만들어지는 층에서 아이템을 모아 보스를 쓰러뜨리세요.</p>
+        <ul class="feat"><li>세포 8종</li><li>아이템 140종 · 장신구 200종</li><li>카드 70종 · 알약 32종 · 보스 12종</li></ul>
+        <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> 공격 · <kbd>E</kbd> 폭탄 · <kbd>Space</kbd> 액티브</div>
+        <div class="foot"><span class="rec" data-rec="cell-bound">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+      </div>
+    </a>
   </main>
 
   <section class="tips" aria-label="플레이 안내">
@@ -204,6 +214,12 @@ footer{text-align:center;color:#6a5a88;font-size:14px;padding:6px 0 36px}
       const s=get('biotroStats');if(!s||!s.runs)return '';
       const out=[`최고 앤티 <b>${s.bestAnte||1}</b>`];if(s.stakeWin)out.push(`<b>${['흰색','빨간색','초록색','검은색','파란색','보라색','주황색','황금색'][s.stakeWin-1]}</b> 판돈 클리어`);if(s.bestHand)out.push(`최고 핸드 <b>${Number(s.bestHand).toLocaleString('en-US')}</b>`);if(s.wins)out.push(`승리 <b>${s.wins}</b>회`);
       return out.join(' · ');
+    },
+    'cell-bound'(){
+      const s=get('cellBoundStats');if(!s||!s.runs)return '';
+      const F=['세포질 I','세포질 II','혈관 I','혈관 II','림프절 I','림프절 II','핵 I','핵 II'];
+      const out=[];if(s.wins)out.push(`승리 <b>${s.wins}</b>회`);else if(s.bestFloor)out.push(`최고 <b>${F[Math.min(7,s.bestFloor-1)]}</b>`);
+      if(s.kills)out.push(`처치 <b>${s.kills}</b>`);return out.join(' · ')||`플레이 <b>${s.runs}</b>회`;
     },
     'vessel-canyon'(){
       const s=get('vesselCanyonStats');if(!s||!(s.w||s.l))return '';
