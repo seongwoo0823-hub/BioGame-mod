@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BIO ARCADE · 생명과학 게임 아케이드</title>
-<meta name="description" content="리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터까지 — 생명과학으로 만든 픽셀 게임 6종을 한곳에서 즐기세요.">
+<meta name="description" content="리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터, 핀볼, 3D 난투와 플랫포머까지 — 생명과학으로 만든 게임 9종을 한곳에서 즐기세요.">
 <meta name="theme-color" content="#0a0612">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -71,7 +71,7 @@ header{text-align:center;padding:48px 0 28px}
 .rec{font-size:15px;color:var(--dim);min-width:0}
 .rec b{color:var(--yolk);font-weight:400}
 .play{flex:none;font-family:var(--px);font-size:12px;padding:10px 14px;background:var(--c);color:#12081a;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),3px 3px 0 #05020a}
-.c1{--c:#2fe6ff}.c2{--c:#ff6aa8}.c3{--c:#ffd23f}.c4{--c:#ff5a5a}.c5{--c:#b07aff}.c6{--c:#ff8a3a}
+.c1{--c:#2fe6ff}.c2{--c:#ff6aa8}.c3{--c:#ffd23f}.c4{--c:#ff5a5a}.c5{--c:#b07aff}.c6{--c:#ff8a3a}.c7{--c:#7cf06a}.c8{--c:#ff4fc8}.c9{--c:#ff9d7a}
 
 /* ---------- tips ---------- */
 .tips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:28px}
@@ -107,7 +107,7 @@ footer{text-align:center;color:#6a5a88;font-size:14px;padding:6px 0 36px}
   <header>
     <h1 class="logo">BIO <span>ARCADE</span></h1>
     <p class="tag">생명과학 게임 아케이드</p>
-    <p class="lead">세포·유전·면역·생태를 무대로 한 픽셀 게임 6종. 브라우저에서 바로 플레이하거나 앱으로 설치해 오프라인에서도 즐기세요.</p>
+    <p class="lead">세포·유전·면역·생태를 무대로 한 게임 9종. 브라우저에서 바로 플레이하거나 앱으로 설치해 오프라인에서도 즐기세요.</p>
     <button id="install" type="button" hidden>📲 앱으로 설치하기</button>
     <p id="iosHint" hidden>📲 홈 화면에 설치하려면 Safari 아래쪽 <b>공유 버튼</b>을 누르고 <b>「홈 화면에 추가」</b>를 선택하세요.</p>
     <div class="cells" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -177,6 +177,39 @@ footer{text-align:center;color:#6a5a88;font-size:14px;padding:6px 0 36px}
         <div class="foot"><span class="rec" data-rec="cell-bound">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
       </div>
     </a>
+
+    <a class="card c7" href="games/cell-pinball.html" data-id="cell-pinball">
+      <div class="shot"><img src="assets/cell-pinball.jpg" alt="세포 탐사대 플레이 화면: 세포핵과 골지체, 미토콘드리아로 꾸민 핀볼 테이블" width="640" height="360"><span class="genre">PINBALL</span></div>
+      <div class="body">
+        <div class="title"><h2>세포 탐사대</h2><small>CELL CADET · 생명과학 핀볼</small></div>
+        <p class="desc">세포 속을 옮겨 놓은 핀볼 테이블. 범퍼와 램프, 세포핵을 맞히며 실험 미션을 하나씩 완수하고 연구 등급을 올리세요.</p>
+        <ul class="feat"><li>실험 미션 16종</li><li>구성 요소 도감</li><li>최대 4인 번갈아 플레이</li></ul>
+        <div class="keys"><kbd>Z</kbd> <kbd>/</kbd> 플리퍼 · <kbd>Space</kbd> 발사 · <kbd>C</kbd> 코인 · <kbd>F2</kbd> 시작</div>
+        <div class="foot"><span class="rec" data-rec="cell-pinball">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+      </div>
+    </a>
+
+    <a class="card c8" href="games/cell-brawl.html" data-id="cell-brawl">
+      <div class="shot"><img src="assets/cell-brawl.jpg" alt="셀 브롤 플레이 화면: 면역 세포와 병원체가 3D 경기장에서 맞붙는 모습" width="640" height="360"><span class="genre">3D BRAWL</span></div>
+      <div class="body">
+        <div class="title"><h2>셀 브롤</h2><small>면역 대작전</small></div>
+        <p class="desc">면역 세포와 병원체가 3D 경기장에서 맞붙는 실시간 난투. 3대3 ATP 그랩이나 혼자 살아남는 생존 쇼다운으로 트로피를 모으세요.</p>
+        <ul class="feat"><li>면역 세포 7 · 병원체 7</li><li>ATP 그랩 / 생존 쇼다운</li><li>캐릭터별 트로피</li></ul>
+        <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · 클릭 공격 · <kbd>E</kbd> 궁극기 · <kbd>Q</kbd> 가젯</div>
+        <div class="foot"><span class="rec" data-rec="cell-brawl">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+      </div>
+    </a>
+
+    <a class="card c9" href="games/only-up.html" data-id="only-up">
+      <div class="shot"><img src="assets/only-up.jpg" alt="ONLY UP 플레이 화면: 소화관 속 발판을 밟고 위로 올라가는 3D 플랫포머" width="640" height="360"><span class="genre">3D PLATFORMER</span></div>
+      <div class="body">
+        <div class="title"><h2>ONLY UP</h2><small>거꾸로 소화 대탈출</small></div>
+        <p class="desc">나노봇이 되어 항문에서 입까지 소화관을 거꾸로 거슬러 오르는 3D 점프 플랫포머. 한 번 떨어지면 아래 구간까지 미끄러져요.</p>
+        <ul class="feat"><li>소화 기관 7구간</li><li>체크포인트 이어하기</li><li>약 15분</li></ul>
+        <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · <kbd>Space</kbd> 점프 · 마우스 시점 · <kbd>R</kbd> 체크포인트</div>
+        <div class="foot"><span class="rec" data-rec="only-up">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+      </div>
+    </a>
   </main>
 
   <section class="tips" aria-label="플레이 안내">
@@ -220,6 +253,19 @@ footer{text-align:center;color:#6a5a88;font-size:14px;padding:6px 0 36px}
       const F=['세포질 I','세포질 II','혈관 I','혈관 II','림프절 I','림프절 II','핵 I','핵 II'];
       const out=[];if(s.wins)out.push(`승리 <b>${s.wins}</b>회`);else if(s.bestFloor)out.push(`최고 <b>${F[Math.min(7,s.bestFloor-1)]}</b>`);
       if(s.kills)out.push(`처치 <b>${s.kills}</b>`);return out.join(' · ')||`플레이 <b>${s.runs}</b>회`;
+    },
+    'cell-pinball'(){
+      const hs=get('cellCadetHS');if(!Array.isArray(hs)||!hs.length||!hs[0])return '';
+      return `최고 점수 <b>${Number(hs[0].score||0).toLocaleString('en-US')}</b> ${hs[0].name||''}`;
+    },
+    'cell-brawl'(){
+      const t=get('cellbrawl:trophies');if(!t||typeof t!=='object')return '';
+      const v=Object.values(t).filter(x=>typeof x==='number'&&x>0);if(!v.length)return '';
+      return `트로피 <b>${v.reduce((a,b)=>a+b,0)}</b> · 최고 캐릭터 <b>${Math.max(...v)}</b>`;
+    },
+    'only-up'(){
+      const s=get('onlyupBioStats');if(s&&s.clears)return `탈출 <b>${s.clears}</b>회 · 최단 <b>${fmtT(s.best)}</b>`;
+      const p=get('onlyupBio');if(p&&p.cp>0)return `진행 중 <b>${p.cp+1}</b>/7 구간`;return '';
     },
     'vessel-canyon'(){
       const s=get('vesselCanyonStats');if(!s||!(s.w||s.l))return '';
