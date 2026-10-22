@@ -205,6 +205,13 @@ body.touch .abtn em{ display:none; }
 .quiz .exp{ margin-top:10px; font-size:14px; line-height:1.5; color:#d6f7e6; }
 @media (max-width:520px){ .quiz .opts{ grid-template-columns:1fr; } }
 </style>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));</script>
 </head>
 <body>
 <div id="lobbyBg"></div>
@@ -220,6 +227,7 @@ body.touch .abtn em{ display:none; }
       <button class="chip-btn snd-sfx" aria-label="효과음 켜기/끄기">🔊</button>
       <button class="chip-btn" id="btnDex">📖 도감</button>
       <button class="chip-btn" id="btnHelp">❔</button>
+      <button class="chip-btn" type="button" onclick="location.href='../index.html'" aria-label="게임 목록">🏠 목록</button>
     </div>
   </div>
   <div class="card info" id="infoCard"></div>
@@ -307,7 +315,7 @@ body.touch .abtn em{ display:none; }
   <div class="close-row"><button class="btn-y" data-close="helpModal">알겠어요</button></div>
 </div></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../vendor/three.min.js"></script>
 <script>
 'use strict';
 /* ================= utilities ================= */

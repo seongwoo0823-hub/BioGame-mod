@@ -1,13 +1,15 @@
 /* BIO ARCADE 서비스 워커: 처음 접속할 때 전체 게임을 저장해 두고, 이후에는 오프라인에서도 실행.
    파일을 바꾸면 VERSION을 올려야 사용자 기기의 캐시가 새 버전으로 교체됩니다. */
-const VERSION = 'bio-arcade-v3';
+const VERSION = 'bio-arcade-v4';
 const FONT_CACHE = 'bio-arcade-fonts';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './games/bio-beat.html', './games/immune-strike.html', './games/bio-kart.html',
   './games/vessel-canyon.html', './games/biotro.html', './games/cell-bound.html',
+  './games/cell-pinball.html', './games/cell-brawl.html', './games/only-up.html',
   './assets/bio-beat.jpg', './assets/immune-strike.jpg', './assets/bio-kart.jpg',
   './assets/vessel-canyon.jpg', './assets/biotro.jpg', './assets/cell-bound.jpg',
+  './assets/cell-pinball.jpg', './assets/cell-brawl.jpg', './assets/only-up.jpg',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png',
   './icons/apple-touch-icon.png', './icons/favicon-32.png',
   './vendor/three.min.js',

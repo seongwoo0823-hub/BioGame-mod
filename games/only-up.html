@@ -123,6 +123,13 @@ button:focus-visible{outline:3px solid var(--accent-2);outline-offset:3px}
 }
 @media (prefers-reduced-motion: reduce){ .pop{animation-duration:.01s} }
 </style>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));</script>
 </head>
 <body>
 <canvas id="c" aria-label="게임 화면"></canvas>
@@ -163,6 +170,7 @@ button:focus-visible{outline:3px solid var(--accent-2);outline-offset:3px}
     <div class="btns">
       <button id="btn-start" type="button">탐사 시작</button>
       <button id="btn-continue" type="button" class="ghost" hidden>이어하기</button>
+      <button type="button" class="ghost" onclick="location.href='../index.html'">게임 목록</button>
     </div>
     <p class="note">헤드폰을 끼면 바삭함이 두 배. 7개 구간, 예상 플레이 시간 약 15분. 떨어져도 각 구간 바닥의 괄약근에서 멈춰요.</p>
   </div>
@@ -177,6 +185,7 @@ button:focus-visible{outline:3px solid var(--accent-2);outline-offset:3px}
       <button id="btn-cp" type="button" class="ghost">체크포인트로</button>
       <button id="btn-sound" type="button" class="ghost">소리 끄기</button>
       <button id="btn-restart" type="button" class="ghost">처음부터</button>
+      <button type="button" class="ghost" onclick="location.href='../index.html'">게임 목록</button>
     </div>
   </div>
 </div>
@@ -191,11 +200,11 @@ button:focus-visible{outline:3px solid var(--accent-2);outline-offset:3px}
       <div><span>점프</span><b class="num" id="w-jump">0</b></div>
     </div>
     <p class="route">음식은 원래 입 → 식도 → 위 → 십이지장 → 소장 → 대장 → 항문 순서로 이동해요. B-01은 이 약 9m의 길을 정확히 거꾸로 완주했습니다.</p>
-    <div class="btns"><button id="btn-again" type="button">다시 도전</button></div>
+    <div class="btns"><button id="btn-again" type="button">다시 도전</button><button type="button" class="ghost" onclick="location.href='../index.html'">게임 목록</button></div>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../vendor/three.min.js"></script>
 <script>
 'use strict';
 // ===GEN START===
@@ -760,7 +769,7 @@ function pauseGame(){if(state!=='play')return;state='pause';$('pause').hidden=fa
   if(document.pointerLockElement)document.exitPointerLock();setTimeout(()=>$('btn-resume').focus(),50);}
 function resumeGame(){$('pause').hidden=true;state='play';AU.init();requestLock();}
 function die(msg){AU.sizzle();toast(msg,'마지막 체크포인트인 '+STAGES[cpStage].name+' 구간 입구로 돌아가요.');respawnAt(cpStage);}
-function win(){state='win';AU.fanfare();try{localStorage.removeItem('onlyupBio');}catch(e){}
+function win(){state='win';AU.fanfare();try{localStorage.removeItem('onlyupBio');const st=JSON.parse(localStorage.getItem('onlyupBioStats')||'{}')||{};st.clears=(st.clears||0)+1;if(!(st.best>0)||time<st.best)st.best=time;localStorage.setItem('onlyupBioStats',JSON.stringify(st));}catch(e){}
   $('w-time').textContent=fmt(time);$('w-fall').textContent=falls;$('w-jump').textContent=jumps;$('hud').hidden=true;$('touch').hidden=true;$('win').hidden=false;
   if(document.pointerLockElement)document.exitPointerLock();setTimeout(()=>$('btn-again').focus(),50);}
 function requestLock(){if(matchMedia('(pointer: coarse)').matches)return;const c=$('c');try{const r=c.requestPointerLock&&c.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(e){}}

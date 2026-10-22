@@ -81,6 +81,13 @@ input[type=text]{font:inherit;font-size:18px;padding:8px 10px;border:1px solid v
   #touch button{flex:1;padding:16px 0;font-size:16px}
 }
 </style>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));</script>
 </head>
 <body>
 <div id="app">
@@ -125,6 +132,7 @@ input[type=text]{font:inherit;font-size:18px;padding:8px 10px;border:1px solid v
       <label class="btn">MIDI 불러오기<input type="file" id="midiFile" accept=".mid,.midi,audio/midi" hidden></label>
       <button id="bGloss">구성 요소 도감</button>
       <button id="bHigh">고득점</button>
+      <button type="button" onclick="location.href='../index.html'">게임 목록</button>
     </div>
     <div class="keys hide-m">
       <kbd>Z</kbd> 왼쪽 플리퍼 · <kbd>/</kbd> 오른쪽 플리퍼 · <kbd>Space</kbd> 발사(길게 눌러 세기)<br>
