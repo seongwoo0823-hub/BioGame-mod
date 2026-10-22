@@ -338,46 +338,46 @@ const hexCss = c => '#'+c.toString(16).padStart(6,'0');
 /* ================= characters ================= */
 const KITS = {
   /* ---------- 면역 세포 ---------- */
-  macro:{ side:'immune', name:'대식세포', nick:'마크로', icon:'🫧', kind:'선천성 면역 · 식세포', role:'탱커', color:0xb57bff, hp:6400, speed:5.0, sfx:'goo',
+  macro:{ side:'immune', name:'대식세포', nick:'마크로', icon:'🫧', kind:'선천성 면역 · 식세포', role:'탱커', color:0xb57bff, hp:5400, speed:5.0, sfx:'goo',
     trait:'느리지만 단단해요. 가까이 붙어 끈적한 세포질로 밀어내고, 돌진해 통째로 삼켜요.',
-    attack:{ type:'spread', name:'끈적 세포질', desc:'짧은 거리에 덩어리 5개를 흩뿌려요. 맞은 적은 살짝 밀려나요.', count:5, spreadDeg:38, range:7, dmg:340, speed:18, reload:1.5, cd:0.45, proj:'goo', projColor:0xc792ff, knock:1.6, width:0.45 },
-    superCost:3200, super:{ type:'dash', name:'식세포 돌진', desc:'앞으로 돌진해 부딪힌 적을 삼키고 체력을 크게 회복해요.', range:9, dmg:1500, heal:1400, radius:2.6, icon:'🍽️' },
+    attack:{ type:'spread', name:'끈적 세포질', desc:'짧은 거리에 덩어리 5개를 흩뿌려요. 맞은 적은 살짝 밀려나요.', count:5, spreadDeg:38, range:7, dmg:420, speed:18, reload:1.5, cd:0.45, proj:'goo', projColor:0xc792ff, knock:1.6, width:0.45 },
+    superCost:3500, super:{ type:'dash', name:'식세포 돌진', desc:'앞으로 돌진해 부딪힌 적을 삼키고 체력을 크게 회복해요.', range:9, dmg:1500, heal:1100, radius:2.6, icon:'🍽️' },
     gadget:{ type:'heal', name:'사이토카인 신호', desc:'자신과 주변 아군의 체력을 회복해요.', amount:1400, radius:6, icon:'💗' },
     fact:'혈액 속 단핵구가 조직으로 들어가 분화한 세포예요. 병원체를 위족으로 감싸 삼키는 식세포 작용을 하고, 리소좀의 분해 효소로 소화해요. 삼킨 병원체의 조각(항원)을 MHC II에 실어 보조 T세포에게 보여 주는 항원 제시 세포이기도 해요.' },
-  neutro:{ side:'immune', name:'호중구', nick:'뉴트로', icon:'⚡', kind:'선천성 면역 · 식세포', role:'돌격', color:0xffb3c7, hp:4000, speed:6.1, sfx:'pew',
+  neutro:{ side:'immune', name:'호중구', nick:'뉴트로', icon:'⚡', kind:'선천성 면역 · 식세포', role:'돌격', color:0xffb3c7, hp:3800, speed:6.1, sfx:'pew',
     trait:'가장 빠른 선발대. 날쌘 3연사로 몰아치고 DNA 그물로 적을 꽁꽁 묶어요.',
-    attack:{ type:'burst', name:'과립 3연사', desc:'빠른 과립 3발을 연달아 쏴요.', count:3, interval:0.08, range:9.5, dmg:380, speed:28, reload:1.1, cd:0.45, proj:'granule', projColor:0xff5c94 },
-    superCost:2800, super:{ type:'net', name:'NETs 그물', desc:'DNA 그물을 던져 맞은 적을 1.2초 묶고 3초 동안 느리게 해요.', range:11, radius:3.4, dmg:800, slow:3, root:1.2, flight:0.75, icon:'🕸️' },
+    attack:{ type:'burst', name:'과립 3연사', desc:'빠른 과립 3발을 연달아 쏴요.', count:3, interval:0.08, range:9.5, dmg:305, speed:28, reload:1.3, cd:0.45, proj:'granule', projColor:0xff5c94 },
+    superCost:3500, super:{ type:'net', name:'NETs 그물', desc:'DNA 그물을 던져 맞은 적을 1.2초 묶고 3초 동안 느리게 해요.', range:11, radius:3.4, dmg:800, slow:3, root:1.2, flight:0.75, icon:'🕸️' },
     gadget:{ type:'speed', name:'과립 방출 질주', desc:'3초 동안 이동 속도가 크게 빨라져요.', dur:3, icon:'💨' },
     fact:'백혈구 중 가장 많은 세포(약 50~70%)로, 감염 부위에 가장 먼저 도착하는 선발대예요. 핵이 2~5개의 엽으로 나뉜 다형핵 백혈구이고, DNA와 항균 단백질로 된 그물(NETs)을 뿜어 세균을 가두기도 해요. 수명이 짧아서 죽은 호중구는 고름의 주성분이 돼요.' },
   bcell:{ side:'immune', name:'B 림프구', nick:'비셀', icon:'🎯', kind:'적응 면역 · 체액성', role:'저격', color:0x5fb8ff, hp:3100, speed:5.0, sfx:'zap',
     trait:'멀리서 Y자 항체를 꽂아 표지를 남겨요. 표지된 적은 모두에게 더 아프게 맞아요.',
-    attack:{ type:'single', name:'항체 저격', desc:'아주 멀리 날아가는 항체. 맞은 적에게 4초 동안 표지(받는 피해 +25%)를 남겨요.', range:15, dmg:1100, speed:32, reload:1.7, cd:0.5, proj:'antibody', projColor:0xfff27a, width:0.5, mark:4, trail:true },
-    superCost:3500, super:{ type:'ring', name:'항체 폭풍', desc:'사방으로 항체 16개를 퍼뜨려 맞은 적 모두에게 표지를 남겨요.', count:16, dmg:700, range:11, speed:22, mark:4, icon:'✳️' },
+    attack:{ type:'single', name:'항체 저격', desc:'아주 멀리 날아가는 항체. 맞은 적에게 4초 동안 표지(받는 피해 +25%)를 남겨요.', range:15, dmg:980, speed:32, reload:1.85, cd:0.5, proj:'antibody', projColor:0xfff27a, width:0.5, mark:3, trail:true },
+    superCost:3500, super:{ type:'ring', name:'항체 폭풍', desc:'사방으로 항체 16개를 퍼뜨려 맞은 적 모두에게 표지를 남겨요.', count:16, dmg:700, range:11, speed:22, mark:3, icon:'✳️' },
     gadget:{ type:'reveal', name:'옵소닌화 표지', desc:'5초 동안 숨은 적을 팀 전체에게 드러내요.', dur:5, icon:'👁️' },
     fact:'골수에서 만들어지고 성숙해요. 항원을 만나면 보조 T세포의 도움을 받아 형질세포로 분화해 Y자 모양의 항체를 대량으로 분비해요(체액성 면역). 항체가 병원체에 붙으면 식세포가 잡아먹기 쉬워지는데, 이를 옵소닌화라고 해요.' },
-  tcell:{ side:'immune', name:'세포독성 T세포', nick:'킬러T', icon:'💥', kind:'적응 면역 · 세포성', role:'투척', color:0x6fe08a, hp:3600, speed:5.0, sfx:'throw',
+  tcell:{ side:'immune', name:'세포독성 T세포', nick:'킬러T', icon:'💥', kind:'적응 면역 · 세포성', role:'투척', color:0x6fe08a, hp:3800, speed:5.0, sfx:'throw',
     trait:'벽 너머로 퍼포린을 던지는 폭격수. 숨어 있는 적도 위에서 내리꽂아요.',
-    attack:{ type:'lob', name:'퍼포린 투척', desc:'벽을 넘어 날아가 떨어진 곳 주변에 피해를 줘요.', range:11, radius:2.2, dmg:1050, flight:0.75, reload:1.7, cd:0.5, proj:'perforin', projColor:0x2ee6c8 },
+    attack:{ type:'lob', name:'퍼포린 투척', desc:'벽을 넘어 날아가 떨어진 곳 주변에 피해를 줘요.', range:11, radius:2.2, dmg:940, flight:0.75, reload:1.7, cd:0.5, proj:'perforin', projColor:0x2ee6c8 },
     superCost:3300, super:{ type:'bigLob', name:'그랜자임 폭격', desc:'넓은 범위에 강력한 그랜자임 폭탄을 떨어뜨려요.', range:12, radius:4.2, dmg:1900, flight:1.0, icon:'☄️' },
     gadget:{ type:'shield', name:'세포막 강화', desc:'3.5초 동안 받는 피해가 절반으로 줄어요.', dur:3.5, icon:'🛡️' },
     fact:'가슴샘(흉선)에서 성숙하는 T 림프구로, 표면에 CD8 단백질이 있어요. MHC I에 제시된 항원을 알아보고 바이러스에 감염된 세포나 암세포를 직접 공격해요(세포성 면역). 퍼포린으로 세포막에 구멍을 낸 뒤 그랜자임을 들여보내 세포자멸사를 일으켜요.' },
   nk:{ side:'immune', name:'NK 세포', nick:'엔케이', icon:'🥷', kind:'선천성 면역 · 자연살해', role:'암살자', color:0x37c7b5, hp:3800, speed:6.3, sfx:'slash',
     trait:'그림자 속 자연살해자. 은신으로 다가가 근접 할퀴기 한 방에 큰 피해를 줘요.',
-    attack:{ type:'melee', name:'독성 할퀴기', desc:'눈앞의 넓은 부채꼴을 즉시 할퀴어요. 사거리는 짧지만 강해요.', range:3.4, arcDeg:120, dmg:950, reload:0.9, cd:0.3, projColor:0x5ef2e0 },
+    attack:{ type:'melee', name:'독성 할퀴기', desc:'눈앞의 넓은 부채꼴을 즉시 할퀴어요. 사거리는 짧지만 강해요.', range:3.4, arcDeg:120, dmg:1000, reload:0.9, cd:0.3, projColor:0x5ef2e0 },
     superCost:2900, super:{ type:'stealth', name:'은밀한 습격', desc:'4초 동안 투명해지고 빨라져요. 은신 중 첫 공격은 1.6배 피해!', dur:4, bonus:1.6, icon:'🌫️' },
     gadget:{ type:'blink', name:'순간 이동', desc:'바라보는 방향으로 순식간에 5칸 이동해요.', dist:5, icon:'✨' },
     fact:'항원을 미리 배우지 않아도 바로 공격하는 선천성 면역의 림프구예요. 정상 세포가 가진 MHC I이 줄어든 감염 세포나 암세포를 알아보고, T세포처럼 퍼포린과 그랜자임으로 세포자멸사를 일으켜요. 그래서 "자연살해" 세포라고 불러요.' },
-  helper:{ side:'immune', name:'보조 T세포', nick:'헬퍼T', icon:'📡', kind:'적응 면역 · 지휘관', role:'지원', color:0xffc04d, hp:3400, speed:5.2, sfx:'orb',
+  helper:{ side:'immune', name:'보조 T세포', nick:'헬퍼T', icon:'📡', kind:'적응 면역 · 지휘관', role:'지원', color:0xffc04d, hp:3700, speed:5.2, sfx:'orb',
     trait:'면역 부대의 지휘관. 구슬은 적을 뚫고 아군을 치료하고, 신호탑을 세워 전선을 지켜요.',
-    attack:{ type:'single', name:'사이토카인 구슬', desc:'적을 관통하며 피해를 주고, 지나가는 아군은 치료해요.', range:10, dmg:650, speed:15, reload:1.4, cd:0.5, proj:'orb', projColor:0xffa630, width:0.55, pierce:true, healAlly:700 },
-    superCost:3000, super:{ type:'turret', name:'사이토카인 신호탑', desc:'9초 동안 적을 자동 공격하고 주변 아군을 계속 치료하는 탑을 세워요.', dur:9, dmg:340, rate:0.65, range:9, heal:260, icon:'🗼' },
+    attack:{ type:'single', name:'사이토카인 구슬', desc:'적을 관통하며 피해를 주고, 지나가는 아군은 치료해요.', range:10, dmg:780, speed:15, reload:1.4, cd:0.5, proj:'orb', projColor:0xffa630, width:0.55, pierce:true, healAlly:700 },
+    superCost:3000, super:{ type:'turret', name:'사이토카인 신호탑', desc:'9초 동안 적을 자동 공격하고 주변 아군을 계속 치료하는 탑을 세워요.', dur:9, dmg:400, rate:0.65, range:9, heal:260, icon:'🗼' },
     gadget:{ type:'heal', name:'인터류킨 분비', desc:'자신과 주변 아군의 체력을 회복해요.', amount:1200, radius:6, icon:'💛' },
     fact:'표면에 CD4 단백질이 있는 T 림프구예요. 대식세포가 제시한 항원을 알아보면 인터류킨 같은 사이토카인을 분비해 B 림프구의 항체 생산과 세포독성 T세포의 활동을 돕는 면역 반응의 지휘관이에요.' },
-  mast:{ side:'immune', name:'비만세포', nick:'마스트', icon:'🎈', kind:'선천성 면역 · 염증 유발', role:'컨트롤', color:0xff8cc6, hp:3700, speed:5.0, sfx:'drip',
+  mast:{ side:'immune', name:'비만세포', nick:'마스트', icon:'🎈', kind:'선천성 면역 · 염증 유발', role:'컨트롤', color:0xff8cc6, hp:4500, speed:5.0, sfx:'drip',
     trait:'염증의 방아쇠. 바닥에 히스타민 웅덩이를 깔고, 폭발로 적을 날려 버려요.',
-    attack:{ type:'lob', name:'히스타민 웅덩이', desc:'떨어진 곳에 2.5초 동안 계속 피해를 주는 웅덩이를 만들어요.', range:10, radius:1.8, dmg:450, flight:0.7, reload:1.8, cd:0.5, proj:'drop', projColor:0xff4fa3, pool:{ dur:2.5, dps:420, r:2.1 } },
-    superCost:3100, super:{ type:'wave', name:'히스타민 대폭발', desc:'주변으로 충격파를 터뜨려 적을 멀리 밀쳐 내요.', radius:5.2, range:5.2, dmg:1300, knock:9, icon:'💢' },
+    attack:{ type:'lob', name:'히스타민 웅덩이', desc:'떨어진 곳에 2.5초 동안 계속 피해를 주는 웅덩이를 만들어요.', range:10, radius:1.8, dmg:620, flight:0.7, reload:1.6, cd:0.5, proj:'drop', projColor:0xff4fa3, pool:{ dur:2.5, dps:640, r:2.1 } },
+    superCost:3100, super:{ type:'wave', name:'히스타민 대폭발', desc:'주변으로 충격파를 터뜨려 적을 멀리 밀쳐 내요.', radius:5.2, range:5.2, dmg:1500, knock:9, icon:'💢' },
     gadget:{ type:'speed', name:'혈관 확장', desc:'3초 동안 이동 속도가 빨라져요.', dur:3, icon:'💨' },
     fact:'피부와 점막 근처 조직에 사는 세포로, 알갱이(과립) 속에 히스타민을 잔뜩 저장해요. 히스타민이 나오면 모세혈관이 넓어지고 투과성이 커져 붓고 빨개지는 염증 반응이 일어나요. 알레르기 반응의 주인공이기도 해요.' },
 
@@ -385,42 +385,42 @@ const KITS = {
   virus:{ side:'pathogen', name:'인플루엔자 바이러스', nick:'플루', icon:'🦠', kind:'바이러스', role:'증식', color:0xff4d5e, hp:4000, speed:5.4, sfx:'wub',
     trait:'흔들리며 날아가는 비리온과 자기 복제. 혼자서도 무리를 만들어 몰아쳐요.',
     attack:{ type:'spread', name:'흔들 비리온', desc:'물결치듯 흔들리며 날아가는 비리온 3개를 쏴요.', count:3, spreadDeg:22, range:9, dmg:420, speed:16, reload:1.4, cd:0.45, proj:'virion', projColor:0xff5a6b, wave:{ amp:0.75, freq:1.5 }, width:0.4 },
-    superCost:3000, super:{ type:'summon', name:'자기 복제', desc:'작은 복제 바이러스 3마리를 만들어요. 적에게 달려가 터져요.', count:3, hp:900, dmg:800, life:11, icon:'🧬' },
+    superCost:3400, super:{ type:'summon', name:'자기 복제', desc:'작은 복제 바이러스 3마리를 만들어요. 적에게 달려가 터져요.', count:3, hp:900, dmg:800, life:11, icon:'🧬' },
     gadget:{ type:'speed', name:'항원 변이', desc:'2.5초 동안 이동 속도가 빨라져요.', dur:2.5, icon:'🔀' },
     fact:'세포 구조가 없고 단백질 껍질 속에 RNA를 가진 바이러스예요. 스스로 물질대사를 못 해서 숙주 세포 안에서만 증식해요. 표면의 헤마글루티닌(H)과 뉴라미니데이스(N) 단백질 종류에 따라 H1N1처럼 이름을 붙이고, 변이가 잦아 해마다 백신을 새로 만들어요.' },
-  bacteria:{ side:'pathogen', name:'병원성 대장균', nick:'콜라이', icon:'🧫', kind:'세균 (원핵생물)', role:'돌격', color:0xffa630, hp:4600, speed:5.5, sfx:'hiss',
+  bacteria:{ side:'pathogen', name:'병원성 대장균', nick:'콜라이', icon:'🧫', kind:'세균 (원핵생물)', role:'돌격', color:0xffa630, hp:4800, speed:5.5, sfx:'hiss',
     trait:'근거리 독소 분사기. 화염처럼 퍼지는 독소를 뿜고 편모로 들이받아요.',
-    attack:{ type:'flame', name:'독소 분사', desc:'짧은 거리에 독소를 뿜어요. 관통하며 여러 적을 동시에 태워요.', count:9, interval:0.04, spreadDeg:30, range:5.8, dmg:120, speed:13, reload:1.2, cd:0.45, proj:'flame', projColor:0xffa630, width:0.55 },
-    superCost:2900, super:{ type:'dash', name:'편모 돌진', desc:'편모를 돌려 돌진하고 부딪힌 주변에 피해를 줘요.', range:9, dmg:1300, heal:600, radius:2.4, icon:'🌀' },
+    attack:{ type:'flame', name:'독소 분사', desc:'짧은 거리에 독소를 뿜어요. 관통하며 여러 적을 동시에 태워요.', count:9, interval:0.04, spreadDeg:30, range:6.3, dmg:180, speed:13, reload:1.2, cd:0.45, proj:'flame', projColor:0xffa630, width:0.55 },
+    superCost:2900, super:{ type:'dash', name:'편모 돌진', desc:'편모를 돌려 돌진하고 부딪힌 주변에 피해를 줘요.', range:9, dmg:1500, heal:600, radius:2.4, icon:'🌀' },
     gadget:{ type:'heal', name:'바이오필름 회복', desc:'자신과 주변 아군의 체력을 회복해요.', amount:1000, radius:5, icon:'🟫' },
     fact:'핵막이 없는 원핵생물이에요. 펩티도글리칸 세포벽을 가지고 편모로 헤엄치며, 조건이 좋으면 약 20분마다 이분법으로 분열해요. 일부 병원성 대장균은 독소를 만들어 식중독을 일으켜요. 항생제로 치료하지만 함부로 쓰면 내성 세균이 생겨요.' },
-  fungus:{ side:'pathogen', name:'칸디다 진균', nick:'칸디', icon:'🍄', kind:'균류 (진핵생물)', role:'투척', color:0xc8d94a, hp:3500, speed:4.9, sfx:'puff',
+  fungus:{ side:'pathogen', name:'칸디다 진균', nick:'칸디', icon:'🍄', kind:'균류 (진핵생물)', role:'투척', color:0xc8d94a, hp:3900, speed:5.1, sfx:'puff',
     trait:'출아로 터지는 포자 폭탄. 떨어진 포자가 다시 갈라져 주변을 뒤덮어요.',
-    attack:{ type:'lob', name:'출아 포자', desc:'떨어지면 작은 포자 4개로 갈라지며 연쇄 폭발해요.', range:10.5, radius:1.6, dmg:620, flight:0.8, reload:1.8, cd:0.5, proj:'spore', projColor:0xd8f05a, split:{ n:4, r:1.9, dmg:300, radius:1.2 } },
-    superCost:3200, super:{ type:'cloud', name:'포자 구름', desc:'5초 동안 머무는 포자 구름. 안에 있는 적은 계속 피해를 입고 느려져요.', range:11, radius:3.6, dps:520, dur:5, flight:0.8, icon:'☁️' },
+    attack:{ type:'lob', name:'출아 포자', desc:'떨어지면 작은 포자 4개로 갈라지며 연쇄 폭발해요.', range:10.5, radius:1.8, dmg:780, flight:0.8, reload:1.7, cd:0.5, proj:'spore', projColor:0xd8f05a, split:{ n:4, r:1.9, dmg:340, radius:1.2 } },
+    superCost:3200, super:{ type:'cloud', name:'포자 구름', desc:'5초 동안 머무는 포자 구름. 안에 있는 적은 계속 피해를 입고 느려져요.', range:11, radius:3.6, dps:600, dur:5, flight:0.8, icon:'☁️' },
     gadget:{ type:'shield', name:'키틴 갑옷', desc:'3초 동안 받는 피해가 절반으로 줄어요.', dur:3, icon:'🛡️' },
     fact:'핵이 있는 진핵생물인 균류(효모)예요. 세포벽이 키틴으로 되어 있고, 몸에서 작은 싹이 돋아 떨어지는 출아법으로 늘어나요. 평소엔 몸에 조금 살지만 면역력이 떨어지면 칸디다증을 일으켜요. 항진균제로 치료해요.' },
   plasmo:{ side:'pathogen', name:'말라리아 원충', nick:'플라스모', icon:'🦟', kind:'원생생물 (진핵생물)', role:'저격', color:0xd14bd1, hp:3000, speed:5.0, sfx:'needle',
     trait:'초장거리 바늘 저격수. 한 발 한 발이 아프고, 적혈구를 터뜨리는 폭격도 해요.',
-    attack:{ type:'single', name:'침투 바늘', desc:'가장 멀리, 가장 아프게 꽂히는 바늘. 재장전은 느려요.', range:16, dmg:1300, speed:36, reload:2.0, cd:0.5, proj:'needle', projColor:0xff8bff, width:0.4, trail:true },
-    superCost:3400, super:{ type:'bigLob', name:'적혈구 파열', desc:'넓은 범위의 적혈구를 터뜨려 큰 피해를 줘요.', range:12, radius:4, dmg:1700, flight:1.0, icon:'🩸' },
+    attack:{ type:'single', name:'침투 바늘', desc:'가장 멀리, 가장 아프게 꽂히는 바늘. 재장전은 느려요.', range:16, dmg:1080, speed:36, reload:2.1, cd:0.5, proj:'needle', projColor:0xff8bff, width:0.4, trail:true },
+    superCost:4000, super:{ type:'bigLob', name:'적혈구 파열', desc:'넓은 범위의 적혈구를 터뜨려 큰 피해를 줘요.', range:12, radius:4, dmg:1700, flight:1.0, icon:'🩸' },
     gadget:{ type:'reveal', name:'모기 정찰', desc:'4초 동안 숨은 적을 드러내요.', dur:4, icon:'🦟' },
     fact:'얼룩날개모기(학질모기)가 옮기는 원생생물이에요. 사람 몸에 들어오면 간세포에서 늘어난 뒤 적혈구에 침입해 증식하고, 적혈구를 터뜨려요. 그래서 높은 열이 주기적으로 반복되는 말라리아에 걸려요.' },
-  hiv:{ side:'pathogen', name:'HIV', nick:'아이브', icon:'🔮', kind:'바이러스 (레트로바이러스)', role:'흡혈', color:0x8f7fd6, hp:3500, speed:5.2, sfx:'wobble',
+  hiv:{ side:'pathogen', name:'HIV', nick:'아이브', icon:'🔮', kind:'바이러스 (레트로바이러스)', role:'흡혈', color:0x8f7fd6, hp:3800, speed:5.2, sfx:'wobble',
     trait:'면역을 무너뜨리는 그림자. 끝까지 쫓아가는 구슬로 체력을 빼앗고 적을 약화시켜요.',
-    attack:{ type:'homing', name:'추적 비리온', desc:'가까운 적을 따라가는 구슬. 준 피해의 60%만큼 체력을 회복해요.', range:11, dmg:520, speed:12, reload:1.3, cd:0.45, proj:'hivorb', projColor:0xa48cff, width:0.45, lifesteal:0.6, turn:4.5 },
+    attack:{ type:'homing', name:'추적 비리온', desc:'가까운 적을 따라가는 구슬. 준 피해의 60%만큼 체력을 회복해요.', range:11, dmg:660, speed:14, reload:1.3, cd:0.45, proj:'hivorb', projColor:0xa48cff, width:0.45, lifesteal:0.6, turn:4.5 },
     superCost:3200, super:{ type:'curse', name:'면역 결핍', desc:'범위 안의 적을 5초 동안 약화(주는 피해 -40%, 회복 불가)시켜요.', range:11, radius:4, dmg:600, weak:5, flight:0.8, icon:'💜' },
     gadget:{ type:'stealth', name:'잠복기', desc:'2.5초 동안 투명해져요.', dur:2.5, icon:'🌑' },
     fact:'유전 물질인 RNA를 DNA로 바꾸는 역전사 효소를 가진 레트로바이러스예요. 면역의 지휘관인 보조 T세포(CD4)를 감염시켜 파괴하기 때문에, 시간이 지나면 면역력이 무너지는 후천성 면역 결핍증(AIDS)을 일으켜요.' },
-  tb:{ side:'pathogen', name:'결핵균', nick:'튜베', icon:'🧱', kind:'세균 (원핵생물)', role:'요새', color:0xb5532f, hp:6800, speed:4.6, sfx:'thunk',
+  tb:{ side:'pathogen', name:'결핵균', nick:'튜베', icon:'🧱', kind:'세균 (원핵생물)', role:'요새', color:0xb5532f, hp:5800, speed:4.6, sfx:'thunk',
     trait:'두꺼운 밀랍 갑옷의 요새. 관통 막대를 쏘고, 주변에 벽을 세워 버텨요.',
-    attack:{ type:'pierce', name:'밀랍 막대', desc:'여러 적을 꿰뚫고 날아가는 굵은 막대.', range:8.5, dmg:850, speed:19, reload:1.6, cd:0.5, proj:'wax', projColor:0xd9a066, width:0.75, pierce:true },
+    attack:{ type:'pierce', name:'밀랍 막대', desc:'여러 적을 꿰뚫고 날아가는 굵은 막대.', range:8.5, dmg:1040, speed:19, reload:1.6, cd:0.5, proj:'wax', projColor:0xd9a066, width:0.75, pierce:true },
     superCost:3300, super:{ type:'wall', name:'육아종 요새', desc:'7초 동안 주변을 둘러싸는 벽을 세우고 잠시 방어막을 얻어요.', dur:7, icon:'🏰' },
     gadget:{ type:'shield', name:'밀랍 코팅', desc:'3.5초 동안 받는 피해가 절반으로 줄어요.', dur:3.5, icon:'🛡️' },
     fact:'세포벽에 미콜산이라는 두꺼운 밀랍층이 있어 소독약과 면역 공격을 잘 버티는 세균이에요. 기침으로 퍼지며 주로 폐를 감염시켜요. 몸은 대식세포를 모아 결핵균을 둘러싸는 육아종이라는 덩어리를 만들어 가두려고 해요. 오랫동안 항생제를 먹어야 치료돼요.' },
-  staph:{ side:'pathogen', name:'황색포도상구균', nick:'스태프', icon:'🍇', kind:'세균 (원핵생물)', role:'난사', color:0xf2c230, hp:3400, speed:5.4, sfx:'boing',
+  staph:{ side:'pathogen', name:'황색포도상구균', nick:'스태프', icon:'🍇', kind:'세균 (원핵생물)', role:'난사', color:0xf2c230, hp:3800, speed:5.4, sfx:'boing',
     trait:'포도송이 튕기기 장인. 벽에 맞고 튀어나오는 포도알로 구석의 적도 맞혀요.',
-    attack:{ type:'bounce', name:'튕기는 포도알', desc:'포도알 2개를 쏴요. 벽에 닿으면 두 번까지 튕겨요.', count:2, spreadDeg:12, range:13, dmg:480, speed:20, reload:1.4, cd:0.45, proj:'grape', projColor:0xffd23f, width:0.42, bounces:2 },
+    attack:{ type:'bounce', name:'튕기는 포도알', desc:'포도알 2개를 쏴요. 벽에 닿으면 두 번까지 튕겨요.', count:2, spreadDeg:12, range:13, dmg:520, speed:20, reload:1.4, cd:0.45, proj:'grape', projColor:0xffd23f, width:0.42, bounces:2 },
     superCost:3100, super:{ type:'cluster', name:'포도송이 폭탄', desc:'떨어진 곳에서 포도알 7개가 사방으로 흩어져 터져요.', range:11, radius:1.8, dmg:600, n:7, spread:3.2, flight:0.9, icon:'🍇' },
     gadget:{ type:'speed', name:'응집 질주', desc:'3초 동안 이동 속도가 빨라져요.', dur:3, icon:'💨' },
     fact:'공 모양의 세균(구균)이 포도송이처럼 뭉쳐 있어서 붙은 이름이에요. 피부와 코에 흔히 살고, 상처에 들어가면 고름이 생기는 감염이나 식중독을 일으켜요. 항생제가 잘 듣지 않는 내성균(MRSA)이 문제가 되고 있어요.' }
@@ -1085,6 +1085,7 @@ class Unit{
     this.gems = 0; this.cubes = 0; this.dashT = 0; this.dashDir = {x:0,z:0};
     this.slowT = 0; this.speedT = 0; this.shieldT = 0; this.markT = 0; this.weakT = 0; this.rootT = 0; this.stealthT = 0; this.stealthBonus = 0;
     this.burst = []; this.revealedUntil = 0; this.flashT = 0; this.inBush = false; this.zoneAcc = 0; this.kills = 0;
+    this.st = { dmg:0, superDmg:0, deaths:0, superUse:0, gadUse:0, deathT:-1, rank:0 };
     this.thinkT = rand(0,0.2); this.aiFireT = rand(0.3,0.8); this.strafe = Math.random()<0.5?1:-1; this.strafeT = rand(0.6,1.6);
     this.path = null; this.pathT = 0; this.pathGoal = null; this.target = null; this.goal = null; this.stuckT = 0; this.jitterT = 0; this.jitter = {x:0,z:0}; this.wanderT = 0;
     const md = buildModel(kitId); this.model = md; this.opacity = 1;
@@ -1208,7 +1209,7 @@ const SELF_SUPERS = new Set(['stealth','turret','wave','summon','wall','ring']);
 function useSuper(u, dir, aimDist){
   if (!u.alive || u.superCharge<1 || u.dashT>0) return false;
   const s = u.kit.super; const dm = u.dmgMul();
-  u.superCharge = 0; u.lastAttack = G.time;
+  u.superCharge = 0; u.lastAttack = G.time; u.st.superUse++;
   if (s.type!=='stealth'){ u.revealedUntil = G.time+1.2; breakStealth(u); }
   u.facing = Math.atan2(dir.x, dir.z);
   burst(u.pos.x,1.2,u.pos.z,0xffd23f,14,6);
@@ -1247,7 +1248,7 @@ function useSuper(u, dir, aimDist){
 }
 function useGadget(u){
   if (!u.alive || u.gadgets<=0 || u.gadgetCd>0) return false;
-  const g = u.kit.gadget; u.gadgets--; u.gadgetCd = 5;
+  const g = u.kit.gadget; u.gadgets--; u.gadgetCd = 5; u.st.gadUse++;
   sfxAt(GADGET_SFX[g.type], u.pos.x, u.pos.z);
   switch(g.type){
     case 'heal': for (const o of G.units) if (o.alive && o.team===u.team && dist(o,u)<=g.radius) heal(o, g.amount); ringFx(u.pos.x,u.pos.z,g.radius,0x5dff9a,0.6); break;
@@ -1275,6 +1276,7 @@ function damage(t, amount, src, charges, crit){
   if (t.shieldT>0) amount *= 0.5;
   if (t.markT>0) amount *= 1.25;
   amount = Math.round(amount);
+  if (src && src.st){ src.st.dmg += amount; if (!charges) src.st.superDmg += amount; }
   t.hp -= amount; t.lastHurt = G.time; t.flashT = 0.12; t.revealedUntil = G.time+0.8;
   if (t.stealthT>0 && amount>0) t.stealthT = Math.min(t.stealthT, 0.3);
   if (src && charges && src.alive) src.superCharge = Math.min(1, src.superCharge + amount/src.kit.superCost);
@@ -1303,6 +1305,7 @@ function kill(u, src){
   u.stealthT = 0; u.markT = 0; u.weakT = 0; u.rootT = 0; u.slowT = 0; u.kb.x = u.kb.z = 0;
   burst(u.pos.x,1,u.pos.z,u.kit.color,22,7);
   if (src) src.kills++;
+  u.st.deaths++; u.st.deathT = G.time;
   addKillfeed(src, u);
   if (u.isPlayer) SND.play('die'); else sfxAt('kill', u.pos.x, u.pos.z, src&&src.isPlayer?1.2:0.7);
   if (G.mode==='gem'){
@@ -1312,7 +1315,9 @@ function kill(u, src){
     const n = Math.max(1, u.cubes);
     for (let i=0;i<n;i++){ const a = rand(0,TAU); spawnCube(u.pos.x+Math.sin(a)*rand(0,1.4), u.pos.z+Math.cos(a)*rand(0,1.4)); }
     const alive = G.units.filter(o=>o.alive).length;
-    if (u.isPlayer) endMatch('lose', alive+1);
+    u.st.rank = alive+1;
+    if (G.simAll){ if (alive<=1){ for (const o of G.units) if (o.alive) o.st.rank = 1; endMatch(G.player.alive?'win':'lose', G.player.alive?1:G.player.st.rank); } }
+    else if (u.isPlayer) endMatch('lose', alive+1);
     else if (alive===1 && G.player.alive) endMatch('win', 1);
   }
 }
@@ -1725,7 +1730,7 @@ function updateGame(dt){
     if (after!==before){ showBanner(after>0 ? String(after) : '시작!'); SND.play(after>0?'count':'go'); }
   } else if (!G.over){
     if (G.mode==='gem'){ G.clock -= dt; if (G.clock<=0){ G.clock = 0; const [a,b] = teamGems(); endMatch(a>b?'win':a<b?'lose':'draw'); } }
-    playerInput(dt);
+    if (G.autopilot){ if (G.player.alive) botThink(G.player, dt); } else playerInput(dt);
     for (const u of G.units) if (!u.isPlayer && u.alive) botThink(u, dt);
     for (const u of G.units) updateUnit(u, dt);
     separate();
@@ -1923,7 +1928,7 @@ function updateMinions(dt){
     mn.body.rotation.x += dt*6;
     if (mn.dead){
       if (mn.dead==='boom'){
-        for (const u of G.units) if (u.alive && u.team!==mn.team && Math.hypot(u.pos.x-mn.x,u.pos.z-mn.z)<=1.9) damage(u, mn.dmg, mn.owner, true);
+        for (const u of G.units) if (u.alive && u.team!==mn.team && Math.hypot(u.pos.x-mn.x,u.pos.z-mn.z)<=1.9) damage(u, mn.dmg, mn.owner, false);
         discFx(mn.x,mn.z,1.9,mn.owner.kit.color,0.3);
       }
       burst(mn.x,0.6,mn.z,mn.owner.kit.color,10,4); sfxAt('pop', mn.x, mn.z);
@@ -2123,7 +2128,7 @@ function botThink(u, dt){
   if (u.strafeT<=0){ u.strafe *= -1; u.strafeT = rand(0.6,1.7); }
   if (u.thinkT<=0){
     u.thinkT = rand(0.12,0.22);
-    let best = null, bd = 1e9; const aggro = a.range+6;
+    let best = null, bd = 1e9; const aggro = Math.max(a.range+6, 15); // same engage radius for all kits so short-range kits don't dodge every fight
     for (const e of G.units){ if (!e.alive || e.team===u.team || !isVisibleTo(e,u.team)) continue; const d = dist(u,e); if (d<aggro && d<bd){ bd = d; best = e; } }
     u.target = best; u.boxGoal = null; u.goal = computeGoal(u);
   }
@@ -2134,7 +2139,8 @@ function botThink(u, dt){
     const dx = t.pos.x-u.pos.x, dz = t.pos.z-u.pos.z, d = Math.hypot(dx,dz)||1;
     const hasLos = los(u.pos.x,u.pos.z,t.pos.x,t.pos.z);
     const canShoot = a.type==='lob' || a.type==='homing' || hasLos || (a.type==='bounce' && d<a.range*0.6);
-    const pref = prefDist(a);
+    let pref = prefDist(a);
+    if (u.superCharge>=1){ const sp = u.kit.super; if (sp.type==='wave') pref = sp.radius*0.55; else if (sp.type==='ring') pref = Math.min(pref, sp.range*0.45); }
     if (lowHp && u.hp < t.hp){
       [mx,mz] = G.mode==='gem' ? navDir(u, u.spawn[0], u.spawn[1], dt) : [-dx/d, -dz/d];
       mx += -dz/d*u.strafe*0.5; mz += dx/d*u.strafe*0.5;
