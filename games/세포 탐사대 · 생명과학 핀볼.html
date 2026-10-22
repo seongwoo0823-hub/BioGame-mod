@@ -1,0 +1,1194 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>세포 탐사대 · 생명과학 핀볼</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600;700&family=Pixelify+Sans:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#EDEFF7; --card:#FFFFFF; --ink:#141833; --soft:#5B6189; --line:#DADDEC; --accent:#D2457F; --accent2:#3C7DE0;
+  --atp:#3F9142; --off:#E3E6F1; --newbg:#FFE4EE;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); color-scheme:light;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --page:#070915; --card:#10142B; --ink:#E7EAFF; --soft:#8D93C4; --line:#1F2547; --accent:#E05A93; --accent2:#76B6FF; --atp:#9BDB5A; --off:#1A2042; --newbg:#3B1240; color-scheme:dark; } }
+:root[data-theme="dark"]{ --page:#070915; --card:#10142B; --ink:#E7EAFF; --soft:#8D93C4; --line:#1F2547; --accent:#E05A93; --accent2:#76B6FF; --atp:#9BDB5A; --off:#1A2042; --newbg:#3B1240; color-scheme:dark; }
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{background:var(--page);color:var(--ink);font-family:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;display:flex;justify-content:center;overflow:hidden;-webkit-user-select:none;user-select:none}
+#app{display:flex;gap:22px;padding:14px;height:100%;max-width:100%}
+#stage{position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#table{display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;background:#05060F;border-radius:14px;box-shadow:0 0 0 2px #1A2347,0 0 0 6px rgba(60,125,224,.12),0 28px 60px -14px rgba(20,30,90,.6)}
+#panel{width:340px;flex:none;display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding:2px 6px 10px 2px}
+.brand{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:2px 2px 0}
+#logo{width:200px;image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.tag{font-family:"Pixelify Sans",monospace;font-size:13px;color:var(--soft);letter-spacing:.06em;text-align:right;line-height:1.3}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.hud{background:radial-gradient(120% 90% at 80% 0%,#1E2A62 0%,#0D1126 62%);border-color:#232C5E;color:#E7EAFF}
+.chips{display:flex;gap:6px;align-items:center}
+.chip{font-family:"Pixelify Sans",monospace;font-size:12px;padding:2px 9px;border-radius:999px;background:#1C2452;color:#A9B6FF}
+.chip.combo{margin-left:auto;background:#3B1240;color:#FF9EC0;opacity:0;transition:opacity .2s}
+.chip.combo.on{opacity:1}
+.score{font-family:"Pixelify Sans",monospace;font-weight:700;font-size:44px;line-height:1.05;text-align:right;color:#FFD66B;text-shadow:3px 3px 0 #8A3A24,0 0 22px rgba(255,170,60,.35);font-variant-numeric:tabular-nums;margin:8px 0 4px;letter-spacing:1px}
+.msg{min-height:46px;font-weight:600;font-size:16px;text-align:center;color:#C2E4FF;white-space:pre-line;line-height:1.35;display:flex;align-items:center;justify-content:center;border-top:1px dashed #263066;padding-top:8px}
+.label{font-size:12px;color:var(--soft);display:flex;justify-content:space-between}
+.mname{font-weight:700;font-size:17px;margin-top:3px}
+.mstep{font-size:14px;color:var(--soft);margin-top:2px;min-height:20px}
+.seg{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-top:9px}
+.seg i{height:8px;border-radius:2px;background:var(--off)} .seg i.on{background:var(--accent)}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px 10px}
+.stats div span{display:block;font-size:11px;color:var(--soft)}
+.stats div strong{font-family:"Pixelify Sans",monospace;font-weight:700;font-size:19px}
+.stats .wide{grid-column:span 3;display:flex;align-items:center;gap:10px}
+.stats .wide strong{font-family:"IBM Plex Sans KR",sans-serif;font-size:16px}
+.atp{display:flex;gap:3px;flex:1}.atp i{flex:1;height:10px;border-radius:2px;background:var(--off)}.atp i.on{background:var(--atp)}
+.disc{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--soft)}
+.disc .bar{flex:1;height:6px;border-radius:3px;background:var(--off);overflow:hidden}.disc .bar b{display:block;height:100%;background:var(--accent2);width:0}
+.disc strong{font-family:"Pixelify Sans",monospace;color:var(--ink)}
+.note h3{margin:8px 0 4px;font-size:16px;color:var(--accent);display:flex;align-items:center;gap:6px}
+.note .new{font-size:11px;background:var(--newbg);color:var(--accent);padding:1px 7px;border-radius:999px}
+.note p{margin:0;font-size:14px;line-height:1.6}
+.btns{display:flex;flex-wrap:wrap;gap:7px}
+button,select,label.btn{font:inherit;font-size:14px;font-weight:600;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);padding:7px 11px;cursor:pointer}
+button:hover,label.btn:hover{border-color:var(--accent2)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:focus-visible,select:focus-visible,label.btn:focus-within{outline:2px solid var(--accent2);outline-offset:2px}
+#table:focus{outline:none}
+.keys{font-size:12.5px;color:var(--soft);line-height:1.8}
+kbd{font-family:"Pixelify Sans",monospace;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--card);color:var(--ink)}
+#touch{display:none}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);max-width:min(780px,94vw);max-height:86vh;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+dialog::backdrop{background:rgba(5,6,15,.6)}
+dialog h2{margin:0 0 10px;font-size:22px}
+.glossary{width:100%;border-collapse:collapse;font-size:14px}
+.glossary td,.glossary th{border-bottom:1px solid var(--line);padding:7px 6px;vertical-align:top;text-align:left}
+.glossary th{color:var(--soft);font-weight:400;font-size:12px}
+.glossary td:first-child{white-space:nowrap;color:var(--soft);font-family:"Pixelify Sans",monospace}
+.glossary td:nth-child(3){font-weight:700;white-space:nowrap}
+.hs{width:100%;font-size:16px;border-collapse:collapse}.hs td{padding:6px;border-bottom:1px solid var(--line)}.hs td:last-child{text-align:right;font-family:"Pixelify Sans",monospace}
+input[type=text]{font:inherit;font-size:18px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--page);color:var(--ink);width:100%}
+.overflow{overflow-x:auto}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (max-width:860px){
+  body{overflow:auto}
+  #app{flex-direction:column;height:auto;padding:8px;gap:10px;width:100%}
+  #panel{width:100%;order:-1;overflow:visible;padding:0}
+  #panel .hide-m{display:none}
+  #stage{height:auto}
+  .score{font-size:34px}
+  #touch{display:flex;gap:8px;margin-top:10px;width:100%}
+  #touch button{flex:1;padding:16px 0;font-size:16px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="table" width="300" height="500" aria-label="생명과학 핀볼 테이블" tabindex="0"></canvas>
+    <div id="touch"><button id="tC">코인</button><button id="tL">◀ 왼쪽</button><button id="tP">발사</button><button id="tR">오른쪽 ▶</button></div>
+  </div>
+  <aside id="panel">
+    <div class="brand"><canvas id="logo" aria-label="세포 탐사대"></canvas><div class="tag">CELL CADET<br>생명과학 핀볼</div></div>
+    <section class="card hud" aria-live="polite">
+      <div class="chips"><span class="chip" id="pChip">DEMO</span><span class="chip" id="bChip">BALL –</span><span class="chip" id="cChip">CREDIT 0</span><span class="chip combo" id="combo">COMBO ×2</span></div>
+      <div class="score" id="score">0</div>
+      <div class="msg" id="msg">F2 키로 새 게임 시작</div>
+    </section>
+    <section class="card">
+      <div class="label"><span>진행 중인 실험</span><span id="mTier"></span></div>
+      <div class="mname" id="mName">실험 대기 중</div>
+      <div class="mstep" id="mStep">실험 표적을 맞혀 선택</div>
+      <div class="seg" id="mBar"></div>
+    </section>
+    <section class="card stats">
+      <div class="wide"><span>연구 등급</span><strong id="sRank">학부 연구생</strong></div>
+      <div class="wide"><span>ATP</span><div class="atp" id="sAtp"></div></div>
+      <div><span>보너스 배수</span><strong id="sMult">×1</strong></div>
+      <div><span>세포분열</span><strong id="sHyper">0/5</strong></div>
+      <div><span>범퍼 배수</span><strong id="sBump">×1</strong></div>
+      <div><span>항원 메달</span><strong id="sMedal">0</strong></div>
+      <div><span>소포 수집</span><strong id="sVes">0</strong></div>
+      <div><span>바이러스 격퇴</span><strong id="sVir">0</strong></div>
+    </section>
+    <section class="card note">
+      <div class="disc"><span>발견 도감</span><div class="bar"><b id="discBar"></b></div><strong id="discN">0/0</strong></div>
+      <div id="note"><h3>생명과학 노트</h3><p>구슬이 닿는 구성 요소마다 실제 생명과학 개념이 여기에 나타나고 발견 도감에 기록됩니다.</p></div>
+    </section>
+    <div class="btns">
+      <button class="primary" id="bCoin">코인 넣기 (C)</button>
+      <button class="primary" id="bNew" style="background:var(--accent2);border-color:var(--accent2)">시작 (F2)</button>
+      <select id="bPlayers" aria-label="연구원 수"><option value="1">1명</option><option value="2">2명</option><option value="3">3명</option><option value="4">4명</option></select>
+      <button id="bPause">일시정지 (F3)</button>
+      <button id="bMusic">음악 끄기 (M)</button>
+      <button id="bSfx">효과음 끄기</button>
+      <label class="btn">MIDI 불러오기<input type="file" id="midiFile" accept=".mid,.midi,audio/midi" hidden></label>
+      <button id="bGloss">구성 요소 도감</button>
+      <button id="bHigh">고득점</button>
+    </div>
+    <div class="keys hide-m">
+      <kbd>Z</kbd> 왼쪽 플리퍼 · <kbd>/</kbd> 오른쪽 플리퍼 · <kbd>Space</kbd> 발사(길게 눌러 세기)<br>
+      <kbd>C</kbd> 코인 투입 · <kbd>F2</kbd>/<kbd>1</kbd> 시작(1구 전 누르면 연구원 추가)<br><kbd>X</kbd> <kbd>.</kbd> <kbd>↑</kbd> 흔들기 · <kbd>F3</kbd> 일시정지 · <kbd>M</kbd> 음악
+    </div>
+  </aside>
+</div>
+
+<dialog id="dGloss"><h2>구성 요소 도감</h2>
+  <p style="margin:0 0 10px;color:var(--soft)">원본 테이블의 55개 번호 구성 요소와 새로 추가된 요소를 생명과학 개념으로 정리했습니다.</p>
+  <div class="overflow"><table class="glossary" id="glossTable"><thead><tr><th>번호</th><th>원본 구성 요소</th><th>이 게임에서</th><th>게임 역할과 과학 개념</th></tr></thead><tbody></tbody></table></div>
+  <form method="dialog" style="margin-top:14px;text-align:right"><button>닫기</button></form>
+</dialog>
+<dialog id="dHigh"><h2>고득점</h2><table class="hs" id="hsTable"></table>
+  <form method="dialog" style="margin-top:14px;text-align:right"><button id="hsClear" type="button">기록 지우기</button> <button>닫기</button></form>
+</dialog>
+<dialog id="dName"><h2>고득점 달성</h2><p id="nameMsg"></p>
+  <form method="dialog"><input type="text" id="nameIn" maxlength="12" placeholder="이름"><div style="margin-top:12px;text-align:right"><button class="primary">기록하기</button></div></form>
+</dialog>
+
+<script>
+/* ================= 데이터 ================= */
+const W=600, H=1000, LW=300, LH=500;
+const TS=0.87; // 구슬 시간 배율: 1보다 작을수록 느려짐
+const RANKS=["학부 연구생","연구 보조원","석사 연구원","박사 과정생","박사후 연구원","선임 연구원","책임 연구원","연구소장","노벨상 수상자"];
+
+const MISSIONS=[
+ {id:"scope",tier:0,name:"현미경 정렬 훈련",steps:[{tag:"bumper",n:8,t:"면역세포 범퍼"}],reward:500000,fact:"광학 현미경은 초점과 광축을 정렬해야 0.2 µm 수준의 해상도를 얻을 수 있습니다."},
+ {id:"pipette",tier:0,name:"피펫 발사 훈련",steps:[{tag:"ramp",n:3,t:"혈관 램프 통과"}],reward:500000,fact:"마이크로피펫은 µL 단위의 액체를 정확히 옮기는 실험실의 기본 도구입니다."},
+ {id:"circ",tier:0,name:"혈액 순환 훈련",steps:[{tag:"reentry",n:3,t:"재순환 레인 통과"}],reward:500000,fact:"혈액은 체순환과 폐순환을 거치며 약 1분 만에 온몸을 한 바퀴 돕니다."},
+ {id:"cell",tier:1,name:"세포 관찰",steps:[{tag:"drop",n:6,t:"병원체 표적"}],reward:750000,fact:"1665년 로버트 훅은 코르크 조각에서 처음으로 '세포(cell)'라는 이름을 붙였습니다."},
+ {id:"cancer",tier:1,name:"암세포 제거",steps:[{tag:"flag",n:15,t:"편모 회전"},{tag:"hyper",n:1,t:"세포분열 슈트"}],reward:900000,fact:"암세포는 세포 주기 점검 지점을 무시하고 분열을 멈추지 않는 세포입니다."},
+ {id:"lyso",tier:1,name:"리소좀 분해",steps:[{tag:"atp",n:3,t:"ATP 표적"},{tag:"blackhole",n:1,t:"리소좀에 넣기"}],reward:900000,fact:"리소좀은 산성 가수분해 효소로 낡은 세포 소기관과 침입자를 분해합니다."},
+ {id:"uv",tier:1,name:"자외선 DNA 손상 복구",steps:[{tag:"rebound",n:3,t:"반동 고무"},{tag:"nucleus",n:1,t:"세포핵 통과"}],reward:900000,fact:"자외선은 이웃한 티민끼리 붙는 티민 이량체를 만들고, 세포는 뉴클레오타이드 절제 복구로 이를 고칩니다."},
+ {id:"virus",tier:2,name:"바이러스 퇴치",steps:[{tag:"launchBumper",n:6,t:"효소 범퍼"},{tag:"dropR",n:3,t:"오른쪽 병원체 뱅크"}],reward:1200000,fact:"바이러스는 스스로 대사하지 못하고 숙주 세포의 리보솜을 빌려 증식합니다."},
+ {id:"parasite",tier:2,name:"기생충 격퇴",steps:[{tag:"medal",n:3,t:"항원 표적"},{tag:"wormhole",n:1,t:"소포 구멍"}],reward:1200000,fact:"말라리아 원충은 모기와 사람을 오가며 생활사를 완성하는 기생 원생생물입니다."},
+ {id:"stem",tier:2,name:"줄기세포 구출",steps:[{tag:"lane",n:4,t:"하단 레인"},{tag:"ramp",n:1,t:"혈관 램프"}],reward:1200000,fact:"줄기세포는 자기 복제와 여러 세포로의 분화 능력을 함께 지닌 세포입니다."},
+ {id:"fold",tier:2,name:"단백질 접힘 복구",steps:[{tag:"booster",n:3,t:"샤페론 표적"},{tag:"hyper",n:1,t:"세포분열 슈트"}],reward:1200000,fact:"샤페론 단백질은 새로 만들어진 폴리펩타이드가 올바른 입체 구조로 접히도록 돕습니다."},
+ {id:"genome",tier:3,name:"게놈 탐사",steps:[{tag:"warpTarget",n:2,t:"돌연변이 표적"},{tag:"reentry",n:2,t:"재순환 레인"},{tag:"nucleus",n:1,t:"세포핵 통과"}],reward:1600000,fact:"사람 게놈은 약 30억 염기쌍으로 이루어져 있고 단백질 암호 영역은 2% 남짓입니다."},
+ {id:"prion",tier:3,name:"프리온 봉쇄",steps:[{tag:"dropL",n:3,t:"왼쪽 병원체 뱅크"},{tag:"dropR",n:3,t:"오른쪽 병원체 뱅크"},{tag:"ramp",n:1,t:"혈관 램프"}],reward:1600000,fact:"프리온은 잘못 접힌 단백질이 정상 단백질까지 잘못 접히게 만드는 감염성 인자입니다."},
+ {id:"pandemic",tier:3,name:"팬데믹 대응",steps:[{tag:"wormY",n:1,t:"노란 소포"},{tag:"wormR",n:1,t:"빨간 소포"},{tag:"wormG",n:1,t:"초록 소포"}],reward:1600000,fact:"역학에서 기초감염재생산수 R₀가 1보다 크면 감염병은 퍼져 나갑니다."},
+ {id:"crispr",tier:3,name:"크리스퍼 유전자 편집",steps:[{tag:"multTarget",n:2,t:"PCR 증폭 표적"},{tag:"blackhole",n:1,t:"리소좀"},{tag:"hyper",n:1,t:"세포분열 슈트"}],reward:1600000,fact:"CRISPR-Cas9은 가이드 RNA가 지정한 DNA 서열을 Cas9 단백질이 잘라 내는 유전자 가위입니다."},
+ {id:"evo",tier:3,name:"진화의 시간",steps:[{tag:"hyper",n:3,t:"세포분열 슈트"}],reward:1600000,fact:"자연선택은 환경에 더 잘 맞는 형질을 가진 개체가 더 많은 자손을 남기며 일어납니다."},
+ {id:"storm",tier:4,name:"사이토카인 폭풍",steps:[{tag:"bumper",n:10,t:"면역세포 범퍼"},{tag:"ramp",n:1,t:"혈관 램프"},{tag:"hyper",n:1,t:"세포분열 슈트"},{tag:"blackhole",n:1,t:"리소좀"},{tag:"nucleus",n:1,t:"세포핵"}],reward:5000000,final:true,fact:"사이토카인 폭풍은 면역 신호 물질이 과도하게 분비되어 오히려 몸을 공격하는 상태입니다."}
+];
+
+const NOTES={
+ bumper:["면역세포 범퍼","백혈구는 병원체를 삼키고(식세포 작용) 다른 면역세포에 신호를 보냅니다."],
+ launchBumper:["효소 범퍼","효소는 활성화 에너지를 낮춰 반응 속도를 수백만 배까지 높이는 생체 촉매입니다."],
+ atp:["ATP 표적","ATP는 인산 결합이 끊어질 때 나오는 에너지로 세포 활동을 움직이는 에너지 화폐입니다."],
+ reentry:["재순환 레인","정맥은 판막이 있어 혈액이 심장 쪽으로만 흐르도록 막아 줍니다."],
+ ramp:["혈관 램프","모세혈관 벽은 세포 한 겹이라 산소와 영양소가 쉽게 빠져나갑니다."],
+ hyper:["세포분열 슈트","체세포 분열은 전기·중기·후기·말기를 거쳐 같은 유전 정보를 가진 두 딸세포를 만듭니다."],
+ wormhole:["소포 구멍","소포는 막으로 싸인 주머니로, 골지체에서 단백질을 담아 목적지로 배달합니다."],
+ blackhole:["리소좀","리소좀 안은 pH 약 4.5의 산성 환경이라 분해 효소가 잘 작동합니다."],
+ nucleus:["세포핵","핵막의 핵공을 통해 mRNA가 세포질로 나가고 단백질이 핵 안으로 들어옵니다."],
+ drop:["병원체 표적","항체는 병원체 표면의 항원에 결합해 표시를 남기고 제거를 돕습니다."],
+ flag:["편모","세균의 편모는 회전 모터처럼 돌아가며 세포를 앞으로 밀어냅니다."],
+ medal:["항원 표적","기억 B세포는 한 번 만난 항원을 기억해 두 번째 감염 때 빠르게 반응합니다."],
+ booster:["샤페론 표적","열 충격 단백질(HSP)은 스트레스 상황에서 단백질 접힘을 지켜 주는 샤페론입니다."],
+ rebound:["반동 고무","세포막은 유동 모자이크 구조라 늘어나고 되돌아오는 탄력을 지닙니다."],
+ sling:["근육 키커","근육은 액틴과 마이오신 필라멘트가 미끄러지며 수축합니다."],
+ lane:["하단 레인","림프관은 조직액을 모아 혈관으로 되돌려 보내는 또 하나의 순환로입니다."],
+ multTarget:["PCR 증폭 표적","PCR은 변성·결합·신장을 반복해 DNA를 한 사이클마다 두 배로 늘립니다."],
+ warpTarget:["돌연변이 표적","점 돌연변이는 염기 하나가 바뀌는 변화로, 아무 영향이 없을 수도 질병을 일으킬 수도 있습니다."],
+ warpRoll:["돌연변이 롤오버","세포 주기는 G1, S, G2, M 단계로 나뉘며 S기에 DNA가 복제됩니다."],
+ missionTarget:["실험 표적","과학적 탐구는 가설을 세우고 대조군과 실험군을 비교하는 실험으로 검증합니다."],
+ escape:["ATP 합성 슈트","미토콘드리아 내막의 ATP 합성효소는 수소 이온의 흐름으로 회전하며 ATP를 만듭니다."],
+ deploy:["백신 배치 슈트","백신은 약화되거나 일부만 남긴 항원으로 면역 기억을 미리 만들어 둡니다."],
+ orbit:["순환 궤도","골지체 옆 왼쪽 레인과 미토콘드리아 옆 오른쪽 레인은 세포막을 따라 이어진 하나의 순환로입니다. 세포질 흐름(원형질 유동)처럼 구슬이 세포 가장자리를 한 바퀴 돕니다."],
+ drain:["세포 사멸","세포자멸사(아폽토시스)는 손상된 세포를 스스로 정리하는 프로그램된 죽음입니다."]
+};
+
+const GLOSS=[
+ ["1","Fuel Targets","ATP 표적","골지체 오른쪽 면의 표적 3개. 맞힐 때마다 ATP 충전, 3개 모두 맞히면 가득 충전."],
+ ["2, 32","Attack Bumpers","면역세포 범퍼","위쪽 면역 구역의 백혈구 범퍼 4개. 샤페론 표적으로 점수 배수가 ×2·×3·×5·×10으로 오릅니다."],
+ ["3, 28, 41","Wormhole","소포 구멍(노랑·빨강·초록)","재순환 레인에서 불을 켠 색의 소포에 넣으면 소포 융합 보너스, 아니면 다른 소포로 순간 이동합니다."],
+ ["4","Field Multiplier Target","PCR 증폭 표적","골지체 아래 끝. 두 번 맞힐 때마다 보너스 배수 증가."],
+ ["5","Space Warp Rollover","돌연변이 롤오버","세포핵 위 중앙. 세포 주기 정방향/역방향 표시등을 전환합니다."],
+ ["6, 23","Hazard Target Bank","병원체 표적 뱅크(좌·우)","쓰러지는 바이러스 표적 3개씩. 모두 쓰러뜨리면 백신 배치 표시등이 켜집니다."],
+ ["7, 33","Flag","편모 스피너","좌우 순환 레인 입구. 지나가면 회전하며 점수를 얻습니다."],
+ ["8","Launch Ramp","혈관 램프","골지체와 중앙 캡 사이 입구. 실험을 시작하며 구슬을 효소 구역 위로 보냅니다."],
+ ["9","Black Hole Kickout","리소좀","골지체 옆 구멍. 구슬을 붙잡아 분해 점수를 준 뒤 내보냅니다."],
+ ["10","Fuel Lights","ATP 막대","플리퍼 위 ATP 8칸 표시."],
+ ["11","Launch Lanes","수송 레인 표시등","혈관 램프 위 3개. 모두 켜면 효소 범퍼 점수 2배."],
+ ["12, 36","Reflex Shot Light","반사 반응(스킬 샷)","발사 직후 깜박이는 재순환 레인으로 들어가면 스킬 샷 점수."],
+ ["13, 37","Time Warp Light","세포 주기 표시등","세포분열 3단계 이상에서 돌연변이 표적을 맞히면 등급 이동."],
+ ["14","Mission Accept Light","실험 승인 표시등","실험이 선택되면 혈관 램프 입구에서 깜박입니다."],
+ ["15","Launch Bumpers","효소 범퍼","혈관 램프 출구 아래의 작은 범퍼 3개."],
+ ["16","Mission Targets","실험 표적","왼쪽 벽 아래. 맞힐 때마다 실험이 차례로 선택됩니다."],
+ ["17","Tilt Light","오염 경고등","테이블을 너무 흔들면 실험이 오염되어 플리퍼가 멈추고 보너스를 잃습니다."],
+ ["18, 46","Extra Ball Light","추가 구슬 표시등","켜진 상태에서 귀환 레인을 지나면 추가 구슬."],
+ ["19, 47","Out Lane","배출 레인","바깥 레인. 레인 표시등을 켭니다."],
+ ["20","Bonus Lane","보너스 레인","왼쪽 귀환 레인, 통과할 때 보너스 누적."],
+ ["21, 48","Return Lane","귀환 레인","플리퍼로 돌아오는 안쪽 레인. ATP 1칸 충전."],
+ ["22, 49","Rebound","반동 고무","레인 사이를 가르는 고무 기둥."],
+ ["23, 52","Kicker","근육 키커(슬링샷)","플리퍼 위 삼각형 키커."],
+ ["24","Replay Light","다시 쏘기 표시등","소포 3개를 모두 융합하면 켜집니다."],
+ ["25, 54","Flipper","플리퍼","Z와 / 키로 조작."],
+ ["26","Re-Entry Lanes","재순환 레인","위쪽 레인 3개. 모두 켜면 보너스 배수 증가, 각 레인은 같은 색 소포를 켭니다."],
+ ["27","Hyperspace Kickout","분열 방출구","세포분열 슈트 끝. 구슬을 면역 구역으로 내보냅니다."],
+ ["29","Hyperspace Target Bank","세포분열 단계","슈트 진입마다 1~5단계 상승."],
+ ["30","Hyperspace Chute","세포분열 슈트","중앙 캡과 미토콘드리아 사이 입구. 다중 구슬 중에는 잭팟."],
+ ["31","Hyperspace Lights","분열 단계 표시등","슈트 위 5칸."],
+ ["34","Space Warp Target","돌연변이 표적","미토콘드리아 아래 끝."],
+ ["35","Medal Targets","항원 표적","중앙 캡 아랫면 3개. 모두 맞히면 항원 메달."],
+ ["38","Maelstrom Light","사이토카인 폭풍 표시등","최종 실험 진행 중 켜집니다."],
+ ["39","Deployment Lights","백신 배치 표시등","3개를 모두 켜면 백신 배치 슈트가 열립니다."],
+ ["40","Booster Targets","샤페론 표적","미토콘드리아 왼쪽 면 3개. 모두 맞히면 면역 범퍼 배수 증가."],
+ ["42","Escape Chute","ATP 합성 슈트","미토콘드리아 위 구멍. ATP를 채우고 구슬을 발사대로 돌려보냅니다."],
+ ["43","Gravity Well","세포핵","가까이 오면 구슬을 끌어당깁니다. 불이 켜졌을 때 통과하면 큰 보너스."],
+ ["44","Rank Lights","연구 등급 표시등","세포핵 바깥 고리 9칸."],
+ ["45","Progress Lights","실험 진행 표시등","세포핵 안쪽 고리."],
+ ["50","Deployment Chute","백신 배치 슈트","미토콘드리아 옆 구멍. 열려 있으면 다중 구슬."],
+ ["51","Plunger","발사대","스페이스를 길게 눌러 세기를 조절합니다."],
+ ["53","Re-Deploy Light","재배치 표시등","발사 후 몇 초 동안 구슬을 잃어도 다시 배치합니다."],
+ ["55","Center Post","중앙 기둥","재배치 시간 동안 플리퍼 사이를 막아 줍니다."]
+];
+
+/* ================= 테이블 구조 (물리 좌표 600×1000) ================= */
+const segs=[];
+function wall(pts,o={}){ for(let i=0;i<pts.length-1;i++) segs.push({ax:pts[i][0],ay:pts[i][1],bx:pts[i+1][0],by:pts[i+1][1],rad:o.rad??3,rest:o.rest??0.45,kick:o.kick||0,tag:o.tag||null,draw:o.draw!==false,cls:o.cls||"wall"}); }
+function arcPts(cx,cy,r,a0,a1,n){const p=[];for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n;p.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]);}return p;}
+function smoothClosed(pts,k=6){ const out=[],n=pts.length;
+  for(let i=0;i<n;i++){ const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n];
+    for(let j=0;j<k;j++){ const t=j/k,t2=t*t,t3=t2*t;
+      out.push([0.5*((2*p1[0])+(-p0[0]+p2[0])*t+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3),
+                0.5*((2*p1[1])+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3)]); } }
+  out.push(out[0]); return out; }
+function smoothOpen(pts,k=6){ const out=[],n=pts.length;
+  for(let i=0;i<n-1;i++){ const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(n-1,i+2)];
+    for(let j=0;j<k;j++){ const t=j/k,t2=t*t,t3=t2*t;
+      out.push([0.5*((2*p1[0])+(-p0[0]+p2[0])*t+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3),
+                0.5*((2*p1[1])+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3)]); } }
+  out.push(pts[n-1]); return out; }
+
+const ARC={cx:295,cy:290,r:265};
+const OUTER=[[30,1010],[30,290],...arcPts(ARC.cx,ARC.cy,ARC.r,Math.PI,2*Math.PI,72).slice(1),[560,1010]];
+wall(OUTER,{cls:"membrane",draw:false});
+wall([[522,1010],[522,330]],{rad:4,draw:false});
+for(const x of [232,278,324,370]) wall([[x,62],[x,102]],{rad:3.5,draw:false});
+// 세포 소기관 섬 (골지체 · 중앙 캡 · 미토콘드리아)
+const ISLANDS=[
+ {id:"golgi",pts:smoothClosed([[150,352],[161,400],[157,460],[139,520],[112,560],[90,557],[82,520],[82,400],[94,367],[120,349]])},
+ {id:"cap",pts:smoothClosed([[205,318],[240,334],[276,340],[312,334],[347,318],[312,304],[276,300],[240,304]],5)},
+ {id:"mito",pts:smoothClosed([[398,350],[392,400],[398,460],[420,510],[448,540],[468,535],[476,500],[476,400],[466,366],[436,348]])},
+];
+for(const isl of ISLANDS) wall(isl.pts,{rad:3,draw:false,rest:0.5});
+// 아래쪽 레인과 슬링샷
+const GUIDE_L=[[68,722],[68,850],[194,905]], GUIDE_R=[[484,722],[484,850],[358,905]];
+wall(GUIDE_L,{rad:4,draw:false}); wall(GUIDE_R,{rad:4,draw:false});
+const SLING_L=[[104,740],[104,822],[156,856]], SLING_R=[[448,740],[448,822],[396,856]];
+wall(SLING_L,{rad:4,draw:false}); wall([SLING_L[0],SLING_L[2]],{rad:4,kick:600,rest:0.3,tag:"sling",draw:false});
+wall(SLING_R,{rad:4,draw:false}); wall([SLING_R[0],SLING_R[2]],{rad:4,kick:600,rest:0.3,tag:"sling",draw:false});
+
+const posts=[
+ {x:68,y:722,r:9,kick:400,rest:0.6,tag:"rebound"},{x:484,y:722,r:9,kick:400,rest:0.6,tag:"rebound"},
+ {x:104,y:740,r:6,rest:0.4},{x:448,y:740,r:6,rest:0.4},{x:156,y:856,r:6,rest:0.4},{x:396,y:856,r:6,rest:0.4},
+];
+const centerPost={x:276,y:968,r:8,rest:0.5};
+const bumpers=[
+ {x:234,y:165,r:21,tag:"bumper",kind:"wbc",flash:-1e9},{x:318,y:165,r:21,tag:"bumper",kind:"wbc",flash:-1e9},
+ {x:276,y:232,r:21,tag:"bumper",kind:"wbc",flash:-1e9},{x:362,y:236,r:19,tag:"bumper",kind:"wbc",flash:-1e9},
+ {x:118,y:232,r:16,tag:"launchBumper",kind:"enz",flash:-1e9},{x:164,y:204,r:16,tag:"launchBumper",kind:"enz",flash:-1e9},{x:152,y:276,r:16,tag:"launchBumper",kind:"enz",flash:-1e9},
+];
+function mkTarget(x,y,ang,len,o){const dx=Math.cos(ang)*len/2,dy=Math.sin(ang)*len/2;return Object.assign({x,y,ax:x-dx,ay:y-dy,bx:x+dx,by:y+dy,up:true,flash:-1e9},o);}
+const targets=[
+ mkTarget(167,402,Math.PI/2,28,{tag:"atp",idx:0,col:"atp"}), mkTarget(166,447,Math.PI/2+0.05,28,{tag:"atp",idx:1,col:"atp"}), mkTarget(157,493,1.86,28,{tag:"atp",idx:2,col:"atp"}),
+ mkTarget(37,602,Math.PI/2,28,{tag:"missionTarget",idx:0,col:"mission"}), mkTarget(37,636,Math.PI/2,28,{tag:"missionTarget",idx:1,col:"mission"}), mkTarget(37,670,Math.PI/2,28,{tag:"missionTarget",idx:2,col:"mission"}),
+ mkTarget(240,340,0.43,26,{tag:"medal",idx:0,col:"medal"}), mkTarget(276,346,0,26,{tag:"medal",idx:1,col:"medal"}), mkTarget(312,340,-0.43,26,{tag:"medal",idx:2,col:"medal"}),
+ mkTarget(385,402,Math.PI/2,28,{tag:"booster",idx:0,col:"booster"}), mkTarget(387,447,Math.PI/2-0.05,28,{tag:"booster",idx:1,col:"booster"}), mkTarget(402,492,1.16,28,{tag:"booster",idx:2,col:"booster"}),
+ mkTarget(130,544,Math.atan2(40,-28),26,{tag:"multTarget",idx:0,col:"mult"}),
+ mkTarget(429,530,Math.atan2(30,28),26,{tag:"warpTarget",idx:0,col:"warp"}),
+];
+const drops=[];
+for(const i of [0,1,2]) drops.push(mkTarget(150+i*22,648+i*16,0.63,24,{tag:"dropL",bank:"L",idx:i}));
+for(const i of [0,1,2]) drops.push(mkTarget(514,612+i*32,Math.PI/2,26,{tag:"dropR",bank:"R",idx:i}));
+const sinks=[
+ {id:"wormY",x:180,y:124,r:14,col:"#F2C14E",tag:"wormhole"},
+ {id:"wormR",x:404,y:110,r:14,col:"#FF6B6B",tag:"wormhole"},
+ {id:"wormG",x:446,y:590,r:14,col:"#8FD16A",tag:"wormhole"},
+ {id:"black",x:192,y:452,r:15,col:"#000",tag:"blackhole"},
+ {id:"escape",x:452,y:300,r:13,col:"#8FD16A",tag:"escape"},
+ {id:"deploy",x:360,y:466,r:14,col:"#8AB8FF",tag:"deploy"},
+ {id:"hyperOut",x:452,y:172,r:13,col:"#E2669A",tag:null,eject:true},
+];
+const sinkById=Object.fromEntries(sinks.map(s=>[s.id,s]));
+const rollovers=[
+ {x:255,y:84,r:11,tag:"reentry",idx:0,col:"#F2C14E"},{x:301,y:84,r:11,tag:"reentry",idx:1,col:"#FF6B6B"},{x:347,y:84,r:11,tag:"reentry",idx:2,col:"#8FD16A"},
+ {x:49,y:800,r:11,tag:"lane",idx:0,lane:"out"},{x:86,y:792,r:11,tag:"lane",idx:1,lane:"return"},{x:466,y:792,r:11,tag:"lane",idx:2,lane:"return"},{x:503,y:800,r:11,tag:"lane",idx:3,lane:"out"},
+ {x:276,y:472,r:11,tag:"warpRoll",idx:0},
+];
+const WELL={x:276,y:612,R:92,core:16};
+const spinners=[{ax:32,ay:470,bx:80,by:470,ang:0,spin:0,tag:"flag"},{ax:478,ay:440,bx:520,by:440,ang:0,spin:0,tag:"flag"}];
+const ramps=[
+ {id:"launch",ax:158,ay:346,bx:200,by:324,dir:[-0.45,-0.89],min:480,
+  path:smoothOpen([[179,335],[150,302],[108,282],[72,236],[62,176],[86,124],[136,88],[194,70],[214,74]],5),speed:1000,exit:[140,180],tag:"ramp"},
+ {id:"hyper",ax:352,ay:326,bx:394,by:348,dir:[0.45,-0.89],min:480,
+  path:smoothOpen([[373,336],[392,290],[420,244],[446,206],[452,174]],5),speed:950,exit:null,tag:"hyper"},
+];
+const gates=[{ax:520,ay:304,bx:560,by:270}];
+
+const L={
+ rank:Array.from({length:9},(_,i)=>{const a=-Math.PI/2+(i-4)*0.36;return [WELL.x+Math.cos(a)*78,WELL.y+Math.sin(a)*78];}),
+ progress:Array.from({length:8},(_,i)=>{const a=-Math.PI/2+i*Math.PI/4;return [WELL.x+Math.cos(a)*44,WELL.y+Math.sin(a)*44];}),
+ hyper:[[384,312],[404,270],[426,236],[444,208],[452,190]],
+ launchLanes:[[132,290],[72,226],[96,116]],
+ deploy:[[338,496],[360,502],[382,496]],
+ bumpInc:[[436,392],[436,414],[436,436],[436,458]],
+ multLights:[[118,402],[118,424],[118,446],[118,468]],
+ medals:[[246,320],[276,322],[306,320]],
+ atpBar:Array.from({length:8},(_,i)=>[220+i*16,792]),
+ extraL:[86,762],extraR:[466,762],replay:[150,948],redeploy:[276,938],tilt:[276,880],
+ maelstrom:[276,506],warpFwd:[300,490],warpBack:[252,490],accept:[176,372]
+};
+const ARROWS=[ // 샷 안내 화살표: 플리퍼에서 각 샷으로 이어지는 흐름
+ {x:56,y:600,dx:0,dy:-1,key:"orbitL"},{x:172,y:392,dx:-0.45,dy:-0.89,key:"launch"},{x:276,y:432,dx:0,dy:-1,key:"center"},
+ {x:380,y:392,dx:0.45,dy:-0.89,key:"hyper"},{x:499,y:560,dx:0,dy:-1,key:"orbitR"}
+];
+
+/* ================= 팔레트 · 픽셀 도구 ================= */
+const C={k:"#05060F",bg0:"#0B0E1F",bg1:"#121833",bg2:"#1A2347",bg3:"#243160",bg4:"#33447C",
+ cy1:"#123C4A",cy2:"#1B5A66",cy3:"#2A8285",cy4:"#4DB3A6",cy5:"#8EE3C8",
+ pk1:"#3B1240",pk2:"#6B1F5E",pk3:"#A8327A",pk4:"#E05A93",pk5:"#FF9EC0",pk6:"#FFD3E2",
+ or1:"#4A1E1A",or2:"#8A3A24",or3:"#D06A2E",or4:"#F2A341",or5:"#FFD66B",or6:"#FFF3B8",
+ gr1:"#163B2E",gr2:"#2A6B3E",gr3:"#4FA64A",gr4:"#9BDB5A",gr5:"#D9F59A",
+ bl1:"#14245C",bl2:"#2149A0",bl3:"#3C7DE0",bl4:"#76B6FF",bl5:"#C2E4FF",
+ vi1:"#2B2350",vi2:"#4A3C82",vi3:"#7562B8",vi4:"#A895E6",vi5:"#E3DBFF",
+ rd1:"#4A0F1F",rd2:"#8C1A2E",rd3:"#D32F3F",rd4:"#FF6B5E",rd5:"#FFB0A0",w:"#FFFFFF"};
+const RAMP={vi:[C.vi1,C.vi2,C.vi3,C.vi4,C.vi5],pk:[C.pk1,C.pk2,C.pk3,C.pk4,C.pk5,C.pk6],or:[C.or1,C.or2,C.or3,C.or4,C.or5,C.or6],
+ gr:[C.gr1,C.gr2,C.gr3,C.gr4,C.gr5],bl:[C.bl1,C.bl2,C.bl3,C.bl4,C.bl5],cy:[C.cy1,C.cy2,C.cy3,C.cy4,C.cy5],rd:[C.rd1,C.rd2,C.rd3,C.rd4,C.rd5]};
+const BAYER=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5].map(v=>(v+0.5)/16);
+const bay=(x,y)=>BAYER[(y&3)*4+(x&3)];
+const lerp=(a,b,t)=>a+(b-a)*t;
+function hexRGB(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+function toHex(r,g,b){return "#"+[r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join("");}
+const mixCache=new Map();
+function mix(a,b,t){const k=a+b+t; let v=mixCache.get(k); if(!v){const A=hexRGB(a),B=hexRGB(b); v=toHex(lerp(A[0],B[0],t),lerp(A[1],B[1],t),lerp(A[2],B[2],t)); mixCache.set(k,v);} return v;}
+
+function mk(w,h){const c=document.createElement("canvas");c.width=w;c.height=h;return c;}
+function R(c,x,y,w,h,col){c.fillStyle=col;c.fillRect(x,y,w,h);}
+function disc(c,cx,cy,r,col){ c.fillStyle=col; cx=Math.round(cx); cy=Math.round(cy); const ri=Math.ceil(r);
+  for(let y=-ri;y<=ri;y++){ const v=r*r-y*y; if(v<0) continue; const w=Math.floor(Math.sqrt(v)+0.3); c.fillRect(cx-w,cy+y,2*w+1,1);} }
+function ring(c,cx,cy,r0,r1,col,fn){ c.fillStyle=col; const ri=Math.ceil(r1); cx=Math.round(cx); cy=Math.round(cy);
+  for(let y=-ri;y<=ri;y++) for(let x=-ri;x<=ri;x++){ const d=Math.hypot(x,y); if(d>=r0&&d<=r1&&(!fn||fn(x+cx,y+cy,x,y))) c.fillRect(cx+x,cy+y,1,1);} }
+function line(c,x0,y0,x1,y1,col){ c.fillStyle=col; x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);
+  const dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1; let e=dx+dy;
+  for(;;){ c.fillRect(x0,y0,1,1); if(x0===x1&&y0===y1) break; const e2=2*e; if(e2>=dy){e+=dy;x0+=sx;} if(e2<=dx){e+=dx;y0+=sy;} } }
+function capsule(c,ax,ay,bx,by,ra,rb,col){ c.fillStyle=col; const m=Math.max(ra,rb)+1;
+  const x0=Math.floor(Math.min(ax,bx)-m),x1=Math.ceil(Math.max(ax,bx)+m),y0=Math.floor(Math.min(ay,by)-m),y1=Math.ceil(Math.max(ay,by)+m);
+  const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy||1;
+  for(let y=y0;y<=y1;y++){ let run=-1; for(let x=x0;x<=x1+1;x++){ let ins=false; if(x<=x1){ const px=x+0.5,py=y+0.5; let t=((px-ax)*dx+(py-ay)*dy)/l2; t=t<0?0:t>1?1:t; ins=Math.hypot(px-ax-dx*t,py-ay-dy*t)<=ra+(rb-ra)*t; }
+    if(ins&&run<0) run=x; else if(!ins&&run>=0){ c.fillRect(run,y,x-run,1); run=-1; } } } }
+function polyFill(c,pts,colFn){ let y0=1e9,y1=-1e9; for(const p of pts){y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);}
+  for(let y=Math.floor(y0);y<=Math.ceil(y1);y++){ const yy=y+0.5,xs=[];
+    for(let i=0;i<pts.length-1;i++){ const [ax,ay]=pts[i],[bx,by]=pts[i+1]; if((ay<=yy&&by>yy)||(by<=yy&&ay>yy)) xs.push(ax+(yy-ay)/(by-ay)*(bx-ax)); }
+    xs.sort((a,b)=>a-b); for(let k=0;k+1<xs.length;k+=2) for(let x=Math.round(xs[k]);x<Math.round(xs[k+1]);x++){ const col=typeof colFn==="function"?colFn(x,y):colFn; if(col){c.fillStyle=col;c.fillRect(x,y,1,1);} } } }
+function polyLine(c,pts,col){ for(let i=0;i<pts.length-1;i++) line(c,pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1],col); }
+const half=p=>p.map(([x,y])=>[x/2,y/2]);
+
+/* 픽셀 글자 */
+const tbCache=new Map();
+function textBits(str,size,weight=700,family){
+  const k=str+"|"+size+"|"+weight+"|"+(family||""); if(tbCache.has(k)) return tbCache.get(k);
+  const f=`${weight} ${size}px ${family||'"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif'}`;
+  const c=mk(4,4),g=c.getContext("2d"); g.font=f; const w=Math.ceil(g.measureText(str).width)+2,h=size+5;
+  c.width=Math.max(1,w); c.height=h; g.font=f; g.fillStyle="#fff"; g.textBaseline="top"; g.fillText(str,1,1);
+  const d=g.getImageData(0,0,c.width,h).data,bits=new Uint8Array(c.width*h); for(let i=0;i<bits.length;i++) if(d[i*4+3]>118) bits[i]=1;
+  const r={w:c.width,h,bits}; tbCache.set(k,r); if(tbCache.size>300) tbCache.delete(tbCache.keys().next().value); return r; }
+function drawBits(c,tb,x,y,col,outline,shadow){ x=Math.round(x);y=Math.round(y); const on=(i,j)=>i>=0&&j>=0&&i<tb.w&&j<tb.h&&tb.bits[j*tb.w+i];
+  if(shadow){ c.fillStyle=shadow; for(let j=0;j<tb.h;j++) for(let i=0;i<tb.w;i++) if(on(i,j)) c.fillRect(x+i+1,y+j+2,1,1); }
+  if(outline){ c.fillStyle=outline; for(let j=-1;j<=tb.h;j++) for(let i=-1;i<=tb.w;i++) if(!on(i,j)&&(on(i-1,j)||on(i+1,j)||on(i,j-1)||on(i,j+1))) c.fillRect(x+i,y+j,1,1); }
+  for(let j=0;j<tb.h;j++) for(let i=0;i<tb.w;i++) if(on(i,j)){ c.fillStyle=typeof col==="function"?col(j/tb.h):col; c.fillRect(x+i,y+j,1,1); } }
+const F3={"0":["111","101","101","101","111"],"1":["010","110","010","010","111"],"2":["111","001","111","100","111"],"3":["111","001","111","001","111"],"4":["101","101","111","001","001"],"5":["111","100","111","001","111"],"6":["111","100","111","101","111"],"7":["111","001","001","010","010"],"8":["111","101","111","101","111"],"9":["111","101","111","001","111"],",":["0","0","0","1","1"],"+":["000","010","111","010","000"],"x":["000","101","010","101","000"]};
+function glyphs(c,str,x,y,col,outline){ x=Math.round(x);y=Math.round(y); let cx=x; const cells=[];
+  for(const ch of str){ const g=F3[ch]; if(!g){cx+=2;continue;} for(let j=0;j<5;j++) for(let i=0;i<g[0].length;i++) if(g[j][i]==="1") cells.push([cx+i,y+j]); cx+=g[0].length+1; }
+  if(outline){ c.fillStyle=outline; for(const [a,b] of cells){ c.fillRect(a-1,b,3,1); c.fillRect(a,b-1,1,3);} }
+  c.fillStyle=col; for(const [a,b] of cells) c.fillRect(a,b,1,1); return cx-x; }
+function glyphsW(str){ let w=0; for(const ch of str){ const g=F3[ch]; w+=(g?g[0].length:1)+1; } return w-1; }
+
+/* ================= 입체 음영 스프라이트 ================= */
+const LIGHT=[-0.5,-0.62,0.6];
+function shadeBall(g,cx,cy,r,ramp,opt={}){ const ri=Math.ceil(r+2);
+  for(let y=-ri;y<=ri;y++) for(let x=-ri;x<=ri;x++){ const d=Math.hypot(x,y),a=Math.atan2(y,x),R0=opt.rr?opt.rr(a):r; if(d>R0+0.3) continue;
+    if(opt.skip&&opt.skip(x,y,d,a)) continue; let col;
+    if(d>R0-0.9) col=ramp[0];
+    else { const nx=x/R0,ny=y/R0,nz=Math.sqrt(Math.max(0,1-nx*nx-ny*ny)), lit=nx*LIGHT[0]+ny*LIGHT[1]+nz*LIGHT[2];
+      const v=Math.max(0,Math.min(0.999,(lit+0.3)/1.25)); col=ramp[Math.min(ramp.length-1,1+Math.floor(v*(ramp.length-1)))];
+      if(opt.spec!==false&&lit>0.95) col=C.w; }
+    if(opt.fn){ const c2=opt.fn(x,y,d,a); if(c2) col=c2; }
+    g.fillStyle=col; g.fillRect(cx+x,cy+y,1,1); } }
+function sprite(s,fn){ const c=mk(s,s),g=c.getContext("2d"); fn(g,(s-1)/2); return c; }
+const SPR={};
+SPR.ball=sprite(11,(g,o)=>shadeBall(g,o,o,4.6,RAMP.rd,{fn:(x,y,d)=>d>0.6&&d<1.9?C.rd2:null}));
+SPR.ballBig=sprite(15,(g,o)=>shadeBall(g,o,o,6,RAMP.rd,{fn:(x,y,d)=>d>0.8&&d<2.5?C.rd2:null}));
+function mkWBC(r,ph,flash){ return sprite(Math.ceil(r+2)*2+1,(g,o)=>{
+  shadeBall(g,o,o,r,flash?[C.pk2,C.pk4,C.pk5,C.pk6,C.w]:[C.vi2,C.vi3,C.vi4,C.vi5,C.w],{spec:false,rr:a=>r+0.9*Math.sin(6*a+ph)+0.45*Math.sin(3*a-ph*1.3)});
+  const lr=flash?[C.pk1,C.pk2,C.pk3,C.pk4]:[C.vi1,C.vi2,C.vi3,C.vi4], rot=ph*0.12;
+  for(const [ox,oy] of [[-3.2,-0.5],[0,-3.1],[3,0.6],[0.3,3]]){ const X=Math.round(o+ox*Math.cos(rot)-oy*Math.sin(rot)),Y=Math.round(o+ox*Math.sin(rot)+oy*Math.cos(rot)); shadeBall(g,X,Y,2.5,lr,{spec:false}); }
+  for(const [a,b] of [[-6,4],[5,-5],[4,6],[-5,-5],[7,1],[-7,0]]) R(g,o+a,o+b,1,1,flash?C.or5:C.pk5); }); }
+SPR.wbc=[0,1].map(f=>Array.from({length:8},(_,i)=>mkWBC(10.5,i*Math.PI/4,!!f)));
+SPR.wbcS=[0,1].map(f=>Array.from({length:8},(_,i)=>mkWBC(9.5,i*Math.PI/4,!!f)));
+function mkEnz(r,open,flash){ return sprite(Math.ceil(r+2)*2+1,(g,o)=>{
+  shadeBall(g,o,o,r,flash?[C.cy2,C.cy4,C.cy5,C.w]:RAMP.cy,{skip:(x,y,d,a)=>Math.abs(a)<open&&d>r*0.3});
+  shadeBall(g,Math.round(o+r*0.95),o,1.6,RAMP.or,{spec:false}); }); }
+SPR.enz=[0,1].map(f=>Array.from({length:6},(_,i)=>mkEnz(8,0.22+0.3*(0.5+0.5*Math.sin(i*Math.PI/3)),!!f)));
+function mkVirus(ph,flash){ return sprite(25,(g,o)=>{
+  for(let k=0;k<10;k++){ const a=k*Math.PI/5+ph; for(let s=6;s<=8.6;s+=0.5) R(g,Math.round(o+Math.cos(a)*s),Math.round(o+Math.sin(a)*s),1,1,flash?C.w:C.or3); shadeBall(g,Math.round(o+Math.cos(a)*9.6),Math.round(o+Math.sin(a)*9.6),1.3,RAMP.or,{spec:false}); }
+  shadeBall(g,o,o,6.4,flash?[C.gr2,C.gr4,C.gr5,C.w]:RAMP.gr,{fn:(x,y,d)=>((x*3+y*7)&7)===0&&d<5?C.gr2:null}); }); }
+SPR.virus=[0,1].map(f=>Array.from({length:8},(_,i)=>mkVirus(i*Math.PI/20,!!f)));
+SPR.ves=sprite(11,(g,o)=>{ ring(g,o,o,3.4,4.4,C.cy4); disc(g,o,o,3.2,C.cy1); ring(g,o,o,2.2,3.3,C.cy2,(X,Y)=>(X+Y)%2===0); shadeBall(g,o+1,o+1,1.5,RAMP.or,{spec:false}); R(g,o-2,o-2,1,1,C.w); R(g,o-1,o-3,1,1,C.cy5); });
+
+/* ================= 배경 ================= */
+function inTable(wx,wy){ return wx>30&&wx<560&&(wy>=290||Math.hypot(wx-ARC.cx,wy-ARC.cy)<ARC.r); }
+const BGP=["#05060F","#0B0E1F","#121833","#1A2347","#243160","#2B3A73","#33447C","#1E3A60","#16384A","#1E2A55","#2A2E66"].map(hexRGB);
+function nearest(r,g,b){ let bi=0,bd=1e9; for(let i=0;i<BGP.length;i++){ const p=BGP[i],d=(p[0]-r)**2+(p[1]-g)**2+(p[2]-b)**2; if(d<bd){bd=d;bi=i;} } return BGP[bi]; }
+const MEM=(()=>{ const op=half(OUTER),out=[]; for(let i=0;i<op.length-1;i++){ const [ax,ay]=op[i],[bx,by]=op[i+1],len=Math.hypot(bx-ax,by-ay); if(len<0.01) continue; const tx=(bx-ax)/len,ty=(by-ay)/len;
+  for(let s=0;s<len;s+=0.5) out.push({x:ax+tx*s,y:ay+ty*s,nx:-ty,ny:tx,tx,ty}); } return out; })(); // n = 안쪽 방향
+const CILIA=MEM.filter((m,i)=>i%14===0&&m.y<495);
+const SHADOW="rgba(2,3,10,0.5)";
+function islandPaint(g,ptsW,ramp,tex){ const p=half(ptsW);
+  polyFill(g,p.map(([x,y])=>[x+2,y+3]),SHADOW);
+  polyFill(g,p,(x,y)=>{ const px=x+0.5,py=y+0.5; let md=1e9,qx=0,qy=0;
+    for(let i=0;i<p.length-1;i++){ const [ax,ay]=p[i],[bx,by]=p[i+1],dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy||1; let t=((px-ax)*dx+(py-ay)*dy)/l2; t=t<0?0:t>1?1:t; const X=ax+dx*t,Y=ay+dy*t,d=Math.hypot(px-X,py-Y); if(d<md){md=d;qx=X;qy=Y;} }
+    const nx=(qx-px)/(md||1),ny=(qy-py)/(md||1),lit=-(nx*-0.7+ny*-0.7)*-1; // 바깥쪽 법선과 빛 방향
+    const L=nx*-0.7+ny*-0.7;
+    if(md<1.1) return ramp[0];
+    if(md<2.3) return L>0.3?ramp[ramp.length-1]:L<-0.3?ramp[1]:ramp[3];
+    if(md<3.5&&L<-0.2) return ramp[1];
+    return tex(x,y,md,L); }); }
+function buildBG(){
+  const c=mk(LW,LH),g=c.getContext("2d"),img=g.createImageData(LW,LH),d=img.data;
+  for(let y=0;y<LH;y++) for(let x=0;x<LW;x++){ const wx=x*2+1,wy=y*2+1; let r,gg,b;
+    if(!inTable(wx,wy)){ const v=0.5+0.5*Math.sin(y*0.06+x*0.02); r=6+v*6; gg=8+v*6; b=18+v*12; }
+    else { const dn=Math.min(1,Math.hypot(wx-276,wy-612)/560), cloud=0.5+0.28*Math.sin(x*0.05+y*0.031)+0.22*Math.sin(x*0.021-y*0.047+1.3);
+      r=lerp(44,17,dn); gg=lerp(58,22,dn); b=lerp(116,50,dn); const tk=cloud*0.5*(1-dn*0.5); r=lerp(r,24,tk*0.55); gg=lerp(gg,66,tk*0.55); b=lerp(b,96,tk*0.55);
+      const rr=Math.hypot(wx-ARC.cx,wy-ARC.cy);
+      if((wy<340&&rr>232)||(wx<82&&wy>=290&&wy<570)||(wx>476&&wx<522&&wy>330&&wy<550)){ r*=0.7; gg*=0.72; b*=0.78; }
+      if(wx>522){ r=13;gg=16;b=34; }
+      const edge=Math.min(wx-30,560-wx,wy<290?ARC.r-rr:999); if(edge<30){ const k=0.5+0.5*edge/30; r*=k;gg*=k;b*=k; } }
+    const o=(bay(x,y)-0.5)*20, p=nearest(r+o,gg+o,b+o), k=(y*LW+x)*4; d[k]=p[0];d[k+1]=p[1];d[k+2]=p[2];d[k+3]=255; }
+  g.putImageData(img,0,0);
+  // 미세소관 (세포골격) – 중심체에서 뻗어 나감
+  for(let k=0;k<18;k++){ const a=k*Math.PI*2/18+0.17; for(let s=34;s<300;s+=1){ const aa=a+0.18*Math.sin(s*0.025+k), x=165+Math.cos(aa)*s, y=268+Math.sin(aa)*s; if(!inTable(x*2,y*2)) break; if((s+k)%3!==0) R(g,Math.round(x),Math.round(y),1,1,"#2B3A73"); } }
+  // 세포핵
+  const wx=WELL.x/2,wy=WELL.y/2;
+  ring(g,wx,wy,44,46,"#1E2A55",(X,Y,a,b)=>((Math.round(Math.atan2(b,a)*20))%2)===0);
+  disc(g,wx+2,wy+3,32.5,SHADOW);
+  for(let y=-32;y<=32;y++) for(let x=-32;x<=32;x++){ const dd=Math.hypot(x,y); if(dd>31) continue;
+    const nx=x/31,ny=y/31,nz=Math.sqrt(Math.max(0,1-nx*nx-ny*ny)),lit=nx*-0.4+ny*-0.5+nz*0.75, v=lit+(bay(x+64,y+64)-0.5)*0.22;
+    R(g,Math.round(wx+x),Math.round(wy+y),1,1,v>0.82?C.bl4:v>0.6?C.bl3:v>0.36?C.bl2:C.bl1); }
+  shadeBall(g,Math.round(wx-9),Math.round(wy+8),6,[C.bl1,C.vi1,C.vi2,C.vi3],{spec:false}); // 핵소체
+  let sd=5; const rn=()=>{sd=(sd*16807)%2147483647;return sd/2147483647;};
+  for(let k=0;k<9;k++){ let x=wx+(rn()-0.5)*40,y=wy+(rn()-0.5)*40,a=rn()*6; for(let s=0;s<16;s++){ a+=(rn()-0.5)*1.1; x+=Math.cos(a);y+=Math.sin(a); if(Math.hypot(x-wx,y-wy)<28) R(g,Math.round(x),Math.round(y),1,1,s%2?C.bl4:C.bl3);} }
+  ring(g,wx,wy,31,33,C.bl1); ring(g,wx,wy,31.2,32.2,C.bl4,(X,Y,a,b)=>((Math.round(Math.atan2(b,a)*14))%4)!==0);
+  for(let k=0;k<14;k++){ const a=k*Math.PI*2/14+0.11; R(g,Math.round(wx+Math.cos(a)*31.6),Math.round(wy+Math.sin(a)*31.6),1,1,C.bl5); }
+  // 램프 (투명한 관)
+  for(const r of ramps){ const p=half(r.path), L1=r.id==="launch"?[C.rd1,C.rd2,C.rd3,C.rd5]:[C.pk1,C.pk2,C.pk3,C.pk6];
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; for(const [x,y] of p){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}
+    const dist=(X,Y)=>{ let md=1e9,vx=0,vy=0; for(let i=0;i<p.length-1;i++){ const [ax,ay]=p[i],[bx,by]=p[i+1],dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy||1; let t=((X-ax)*dx+(Y-ay)*dy)/l2; t=t<0?0:t>1?1:t; const qx=ax+dx*t,qy=ay+dy*t,dd=Math.hypot(X-qx,Y-qy); if(dd<md){md=dd;vx=X-qx;vy=Y-qy;} } return [md,vx,vy]; };
+    for(let y=Math.floor(y0-10);y<=y1+10;y++) for(let x=Math.floor(x0-10);x<=x1+10;x++){ const [md,vx,vy]=dist(x+0.5,y+0.5);
+      if(md>6.5){ if(dist(x-2.5,y-4.5)[0]<=6) R(g,x,y,1,1,SHADOW); continue; }
+      const L=(vx*-0.7+vy*-0.7)/(md||1);
+      if(md>5.6) R(g,x,y,1,1,L1[0]); else if(md>4.6) R(g,x,y,1,1,L>0.2?L1[3]:L1[1]); else if(md>3.4&&L>0.35) { if((x+y)%2===0) R(g,x,y,1,1,L1[3]); }
+      else if((x+y*2)%4===0) R(g,x,y,1,1,L1[1]); } }
+  // 세포 소기관 섬
+  islandPaint(g,ISLANDS[0].pts,RAMP.pk,(x,y,md)=>{ const v=y+2.5*Math.sin(x*0.42)+md*0.6, m=((v%5)+5)%5; return m<1?C.pk4:m<2.2?C.pk3:((x+y)%2?C.pk2:C.pk3); });
+  islandPaint(g,ISLANDS[2].pts,RAMP.or,(x,y,md)=>{ if(md<4.4) return md<3.6?C.or2:C.or3; const v=y+Math.round(2.4*Math.sin(x*0.7)), m=((v%5)+5)%5; return m===0?C.or2:m===1?C.or4:((x*7+y*3)%11===0?C.or5:C.or3); });
+  islandPaint(g,ISLANDS[1].pts,RAMP.vi,(x,y,md)=>{ if(md<3.4&&(x+y)%3===0) return C.cy4; return ((x+Math.round(Math.sin(y)*1.5))%4===0)?C.vi2:C.vi3; });
+  // 바깥 세포막: 인지질 이중층
+  for(const m of MEM){ for(let o=-4;o<=5;o+=0.5){ const x=Math.round(m.x+m.nx*o),y=Math.round(m.y+m.ny*o); if(x<0||y<0||x>=LW||y>=LH) continue; let col=null;
+      if(o<-3.4) col=C.or1; else if(o<-2.4) col=C.or4; else if(o<-0.9) col=((x+y)&1)?C.or2:C.or3; else if(o<0.1) col=C.or4; else if(o<1) col=C.or5; else if(o<1.6) col=C.or1; else if(o>=1.6&&o<5&&((x+y)&1)===0) col=SHADOW;
+      if(col) R(g,x,y,1,1,col); } }
+  // 발사 통로 벽 · 레인 가이드 (액틴 레일)
+  const rail=(ax,ay,bx,by,r)=>{ capsule(g,ax+1,ay+2,bx+1,by+2,r,r,SHADOW); capsule(g,ax,ay,bx,by,r+0.6,r+0.6,C.vi1); capsule(g,ax,ay,bx,by,r-0.3,r-0.3,C.vi3); line(g,ax-0.7,ay-0.7,bx-0.7,by-0.7,C.vi5); };
+  rail(261,505,261,165,1.8);
+  for(const x of [232,278,324,370]) rail(x/2,31,x/2,51,1.6);
+  for(const gd of [GUIDE_L,GUIDE_R]){ const p=half(gd); for(let i=0;i<p.length-1;i++) rail(p[i][0],p[i][1],p[i+1][0],p[i+1][1],1.8); }
+  // 근육 슬링샷 (가로무늬근)
+  for(const sl of [SLING_L,SLING_R]){ const p=half([...sl,sl[0]]);
+    polyFill(g,p.map(([x,y])=>[x+2,y+3]),SHADOW);
+    polyFill(g,p,(x,y)=>{ const m=((x-y)%5+5)%5; return m===0?C.pk1:m<3?C.pk2:C.pk3; });
+    for(let i=0;i<p.length-1;i++) capsule(g,p[i][0],p[i][1],p[i+1][0],p[i+1][1],1.3,1.3,C.vi2);
+    const k=half([sl[0],sl[2]]); capsule(g,k[0][0],k[0][1],k[1][0],k[1][1],2.2,2.2,C.pk3); capsule(g,k[0][0],k[0][1],k[1][0],k[1][1],1.4,1.4,C.pk4); line(g,k[0][0]-0.6,k[0][1]-0.6,k[1][0]-0.6,k[1][1]-0.6,C.pk6); }
+  // 일방향 문
+  for(const q of gates){ for(let s=0;s<=1;s+=0.06) if(Math.round(s*16)%2===0) R(g,Math.round(lerp(q.ax,q.bx,s)/2),Math.round(lerp(q.ay,q.by,s)/2),1,1,C.vi4); }
+  // 구멍 (깊이감)
+  for(const s of sinks){ const x=s.x/2,y=s.y/2,r=s.r/2+1; disc(g,x,y,r+1.5,C.k);
+    for(let yy=-r;yy<=r;yy++) for(let xx=-r;xx<=r;xx++){ const dd=Math.hypot(xx,yy); if(dd>r) continue; const L=(xx*0.7+yy*0.7)/(dd||1); R(g,Math.round(x+xx),Math.round(y+yy),1,1,dd>r-1.6&&L>0.2?"#1E2A55":dd>r-2.6&&L>0.2?"#121833":"#05060F"); } }
+  // 램프 입구 아치
+  for(const r of ramps){ capsule(g,r.ax/2,r.ay/2,r.bx/2,r.by/2,1.4,1.4,C.vi1); line(g,r.ax/2,r.ay/2-0.6,r.bx/2,r.by/2-0.6,C.vi5); }
+  // 표시등 소켓
+  const sockets=[...L.rank,...L.progress,...L.hyper,...L.launchLanes,...L.deploy,...L.bumpInc,...L.multLights,...L.medals,L.extraL,L.extraR,L.replay,L.redeploy,L.tilt,L.maelstrom,L.warpFwd,L.warpBack,L.accept];
+  for(const [x,y] of sockets){ disc(g,x/2,y/2,2.9,C.k); }
+  for(const [x,y] of L.atpBar){ R(g,Math.round(x/2)-1,Math.round(y/2)-3,8,6,C.k); }
+  return c;
+}
+/* ================= 오디오 ================= */
+let AC=null,master,sfxGain,musGain,sfxOn=true,musicOn=true;
+function audio(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); master=AC.createGain(); master.gain.value=0.8; master.connect(AC.destination);
+  sfxGain=AC.createGain(); sfxGain.gain.value=0.5; sfxGain.connect(master); musGain=AC.createGain(); musGain.gain.value=0.22; musGain.connect(master);}catch(e){return null;} }
+  if(AC.state==="suspended") AC.resume(); return AC; }
+let noiseBuf=null;
+function noise(){ if(!noiseBuf){noiseBuf=AC.createBuffer(1,AC.sampleRate*0.5,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;} return noiseBuf; }
+function tone(f,dur,type="sine",vol=0.3,slide=0,when=0){ if(!AC) return; const t=AC.currentTime+when,o=AC.createOscillator(),g=AC.createGain();
+  o.type=type; o.frequency.setValueAtTime(f,t); if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(20,f*slide),t+dur);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0008,t+dur); o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t+dur+0.02); }
+function hiss(dur,vol=0.2,freq=2000){ if(!AC) return; const t=AC.currentTime,s=AC.createBufferSource(); s.buffer=noise(); const f=AC.createBiquadFilter(); f.type="bandpass"; f.frequency.value=freq; f.Q.value=0.8;
+  const g=AC.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0008,t+dur); s.connect(f); f.connect(g); g.connect(sfxGain); s.start(t); s.stop(t+dur+0.02); }
+const SFX={ // 8비트 느낌으로 사각파 위주
+  flip(){hiss(0.05,0.22,3000);tone(140,0.05,"square",0.08);},
+  bumper(){tone(520,0.1,"square",0.18,0.5);tone(1040,0.05,"square",0.08);},
+  enz(){tone(780,0.08,"square",0.15,0.6);},
+  sling(){tone(220,0.07,"square",0.13,0.6);hiss(0.05,0.18,1500);},
+  target(){tone(330,0.08,"square",0.13,0.9);tone(660,0.07,"square",0.1,1,0.04);},
+  drop(){tone(180,0.13,"sawtooth",0.16,0.5);hiss(0.08,0.12,800);},
+  roll(){tone(880,0.06,"square",0.1,1.2);},
+  sink(){tone(600,0.32,"triangle",0.25,0.25);},
+  eject(){tone(160,0.16,"square",0.18,2.5);hiss(0.1,0.18,2500);},
+  ramp(){tone(300,0.45,"square",0.1,3);},
+  spin(){tone(1400,0.03,"square",0.05);},
+  launch(){hiss(0.25,0.28,1200);tone(90,0.2,"square",0.12,2);},
+  drain(){tone(400,0.8,"triangle",0.25,0.25);},
+  rank(){[523,659,784,1046].forEach((f,i)=>tone(f,0.22,"square",0.14,1,i*0.1));},
+  mission(){[392,523,659].forEach((f,i)=>tone(f,0.18,"square",0.12,1,i*0.08));},
+  done(){[523,659,784,988,1318].forEach((f,i)=>tone(f,0.26,"square",0.13,1,i*0.08));},
+  bad(){tone(180,0.4,"sawtooth",0.18,0.6);tone(170,0.4,"sawtooth",0.18,0.6,0.15);},
+  tilt(){tone(110,0.9,"sawtooth",0.28,0.8);},
+  warn(){tone(240,0.15,"square",0.18);tone(240,0.15,"square",0.18,1,0.2);},
+  extra(){[784,988,1175,1568].forEach((f,i)=>tone(f,0.16,"square",0.15,1,i*0.07));},
+  well(){tone(90,0.6,"triangle",0.35,3);},
+};
+function sfx(n){ if(!sfxOn||!AC) return; try{SFX[n]&&SFX[n]();}catch(e){} }
+
+const music={mode:"gen",next:0,step:0,midi:null,midiPos:0,midiStart:0};
+const SCALE=[0,2,3,5,7,9,10];
+function midiF(n){return 440*Math.pow(2,(n-69)/12);}
+function mtone(f,d,type,v,t,lp){ const o=AC.createOscillator(),g=AC.createGain(); o.type=type; o.frequency.value=f;
+  g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(v,t+0.01); g.gain.exponentialRampToValueAtTime(0.0008,t+d);
+  if(lp){const fl=AC.createBiquadFilter();fl.type="lowpass";fl.frequency.value=lp;o.connect(fl);fl.connect(g);} else o.connect(g); g.connect(musGain); o.start(t); o.stop(t+d+0.05); }
+function mkick(t){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(40,t+0.15);g.gain.setValueAtTime(0.6,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.2);o.connect(g);g.connect(musGain);o.start(t);o.stop(t+0.25);}
+function mnoise(t,d,v,f,type){const s=AC.createBufferSource();s.buffer=noise();const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.value=f;const g=AC.createGain();g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);s.connect(fl);fl.connect(g);g.connect(musGain);s.start(t);s.stop(t+d+0.02);}
+function msnare(t){mnoise(t,0.15,0.3,1800,"bandpass");} function mhat(t){mnoise(t,0.04,0.12,7000,"highpass");}
+function genStep(t){ const s=60/112/4,st=music.step,root=[50,50,53,48][Math.floor(st/16)%4];
+  if(st%16===0||st%16===10) mtone(midiF(root-12),s*3,"square",0.22,t,600);
+  if(st%4===0) mkick(t); if(st%8===4) msnare(t); if(st%2===1) mhat(t);
+  if(st%2===0){ const deg=[0,2,4,6,4,2,1,3][(st/2)%8]; mtone(midiF(root+12+SCALE[deg%7]),s*1.5,"square",0.07,t,2400);}
+  if(st%32===28) mtone(midiF(root+31),s*6,"triangle",0.12,t); music.step++; }
+function parseMidi(buf){
+  const d=new DataView(buf); let p=0; const str=n=>{let s="";for(let i=0;i<n;i++)s+=String.fromCharCode(d.getUint8(p+i));return s;};
+  if(str(4)!=="MThd") throw new Error("MIDI 파일이 아닙니다 (MThd 머리말 없음)");
+  const hl=d.getUint32(4),ntr=d.getUint16(10),div=d.getUint16(12); p=8+hl; const ev=[];
+  for(let tr=0;tr<ntr&&p<d.byteLength;tr++){ if(str(4)!=="MTrk") break; const len=d.getUint32(p+4); p+=8; const end=p+len; let tick=0,rs=0;
+    const vlq=()=>{let v=0,b;do{b=d.getUint8(p++);v=(v<<7)|(b&127);}while(b&128);return v;};
+    while(p<end){ tick+=vlq(); const b=d.getUint8(p);
+      if(b===0xFF){const ty=d.getUint8(p+1);p+=2;const l=vlq(); if(ty===0x51) ev.push({tick,type:"tempo",tempo:(d.getUint8(p)<<16)|(d.getUint8(p+1)<<8)|d.getUint8(p+2)}); p+=l; continue;}
+      if(b===0xF0||b===0xF7){p++;const l=vlq();p+=l;continue;}
+      if(b&0x80){rs=b;p++;} const st=rs&0xF0,ch=rs&15;
+      if(st===0xC0){ev.push({tick,type:"prog",ch,prog:d.getUint8(p)});p++;} else if(st===0xD0){p++;}
+      else { const a=d.getUint8(p),c=d.getUint8(p+1); p+=2; if(st===0x90&&c>0) ev.push({tick,type:"on",ch,note:a,vel:c}); else if(st===0x80||(st===0x90&&c===0)) ev.push({tick,type:"off",ch,note:a}); } }
+    p=end; }
+  ev.sort((a,b)=>a.tick-b.tick||(a.type==="off"?-1:1));
+  let tempo=500000,last=0,sec=0; const open={},notes=[],progs={};
+  for(const e of ev){ sec+=(e.tick-last)*tempo/1e6/div; last=e.tick;
+    if(e.type==="tempo") tempo=e.tempo; else if(e.type==="prog") progs[e.ch]=e.prog;
+    else if(e.type==="on") open[e.ch*128+e.note]={t:sec,ch:e.ch,note:e.note,vel:e.vel,prog:progs[e.ch]||0};
+    else { const k=e.ch*128+e.note; if(open[k]){const n=open[k];n.d=Math.max(0.03,sec-n.t);notes.push(n);delete open[k];} } }
+  notes.sort((a,b)=>a.t-b.t); return {notes,length:sec,tracks:ntr}; }
+function playMidiNote(n,t){ const v=(n.vel/127)*0.45;
+  if(n.ch===9){ if(n.note===35||n.note===36) mkick(t); else if(n.note===38||n.note===40) msnare(t); else if(n.note>=42&&n.note<=46) mhat(t); else mnoise(t,0.25,v*0.4,4000,"highpass"); return; }
+  const fam=Math.floor(n.prog/8); let type="triangle",lp=0,d=Math.min(n.d,2.5);
+  if(fam===4){type="sawtooth";lp=600;} else if(fam===3){type="square";lp=1600;d=Math.min(d,0.3);} else if(fam===1){type="sine";d=Math.max(d,0.5);} else if(fam===10||fam===11){type="sawtooth";lp=2000;}
+  mtone(midiF(n.note),d+0.05,type,v,t,lp); }
+function musicTick(){ if(!AC||!musicOn||G.paused) return; const now=AC.currentTime;
+  if(music.mode==="gen"){ if(music.next<now) music.next=now+0.05; while(music.next<now+0.25){ genStep(music.next); music.next+=60/112/4; } }
+  else if(music.midi){ const m=music.midi; if(music.midiStart===0){music.midiStart=now+0.1;music.midiPos=0;} const until=now+0.3-music.midiStart;
+    while(music.midiPos<m.notes.length&&m.notes[music.midiPos].t<until){ const n=m.notes[music.midiPos++],t=music.midiStart+n.t; if(t>now-0.05) playMidiNote(n,Math.max(t,now)); }
+    if(music.midiPos>=m.notes.length&&now>music.midiStart+m.length){music.midiStart=now+0.5;music.midiPos=0;} } }
+setInterval(musicTick,90);
+
+/* ================= 게임 상태 ================= */
+function freshPlayer(i){ return {idx:i,score:0,ball:1,extra:0,rank:0,done:{},missionSel:null,mission:null,mstep:0,mcount:0,atpClock:0,
+  atp:4,atpLit:[false,false,false],mult:0,multHits:0,reentry:[false,false,false],worm:{wormY:false,wormR:false,wormG:false},wormDone:{wormY:false,wormR:false,wormG:false},
+  hyper:0,bumpLv:0,booster:[false,false,false],medalLit:[false,false,false],medals:0,deployLit:[false,false,false],
+  launchLanes:[false,false,false],lanes:[false,false,false,false],extraLit:false,replay:false,warpFwd:true,timeWarp:false,wellLit:false,bonus:0,missionLit:[false,false,false],jackpot:false,stormLit:false,dropsDown:{L:[false,false,false],R:[false,false,false]}}; }
+const G={mode:"attract",paused:false,players:[],cur:0,np:1,balls:[],plunge:0,plunging:false,tilt:0,tilted:false,warned:false,
+  saveUntil:0,skillLane:-1,skillUntil:0,shake:[0,0],now:0,msgQ:[],msgUntil:0,msg:"F2 키로 새 게임 시작",demoNext:0,flipL:false,flipR:false,lastNote:0,multiball:false,ballServed:0};
+let PS=freshPlayer(0);
+const flippers=[
+ {px:190,py:912,len:76,rest:0.52,up:-0.46,a:0.52,w:0,side:"L"},
+ {px:362,py:912,len:76,rest:Math.PI-0.52,up:Math.PI+0.46,a:Math.PI-0.52,w:0,side:"R"},
+];
+function newBall(x=541,y=955,vx=0,vy=0){ return {x,y,vx,vy,r:9,held:null,path:null,inLane:true,trail:[],lastHit:{},rollIn:{}}; }
+
+/* ================= 메시지 · 패널 ================= */
+Object.assign(G,{particles:[],rings:[],popups:[],combo:0,comboUntil:0,virus:null,virusNext:40000,vesicles:[],vesNext:4000,bumperHits:0,toast:null,hb:null,flashUntil:0});
+Object.assign(NOTES,{
+ virusBoss:["떠다니는 바이러스","바이러스는 표면 단백질로 숙주 세포의 수용체에 달라붙습니다. 세 번 맞혀 중화하세요."],
+ vesicle:["단백질 소포","세포는 단백질을 소포에 담아 막과 융합시키며 밖으로 내보냅니다(세포외 배출)."],
+ combo:["연쇄 반응","효소 반응이 줄줄이 이어지는 대사 경로처럼, 짧은 시간에 연속으로 맞히면 점수가 불어납니다."]
+});
+GLOSS.push(["신규","—","떠다니는 바이러스","면역 범퍼를 25번 맞히거나 시간이 지나면 나타나 세포질을 돌아다닙니다. 세 번 맞히면 250,000점."],
+           ["신규","—","단백질 소포","떠오르는 방울. 지나가면 수집, 3개마다 ATP 1칸."],
+           ["신규","—","연쇄 반응(콤보)","1.8초 안에 연속으로 맞히면 콤보, 5콤보마다 점수 25% 추가(최대 2배)."],
+           ["신규","—","발견 도감","처음 닿은 구성 요소가 기록됩니다. 브라우저에 저장되어 다음 게임에도 이어집니다."]);
+const $=id=>document.getElementById(id);
+function fmt(n){return Math.floor(n).toLocaleString("ko-KR");}
+function say(text,ms=1800,prio=false){ if(prio){ G.msgQ=[]; G.msgUntil=0; G.toast={text,until:G.now+Math.min(ms,2400),start:G.now}; } G.msgQ.push({text,ms}); if(G.msgQ.length>5) G.msgQ.shift(); }
+let SEEN; try{ SEEN=new Set(JSON.parse(localStorage.getItem("cellCadetSeen")||"[]")); }catch(e){ SEEN=new Set(); }
+function note(tag){ const n=NOTES[tag]; if(!n) return; const fresh=!SEEN.has(tag);
+  if(fresh){ SEEN.add(tag); try{ localStorage.setItem("cellCadetSeen",JSON.stringify([...SEEN])); }catch(e){} }
+  if(!fresh&&G.now-G.lastNote<2200) return; G.lastNote=G.now;
+  $("note").innerHTML=`<h3>${fresh?'<span class="new">새 발견</span>':''}${n[0]}</h3><p>${n[1]}</p>`; }
+function missionLines(){ const p=PS;
+  if(G.mode!=="play") return [G.mode==="over"?"게임 끝":"데모 플레이","코인을 넣고 시작 버튼(F2)",""];
+  if(p.mission){ const m=p.mission,s=m.steps[p.mstep]; return [m.name,`${s.t} · 남은 횟수 ${Math.max(0,s.n-p.mcount)}${p.atp<=2?" · ATP 부족!":""}`,`단계 ${p.mstep+1}/${m.steps.length}`]; }
+  if(p.missionSel) return [`${p.missionSel.name} 선택됨`,"혈관 램프를 맞혀 실험 시작",""];
+  return ["실험 대기 중","왼쪽 벽 실험 표적을 맞혀 선택",""]; }
+const _txt={};
+function setT(id,v){ if(_txt[id]!==v){ _txt[id]=v; $(id).textContent=v; } }
+function updatePanel(){
+  const p=PS;
+  setT("score",fmt(p.score));
+  setT("pChip",G.mode==="play"?`P${G.cur+1}/${G.np}`:"DEMO");
+  setT("bChip",G.mode==="play"?`BALL ${Math.min(p.ball,3)}${p.extra?" +"+p.extra:""}`:"BALL –");
+  const cOn=G.combo>=2&&G.now<G.comboUntil; $("combo").classList.toggle("on",cOn); if(cOn) setT("combo",`COMBO ×${G.combo}`);
+  if(G.now>G.msgUntil){ const m=G.msgQ.shift(); if(m){ G.msg=m.text; G.msgUntil=G.now+m.ms; }
+    else if(G.now>G.msgUntil+400) G.msg=G.mode==="play"?(G.paused?"일시정지\nF3 키로 계속":(G.tilted?"반칙!\n실험 오염":RANKS[p.rank])):(G.mode==="initials"?"고득점!\n이니셜을 입력하세요":G.mode==="match"?"게임 끝\n매치 추첨 중":G.credits>0?"PRESS START\nF2 키로 시작 · 크레딧 "+G.credits:"INSERT COIN\nC 키로 코인 투입"); }
+  setT("msg",G.msg||"");
+  const ml=missionLines(); setT("mName",ml[0]); setT("mStep",ml[1]+(ml[2]?"  ·  "+ml[2]:""));
+  setT("mTier",p.mission?(p.mission.final?"최종 실험":`난이도 ${p.mission.tier+1}`):"");
+  const bar=$("mBar"); if(bar.children.length!==12) bar.innerHTML="<i></i>".repeat(12);
+  const prog=p.mission?(p.mstep+p.mcount/p.mission.steps[p.mstep].n)/p.mission.steps.length:0, on=Math.round(prog*12);
+  if(_txt.bar!==on){ _txt.bar=on; [...bar.children].forEach((c,i)=>c.classList.toggle("on",i<on)); }
+  setT("sRank",RANKS[p.rank]); setT("sMult","×"+[1,2,3,5,10][p.mult]); setT("sHyper",p.hyper+"/5"); setT("sBump","×"+[1,2,3,5,10][p.bumpLv]);
+  setT("sMedal",String(p.medals)); setT("sVes",String(p.ves||0)); setT("sVir",String(p.virKills||0));
+  const atp=$("sAtp"); if(atp.children.length!==8) atp.innerHTML="<i></i>".repeat(8); if(_txt.atp!==p.atp){ _txt.atp=p.atp; [...atp.children].forEach((c,i)=>c.classList.toggle("on",i<p.atp)); }
+  const tot=Object.keys(NOTES).length, n=[...SEEN].filter(k=>NOTES[k]).length; setT("discN",`${n}/${tot}`); $("discBar").style.width=(100*n/tot)+"%";
+}
+function drawLogo(){ const tb=textBits("세포 탐사대",24,700), w=tb.w+4, h=tb.h+6, cv=$("logo"); cv.width=w; cv.height=h; const g=cv.getContext("2d");
+  const grad=v=>v<0.38?C.pk6:v<0.55?C.pk5:v<0.75?C.pk4:C.pk3;
+  drawBits(g,tb,2,1,grad,C.k,C.pk1); cv.style.width=Math.min(220,w*2)+"px"; }
+drawLogo();
+/* ================= 점수와 규칙 ================= */
+function add(pts){ if(G.tilted) return; PS.score+=pts; PS.bonus+=Math.floor(pts*0.05); }
+function availableMissions(){ const r=PS.rank,maxTier=r===0?0:r===1?1:r<=3?2:r<=6?3:4;
+  let list=MISSIONS.filter(m=>m.tier<=maxTier&&!PS.done[m.id]); if(!list.length) list=MISSIONS.filter(m=>m.tier<=maxTier); return list; }
+function progress(tag){ const p=PS; if(!p.mission) return; const s=p.mission.steps[p.mstep];
+  if(s.tag===tag||(s.tag==="wormhole"&&tag.startsWith("worm"))||(s.tag==="drop"&&(tag==="dropL"||tag==="dropR"))){
+    p.mcount++; add(15000);
+    if(p.mcount>=s.n){ p.mstep++; p.mcount=0; if(p.mstep>=p.mission.steps.length) completeMission(); else { sfx("mission"); say(p.mission.steps[p.mstep].t,1800);} }
+    else say(`${s.t}\n남은 횟수: ${s.n-p.mcount}`,1100); } }
+function startMission(){ const p=PS; if(!p.missionSel||p.mission) return;
+  if(p.atp<=0){ say("ATP 부족\nATP 표적을 맞히세요",1800); return; }
+  p.mission=p.missionSel; p.missionSel=null; p.mstep=0; p.mcount=0; p.missionLit=[false,false,false]; p.stormLit=!!p.mission.final; p.atpClock=G.now;
+  add(25000); sfx("mission"); say(`실험 시작\n${p.mission.name}`,2200,true); $("note").innerHTML=`<h3>${p.mission.name}</h3><p>${p.mission.fact}</p>`; G.lastNote=G.now; }
+function completeMission(){ const p=PS,m=p.mission; p.done[m.id]=true; p.mission=null; p.stormLit=false;
+  add(m.reward*(1+p.rank*0.25)); sfx("done"); say(`실험 완료\n${fmt(m.reward)}`,2200,true);
+  if(m.final){ add(10000000); say("최종 승리\n노벨상 수상 연구",3000); p.rank=8; } else rankUp(); }
+function abortMission(reason){ const p=PS; if(!p.mission) return; say(`실험 취소\n${reason}`,2200,true); sfx("bad"); p.mission=null; p.stormLit=false; }
+function rankUp(){ const p=PS; if(p.rank<8){ p.rank++; sfx("rank"); say(`승급\n${RANKS[p.rank]}`,2400); add(100000*p.rank);} }
+function rankDown(){ const p=PS; if(p.rank>0){ p.rank--; say(`강등\n${RANKS[p.rank]}`,2000);} }
+function addAtp(n){ const p=PS,was=p.atp; p.atp=Math.max(0,Math.min(8,p.atp+n)); if(p.atp===8&&was<8) say("ATP 가득 충전",1400); }
+function lightDeploy(){ const p=PS,i=p.deployLit.indexOf(false); if(i>=0){p.deployLit[i]=true; say(p.deployLit.every(Boolean)?"백신 배치 준비\n백신 슈트로!":"백신 배치 표시등",1600);} }
+function lightExtra(){ PS.extraLit=true; say("추가 구슬 기회\n귀환 레인 통과",1800); }
+function multUp(){ const p=PS; if(p.mult<4){ p.mult++; say(`보너스 배수 ×${[1,2,3,5,10][p.mult]}`,1500);} else add(100000); }
+function hit(tag,obj){
+  if(G.tilted) return; const p=PS; note(tag);
+  switch(tag){
+   case "bumper": add([1,2,3,5,10][p.bumpLv]*1000); sfx("bumper"); break;
+   case "launchBumper": add(p.launchLanes.every(Boolean)?3000:1500); sfx("enz"); break;
+   case "sling": add(500); sfx("sling"); break;
+   case "rebound": add(1000); sfx("sling"); break;
+   case "atp": add(5000); sfx("target"); addAtp(1); p.atpLit[obj.idx]=true; if(p.atpLit.every(Boolean)){ p.atpLit=[false,false,false]; addAtp(8); add(50000); say("세포에 ATP 공급\n50,000",1600);} break;
+   case "missionTarget": add(5000); sfx("target"); p.missionLit[obj.idx]=true;
+     if(!p.mission){ const list=availableMissions(),cur=p.missionSel?list.indexOf(p.missionSel):-1; p.missionSel=list[(cur+1)%list.length]; say(`실험 선택\n${p.missionSel.name}`,1600); }
+     if(p.missionLit.every(Boolean)){ p.missionLit=[false,false,false]; add(25000);} break;
+   case "medal": add(5000); sfx("target"); p.medalLit[obj.idx]=true;
+     if(p.medalLit.every(Boolean)){ p.medalLit=[false,false,false]; p.medals++; add(100000); say(`항원 메달 ${p.medals}개`,1600); lightDeploy(); if(p.medals%3===0) lightExtra(); } break;
+   case "booster": add(5000); sfx("target"); p.booster[obj.idx]=true;
+     if(p.booster.every(Boolean)){ p.booster=[false,false,false]; if(p.bumpLv<4){p.bumpLv++; say(`면역 범퍼 점수\n${[1,2,3,5,10][p.bumpLv]}배`,1800);} else add(200000); } break;
+   case "multTarget": add(7500); sfx("target"); p.multHits++; if(p.multHits%2===0) multUp(); break;
+   case "warpTarget": add(10000); sfx("target");
+     if(p.timeWarp){ p.timeWarp=false; if(p.warpFwd){ say("세포 주기 정방향\n앞으로 시간 이동",2000); rankUp(); } else { add(1000000); say("세포 주기 역방향\n1,000,000",2000); rankDown(); } } break;
+   case "warpRoll": add(2500); sfx("roll"); p.warpFwd=!p.warpFwd; break;
+   case "dropL": case "dropR": { add(7500); sfx("drop"); const bank=obj.bank; p.dropsDown[bank][obj.idx]=true;
+     if(p.dropsDown[bank].every(Boolean)){ add(75000); say(`${bank==="L"?"왼쪽":"오른쪽"} 병원체 제거`,1600); lightDeploy();
+       setTimeout(()=>{ drops.filter(d=>d.bank===bank).forEach(d=>d.up=true); PS.dropsDown[bank]=[false,false,false]; },1500);} break; }
+   case "reentry": { add(5000); sfx("roll"); const i=obj.idx; p.reentry[i]=true; p.worm[["wormY","wormR","wormG"][i]]=true;
+     if(G.skillLane===i&&G.now<G.skillUntil){ const v=[15000,30000,75000][Math.floor(Math.random()*3)]; add(v); say(`쏘기 기술 점수\n${fmt(v)}`,1800,true); sfx("extra"); }
+     G.skillUntil=0; if(p.reentry.every(Boolean)){ p.reentry=[false,false,false]; multUp(); } break; }
+   case "lane": add(2500); sfx("roll"); p.lanes[obj.idx]=true;
+     if(obj.lane==="return"){ addAtp(1); if(obj.idx===1) add(5000); if(p.extraLit){ p.extraLit=false; p.extra++; sfx("extra"); say("보너스 구슬",2000,true);} }
+     if(p.lanes.every(Boolean)){ p.lanes=[false,false,false,false]; multUp(); } break;
+   case "flag": add(1500); sfx("spin"); break;
+   case "ramp": { add(20000); sfx("ramp"); const i=p.launchLanes.indexOf(false); if(i>=0){p.launchLanes[i]=true; if(p.launchLanes.every(Boolean)) say("효소 범퍼 보너스",1500);} if(p.missionSel&&!p.mission) startMission(); break; }
+   case "hyper": { sfx("ramp"); p.hyper=Math.min(5,p.hyper+1); add(25000*p.hyper); const lv=p.hyper;
+     if(G.multiball&&p.jackpot){ add(1000000); say("잭팟\n1,000,000",2200,true); sfx("extra"); }
+     else if(lv===1) say("세포분열 1단계",1400); else if(lv===2) say("세포분열 2단계",1400);
+     else if(lv===3){ p.timeWarp=true; say("세포 주기 표시등\n돌연변이 표적으로!",1800); }
+     else if(lv===4) lightExtra(); else if(lv===5){ add(500000); say("세포분열 보너스\n500,000",2000); p.hyper=0; } break; }
+   case "nucleus": sfx("well"); if(p.wellLit){ p.wellLit=false; const v=250000+100000*p.rank; add(v); say(`세포핵의 중심\n${fmt(v)}`,1800);} else add(5000); break;
+   case "blackhole": add(50000); say("리소좀 분해\n50,000",1200); break;
+   case "escape": add(20000); addAtp(8); say("ATP 합성 완료\n발사대로 이동",1600); break;
+  }
+  progress(tag);
+}
+function onSink(s,b){ const p=PS; b.held={until:G.now+(s.id==="black"?1100:800),sink:s}; b.x=s.x; b.y=s.y; b.vx=b.vy=0; sfx("sink");
+  if(s.id.startsWith("worm")){ note("wormhole"); if(G.tilted) return;
+    if(p.worm[s.id]){ p.worm[s.id]=false; p.wormDone[s.id]=true; add(100000); say(`소포 융합\n${{wormY:"노란",wormR:"빨간",wormG:"초록"}[s.id]} 소포`,1600); p.wellLit=true;
+      if(Object.values(p.wormDone).every(Boolean)){ p.wormDone={wormY:false,wormR:false,wormG:false}; if(!p.replayUsed){ p.replay=true; p.replayUsed=true; say("소포 3개 융합\n다시 쏘기 켜짐",2000); } else { add(500000); say("소포 3개 융합\n500,000",2000); } sfx("extra"); } }
+    else { add(10000); const others=["wormY","wormR","wormG"].filter(i=>i!==s.id); b.held.sink=sinkById[others[Math.floor(Math.random()*2)]]; }
+    progress(s.id); }
+  else if(s.id==="black") hit("blackhole",s);
+  else if(s.id==="escape"){ hit("escape",s); b.held.toPlunger=true; }
+  else if(s.id==="deploy"){ note("deploy"); if(p.deployLit.every(Boolean)&&!G.tilted&&!G.multiball){ p.deployLit=[false,false,false]; startMultiball(); } else { add(10000); say("백신 배치 표시등\n3개를 모두 켜세요",1400);} } }
+function ejectFrom(s,b){ const ej={wormY:[200,220],wormR:[-220,240],wormG:[-280,200],black:[220,250],deploy:[-240,200],hyperOut:[-380,240]}[s.id]||[0,200];
+  const m=Math.hypot(ej[0],ej[1])||1; b.x=s.x+ej[0]/m*(s.r+b.r+2); b.y=s.y+ej[1]/m*(s.r+b.r+2); b.vx=ej[0]+(Math.random()-0.5)*40; b.vy=ej[1]; b.noSink=G.now+700; sfx("eject"); }
+function startMultiball(){ G.multiball=true; PS.jackpot=true; say("백신 배치!\n분열 슈트에서 잭팟",2400,true); sfx("extra"); G.saveUntil=G.now+10000; G.saveGranted=true;
+  const need=Math.max(0,3-G.balls.length); for(let i=0;i<need;i++) setTimeout(()=>{ if(G.mode!=="play"&&G.mode!=="attract") return; const nb=newBall(541,955,0,-(1900+Math.random()*200)); G.balls.push(nb); sfx("launch"); },600+i*900); }
+
+/* ================= 물리 ================= */
+const GRAV=1500,MAXV=2600;
+function collideSegment(b,ax,ay,bx,by,rad,rest,kick){ const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy||1; let t=((b.x-ax)*dx+(b.y-ay)*dy)/l2; t=t<0?0:t>1?1:t;
+  const px=ax+dx*t,py=ay+dy*t; let nx=b.x-px,ny=b.y-py; const d=Math.hypot(nx,ny),md=b.r+rad; if(d>=md||d===0) return false;
+  nx/=d;ny/=d; b.x=px+nx*md; b.y=py+ny*md; const vn=b.vx*nx+b.vy*ny;
+  if(vn<0){ b.vx-=(1+rest)*vn*nx; b.vy-=(1+rest)*vn*ny; if(kick&&-vn>60){ b.vx+=nx*kick; b.vy+=ny*kick; } return {nx,ny,vn}; } return {nx,ny,vn:0}; }
+function collideCircle(b,c,rest){ let nx=b.x-c.x,ny=b.y-c.y; const d=Math.hypot(nx,ny),md=b.r+c.r; if(d>=md||d===0) return false;
+  nx/=d;ny/=d; b.x=c.x+nx*md; b.y=c.y+ny*md; const vn=b.vx*nx+b.vy*ny; if(vn<0){ b.vx-=(1+rest)*vn*nx; b.vy-=(1+rest)*vn*ny; } return {nx,ny,vn}; }
+function flipperHit(b,f){ const tx=f.px+Math.cos(f.a)*f.len,ty=f.py+Math.sin(f.a)*f.len,dx=tx-f.px,dy=ty-f.py,l2=dx*dx+dy*dy;
+  let t=((b.x-f.px)*dx+(b.y-f.py)*dy)/l2; t=t<0?0:t>1?1:t; const px=f.px+dx*t,py=f.py+dy*t,rad=12-6*t; let nx=b.x-px,ny=b.y-py; const d=Math.hypot(nx,ny),md=b.r+rad;
+  if(d>=md||d===0) return; nx/=d;ny/=d; b.x=px+nx*md; b.y=py+ny*md;
+  const w=f.w*TS, sx=-w*(py-f.py),sy=w*(px-f.px), vn=(b.vx-sx)*nx+(b.vy-sy)*ny; // 구슬 시간 기준으로 맞춘 플리퍼 속도
+  if(vn<0){ b.vx-=1.35*vn*nx; b.vy-=1.35*vn*ny; } }
+function crossed(ox,oy,x,y,s){ const side=(px,py)=>(s.bx-s.ax)*(py-s.ay)-(s.by-s.ay)*(px-s.ax); const s1=side(ox,oy),s2=side(x,y); if((s1<0)===(s2<0)) return false;
+  const dx=s.bx-s.ax,dy=s.by-s.ay,l2=dx*dx+dy*dy; const t=((x-s.ax)*dx+(y-s.ay)*dy)/l2; return t>-0.05&&t<1.05; }
+function once(b,o,fn,ms){ const k=o.__id||(o.__id=Math.random()); if(!b.lastHit[k]||G.now-b.lastHit[k]>ms){ b.lastHit[k]=G.now; fn(); } }
+function physics(dt){
+  const SUB=10, hf=dt/SUB, h=dt*TS/SUB;   // 플리퍼는 실제 시간, 구슬은 느린 시간
+  for(let sub=0;sub<SUB;sub++){
+    for(const f of flippers){ const on=!G.tilted&&(f.side==="L"?G.flipL:G.flipR), target=on?f.up:f.rest, sp=on?26:16, old=f.a;
+      if(f.a<target) f.a=Math.min(target,f.a+sp*hf); else if(f.a>target) f.a=Math.max(target,f.a-sp*hf); f.w=(f.a-old)/(hf*TS); }
+    const act=G.balls.filter(b=>!b.held&&!b.path&&!b.gone);
+    for(let i=0;i<act.length;i++) for(let j=i+1;j<act.length;j++){ const a=act[i],c=act[j]; let nx=c.x-a.x,ny=c.y-a.y; const d=Math.hypot(nx,ny);
+      if(d>0&&d<a.r+c.r){ nx/=d;ny/=d; const o=(a.r+c.r-d)/2; a.x-=nx*o;a.y-=ny*o;c.x+=nx*o;c.y+=ny*o; const rv=(c.vx-a.vx)*nx+(c.vy-a.vy)*ny; if(rv<0){ const k=rv*0.95; a.vx+=k*nx;a.vy+=k*ny;c.vx-=k*nx;c.vy-=k*ny; } } }
+    for(const b of act){
+      G.hb=b; const ox=b.x,oy=b.y; b.vy+=GRAV*h;
+      const wx=WELL.x-b.x,wy=WELL.y-b.y,wd=Math.hypot(wx,wy);
+      if(wd<WELL.R&&wd>4){ const k=820*(1-wd/WELL.R); b.vx+=wx/wd*k*h; b.vy+=wy/wd*k*h; }
+      const sp=Math.hypot(b.vx,b.vy); if(sp>MAXV){b.vx*=MAXV/sp;b.vy*=MAXV/sp;}
+      b.x+=b.vx*h; b.y+=b.vy*h;
+      for(const s of segs){ const r=collideSegment(b,s.ax,s.ay,s.bx,s.by,s.rad,s.rest,s.kick); if(r&&s.tag&&r.vn<-60) once(b,s,()=>{hit(s.tag,s); s.flash=G.now;},120); }
+      for(const g of gates){ if(b.x>g.ax-12&&b.x<g.bx+12){ const ly=g.ay+(g.by-g.ay)*(b.x-g.ax)/(g.bx-g.ax); if(b.vy>0&&b.y<ly+2) collideSegment(b,g.ax,g.ay,g.bx,g.by,2,0.3,0); } }
+      for(const c of posts){ const r=collideCircle(b,c,c.rest??0.5); if(r&&c.kick&&r.vn<-80){ b.vx+=r.nx*c.kick; b.vy+=r.ny*c.kick; once(b,c,()=>{hit(c.tag,c);c.flash=G.now;},120);} }
+      if(G.now<G.saveUntil) collideCircle(b,centerPost,0.5);
+      for(const bp of bumpers){ const r=collideCircle(b,bp,0.3); if(r){ b.vx+=r.nx*540; b.vy+=r.ny*540; bp.flash=G.now; once(b,bp,()=>hit(bp.tag,bp),90);} }
+      for(const t of targets){ const r=collideSegment(b,t.ax,t.ay,t.bx,t.by,4,0.55,0); if(r&&r.vn<-80) once(b,t,()=>{t.flash=G.now;hit(t.tag,t);},200); }
+      for(const t of drops){ if(!t.up) continue; const r=collideSegment(b,t.ax,t.ay,t.bx,t.by,4,0.4,0); if(r&&r.vn<-90){ t.up=false; t.flash=G.now; hit(t.tag,t);} }
+      for(const f of flippers) flipperHit(b,f);
+      extraCollide(b);
+      for(const s of spinners) if(crossed(ox,oy,b.x,b.y,s)){ s.spin=Math.min(40,s.spin+Math.hypot(b.vx,b.vy)/45); if(G.mode==="play") note("orbit"); }
+      for(const r of ramps){ if(crossed(ox,oy,b.x,b.y,r)&&b.vx*r.dir[0]+b.vy*r.dir[1]>r.min){ b.path={ramp:r,i:0}; b.trail=[]; break; } }
+      if(b.path) continue;
+      if(!(b.noSink>G.now)) for(const s of sinks){ if(s.eject) continue; const d=Math.hypot(b.x-s.x,b.y-s.y);
+        if(d<s.r-1&&Math.hypot(b.vx,b.vy)<(s.id==="escape"?800:1700)){ onSink(s,b); break; } else if(d<s.r+10){ b.vx+=(s.x-b.x)*240*h; b.vy+=(s.y-b.y)*240*h; } }
+      if(b.held) continue;
+      rollovers.forEach((ro,k)=>{ const ins=Math.hypot(b.x-ro.x,b.y-ro.y)<ro.r; if(ins&&!b.rollIn[k]){ b.rollIn[k]=true; ro.flash=G.now; hit(ro.tag,ro);} else if(!ins) b.rollIn[k]=false; });
+      const inCore=wd<WELL.core; if(inCore&&!b.rollIn.core){ b.rollIn.core=true; hit("nucleus",null);} else if(!inCore) b.rollIn.core=false;
+      if(b.x>522&&b.x<560){ const py=972-G.plunge*36; if(b.y>py-b.r){ b.y=py-b.r; if(b.vy>0) b.vy=-b.vy*0.2; if(Math.abs(b.vy)<30) b.vy=0; b.inLane=true; } }
+      if(b.y<300) b.inLane=false;
+      if(b.y>1030) b.gone=true;
+    }
+  }
+}
+function updateBalls(dt){
+  for(const b of G.balls){
+    if(b.path){ const P=b.path,r=P.ramp; let move=r.speed*TS*dt;
+      while(move>0&&P.i<r.path.length){ const [tx,ty]=r.path[P.i],dx=tx-b.x,dy=ty-b.y,d=Math.hypot(dx,dy); if(d<=move){b.x=tx;b.y=ty;move-=d;P.i++;} else {b.x+=dx/d*move;b.y+=dy/d*move;move=0;} }
+      if(P.i>=r.path.length){ b.path=null; hit(r.tag,r);
+        if(r.id==="hyper"){ const s=sinkById.hyperOut; b.held={until:G.now+700,sink:s}; b.x=s.x;b.y=s.y; } else { b.vx=r.exit[0]; b.vy=r.exit[1]; } }
+      continue; }
+    if(b.held&&G.now>=b.held.until){ const s=b.held.sink,hd=b.held; b.held=null;
+      if(hd.toPlunger){ b.x=541;b.y=955;b.vx=0;b.vy=0;b.inLane=true; setTimeout(()=>{ if(b.inLane&&!b.gone){ b.vy=-(1700+Math.random()*450); sfx("launch"); G.skillLane=Math.floor(Math.random()*3); G.skillUntil=G.now+3500; G.ballServed=G.now; } },700); }
+      else ejectFrom(s,b); }
+    b.trail.push([b.x,b.y]); if(b.trail.length>4) b.trail.shift();
+  }
+  for(const s of spinners){ if(s.spin>0){ const before=Math.floor(s.ang/(Math.PI*2)); s.ang+=s.spin*dt*6*TS; s.spin=Math.max(0,s.spin-dt*14); if(Math.floor(s.ang/(Math.PI*2))>before) hit("flag",s); } }
+  const lost=G.balls.filter(b=>b.gone); if(lost.length){ G.balls=G.balls.filter(b=>!b.gone); onDrain(); }
+  for(const b of G.balls){ if(b.held||b.path||b.inLane||G.flipL||G.flipR){ b.anc=null; continue; }
+    if(!b.anc||Math.hypot(b.x-b.anc[0],b.y-b.anc[1])>6) b.anc=[b.x,b.y,G.now];
+    else if(G.now-b.anc[2]>3500){ b.vy=-650; b.vx=(Math.random()<0.5?-1:1)*(150+Math.random()*150); b.anc=null; G.shake=[2,-2]; } }
+}
+
+/* ================= 진행 흐름 ================= */
+function onDrain(){
+  if(G.mode==="attract"){ if(!G.balls.length) G.balls.push(newBall()); return; }
+  if(G.mode!=="play") return;
+  if(G.balls.length>0){ if(G.balls.length===1&&G.multiball){ G.multiball=false; PS.jackpot=false; say("다중 구슬 종료",1400);} return; }
+  G.multiball=false; PS.jackpot=false;
+  if(G.now<G.saveUntil&&!G.tilted){ say("재배치\n이번 구슬은 1회만",1500,true); sfx("eject"); serve(true); return; }
+  sfx("drain"); note("drain");
+  const p=PS,bonus=G.tilted?0:p.bonus*[1,2,3,5,10][p.mult];
+  if(bonus){ p.score+=bonus; say(`추락 보너스\n${fmt(bonus)}`,2200,true);} else say(G.tilted?"오염된 실험\n보너스 없음":"구슬 잃음",1800,true);
+  p.bonus=0; if(p.mission) abortMission("세포 사멸"); G.tilted=false; G.tilt=0; G.warned=false; setTimeout(nextTurn,1600); }
+function nextTurn(){ if(G.mode!=="play") return; const p=PS;
+  if(p.replay){ p.replay=false; say(`연구원 ${G.cur+1}\n다시 쏘기`,1800,true); serve(); return; }
+  if(p.extra>0){ p.extra--; say("보너스 구슬",1500,true); serve(); return; }
+  p.ball++;
+  for(let k=1;k<=G.np;k++){ const i=(G.cur+k)%G.np; if(G.players[i].ball<=3){ G.cur=i; PS=G.players[i]; say(`연구원 ${i+1}`,1500,true); serve(); return; } }
+  gameOver(); }
+function serve(){ G.balls=[newBall()]; G.saveUntil=0; G.skillLane=Math.floor(Math.random()*3); G.skillUntil=0; G.ballServed=G.now; }
+function newGame(){ audio(); G.np=+$("bPlayers").value; G.players=Array.from({length:G.np},(_,i)=>freshPlayer(i)); G.cur=0; PS=G.players[0];
+  G.mode="play"; G.paused=false; G.tilted=false; G.tilt=0; G.multiball=false; drops.forEach(d=>d.up=true); say("새 게임\n연구원 1",1600,true); sfx("rank"); serve();
+  $("note").innerHTML=`<h3>세포 탐사대</h3><p>실험 표적으로 실험을 고르고, 혈관 램프로 시작하세요. 실험을 끝낼 때마다 연구 등급이 오릅니다.</p>`; $("table").focus(); }
+function gameOver(){ G.mode="over"; G.balls=[]; say("게임 끝",3000,true); sfx("drain");
+  const queue=G.players.map((p,i)=>({p,i})).sort((a,b)=>b.p.score-a.p.score);
+  const ask=()=>{ const it=queue.shift(); if(!it){ setTimeout(()=>{ if(G.mode==="over"){ G.mode="attract"; G.balls=[newBall()]; PS=freshPlayer(0);} },6000); return; }
+    const list=loadHS(); if(it.p.score>0&&(list.length<5||it.p.score>list[list.length-1].score)){
+      $("nameMsg").textContent=`연구원 ${it.i+1} · ${fmt(it.p.score)}점 · ${RANKS[it.p.rank]}`; $("nameIn").value=""; const dlg=$("dName"); dlg.showModal();
+      dlg.onclose=()=>{ const l=loadHS(); l.push({name:($("nameIn").value.trim()||`연구원 ${it.i+1}`),score:it.p.score,rank:it.p.rank}); l.sort((a,b)=>b.score-a.score); saveHS(l.slice(0,5)); ask(); };
+    } else ask(); };
+  setTimeout(ask,900); }
+function loadHS(){ try{ return JSON.parse(localStorage.getItem("cellCadetHS")||"[]"); }catch(e){ return []; } }
+function saveHS(l){ try{ localStorage.setItem("cellCadetHS",JSON.stringify(l)); }catch(e){} }
+function nudge(dx,dy){ if(G.mode!=="play"||G.paused||G.tilted) return;
+  for(const b of G.balls) if(!b.held&&!b.path){ b.vx+=dx; b.vy+=dy; }
+  G.shake=[dx/70,dy/70]; G.tilt+=1;
+  if(G.tilt>3.4){ G.tilted=true; G.flipL=G.flipR=false; sfx("tilt"); say("반칙!\n실험 오염",2500,true); if(PS.mission) abortMission("실험 오염"); }
+  else if(G.tilt>2.2&&!G.warned){ G.warned=true; sfx("warn"); say("조심하세요...",1500,true); } }
+
+/* ================= 입력 ================= */
+const keyState={};
+function launchPress(){ if(G.mode!=="play"||G.paused) return; G.plunging=true; }
+function launchRelease(){ if(!G.plunging) return; G.plunging=false; const pw=G.plunge; G.plunge=0;
+  for(const b of G.balls) if(b.inLane&&b.x>522&&b.y>900&&!b.held){ b.vy=-(700+1600*pw); sfx("launch"); if(!G.saveGranted){ G.saveGranted=true; G.saveUntil=G.now+8000; } G.skillUntil=G.now+3500; G.ballServed=G.now; } }
+function setFlip(side,on){ if(G.mode!=="play"||G.paused) return; if(G.tilted) on=false; const k=side==="L"?"flipL":"flipR"; if(on&&!G[k]) sfx("flip"); G[k]=on; }
+addEventListener("keydown",e=>{ const c=e.code; if(["Space","ArrowUp","ArrowDown","F2","F3","Slash","KeyZ"].includes(c)) e.preventDefault();
+  if(document.querySelector("dialog[open]")) return; audio(); if(keyState[c]) return; keyState[c]=true;
+  if(c==="KeyZ"||c==="ShiftLeft") setFlip("L",true); else if(c==="Slash"||c==="ShiftRight") setFlip("R",true);
+  else if(c==="Space"||c==="Enter"||c==="ArrowDown") launchPress(); else if(c==="KeyX") nudge(140,-90); else if(c==="Period") nudge(-140,-90);
+  else if(c==="ArrowUp") nudge(0,-200); else if(c==="F2") newGame(); else if(c==="F3") togglePause(); else if(c==="KeyM") toggleMusic(); });
+addEventListener("keyup",e=>{ const c=e.code; keyState[c]=false;
+  if(c==="KeyZ"||c==="ShiftLeft") setFlip("L",false); else if(c==="Slash"||c==="ShiftRight") setFlip("R",false); else if(c==="Space"||c==="Enter"||c==="ArrowDown") launchRelease(); });
+function togglePause(){ if(G.mode!=="play") return; G.paused=!G.paused; $("bPause").textContent=G.paused?"계속 (F3)":"일시정지 (F3)"; say(G.paused?"일시정지\nF3 키로 계속":"게임 계속",1200,true); }
+function toggleMusic(){ audio(); musicOn=!musicOn; $("bMusic").textContent=musicOn?"음악 끄기 (M)":"음악 켜기 (M)"; if(musGain) musGain.gain.value=musicOn?0.22:0; if(musicOn) music.next=0; }
+$("bNew").onclick=newGame; $("bPause").onclick=togglePause; $("bMusic").onclick=toggleMusic;
+$("bSfx").onclick=()=>{sfxOn=!sfxOn;$("bSfx").textContent=sfxOn?"효과음 끄기":"효과음 켜기";};
+$("midiFile").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; audio();
+  try{ const m=parseMidi(await f.arrayBuffer()); if(!m.notes.length) throw new Error("연주할 음표가 없습니다");
+    music.midi=m; music.mode="midi"; music.midiStart=0; musicOn=true; if(musGain) musGain.gain.value=0.22; $("bMusic").textContent="음악 끄기 (M)"; say("MIDI 연주\n"+f.name,2000,true);
+    $("note").innerHTML=`<h3>배경 음악</h3><p>${f.name.replace(/[<>&]/g,"")} · 트랙 ${m.tracks}개 · 음표 ${m.notes.length.toLocaleString("ko-KR")}개 · ${Math.round(m.length)}초. 기본 음악으로 돌아가려면 페이지를 새로 고치세요.</p>`;
+  }catch(err){ say("MIDI 오류",2000,true); $("note").innerHTML=`<h3>MIDI 오류</h3><p>${err.message}. 표준 MIDI 파일(.mid)을 골라 주세요.</p>`; }
+  e.target.value=""; };
+$("bGloss").onclick=()=>{ if(G.mode==="play") G.paused=true; $("dGloss").showModal(); };
+$("dGloss").addEventListener("close",()=>{ if(G.mode==="play") G.paused=false; });
+$("bHigh").onclick=()=>{ const l=loadHS(); $("hsTable").innerHTML=l.length?l.map((r,i)=>`<tr><td>${i+1}</td><td>${r.name.replace(/[<>&]/g,"")}</td><td>${RANKS[r.rank]||""}</td><td>${fmt(r.score)}</td></tr>`).join(""):"<tr><td>아직 기록이 없습니다. 첫 게임을 시작해 보세요.</td></tr>"; $("dHigh").showModal(); };
+$("hsClear").onclick=()=>{ if(confirm("고득점을 지우시겠습니까?")){ saveHS([]); $("hsTable").innerHTML="<tr><td>기록을 지웠습니다.</td></tr>"; } };
+document.querySelector("#glossTable tbody").innerHTML=GLOSS.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
+function bindHold(el,down,up){ el.addEventListener("pointerdown",e=>{e.preventDefault();audio();down();}); ["pointerup","pointerleave","pointercancel"].forEach(t=>el.addEventListener(t,up)); }
+bindHold($("tL"),()=>{if(G.mode!=="play")newGame();setFlip("L",true);},()=>setFlip("L",false));
+bindHold($("tR"),()=>setFlip("R",true),()=>setFlip("R",false));
+bindHold($("tP"),launchPress,launchRelease);
+const cv=$("table");
+cv.addEventListener("pointerdown",e=>{ audio(); if(G.mode!=="play") return; const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*H;
+  if(x>505&&y>820){launchPress();cv._k="P";} else { const s=x<W/2?"L":"R"; setFlip(s,true); cv._k=s; } });
+cv.addEventListener("pointerup",()=>{ if(cv._k==="P") launchRelease(); else if(cv._k) setFlip(cv._k,false); cv._k=null; });
+
+/* ================= 효과 · 새 요소 ================= */
+const TAGCOL={bumper:C.vi5,launchBumper:C.cy5,atp:C.gr4,missionTarget:C.or5,medal:C.or5,booster:C.cy4,multTarget:C.or4,warpTarget:C.pk5,dropL:C.rd4,dropR:C.rd4,
+  reentry:C.or5,lane:C.bl4,flag:C.or4,ramp:C.rd4,hyper:C.pk5,nucleus:C.bl4,blackhole:C.vi4,escape:C.gr4,sling:C.pk5,rebound:C.pk5,warpRoll:C.gr4,virusBoss:C.gr4,vesicle:C.cy5};
+function burst(x,y,col,n=10,sp=160){ for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2,v=sp*(0.35+Math.random()*0.8); G.particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-40,life:0.35+Math.random()*0.4,max:0.75,col,sz:Math.random()<0.25?2:1}); } if(G.particles.length>420) G.particles.splice(0,G.particles.length-420); }
+function shock(x,y,col,r=26){ G.rings.push({x,y,col,r,life:0.32,max:0.32}); }
+function popup(x,y,val,col){ G.popups.push({x,y,text:(val>=1000?fmt(val):String(val)),col,life:0.95}); if(G.popups.length>14) G.popups.shift(); }
+const _hit=hit;
+hit=function(tag,obj){
+  const s0=PS.score;
+  if(!G.tilted&&tag!=="flag"){ G.combo=G.now<G.comboUntil?G.combo+1:1; G.comboUntil=G.now+1800; if(G.combo===5||G.combo===10||G.combo===20){ note("combo"); say(`연쇄 반응 ×${G.combo}`,1100); } }
+  _hit(tag,obj);
+  let gain=PS.score-s0;
+  if(gain>0&&G.combo>=5&&!G.tilted){ const extra=Math.floor(gain*Math.min(1,Math.floor(G.combo/5)*0.25)); PS.score+=extra; gain+=extra; }
+  const hx=obj&&obj.x!=null?obj.x:(G.hb?G.hb.x:276), hy=obj&&obj.y!=null?obj.y:(G.hb?G.hb.y:500), col=TAGCOL[tag]||C.w;
+  if(gain>=1000&&tag!=="flag") popup(hx,hy-14,gain,gain>=100000?C.or5:col);
+  if(tag!=="flag") burst(hx,hy,col,tag==="bumper"||tag==="launchBumper"?8:12);
+  if(tag==="bumper"||tag==="launchBumper") shock(obj.x,obj.y,col,obj.r+10);
+  if(["ramp","hyper","blackhole","escape","nucleus"].includes(tag)) G.flashUntil=G.now+120;
+  if(tag==="bumper"){ G.bumperHits++; if(!G.virus&&G.bumperHits%25===0) spawnVirus(); }
+  if(PS.mission&&PS.mission.id==="virus"&&!G.virus) spawnVirus();
+};
+function spawnVirus(){ if(G.virus||G.mode==="over") return; G.virus={x:276,y:410,t:0,hp:3,flash:-1e9,born:G.now,cool:0}; say("바이러스 침입!\n세 번 맞혀 중화",1800,G.mode==="play"); note("virusBoss"); sfx("warn"); shock(276,410,C.gr4,60); }
+const VES_SPOTS=[[232,388],[322,388],[204,560],[350,560],[110,640],[442,660],[276,520],[120,120],[440,250],[56,430],[498,480]];
+function extraCollide(b){
+  const v=G.virus;
+  if(v){ const dx=b.x-v.x,dy=b.y-v.y,d=Math.hypot(dx,dy),md=b.r+14;
+    if(d<md&&d>0){ const nx=dx/d,ny=dy/d; b.x=v.x+nx*md; b.y=v.y+ny*md; const vn=b.vx*nx+b.vy*ny; if(vn<0){ b.vx-=1.5*vn*nx; b.vy-=1.5*vn*ny; } b.vx+=nx*260; b.vy+=ny*260;
+      if(G.now>v.cool){ v.cool=G.now+300; v.hp--; v.flash=G.now; sfx("bumper"); burst(v.x,v.y,C.gr4,10); shock(v.x,v.y,C.gr4,34);
+        if(v.hp<=0){ G.virus=null; G.virusNext=G.now+50000; if(!G.tilted){ add(250000); PS.virKills=(PS.virKills||0)+1; } popup(v.x,v.y-16,250000,C.or5); burst(v.x,v.y,C.gr5,40,260); burst(v.x,v.y,C.or4,20,200); shock(v.x,v.y,C.w,70); G.flashUntil=G.now+160; say("바이러스 중화\n250,000",1800,true); sfx("done"); }
+        else { add(25000); popup(v.x,v.y-16,25000,C.gr4); } } } }
+  for(let i=G.vesicles.length-1;i>=0;i--){ const s=G.vesicles[i]; if(Math.hypot(b.x-s.x,b.y-s.y)<b.r+9){ G.vesicles.splice(i,1); if(G.tilted) continue;
+      add(2500); PS.ves=(PS.ves||0)+1; if(PS.ves%3===0) addAtp(1); popup(s.x,s.y-12,2500,C.cy5); burst(s.x,s.y,C.cy5,14,140); shock(s.x,s.y,C.cy4,22); sfx("roll"); note("vesicle"); progress("vesicle"); } }
+}
+function updateFX(dt){
+  for(const p of G.particles){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=380*dt; p.vx*=0.985; p.life-=dt; }
+  G.particles=G.particles.filter(p=>p.life>0);
+  for(const r of G.rings) r.life-=dt; G.rings=G.rings.filter(r=>r.life>0);
+  for(const p of G.popups){ p.life-=dt; p.y-=38*dt; } G.popups=G.popups.filter(p=>p.life>0);
+  if(G.now>G.comboUntil&&G.combo) G.combo=0;
+  const v=G.virus; if(v){ v.t+=dt*TS; v.x=276+Math.cos(v.t*0.8)*70; v.y=412+Math.sin(v.t*1.6)*22; if(G.now-v.born>38000){ G.virus=null; G.virusNext=G.now+45000; burst(v.x,v.y,C.gr2,16); say("바이러스가 사라졌습니다",1200); } }
+  else if((G.mode==="play"||G.mode==="attract")&&G.now>G.virusNext) spawnVirus();
+  if((G.mode==="play"||G.mode==="attract")&&G.vesicles.length<3&&G.now>G.vesNext){ G.vesNext=G.now+6000+Math.random()*5000;
+    const free=VES_SPOTS.filter(([x,y])=>!G.vesicles.some(s=>Math.hypot(s.bx-x,s.by-y)<20)); const [x,y]=free[Math.floor(Math.random()*free.length)]; G.vesicles.push({bx:x,by:y,x,y,ph:Math.random()*6,born:G.now}); }
+  for(const s of G.vesicles){ s.x=s.bx+Math.sin(G.now/900+s.ph)*5; s.y=s.by+Math.cos(G.now/700+s.ph)*4; }
+  G.vesicles=G.vesicles.filter(s=>G.now-s.born<16000);
+  for(const b of G.balls) if(!b.held&&!b.path&&Math.hypot(b.vx,b.vy)>900&&Math.random()<0.5) G.particles.push({x:b.x,y:b.y,vx:0,vy:0,life:0.18,max:0.18,col:C.rd4,sz:1,trail:true});
+}
+
+/* ================= 화면 그리기 ================= */
+const lx=cv.getContext("2d"); lx.imageSmoothingEnabled=false;
+const glowCv=mk(150,250), gx=glowCv.getContext("2d"); let glows=[], BG=null;
+function glow(x,y,r,col,a=1){ glows.push([x/4,y/4,r/4,col,a]); }
+function flushGlow(){ gx.clearRect(0,0,150,250); gx.globalCompositeOperation="lighter";
+  for(const [x,y,r,col,a] of glows){ const gr=gx.createRadialGradient(x,y,0,x,y,r); gr.addColorStop(0,col); gr.addColorStop(1,"rgba(0,0,0,0)"); gx.globalAlpha=a; gx.fillStyle=gr; gx.fillRect(x-r,y-r,r*2,r*2); }
+  gx.globalAlpha=1; glows=[]; lx.save(); lx.globalCompositeOperation="lighter"; lx.globalAlpha=0.85; lx.imageSmoothingEnabled=false; lx.drawImage(glowCv,0,0,LW,LH); lx.restore(); }
+function resize(){ const mob=innerWidth<=860, availH=mob?innerHeight*0.8:innerHeight-36, availW=mob?innerWidth-24:innerWidth-410;
+  let s=Math.max(0.6,Math.min(availH/LH,availW/LW)); if(s>=2) s=Math.floor(s*2)/2; cv.style.width=Math.round(LW*s)+"px"; cv.style.height=Math.round(LH*s)+"px"; }
+addEventListener("resize",resize);
+function lamp(x,y,on,col,r=2,blink=false){ const X=Math.round(x/2),Y=Math.round(y/2),vis=on&&(!blink||Math.floor(G.now/220)%2===0);
+  if(vis){ disc(lx,X,Y,r,col); R(lx,X-1,Y-1,1,1,C.w); if(r>=2) R(lx,X,Y-1,1,1,mix(col,C.w,0.5)); glow(x,y,r*9,col,0.9); }
+  else { disc(lx,X,Y,r,mix(col,C.bg0,0.74)); R(lx,X-1,Y-1,1,1,mix(col,C.bg0,0.55)); } }
+const AMB=Array.from({length:12},(_,i)=>({x:40+((i*97)%220),y:80+((i*173)%360),k:i%3,ph:i*1.7}));
+function draw(){
+  if(!BG) BG=buildBG();
+  const t=G.now,p=PS,sx=Math.round(G.shake[0]),sy=Math.round(G.shake[1]); G.shake[0]*=0.75; G.shake[1]*=0.75;
+  R(lx,0,0,LW,LH,C.k); lx.drawImage(BG,sx,sy); lx.save(); lx.translate(sx,sy);
+  // 떠다니는 세포질 입자 (배경)
+  for(const a of AMB){ const x=Math.round(a.x+Math.sin(t/4000+a.ph)*8),y=Math.round(a.y+Math.cos(t/5200+a.ph)*6); if(!inTable(x*2,y*2)) continue;
+    if(a.k===0){ R(lx,x,y,1,1,"#3C4F8F"); R(lx,x+1,y+1,1,1,"#3C4F8F"); } else if(a.k===1) ring(lx,x,y,1.4,2.2,"#2E4A7A"); else { R(lx,x,y,4,2,"#3A3466"); R(lx,x+1,y,2,1,"#4A4580"); } }
+  // 섬모 (세포막 바깥)
+  for(let i=0;i<CILIA.length;i++){ const m=CILIA[i]; for(let k=1;k<=4;k++){ const sw=Math.sin(t/260+i*0.55)*k*0.45; const x=Math.round(m.x-m.nx*(3.6+k)+m.tx*sw),y=Math.round(m.y-m.ny*(3.6+k)+m.ty*sw); R(lx,x,y,1,1,k===4?C.or4:C.or2); } }
+  // 램프 안의 흐름 (적혈구 · 염색체)
+  for(const r of ramps){ const pts=half(r.path),n=pts.length-1; for(let k=0;k<7;k++){ const u=((((t*0.00011*(r.id==="launch"?1:1.2))+k/7)%1)+1)%1, f=u*n, i=Math.max(0,Math.min(n-1,Math.floor(f))), fr=f-i; const [ax,ay]=pts[i],[bx,by]=pts[Math.min(n,i+1)], x=lerp(ax,bx,fr), y=lerp(ay,by,fr);
+      if(r.id==="launch"){ disc(lx,x,y,1.6,C.rd3); R(lx,Math.round(x)-1,Math.round(y)-1,1,1,C.rd5); } else { const X=Math.round(x),Y=Math.round(y); R(lx,X-1,Y-1,1,1,C.pk5); R(lx,X+1,Y-1,1,1,C.pk5); R(lx,X,Y,1,1,C.pk6); R(lx,X-1,Y+1,1,1,C.pk5); R(lx,X+1,Y+1,1,1,C.pk5); } } }
+  // 샷 안내 화살표
+  const arrowOn={orbitL:true,launch:!!p.missionSel||!!(p.mission&&p.mission.steps[p.mstep].tag==="ramp"),center:p.wellLit,hyper:p.jackpot||p.hyper>=2,orbitR:true};
+  for(const a of ARROWS){ const acol=a.key==="launch"?C.or5:a.key==="hyper"?C.pk5:a.key==="center"?C.gr4:C.bl4;
+    for(let k=0;k<3;k++){ const lit=arrowOn[a.key]&&Math.floor(t/130)%4===(2-k); const cx=a.x/2-a.dx*k*5,cy=a.y/2-a.dy*k*5,px=-a.dy,py=a.dx, col=lit?acol:mix(acol,C.bg0,0.75);
+      for(let s=-3;s<=3;s++){ const ox=Math.round(cx+px*s-a.dx*Math.abs(s)*0.9),oy=Math.round(cy+py*s-a.dy*Math.abs(s)*0.9); R(lx,ox,oy,1,1,col); R(lx,ox-Math.round(a.dx),oy-Math.round(a.dy),1,1,lit?mix(acol,C.bg0,0.4):mix(acol,C.bg0,0.85)); }
+      if(lit) glow(cx*2,cy*2,14,acol,0.7); } }
+  // 표시등
+  L.rank.forEach(([x,y],i)=>lamp(x,y,i<=p.rank,C.or5,2,i===p.rank&&p.rank<8));
+  const prog=p.mission?Math.round(8*(p.mstep+p.mcount/p.mission.steps[p.mstep].n)/p.mission.steps.length):0;
+  L.progress.forEach(([x,y],i)=>lamp(x,y,i<prog,C.gr4,1.5));
+  L.hyper.forEach(([x,y],i)=>lamp(x,y,i<p.hyper,C.pk5,2,G.multiball&&p.jackpot));
+  L.launchLanes.forEach(([x,y],i)=>lamp(x,y,p.launchLanes[i],C.rd4,2));
+  L.deploy.forEach(([x,y],i)=>lamp(x,y,p.deployLit[i],C.bl4,2,p.deployLit.every(Boolean)));
+  L.bumpInc.forEach(([x,y],i)=>lamp(x,y,i<p.bumpLv,C.or6,1.5));
+  L.multLights.forEach(([x,y],i)=>lamp(x,y,i<p.mult,C.pk6,1.5));
+  L.medals.forEach(([x,y],i)=>lamp(x,y,p.medalLit[i],C.or5,1.5));
+  L.atpBar.forEach(([x,y],i)=>{ const X=Math.round(x/2),Y=Math.round(y/2),on=i<p.atp,col=p.atp<=2?C.rd4:C.gr4; R(lx,X,Y-2,6,4,on?col:mix(col,C.bg0,0.78)); if(on){ R(lx,X,Y-2,6,1,mix(col,C.w,0.6)); glow(x+6,y,10,col,0.5);} });
+  lamp(...L.extraL,p.extraLit,C.w,2.5,true); lamp(...L.extraR,p.extraLit,C.w,2.5,true);
+  lamp(...L.replay,p.replay,C.gr4,2.5,true); lamp(...L.redeploy,t<G.saveUntil,C.bl4,2.5,G.saveUntil-t<3000);
+  lamp(...L.tilt,G.tilted||G.warned,C.rd4,2.5,G.warned&&!G.tilted); lamp(...L.maelstrom,p.stormLit,C.pk4,3,true);
+  lamp(...L.warpFwd,p.warpFwd,C.gr4,2,p.timeWarp&&p.warpFwd); lamp(...L.warpBack,!p.warpFwd,C.rd4,2,p.timeWarp&&!p.warpFwd);
+  lamp(...L.accept,!!p.missionSel,C.or5,2.5,true);
+  // 세포핵 중심: 회전하는 DNA 이중나선
+  { const cx=WELL.x/2,cy=WELL.y/2; for(let i=-11;i<=11;i++){ const ph=t/420+i*0.42, s1=Math.sin(ph),c1=Math.cos(ph), x1=Math.round(cx+s1*7), x2=Math.round(cx-s1*7), y=Math.round(cy+i);
+      if(i%2===0){ for(let x=Math.min(x1,x2)+1;x<Math.max(x1,x2);x++) R(lx,x,y,1,1,(x+i)%2?C.bl5:C.or5); }
+      R(lx,(c1>0?x2:x1)-1,y,2,1,c1>0?C.gr3:C.pk3); R(lx,c1>0?x1:x2,y,2,1,c1>0?C.gr5:C.pk5); }
+    glow(WELL.x,WELL.y,p.wellLit?70:44,p.wellLit?C.gr4:C.bl3,p.wellLit?0.9+0.3*Math.sin(t/120):0.5);
+    if(p.wellLit) ring(lx,cx,cy,8,9,Math.floor(t/150)%2?C.gr4:C.w); }
+  // 구멍 테두리
+  for(const s of sinks){ const x=s.x/2,y=s.y/2,r=s.r/2+1;
+    if(s.id==="black"){ ring(lx,x,y,r+0.5,r+1.6,C.vi3); for(let i=0;i<6;i++){ const a=t/380+i*1.047,rr=r-1-((t/90+i*3)%4); R(lx,Math.round(x+Math.cos(a)*rr),Math.round(y+Math.sin(a)*rr),1,1,i%2?C.vi4:C.pk4);} glow(s.x,s.y,24,C.vi3,0.5); continue; }
+    const lit=s.id.startsWith("worm")?p.worm[s.id]:s.id==="deploy"?p.deployLit.every(Boolean):s.id==="escape";
+    ring(lx,x,y,r+0.5,r+1.6,lit&&Math.floor(t/180)%2?C.w:s.col);
+    if(s.id.startsWith("worm")) for(let i=0;i<3;i++){ const a=t/300*(i%2?1:-1)+i*2.1; R(lx,Math.round(x+Math.cos(a)*(r+3.2)),Math.round(y+Math.sin(a)*(r+3.2)),1,1,s.col); }
+    if(s.id==="escape") for(let i=0;i<3;i++){ const a=t/150+i*2.094; line(lx,x,y,x+Math.cos(a)*(r-1.5),y+Math.sin(a)*(r-1.5),C.gr3); }
+    if(lit) glow(s.x,s.y,30,s.col,0.75); }
+  // 롤오버
+  for(const ro of rollovers){ let on=false,col=C.w,blink=false;
+    if(ro.tag==="reentry"){ on=p.reentry[ro.idx]||p.worm[["wormY","wormR","wormG"][ro.idx]]; col=ro.col; blink=G.mode==="play"&&G.skillLane===ro.idx&&t-G.ballServed<6000; }
+    else if(ro.tag==="lane"){ on=p.lanes[ro.idx]; col=C.bl4; } else { on=true; col=p.warpFwd?C.gr4:C.rd4; }
+    const x=Math.round(ro.x/2),y=Math.round(ro.y/2),fl=t-(ro.flash||-1e9)<200, c2=fl?C.w:(on?col:mix(col,C.bg0,0.7));
+    for(let s=-2;s<=2;s++){ R(lx,x+s,y-2+Math.abs(s),1,1,c2); R(lx,x+s,y+1+Math.abs(s),1,1,c2); }
+    if(on||fl) glow(ro.x,ro.y,16,col,0.6); if(blink&&Math.floor(t/200)%2){ R(lx,x-1,y-7,3,2,C.w); glow(ro.x,ro.y-12,14,C.w,0.9); } }
+  // 소포 (수집 아이템)
+  for(const s of G.vesicles){ const age=(t-s.born)/1000, fade=age>13&&Math.floor(t/120)%2; if(fade) continue; const pop=Math.min(1,age*4); if(pop<1&&Math.floor(age*20)%2) continue;
+    lx.drawImage(SPR.ves,Math.round(s.x/2)-5,Math.round(s.y/2)-5); glow(s.x,s.y,18,C.cy4,0.55); }
+  // 범퍼 (그림자 → 본체)
+  for(const bp of bumpers){ const r=bp.r/2; disc(lx,bp.x/2+2,bp.y/2+3,r,SHADOW); }
+  for(const bp of bumpers){ const fl=t-bp.flash<110?1:0, fr=Math.floor(t/140+bp.x)%8, s=bp.kind==="enz"?SPR.enz[fl][Math.floor(t/120+bp.y)%6]:(bp.r>20?SPR.wbc[fl][fr]:SPR.wbcS[fl][fr]);
+    lx.drawImage(s,Math.round(bp.x/2-s.width/2),Math.round(bp.y/2-s.height/2)); if(fl) glow(bp.x,bp.y,bp.r*2.6,bp.kind==="enz"?C.cy4:C.pk5,1); }
+  // 기둥
+  for(const c of posts){ const x=c.x/2,y=c.y/2,r=c.r/2; disc(lx,x+1,y+2,r,SHADOW); const fl=t-(c.flash||-1e9)<120;
+    shadeBall(lx,Math.round(x),Math.round(y),r,fl?[C.pk3,C.pk6,C.w]:c.kick?RAMP.pk:RAMP.vi,{spec:false}); if(fl) glow(c.x,c.y,26,C.pk5,0.9); }
+  if(t<G.saveUntil){ shadeBall(lx,138,484,3.6,RAMP.bl,{spec:false}); glow(centerPost.x,centerPost.y,22,C.bl4,0.8); }
+  // 표적
+  const tc={atp:RAMP.gr,mission:RAMP.or,medal:[C.or2,C.or3,C.or4,C.or5,C.or6],booster:RAMP.cy,mult:RAMP.or,warp:RAMP.pk};
+  for(const tg of targets){ let lit=false;
+    if(tg.tag==="atp") lit=p.atpLit[tg.idx]; else if(tg.tag==="missionTarget") lit=p.missionLit[tg.idx]; else if(tg.tag==="medal") lit=p.medalLit[tg.idx];
+    else if(tg.tag==="booster") lit=p.booster[tg.idx]; else if(tg.tag==="warpTarget") lit=p.timeWarp; else if(tg.tag==="multTarget") lit=p.multHits%2===1;
+    const fl=t-tg.flash<150, rp=tc[tg.col], ax=tg.ax/2,ay=tg.ay/2,bx=tg.bx/2,by=tg.by/2;
+    capsule(lx,ax+1,ay+2,bx+1,by+2,2,2,SHADOW); capsule(lx,ax,ay,bx,by,2.7,2.7,rp[0]); capsule(lx,ax,ay,bx,by,1.9,1.9,fl?C.w:lit?rp[3]:rp[1]); line(lx,ax-0.6,ay-0.6,bx-0.6,by-0.6,fl?C.w:lit?rp[4]||C.w:rp[2]);
+    if(lit||fl) glow(tg.x,tg.y,24,rp[3],0.8); }
+  // 병원체 표적 (바이러스 캡시드)
+  for(const d of drops){ const ax=d.ax/2,ay=d.ay/2,bx=d.bx/2,by=d.by/2,len=Math.hypot(bx-ax,by-ay),sd=d.bank==="L"?-1:1,nx=sd*-(by-ay)/len,ny=sd*(bx-ax)/len;
+    if(d.up){ capsule(lx,ax+1,ay+2,bx+1,by+2,2.4,2.4,SHADOW); capsule(lx,ax,ay,bx,by,2.9,2.9,C.rd1); capsule(lx,ax,ay,bx,by,2,2,t-d.flash<150?C.w:C.rd2); line(lx,ax-0.5,ay-0.5,bx-0.5,by-0.5,C.rd4);
+      for(let s=0.1;s<=0.95;s+=0.28){ const x=ax+(bx-ax)*s,y=ay+(by-ay)*s; R(lx,Math.round(x+nx*3.4),Math.round(y+ny*3.4),1,1,C.or4); R(lx,Math.round(x+nx*4.6),Math.round(y+ny*4.6),1,1,C.or6); } }
+    else { line(lx,ax,ay,bx,by,C.rd1); } }
+  // 편모 스피너
+  for(const s of spinners){ const ax=s.ax/2,ay=s.ay/2,bx=s.bx/2,len=bx-ax,c=Math.cos(s.ang),fast=s.spin>6;
+    for(let i=0;i<=len;i++){ const yy=ay+Math.sin(i*0.9+s.ang*2)*2.4*c; if(fast) R(lx,Math.round(ax+i),Math.round(ay-Math.sin(i*0.9+s.ang*2+1.5)*2),1,1,C.or2); R(lx,Math.round(ax+i),Math.round(yy),1,1,i%3?C.or4:C.or5); }
+    shadeBall(lx,Math.round(ax),Math.round(ay),2,RAMP.vi,{spec:false}); shadeBall(lx,Math.round(bx),Math.round(ay),2,RAMP.vi,{spec:false}); if(fast) glow((s.ax+s.bx)/2,s.ay,22,C.or4,0.6); }
+  // 떠다니는 바이러스
+  if(G.virus){ const v=G.virus,fl=t-v.flash<140?1:0,s=SPR.virus[fl][Math.floor(t/90)%8]; disc(lx,v.x/2+2,v.y/2+4,6,SHADOW); lx.drawImage(s,Math.round(v.x/2-12),Math.round(v.y/2-12));
+    for(let i=0;i<3;i++) R(lx,Math.round(v.x/2)-4+i*3,Math.round(v.y/2)-15,2,2,i<v.hp?C.gr4:C.bg3); glow(v.x,v.y,40,C.gr4,0.7+(fl?0.6:0)); }
+  // 발사대 (용수철)
+  const ply=Math.round((972-G.plunge*36)/2); shadeBall(lx,271,ply+1,3.5,RAMP.or,{spec:false}); R(lx,265,ply,13,3,C.or3); R(lx,265,ply,13,1,C.or5);
+  for(let y=ply+4,k=0;y<499;y+=2,k++) R(lx,k%2?266:268,y,8,1,k%2?C.vi3:C.vi2);
+  if(G.plunging){ const hgt=Math.round(G.plunge*60); R(lx,262,500-hgt,1,hgt,C.pk4); glow(526,1000-hgt,20,C.pk4,0.8); }
+  // 플리퍼
+  for(const f of flippers){ const ax=f.px/2,ay=f.py/2,bx=(f.px+Math.cos(f.a)*f.len)/2,by=(f.py+Math.sin(f.a)*f.len)/2, dim=G.tilted;
+    capsule(lx,ax+2,ay+3,bx+2,by+3,6,3,SHADOW); capsule(lx,ax,ay,bx,by,6.6,3.6,C.vi1); capsule(lx,ax,ay,bx,by,5.6,2.6,dim?C.vi2:C.vi3);
+    capsule(lx,ax-0.4,ay-1,bx-0.4,by-1,4.2,1.6,dim?C.vi3:C.vi4); line(lx,ax-0.5,ay-2.6,bx-0.3,by-1.6,dim?C.vi3:C.vi5); line(lx,ax+0.6,ay+1.4,bx+0.4,by+0.8,C.pk4);
+    shadeBall(lx,Math.round(ax),Math.round(ay),2.2,RAMP.or,{spec:false}); }
+  // 충격파 · 파티클
+  for(const r of G.rings){ const k=1-r.life/r.max; ring(lx,r.x/2,r.y/2,(r.r*k)/2,(r.r*k)/2+1,r.col,(X,Y)=>((X+Y)&1)===0||k<0.5); }
+  for(const q of G.particles){ if(q.life/q.max<0.35&&(Math.floor(q.x+q.y)&1)) continue; R(lx,Math.round(q.x/2),Math.round(q.y/2),q.sz,q.sz,q.col); if(!q.trail&&q.sz>1) glow(q.x,q.y,8,q.col,0.5); }
+  // 구슬
+  for(const b of G.balls){ if(b.held&&Math.floor(t/90)%2) continue; const s=b.path?SPR.ballBig:SPR.ball, X=Math.round(b.x/2-s.width/2), Y=Math.round(b.y/2-s.height/2);
+    if(!b.path) disc(lx,b.x/2+2,b.y/2+3,4.2,SHADOW); else disc(lx,b.x/2+4,b.y/2+7,5,SHADOW);
+    lx.drawImage(s,X,Y); glow(b.x,b.y,b.path?30:22,C.rd4,0.55); }
+  // 점수 팝업
+  for(const q of G.popups){ if(q.life<0.25&&Math.floor(t/60)%2) continue; const w=glyphsW(q.text); glyphs(lx,q.text,q.x/2-w/2,q.y/2,q.col,C.k); }
+  lx.restore();
+  flushGlow();
+  if(t<G.flashUntil){ lx.fillStyle="rgba(255,240,220,0.12)"; lx.fillRect(0,0,LW,LH); }
+  // 토스트 (중요 메시지)
+  if(G.toast&&t<G.toast.until&&G.mode==="play"){ const lines=G.toast.text.split("\n").slice(0,2).map(s=>textBits(s,11,700)); const w=Math.max(...lines.map(l=>l.w))+16, h=lines.length*14+8, k=Math.min(1,(t-G.toast.start)/120);
+    const x=Math.round(150-w/2), y=Math.round(352-h/2+(1-k)*8);
+    for(let yy=0;yy<h;yy++) for(let xx=0;xx<w;xx++) if(((xx+yy)&1)===0||yy===0||yy===h-1) R(lx,x+xx,y+yy,1,1,yy===0||yy===h-1?C.or4:C.k);
+    lines.forEach((l,i)=>drawBits(lx,l,150-l.w/2,y+4+i*14,i===0?C.or5:C.vi5,C.k)); }
+  // 대기 · 일시정지 화면
+  if(G.paused){ for(let y=44;y<112;y++) for(let x=26;x<274;x++) if(((x+y)&1)===0) R(lx,x,y,1,1,C.k);
+    R(lx,26,44,248,1,C.or4); R(lx,26,111,248,1,C.or4);
+    const big=G.paused?textBits("PAUSE",22,700,'"Pixelify Sans",monospace'):G.mode==="over"?textBits("GAME OVER",22,700,'"Pixelify Sans",monospace'):textBits("CELL CADET",22,700,'"Pixelify Sans",monospace');
+    drawBits(lx,big,150-big.w/2,50,v=>v<0.35?C.or6:v<0.6?C.or5:v<0.8?C.or4:C.or3,C.k,C.pk2);
+    const sub=textBits(G.paused?"F3 키로 계속":"세포 탐사대 · 생명과학 핀볼",11,700); drawBits(lx,sub,150-sub.w/2,77,C.vi5,C.k);
+    if(!G.paused&&Math.floor(t/500)%2===0){ const pr=textBits("F2 키 또는 새 게임 버튼",10,700); drawBits(lx,pr,150-pr.w/2,94,C.pk5,C.k); } }
+}
+
+/* ================= 데모 · 루프 ================= */
+function demoAI(){ if(G.mode!=="attract") return; if(!G.balls.length) G.balls.push(newBall()); let l=false,r=false;
+  for(const b of G.balls){ if(b.inLane&&b.x>522&&b.y>930&&Math.abs(b.vy)<5&&G.now>G.demoNext){ b.vy=-(1650+Math.random()*700); G.demoNext=G.now+2500; }
+    if(b.vy>0&&b.y>840&&b.y<915){ if(b.x<276&&b.x>140) l=true; if(b.x>=276&&b.x<420) r=true; } }
+  G.flipL=l; G.flipR=r; }
+let last=performance.now();
+function frame(now){ requestAnimationFrame(frame); try{ step(now); }catch(err){ console.error(err); } }
+function step(now){ const dt=Math.max(0,Math.min(0.033,((now||performance.now())-last)/1000)); last=Math.max(last,now||0);
+  if(!G.paused){ G.now+=dt*1000; demoAI(); if(G.plunging) G.plunge=Math.min(1,G.plunge+dt*1.1); physics(dt); updateBalls(dt);
+    G.tilt=Math.max(0,G.tilt-dt*0.45); if(G.tilt<1) G.warned=false;
+    if(G.mode==="play"&&PS.mission&&G.now-PS.atpClock>7000){ PS.atpClock=G.now; PS.atp=Math.max(0,PS.atp-1); if(PS.atp===2) say("경고\nATP가 거의 없음",1500); if(PS.atp===0) abortMission("ATP 고갈"); } }
+  if(!G.paused) updateFX(dt); try{ draw(); drawArcade(); }catch(err){ console.error(err); lx.restore(); } updatePanel(); }
+/* ================= 오락실 규칙: 코인 · 크레딧 · 리플레이 · 매치 · 이니셜 ================= */
+Object.assign(G,{credits:0,saveGranted:false,match:null,ini:null});
+SFX.coin=()=>{ tone(1318,0.07,"square",0.14); tone(1760,0.32,"square",0.14,1,0.07); };
+SFX.knock=()=>{ tone(90,0.25,"square",0.45,0.5); hiss(0.12,0.3,400); };
+const WALLET_MAX=5, WALLET_REGEN=4*60*1000;
+let wallet={coins:WALLET_MAX,t:Date.now(),credits:0};
+try{ const w=JSON.parse(localStorage.getItem("cellCadetWallet")||"null"); if(w&&typeof w.coins==="number") wallet=w; }catch(e){}
+G.credits=Math.min(9,wallet.credits||0);
+function saveWallet(){ wallet.credits=G.credits; try{ localStorage.setItem("cellCadetWallet",JSON.stringify(wallet)); }catch(e){} }
+function regenWallet(){ const now=Date.now(); if(wallet.coins>=WALLET_MAX){ wallet.t=now; return; }
+  const n=Math.floor((now-wallet.t)/WALLET_REGEN); if(n>0){ wallet.coins=Math.min(WALLET_MAX,wallet.coins+n); wallet.t=wallet.coins>=WALLET_MAX?now:wallet.t+n*WALLET_REGEN; saveWallet(); } }
+function nextCoinIn(){ const ms=Math.max(0,WALLET_REGEN-(Date.now()-wallet.t)); return `${Math.floor(ms/60000)}:${String(Math.floor(ms/1000)%60).padStart(2,"0")}`; }
+function insertCoin(){ audio(); regenWallet(); if(G.mode==="initials") return;
+  if(wallet.coins<=0){ say(`코인이 없습니다\n다음 코인까지 ${nextCoinIn()}`,2200,true); sfx("bad"); return; }
+  if(G.credits>=9){ say("크레딧이 가득 찼습니다",1400,true); return; }
+  wallet.coins--; G.credits++; saveWallet(); sfx("coin"); say(`코인 투입\n크레딧 ${G.credits}`,1500,true); }
+function addCredit(why){ G.credits=Math.min(9,G.credits+1); saveWallet(); sfx("knock"); say(`${why}\n크레딧 +1`,2200,true); }
+const _newGame=newGame;
+newGame=function(){ audio();
+  if(G.mode==="initials"||G.mode==="match") return;
+  if(G.mode==="play"){ // 첫 구슬을 쏘기 전에는 연구원 추가 참가 (오락실 방식)
+    if(G.cur===0&&PS.ball===1&&PS.score===0&&G.np<4){
+      if(G.credits<1){ say("크레딧 부족\nC 키로 코인 투입",1600,true); sfx("bad"); return; }
+      G.credits--; saveWallet(); G.np++; const np=freshPlayer(G.np-1); np.nextReplay=3000000; G.players.push(np); $("bPlayers").value=String(G.np); sfx("coin"); say(`연구원 ${G.np} 참가`,1500,true); }
+    return; }
+  const need=+$("bPlayers").value;
+  if(G.credits<need){ say(need>1?`크레딧 부족\n${need}명은 크레딧 ${need}개 필요`:"INSERT COIN\nC 키로 코인 투입",2000,true); sfx("bad"); return; }
+  G.credits-=need; saveWallet(); G.saveGranted=false; G.match=null; G.ini=null; _newGame();
+  G.players.forEach(p=>{ p.nextReplay=3000000; }); };
+$("bNew").onclick=()=>newGame();
+serve=function(redeploy){ G.balls=[newBall()]; G.saveUntil=0; if(!redeploy) G.saveGranted=false; G.skillLane=Math.floor(Math.random()*3); G.skillUntil=0; G.ballServed=G.now; };
+lightExtra=function(){ const p=PS; if(p.extraLit) return;
+  if((p.extraTotal||0)>=2){ add(250000); say("추가 구슬 한도 도달\n250,000",1500); return; }
+  p.extraTotal=(p.extraTotal||0)+1; p.extraLit=true; say("추가 구슬 기회\n귀환 레인 통과",1800); };
+function arcadeTick(){
+  if(G.mode==="play"&&!G.tilted){ const p=PS; if(p.nextReplay&&p.score>=p.nextReplay){ p.nextReplay=p.nextReplay<=3e6?7e6:p.nextReplay<=7e6?13e6:p.nextReplay+6e6; addCredit("리플레이 점수 달성"); } }
+  if(G.mode==="match"&&G.match){ const m=G.match;
+    if(!m.done&&G.now-m.start>3200){ m.done=true; m.end=G.now+2200; if(m.winners.length) m.winners.forEach(i=>addCredit(`매치! 연구원 ${i+1}`)); else sfx("bad"); }
+    if(m.done&&G.now>m.end) startInitials(); } }
+const _updFX=updateFX; updateFX=function(dt){ _updFX(dt); arcadeTick(); };
+gameOver=function(){ G.mode="match"; G.balls=[]; G.flipL=G.flipR=false; sfx("drain"); say("게임 끝\n매치 추첨",2500,true);
+  const num=Math.floor(Math.random()*10); G.match={num,start:G.now,done:false,winners:G.players.filter(p=>Math.floor(p.score/1000)%10===num).map(p=>p.idx)}; };
+function startInitials(){ G.ini={queue:G.players.map((p,i)=>({p,i})).sort((a,b)=>b.p.score-a.p.score),cur:null}; nextInitials(); }
+function nextInitials(){ while(G.ini&&G.ini.queue.length){ const it=G.ini.queue.shift(), l=loadHS();
+    if(it.p.score>0&&(l.length<5||it.p.score>l[l.length-1].score)){ G.ini.cur={it,letters:[0,0,0],pos:0}; G.mode="initials"; sfx("rank"); say("고득점!\n이니셜 3글자 입력",2200,true); return; } }
+  G.mode="attract"; G.ini=null; G.match=null; PS=freshPlayer(0); G.balls=[newBall()]; hsCache.t=0; }
+const CH="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-";
+function iniMove(d){ const c=G.ini.cur; c.letters[c.pos]=(c.letters[c.pos]+d+CH.length)%CH.length; sfx("roll"); }
+function iniOK(){ const c=G.ini.cur; sfx("target"); if(c.pos<2){ c.pos++; return; }
+  const l=loadHS(); l.push({name:c.letters.map(i=>CH[i]).join(""),score:c.it.p.score,rank:c.it.p.rank}); l.sort((a,b)=>b.score-a.score); saveHS(l.slice(0,5)); sfx("done"); hsCache.t=0; nextInitials(); }
+function iniBack(){ const c=G.ini.cur; if(c.pos>0){ c.pos--; sfx("roll"); } }
+addEventListener("keydown",e=>{ if(document.querySelector("dialog[open]")) return; const c=e.code;
+  if(G.mode!=="initials"){
+    if(c==="KeyC"||c==="Digit5"){ e.preventDefault(); e.stopImmediatePropagation(); if(!e.repeat) insertCoin(); return; }
+    if(c==="Digit1"){ e.preventDefault(); e.stopImmediatePropagation(); if(!e.repeat) newGame(); return; }
+    return; }
+  if(!G.ini||!G.ini.cur) return; e.preventDefault(); e.stopImmediatePropagation(); audio();
+  if(["KeyZ","ShiftLeft","ArrowLeft","ArrowDown"].includes(c)) iniMove(-1);
+  else if(["Slash","ShiftRight","ArrowRight","ArrowUp"].includes(c)) iniMove(1);
+  else if(e.repeat) return;
+  else if(c==="Space"||c==="Enter") iniOK();
+  else if(c==="Backspace") iniBack();
+  else if(/^Key[A-Y]$|^Digit\d$/.test(c)){ G.ini.cur.letters[G.ini.cur.pos]=CH.indexOf(c.startsWith("Key")?c.slice(3):c.slice(5)); iniOK(); } },{capture:true});
+for(const [id,fn] of [["tL",()=>iniMove(-1)],["tR",()=>iniMove(1)],["tP",()=>iniOK()]]) $(id).addEventListener("pointerdown",e=>{ if(G.mode==="initials"&&G.ini&&G.ini.cur){ e.preventDefault(); e.stopImmediatePropagation(); audio(); fn(); } },{capture:true});
+cv.addEventListener("pointerdown",e=>{ if(G.mode!=="initials"||!G.ini||!G.ini.cur) return; const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width; audio(); if(x<0.33) iniMove(-1); else if(x>0.67) iniMove(1); else iniOK(); });
+$("bCoin").onclick=insertCoin; $("tC").addEventListener("pointerdown",e=>{ e.preventDefault(); insertCoin(); });
+let lastRegen=0;
+const _updPanel=updatePanel; updatePanel=function(){ _updPanel();
+  if(Date.now()-lastRegen>1000){ lastRegen=Date.now(); regenWallet(); }
+  setT("cChip",`CREDIT ${G.credits}`); setT("bCoin",wallet.coins>0?`코인 넣기 (C) · 지갑 ${wallet.coins}/${WALLET_MAX}`:`코인 없음 · ${nextCoinIn()} 후 충전`); };
+const hsCache={t:0,list:[]};
+function hsList(){ if(Date.now()-hsCache.t>2000){ hsCache.list=loadHS(); hsCache.t=Date.now(); } return hsCache.list; }
+function drawArcade(){
+  const t=G.now, PX='"Pixelify Sans",monospace', gradO=v=>v<0.35?C.or6:v<0.6?C.or5:v<0.8?C.or4:C.or3;
+  const band=(y0,y1)=>{ for(let y=y0;y<y1;y++) for(let x=20;x<280;x++) if(((x+y)&1)===0) R(lx,x,y,1,1,C.k); R(lx,20,y0,260,1,C.or4); R(lx,20,y1-1,260,1,C.or4); };
+  const ct=(s,size,y,col,fam)=>{ const tb=textBits(s,size,700,fam); drawBits(lx,tb,150-tb.w/2,y,col,C.k); return tb; };
+  if(G.mode==="attract"){
+    if(Math.floor(t/6000)%2===0){ band(40,126); ct("CELL CADET",22,46,gradO,PX); ct("세포 탐사대 · 생명과학 핀볼",11,73,C.vi5);
+      if(Math.floor(t/450)%2===0) ct(G.credits>0?"PRESS START":"INSERT COIN",14,89,G.credits>0?C.gr4:C.pk5,PX);
+      ct(G.credits>0?"F2 또는 1 키로 시작":"C 키로 코인 투입",10,109,C.vi4); }
+    else { band(40,178); ct("HIGH SCORES",16,46,gradO,PX); const l=hsList(); if(!l.length) ct("아직 기록이 없습니다",11,96,C.vi4);
+      l.slice(0,5).forEach((r,i)=>{ const y=70+i*20, col=i===0?C.or5:C.vi5, a=textBits(`${i+1}  ${r.name}`,12,700,PX), s=textBits(fmt(r.score),12,700,PX); drawBits(lx,a,46,y,col,C.k); drawBits(lx,s,254-s.w,y,col,C.k); }); }
+    const cr=textBits(`CREDIT ${G.credits}`,10,700,PX); drawBits(lx,cr,150-cr.w/2,486,G.credits>0?C.gr4:C.vi4,C.k); }
+  else if(G.mode==="match"&&G.match){ const m=G.match; band(150,262); ct("GAME OVER",20,156,gradO,PX); ct("MATCH",12,182,C.vi5,PX);
+    const n=m.done?m.num:Math.floor(t/60)%10; ct(`${n}0`,28,196,m.done&&m.winners.length?C.gr4:C.or5,PX);
+    ct(G.players.map(p=>`P${p.idx+1}·${Math.floor(p.score/1000)%10}0`).join("   "),10,240,C.vi4,PX); }
+  else if(G.mode==="initials"&&G.ini&&G.ini.cur){ const c=G.ini.cur; band(140,300); ct("NEW HIGH SCORE",15,148,gradO,PX); ct(`연구원 ${c.it.i+1} · ${fmt(c.it.p.score)}`,11,172,C.vi5);
+    for(let k=0;k<3;k++){ const x=150+(k-1)*40, tb=textBits(CH[c.letters[k]],28,700,PX), cur=k===c.pos;
+      R(lx,x-14,196,28,34,cur?"#1E2A55":C.bg1); R(lx,x-14,196,28,1,cur?C.or4:C.bg3); drawBits(lx,tb,x-tb.w/2,198,cur?C.or5:k<c.pos?C.gr4:C.vi4,C.k);
+      if(cur&&Math.floor(t/300)%2===0) R(lx,x-10,227,20,2,C.or5); }
+    ct("◀ ▶ 글자 고르기 · 발사 키로 확정",10,244,C.vi5); ct("키보드로 바로 입력 · Backspace 이전 칸",10,262,C.vi4); ct(`${c.pos+1} / 3`,10,280,C.or4,PX); }
+}
+document.querySelector("#glossTable tbody").insertAdjacentHTML("beforeend",[
+ ["오락실","—","코인과 크레딧","C 키(또는 5)로 코인을 넣으면 크레딧 1개. 연구원 1명당 크레딧 1개로 3구 플레이. 지갑 코인은 5개까지, 4분마다 1개씩 다시 찹니다."],
+ ["오락실","—","리플레이","한 게임에서 300만·700만·1300만 점(이후 600만 점마다)을 넘으면 크레딧 +1."],
+ ["오락실","—","매치","게임이 끝나면 0~9 숫자를 추첨해, 점수의 천 단위 숫자와 같으면 크레딧 +1."],
+ ["오락실","—","볼 세이브 · 추가 구슬 제한","재배치는 구슬마다 1번(8초), 추가 구슬은 한 게임에 2개까지, 다시 쏘기는 한 게임에 1번."],
+ ["오락실","—","이니셜 입력","고득점이면 3글자 이니셜을 플리퍼 키로 고르고 발사 키로 확정합니다."]].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join(""));
+
+resize(); G.balls=[newBall()];
+if(document.fonts) document.fonts.ready.then(()=>{ tbCache.clear(); drawLogo(); });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
