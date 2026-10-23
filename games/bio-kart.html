@@ -1426,7 +1426,7 @@ function chunkAdd(list,make){const by=new Map();
 function clearStatic(){
   if(STAT)scene.remove(STAT);
   for(const o of DISPOSE){if(o.dispose)o.dispose();}DISPOSE.length=0;
-  for(const k of KOBJ)scene.remove(k.root);KOBJ.length=0;
+  for(const k of KOBJ){scene.remove(k.root);if(k.sonicRing)k.sonicRing.material.dispose();}KOBJ.length=0;
   for(const f of FX)if(f.m){scene.remove(f.m);f.m.material.dispose();}FX.length=0;FLASHES.length=0;PARTS.length=0;SKIDS.length=0;
 }
 
@@ -1585,7 +1585,7 @@ function buildAssets(R){
     A.pads.push({m,t,mat});}
   // 동적 오브젝트
   if(!BOXMAT)BOXMAT=new THREE.MeshPhongMaterial({map:boxTex(),shininess:90,emissive:0x18344a});
-  const boxSphereG=new THREE.OctahedronGeometry(6.5,1);
+  const boxSphereG=track3(new THREE.OctahedronGeometry(6.5,1));
   A.boxes=R.boxes.map(b=>{const m=new THREE.Mesh(boxSphereG,BOXMAT);m.castShadow=true;STAT.add(m);return m;});
   A.obs=R.obs.map(o=>{const m=new THREE.Mesh(decoGeo(o.spr,th.dc[0],th.dc[1]),VMAT);m.scale.setScalar(o.r*2.6);m.castShadow=true;STAT.add(m);return m;});
   A.pool={gi:[],proj:[]};
@@ -1595,6 +1595,7 @@ function buildAssets(R){
 
 /* ----- 카트 오브젝트 (회전 휠 + 부스터 변신 파츠 + 제트 플레임 + 스키드마크) ----- */
 const KOBJ=[];
+const SONICG=new THREE.TorusGeometry(6.5,0.28,8,24);
 const SHIELDG=new THREE.IcosahedronGeometry(13.5,2),CAGEG=new THREE.CylinderGeometry(12,12,20,16,1,true);
 const SHIELDM=new THREE.MeshPhongMaterial({color:0x4cc9f0,transparent:true,opacity:0.32,depthWrite:false,emissive:0x1b6c8a,shininess:100});
 const CAGEM=new THREE.MeshLambertMaterial({color:0xe9f5ff,transparent:true,opacity:0.48,depthWrite:false});
@@ -1632,7 +1633,7 @@ function makeKartObj(k){
     body.add(f);return f;
   });
   // 부스터 소닉 링 이펙트
-  const sonicRing=new THREE.Mesh(new THREE.TorusGeometry(6.5,0.28,8,24),new THREE.MeshBasicMaterial({color:0x4cc9f0,transparent:true,opacity:0.65}));
+  const sonicRing=new THREE.Mesh(SONICG,new THREE.MeshBasicMaterial({color:0x4cc9f0,transparent:true,opacity:0.65}));
   sonicRing.rotation.y=Math.PI/2;sonicRing.position.set(-kg.L-2.5,3.2,0);sonicRing.visible=false;body.add(sonicRing);
   const shield=new THREE.Mesh(SHIELDG,SHIELDM);shield.position.y=7;root.add(shield);
   const cage=new THREE.Mesh(CAGEG,CAGEM);cage.position.y=9;root.add(cage);
