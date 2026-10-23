@@ -99,10 +99,6 @@ img.px,.pxi{image-rendering:pixelated}
 @keyframes jig{30%{transform:scale(1.14) rotate(-4deg)}70%{transform:scale(1.08) rotate(3deg)}}
 .card.dis{opacity:.5;filter:grayscale(.6)}
 .card .db{position:absolute;inset:0;background:linear-gradient(45deg,transparent 46%,rgba(255,40,40,.85) 46% 54%,transparent 54%),linear-gradient(-45deg,transparent 46%,rgba(255,40,40,.85) 46% 54%,transparent 54%);border-radius:6px;pointer-events:none}
-.card .ed{position:absolute;inset:3px;border-radius:5px;pointer-events:none;mix-blend-mode:screen;opacity:.55}
-.ed-foil .ed{background:linear-gradient(115deg,transparent 20%,#7fd8ff 40%,transparent 55%,#a0c8ff 75%,transparent 90%);background-size:200% 200%;animation:shine 2.4s linear infinite}
-.ed-holo .ed{background:repeating-linear-gradient(60deg,rgba(255,80,120,.6) 0 6px,rgba(255,200,80,.25) 6px 12px);animation:shine 3s linear infinite;background-size:200% 200%}
-.ed-poly .ed{background:linear-gradient(90deg,#ff5f6d,#ffc371,#5ff08d,#5fb8ff,#c35fff,#ff5f6d);background-size:300% 100%;animation:shine 3s linear infinite;opacity:.45}
 .ed-neg img{filter:invert(1) hue-rotate(180deg) drop-shadow(3px 4px 0 rgba(0,0,0,.45))}
 @keyframes shine{from{background-position:0 0}to{background-position:200% 0}}
 .card .stk{position:absolute;left:2px;top:2px;display:flex;gap:2px;pointer-events:none}.card .stk i{font-style:normal;font-family:var(--kr);font-size:13px;line-height:1;color:#fff;padding:2px 4px;border-radius:4px;box-shadow:0 1px 0 #0008}
@@ -215,26 +211,24 @@ img.px,.pxi{image-rendering:pixelated}
 #flash{position:absolute;left:-40px;top:-40px;width:1360px;height:800px;z-index:88;pointer-events:none;background:#fff;opacity:0}
 #crt{position:fixed;inset:0;z-index:300;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 58%,rgba(0,0,0,.42) 100%)}
 body.crt #crt::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.17) 2px,rgba(0,0,0,.17) 3px);animation:crtf 6s steps(1) infinite}
-body.crt #crt::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.035) 50%,rgba(255,255,255,0));background-size:100% 18%;background-repeat:no-repeat;animation:crtroll 7s linear infinite}
+body.crt #crt::after{content:'';position:absolute;left:0;right:0;top:0;height:18%;background:linear-gradient(to bottom,rgba(255,255,255,0),rgba(255,255,255,.035) 50%,rgba(255,255,255,0));animation:crtroll 7s linear infinite}
 @keyframes crtf{0%,100%{opacity:1}48%{opacity:.86}52%{opacity:1}}
-@keyframes crtroll{from{background-position:0 -20%}to{background-position:0 120%}}
+@keyframes crtroll{from{transform:translateY(-100%)}to{transform:translateY(560%)}}
 body.lowfx #crt::before,body.lowfx #crt::after{animation:none}
 
 /* 패널 · 버튼 입체감 */
 .pnl{background:linear-gradient(180deg,#2a2444 0%,#1f1b30 55%,#1a1629 100%);box-shadow:inset 0 2px 0 rgba(255,255,255,.07),inset 0 -3px 0 rgba(0,0,0,.3),0 4px 0 #0a0814}
 #side{background:linear-gradient(180deg,rgba(28,22,46,.92),rgba(14,11,24,.92));box-shadow:inset 0 0 0 2px rgba(255,255,255,.04),0 6px 0 rgba(0,0,0,.35),0 0 24px rgba(80,40,160,.18)}
-#blindBox .bh{position:relative;overflow:hidden;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.09) 0 8px,rgba(255,255,255,0) 8px 16px)!important;background-size:23px 23px;animation:stripes 1.2s linear infinite}
-@keyframes stripes{to{background-position:23px 0}}
-body.lowfx #blindBox .bh{animation:none}
+#blindBox .bh{position:relative;overflow:hidden}
+#blindBox .bh::after{content:'';position:absolute;top:0;bottom:0;left:-46px;right:0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.1) 0 8px,rgba(255,255,255,0) 8px 16px);animation:stripes 1.2s linear infinite;pointer-events:none}
+@keyframes stripes{to{transform:translateX(22.63px)}}
+body.lowfx #blindBox .bh::after{animation:none}
 #rScore{color:#fff;text-shadow:0 0 8px rgba(255,255,255,.35),2px 2px 0 #000}
 #scoreBox b{display:inline-block}
 .btn{position:relative}
 .btn::before{content:'';position:absolute;left:5px;right:5px;top:3px;height:3px;border-radius:2px;background:rgba(255,255,255,.22);pointer-events:none}
 .btn:hover:not(:disabled){transform:translateY(-1px)}
 .btn:active:not(:disabled){transform:translateY(3px)}
-#bPlay:not(:disabled),#bDisc:not(:disabled){animation:btnglow 1.6s ease-in-out infinite}
-@keyframes btnglow{50%{filter:brightness(1.12)}}
-body.lowfx #bPlay,body.lowfx #bDisc{animation:none}
 
 /* 칩 × 배수 카운터 */
 .cm span{position:relative;background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 45%,rgba(0,0,0,.12));text-shadow:2px 2px 0 rgba(0,0,0,.4),-1px -1px 0 rgba(0,0,0,.15);border:2px solid rgba(0,0,0,.35)}
@@ -250,7 +244,7 @@ body.lowfx .cm.hot span{animation:none}
 
 /* 카드: 안쪽 래퍼(.cw)가 기울기 · 흔들림 · 튀어오름을 담당 */
 .card .cw{position:absolute;inset:0;transform:perspective(360px) rotateX(var(--ty,0deg)) rotateY(var(--tx,0deg));transition:transform .14s ease-out;
-  animation:bob 3.4s ease-in-out infinite;animation-delay:var(--bd,0s);will-change:transform}
+  animation:bob 3.4s ease-in-out infinite;animation-delay:var(--bd,0s)}
 @keyframes bob{0%,100%{translate:0 0;rotate:-.7deg}50%{translate:0 -2.5px;rotate:.7deg}}
 .card.hov .cw{scale:1.07}
 .card.drag .cw{rotate:var(--dr,0deg);animation:none;transition:rotate .08s}
@@ -259,20 +253,23 @@ body.lowfx .card .cw{animation:none;transform:none}
 .card.sc img{filter:drop-shadow(0 0 0 #fff) drop-shadow(0 0 6px rgba(255,255,255,.75)) drop-shadow(3px 5px 0 rgba(0,0,0,.45))}
 .card.new{animation:none}
 .card.jig{animation:none}
-.card .ed,.card .cw::after{position:absolute;inset:0;border-radius:0;pointer-events:none;-webkit-mask-image:var(--m);mask-image:var(--m);-webkit-mask-size:100% 100%;mask-size:100% 100%}
-.ed-foil .ed{background:linear-gradient(115deg,rgba(80,160,255,.25) 0%,rgba(80,160,255,.25) 30%,rgba(190,235,255,.95) 42%,#fff 47%,rgba(190,235,255,.95) 52%,rgba(80,160,255,.25) 64%,rgba(80,160,255,.25) 100%),repeating-linear-gradient(0deg,rgba(255,255,255,.18) 0 1px,rgba(255,255,255,0) 1px 3px);
-  background-size:300% 100%,100% 100%;mix-blend-mode:screen;opacity:.8;animation:sweep 2.6s linear infinite}
-.ed-holo .ed{background:repeating-linear-gradient(-55deg,#ff4a6a 0,#ffb84a 9px,#fff36a 18px,#5af08a 27px,#4ad8ff 36px,#9a6aff 45px,#ff4a6a 54px),radial-gradient(circle,rgba(255,255,255,.55) 1px,rgba(255,255,255,0) 1.5px);
-  background-size:200% 200%,5px 5px;mix-blend-mode:hard-light;opacity:.42;animation:holo 3.2s linear infinite}
-.ed-poly .ed{background:linear-gradient(100deg,#ff5f6d,#ffc371,#5ff08d,#5fb8ff,#c35fff,#ff5f6d);background-size:300% 100%;mix-blend-mode:color;opacity:.5;animation:sweep 3s linear infinite}
-.ed-poly img{animation:huecyc 4s linear infinite}
-@keyframes huecyc{from{filter:hue-rotate(0deg) saturate(1.3) drop-shadow(3px 4px 0 rgba(0,0,0,.45))}to{filter:hue-rotate(360deg) saturate(1.3) drop-shadow(3px 4px 0 rgba(0,0,0,.45))}}
+.card .ed,.card .shn{position:absolute;inset:0;border-radius:0;pointer-events:none;overflow:hidden;-webkit-mask-image:var(--m);mask-image:var(--m);-webkit-mask-size:100% 100%;mask-size:100% 100%}
+.card .ed::before,.card .shn::before{content:'';position:absolute;top:-10%;bottom:-10%;left:-100%;width:300%}
+/* 에디션 광택: 큰 그라디언트 판을 transform으로만 움직여(합성 전용) 저사양 기기에서도 부드럽게 */
+.ed-foil .ed{background:repeating-linear-gradient(0deg,rgba(255,255,255,.16) 0 1px,rgba(255,255,255,0) 1px 3px),rgba(80,160,255,.22);mix-blend-mode:screen;opacity:.85}
+.ed-foil .ed::before{background:linear-gradient(115deg,rgba(190,235,255,0) 40%,rgba(190,235,255,.95) 47%,#fff 50%,rgba(190,235,255,.95) 53%,rgba(190,235,255,0) 60%);animation:slide 2.6s linear infinite}
+.ed-holo .ed{background:radial-gradient(circle,rgba(255,255,255,.5) 1px,rgba(255,255,255,0) 1.5px);background-size:5px 5px;mix-blend-mode:hard-light;opacity:.45}
+.ed-holo .ed::before{background:repeating-linear-gradient(-55deg,#ff4a6a 0,#ffb84a 9px,#fff36a 18px,#5af08a 27px,#4ad8ff 36px,#9a6aff 45px,#ff4a6a 54px);animation:slide 4s linear infinite}
+.ed-poly .ed{mix-blend-mode:color;opacity:.55}
+.ed-poly .ed::before{background:linear-gradient(100deg,#ff5f6d,#ffc371,#5ff08d,#5fb8ff,#c35fff,#ff5f6d,#ffc371,#5ff08d,#5fb8ff,#c35fff,#ff5f6d);animation:slide 3.2s linear infinite}
 .ed-neg .ed{background:radial-gradient(ellipse at center,rgba(170,90,255,0) 40%,rgba(170,90,255,.55) 100%);mix-blend-mode:screen;opacity:.9;animation:negp 2s ease-in-out infinite alternate}
 @keyframes negp{to{opacity:.4}}
-@keyframes sweep{from{background-position:120% 0,0 0}to{background-position:-120% 0,0 0}}
-@keyframes holo{from{background-position:0 0,0 0}to{background-position:200% 200%,0 0}}
-.card.leg .cw::after{content:'';background:linear-gradient(105deg,rgba(255,240,180,0) 38%,rgba(255,240,180,.85) 48%,rgba(255,255,255,.95) 50%,rgba(255,240,180,.85) 52%,rgba(255,240,180,0) 62%);background-size:300% 100%;mix-blend-mode:screen;animation:sweep 3.4s linear infinite}
-body.lowfx .ed-foil .ed,body.lowfx .ed-holo .ed,body.lowfx .ed-poly .ed,body.lowfx .ed-poly img,body.lowfx .card.leg .cw::after,body.lowfx .ed-neg .ed{animation:none}
+@keyframes slide{from{transform:translateX(-33.3%)}to{transform:translateX(33.3%)}}
+.card .shn{mix-blend-mode:screen}
+.card .shn::before{background:linear-gradient(105deg,rgba(255,240,180,0) 42%,rgba(255,240,180,.85) 48.5%,rgba(255,255,255,.95) 50%,rgba(255,240,180,.85) 51.5%,rgba(255,240,180,0) 58%);animation:slide 3.4s linear infinite}
+body.perf .card .cw,body.perf #crt::before,body.perf #crt::after,body.perf #blindBox .bh::after,body.perf .ed::before,body.perf .shn::before{animation:none}
+body.lowfx .ed::before,body.lowfx .shn::before,body.lowfx .ed-neg .ed{animation:none}
+.ed-poly img{filter:saturate(1.35) drop-shadow(3px 4px 0 rgba(0,0,0,.45))}
 
 /* 팝업 숫자 */
 .pop{font-size:16px;padding:6px 9px 8px;border-radius:5px;border:2px solid rgba(0,0,0,.55);box-shadow:0 3px 0 rgba(0,0,0,.45),inset 0 -3px 0 rgba(0,0,0,.22),inset 0 2px 0 rgba(255,255,255,.35);
@@ -1315,7 +1312,7 @@ async function addEff(S,e,el,ci,cel){
   if(e.mult){S.m+=e.mult;pop(el,(e.mult>0?'+':'')+e.mult+' 배수','m',dy);dy-=34;sfx('mult');
     if(p)burst(p.x,p.y,10,CG.mult,{sp:230,life:.5});if(fly){const t=ctr($('#vMult'));orb(p.x,p.y-24,t.x,t.y,3,fs,()=>setCM(S.c,S.m,'m'));}else setCM(S.c,S.m,'m');}
   if(e.xmult){S.m*=e.xmult;pop(el,'×'+(+e.xmult.toFixed(2)),'x big',dy);dy-=34;sfx('xmult');
-    if(p){burst(p.x,p.y,22,CG.x,{sp:340,life:.6});shock(p.x,p.y,3,460,.38,2);shake(2.5);}
+    if(p){burst(p.x,p.y,22,CG.x,{sp:340,life:.6});shock(p.x,p.y,3,460,.38,2);}
     if(fly){const t=ctr($('#vMult'));orb(p.x,p.y-24,t.x,t.y,0,fs,()=>{setCM(S.c,S.m,'m');const q=ctr($('#vMult'));shock(q.x,q.y,3,300,.3,1);});}else setCM(S.c,S.m,'m');}
   if(e.money){G.money+=e.money;pop(el,(e.money>0?'+$':'-$')+Math.abs(e.money),'d',dy);sfx('coin');
     if(p&&e.money>0){coinsTo({x:p.x,y:p.y},ctr($('#vMoney')),Math.min(10,e.money*2),null);burst(p.x,p.y,8,CG.gold,{sp:200,life:.5});}renderSide();}
@@ -1799,16 +1796,16 @@ if(OPT.fx==null)OPT.fx=RMQ.matches?0:1;
 if(OPT.crt==null)OPT.crt=1;
 const fxOn=()=>OPT.fx>0;
 function applyFxOpt(){document.body.classList.toggle('lowfx',!fxOn());document.body.classList.toggle('crt',!!OPT.crt);}
-const FXC=$('#fx'),FXG=FXC.getContext('2d');
+const FXC=$('#fx'),FXG=FXC.getContext('2d',{willReadFrequently:true});
 const PAL=['#ffffff','#1e9bff','#8ad0ff','#ff4b4b','#ffb0a0','#ffc83a','#fff2a8','#3fcf6a','#b07aff','#ff8a2a','#5af0e0','#ff5fa0','#ffe27a','#c8f4ff','#c0203a','#2a8ae8'];
 const CG={chip:[1,2,0,15],mult:[3,4,0,14],x:[3,0,14,11],gold:[5,6,12],green:[7,0,10],purple:[8,11,0],rainbow:[3,9,5,7,10,1,8,11],white:[0,6,13],glass:[13,0,10,2],fire:[9,5,3,6],red:[3,14,9]};
 const NOO={};
 const PN=700,PX=new Float32Array(PN),PY=new Float32Array(PN),PVX=new Float32Array(PN),PVY=new Float32Array(PN),PL=new Float32Array(PN),PT=new Float32Array(PN),PS=new Float32Array(PN),PGR=new Float32Array(PN),PDR=new Float32Array(PN),PK=new Uint8Array(PN),PC=new Uint8Array(PN);
 let pHead=0;
-const FX={live:false,sh:0,shaking:false,base:'',flame:0,fr:null,heat:0,clr:false};
+const FX={q:1,pf:0,pt:0,live:false,sh:0,shaking:false,base:'',flame:0,fr:null,heat:0,clr:false};
 // k: 0 사각 불꽃 · 1 동전 · 2 화염 · 3 별 · 4 잔상
 function spawn(k,x,y,vx,vy,ttl,sz,c,gr,dr){const i=pHead;pHead=(pHead+1)%PN;PX[i]=x;PY[i]=y;PVX[i]=vx;PVY[i]=vy;PL[i]=ttl;PT[i]=ttl;PS[i]=sz;PK[i]=k;PC[i]=c;PGR[i]=gr||0;PDR[i]=dr==null?.92:dr;FX.live=true;}
-function burst(x,y,n,grp,o){o=o||NOO;if(!fxOn())n=Math.ceil(n*.25);const sp=o.sp||260,k=o.k||0,life=o.life||.7,gr=o.g==null?420:o.g,sz=o.sz||2,rr=o.r||0;
+function burst(x,y,n,grp,o){o=o||NOO;n=Math.ceil(n*(fxOn()?FX.q:.25));const sp=o.sp||260,k=o.k||0,life=o.life||.7,gr=o.g==null?420:o.g,sz=o.sz||2,rr=o.r||0;
   for(let i=0;i<n;i++){const a=R()*6.283,v=sp*(.3+R()*.8);spawn(k,x+(R()-.5)*rr,y+(R()-.5)*rr,Math.cos(a)*v,Math.sin(a)*v-(o.up||0),life*(.6+R()*.6),sz+(R()<.3?1:0),grp[(R()*grp.length)|0],gr,o.dr);}}
 // 충격파 고리
 const QRN=24,QRX=new Float32Array(QRN),QRY=new Float32Array(QRN),QRR=new Float32Array(QRN),QRV=new Float32Array(QRN),QRL=new Float32Array(QRN),QRT=new Float32Array(QRN),QRW=new Uint8Array(QRN),QRC=new Uint8Array(QRN);let rHead=0;
@@ -1824,7 +1821,10 @@ function orb(x0,y0,x1,y1,c,dur,cb,kind,delay){
 const FN=32,FX0=new Float32Array(FN),FY0=new Float32Array(FN),FX1=new Float32Array(FN),FY1=new Float32Array(FN),FS=new Float64Array(FN),FDU=new Float32Array(FN),FCL=new Uint8Array(FN);let fHead=0;
 function flight(x0,y0,x1,y1,delay,dur,grp){if(!fxOn())return;const i=fHead;fHead=(fHead+1)%FN;FX0[i]=x0;FY0[i]=y0;FX1[i]=x1;FY1[i]=y1;FS[i]=performance.now()+delay;FDU[i]=dur;FCL[i]=grp[(R()*grp.length)|0];FX.live=true;}
 const ctr=el=>{const r=stageRect(el);return {x:r.x+r.w/2,y:r.y+r.h/2};};
-function shake(a){if(!fxOn())return;FX.sh=Math.min(16,Math.max(FX.sh,a));}
+// 화면 흔들림: 개별 translate 속성을 Web Animations로 움직여 합성 단계에서만 처리 (매 프레임 스타일 변경 없음)
+function shake(a){if(!fxOn())return;a=Math.min(16,a);const now=performance.now();if(FX.shA&&now<FX.shEnd&&a<=FX.shAmp*(1-(now-FX.shS)/(FX.shEnd-FX.shS)))return;
+  const n=10,kf=[];for(let i=0;i<=n;i++){const k=a*Math.pow(1-i/n,1.5);kf.push({translate:i===n?'0px 0px':`${((R()*2-1)*k).toFixed(1)}px ${((R()*2-1)*k).toFixed(1)}px`});}
+  if(FX.shA)FX.shA.cancel();const d=160+a*45;FX.shA=ST.animate(kf,{duration:d});FX.shS=now;FX.shEnd=now+d;FX.shAmp=a;}
 const FLASH=$('#flash');
 function flash(col,a,dur){if(!fxOn())a*=.3;FLASH.style.background=col||'#fff';FLASH.animate([{opacity:a},{opacity:0}],{duration:dur||350,easing:'ease-out'});}
 function setFlame(lv){lv=fxOn()?lv:Math.min(lv,1);const was=FX.flame>0;FX.flame=lv;BG.heat=lv/3*.75;const cm=$('.cm');cm.classList.toggle('hot',lv>0);
@@ -1841,11 +1841,11 @@ function bumpEl(el,k){if(!el)return;k=k||1;el.animate([{transform:'scale(1)'},{t
 
 function fxTick(dt){
   const g=FXG;
-  if(!FX.live&&FX.flame<=0&&!FX.shaking&&FX.sh<=.25){if(FX.clr){g.clearRect(0,0,640,360);FX.clr=false;}return;}
+  if(!FX.live&&FX.flame<=0){if(FX.clr){g.clearRect(0,0,640,360);FX.clr=false;}return;}
   if(FX.live||FX.flame>0){g.clearRect(0,0,640,360);FX.clr=true;}else if(FX.clr){g.clearRect(0,0,640,360);FX.clr=false;}
   let any=false;
   // 화염 (점수가 블라인드를 넘으면 칩·배수 상자 위에서 타오름)
-  if(FX.flame>0&&FX.fr){const n=fxOn()?Math.ceil(FX.flame*2.2):1;for(const r of FX.fr)for(let i=0;i<n;i++)spawn(2,r.x+4+R()*(r.w-8),r.y+6,(R()-.5)*26,-(40+R()*55)*(.6+FX.flame*.25),.22+R()*.18*FX.flame,2+(R()*FX.flame|0),9,-40,.95);}
+  if(FX.flame>0&&FX.fr){const n=fxOn()?Math.ceil(FX.flame*2.2*FX.q):1;for(const r of FX.fr)for(let i=0;i<n;i++)spawn(2,r.x+4+R()*(r.w-8),r.y+6,(R()-.5)*26,-(40+R()*55)*(.6+FX.flame*.25),.22+R()*.18*FX.flame,2+(R()*FX.flame|0),9,-40,.95);}
   // 비행 잔상
   const now=performance.now();
   for(let i=0;i<FN;i++){if(FDU[i]<=0)continue;const t=(now-FS[i])/FDU[i];if(t<0){any=true;continue;}if(t>=1){FDU[i]=0;continue;}any=true;const e=1-Math.pow(1-t,3);
@@ -1870,8 +1870,6 @@ function fxTick(dt){
     else{g.globalAlpha=f;g.fillStyle=PAL[PC[i]];g.fillRect(x,y,s,s);g.globalAlpha=1;}}
   FX.live=any;
   // 화면 흔들림
-  if(FX.sh>.25){FX.sh*=Math.pow(.004,dt);FX.shaking=true;const a=FX.sh;ST.style.transform=FX.base+` translate(${((R()*2-1)*a).toFixed(1)}px,${((R()*2-1)*a).toFixed(1)}px) rotate(${((R()*2-1)*a*.035).toFixed(3)}deg)`;}
-  else if(FX.shaking){FX.shaking=false;FX.sh=0;ST.style.transform=FX.base;}
 }
 
 function jig(el,k){if(!el||!el.isConnected)return;const t=el._cw||el;k=(k||1)*(fxOn()?1:.35);
@@ -1956,6 +1954,7 @@ function mkEl(){const el=document.createElement('div');el.className='card';const
   el.addEventListener('pointerleave',()=>{hideTip();el.classList.remove('hov');cw.style.setProperty('--tx','0deg');cw.style.setProperty('--ty','0deg');});bindDrag(el);return el;}
 function setImg(el,src){const img=el._img||el.firstChild;if(img.getAttribute('src')!==src){img.src=src;el.style.setProperty('--m',`url("${src}")`);}}
 function setEd(el,ed){['foil','holo','poly','neg'].forEach(k=>el.classList.toggle('ed-'+k,ed===k));const host=el._cw||el;let e=host.querySelector('.ed');if(ed){if(!e){e=document.createElement('i');e.className='ed';host.appendChild(e);}}else if(e)e.remove();}
+function setLeg(el,on){const host=el._cw||el;let e=host.querySelector('.shn');if(on&&!e){e=document.createElement('i');e.className='shn';host.appendChild(e);}else if(!on&&e)e.remove();}
 function setDb(el,on){const host=el._cw||el;let e=host.querySelector('.db');if(on&&!e){e=document.createElement('i');e.className='db';host.appendChild(e);}else if(!on&&e)e.remove();}
 function setStk(el,J){let e=el.querySelector('.stk');const t=(J&&(J.et?'<i style="background:#4a2a8a">∞</i>':'')+(J.per!=null?`<i style="background:#3a7a9a">${J.perished?'✕':'⏳'+J.per}</i>`:'')+(J.rent?'<i style="background:#c08a00">$</i>':''))||'';
   if(!t){if(e)e.remove();return;}if(!e){e=document.createElement('span');e.className='stk';el.appendChild(e);}e.innerHTML=t;}
@@ -2055,7 +2054,7 @@ function updateSelInfo(){
 }
 function renderJokers(){
   const z=$('#jokers');const els=syncZone(z,G.jokers,J=>'j'+J.uid,()=>{const el=mkEl();el._kf=J=>'j'+J.uid;el._list=G.jokers;el._click=()=>selectItem('joker',el._it,el);return el;},
-    (el,J)=>{el._list=G.jokers;setImg(el,jokerURL(J.id));setEd(el,J.ed);el.classList.toggle('leg',JD[J.id].rar===4);setStk(el,J);el.classList.toggle('off',G.disabledJ===J.uid||!!J.perished);el._tip=()=>tipJoker(J.id,J,J.ed);});
+    (el,J)=>{el._list=G.jokers;setImg(el,jokerURL(J.id));setEd(el,J.ed);setLeg(el,JD[J.id].rar===4);setStk(el,J);el.classList.toggle('off',G.disabledJ===J.uid||!!J.perished);el._tip=()=>tipJoker(J.id,J,J.ed);});
   layout(els,{W:660,top:14,gap:10});
   $('#jCount').textContent=`조커 ${G.jokers.length}/${jokerSlots()}`;
 }
@@ -2129,7 +2128,7 @@ function appearIn(el,it){if(SEEN.has(it))return;SEEN.add(it);if(!fxOn())return;c
 function itemEl(it,type){
   const el=mkEl();el._list=null;
   ITEM_EL.set(it,el);appearIn(el,it);
-  if(it.kind==='joker'){setImg(el,jokerURL(it.id));setEd(el,it.ed);el.classList.toggle('leg',JD[it.id].rar===4);setStk(el,it.sk);el._tip=()=>tipJoker(it.id,it.sk&&Object.keys(it.sk).length?Object.assign({uid:0,id:it.id,_shop:1},it.sk):null,it.ed);}
+  if(it.kind==='joker'){setImg(el,jokerURL(it.id));setEd(el,it.ed);setLeg(el,JD[it.id].rar===4);setStk(el,it.sk);el._tip=()=>tipJoker(it.id,it.sk&&Object.keys(it.sk).length?Object.assign({uid:0,id:it.id,_shop:1},it.sk):null,it.ed);}
   else if(it.kind==='pack'){setImg(el,packURL(it.pk));el._tip=()=>tipPack(it);}
   else if(it.kind==='voucher'){setImg(el,voucherURL(it.id));el._tip=()=>tipVoucher(it.id);}
   else if(it.kind==='card'){updCard(el,it.card);el._tip=()=>tipCard(it.card);}
@@ -2378,9 +2377,12 @@ function bgTick(ts,dt){
     g.fillStyle=i%3?'rgba(255,140,60,.7)':'rgba(255,230,140,.8)';g.fillRect(Math.round(EMB[i*3]+Math.sin(T*2+i)*3),Math.round(y),1,i%4?1:2);}
   if(mood==='boss'&&!lo){g.fillStyle=`rgba(255,20,40,${(.05+.05*Math.sin(T*2.2)).toFixed(3)})`;g.fillRect(0,0,320,180);}
 }
+// 느린 기기 자동 감지: 평균 프레임이 30fps 아래로 떨어지면 파티클 수를 줄이고 무거운 CSS 애니메이션을 끔
+function perfWatch(dt){if(document.hidden||!fxOn())return;FX.pf++;FX.pt+=dt;if(FX.pf<60)return;const avg=FX.pt/FX.pf;FX.pf=0;FX.pt=0;
+  if(avg>1/28&&FX.q>.3){FX.q=Math.max(.3,FX.q*.7);if(FX.q<.75)document.body.classList.add('perf');}else if(avg<1/52&&FX.q<1){FX.q=Math.min(1,FX.q*1.2);if(FX.q>=.95)document.body.classList.remove('perf');}}
 let lastTs=0;
 function tick(ts){requestAnimationFrame(tick);const dt=Math.min(.05,Math.max(0,(ts-(lastTs||ts))/1000));lastTs=ts;
-  twTick(dt);fxTick(dt);bgTick(ts,dt);
+  twTick(dt);fxTick(dt);bgTick(ts,dt);perfWatch(dt);
   if(fxOn()&&!$('#title').classList.contains('hidden')&&R()<dt*7)spawn(3,340+R()*600,150+R()*180,(R()-.5)*20,-10-R()*20,1+R(),R()<.3?3:2,[0,5,12,10,11][(R()*5)|0],0,1);}
 
 /* =========================================================
@@ -2417,6 +2419,9 @@ document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
 document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault();},{passive:false});
 {let lastTE=0;document.addEventListener('touchend',e=>{const t=Date.now();if(t-lastTE<300&&e.touches.length===0&&e.cancelable&&!e.target.closest('input,button,.card,#act,#modal'))e.preventDefault();lastTE=t;},{passive:false});}
 applyFxOpt();fit();$("#deckImg").src=backURL();showTitle();requestAnimationFrame(tick);
+// 기본 덱 52장 스프라이트를 유휴 시간에 미리 그려 둠 (첫 라운드 카드 배분 때 끊김 방지)
+{const q=[];for(const su of SUITS)for(let r=2;r<=14;r++)q.push(()=>cardURL({r,s:su}));const ric=window.requestIdleCallback||(f=>setTimeout(()=>f({timeRemaining:()=>8}),60));
+  const step=d=>{let k=0;while(q.length&&(k++<1||d.timeRemaining()>6))q.shift()();if(q.length)ric(step);};ric(step);}
 if(document.fonts&&document.fonts.load){document.fonts.load("16px 'Press Start 2P'");document.fonts.load("16px 'Do Hyeon'");}
 </script>
 </body>
