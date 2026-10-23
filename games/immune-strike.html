@@ -254,7 +254,7 @@ let DEMO=false,DK={},DKP={},padSeen=false,padId='',padMap=null,PADMAPS={};
 try{PADMAPS=JSON.parse(localStorage.getItem('immuneStrikePad')||'{}')||{};}catch(e){PADMAPS={};}
 function savePadMaps(){try{localStorage.setItem('immuneStrikePad',JSON.stringify(PADMAPS));}catch(e){}}
 function getPad(){if(typeof navigator==='undefined'||!navigator.getGamepads)return null;try{for(const q of navigator.getGamepads())if(q&&q.connected!==false)return q;}catch(e){}return null;}
-function setTouchUI(show){const a=document.getElementById('tc'),b=document.getElementById('tp');if(a&&a.style)a.style.display=show?'':'none';if(b&&b.style)b.style.display=show?'':'none';}
+function setTouchUI(show){if(!show&&typeof TPTR!=='undefined'&&TPTR.size){TPTR.clear();syncTouch();}const a=document.getElementById('tc'),b=document.getElementById('tp');if(a&&a.style)a.style.display=show?'':'none';if(b&&b.style)b.style.display=show?'':'none';}
 function inMap(p,m){if(!m)return false;if(m.t==='b')return !!(p.buttons[m.i]&&p.buttons[m.i].pressed);const v=p.axes[m.i]||0;return m.s>0?v>.5:v<-.5;}
 let onNewPad=null;
 function pollPad(){const p=getPad();if(!p){if(padSeen){padSeen=false;setTouchUI(true);}return;}
