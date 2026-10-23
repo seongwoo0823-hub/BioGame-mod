@@ -2315,7 +2315,7 @@ const ONLINE=(()=>{
     const judged=st.cnt.KOOL+st.cnt.COOL+st.cnt.GOOD+st.cnt.MISS+st.cnt.FAIL;
     const e={id:myId,n:N.nick,s:st.total?Math.round(st.acc/st.total*1000000):0,c:st.combo,m:st.max,r:judged?Math.round(st.acc/judged*10000)/100:100,
       j:st.jText||'',pr:Math.round(clamp(songNow()/st.endT,0,1)*100),st:st.ended?(st.failed?'fail':'done'):'play',au:st.auto?1:0,jt:st.jT};
-    if(st.ended&&N.final){Object.assign(e,N.final);}
+    if(N.final)Object.assign(e,N.final);
     return e;
   }
   setInterval(()=>{
