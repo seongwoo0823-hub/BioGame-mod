@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>혈관 협곡 : 세포 대전 (리마스터 에디션)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -245,6 +245,18 @@ table.sc img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mid
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script>if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));</script>
+<style>html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>
+<script>/* 휴대폰에서 두 손가락·두 번 탭으로 화면이 확대되어 조작이 막히는 것을 방지 */
+(()=>{const no=e=>{if(e.cancelable)e.preventDefault();};['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,no,{passive:false}));
+document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)no(e);},{passive:false});
+document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,select'))no(e);},{passive:false});})();</script>
 </head>
 <body>
 <div id="rot">가로 화면으로 돌려주세요 📱↻<br><small style="color:#c79aa6">혈관 협곡은 가로 모드에서 플레이할 수 있어요</small></div>
@@ -257,6 +269,7 @@ table.sc img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mid
     <button class="bigbtn" id="bPlay">⚔ 게임 시작</button>
     <button class="bigbtn" id="bOnlineTitle" type="button" style="background:linear-gradient(180deg,#126b82 0%,#093d4f 100%);border-color:#68e8ff">🌐 온라인 멀티 (P2P)</button>
     <button class="bigbtn alt" id="bHelp">📖 조작법 · 가이드</button>
+    <button class="bigbtn alt" type="button" onclick="location.href='../index.html'">🏠 게임 목록</button>
   </div>
   <p style="font-size:13px">🔊 오케스트라 사운드 & 타격 효과음 지원 · 평균 8~12분 플레이</p>
 </section>
@@ -358,6 +371,7 @@ table.sc img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mid
           <button class="bigbtn alt" id="bHelp2" style="font-size:18px;padding:8px 18px">조작법</button>
           <button class="bigbtn alt" id="bSurrender" style="font-size:18px;padding:8px 18px">항복</button>
           <button class="bigbtn alt" id="bQuit" style="font-size:18px;padding:8px 18px">메인 메뉴</button>
+          <button class="bigbtn alt" type="button" onclick="location.href='../index.html'" style="font-size:18px;padding:8px 18px">게임 목록</button>
         </div>
       </div>
     </div>
@@ -451,12 +465,11 @@ table.sc img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mid
     <h2 class="res" id="endRes">승리</h2>
     <div id="endSub" style="color:var(--dim);margin-bottom:6px"></div>
     <div class="scwrap" id="endBody" style="width:100%"></div>
-    <div class="row"><button class="bigbtn" id="bAgain">다시 하기</button><button class="bigbtn alt" id="bMenu">메인 메뉴</button></div>
+    <div class="row"><button class="bigbtn" id="bAgain">다시 하기</button><button class="bigbtn alt" id="bMenu">메인 메뉴</button><button class="bigbtn alt" type="button" onclick="location.href='../index.html'">게임 목록</button></div>
   </div>
 </div>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>if(!window.THREE)document.write('<scr'+'ipt src="../vendor/three.min.js"><\/scr'+'ipt>');</script>
+<script async id="peerjs-cdn" src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="../vendor/three.min.js"></script>
 <script>
 'use strict';
 /* =========================================================

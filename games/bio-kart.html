@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>바이오 카트 레이서</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -183,6 +183,11 @@ body.portrait .modes,body.portrait .gar,body.portrait .help,body.portrait .netgr
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script>if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));</script>
+<style>html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>
+<script>/* 휴대폰에서 두 손가락·두 번 탭으로 화면이 확대되어 조작이 막히는 것을 방지 */
+(()=>{const no=e=>{if(e.cancelable)e.preventDefault();};['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,no,{passive:false}));
+document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)no(e);},{passive:false});
+document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,select'))no(e);},{passive:false});})();</script>
 </head>
 <body>
 <div id="wrap"><div id="stage">
@@ -334,8 +339,7 @@ body.portrait .modes,body.portrait .gar,body.portrait .help,body.portrait .netgr
 
 <div id="portrait">휴대폰을 가로로 돌려 주세요</div>
 </div></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>if(!window.THREE)document.write('<scr'+'ipt src="../vendor/three.min.js"><\/scr'+'ipt>');</script>
+<script src="../vendor/three.min.js"></script>
 <script>
 'use strict';
 /* ================= 공통 ================= */
