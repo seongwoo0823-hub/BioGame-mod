@@ -7,8 +7,8 @@
 | --- | --- | --- |
 | BIO BEAT | 4키 리듬게임 (25곡, OX 퀴즈) | `games/bio-beat.html` |
 | 면역 특공대 IMMUNE STRIKE | 횡스크롤 런앤건 액션 | `games/immune-strike.html` |
-| 바이오 카트 레이서 | 3D 복셀 카트 레이싱 (15트랙) | `games/bio-kart.html` |
-| 혈관 협곡 : 세포 대전 | 3D 복셀 5대5 대전 (칼바람 모드) | `games/vessel-canyon.html` |
+| 바이오 카트 레이서 | 3D 카트 레이싱 (15트랙) | `games/bio-kart.html` |
+| 혈관 협곡 : 세포 대전 | 3D 5대5 대전 (칼바람 모드) | `games/vessel-canyon.html` |
 | BIOTRO · 세포 포커 | 포커 덱빌딩 로그라이크 | `games/biotro.html` |
 | CELL BOUND · 세포의 속박 | 방 탐험 로그라이크 슈터 | `games/cell-bound.html` |
 | 세포 탐사대 CELL CADET | 생명과학 핀볼 | `games/cell-pinball.html` |
