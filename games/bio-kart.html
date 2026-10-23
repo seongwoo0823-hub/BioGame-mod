@@ -2567,7 +2567,7 @@ const NET = (() => {
     if(window.Peer || document.getElementById('peerjs-cdn')) return;
     const sc = document.createElement('script');
     sc.id = 'peerjs-cdn';
-    sc.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+    sc.src = '../vendor/peerjs.min.js';
     sc.async = true;
     sc.onerror = () => {}; // 오프라인/샌드박스 환경에서는 BroadcastChannel로 동작
     document.head.appendChild(sc);
