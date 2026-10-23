@@ -2615,7 +2615,7 @@ const NET = (() => {
     active: false, role: null, code: '', phase: 'idle', busy: false,
     nick: String(store.get('nick', '면역사령관' + (10 + Math.random()*89|0))).slice(0, 10),
     myTeam: 0, aiFill: true, mySlot: 0, players: {}, remoteInputs: {}, pendingActs: [],
-    netAcc: 0, inAcc: 0, pingAcc: 0, pkt: 0, rtt: 0, suppressRecord: false, transport: null,
+    netAcc: 0, lastInT: 0, pkt: 0, rtt: 0, suppressRecord: false, transport: null,
     mid: 0, slotOf: {}, endSent: false, lastHost: 0, joinWait: null, bcOnly: false, lastIn: null
   };
 
@@ -3214,7 +3214,6 @@ const NET = (() => {
         }
       }
     } else if (st.role === 'guest'){
-      st.inAcc += dt; st.pingAcc += dt;
       const p = G.player;
       const inp = [+p.moveDir.x.toFixed(2), +p.moveDir.z.toFixed(2), +p.facing.toFixed(2)];
       const changed = !st.lastIn || inp[0] !== st.lastIn[0] || inp[1] !== st.lastIn[1] || Math.abs(inp[2] - st.lastIn[2]) > 0.05;
