@@ -204,6 +204,18 @@ body.touch .abtn em{ display:none; }
 .quiz .opts button.ok{ background:#1f9e5c; } .quiz .opts button.no{ background:#b8233c; }
 .quiz .exp{ margin-top:10px; font-size:14px; line-height:1.5; color:#d6f7e6; }
 @media (max-width:520px){ .quiz .opts{ grid-template-columns:1fr; } }
+.net-grid{ display:grid; grid-template-columns:1fr 1.15fr; gap:12px; margin-top:8px; }
+@media (max-width:640px){ .net-grid{ grid-template-columns:1fr; } }
+.net-box{ background:rgba(0,0,0,.28); border:2px solid var(--panel-line); border-radius:14px; padding:12px; }
+.net-row{ display:flex; gap:7px; align-items:center; flex-wrap:wrap; margin:6px 0; }
+.net-inp{ font-family:inherit; font-size:15px; background:#1b0829; color:#fff; border:2px solid var(--stroke); border-radius:9px; padding:6px 10px; width:130px; }
+.net-code{ font-family:'Black Han Sans',sans-serif; font-size:24px; color:var(--gold); background:#1b0829; border:2px solid var(--stroke); border-radius:10px; padding:4px 12px; letter-spacing:3px; }
+.net-slots{ display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:8px; }
+.net-slot{ display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.06); border:2px solid var(--stroke); border-radius:11px; padding:6px 9px; font-size:13px; }
+.net-slot.human{ background:rgba(47,140,255,.28); border-color:#4aa3ff; }
+.net-slot.me{ background:rgba(62,224,122,.28); border-color:var(--gold); }
+.net-slot .fc{ width:34px; height:34px; border-radius:9px; border:2px solid var(--stroke); display:grid; place-items:center; font-size:18px; flex:none; }
+#netHudPill{ position:absolute; left:calc(66px + env(safe-area-inset-left,0px)); top:calc(56px + env(safe-area-inset-top,0px)); background:rgba(20,6,30,.82); border:2px solid var(--gold); border-radius:9px; padding:2px 9px; font-size:12px; color:var(--gold); display:none; }
 </style>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
@@ -241,7 +253,10 @@ body.touch .abtn em{ display:none; }
     </div>
     <div class="go-col">
       <button class="mode-card" id="modeBtn"><div class="mode-ico" id="modeIco">💎</div><div><div class="mode-name stroke" id="modeName"></div><div class="mode-sub" id="modeSub"></div></div><span class="mode-swap">변경</span></button>
-      <button class="play-btn" id="playBtn">플레이</button>
+      <div style="display:flex;gap:8px">
+        <button class="play-btn" id="playBtn" style="flex:1">플레이</button>
+        <button class="play-btn" id="onlineOpenBtn" type="button" style="background:linear-gradient(#5fb8ff,#2f8cff 55%,#1b64c2);color:#fff;font-size:clamp(18px,2.4vw,24px);padding:8px 14px">🌐 온라인</button>
+      </div>
     </div>
   </div>
 </div>
@@ -250,6 +265,7 @@ body.touch .abtn em{ display:none; }
   <div id="joyZone"><div id="joyBase"><div id="joyKnob"></div></div></div>
   <button id="pauseBtn" class="pause-btn" aria-label="일시정지">II</button>
   <div class="me-card" id="meCard"><div class="face" id="meFace"></div><div><div id="meName"></div><div class="status" id="meStatus"></div></div></div>
+  <div id="netHudPill"></div>
   <div id="scoreGem" class="scoreboard">
     <div class="team blue stroke"><span class="atp-ico"></span><span id="sBlue">0</span></div>
     <div class="timer stroke" id="timer">2:30</div>
@@ -281,6 +297,56 @@ body.touch .abtn em{ display:none; }
   <div class="trophy-delta" id="resTrophy"></div>
   <div class="quiz" id="quizBox"></div>
   <div class="close-row"><button class="btn-p" id="resLobby">로비로</button><button class="btn-y" id="resAgain">다시 하기</button></div>
+</div></div>
+
+<div id="onlineModal" class="modal hidden"><div class="sheet" style="width:min(740px,100%)">
+  <h2>🌐 온라인 P2P 멀티플레이 <small style="font-family:'Jua',sans-serif;font-size:14px;color:#8ff0c0">방장 권한 판정 + 클라이언트 예측 보간</small></h2>
+  <div class="net-grid">
+    <div class="net-box">
+      <div class="net-row">
+        <span>닉네임</span>
+        <input id="netNick" class="net-inp" maxlength="10" value="면역전사">
+        <span id="netMyBrawler" style="font-size:13px;color:var(--gold)"></span>
+      </div>
+      <div class="net-row">
+        <button class="btn-y" id="btnCreateRoom" type="button" style="font-size:16px;padding:6px 14px">🏠 방 만들기</button>
+        <button class="btn-p" id="btnQuickMatch" type="button" style="font-size:16px;padding:6px 14px;background:#2f8cff">⚡ 빠른 매칭</button>
+      </div>
+      <div class="net-row">
+        <input id="netCodeInp" class="net-inp" maxlength="6" placeholder="방 코드 입력" style="text-transform:uppercase;width:115px">
+        <button class="btn-p" id="btnJoinRoom" type="button" style="font-size:16px;padding:6px 14px">🔑 코드 참가</button>
+      </div>
+      <div id="netRoomPanel" style="display:none;margin-top:8px;padding-top:8px;border-top:2px solid var(--panel-line)">
+        <div class="net-row">
+          <span>방 코드:</span>
+          <span class="net-code" id="netCodeDisp">----</span>
+          <button class="chip-btn" id="btnCopyCode" type="button" style="padding:5px 10px;font-size:13px">📋 복사</button>
+          <button class="chip-btn" id="btnLeaveRoom" type="button" style="padding:5px 10px;font-size:13px;background:#b8233c">나가기</button>
+        </div>
+        <div class="net-row">
+          <button class="chip-btn" id="btnNetMode" type="button" style="padding:5px 10px;font-size:13px">모드: ATP 그랩</button>
+          <button class="chip-btn" id="btnNetTeam" type="button" style="padding:5px 10px;font-size:13px">팀: 🔵 블루팀</button>
+          <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="netAiFill" checked> AI 빈자리 채움</label>
+        </div>
+      </div>
+      <p style="font-size:12.5px;color:#d6f7e6;margin:8px 0 0;line-height:1.45">
+        💡 <b>방장 권한 P2P</b>: 방장이 ATP·상자·피격 판정을 총괄하고 게스트는 예측 보간으로 렉 없이 부드럽게 움직입니다. 빈자리는 AI 브롤러가 자동으로 채웁니다.
+      </p>
+    </div>
+    <div class="net-box" style="display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <b style="color:var(--gold);font-size:15px">대기실 슬롯 (6인 매치)</b>
+        <span id="netStateTxt" style="font-size:12.5px;color:#8ff0c0">대기 중</span>
+      </div>
+      <div class="net-slots" id="netSlotList"></div>
+      <div id="netStatusLog" style="margin-top:auto;padding-top:8px;font-size:13px;color:#ffe9a8">방 만들기 또는 방 코드로 친구와 연결하세요. (멀티탭 즉시 연동 지원)</div>
+    </div>
+  </div>
+  <div class="close-row">
+    <button class="btn-p" data-close="onlineModal" type="button">닫기</button>
+    <button class="btn-p" id="btnSingleFromModal" type="button">👤 싱글 모드로 시작</button>
+    <button class="btn-y" id="btnNetStart" type="button" disabled>🚀 온라인 대전 시작!</button>
+  </div>
 </div></div>
 
 <div id="dexModal" class="modal hidden"><div class="sheet">
@@ -315,7 +381,8 @@ body.touch .abtn em{ display:none; }
   <div class="close-row"><button class="btn-y" data-close="helpModal">알겠어요</button></div>
 </div></div>
 
-<script src="../vendor/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>if(!window.THREE)document.write('<scr'+'ipt src="../vendor/three.min.js"><\/scr'+'ipt>');</script>
 <script>
 'use strict';
 /* ================= utilities ================= */
@@ -335,94 +402,94 @@ let trophies = store.get('trophies', {});
 if (typeof trophies !== 'object' || !trophies) trophies = {};
 const hexCss = c => '#'+c.toString(16).padStart(6,'0');
 
-/* ================= characters ================= */
+/* ================= characters (Balanced & Distinct Kits) ================= */
 const KITS = {
   /* ---------- 면역 세포 ---------- */
-  macro:{ side:'immune', name:'대식세포', nick:'마크로', icon:'🫧', kind:'선천성 면역 · 식세포', role:'탱커', color:0xb57bff, hp:6400, speed:5.0, sfx:'goo',
-    trait:'느리지만 단단해요. 가까이 붙어 끈적한 세포질로 밀어내고, 돌진해 통째로 삼켜요.',
-    attack:{ type:'spread', name:'끈적 세포질', desc:'짧은 거리에 덩어리 5개를 흩뿌려요. 맞은 적은 살짝 밀려나요.', count:5, spreadDeg:38, range:7, dmg:340, speed:18, reload:1.5, cd:0.45, proj:'goo', projColor:0xc792ff, knock:1.6, width:0.45 },
-    superCost:3200, super:{ type:'dash', name:'식세포 돌진', desc:'앞으로 돌진해 부딪힌 적을 삼키고 체력을 크게 회복해요.', range:9, dmg:1500, heal:1400, radius:2.6, icon:'🍽️' },
-    gadget:{ type:'heal', name:'사이토카인 신호', desc:'자신과 주변 아군의 체력을 회복해요.', amount:1400, radius:6, icon:'💗' },
+  macro:{ side:'immune', name:'대식세포', nick:'마크로', icon:'🫧', kind:'선천성 면역 · 식세포', role:'탱커', color:0xb57bff, hp:6600, speed:5.55, sfx:'goo',
+    trait:'단단한 최전방 포식자. 위족 세포질 탄환으로 적을 밀어내고, 식세포 돌진으로 적을 삼켜 대량 회복해요.',
+    attack:{ type:'spread', name:'위족 세포질 탄막', desc:'부채꼴로 끈적한 세포질 5덩이를 흩뿌려 맞은 적을 밀어내요.', count:5, spreadDeg:33, range:7.4, dmg:365, speed:19.5, reload:1.4, cd:0.42, proj:'goo', projColor:0xc792ff, knock:1.8, width:0.48, trail:true },
+    superCost:3000, super:{ type:'dash', name:'식세포 포식 돌진', desc:'거대한 위족을 벌려 돌진하고 주변 적을 삼켜 큰 피해와 함께 체력을 대량 회복해요.', range:9.2, dmg:1550, heal:1550, radius:2.8, icon:'🍽️' },
+    gadget:{ type:'heal', name:'사이토카인 신호', desc:'자신과 주변 아군의 체력을 즉시 1500 회복해요.', amount:1500, radius:6.2, icon:'💗' },
     fact:'혈액 속 단핵구가 조직으로 들어가 분화한 세포예요. 병원체를 위족으로 감싸 삼키는 식세포 작용을 하고, 리소좀의 분해 효소로 소화해요. 삼킨 병원체의 조각(항원)을 MHC II에 실어 보조 T세포에게 보여 주는 항원 제시 세포이기도 해요.' },
-  neutro:{ side:'immune', name:'호중구', nick:'뉴트로', icon:'⚡', kind:'선천성 면역 · 식세포', role:'돌격', color:0xffb3c7, hp:4000, speed:6.1, sfx:'pew',
-    trait:'가장 빠른 선발대. 날쌘 3연사로 몰아치고 DNA 그물로 적을 꽁꽁 묶어요.',
-    attack:{ type:'burst', name:'과립 3연사', desc:'빠른 과립 3발을 연달아 쏴요.', count:3, interval:0.08, range:9.5, dmg:380, speed:28, reload:1.1, cd:0.45, proj:'granule', projColor:0xff5c94 },
-    superCost:2800, super:{ type:'net', name:'NETs 그물', desc:'DNA 그물을 던져 맞은 적을 1.2초 묶고 3초 동안 느리게 해요.', range:11, radius:3.4, dmg:800, slow:3, root:1.2, flight:0.75, icon:'🕸️' },
-    gadget:{ type:'speed', name:'과립 방출 질주', desc:'3초 동안 이동 속도가 크게 빨라져요.', dur:3, icon:'💨' },
+  neutro:{ side:'immune', name:'호중구', nick:'뉴트로', icon:'⚡', kind:'선천성 면역 · 식세포', role:'돌격', color:0xffb3c7, hp:4300, speed:6.15, sfx:'pew',
+    trait:'가장 빠른 선발대. 날쌘 살균 과립 3연사로 몰아치고 DNA 그물(NETs)로 적을 꽁꽁 묶어요.',
+    attack:{ type:'burst', name:'살균 과립 3연사', desc:'빠르고 예리한 과립 탄환 3발을 연속 발사해요.', count:3, interval:0.075, range:9.6, dmg:405, speed:29, reload:1.1, cd:0.4, proj:'granule', projColor:0xff5c94, width:0.42, trail:true },
+    superCost:2750, super:{ type:'net', name:'NETs DNA 포획망', desc:'DNA 그물을 던져 맞은 적을 1.35초 속박하고 3초 동안 느리게 만들어요.', range:11, radius:3.5, dmg:900, slow:3, root:1.35, flight:0.68, icon:'🕸️' },
+    gadget:{ type:'speed', name:'과립 방출 질주', desc:'3.2초 동안 이동 속도가 폭발적으로 빨라져요.', dur:3.2, icon:'💨' },
     fact:'백혈구 중 가장 많은 세포(약 50~70%)로, 감염 부위에 가장 먼저 도착하는 선발대예요. 핵이 2~5개의 엽으로 나뉜 다형핵 백혈구이고, DNA와 항균 단백질로 된 그물(NETs)을 뿜어 세균을 가두기도 해요. 수명이 짧아서 죽은 호중구는 고름의 주성분이 돼요.' },
-  bcell:{ side:'immune', name:'B 림프구', nick:'비셀', icon:'🎯', kind:'적응 면역 · 체액성', role:'저격', color:0x5fb8ff, hp:3100, speed:5.0, sfx:'zap',
-    trait:'멀리서 Y자 항체를 꽂아 표지를 남겨요. 표지된 적은 모두에게 더 아프게 맞아요.',
-    attack:{ type:'single', name:'항체 저격', desc:'아주 멀리 날아가는 항체. 맞은 적에게 4초 동안 표지(받는 피해 +25%)를 남겨요.', range:15, dmg:1100, speed:32, reload:1.7, cd:0.5, proj:'antibody', projColor:0xfff27a, width:0.5, mark:4, trail:true },
-    superCost:3500, super:{ type:'ring', name:'항체 폭풍', desc:'사방으로 항체 16개를 퍼뜨려 맞은 적 모두에게 표지를 남겨요.', count:16, dmg:700, range:11, speed:22, mark:4, icon:'✳️' },
-    gadget:{ type:'reveal', name:'옵소닌화 표지', desc:'5초 동안 숨은 적을 팀 전체에게 드러내요.', dur:5, icon:'👁️' },
+  bcell:{ side:'immune', name:'B 림프구', nick:'비셀', icon:'🎯', kind:'적응 면역 · 체액성', role:'저격', color:0x5fb8ff, hp:3350, speed:5.15, sfx:'zap',
+    trait:'멀리서 Y자 항체를 꽂아 옵소닌 표지를 남겨요. 표지된 적은 모든 공격에 25% 추가 피해를 받아요.',
+    attack:{ type:'single', name:'Y-항체 정밀 저격', desc:'고속 Y자 항체를 발사해 맞은 적에게 4초간 표지(받는 피해 +25%)를 남겨요.', range:15, dmg:1180, speed:33, reload:1.55, cd:0.45, proj:'antibody', projColor:0xfff27a, width:0.52, mark:4, trail:true },
+    superCost:3200, super:{ type:'ring', name:'항체 폭풍 노바', desc:'전방위로 황금 항체 16발을 고속 방출해 맞은 적 모두에게 피해와 표지를 남겨요.', count:16, dmg:820, range:11.5, speed:25, mark:4.5, icon:'✳️' },
+    gadget:{ type:'reveal', name:'옵소닌화 정찰', desc:'5초 동안 수풀과 은신 중인 모든 적을 팀 전체에게 드러내요.', dur:5, icon:'👁️' },
     fact:'골수에서 만들어지고 성숙해요. 항원을 만나면 보조 T세포의 도움을 받아 형질세포로 분화해 Y자 모양의 항체를 대량으로 분비해요(체액성 면역). 항체가 병원체에 붙으면 식세포가 잡아먹기 쉬워지는데, 이를 옵소닌화라고 해요.' },
-  tcell:{ side:'immune', name:'세포독성 T세포', nick:'킬러T', icon:'💥', kind:'적응 면역 · 세포성', role:'투척', color:0x6fe08a, hp:3600, speed:5.0, sfx:'throw',
-    trait:'벽 너머로 퍼포린을 던지는 폭격수. 숨어 있는 적도 위에서 내리꽂아요.',
-    attack:{ type:'lob', name:'퍼포린 투척', desc:'벽을 넘어 날아가 떨어진 곳 주변에 피해를 줘요.', range:11, radius:2.2, dmg:1050, flight:0.75, reload:1.7, cd:0.5, proj:'perforin', projColor:0x2ee6c8 },
-    superCost:3300, super:{ type:'bigLob', name:'그랜자임 폭격', desc:'넓은 범위에 강력한 그랜자임 폭탄을 떨어뜨려요.', range:12, radius:4.2, dmg:1900, flight:1.0, icon:'☄️' },
-    gadget:{ type:'shield', name:'세포막 강화', desc:'3.5초 동안 받는 피해가 절반으로 줄어요.', dur:3.5, icon:'🛡️' },
+  tcell:{ side:'immune', name:'세포독성 T세포', nick:'킬러T', icon:'💥', kind:'적응 면역 · 세포성', role:'투척', color:0x6fe08a, hp:3800, speed:5.15, sfx:'throw',
+    trait:'벽 너머로 퍼포린 캡슐을 곡사 투척하는 폭격수. 숨어 있는 적도 그랜자임 궤도 폭격으로 초토화해요.',
+    attack:{ type:'lob', name:'퍼포린 천공 폭탄', desc:'벽을 넘어 날아가 착탄 지점 주변에 충격파 피해를 줘요.', range:11, radius:2.35, dmg:1120, flight:0.66, reload:1.55, cd:0.45, proj:'perforin', projColor:0x2ee6c8 },
+    superCost:3150, super:{ type:'bigLob', name:'그랜자임 세포자멸 폭격', desc:'넓은 범위에 초대형 그랜자임 핵폭탄을 떨어뜨려 막대한 피해를 줘요.', range:12, radius:4.4, dmg:1950, flight:0.88, icon:'☄️' },
+    gadget:{ type:'shield', name:'세포막 강화', desc:'3.5초 동안 받는 피해가 50% 줄어들어요.', dur:3.5, icon:'🛡️' },
     fact:'가슴샘(흉선)에서 성숙하는 T 림프구로, 표면에 CD8 단백질이 있어요. MHC I에 제시된 항원을 알아보고 바이러스에 감염된 세포나 암세포를 직접 공격해요(세포성 면역). 퍼포린으로 세포막에 구멍을 낸 뒤 그랜자임을 들여보내 세포자멸사를 일으켜요.' },
-  nk:{ side:'immune', name:'NK 세포', nick:'엔케이', icon:'🥷', kind:'선천성 면역 · 자연살해', role:'암살자', color:0x37c7b5, hp:3800, speed:6.3, sfx:'slash',
-    trait:'그림자 속 자연살해자. 은신으로 다가가 근접 할퀴기 한 방에 큰 피해를 줘요.',
-    attack:{ type:'melee', name:'독성 할퀴기', desc:'눈앞의 넓은 부채꼴을 즉시 할퀴어요. 사거리는 짧지만 강해요.', range:3.4, arcDeg:120, dmg:950, reload:0.9, cd:0.3, projColor:0x5ef2e0 },
-    superCost:2900, super:{ type:'stealth', name:'은밀한 습격', desc:'4초 동안 투명해지고 빨라져요. 은신 중 첫 공격은 1.6배 피해!', dur:4, bonus:1.6, icon:'🌫️' },
-    gadget:{ type:'blink', name:'순간 이동', desc:'바라보는 방향으로 순식간에 5칸 이동해요.', dist:5, icon:'✨' },
+  nk:{ side:'immune', name:'NK 세포', nick:'엔케이', icon:'🥷', kind:'선천성 면역 · 자연살해', role:'암살자', color:0x37c7b5, hp:4300, speed:6.4, sfx:'slash',
+    trait:'그림자 속 자연살해자. 은신 습격으로 단숨에 파고들어 쌍단검 참격으로 암살해요.',
+    attack:{ type:'melee', name:'퍼포린 쌍단검 참격', desc:'눈앞의 넓은 부채꼴을 즉시 베어내요. 재장전이 매우 빨라요.', range:3.85, arcDeg:125, dmg:1020, reload:0.82, cd:0.28, projColor:0x5ef2e0 },
+    superCost:2800, super:{ type:'stealth', name:'은밀한 자연살해 습격', desc:'4초간 투명해지고 이동 속도가 크게 증가해요. 은신 중 첫 공격은 1.65배 치명타 피해!', dur:4, bonus:1.65, icon:'🌫️' },
+    gadget:{ type:'blink', name:'순간 도약', desc:'바라보는 방향으로 순식간에 5.5칸 잔상 도약해요.', dist:5.5, icon:'✨' },
     fact:'항원을 미리 배우지 않아도 바로 공격하는 선천성 면역의 림프구예요. 정상 세포가 가진 MHC I이 줄어든 감염 세포나 암세포를 알아보고, T세포처럼 퍼포린과 그랜자임으로 세포자멸사를 일으켜요. 그래서 "자연살해" 세포라고 불러요.' },
-  helper:{ side:'immune', name:'보조 T세포', nick:'헬퍼T', icon:'📡', kind:'적응 면역 · 지휘관', role:'지원', color:0xffc04d, hp:3400, speed:5.2, sfx:'orb',
-    trait:'면역 부대의 지휘관. 구슬은 적을 뚫고 아군을 치료하고, 신호탑을 세워 전선을 지켜요.',
-    attack:{ type:'single', name:'사이토카인 구슬', desc:'적을 관통하며 피해를 주고, 지나가는 아군은 치료해요.', range:10, dmg:650, speed:15, reload:1.4, cd:0.5, proj:'orb', projColor:0xffa630, width:0.55, pierce:true, healAlly:700 },
-    superCost:3000, super:{ type:'turret', name:'사이토카인 신호탑', desc:'9초 동안 적을 자동 공격하고 주변 아군을 계속 치료하는 탑을 세워요.', dur:9, dmg:340, rate:0.65, range:9, heal:260, icon:'🗼' },
-    gadget:{ type:'heal', name:'인터류킨 분비', desc:'자신과 주변 아군의 체력을 회복해요.', amount:1200, radius:6, icon:'💛' },
+  helper:{ side:'immune', name:'보조 T세포', nick:'헬퍼T', icon:'📡', kind:'적응 면역 · 지휘관', role:'지원', color:0xffc04d, hp:3850, speed:5.35, sfx:'orb',
+    trait:'면역 부대의 지휘관. 관통하는 태양 구슬로 적을 공격함과 동시에 아군을 치유하고 신호탑을 세워요.',
+    attack:{ type:'single', name:'사이토카인 공명 구슬', desc:'적을 관통하며 피해를 주고, 닿는 아군은 즉시 치유해요.', range:10.5, dmg:780, speed:18.5, reload:1.3, cd:0.42, proj:'orb', projColor:0xffa630, width:0.6, pierce:true, healAlly:760, trail:true },
+    superCost:2850, super:{ type:'turret', name:'사이토카인 지휘 신호탑', desc:'10초 동안 주변 아군을 지속 치유하고 적에게 유도 광탄을 쏘는 신호탑을 소환해요.', dur:10, dmg:380, rate:0.6, range:9.5, heal:300, icon:'🗼' },
+    gadget:{ type:'heal', name:'인터류킨 파동', desc:'자신과 주변 아군의 체력을 1350 회복해요.', amount:1350, radius:6.2, icon:'💛' },
     fact:'표면에 CD4 단백질이 있는 T 림프구예요. 대식세포가 제시한 항원을 알아보면 인터류킨 같은 사이토카인을 분비해 B 림프구의 항체 생산과 세포독성 T세포의 활동을 돕는 면역 반응의 지휘관이에요.' },
-  mast:{ side:'immune', name:'비만세포', nick:'마스트', icon:'🎈', kind:'선천성 면역 · 염증 유발', role:'컨트롤', color:0xff8cc6, hp:3700, speed:5.0, sfx:'drip',
-    trait:'염증의 방아쇠. 바닥에 히스타민 웅덩이를 깔고, 폭발로 적을 날려 버려요.',
-    attack:{ type:'lob', name:'히스타민 웅덩이', desc:'떨어진 곳에 2.5초 동안 계속 피해를 주는 웅덩이를 만들어요.', range:10, radius:1.8, dmg:450, flight:0.7, reload:1.8, cd:0.5, proj:'drop', projColor:0xff4fa3, pool:{ dur:2.5, dps:420, r:2.1 } },
-    superCost:3100, super:{ type:'wave', name:'히스타민 대폭발', desc:'주변으로 충격파를 터뜨려 적을 멀리 밀쳐 내요.', radius:5.2, range:5.2, dmg:1300, knock:9, icon:'💢' },
-    gadget:{ type:'speed', name:'혈관 확장', desc:'3초 동안 이동 속도가 빨라져요.', dur:3, icon:'💨' },
+  mast:{ side:'immune', name:'비만세포', nick:'마스트', icon:'🎈', kind:'선천성 면역 · 염증 유발', role:'컨트롤', color:0xff8cc6, hp:3950, speed:5.15, sfx:'drip',
+    trait:'염증의 방아쇠. 히스타민 용액으로 지역을 장악하고, 아나필락시스 대폭발로 적들을 날려 버려요.',
+    attack:{ type:'lob', name:'히스타민 산성 웅덩이', desc:'착탄 즉시 피해를 주고 2.8초 동안 끓어오르는 히스타민 장판을 생성해요.', range:10.2, radius:2.0, dmg:540, flight:0.66, reload:1.55, cd:0.45, proj:'drop', projColor:0xff4fa3, pool:{ dur:2.8, dps:460, r:2.3 } },
+    superCost:2900, super:{ type:'wave', name:'히스타민 대폭발', desc:'주변에 거대한 충격파 돔을 터뜨려 큰 피해를 주고 적들을 멀리 날려 버려요.', radius:5.5, range:5.5, dmg:1420, knock:9.5, icon:'💢' },
+    gadget:{ type:'speed', name:'혈관 확장 가속', desc:'3.2초 동안 이동 속도가 빨라져요.', dur:3.2, icon:'💨' },
     fact:'피부와 점막 근처 조직에 사는 세포로, 알갱이(과립) 속에 히스타민을 잔뜩 저장해요. 히스타민이 나오면 모세혈관이 넓어지고 투과성이 커져 붓고 빨개지는 염증 반응이 일어나요. 알레르기 반응의 주인공이기도 해요.' },
 
   /* ---------- 병원체 ---------- */
-  virus:{ side:'pathogen', name:'인플루엔자 바이러스', nick:'플루', icon:'🦠', kind:'바이러스', role:'증식', color:0xff4d5e, hp:4000, speed:5.4, sfx:'wub',
-    trait:'흔들리며 날아가는 비리온과 자기 복제. 혼자서도 무리를 만들어 몰아쳐요.',
-    attack:{ type:'spread', name:'흔들 비리온', desc:'물결치듯 흔들리며 날아가는 비리온 3개를 쏴요.', count:3, spreadDeg:22, range:9, dmg:420, speed:16, reload:1.4, cd:0.45, proj:'virion', projColor:0xff5a6b, wave:{ amp:0.75, freq:1.5 }, width:0.4 },
-    superCost:3000, super:{ type:'summon', name:'자기 복제', desc:'작은 복제 바이러스 3마리를 만들어요. 적에게 달려가 터져요.', count:3, hp:900, dmg:800, life:11, icon:'🧬' },
-    gadget:{ type:'speed', name:'항원 변이', desc:'2.5초 동안 이동 속도가 빨라져요.', dur:2.5, icon:'🔀' },
+  virus:{ side:'pathogen', name:'인플루엔자 바이러스', nick:'플루', icon:'🦠', kind:'바이러스', role:'증식', color:0xff4d5e, hp:4100, speed:5.5, sfx:'wub',
+    trait:'물결치며 날아가는 비리온 탄막과 자기 복제 군단. 복제 바이러스 무리로 전장을 압도해요.',
+    attack:{ type:'spread', name:'파동 비리온 3연발', desc:'사인파 궤적으로 출렁이며 날아가는 비리온 3개를 동시에 발사해요.', count:3, spreadDeg:18, range:9.4, dmg:450, speed:18.5, reload:1.35, cd:0.42, proj:'virion', projColor:0xff5a6b, wave:{ amp:0.55, freq:1.6 }, width:0.44, trail:true },
+    superCost:2900, super:{ type:'summon', name:'RNA 자기 복제 군단', desc:'적에게 돌진해 자폭하는 복제 바이러스 3마리를 즉시 증식시켜요.', count:3, hp:1050, dmg:860, life:12, icon:'🧬' },
+    gadget:{ type:'speed', name:'항원 변이 질주', desc:'2.8초 동안 이동 속도가 빨라져요.', dur:2.8, icon:'🔀' },
     fact:'세포 구조가 없고 단백질 껍질 속에 RNA를 가진 바이러스예요. 스스로 물질대사를 못 해서 숙주 세포 안에서만 증식해요. 표면의 헤마글루티닌(H)과 뉴라미니데이스(N) 단백질 종류에 따라 H1N1처럼 이름을 붙이고, 변이가 잦아 해마다 백신을 새로 만들어요.' },
-  bacteria:{ side:'pathogen', name:'병원성 대장균', nick:'콜라이', icon:'🧫', kind:'세균 (원핵생물)', role:'돌격', color:0xffa630, hp:4600, speed:5.5, sfx:'hiss',
-    trait:'근거리 독소 분사기. 화염처럼 퍼지는 독소를 뿜고 편모로 들이받아요.',
-    attack:{ type:'flame', name:'독소 분사', desc:'짧은 거리에 독소를 뿜어요. 관통하며 여러 적을 동시에 태워요.', count:9, interval:0.04, spreadDeg:30, range:5.8, dmg:120, speed:13, reload:1.2, cd:0.45, proj:'flame', projColor:0xffa630, width:0.55 },
-    superCost:2900, super:{ type:'dash', name:'편모 돌진', desc:'편모를 돌려 돌진하고 부딪힌 주변에 피해를 줘요.', range:9, dmg:1300, heal:600, radius:2.4, icon:'🌀' },
-    gadget:{ type:'heal', name:'바이오필름 회복', desc:'자신과 주변 아군의 체력을 회복해요.', amount:1000, radius:5, icon:'🟫' },
+  bacteria:{ side:'pathogen', name:'병원성 대장균', nick:'콜라이', icon:'🧫', kind:'세균 (원핵생물)', role:'돌격', color:0xffa630, hp:4900, speed:5.7, sfx:'hiss',
+    trait:'맹독 화염방사 돌격병. 관통하는 독소 불길을 뿜어 여러 적을 녹이고 편모 회전으로 돌진해요.',
+    attack:{ type:'flame', name:'장독소 화염 분사', desc:'전방에 관통하는 고열 독소 입자를 연속 분사해 여러 적을 동시에 태워요.', count:9, interval:0.038, spreadDeg:28, range:6.4, dmg:142, speed:14.5, reload:1.15, cd:0.4, proj:'flame', projColor:0xffa630, width:0.6 },
+    superCost:2800, super:{ type:'dash', name:'편모 회전 돌진', desc:'편모 모터를 풀가동해 돌진하며 부딪힌 적들에게 큰 피해를 주고 체력을 회복해요.', range:9.2, dmg:1380, heal:950, radius:2.6, icon:'🌀' },
+    gadget:{ type:'heal', name:'바이오필름 재생', desc:'자신과 주변 아군의 체력을 1250 회복해요.', amount:1250, radius:5.5, icon:'🟫' },
     fact:'핵막이 없는 원핵생물이에요. 펩티도글리칸 세포벽을 가지고 편모로 헤엄치며, 조건이 좋으면 약 20분마다 이분법으로 분열해요. 일부 병원성 대장균은 독소를 만들어 식중독을 일으켜요. 항생제로 치료하지만 함부로 쓰면 내성 세균이 생겨요.' },
-  fungus:{ side:'pathogen', name:'칸디다 진균', nick:'칸디', icon:'🍄', kind:'균류 (진핵생물)', role:'투척', color:0xc8d94a, hp:3500, speed:4.9, sfx:'puff',
-    trait:'출아로 터지는 포자 폭탄. 떨어진 포자가 다시 갈라져 주변을 뒤덮어요.',
-    attack:{ type:'lob', name:'출아 포자', desc:'떨어지면 작은 포자 4개로 갈라지며 연쇄 폭발해요.', range:10.5, radius:1.6, dmg:620, flight:0.8, reload:1.8, cd:0.5, proj:'spore', projColor:0xd8f05a, split:{ n:4, r:1.9, dmg:300, radius:1.2 } },
-    superCost:3200, super:{ type:'cloud', name:'포자 구름', desc:'5초 동안 머무는 포자 구름. 안에 있는 적은 계속 피해를 입고 느려져요.', range:11, radius:3.6, dps:520, dur:5, flight:0.8, icon:'☁️' },
-    gadget:{ type:'shield', name:'키틴 갑옷', desc:'3초 동안 받는 피해가 절반으로 줄어요.', dur:3, icon:'🛡️' },
+  fungus:{ side:'pathogen', name:'칸디다 진균', nick:'칸디', icon:'🍄', kind:'균류 (진핵생물)', role:'투척', color:0xc8d94a, hp:3750, speed:5.15, sfx:'puff',
+    trait:'출아법으로 분열하는 연쇄 포자 폭탄. 착탄 후 4개의 자포자로 갈라지며 넓은 지역을 초토화해요.',
+    attack:{ type:'lob', name:'출아 연쇄 포자탄', desc:'착탄 지점에 폭발한 뒤 4개의 출아 포자로 갈라져 2차 연쇄 폭발을 일으켜요.', range:10.5, radius:1.75, dmg:680, flight:0.74, reload:1.6, cd:0.45, proj:'spore', projColor:0xd8f05a, split:{ n:4, r:1.95, dmg:330, radius:1.3 } },
+    superCost:3050, super:{ type:'cloud', name:'맹독 포자 구름', desc:'착탄 즉시 충격 피해를 주고 5초간 적을 둔화시키며 지속 피해를 주는 포자 구름을 생성해요.', range:11, radius:3.8, dmg:380, dps:560, dur:5, flight:0.75, icon:'☁️' },
+    gadget:{ type:'shield', name:'키틴 세포벽 갑옷', desc:'3.2초 동안 받는 피해가 50% 줄어요.', dur:3.2, icon:'🛡️' },
     fact:'핵이 있는 진핵생물인 균류(효모)예요. 세포벽이 키틴으로 되어 있고, 몸에서 작은 싹이 돋아 떨어지는 출아법으로 늘어나요. 평소엔 몸에 조금 살지만 면역력이 떨어지면 칸디다증을 일으켜요. 항진균제로 치료해요.' },
-  plasmo:{ side:'pathogen', name:'말라리아 원충', nick:'플라스모', icon:'🦟', kind:'원생생물 (진핵생물)', role:'저격', color:0xd14bd1, hp:3000, speed:5.0, sfx:'needle',
-    trait:'초장거리 바늘 저격수. 한 발 한 발이 아프고, 적혈구를 터뜨리는 폭격도 해요.',
-    attack:{ type:'single', name:'침투 바늘', desc:'가장 멀리, 가장 아프게 꽂히는 바늘. 재장전은 느려요.', range:16, dmg:1300, speed:36, reload:2.0, cd:0.5, proj:'needle', projColor:0xff8bff, width:0.4, trail:true },
-    superCost:3400, super:{ type:'bigLob', name:'적혈구 파열', desc:'넓은 범위의 적혈구를 터뜨려 큰 피해를 줘요.', range:12, radius:4, dmg:1700, flight:1.0, icon:'🩸' },
-    gadget:{ type:'reveal', name:'모기 정찰', desc:'4초 동안 숨은 적을 드러내요.', dur:4, icon:'🦟' },
+  plasmo:{ side:'pathogen', name:'말라리아 원충', nick:'플라스모', icon:'🦟', kind:'원생생물 (진핵생물)', role:'저격', color:0xd14bd1, hp:3250, speed:5.2, sfx:'needle',
+    trait:'초장거리 포자소체 바늘 저격수. 단 한 발의 위력이 가장 강력하며 적혈구 파열로 광역 폭격해요.',
+    attack:{ type:'single', name:'포자소체 관통 바늘', desc:'가장 사거리가 길고 탄속이 빠른 초고위력 저격 바늘을 발사해요.', range:16, dmg:1360, speed:37, reload:1.72, cd:0.48, proj:'needle', projColor:0xff8bff, width:0.45, trail:true },
+    superCost:3200, super:{ type:'bigLob', name:'적혈구 연쇄 파열', desc:'넓은 범위의 적혈구를 한꺼번에 폭발시켜 치명적인 광역 피해를 입혀요.', range:12, radius:4.2, dmg:1850, flight:0.9, icon:'🩸' },
+    gadget:{ type:'reveal', name:'학질모기 정찰', desc:'4.5초 동안 숨은 적을 모두 드러내요.', dur:4.5, icon:'🦟' },
     fact:'얼룩날개모기(학질모기)가 옮기는 원생생물이에요. 사람 몸에 들어오면 간세포에서 늘어난 뒤 적혈구에 침입해 증식하고, 적혈구를 터뜨려요. 그래서 높은 열이 주기적으로 반복되는 말라리아에 걸려요.' },
-  hiv:{ side:'pathogen', name:'HIV', nick:'아이브', icon:'🔮', kind:'바이러스 (레트로바이러스)', role:'흡혈', color:0x8f7fd6, hp:3500, speed:5.2, sfx:'wobble',
-    trait:'면역을 무너뜨리는 그림자. 끝까지 쫓아가는 구슬로 체력을 빼앗고 적을 약화시켜요.',
-    attack:{ type:'homing', name:'추적 비리온', desc:'가까운 적을 따라가는 구슬. 준 피해의 60%만큼 체력을 회복해요.', range:11, dmg:520, speed:12, reload:1.3, cd:0.45, proj:'hivorb', projColor:0xa48cff, width:0.45, lifesteal:0.6, turn:4.5 },
-    superCost:3200, super:{ type:'curse', name:'면역 결핍', desc:'범위 안의 적을 5초 동안 약화(주는 피해 -40%, 회복 불가)시켜요.', range:11, radius:4, dmg:600, weak:5, flight:0.8, icon:'💜' },
-    gadget:{ type:'stealth', name:'잠복기', desc:'2.5초 동안 투명해져요.', dur:2.5, icon:'🌑' },
+  hiv:{ side:'pathogen', name:'HIV', nick:'아이브', icon:'🔮', kind:'바이러스 (레트로바이러스)', role:'흡혈', color:0x8f7fd6, hp:3750, speed:5.4, sfx:'wobble',
+    trait:'생명력을 빨아들이는 추적 암살자. 유도 비리온으로 체력을 흡수하고 면역 결핍 저주로 적을 무력화해요.',
+    attack:{ type:'homing', name:'역전사 유도 비리온', desc:'적을 자동 추적하는 암흑 구슬을 쏴 입힌 피해의 60%만큼 자신의 체력을 흡수해요.', range:11.2, dmg:680, speed:14.5, reload:1.2, cd:0.4, proj:'hivorb', projColor:0xa48cff, width:0.48, lifesteal:0.6, turn:4.8, trail:true },
+    superCost:2750, super:{ type:'curse', name:'후천성 면역 결핍', desc:'범위 내 적에게 큰 피해를 주고 5초간 약화(공격력 -40%, 모든 치유 차단) 저주를 걸어요.', range:11, radius:4.1, dmg:860, weak:5, flight:0.75, icon:'💜' },
+    gadget:{ type:'stealth', name:'은밀한 잠복기', desc:'2.8초 동안 투명해져 적의 시야에서 사라져요.', dur:2.8, icon:'🌑' },
     fact:'유전 물질인 RNA를 DNA로 바꾸는 역전사 효소를 가진 레트로바이러스예요. 면역의 지휘관인 보조 T세포(CD4)를 감염시켜 파괴하기 때문에, 시간이 지나면 면역력이 무너지는 후천성 면역 결핍증(AIDS)을 일으켜요.' },
-  tb:{ side:'pathogen', name:'결핵균', nick:'튜베', icon:'🧱', kind:'세균 (원핵생물)', role:'요새', color:0xb5532f, hp:6800, speed:4.6, sfx:'thunk',
-    trait:'두꺼운 밀랍 갑옷의 요새. 관통 막대를 쏘고, 주변에 벽을 세워 버텨요.',
-    attack:{ type:'pierce', name:'밀랍 막대', desc:'여러 적을 꿰뚫고 날아가는 굵은 막대.', range:8.5, dmg:850, speed:19, reload:1.6, cd:0.5, proj:'wax', projColor:0xd9a066, width:0.75, pierce:true },
-    superCost:3300, super:{ type:'wall', name:'육아종 요새', desc:'7초 동안 주변을 둘러싸는 벽을 세우고 잠시 방어막을 얻어요.', dur:7, icon:'🏰' },
-    gadget:{ type:'shield', name:'밀랍 코팅', desc:'3.5초 동안 받는 피해가 절반으로 줄어요.', dur:3.5, icon:'🛡️' },
+  tb:{ side:'pathogen', name:'결핵균', nick:'튜베', icon:'🧱', kind:'세균 (원핵생물)', role:'요새', color:0xb5532f, hp:6800, speed:5.15, sfx:'thunk',
+    trait:'미콜산 밀랍 갑옷의 철벽 요새. 두꺼운 관통 막대를 쏘고, 지형을 바꾸는 육아종 성벽으로 적을 가둬요.',
+    attack:{ type:'pierce', name:'미콜산 관통 기둥', desc:'일직선상의 모든 적을 꿰뚫고 지나가는 묵직한 밀랍 기둥을 발사해요.', range:8.8, dmg:940, speed:20.5, reload:1.45, cd:0.45, proj:'wax', projColor:0xd9a066, width:0.78, pierce:true, trail:true },
+    superCost:3100, super:{ type:'wall', name:'육아종 요새 융기', desc:'주변 적에게 1000의 지진 피해를 주며 7초간 성벽을 세우고 2.5초간 방어막을 얻어요.', dur:7, dmg:1000, radius:4.5, icon:'🏰' },
+    gadget:{ type:'shield', name:'미콜산 밀랍 코팅', desc:'3.5초 동안 받는 피해가 50% 감소해요.', dur:3.5, icon:'🛡️' },
     fact:'세포벽에 미콜산이라는 두꺼운 밀랍층이 있어 소독약과 면역 공격을 잘 버티는 세균이에요. 기침으로 퍼지며 주로 폐를 감염시켜요. 몸은 대식세포를 모아 결핵균을 둘러싸는 육아종이라는 덩어리를 만들어 가두려고 해요. 오랫동안 항생제를 먹어야 치료돼요.' },
-  staph:{ side:'pathogen', name:'황색포도상구균', nick:'스태프', icon:'🍇', kind:'세균 (원핵생물)', role:'난사', color:0xf2c230, hp:3400, speed:5.4, sfx:'boing',
-    trait:'포도송이 튕기기 장인. 벽에 맞고 튀어나오는 포도알로 구석의 적도 맞혀요.',
-    attack:{ type:'bounce', name:'튕기는 포도알', desc:'포도알 2개를 쏴요. 벽에 닿으면 두 번까지 튕겨요.', count:2, spreadDeg:12, range:13, dmg:480, speed:20, reload:1.4, cd:0.45, proj:'grape', projColor:0xffd23f, width:0.42, bounces:2 },
-    superCost:3100, super:{ type:'cluster', name:'포도송이 폭탄', desc:'떨어진 곳에서 포도알 7개가 사방으로 흩어져 터져요.', range:11, radius:1.8, dmg:600, n:7, spread:3.2, flight:0.9, icon:'🍇' },
-    gadget:{ type:'speed', name:'응집 질주', desc:'3초 동안 이동 속도가 빨라져요.', dur:3, icon:'💨' },
+  staph:{ side:'pathogen', name:'황색포도상구균', nick:'스태프', icon:'🍇', kind:'세균 (원핵생물)', role:'난사', color:0xf2c230, hp:3750, speed:5.5, sfx:'boing',
+    trait:'황금 포도송이 도탄 스페셜리스트. 벽에 튕길 때마다 강화되는 포도알로 엄폐물 뒤의 적을 타격해요.',
+    attack:{ type:'bounce', name:'황금 도탄 포도알', desc:'포도알 2개를 발사해요. 벽에 튕길 때마다 탄속과 피해량이 15%씩 증가해요(최대 2회 도탄).', count:2, spreadDeg:11, range:13.5, dmg:530, speed:21, reload:1.3, cd:0.42, proj:'grape', projColor:0xffd23f, width:0.45, bounces:2, trail:true },
+    superCost:2950, super:{ type:'cluster', name:'포도송이 집속 폭탄', desc:'착탄 지점에 폭발한 뒤 사방으로 황금 포도알 7개가 튀어나가 연쇄 폭발해요.', range:11, radius:1.9, dmg:650, n:7, spread:3.2, flight:0.82, icon:'🍇' },
+    gadget:{ type:'speed', name:'응집 질주', desc:'3.2초 동안 이동 속도가 빨라져요.', dur:3.2, icon:'💨' },
     fact:'공 모양의 세균(구균)이 포도송이처럼 뭉쳐 있어서 붙은 이름이에요. 피부와 코에 흔히 살고, 상처에 들어가면 고름이 생기는 감염이나 식중독을 일으켜요. 항생제가 잘 듣지 않는 내성균(MRSA)이 문제가 되고 있어요.' }
 };
 const IMMUNE = ['macro','neutro','bcell','tcell','nk','helper','mast'];
@@ -825,36 +892,106 @@ const pmat = c => partMats[c] || (partMats[c] = new THREE.MeshBasicMaterial({ co
 const arcGeos = {};
 function arcGeo(deg){ if (!arcGeos[deg]){ const h = deg*Math.PI/360; const g = new THREE.RingGeometry(0.35,1,24,1,-Math.PI/2-h,2*h); g.rotateX(-Math.PI/2); arcGeos[deg] = g; } return arcGeos[deg]; }
 const PP = {};
+const domeGeo = new THREE.SphereGeometry(1, 22, 14, 0, TAU, 0, Math.PI/2);
+const pillarGeo = new THREE.CylinderGeometry(1, 1, 1, 16, 1, true);
 function projMesh(type, color){
   const key = type+color;
   if (!PP[key]){
     const mat = new THREE.MeshBasicMaterial({ color });
-    const glow = (r,o=0.35) => new THREE.Mesh(sph(r,10,8), new THREE.MeshBasicMaterial({ color, transparent:true, opacity:o, depthWrite:false }));
+    const glow = (r,o=0.38,c=color) => new THREE.Mesh(sph(r,12,10), new THREE.MeshBasicMaterial({ color:c, transparent:true, opacity:o, depthWrite:false }));
     let m;
     switch(type){
       case 'antibody': {
         m = new THREE.Group();
-        const st = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.45,6).rotateX(Math.PI/2), mat); st.position.z = -0.18; m.add(st);
-        for (const s of [-1,1]){ const a = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.38,6).rotateX(Math.PI/2), mat); a.position.set(s*0.12,0,0.16); a.rotation.y = s*0.55; m.add(a); }
-        m.add(glow(0.3)); break;
+        const st = new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,0.55,8).rotateX(Math.PI/2), mat); st.position.z = -0.22; m.add(st);
+        for (const s of [-1,1]){ const a = new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,0.46,8).rotateX(Math.PI/2), mat); a.position.set(s*0.16,0,0.2); a.rotation.y = s*0.58; m.add(a); }
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.34,0.04,6,16), new THREE.MeshBasicMaterial({ color:0xffffff })); ring.rotation.x = Math.PI/2; m.add(ring);
+        m.add(glow(0.42,0.35)); break;
       }
-      case 'needle': m = new THREE.Group(); m.add(new THREE.Mesh(new THREE.ConeGeometry(0.13,0.8,8).rotateX(Math.PI/2), mat)); m.add(glow(0.22,0.3)); break;
-      case 'perforin': m = new THREE.Mesh(new THREE.TorusGeometry(0.3,0.11,8,14), mat); break;
-      case 'netball': m = new THREE.Mesh(new THREE.SphereGeometry(0.55,8,6), new THREE.MeshBasicMaterial({ color, wireframe:true })); break;
-      case 'big': m = new THREE.Group(); m.add(new THREE.Mesh(sph(0.45,14,10), mat)); m.add(glow(0.7,0.3)); break;
-      case 'granule': m = new THREE.Mesh(sph(0.2,10,8), mat); break;
-      case 'goo': m = new THREE.Mesh(sph(0.34,10,8), toon(color)); break;
-      case 'orb': m = new THREE.Group(); m.add(new THREE.Mesh(sph(0.3,12,10), mat)); { const r = new THREE.Mesh(new THREE.TorusGeometry(0.46,0.05,6,20), new THREE.MeshBasicMaterial({ color:0xfff2c2 })); r.rotation.x = Math.PI/2; m.add(r); } m.add(glow(0.55,0.25)); break;
-      case 'drop': m = new THREE.Mesh(sph(0.3,12,10), mat); m.scale.set(0.85,1.25,0.85); break;
-      case 'virion': { m = new THREE.Group(); m.add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.28,0), toon(color))); const km = new THREE.MeshBasicMaterial({ color:0xffd1d6 }); ICO_V.forEach(v => { const s = new THREE.Mesh(sph(0.07,6,4), km); s.position.set(...v).normalize().multiplyScalar(0.36); m.add(s); }); break; }
-      case 'flame': m = new THREE.Mesh(sph(0.24,8,6), new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.75, depthWrite:false })); break;
-      case 'spore': m = new THREE.Group(); m.add(new THREE.Mesh(sph(0.26,10,8), toon(color))); for (let i=0;i<3;i++){ const s = new THREE.Mesh(sph(0.13,8,6), toon(color)); s.position.set(Math.cos(i*2.1)*0.26,0.1,Math.sin(i*2.1)*0.26); m.add(s); } break;
-      case 'hivorb': m = new THREE.Group(); m.add(new THREE.Mesh(sph(0.16,10,8), new THREE.MeshBasicMaterial({ color:0x2a1a4a }))); m.add(glow(0.34,0.55)); break;
-      case 'wax': m = new THREE.Mesh(new THREE.BoxGeometry(0.32,0.32,1.1), toon(color)); break;
-      case 'grape': m = new THREE.Group(); [[0,0,0],[0.17,0.06,-0.1],[-0.15,0.08,-0.08]].forEach(p => { const s = new THREE.Mesh(sph(0.17,10,8), toon(color)); s.position.set(...p); m.add(s); }); break;
-      case 'clusterball': m = new THREE.Group(); for (let i=0;i<7;i++){ const s = new THREE.Mesh(sph(0.2,10,8), toon(color)); s.position.set(Math.cos(i)*0.22, Math.sin(i*1.7)*0.18, Math.sin(i)*0.22); m.add(s); } break;
-      case 'cloudball': m = new THREE.Group(); for (let i=0;i<4;i++){ const s = new THREE.Mesh(sph(0.3,10,8), new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.7, depthWrite:false })); s.position.set(Math.cos(i*1.6)*0.25, 0, Math.sin(i*1.6)*0.25); m.add(s); } break;
-      case 'curseball': m = new THREE.Group(); m.add(new THREE.Mesh(sph(0.3,12,10), new THREE.MeshBasicMaterial({ color:0x2a0f3a }))); m.add(new THREE.Mesh(new THREE.SphereGeometry(0.5,8,6), new THREE.MeshBasicMaterial({ color, wireframe:true }))); break;
+      case 'needle': {
+        m = new THREE.Group();
+        m.add(new THREE.Mesh(new THREE.ConeGeometry(0.16,1.05,10).rotateX(Math.PI/2), mat));
+        const core = new THREE.Mesh(new THREE.ConeGeometry(0.08,0.85,8).rotateX(Math.PI/2), new THREE.MeshBasicMaterial({ color:0xffffff })); core.position.z = 0.1; m.add(core);
+        const fin = new THREE.Mesh(new THREE.TorusGeometry(0.24,0.04,6,14), new THREE.MeshBasicMaterial({ color:0x70f5ff })); fin.position.z = -0.25; m.add(fin);
+        m.add(glow(0.32,0.38)); break;
+      }
+      case 'perforin': {
+        m = new THREE.Group();
+        m.add(new THREE.Mesh(new THREE.TorusGeometry(0.34,0.12,10,18), mat));
+        m.add(new THREE.Mesh(sph(0.18,10,8), new THREE.MeshBasicMaterial({ color:0xffffff })));
+        m.add(glow(0.48,0.32)); break;
+      }
+      case 'netball': m = new THREE.Group(); m.add(new THREE.Mesh(new THREE.SphereGeometry(0.62,10,8), new THREE.MeshBasicMaterial({ color, wireframe:true }))); m.add(glow(0.45,0.35,0xff5c94)); break;
+      case 'big': {
+        m = new THREE.Group();
+        m.add(new THREE.Mesh(sph(0.52,16,12), mat));
+        const r1 = new THREE.Mesh(new THREE.TorusGeometry(0.72,0.06,6,20), new THREE.MeshBasicMaterial({ color:0xffffff })); r1.rotation.x = Math.PI/3; m.add(r1);
+        const r2 = new THREE.Mesh(new THREE.TorusGeometry(0.72,0.06,6,20), new THREE.MeshBasicMaterial({ color })); r2.rotation.y = Math.PI/3; m.add(r2);
+        m.add(glow(0.88,0.36)); break;
+      }
+      case 'granule': {
+        m = new THREE.Group();
+        const body = new THREE.Mesh(sph(0.22,12,10), mat); body.scale.set(0.85,0.85,1.6); m.add(body);
+        m.add(new THREE.Mesh(sph(0.13,8,6), new THREE.MeshBasicMaterial({ color:0xffffff })));
+        m.add(glow(0.32,0.35)); break;
+      }
+      case 'goo': {
+        m = new THREE.Group();
+        const main = new THREE.Mesh(sph(0.36,12,10), toon(color)); main.scale.set(1.1,0.85,1.2); m.add(main);
+        for (const s of [-1,1]){ const sub = new THREE.Mesh(sph(0.16,8,6), toon(0xe6ccff)); sub.position.set(s*0.24,0.06,-0.18); m.add(sub); }
+        m.add(glow(0.46,0.28)); break;
+      }
+      case 'orb': {
+        m = new THREE.Group();
+        m.add(new THREE.Mesh(sph(0.34,14,10), mat));
+        m.add(new THREE.Mesh(sph(0.2,10,8), new THREE.MeshBasicMaterial({ color:0xffffff })));
+        const r1 = new THREE.Mesh(new THREE.TorusGeometry(0.52,0.055,6,22), new THREE.MeshBasicMaterial({ color:0xfff2c2 })); r1.rotation.x = Math.PI/2; m.add(r1);
+        const r2 = new THREE.Mesh(new THREE.TorusGeometry(0.46,0.04,6,20), new THREE.MeshBasicMaterial({ color:0x5dff9a })); r2.rotation.y = Math.PI/3; m.add(r2);
+        m.add(glow(0.62,0.32)); break;
+      }
+      case 'drop': {
+        m = new THREE.Group();
+        const d = new THREE.Mesh(sph(0.34,12,10), mat); d.scale.set(0.9,1.3,0.9); m.add(d);
+        m.add(glow(0.48,0.35,0xff99d6)); break;
+      }
+      case 'virion': {
+        m = new THREE.Group();
+        m.add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.3,0), toon(color)));
+        const km = new THREE.MeshBasicMaterial({ color:0xffd1d6 });
+        ICO_V.forEach(v => { const s = new THREE.Mesh(sph(0.075,6,4), km); s.position.set(...v).normalize().multiplyScalar(0.38); m.add(s); });
+        m.add(glow(0.44,0.3)); break;
+      }
+      case 'flame': {
+        m = new THREE.Group();
+        m.add(new THREE.Mesh(sph(0.26,10,8), new THREE.MeshBasicMaterial({ color:0xfff07a, transparent:true, opacity:0.9, depthWrite:false })));
+        m.add(glow(0.42,0.55,color)); break;
+      }
+      case 'spore': {
+        m = new THREE.Group();
+        m.add(new THREE.Mesh(sph(0.28,10,8), toon(color)));
+        for (let i=0;i<4;i++){ const s = new THREE.Mesh(sph(0.14,8,6), toon(0xf2ff9e)); s.position.set(Math.cos(i*1.57)*0.28,0.1,Math.sin(i*1.57)*0.28); m.add(s); }
+        m.add(glow(0.44,0.3)); break;
+      }
+      case 'hivorb': {
+        m = new THREE.Group();
+        m.add(new THREE.Mesh(sph(0.2,10,8), new THREE.MeshBasicMaterial({ color:0x1e0b36 })));
+        const w = new THREE.Mesh(new THREE.IcosahedronGeometry(0.34,0), new THREE.MeshBasicMaterial({ color:0xff4791, wireframe:true })); m.add(w);
+        m.add(glow(0.44,0.5,color)); break;
+      }
+      case 'wax': {
+        m = new THREE.Group();
+        m.add(new THREE.Mesh(new THREE.BoxGeometry(0.36,0.36,1.18), toon(color)));
+        for (const z of [-0.35,0,0.35]){ const r = new THREE.Mesh(new THREE.BoxGeometry(0.44,0.44,0.12), new THREE.MeshBasicMaterial({ color:0xffe4b5 })); r.position.z = z; m.add(r); }
+        m.add(glow(0.5,0.28)); break;
+      }
+      case 'grape': {
+        m = new THREE.Group();
+        [[0,0,0],[0.18,0.06,-0.1],[-0.16,0.08,-0.08],[0,-0.14,-0.08]].forEach(p => { const s = new THREE.Mesh(sph(0.18,10,8), toon(color)); s.position.set(...p); m.add(s); });
+        m.add(glow(0.38,0.32)); break;
+      }
+      case 'clusterball': m = new THREE.Group(); for (let i=0;i<7;i++){ const s = new THREE.Mesh(sph(0.22,10,8), toon(color)); s.position.set(Math.cos(i)*0.24, Math.sin(i*1.7)*0.2, Math.sin(i)*0.24); m.add(s); } m.add(glow(0.55,0.35)); break;
+      case 'cloudball': m = new THREE.Group(); for (let i=0;i<4;i++){ const s = new THREE.Mesh(sph(0.32,10,8), new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.75, depthWrite:false })); s.position.set(Math.cos(i*1.6)*0.25, 0, Math.sin(i*1.6)*0.25); m.add(s); } break;
+      case 'curseball': m = new THREE.Group(); m.add(new THREE.Mesh(sph(0.32,12,10), new THREE.MeshBasicMaterial({ color:0x2a0f3a }))); m.add(new THREE.Mesh(new THREE.SphereGeometry(0.55,10,8), new THREE.MeshBasicMaterial({ color, wireframe:true }))); m.add(glow(0.6,0.4)); break;
       default: m = new THREE.Mesh(sph(0.28,10,8), mat);
     }
     PP[key] = m;
@@ -1164,6 +1301,7 @@ function fire(u, dir, aimDist){
   const dm = u.dmgMul() * bonus;
   sfxAt(u.kit.sfx, u.pos.x, u.pos.z);
   const base = Math.atan2(dir.x, dir.z);
+  ringFx(u.pos.x+dir.x*0.75, u.pos.z+dir.z*0.75, 0.85, a.projColor||u.kit.color, 0.18);
   switch(a.type){
     case 'spread': case 'bounce': {
       const half = a.spreadDeg*Math.PI/360;
@@ -1193,12 +1331,20 @@ function fire(u, dir, aimDist){
       }
       for (const mn of G.minions) if (mn.team!==u.team && Math.hypot(mn.x-u.pos.x,mn.z-u.pos.z) < a.range+0.4) damageMinion(mn, a.dmg*dm, u);
       const fx = forward(u); boxesInRadius(u.pos.x+fx.x*1.8, u.pos.z+fx.z*1.8, 0.6, a.dmg*dm);
-      const s = new THREE.Mesh(arcGeo(a.arcDeg), new THREE.MeshBasicMaterial({ color:a.projColor, transparent:true, opacity:0.75, depthWrite:false, side:THREE.DoubleSide }));
-      s.position.set(u.pos.x,0.9,u.pos.z); s.rotation.y = base; s.scale.setScalar(a.range); world.add(s);
-      G.fx.push({ m:s, t:0, dur:0.2, r0:a.range*0.7, r1:a.range*1.05, kind:'arc' });
-      if (hitAny) burst(u.pos.x+fx.x*1.6, 1, u.pos.z+fx.z*1.6, a.projColor, 8, 4);
+      // NK 세포 쌍단검 3중 크레센트 검기 & 잔상 이펙트
+      for (const [scMul, colHex, yOff, tilt] of [[1.05, a.projColor, 0.95, 0.12], [0.85, 0xffffff, 1.05, -0.14], [1.15, bonus>1?0xff3d8b:0x16a596, 0.85, 0]]){
+        const s = new THREE.Mesh(arcGeo(a.arcDeg), new THREE.MeshBasicMaterial({ color:colHex, transparent:true, opacity:0.85, depthWrite:false, side:THREE.DoubleSide }));
+        s.position.set(u.pos.x,yOff,u.pos.z); s.rotation.set(0, base, tilt); s.scale.setScalar(a.range*scMul); world.add(s);
+        G.fx.push({ m:s, t:0, dur:0.24, r0:a.range*0.55*scMul, r1:a.range*1.12*scMul, kind:'arc' });
+      }
+      if (bonus>1){ domeFx(u.pos.x+fx.x*1.8, u.pos.z+fx.z*1.8, 2.4, 0xff3d8b, 0.35); G.shake = Math.max(G.shake, 0.22); }
+      if (hitAny) burst(u.pos.x+fx.x*1.8, 1.1, u.pos.z+fx.z*1.8, bonus>1?0xff3d8b:a.projColor, 14, 5.5);
       break;
     }
+  }
+  if (typeof NET !== 'undefined' && NET.active){
+    if (NET.role === 'host') NET.recordAction('attack', u, dir, aimDist);
+    else if (u.isPlayer) NET.sendAction('attack', dir, aimDist);
   }
   return true;
 }
@@ -1222,7 +1368,7 @@ function useSuper(u, dir, aimDist){
       break;
     case 'net': { const [tx,tz] = tgt(); spawnLob(u, tx, tz, { radius:s.radius, dmg:s.dmg*dm, dur:s.flight, charges:false, type:'netball', color:0xe9d4ff, slow:s.slow, root:s.root, net:true, land:'sNet' }); break; }
     case 'bigLob': { const [tx,tz] = tgt(); spawnLob(u, tx, tz, { radius:s.radius, dmg:s.dmg*dm, dur:s.flight, charges:false, type:'big', color:u.kit.side==='immune'?0x7dffd8:0xff3d5a, land:'boom', big:true }); break; }
-    case 'cloud': { const [tx,tz] = tgt(); spawnLob(u, tx, tz, { radius:s.radius, dmg:0, dur:s.flight, charges:false, type:'cloudball', color:0xc6ff4a, cloud:{ dur:s.dur, dps:s.dps, r:s.radius }, land:'sCloud' }); break; }
+    case 'cloud': { const [tx,tz] = tgt(); spawnLob(u, tx, tz, { radius:s.radius, dmg:(s.dmg||380)*dm, dur:s.flight, charges:false, type:'cloudball', color:0xc6ff4a, cloud:{ dur:s.dur, dps:s.dps, r:s.radius }, land:'sCloud' }); break; }
     case 'curse': { const [tx,tz] = tgt(); spawnLob(u, tx, tz, { radius:s.radius, dmg:s.dmg*dm, dur:s.flight, charges:false, type:'curseball', color:0xa04bff, weak:s.weak, land:'sCurse' }); break; }
     case 'cluster': { const [tx,tz] = tgt(); spawnLob(u, tx, tz, { radius:1.2, dmg:s.dmg*0.6*dm, dur:s.flight, charges:false, type:'clusterball', color:0xffd23f, cluster:{ n:s.n, spread:s.spread, dmg:s.dmg*dm, radius:s.radius }, land:'pop' }); break; }
     case 'stealth': u.stealthT = s.dur; u.speedT = s.dur; u.stealthBonus = s.bonus; burst(u.pos.x,1,u.pos.z,0x1b2838,18,4); break;
@@ -1235,13 +1381,20 @@ function useSuper(u, dir, aimDist){
       }
       for (const mn of G.minions) if (mn.team!==u.team && Math.hypot(mn.x-u.pos.x,mn.z-u.pos.z)<=s.radius) damageMinion(mn, s.dmg*dm, u);
       boxesInRadius(u.pos.x,u.pos.z,s.radius*0.7,s.dmg);
-      discFx(u.pos.x,u.pos.z,s.radius,0xff4fa3,0.45); ringFx(u.pos.x,u.pos.z,s.radius+0.6,0xffffff,0.5); ringFx(u.pos.x,u.pos.z,s.radius*0.6,0xff8cc6,0.35);
+      domeFx(u.pos.x,u.pos.z,s.radius,0xff4fa3,0.48); pillarFx(u.pos.x,u.pos.z,s.radius*0.45,4.5,0xff8cc6,0.42); discFx(u.pos.x,u.pos.z,s.radius,0xff4fa3,0.45); ringFx(u.pos.x,u.pos.z,s.radius+0.8,0xffffff,0.5);
       G.shake = 0.35; break;
     }
     case 'summon':
       for (let i=0;i<s.count;i++){ const a = u.facing + (i-1)*0.9; spawnMinion(u, u.pos.x+Math.sin(a)*1.4, u.pos.z+Math.cos(a)*1.4, s); }
       break;
-    case 'wall': placeWalls(u, s.dur); u.shieldT = Math.max(u.shieldT, 2); break;
+    case 'wall':
+      placeWalls(u, s.dur); u.shieldT = Math.max(u.shieldT, 2.5);
+      for (const e of G.units) if (e.alive && e.team!==u.team && dist(u,e)<=4.5){ damage(e, (s.dmg||1000)*dm, u, false); const dx=e.pos.x-u.pos.x,dz=e.pos.z-u.pos.z,d=Math.hypot(dx,dz)||1; e.kb.x=dx/d*8; e.kb.z=dz/d*8; }
+      domeFx(u.pos.x, u.pos.z, 4.5, 0xd9a066, 0.45); ringFx(u.pos.x, u.pos.z, 4.8, 0xffd23f, 0.5); G.shake = 0.28; break;
+  }
+  if (typeof NET !== 'undefined' && NET.active){
+    if (NET.role === 'host') NET.recordAction('super', u, dir, aimDist);
+    else if (u.isPlayer) NET.sendAction('super', dir, aimDist);
   }
   return true;
 }
@@ -1262,6 +1415,10 @@ function useGadget(u){
     }
   }
   if (u.isPlayer || dist(u,G.player)<16) floatText(u.pos.x,3.0,u.pos.z,g.name,'info');
+  if (typeof NET !== 'undefined' && NET.active){
+    if (NET.role === 'host') NET.recordAction('gadget', u, null, 0);
+    else if (u.isPlayer) NET.sendAction('gadget', null, 0);
+  }
   return true;
 }
 function heal(u, amt, silent){
@@ -1410,8 +1567,23 @@ function trailDot(x,y,z,color){
   G.parts.push({ m, vx:0, vy:0, vz:0, life:0.25, max:0.25, noGrav:true });
 }
 function ringFx(x,z,r,color,dur=0.4){
-  const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.85, depthWrite:false }));
-  m.position.set(x,0.09,z); world.add(m); G.fx.push({ m, t:0, dur, r0:r*0.25, r1:r, kind:'ring' });
+  const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.9, depthWrite:false }));
+  m.position.set(x,0.09,z); world.add(m); G.fx.push({ m, t:0, dur, r0:r*0.2, r1:r, kind:'ring' });
+}
+function domeFx(x,z,r,color,dur=0.42){
+  const m = new THREE.Mesh(domeGeo, new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.55, depthWrite:false, side:THREE.DoubleSide }));
+  m.position.set(x,0.05,z); world.add(m); G.fx.push({ m, t:0, dur, r0:r*0.25, r1:r, kind:'dome' });
+}
+function pillarFx(x,z,r,h,color,dur=0.45){
+  const m = new THREE.Mesh(pillarGeo, new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.65, depthWrite:false, side:THREE.DoubleSide }));
+  m.position.set(x,h*0.5,z); m.scale.set(r,h,r); world.add(m); G.fx.push({ m, t:0, dur, r0:r, r1:r*0.15, h, kind:'pillar' });
+}
+function beamFx(x0,z0,x1,z1,color,dur=0.25){
+  const dx = x1-x0, dz = z1-z0, len = Math.hypot(dx,dz)||0.1;
+  const g = new THREE.CylinderGeometry(0.14,0.14,len,8); g.rotateX(Math.PI/2);
+  const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.8, depthWrite:false }));
+  m.position.set((x0+x1)*0.5, 1.0, (z0+z1)*0.5); m.rotation.y = Math.atan2(dx,dz);
+  world.add(m); G.fx.push({ m, t:0, dur, r0:1, r1:0.2, kind:'beam' });
 }
 function discFx(x,z,r,color,dur=0.35){
   const m = new THREE.Mesh(discGeo, new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.55, depthWrite:false }));
@@ -1589,16 +1761,30 @@ function playerAction(kind, dir, aimDist, frac){
 
 /* ================= match flow ================= */
 function pick(arr, n){ return arr.slice().sort(()=>Math.random()-0.5).slice(0,n); }
-function startMatch(){
+function startMatch(netCfg){
+  if (!netCfg && typeof NET !== 'undefined' && NET.active){
+    if (NET.role === 'host'){ NET.startOnlineMatch(); return; }
+    else NET.leave();
+  }
   SND.init(); SND.play('select');
   if (world){ gameScene.remove(world); }
   world = new THREE.Group(); gameScene.add(world);
   labelsEl.innerHTML = ''; $('#killfeed').innerHTML = '';
+  if (netCfg && netCfg.mode) mode = netCfg.mode;
   G = { mode, time:0, units:[], proj:[], lobs:[], gems:[], cubes:[], fx:[], parts:[], minions:[], turrets:[], tempWalls:[], areas:[],
         over:false, clock:150, gemT:6, lead:-1, cd:0, reveal:{}, start:3.2, player:null, map:null, zone:null, cam:new THREE.Vector3(), water:[], shake:0, superWasReady:false };
   const mySide = KITS[selKit].side, myPool = mySide==='immune' ? IMMUNE : PATHO, theirPool = mySide==='immune' ? PATHO : IMMUNE;
   let rows;
-  if (mode==='gem') rows = gemRows();
+  if (netCfg && netCfg.rows){
+    rows = netCfg.rows.map(r => r.slice());
+    if (mode==='sd'){
+      G.sdSpawns = [];
+      for (let k=0;k<6;k++){
+        const a = k*Math.PI/3; const x = Math.sin(a)*18, z = Math.cos(a)*18;
+        G.sdSpawns.push([Math.floor((z+25)/T), Math.floor((x+25)/T)]);
+      }
+    }
+  } else if (mode==='gem') rows = gemRows();
   else {
     rows = sdRows(); G.sdSpawns = [];
     for (let k=0;k<6;k++){
@@ -1610,11 +1796,26 @@ function startMatch(){
   }
   buildWorld(rows);
   if (mode==='gem'){
-    const allies = pick(myPool.filter(k=>k!==selKit), 2), foes = pick(theirPool, 3);
-    const [px,pz] = tileCenter(24,8);
-    G.player = new Unit(selKit, 0, true, '나', px, pz); G.units.push(G.player);
-    [[24,5],[24,11]].forEach(([r,c],i) => { const [x,z] = tileCenter(r,c); G.units.push(new Unit(allies[i], 0, false, KITS[allies[i]].nick, x, z)); });
-    [[0,5],[0,8],[0,11]].forEach(([r,c],i) => { const [x,z] = tileCenter(r,c); G.units.push(new Unit(foes[i], 1, false, KITS[foes[i]].nick, x, z)); });
+    const gemSpawns = [[24,8],[24,5],[24,11],[0,5],[0,8],[0,11]];
+    if (netCfg && netCfg.netPlayers){
+      const mySlot = netCfg.mySlot || 0;
+      const myTeam = netCfg.netPlayers[mySlot] ? netCfg.netPlayers[mySlot].team : 0;
+      G.player = { team: myTeam };
+      netCfg.netPlayers.forEach((np, i) => {
+        const [r,c] = gemSpawns[i]; const [x,z] = tileCenter(r,c);
+        const u = new Unit(np.kitId, np.team, i===mySlot, np.name, x, z);
+        u.netSlot = i; u.isNetHuman = !np.isAI; u.isIdleSlot = !!np.isIdle;
+        if (u.isIdleSlot){ u.alive = false; u.root.visible = false; u.el.style.display = 'none'; }
+        if (i===mySlot) G.player = u;
+        G.units.push(u);
+      });
+    } else {
+      const allies = pick(myPool.filter(k=>k!==selKit), 2), foes = pick(theirPool, 3);
+      const [px,pz] = tileCenter(24,8);
+      G.player = new Unit(selKit, 0, true, '나', px, pz); G.units.push(G.player);
+      [[24,5],[24,11]].forEach(([r,c],i) => { const [x,z] = tileCenter(r,c); G.units.push(new Unit(allies[i], 0, false, KITS[allies[i]].nick, x, z)); });
+      [[0,5],[0,8],[0,11]].forEach(([r,c],i) => { const [x,z] = tileCenter(r,c); G.units.push(new Unit(foes[i], 1, false, KITS[foes[i]].nick, x, z)); });
+    }
     G.units.forEach((u,i) => u.slot = [-4,0,4][i%3]);
     const mito = new THREE.Group();
     const mb = new THREE.Mesh(sph(1,20,14), toon(0xff9a3c)); mb.scale.set(1.7,0.75,0.95); mito.add(mb);
@@ -1625,13 +1826,26 @@ function startMatch(){
     const pad = new THREE.Mesh(discGeo, new THREE.MeshBasicMaterial({ color:0xffd23f, transparent:true, opacity:0.25, depthWrite:false })); pad.scale.setScalar(2.4); pad.position.y = 0.06; world.add(pad);
     const padR = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color:0xffd23f, transparent:true, opacity:0.7, depthWrite:false })); padR.scale.setScalar(2.4); padR.position.y = 0.07; world.add(padR);
   } else {
-    const foes = pick(ALL_KITS.filter(k=>k!==selKit), 5);
-    G.sdSpawns.forEach(([r,c],i) => {
-      const [x,z] = tileCenter(r,c);
-      const u = i===0 ? new Unit(selKit, 0, true, '나', x, z) : new Unit(foes[i-1], i, false, KITS[foes[i-1]].nick, x, z);
-      if (i===0) G.player = u;
-      G.units.push(u);
-    });
+    if (netCfg && netCfg.netPlayers){
+      const mySlot = netCfg.mySlot || 0;
+      G.player = { team: mySlot };
+      G.sdSpawns.forEach(([r,c],i) => {
+        const [x,z] = tileCenter(r,c); const np = netCfg.netPlayers[i];
+        const u = new Unit(np.kitId, i, i===mySlot, np.name, x, z);
+        u.netSlot = i; u.isNetHuman = !np.isAI; u.isIdleSlot = !!np.isIdle;
+        if (u.isIdleSlot){ u.alive = false; u.root.visible = false; u.el.style.display = 'none'; }
+        if (i===mySlot) G.player = u;
+        G.units.push(u);
+      });
+    } else {
+      const foes = pick(ALL_KITS.filter(k=>k!==selKit), 5);
+      G.sdSpawns.forEach(([r,c],i) => {
+        const [x,z] = tileCenter(r,c);
+        const u = i===0 ? new Unit(selKit, 0, true, '나', x, z) : new Unit(foes[i-1], i, false, KITS[foes[i-1]].nick, x, z);
+        if (i===0) G.player = u;
+        G.units.push(u);
+      });
+    }
     G.zone = { r:37, from:37, to:3, start:18, end:140 };
     const fogMat = new THREE.ShaderMaterial({
       transparent:true, depthWrite:false, uniforms:{ uR:{value:37}, uT:{value:0} },
@@ -1709,13 +1923,13 @@ function showResult(){
 function togglePause(){
   if (state!=='game' || G.over) return;
   paused = !paused; $('#pauseModal').classList.toggle('hidden', !paused);
-  mouse.down = false; SND.play('ui');
+  mouse.down = false; mouse.right = false; aimTouch.active = false; joy.active = false; joy.x = joy.y = 0; joyBase.style.display = 'none'; SND.play('ui');
 }
 $('#pauseBtn').addEventListener('click', togglePause);
 $('#resumeBtn').addEventListener('click', togglePause);
 $('#quitBtn').addEventListener('click', () => { paused = false; $('#pauseModal').classList.add('hidden'); showLobby(); });
 $('#resLobby').addEventListener('click', () => { $('#resultModal').classList.add('hidden'); showLobby(); });
-$('#resAgain').addEventListener('click', () => { $('#resultModal').classList.add('hidden'); startMatch(); });
+$('#resAgain').addEventListener('click', () => { $('#resultModal').classList.add('hidden'); if (typeof NET !== 'undefined' && NET.active && NET.role === 'guest'){ showLobby(); $('#onlineModal').classList.remove('hidden'); return; } startMatch(); });
 
 /* ================= game update ================= */
 function updateGame(dt){
@@ -1724,10 +1938,19 @@ function updateGame(dt){
     const before = Math.ceil(G.start); G.start -= dt; const after = Math.ceil(G.start);
     if (after!==before){ showBanner(after>0 ? String(after) : '시작!'); SND.play(after>0?'count':'go'); }
   } else if (!G.over){
-    if (G.mode==='gem'){ G.clock -= dt; if (G.clock<=0){ G.clock = 0; const [a,b] = teamGems(); endMatch(a>b?'win':a<b?'lose':'draw'); } }
-    playerInput(dt);
-    for (const u of G.units) if (!u.isPlayer && u.alive) botThink(u, dt);
-    for (const u of G.units) updateUnit(u, dt);
+    if (typeof NET !== 'undefined' && NET.active && NET.role === 'guest'){
+      playerInput(dt);
+      NET.stepGuest(dt);
+    } else {
+      if (G.mode==='gem'){ G.clock -= dt; if (G.clock<=0){ G.clock = 0; const [a,b] = teamGems(); const mt = G.player.team; const myG = mt===0?a:b, thG = mt===0?b:a; endMatch(myG>thG?'win':myG<thG?'lose':'draw'); } }
+      playerInput(dt);
+      for (const u of G.units){
+        if (!u.alive || u.isPlayer || u.isIdleSlot) continue;
+        if (u.isNetHuman && typeof NET !== 'undefined' && NET.active) NET.applyRemoteUnit(u, dt);
+        else botThink(u, dt);
+      }
+      for (const u of G.units) if (!u.isIdleSlot) updateUnit(u, dt);
+    }
     separate();
     updateProjectiles(dt);
     updateLobs(dt);
@@ -1744,6 +1967,7 @@ function updateGame(dt){
   }
   updateFx(dt);
   updateVisuals(dt);
+  if (typeof NET !== 'undefined' && NET.active) NET.tick(dt);
   placeCamera(false, dt);
   updateAimVis();
   updateHud();
@@ -1795,7 +2019,7 @@ function dashImpact(u){
   for (const e of G.units) if (e.alive && e.team!==u.team && dist(u,e)<=r) damage(e, s.dmg*u.dmgMul(), u, false);
   for (const mn of G.minions) if (mn.team!==u.team && Math.hypot(mn.x-u.pos.x,mn.z-u.pos.z)<=r) damageMinion(mn, s.dmg, u);
   boxesInRadius(u.pos.x,u.pos.z,r, s.dmg*0.6);
-  heal(u, s.heal); discFx(u.pos.x,u.pos.z,r,u.kit.color,0.4); ringFx(u.pos.x,u.pos.z,r+0.5,0xffffff,0.4);
+  heal(u, s.heal); domeFx(u.pos.x,u.pos.z,r,u.kit.color,0.42); pillarFx(u.pos.x,u.pos.z,r*0.5,3.8,0x5dff9a,0.4); discFx(u.pos.x,u.pos.z,r,u.kit.color,0.4); ringFx(u.pos.x,u.pos.z,r+0.5,0xffffff,0.4);
   sfxAt('boom', u.pos.x, u.pos.z, 0.8); G.shake = Math.max(G.shake, 0.2);
 }
 function separate(){
@@ -1824,12 +2048,13 @@ function updateProjectiles(dt){
       const ch = tileAt(p.x,p.z);
       if (BLOCK_SHOT.has(ch)){
         if (ch==='X'){ const [r,c] = tileRC(p.x,p.z); damageBox(r+','+c, p.dmg); }
-        if (p.bounces>0 && ch!=='OUT' || (p.bounces>0 && ch==='OUT')){
-          p.bounces--;
+        if (p.bounces>0){
+          p.bounces--; p.dmg *= 1.15; p.speed *= 1.1; p.mesh.scale.multiplyScalar(1.14);
           const hx = BLOCK_SHOT.has(tileAt(p.x, pz)), hz = BLOCK_SHOT.has(tileAt(px, p.z));
           if (hx || (!hx && !hz)) p.dx = -p.dx;
           if (hz || (!hx && !hz)) p.dz = -p.dz;
-          p.x = px; p.z = pz; p.hit = null; sfxAt('ricochet', p.x, p.z, 0.7); burst(p.x,1,p.z,0xffffff,3,2);
+          p.x = px; p.z = pz; p.hit = null; sfxAt('ricochet', p.x, p.z, 0.85);
+          ringFx(p.x, p.z, 1.1, 0xffd23f, 0.25); burst(p.x,1,p.z,0xffd23f,6,3.5);
           continue;
         }
         burst(p.x,1,p.z,0xffffff,4,3); dead = true; break;
@@ -1838,15 +2063,16 @@ function updateProjectiles(dt){
         if (!u.alive) continue;
         if (Math.hypot(u.pos.x-p.x,u.pos.z-p.z) >= u.radius+p.r) continue;
         if (u.team===p.team){
-          if (p.healAlly && u!==p.owner && !p.hit.has(u)){ p.hit.add(u); heal(u, p.healAlly); burst(u.pos.x,1.2,u.pos.z,0x5dff9a,6,3); }
+          if (p.healAlly && u!==p.owner && !p.hit.has(u)){ p.hit.add(u); heal(u, p.healAlly); pillarFx(u.pos.x,u.pos.z,0.85,3.2,0x5dff9a,0.38); ringFx(u.pos.x,u.pos.z,1.5,0x5dff9a,0.32); burst(u.pos.x,1.2,u.pos.z,0x5dff9a,8,3.5); }
           continue;
         }
         if (p.hit && p.hit.has(u)) continue;
         damage(u, p.dmg, p.owner, p.charges);
-        if (p.mark) u.markT = p.mark;
-        if (p.lifesteal && p.owner.alive) heal(p.owner, p.dmg*p.lifesteal);
+        if (p.mark){ u.markT = p.mark; pillarFx(u.pos.x,u.pos.z,0.7,3.0,0xfff27a,0.32); ringFx(u.pos.x,u.pos.z,1.4,0xfff27a,0.3); }
+        if (p.lifesteal && p.owner.alive){ heal(p.owner, p.dmg*p.lifesteal); beamFx(u.pos.x,u.pos.z,p.owner.pos.x,p.owner.pos.z,0xff4791,0.28); }
         if (p.knock){ u.kb.x += p.dx*p.knock*2.5; u.kb.z += p.dz*p.knock*2.5; }
-        burst(p.x,1,p.z,p.mesh.material ? p.mesh.material.color.getHex() : 0xfff27a,5,3);
+        const hCol = (p.owner&&p.owner.kit&&p.owner.kit.attack&&p.owner.kit.attack.projColor)||0xfff27a;
+        ringFx(p.x,p.z,1.15,hCol,0.22); burst(p.x,1,p.z,hCol,8,4);
         if (p.pierce){ p.hit.add(u); } else { dead = true; break; }
       }
       if (!dead) for (const mn of G.minions){
@@ -1887,8 +2113,13 @@ function landLob(l){
     boxesInRadius(l.tx,l.tz,l.radius*0.6,l.dmg);
   }
   if (l.land) sfxAt(l.land, l.tx, l.tz, l.big?1.2:0.9);
-  if (!l.cloud){ discFx(l.tx,l.tz,l.radius,l.color,0.35); ringFx(l.tx,l.tz,l.radius,0xffffff,0.35); burst(l.tx,0.5,l.tz,l.color,l.big?20:10,l.big?7:5); }
-  if (l.big) G.shake = Math.max(G.shake, 0.25);
+  if (!l.cloud){
+    domeFx(l.tx,l.tz,l.radius,l.color,l.big?0.48:0.34);
+    if (l.big) pillarFx(l.tx,l.tz,l.radius*0.55,5.5,l.color,0.48);
+    discFx(l.tx,l.tz,l.radius,l.color,0.38); ringFx(l.tx,l.tz,l.radius*1.1,0xffffff,0.38);
+    burst(l.tx,0.6,l.tz,l.color,l.big?26:14,l.big?8:5.5);
+  }
+  if (l.big) G.shake = Math.max(G.shake, 0.32);
   if (l.net) netFx(l.tx,l.tz,l.radius);
   if (l.weak){ ringFx(l.tx,l.tz,l.radius,0xa04bff,0.6); burst(l.tx,0.6,l.tz,0x3a1a5a,16,4); }
   if (l.pool) spawnArea(l.owner, l.tx, l.tz, { kind:'pool', r:l.pool.r, dps:l.pool.dps, dur:l.pool.dur });
@@ -1978,7 +2209,7 @@ function updateGemMode(dt){
   const [a,b] = teamGems();
   let lead = -1; if (a>=10 && a>b) lead = 0; else if (b>=10 && b>a) lead = 1;
   if (lead!==G.lead){ G.lead = lead; G.cd = 10; if (lead>=0) SND.play('superReady', 0.6); }
-  else if (lead>=0){ const before = Math.ceil(G.cd); G.cd -= dt; if (Math.ceil(G.cd)!==before && G.cd<=5) SND.play('count', 0.7); if (G.cd<=0) endMatch(lead===0?'win':'lose'); }
+  else if (lead>=0){ const before = Math.ceil(G.cd); G.cd -= dt; if (Math.ceil(G.cd)!==before && G.cd<=5) SND.play('count', 0.7); if (G.cd<=0) endMatch(lead===G.player.team?'win':'lose'); }
 }
 function updateShowdown(dt){
   const z = G.zone; const k = clamp((G.time-z.start)/(z.end-z.start),0,1);
@@ -2017,8 +2248,10 @@ function updateFx(dt){
     const f = G.fx[i]; f.t += dt; const k = f.t/f.dur;
     if (k>=1){ world.remove(f.m); G.fx.splice(i,1); continue; }
     if (f.kind==='net'){ f.m.material.opacity = 0.8*(1-k); f.m.rotation.y += dt; continue; }
+    if (f.kind==='pillar'){ const sc = lerp(f.r0,f.r1,k); f.m.scale.set(sc, f.h*(1+k*0.4), sc); f.m.material.opacity = 0.68*(1-k); continue; }
+    if (f.kind==='beam'){ f.m.scale.set(1-k*0.7, 1-k*0.7, 1); f.m.material.opacity = 0.85*(1-k); continue; }
     const e = 1-Math.pow(1-k,3); f.m.scale.setScalar(lerp(f.r0,f.r1,e));
-    f.m.material.opacity = (f.kind==='disc'?0.55:f.kind==='arc'?0.75:0.85)*(1-k);
+    f.m.material.opacity = (f.kind==='dome'?0.52:f.kind==='disc'?0.55:f.kind==='arc'?0.82:0.88)*(1-k);
   }
   for (const [key,b] of G.map.boxes){ if (b.shake>0){ b.shake -= dt; const [r,c] = key.split(',').map(Number); const [x] = tileCenter(r,c); b.mesh.position.x = x + (b.shake>0 ? rand(-0.1,0.1) : 0); } }
   if (G.bloodTex) G.bloodTex.offset.x -= dt*0.25;
@@ -2188,11 +2421,11 @@ let lastHudSec = -1, lastStatus = '';
 function updateHud(){
   const p = G.player;
   if (G.mode==='gem'){
-    const [a,b] = teamGems();
-    $('#sBlue').textContent = a; $('#sRed').textContent = b;
+    const [a,b] = teamGems(); const mt = G.player.team;
+    $('#sBlue').textContent = mt===0 ? a : b; $('#sRed').textContent = mt===0 ? b : a;
     const sec = Math.ceil(G.clock); if (sec!==lastHudSec){ lastHudSec = sec; const t = $('#timer'); t.textContent = Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0'); t.classList.toggle('hot', sec<=30); }
     const gb = $('#gemBanner');
-    if (G.lead>=0 && !G.over){ gb.classList.remove('hidden'); gb.style.background = G.lead===0 ? 'var(--blue)' : 'var(--red)'; gb.textContent = (G.lead===0 ? '아군 승리까지 ' : '적 승리까지 ') + Math.max(0,Math.ceil(G.cd)) + '초'; }
+    if (G.lead>=0 && !G.over){ const myLead = G.lead===mt; gb.classList.remove('hidden'); gb.style.background = myLead ? 'var(--blue)' : 'var(--red)'; gb.textContent = (myLead ? '아군 승리까지 ' : '적 승리까지 ') + Math.max(0,Math.ceil(G.cd)) + '초'; }
     else gb.classList.add('hidden');
   } else {
     $('#sAlive').textContent = G.units.filter(u=>u.alive).length; $('#sCubes').textContent = p.cubes;
@@ -2252,7 +2485,7 @@ function showLobby(){
 function renderRoster(){
   const list = rosterSide==='immune' ? IMMUNE : PATHO;
   $('#roster').innerHTML = list.map(id => { const k = KITS[id]; return `<button class="rbtn${id===selKit?' on':''}" data-id="${id}" aria-label="${k.name}"><div class="face" style="background:${hexCss(k.color)}">${k.icon}</div>${k.nick}<div class="tr">🏆${trophies[id]||0}</div></button>`; }).join('');
-  $('#roster').querySelectorAll('.rbtn').forEach(b => b.addEventListener('click', () => { selKit = b.dataset.id; store.set('kit',selKit); SND.play('select'); renderLobby(); }));
+  $('#roster').querySelectorAll('.rbtn').forEach(b => b.addEventListener('click', () => { selKit = b.dataset.id; store.set('kit',selKit); SND.play('select'); renderLobby(); if(typeof NET!=='undefined')NET.syncPick(); }));
   document.querySelectorAll('.side-tabs button').forEach(b => b.classList.toggle('on', b.dataset.side===rosterSide));
 }
 function renderLobby(full){
@@ -2343,6 +2576,547 @@ function frame(now){
     renderer.render(gameScene, camera); updateLabels();
   }
 }
+
+/* ================= 방장 권한 P2P + 클라이언트 예측 보간 엔진 (NET) ================= */
+const NET = (() => {
+  const PREFIX = 'cellbrawl-p2p-v1-';
+  let peer = null, peerConns = new Map(), bc = null, lobbyBc = null;
+  let myId = 'cb_' + Math.random().toString(36).slice(2, 9);
+  const st = {
+    active: false, role: null, code: '', nick: store.get('nick', '면역사령관' + (10 + Math.random()*89|0)),
+    myTeam: 0, aiFill: true, mySlot: 0, players: {}, remoteInputs: {}, pendingActs: [],
+    netAcc: 0, rtt: 0, suppressRecord: false
+  };
+
+  function loadPeerJS(){
+    if (window.Peer || document.getElementById('peerjs-cdn')) return;
+    const sc = document.createElement('script');
+    sc.id = 'peerjs-cdn';
+    sc.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+    sc.async = true;
+    sc.onerror = () => {};
+    document.head.appendChild(sc);
+  }
+  loadPeerJS();
+
+  function log(msg){ const el = $('#netStatusLog'); if (el) el.textContent = msg; }
+  function genCode(){
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let c = ''; for (let i=0;i<4;i++) c += chars[Math.random()*chars.length|0];
+    return c;
+  }
+  function sendAll(msg){
+    if (bc){ try{ bc.postMessage(msg); }catch(e){} }
+    for (const conn of peerConns.values()) if (conn && conn.open){ try{ conn.send(msg); }catch(e){} }
+  }
+  function sendToHost(msg){
+    msg.from = myId;
+    if (bc){ try{ bc.postMessage(msg); }catch(e){} }
+    const h = peerConns.get('HOST');
+    if (h && h.open){ try{ h.send(msg); }catch(e){} }
+  }
+  function cleanup(){
+    if (bc){ try{ bc.close(); }catch(e){} bc = null; }
+    for (const c of peerConns.values()){ try{ c.close(); }catch(e){} }
+    peerConns.clear();
+    if (peer){ try{ peer.destroy(); }catch(e){} peer = null; }
+    st.active = false; st.role = null; st.code = ''; st.players = {}; st.remoteInputs = {}; st.pendingActs = [];
+    const pill = $('#netHudPill'); if (pill) pill.style.display = 'none';
+    renderModal();
+  }
+  function setupChannel(code){
+    if (bc){ try{ bc.close(); }catch(e){} }
+    if (typeof BroadcastChannel !== 'undefined'){
+      bc = new BroadcastChannel(PREFIX + code);
+      bc.onmessage = e => onMessage(e.data);
+    }
+  }
+  function setupDiscovery(){
+    if (lobbyBc || typeof BroadcastChannel === 'undefined') return;
+    lobbyBc = new BroadcastChannel(PREFIX + 'LOBBY');
+    lobbyBc.onmessage = e => {
+      const m = e.data;
+      if (m && m.type === 'discover' && st.active && st.role === 'host' && state === 'lobby'){
+        lobbyBc.postMessage({ type: 'offer_room', code: st.code });
+      }
+    };
+  }
+  setupDiscovery();
+
+  function assignSlots(){
+    const list = Object.values(st.players).sort((a,b) => (b.isHost?1:0)-(a.isHost?1:0) || a.joinT-b.joinT);
+    if (mode === 'gem'){
+      const t0 = [], t1 = [];
+      for (const p of list){
+        if (p.prefTeam === 1 && t1.length < 3) t1.push(p);
+        else if (t0.length < 3) t0.push(p);
+        else t1.push(p);
+      }
+      t0.forEach((p, i) => { p.slot = i; p.team = 0; });
+      t1.forEach((p, i) => { p.slot = 3 + i; p.team = 1; });
+    } else {
+      list.slice(0, 6).forEach((p, i) => { p.slot = i; p.team = i; });
+    }
+    if (st.players[myId]) st.mySlot = st.players[myId].slot;
+  }
+
+  function broadcastRoom(){
+    if (st.role !== 'host') return;
+    assignSlots();
+    sendAll({ type: 'room_state', code: st.code, mode, aiFill: st.aiFill, players: st.players });
+    renderModal();
+  }
+
+  function createRoom(customCode){
+    cleanup();
+    st.code = (customCode || genCode()).toUpperCase();
+    st.role = 'host'; st.active = true; st.mySlot = 0;
+    st.players[myId] = { id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam, team: 0, isHost: true, joinT: Date.now(), slot: 0 };
+    setupChannel(st.code);
+    if (window.Peer){
+      try{
+        peer = new window.Peer(PREFIX + st.code);
+        peer.on('connection', conn => {
+          conn.on('open', () => { peerConns.set(conn.peer, conn); broadcastRoom(); });
+          conn.on('data', d => onMessage(d));
+          conn.on('close', () => {
+            for (const id in st.players) if (st.players[id].peerId === conn.peer) delete st.players[id];
+            peerConns.delete(conn.peer); broadcastRoom();
+          });
+        });
+        peer.on('error', () => {});
+      }catch(e){}
+    }
+    log(`방 [${st.code}] 생성 완료! 친구에게 방 코드를 공유하거나 다른 탭에서 참가하세요.`);
+    broadcastRoom();
+  }
+
+  function joinRoom(code){
+    code = (code || '').trim().toUpperCase();
+    if (!code || code.length < 2){ log('방 코드를 입력해 주세요.'); return; }
+    cleanup();
+    st.code = code; st.role = 'guest'; st.active = true;
+    setupChannel(code);
+    const req = { type: 'join_req', id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam };
+    sendToHost(req);
+    if (window.Peer){
+      try{
+        peer = new window.Peer();
+        peer.on('open', () => {
+          const conn = peer.connect(PREFIX + code, { reliable: true });
+          conn.on('open', () => { peerConns.set('HOST', conn); conn.send(Object.assign({ peerId: peer.id }, req)); });
+          conn.on('data', d => onMessage(d));
+        });
+        peer.on('error', () => {});
+      }catch(e){}
+    }
+    log(`방 [${code}]에 연결 요청 중...`);
+    renderModal();
+  }
+
+  function quickMatch(){
+    log('열려 있는 온라인 방을 검색 중...');
+    setupDiscovery();
+    let found = false;
+    if (lobbyBc){
+      const h = e => {
+        if (e.data && e.data.type === 'offer_room' && !found){
+          found = true; lobbyBc.removeEventListener('message', h); joinRoom(e.data.code);
+        }
+      };
+      lobbyBc.addEventListener('message', h);
+      lobbyBc.postMessage({ type: 'discover', from: myId });
+      setTimeout(() => {
+        lobbyBc.removeEventListener('message', h);
+        if (!found){ createRoom(); log(`열린 방이 없어 새 방 [${st.code}]을 생성했습니다!`); }
+      }, 600);
+    } else createRoom();
+  }
+
+  function buildSlots(){
+    assignSlots();
+    const arr = new Array(6).fill(null);
+    const used = new Set();
+    for (const id in st.players){
+      const p = st.players[id];
+      if (p.slot >= 0 && p.slot < 6){
+        arr[p.slot] = { slot: p.slot, id: p.id, name: p.name, kitId: p.kitId, team: mode==='gem'?(p.slot<3?0:1):p.slot, isHost: p.isHost, isAI: false };
+        used.add(p.kitId);
+      }
+    }
+    for (let i=0;i<6;i++){
+      if (!arr[i]){
+        const pool = mode==='gem' ? (i<3 ? IMMUNE : PATHO) : ALL_KITS;
+        const avail = pool.filter(k => !used.has(k));
+        const kitId = (avail.length ? avail : pool)[i % pool.length];
+        used.add(kitId);
+        arr[i] = {
+          slot: i, id: 'ai_'+i,
+          name: st.aiFill ? ('[AI] ' + KITS[kitId].nick) : '빈 슬롯',
+          kitId, team: mode==='gem'?(i<3?0:1):i, isHost: false, isAI: true, isIdle: !st.aiFill
+        };
+      }
+    }
+    return arr;
+  }
+
+  function startOnlineMatch(){
+    if (!st.active || st.role !== 'host') return;
+    const netPlayers = buildSlots();
+    const rows = mode === 'gem' ? gemRows() : sdRows();
+    if (mode === 'sd'){
+      for (let k=0;k<6;k++){
+        const a = k*Math.PI/3; const x = Math.sin(a)*18, z = Math.cos(a)*18;
+        const r = Math.floor((z+25)/T), c = Math.floor((x+25)/T);
+        for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++){ const rr=r+dr, cc=c+dc; if (rr>=0&&cc>=0&&rr<25&&cc<25) rows[rr][cc] = '.'; }
+      }
+    }
+    const pkt = { type: 'match_start', code: st.code, mode, aiFill: st.aiFill, netPlayers, rows };
+    sendAll(pkt);
+    launchOnline(pkt);
+  }
+
+  function launchOnline(pkt){
+    $('#onlineModal').classList.add('hidden');
+    const me = pkt.netPlayers.find(p => p && p.id === myId);
+    st.mySlot = me ? me.slot : 0;
+    st.remoteInputs = {}; st.pendingActs = [];
+    startMatch({ mode: pkt.mode, mySlot: st.mySlot, netPlayers: pkt.netPlayers, rows: pkt.rows });
+    const pill = $('#netHudPill');
+    if (pill){
+      pill.style.display = 'block';
+      const hc = pkt.netPlayers.filter(p => !p.isAI).length;
+      pill.textContent = st.role === 'host'
+        ? `👑 방장 P2P [${st.code}] · ${hc}명 참가`
+        : `🟢 P2P 연결 [${st.code}] · 예측보간 활성`;
+    }
+  }
+
+  function onMessage(m){
+    if (!m || !st.active) return;
+    if (st.role === 'host'){
+      if (m.type === 'join_req' && m.id !== myId){
+        st.players[m.id] = { id: m.id, peerId: m.peerId, name: m.name||'게스트', kitId: m.kitId||'macro', prefTeam: m.prefTeam||0, isHost: false, joinT: Date.now() };
+        SND.play('select');
+        log(`🎉 [${m.name}] 님이 참가했습니다!`);
+        broadcastRoom();
+      } else if (m.type === 'update_pick' && st.players[m.id]){
+        st.players[m.id].name = m.name || st.players[m.id].name;
+        st.players[m.id].kitId = m.kitId || st.players[m.id].kitId;
+        st.players[m.id].prefTeam = m.prefTeam != null ? m.prefTeam : st.players[m.id].prefTeam;
+        broadcastRoom();
+      } else if (m.type === 'input' && m.slot != null){
+        const cur = st.remoteInputs[m.slot] || { mx:0, mz:0, facing:0, acts:[] };
+        cur.mx = m.mx||0; cur.mz = m.mz||0; cur.facing = m.facing||0;
+        st.remoteInputs[m.slot] = cur;
+        if (m.t) sendAll({ type: 'pong', to: m.from, t: m.t });
+      } else if (m.type === 'act' && m.slot != null){
+        const cur = st.remoteInputs[m.slot] || { mx:0, mz:0, facing:0, acts:[] };
+        cur.acts.push(m);
+        st.remoteInputs[m.slot] = cur;
+      }
+    } else if (st.role === 'guest'){
+      if (m.type === 'room_state' && m.code === st.code){
+        mode = m.mode; st.aiFill = m.aiFill; st.players = m.players || {};
+        if (st.players[myId]) st.mySlot = st.players[myId].slot;
+        log(`✅ 방 [${st.code}]에 연결됨! 방장이 시작하면 출발합니다.`);
+        renderModal();
+      } else if (m.type === 'match_start' && m.code === st.code){
+        launchOnline(m);
+      } else if (m.type === 'state' && state === 'game' && G){
+        applyHostState(m);
+      } else if (m.type === 'pong' && m.to === myId){
+        st.rtt = Math.max(1, Math.round(performance.now() - m.t));
+        const pill = $('#netHudPill');
+        if (pill && state === 'game') pill.textContent = `🟢 P2P [${st.code}] · ${st.rtt}ms · 예측보간`;
+      }
+    }
+  }
+
+  function applyRemoteUnit(u, dt){
+    const r = st.remoteInputs[u.netSlot];
+    if (!r){ u.moveDir.x = 0; u.moveDir.z = 0; return; }
+    u.moveDir.x = r.mx; u.moveDir.z = r.mz; u.facing = r.facing;
+    while (r.acts && r.acts.length){
+      const a = r.acts.shift();
+      if (a.kind === 'attack'){ u.ammo = Math.max(1, u.ammo); u.cdT = 0; fire(u, a.dir || forward(u), a.aimDist); }
+      else if (a.kind === 'super'){ u.superCharge = 1; useSuper(u, a.dir || forward(u), a.aimDist); }
+      else if (a.kind === 'gadget'){ u.gadgets = Math.max(1, u.gadgets); u.gadgetCd = 0; useGadget(u); }
+    }
+  }
+
+  function recordAction(kind, u, dir, aimDist){
+    if (st.suppressRecord) return;
+    const idx = G.units.indexOf(u);
+    if (idx < 0) return;
+    st.pendingActs.push({ k: kind, i: idx, dx: dir?+dir.x.toFixed(3):0, dz: dir?+dir.z.toFixed(3):0, d: aimDist?+aimDist.toFixed(2):0 });
+  }
+
+  function sendAction(kind, dir, aimDist){
+    sendToHost({ type: 'act', slot: st.mySlot, kind, dir: dir?{x:+dir.x.toFixed(3),z:+dir.z.toFixed(3)}:null, aimDist: aimDist||0 });
+  }
+
+  function tick(dt){
+    if (!st.active || !G) return;
+    st.netAcc += dt;
+    if (st.role === 'host'){
+      if (st.netAcc >= 0.04){
+        st.netAcc = 0;
+        const pkt = {
+          type: 'state', clk: +G.clock.toFixed(1), lead: G.lead, cd: +G.cd.toFixed(1),
+          zr: G.zone ? +G.zone.r.toFixed(2) : 37, over: G.over,
+          u: G.units.map(u => [
+            +u.pos.x.toFixed(2), +u.pos.z.toFixed(2), +u.vel.x.toFixed(2), +u.vel.z.toFixed(2),
+            +u.facing.toFixed(2), Math.round(u.hp), Math.round(u.maxHp), u.alive?1:0, +u.respawnT.toFixed(1),
+            u.ammo, +u.reloadT.toFixed(2), +u.superCharge.toFixed(3), u.gadgets, u.gems, u.cubes,
+            +u.shieldT.toFixed(1), +u.markT.toFixed(1), +u.weakT.toFixed(1), +u.rootT.toFixed(1),
+            +u.slowT.toFixed(1), +u.speedT.toFixed(1), +u.stealthT.toFixed(1), +u.dashT.toFixed(2), u.kills
+          ]),
+          gm: G.gems.map(g => [+g.x.toFixed(2), +g.z.toFixed(2)]),
+          cb: G.cubes.map(c => [+c.x.toFixed(2), +c.z.toFixed(2)]),
+          bx: [...G.map.boxes.entries()].map(([k,b]) => [k, Math.round(b.hp)]),
+          acts: st.pendingActs.splice(0, st.pendingActs.length)
+        };
+        sendAll(pkt);
+      }
+    } else if (st.role === 'guest'){
+      if (st.netAcc >= 0.033){
+        st.netAcc = 0;
+        const p = G.player;
+        sendToHost({
+          type: 'input', slot: st.mySlot,
+          mx: +p.moveDir.x.toFixed(2), mz: +p.moveDir.z.toFixed(2), facing: +p.facing.toFixed(2),
+          t: performance.now()
+        });
+      }
+    }
+  }
+
+  function applyHostState(m){
+    G.clock = m.clk; G.lead = m.lead; G.cd = m.cd;
+    if (G.zone && m.zr != null){ G.zone.r = m.zr; if (G.fog) G.fog.uniforms.uR.value = m.zr; }
+    // 상자 동기화
+    if (m.bx){
+      const aliveKeys = new Set(m.bx.map(x => x[0]));
+      for (const key of [...G.map.boxes.keys()]){
+        if (!aliveKeys.has(key)) damageBox(key, 99999);
+      }
+      for (const [k, hp] of m.bx){
+        const b = G.map.boxes.get(k); if (b) b.hp = hp;
+      }
+    }
+    // 젬 & 큐브 동기화
+    if (m.gm){
+      while (G.gems.length > m.gm.length){ const g = G.gems.pop(); world.remove(g.m); }
+      while (G.gems.length < m.gm.length) spawnGem(0,0,0,0);
+      for (let i=0;i<m.gm.length;i++){ G.gems[i].x = m.gm[i][0]; G.gems[i].z = m.gm[i][1]; G.gems[i].vx = 0; G.gems[i].vz = 0; G.gems[i].y = 0.6; G.gems[i].vy = 0; }
+    }
+    if (m.cb){
+      while (G.cubes.length > m.cb.length){ const c = G.cubes.pop(); world.remove(c.m); }
+      while (G.cubes.length < m.cb.length) spawnCube(0,0);
+      for (let i=0;i<m.cb.length;i++){ G.cubes[i].x = m.cb[i][0]; G.cubes[i].z = m.cb[i][1]; }
+    }
+    // 유닛 상태 동기화
+    if (m.u){
+      for (let i=0;i<m.u.length;i++){
+        const d = m.u[i], u = G.units[i];
+        if (!u || u.isIdleSlot) continue;
+        u._netTx = d[0]; u._netTz = d[1]; u.vel.x = d[2]; u.vel.z = d[3];
+        const wasAlive = u.alive, nowAlive = !!d[7];
+        if (wasAlive && !nowAlive){
+          u.alive = false; u.hp = 0; u.root.visible = false; u.el.style.display = 'none';
+          burst(u.pos.x,1,u.pos.z,u.kit.color,18,6);
+        } else if (!wasAlive && nowAlive){
+          u.alive = true; u.root.visible = true; u.pos.set(d[0],0,d[1]);
+        }
+        if (d[5] < u.hp) u.flashT = 0.12;
+        u.hp = d[5]; u.maxHp = d[6]; u.respawnT = d[8];
+        u.ammo = d[9]; u.reloadT = d[10]; u.superCharge = d[11]; u.gadgets = d[12];
+        u.gems = d[13]; u.cubes = d[14]; u.shieldT = d[15]; u.markT = d[16];
+        u.weakT = d[17]; u.rootT = d[18]; u.slowT = d[19]; u.speedT = d[20];
+        u.stealthT = d[21]; u.dashT = d[22]; u.kills = d[23];
+        if (u === G.player){
+          const err = Math.hypot(u._netTx - u.pos.x, u._netTz - u.pos.z);
+          if (err > 4.2){ u.pos.x = u._netTx; u.pos.z = u._netTz; }
+        } else {
+          u.facing = d[4];
+          if (!u._netInit){ u.pos.x = u._netTx; u.pos.z = u._netTz; u._netInit = true; }
+        }
+      }
+    }
+    // 원격 공격/궁극기/가젯 이펙트 재생
+    if (m.acts && m.acts.length){
+      st.suppressRecord = true;
+      for (const a of m.acts){
+        const u = G.units[a.i];
+        if (!u || u === G.player) continue;
+        u.ammo = Math.max(1, u.ammo); u.cdT = 0;
+        if (a.k === 'attack') fire(u, { x: a.dx, z: a.dz }, a.d);
+        else if (a.k === 'super'){ u.superCharge = 1; useSuper(u, { x: a.dx, z: a.dz }, a.d); }
+        else if (a.k === 'gadget'){ u.gadgets = Math.max(1, u.gadgets); u.gadgetCd = 0; useGadget(u); }
+      }
+      st.suppressRecord = false;
+    }
+    if (m.over && !G.over){
+      if (G.mode === 'gem'){
+        const [a,b] = teamGems(); const mt = G.player.team; const myG = mt===0?a:b, thG = mt===0?b:a;
+        endMatch(myG >= thG ? 'win' : 'lose');
+      } else {
+        const alive = G.units.filter(o=>o.alive).length;
+        endMatch(G.player.alive ? 'win' : 'lose', G.player.alive ? 1 : alive + 1);
+      }
+    }
+  }
+
+  function stepGuest(dt){
+    const p = G.player;
+    // 1. 내 유닛 클라이언트 예측 이동 (Client-Side Prediction)
+    if (p.alive){
+      updateUnit(p, dt);
+      if (p._netTx != null){
+        const err = Math.hypot(p._netTx - p.pos.x, p._netTz - p.pos.z);
+        if (err > 0.25 && err <= 4.2){
+          p.pos.x += (p._netTx - p.pos.x) * 0.22;
+          p.pos.z += (p._netTz - p.pos.z) * 0.22;
+        }
+      }
+    }
+    // 2. 원격 유닛 부드러운 예측 보간 (Entity Interpolation)
+    for (const u of G.units){
+      if (u === p || !u.alive || u.isIdleSlot) continue;
+      for (const k of ['cdT','slowT','speedT','shieldT','gadgetCd','flashT','markT','weakT','rootT','stealthT']) u[k] -= dt;
+      while (u.burst.length && u.burst[0].t<=G.time){
+        const b = u.burst.shift(); const a = u.kit.attack;
+        if (a.type==='flame'){ const half = a.spreadDeg*Math.PI/360; const ang = Math.atan2(b.x,b.z) + rand(-half,half); spawnProj(u, u.pos.x, u.pos.z, Math.sin(ang), Math.cos(ang), a, 0, false); }
+        else spawnProj(u, u.pos.x, u.pos.z, b.x, b.z, a, 0, false);
+      }
+      if (u._netTx != null){
+        u.pos.x += u.vel.x * dt * 0.4 + (u._netTx - u.pos.x) * 0.32;
+        u.pos.z += u.vel.z * dt * 0.4 + (u._netTz - u.pos.z) * 0.32;
+      }
+      u.inBush = tileAt(u.pos.x, u.pos.z) === '*';
+    }
+    separate();
+    updateProjectiles(dt);
+    updateLobs(dt);
+    updateMinions(dt);
+    updateTurrets(dt);
+    updateAreas(dt);
+    updateTempWalls(dt);
+    for (let i=0;i<G.gems.length;i++){
+      const g = G.gems[i]; g.m.position.set(g.x, 0.6 + Math.sin(G.time*3+i)*0.12, g.z); g.m.rotation.y += dt*2.5;
+    }
+    for (let i=0;i<G.cubes.length;i++){
+      const c = G.cubes[i]; c.m.position.set(c.x, 0.55 + Math.sin(G.time*3+i)*0.1, c.z); c.m.rotation.y += dt*1.8;
+    }
+  }
+
+  function renderModal(){
+    const k = KITS[selKit];
+    const mb = $('#netMyBrawler');
+    if (mb) mb.textContent = `선택 브롤러: ${k.icon} ${k.name}`;
+    const rp = $('#netRoomPanel');
+    if (rp) rp.style.display = st.active ? 'block' : 'none';
+    const cd = $('#netCodeDisp');
+    if (cd) cd.textContent = st.code || '----';
+    const bm = $('#btnNetMode');
+    if (bm) bm.textContent = '모드: ' + MODES[mode].name;
+    const bt = $('#btnNetTeam');
+    if (bt){
+      bt.style.display = mode === 'gem' ? '' : 'none';
+      bt.textContent = st.myTeam === 0 ? '팀: 🔵 블루팀' : '팀: 🔴 레드팀';
+    }
+    const stTxt = $('#netStateTxt');
+    if (stTxt){
+      stTxt.textContent = st.active
+        ? (st.role === 'host' ? `🟢 방장 호스팅 (${st.code})` : `🟢 게스트 연결됨 (${st.code})`)
+        : '⚪ 대기 중';
+    }
+    const sl = $('#netSlotList');
+    if (sl){
+      const slots = st.active ? buildSlots() : new Array(6).fill(null).map((_, i) => ({
+        slot: i, id: i===0?myId:'ai_'+i, name: i===0?st.nick:('[AI] '+KITS[ALL_KITS[i]].nick),
+        kitId: i===0?selKit:ALL_KITS[i], team: mode==='gem'?(i<3?0:1):i, isHost: i===0, isAI: i!==0
+      }));
+      sl.innerHTML = slots.map(p => {
+        const kit = KITS[p.kitId] || KITS.macro;
+        const isMe = p.id === myId;
+        const cls = isMe ? 'net-slot me' : (!p.isAI ? 'net-slot human' : 'net-slot');
+        const tTag = mode === 'gem' ? (p.team === 0 ? '🔵 블루' : '🔴 레드') : `솔로 #${p.slot+1}`;
+        const rTag = p.isHost ? '👑 방장' : (!p.isAI ? '👤 유저' : (p.isIdle ? '⚪ 빈자리' : '🤖 AI'));
+        return `<div class="${cls}"><div class="fc" style="background:${hexCss(kit.color)}">${kit.icon}</div><div><div><b>${p.name}</b></div><div style="font-size:11.5px;opacity:.85">${kit.name} · ${tTag} · ${rTag}</div></div></div>`;
+      }).join('');
+    }
+    const sb = $('#btnNetStart');
+    if (sb){
+      sb.disabled = !(st.active && st.role === 'host');
+      sb.textContent = st.active && st.role === 'guest' ? '⏳ 방장 시작 대기 중...' : '🚀 온라인 대전 시작!';
+    }
+  }
+
+  setTimeout(() => {
+    $('#onlineOpenBtn')?.addEventListener('click', () => {
+      SND.play('ui'); renderModal(); $('#onlineModal').classList.remove('hidden');
+    });
+    const ni = $('#netNick');
+    if (ni){
+      ni.value = st.nick;
+      ni.addEventListener('input', () => {
+        st.nick = ni.value.trim() || '면역사령관';
+        store.set('nick', st.nick);
+        if (st.active){
+          if (st.role === 'host' && st.players[myId]){ st.players[myId].name = st.nick; broadcastRoom(); }
+          else if (st.role === 'guest') sendToHost({ type: 'update_pick', id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam });
+        } else renderModal();
+      });
+    }
+    $('#btnCreateRoom')?.addEventListener('click', () => { SND.play('select'); createRoom($('#netCodeInp')?.value.trim()); });
+    $('#btnQuickMatch')?.addEventListener('click', () => { SND.play('select'); quickMatch(); });
+    $('#btnJoinRoom')?.addEventListener('click', () => { SND.play('select'); joinRoom($('#netCodeInp')?.value); });
+    $('#btnLeaveRoom')?.addEventListener('click', () => { SND.play('ui'); cleanup(); log('방에서 나왔습니다.'); });
+    $('#btnCopyCode')?.addEventListener('click', () => {
+      if (!st.code) return;
+      try{ navigator.clipboard.writeText(st.code); }catch(e){
+        const ta = document.createElement('textarea'); ta.value = st.code; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      log(`📋 방 코드 [${st.code}] 복사 완료!`); SND.play('gem');
+    });
+    $('#btnNetMode')?.addEventListener('click', () => {
+      if (st.role !== 'host') return;
+      mode = mode === 'gem' ? 'sd' : 'gem'; store.set('mode', mode); SND.play('ui'); renderLobby(); broadcastRoom();
+    });
+    $('#btnNetTeam')?.addEventListener('click', () => {
+      st.myTeam = st.myTeam === 0 ? 1 : 0; SND.play('ui');
+      if (st.active){
+        if (st.role === 'host' && st.players[myId]){ st.players[myId].prefTeam = st.myTeam; broadcastRoom(); }
+        else if (st.role === 'guest') sendToHost({ type: 'update_pick', id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam });
+      } else renderModal();
+    });
+    $('#netAiFill')?.addEventListener('change', e => {
+      if (st.role !== 'host') return;
+      st.aiFill = e.target.checked; broadcastRoom();
+    });
+    $('#btnSingleFromModal')?.addEventListener('click', () => {
+      cleanup(); $('#onlineModal').classList.add('hidden'); startMatch();
+    });
+    $('#btnNetStart')?.addEventListener('click', () => {
+      if (st.active && st.role === 'host') startOnlineMatch();
+    });
+  }, 0);
+
+  return {
+    get active(){ return st.active; },
+    get role(){ return st.role; },
+    get mySlot(){ return st.mySlot; },
+    leave: cleanup, startOnlineMatch, applyRemoteUnit, recordAction, sendAction, tick, stepGuest,
+    syncPick(){
+      if (!st.active) return;
+      if (st.role === 'host' && st.players[myId]){ st.players[myId].kitId = selKit; broadcastRoom(); }
+      else if (st.role === 'guest') sendToHost({ type: 'update_pick', id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam });
+    }
+  };
+})();
+
 renderLobby(true);
 requestAnimationFrame(frame);
 
