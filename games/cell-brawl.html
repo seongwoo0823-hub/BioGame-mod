@@ -318,7 +318,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
         <button class="btn-p" id="btnQuickMatch" type="button" style="font-size:16px;padding:6px 14px;background:#2f8cff">⚡ 빠른 매칭</button>
       </div>
       <div class="net-row">
-        <input id="netCodeInp" class="net-inp" maxlength="6" placeholder="방 코드 입력" style="text-transform:uppercase;width:115px">
+        <input id="netCodeInp" class="net-inp" maxlength="8" placeholder="방 코드 입력" style="text-transform:uppercase;width:115px">
         <button class="btn-p" id="btnJoinRoom" type="button" style="font-size:16px;padding:6px 14px">🔑 코드 참가</button>
       </div>
       <div id="netRoomPanel" style="display:none;margin-top:8px;padding-top:8px;border-top:2px solid var(--panel-line)">
@@ -344,7 +344,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
         <span id="netStateTxt" style="font-size:12.5px;color:#8ff0c0">대기 중</span>
       </div>
       <div class="net-slots" id="netSlotList"></div>
-      <div id="netStatusLog" style="margin-top:auto;padding-top:8px;font-size:13px;color:#ffe9a8">방 만들기 또는 방 코드로 친구와 연결하세요. (멀티탭 즉시 연동 지원)</div>
+      <div id="netStatusLog" style="margin-top:auto;padding-top:8px;font-size:13px;color:#ffe9a8">방 만들기 또는 방 코드로 친구와 연결하세요. (인터넷 연결 필요 · 최대 6명)</div>
     </div>
   </div>
   <div class="close-row">
@@ -405,6 +405,9 @@ const store = {
 let trophies = store.get('trophies', {});
 if (typeof trophies !== 'object' || !trophies) trophies = {};
 const hexCss = c => '#'+c.toString(16).padStart(6,'0');
+const escHtml = v => String(v==null?'':v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+/* 온라인 게스트는 판정(피해·회복·처치)을 직접 하지 않고 방장의 상태만 따른다 */
+const netGuest = () => typeof NET !== 'undefined' && NET.active && NET.role === 'guest' && !!(G && G.netMid);
 
 /* ================= characters (Balanced & Distinct Kits) ================= */
 const KITS = {
@@ -1241,7 +1244,7 @@ class Unit{
     this.rootMesh = new THREE.Mesh(new THREE.SphereGeometry(1.1,10,6,0,TAU,0,Math.PI/2), new THREE.MeshBasicMaterial({ color:0xe9d4ff, wireframe:true })); this.rootMesh.visible = false; this.root.add(this.rootMesh);
     const el = document.createElement('div'); el.className = 'ulabel';
     const color = isPlayer ? '#3ee07a' : friendly ? '#4aa3ff' : '#ff4d63';
-    el.innerHTML = `<div class="badge stroke" style="display:none"></div><div class="fx"></div><div class="nm stroke">${name}</div><div class="hpn stroke"></div><div class="bar" style="--c:${color}"><i></i></div>` + (isPlayer?'<div class="ammo"><b><i></i></b><b><i></i></b><b><i></i></b></div>':'');
+    el.innerHTML = `<div class="badge stroke" style="display:none"></div><div class="fx"></div><div class="nm stroke">${escHtml(name)}</div><div class="hpn stroke"></div><div class="bar" style="--c:${color}"><i></i></div>` + (isPlayer?'<div class="ammo"><b><i></i></b><b><i></i></b><b><i></i></b></div>':'');
     labelsEl.appendChild(el);
     this.el = el; this.elBadge = el.querySelector('.badge'); this.elFx = el.querySelector('.fx'); this.elHp = el.querySelector('.hpn'); this.elBar = el.querySelector('.bar i');
     this.elAmmo = isPlayer ? [...el.querySelectorAll('.ammo i')] : null;
@@ -1426,13 +1429,13 @@ function useGadget(u){
   return true;
 }
 function heal(u, amt, silent){
-  if (!u.alive || u.weakT>0) return;
+  if (!u.alive || u.weakT>0 || netGuest()) return;
   const before = u.hp; u.hp = Math.min(u.maxHp, u.hp+amt);
   const d = Math.round(u.hp-before);
   if (d>0 && !silent) floatText(u.pos.x,2.6,u.pos.z,'+'+d,'heal');
 }
 function damage(t, amount, src, charges, crit){
-  if (!t.alive || G.over) return;
+  if (!t.alive || G.over || netGuest()) return;
   if (t.shieldT>0) amount *= 0.5;
   if (t.markT>0) amount *= 1.25;
   amount = Math.round(amount);
@@ -1445,8 +1448,9 @@ function damage(t, amount, src, charges, crit){
   else if (src && src.isPlayer) SND.play(crit?'crit':'hit', 0.8);
   if (t.hp<=0) kill(t, src);
 }
-function damageBox(key, amount){
+function damageBox(key, amount, fromHost){
   const b = G.map.boxes.get(key); if (!b) return;
+  if (!fromHost && netGuest()) return;
   b.hp -= amount; b.shake = 0.15;
   if (b.hp<=0){
     const [r,c] = key.split(',').map(Number);
@@ -1465,6 +1469,7 @@ function kill(u, src){
   burst(u.pos.x,1,u.pos.z,u.kit.color,22,7);
   if (src) src.kills++;
   addKillfeed(src, u);
+  if (G.netMid && NET.role === 'host') NET.recordKill(u, src);
   if (u.isPlayer) SND.play('die'); else sfxAt('kill', u.pos.x, u.pos.z, src&&src.isPlayer?1.2:0.7);
   if (G.mode==='gem'){
     for (let i=0;i<u.gems;i++){ const a = rand(0,TAU), s = rand(2,5); spawnGem(u.pos.x,u.pos.z,Math.sin(a)*s,Math.cos(a)*s); }
@@ -1473,7 +1478,8 @@ function kill(u, src){
     const n = Math.max(1, u.cubes);
     for (let i=0;i<n;i++){ const a = rand(0,TAU); spawnCube(u.pos.x+Math.sin(a)*rand(0,1.4), u.pos.z+Math.cos(a)*rand(0,1.4)); }
     const alive = G.units.filter(o=>o.alive).length;
-    if (u.isPlayer) endMatch('lose', alive+1);
+    if (G.netMid) NET.sdDeath(u, alive);
+    else if (u.isPlayer) endMatch('lose', alive+1);
     else if (alive===1 && G.player.alive) endMatch('win', 1);
   }
 }
@@ -1606,7 +1612,7 @@ function floatText(x,y,z,text,cls){
 function addKillfeed(src, u){
   const kf = $('#killfeed'); const el = document.createElement('div'); el.className = 'kf';
   const cls = x => (G.mode==='gem' ? (x.team===G.player.team?'b':'r') : (x.isPlayer?'b':'r'));
-  el.innerHTML = src ? `<span class="${cls(src)}">${src.kit.icon} ${src.name}</span> ▸ <span class="${cls(u)}">${u.kit.icon} ${u.name}</span>` : `염증 독소 ▸ <span class="${cls(u)}">${u.kit.icon} ${u.name}</span>`;
+  el.innerHTML = src ? `<span class="${cls(src)}">${src.kit.icon} ${escHtml(src.name)}</span> ▸ <span class="${cls(u)}">${u.kit.icon} ${escHtml(u.name)}</span>` : `염증 독소 ▸ <span class="${cls(u)}">${u.kit.icon} ${escHtml(u.name)}</span>`;
   kf.prepend(el); while (kf.children.length>4) kf.lastChild.remove();
   setTimeout(()=>el.remove(), 3300);
 }
@@ -1776,7 +1782,8 @@ function startMatch(netCfg){
   labelsEl.innerHTML = ''; $('#killfeed').innerHTML = '';
   if (netCfg && netCfg.mode) mode = netCfg.mode;
   G = { mode, time:0, units:[], proj:[], lobs:[], gems:[], cubes:[], fx:[], parts:[], minions:[], turrets:[], tempWalls:[], areas:[],
-        over:false, clock:150, gemT:6, lead:-1, cd:0, reveal:{}, start:3.2, player:null, map:null, zone:null, cam:new THREE.Vector3(), water:[], shake:0, superWasReady:false };
+        over:false, clock:150, gemT:6, lead:-1, cd:0, reveal:{}, start:3.2, player:null, map:null, zone:null, cam:new THREE.Vector3(), water:[], shake:0, superWasReady:false,
+        netMid:(netCfg && netCfg.mid) || 0, ranks:[], winTeam:-1 };
   const mySide = KITS[selKit].side, myPool = mySide==='immune' ? IMMUNE : PATHO, theirPool = mySide==='immune' ? PATHO : IMMUNE;
   let rows;
   if (netCfg && netCfg.rows){
@@ -1922,18 +1929,22 @@ function showResult(){
     box.querySelector('.exp').textContent = (ok ? '정답! ' : '아쉬워요. ') + qz.e;
     if (ok){ trophies[selKit] = (trophies[selKit]||0)+2; store.set('trophies', trophies); $('#resTrophy').textContent = `🏆 ${nv-cur>=0?'+':''}${nv-cur} +2  (${KITS[selKit].name} ${trophies[selKit]})`; }
   }));
+  resetResultButtons();
+  if (G.netMid && typeof NET !== 'undefined') NET.decorateResult();
   $('#resultModal').classList.remove('hidden');
 }
 function togglePause(){
   if (state!=='game' || G.over) return;
   paused = !paused; $('#pauseModal').classList.toggle('hidden', !paused);
+  const pm = $('#pauseModal p'); if (pm) pm.textContent = G.netMid ? '온라인 경기는 멈추지 않아요! 나가면 AI가 대신 싸워요.' : '경기를 잠시 멈췄어요.';
   mouse.down = false; mouse.right = false; aimTouch.active = false; joy.active = false; joy.x = joy.y = 0; joyBase.style.display = 'none'; SND.play('ui');
 }
 $('#pauseBtn').addEventListener('click', togglePause);
 $('#resumeBtn').addEventListener('click', togglePause);
-$('#quitBtn').addEventListener('click', () => { paused = false; $('#pauseModal').classList.add('hidden'); showLobby(); });
-$('#resLobby').addEventListener('click', () => { $('#resultModal').classList.add('hidden'); showLobby(); });
+$('#quitBtn').addEventListener('click', () => { paused = false; $('#pauseModal').classList.add('hidden'); if (G && G.netMid && typeof NET !== 'undefined' && NET.active){ NET.leave(); showLobby(); $('#onlineModal').classList.remove('hidden'); return; } showLobby(); });
+$('#resLobby').addEventListener('click', () => { $('#resultModal').classList.add('hidden'); showLobby(); if (typeof NET !== 'undefined' && NET.active) $('#onlineModal').classList.remove('hidden'); });
 $('#resAgain').addEventListener('click', () => { $('#resultModal').classList.add('hidden'); if (typeof NET !== 'undefined' && NET.active && NET.role === 'guest'){ showLobby(); $('#onlineModal').classList.remove('hidden'); return; } startMatch(); });
+function resetResultButtons(){ $('#resAgain').textContent = '다시 하기'; $('#resLobby').textContent = '로비로'; }
 
 /* ================= game update ================= */
 function updateGame(dt){
@@ -1942,11 +1953,12 @@ function updateGame(dt){
     const before = Math.ceil(G.start); G.start -= dt; const after = Math.ceil(G.start);
     if (after!==before){ showBanner(after>0 ? String(after) : '시작!'); SND.play(after>0?'count':'go'); }
   } else if (!G.over){
-    if (typeof NET !== 'undefined' && NET.active && NET.role === 'guest'){
+    if (netGuest()){
+      // 온라인 게스트: 내 유닛 예측 + 다른 유닛 보간만. 판정·젬·자기장·픽업은 방장이 처리
       playerInput(dt);
       NET.stepGuest(dt);
     } else {
-      if (G.mode==='gem'){ G.clock -= dt; if (G.clock<=0){ G.clock = 0; const [a,b] = teamGems(); const mt = G.player.team; const myG = mt===0?a:b, thG = mt===0?b:a; endMatch(myG>thG?'win':myG<thG?'lose':'draw'); } }
+      if (G.mode==='gem'){ G.clock -= dt; if (G.clock<=0){ G.clock = 0; const [a,b] = teamGems(); const mt = G.player.team; G.winTeam = a>b ? 0 : b>a ? 1 : -1; const myG = mt===0?a:b, thG = mt===0?b:a; endMatch(myG>thG?'win':myG<thG?'lose':'draw'); } }
       playerInput(dt);
       for (const u of G.units){
         if (!u.alive || u.isPlayer || u.isIdleSlot) continue;
@@ -1954,16 +1966,16 @@ function updateGame(dt){
         else botThink(u, dt);
       }
       for (const u of G.units) if (!u.isIdleSlot) updateUnit(u, dt);
+      separate();
+      updateProjectiles(dt);
+      updateLobs(dt);
+      updateMinions(dt);
+      updateTurrets(dt);
+      updateAreas(dt);
+      updateTempWalls(dt);
+      if (G.mode==='gem') updateGemMode(dt); else updateShowdown(dt);
+      updatePickups(dt);
     }
-    separate();
-    updateProjectiles(dt);
-    updateLobs(dt);
-    updateMinions(dt);
-    updateTurrets(dt);
-    updateAreas(dt);
-    updateTempWalls(dt);
-    if (G.mode==='gem') updateGemMode(dt); else updateShowdown(dt);
-    updatePickups(dt);
     const p = G.player;
     if (p.superCharge>=1 && !G.superWasReady){ G.superWasReady = true; SND.play('superReady'); }
     if (p.superCharge<1) G.superWasReady = false;
@@ -2213,7 +2225,7 @@ function updateGemMode(dt){
   const [a,b] = teamGems();
   let lead = -1; if (a>=10 && a>b) lead = 0; else if (b>=10 && b>a) lead = 1;
   if (lead!==G.lead){ G.lead = lead; G.cd = 10; if (lead>=0) SND.play('superReady', 0.6); }
-  else if (lead>=0){ const before = Math.ceil(G.cd); G.cd -= dt; if (Math.ceil(G.cd)!==before && G.cd<=5) SND.play('count', 0.7); if (G.cd<=0) endMatch(lead===G.player.team?'win':'lose'); }
+  else if (lead>=0){ const before = Math.ceil(G.cd); G.cd -= dt; if (Math.ceil(G.cd)!==before && G.cd<=5) SND.play('count', 0.7); if (G.cd<=0){ G.winTeam = lead; endMatch(lead===G.player.team?'win':'lose'); } }
 }
 function updateShowdown(dt){
   const z = G.zone; const k = clamp((G.time-z.start)/(z.end-z.start),0,1);
@@ -2489,7 +2501,7 @@ function showLobby(){
 function renderRoster(){
   const list = rosterSide==='immune' ? IMMUNE : PATHO;
   $('#roster').innerHTML = list.map(id => { const k = KITS[id]; return `<button class="rbtn${id===selKit?' on':''}" data-id="${id}" aria-label="${k.name}"><div class="face" style="background:${hexCss(k.color)}">${k.icon}</div>${k.nick}<div class="tr">🏆${trophies[id]||0}</div></button>`; }).join('');
-  $('#roster').querySelectorAll('.rbtn').forEach(b => b.addEventListener('click', () => { selKit = b.dataset.id; store.set('kit',selKit); SND.play('select'); renderLobby(); if(typeof NET!=='undefined')NET.syncPick(); }));
+  $('#roster').querySelectorAll('.rbtn').forEach(b => b.addEventListener('click', () => { selKit = b.dataset.id; store.set('kit',selKit); SND.play('select'); renderLobby(); }));
   document.querySelectorAll('.side-tabs button').forEach(b => b.classList.toggle('on', b.dataset.side===rosterSide));
 }
 function renderLobby(full){
@@ -2522,6 +2534,7 @@ function renderLobby(full){
   const md = MODES[mode];
   $('#modeName').textContent = md.name; $('#modeSub').textContent = mode==='gem' ? (patho ? '3 vs 3 · 병원체 팀으로 ATP 빼앗기' : md.sub) : md.sub; $('#modeIco').textContent = md.ico;
   renderRoster();
+  if (typeof NET !== 'undefined') NET.syncPick();
   if (!full){ const on = $('#roster .rbtn.on'); if (on && on.scrollIntoView) on.scrollIntoView({ block:'nearest', inline:'center' }); }
 }
 function cycleKit(d){ const list = rosterSide==='immune' ? IMMUNE : PATHO; let i = list.indexOf(selKit); if (i<0) i = 0; selKit = list[(i+d+list.length)%list.length]; store.set('kit',selKit); SND.play('select'); renderLobby(); }
@@ -2532,7 +2545,7 @@ document.querySelectorAll('.side-tabs button').forEach(b => b.addEventListener('
   rosterSide = b.dataset.side; const list = rosterSide==='immune' ? IMMUNE : PATHO;
   selKit = list[0]; store.set('kit',selKit); SND.play('tab'); renderLobby();
 }));
-$('#modeBtn').addEventListener('click', () => { mode = mode==='gem' ? 'sd' : 'gem'; store.set('mode',mode); SND.play('ui'); renderLobby(); });
+$('#modeBtn').addEventListener('click', () => { if (typeof NET !== 'undefined' && NET.active && NET.role === 'guest'){ $('#onlineModal').classList.remove('hidden'); return; } mode = mode==='gem' ? 'sd' : 'gem'; store.set('mode',mode); SND.play('ui'); renderLobby(); });
 $('#playBtn').addEventListener('click', startMatch);
 $('#btnDex').addEventListener('click', () => {
   SND.play('ui');
@@ -2570,83 +2583,203 @@ function resize(){
   lobbyCam.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
-let last = performance.now();
+let last = performance.now(), lastGameStep = performance.now();
 function frame(now){
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now-last)/1000); last = now;
   if (state==='lobby'){ updateLobby(dt, now/1000); renderer.render(lobbyScene, lobbyCam); }
   else if (state==='game' && G){
-    if (!paused && $('#resultModal').classList.contains('hidden')) updateGame(dt);
+    if ((!paused || G.netMid) && $('#resultModal').classList.contains('hidden')) updateGame(dt);
+    lastGameStep = now;
     renderer.render(gameScene, camera); updateLabels();
   }
 }
 
-/* ================= 방장 권한 P2P + 클라이언트 예측 보간 엔진 (NET) ================= */
+/* ================= 방장 권한 P2P + 클라이언트 예측 보간 엔진 (NET) =================
+   - 실제 연결: PeerJS(WebRTC 데이터 채널), 방장 = 허브(스타 구조). 방장이 모든 판정을 하고 20Hz로 상태를 보낸다.
+   - 같은 브라우저의 다른 탭끼리는 BroadcastChannel로도 바로 연결된다(테스트용 보조 경로).
+   - 신호 서버 바꾸기(테스트용): ?peerhost=localhost&peerport=9000&peerpath=/myapp (기본값 = PeerJS 클라우드) */
 const NET = (() => {
-  const PREFIX = 'cellbrawl-p2p-v1-';
-  let peer = null, peerConns = new Map(), bc = null, lobbyBc = null;
-  let myId = 'cb_' + Math.random().toString(36).slice(2, 9);
+  const VER = 2;
+  const PREFIX = 'cellbrawl-v2-';
+  const BC_PREFIX = 'cellbrawl-p2p-v2-';
+  const MAX_PLAYERS = 6;
+  const QUICK = ['QM1','QM2','QM3','QM4','QM5','QM6'];
+  const HOST_TIMEOUT = 10000, GUEST_TIMEOUT = 10000;
+  let peer = null, bc = null, lobbyBc = null, hostConn = null;
+  const conns = new Map();          // 방장: playerId -> DataConnection
+  const lastSeen = new Map();       // 방장: playerId -> ms
+  const myId = 'cb' + Math.random().toString(36).slice(2, 10);
   const st = {
-    active: false, role: null, code: '', nick: store.get('nick', '면역사령관' + (10 + Math.random()*89|0)),
+    active: false, role: null, code: '', phase: 'idle', busy: false,
+    nick: String(store.get('nick', '면역사령관' + (10 + Math.random()*89|0))).slice(0, 10),
     myTeam: 0, aiFill: true, mySlot: 0, players: {}, remoteInputs: {}, pendingActs: [],
-    netAcc: 0, rtt: 0, suppressRecord: false
+    netAcc: 0, inAcc: 0, pingAcc: 0, pkt: 0, rtt: 0, suppressRecord: false, transport: null,
+    mid: 0, slotOf: {}, endSent: false, lastHost: 0, joinWait: null, bcOnly: false, lastIn: null
   };
 
+  /* ---------- PeerJS 불러오기 (필요할 때만) ---------- */
+  let peerLoad = null;
   function loadPeerJS(){
-    if (window.Peer || document.getElementById('peerjs-cdn')) return;
-    const sc = document.createElement('script');
-    sc.id = 'peerjs-cdn';
-    sc.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
-    sc.async = true;
-    sc.onerror = () => {};
-    document.head.appendChild(sc);
+    if (window.Peer) return Promise.resolve(window.Peer);
+    if (peerLoad) return peerLoad;
+    peerLoad = new Promise((res, rej) => {
+      const sc = document.createElement('script');
+      sc.src = '../vendor/peerjs.min.js'; sc.async = true;
+      sc.onload = () => window.Peer ? res(window.Peer) : rej(netErr('load'));
+      sc.onerror = () => { peerLoad = null; sc.remove(); rej(netErr('load')); };
+      document.head.appendChild(sc);
+    });
+    return peerLoad;
   }
-  loadPeerJS();
+  function netErr(code){ const e = new Error(code); e.code = code; return e; }
+  function peerOpts(){
+    const q = new URLSearchParams(location.search);
+    const o = { debug: 0, config: { iceServers: [
+      { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+      { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' }
+    ] } };
+    if (q.get('peerhost')){
+      o.host = q.get('peerhost');
+      o.port = +(q.get('peerport') || (location.protocol === 'https:' ? 443 : 80));
+      o.path = q.get('peerpath') || '/';
+      o.secure = q.has('peersecure') ? /^(1|true)$/i.test(q.get('peersecure')) : o.port === 443;
+    }
+    return o;
+  }
+  function openPeer(id){
+    return loadPeerJS().then(Peer => new Promise((res, rej) => {
+      let p;
+      try { p = id ? new Peer(id, peerOpts()) : new Peer(peerOpts()); }
+      catch(e){ rej(netErr('webrtc')); return; }
+      let done = false;
+      const fin = (err) => {
+        if (done) return; done = true; clearTimeout(to);
+        p.off('open', onOpen); p.off('error', onErr);
+        if (err){ try{ p.destroy(); }catch(_){} rej(err); } else res(p);
+      };
+      const onOpen = () => fin(null);
+      const onErr = e => fin(netErr(e && e.type === 'unavailable-id' ? 'taken' : e && e.type === 'browser-incompatible' ? 'webrtc' : 'server'));
+      const to = setTimeout(() => fin(netErr('server')), 12000);
+      p.on('open', onOpen); p.on('error', onErr);
+    }));
+  }
+  function watchPeer(p){
+    p.on('disconnected', () => {   // 신호 서버만 끊긴 것: 데이터 채널은 살아 있으므로 조용히 재연결
+      setTimeout(() => { if (peer === p && !p.destroyed && p.disconnected){ try{ p.reconnect(); }catch(_){} } }, 1500);
+    });
+    p.on('error', e => {
+      if (peer !== p || !e) return;
+      if (e.type === 'peer-unavailable') return;
+      if (st.active && st.role === 'host' && /network|server-error|socket-error|socket-closed/.test(e.type))
+        log('⚠️ 신호 서버 연결이 잠시 불안정해요. 이미 들어온 친구와는 계속 플레이할 수 있어요.');
+    });
+  }
 
+  /* ---------- 메시지 ---------- */
+  const ERR = {
+    notfound: c => `❌ 방 [${c}]을(를) 찾을 수 없어요. 코드를 다시 확인하거나 방장이 방을 열어 두었는지 확인하세요.`,
+    full: () => '❌ 방이 가득 찼어요 (최대 6명). 다른 방에 참가하거나 새 방을 만드세요.',
+    in_game: () => '⏳ 이 방은 지금 경기 중이에요. 경기가 끝난 뒤 다시 참가하세요.',
+    version: () => '❌ 게임 버전이 달라요. 모두 페이지를 새로고침(F5)한 뒤 다시 시도하세요.',
+    server: () => '❌ 온라인 서버에 연결하지 못했어요. 인터넷 연결을 확인하고 다시 시도하세요. (학교·회사 네트워크는 P2P 연결을 막기도 해요 → 휴대폰 핫스팟 등 다른 네트워크로 시도해 보세요.)',
+    timeout: () => '❌ 방장과 P2P 연결에 실패했어요. 방화벽이 WebRTC를 막고 있을 수 있어요. 잠시 후 다시 시도하거나 다른 네트워크를 이용하세요.',
+    conn: () => '❌ 방장과 P2P 연결에 실패했어요. 잠시 후 다시 시도해 주세요.',
+    load: () => '❌ P2P 모듈을 불러오지 못했어요. 페이지를 새로고침한 뒤 다시 시도하세요.',
+    webrtc: () => '❌ 이 브라우저는 WebRTC를 지원하지 않아요. 최신 Chrome·Edge·Safari를 이용하세요.',
+    taken: c => `❌ 방 코드 [${c}]는 이미 사용 중이에요. 다른 코드를 입력하거나 비워 두세요.`,
+    badcode: () => '방 코드를 확인하세요 (영문·숫자 2~8자).'
+  };
+  function errMsg(code, c){ return (ERR[code] || ERR.conn)(c); }
   function log(msg){ const el = $('#netStatusLog'); if (el) el.textContent = msg; }
   function genCode(){
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let c = ''; for (let i=0;i<4;i++) c += chars[Math.random()*chars.length|0];
     return c;
   }
+  function normCode(c){ c = String(c || '').trim().toUpperCase(); return /^[A-Z0-9]{2,8}$/.test(c) ? c : ''; }
+
+  /* ---------- 전송 ---------- */
+  function rawSend(conn, msg){ if (conn && conn.open){ try{ conn.send(msg); }catch(e){} } }
   function sendAll(msg){
-    if (bc){ try{ bc.postMessage(msg); }catch(e){} }
-    for (const conn of peerConns.values()) if (conn && conn.open){ try{ conn.send(msg); }catch(e){} }
+    let anyBc = false;
+    for (const id in st.players){ const p = st.players[id]; if (p.via === 'bc') anyBc = true; }
+    if (anyBc && bc){ try{ bc.postMessage(msg); }catch(e){} }
+    for (const conn of conns.values()) rawSend(conn, msg);
+  }
+  function sendTo(pid, msg){
+    const p = st.players[pid];
+    if (p && p.via === 'bc'){ if (bc){ try{ bc.postMessage(Object.assign({ to: pid }, msg)); }catch(e){} } }
+    else rawSend(conns.get(pid), msg);
   }
   function sendToHost(msg){
     msg.from = myId;
-    if (bc){ try{ bc.postMessage(msg); }catch(e){} }
-    const h = peerConns.get('HOST');
-    if (h && h.open){ try{ h.send(msg); }catch(e){} }
+    if (st.transport === 'bc'){ if (bc){ try{ bc.postMessage(msg); }catch(e){} } }
+    else rawSend(hostConn, msg);
   }
-  function cleanup(){
-    if (bc){ try{ bc.close(); }catch(e){} bc = null; }
-    for (const c of peerConns.values()){ try{ c.close(); }catch(e){} }
-    peerConns.clear();
-    if (peer){ try{ peer.destroy(); }catch(e){} peer = null; }
-    st.active = false; st.role = null; st.code = ''; st.players = {}; st.remoteInputs = {}; st.pendingActs = [];
-    const pill = $('#netHudPill'); if (pill) pill.style.display = 'none';
-    renderModal();
+
+  /* ---------- 같은 브라우저 탭 (BroadcastChannel) ---------- */
+  function openBc(code){
+    closeBc();
+    if (typeof BroadcastChannel === 'undefined') return;
+    bc = new BroadcastChannel(BC_PREFIX + code);
+    bc.onmessage = e => {
+      const m = e.data; if (!m || typeof m !== 'object') return;
+      if (st.role === 'host'){ if (m.from && m.from !== myId) onHostMsg(m, null); }
+      else if (st.role === 'guest' || st.joinWait){ if (!m.from && (!m.to || m.to === myId)) onGuestMsg(m); }
+    };
   }
-  function setupChannel(code){
-    if (bc){ try{ bc.close(); }catch(e){} }
-    if (typeof BroadcastChannel !== 'undefined'){
-      bc = new BroadcastChannel(PREFIX + code);
-      bc.onmessage = e => onMessage(e.data);
-    }
-  }
+  function closeBc(){ if (bc){ try{ bc.close(); }catch(e){} bc = null; } }
   function setupDiscovery(){
     if (lobbyBc || typeof BroadcastChannel === 'undefined') return;
-    lobbyBc = new BroadcastChannel(PREFIX + 'LOBBY');
+    lobbyBc = new BroadcastChannel(BC_PREFIX + 'LOBBY');
     lobbyBc.onmessage = e => {
       const m = e.data;
-      if (m && m.type === 'discover' && st.active && st.role === 'host' && state === 'lobby'){
+      if (m && m.type === 'discover' && st.active && st.role === 'host' && !inMatch() && Object.keys(st.players).length < MAX_PLAYERS)
         lobbyBc.postMessage({ type: 'offer_room', code: st.code });
-      }
     };
   }
   setupDiscovery();
+  function discoverBc(ms){
+    return new Promise(res => {
+      if (!lobbyBc) return res(null);
+      let found = null;
+      const h = e => { if (e.data && e.data.type === 'offer_room' && !found){ found = e.data.code; } };
+      lobbyBc.addEventListener('message', h);
+      lobbyBc.postMessage({ type: 'discover', from: myId });
+      setTimeout(() => { lobbyBc.removeEventListener('message', h); res(found); }, ms);
+    });
+  }
 
+  const inMatch = () => state === 'game' && G && G.netMid && !G.over;
+
+  /* ---------- 정리 ---------- */
+  function cleanup(silent){
+    if (st.joinWait){ const w = st.joinWait; st.joinWait = null; w('cancel'); }
+    closeBc();
+    for (const c of conns.values()){ try{ c.close(); }catch(e){} }
+    conns.clear(); lastSeen.clear();
+    if (hostConn){ const h = hostConn; hostConn = null; try{ h.close(); }catch(e){} }
+    if (peer){ const p = peer; peer = null; try{ p.destroy(); }catch(e){} }
+    st.active = false; st.role = null; st.code = ''; st.phase = 'idle'; st.players = {}; st.remoteInputs = {}; st.pendingActs = [];
+    st.transport = null; st.slotOf = {}; st.bcOnly = false;
+    const pill = $('#netHudPill'); if (pill) pill.style.display = 'none';
+    if (!silent) renderModal();
+  }
+  function leave(){
+    if (st.active){
+      if (st.role === 'host') sendAll({ type: 'room_closed' });
+      else sendToHost({ type: 'leave' });
+    }
+    // 마지막 메시지가 나갈 시간을 조금 준 뒤 연결을 닫는다
+    const c = [...conns.values()], h = hostConn, p = peer, b = bc;
+    conns.clear(); hostConn = null; peer = null; bc = null;
+    cleanup();
+    setTimeout(() => { c.forEach(x => { try{ x.close(); }catch(e){} }); try{ h && h.close(); }catch(e){} try{ p && p.destroy(); }catch(e){} try{ b && b.close(); }catch(e){} }, 250);
+  }
+  addEventListener('pagehide', () => { if (st.active){ if (st.role === 'host') sendAll({ type: 'room_closed' }); else sendToHost({ type: 'leave' }); } });
+
+  /* ---------- 슬롯 ---------- */
   function assignSlots(){
     const list = Object.values(st.players).sort((a,b) => (b.isHost?1:0)-(a.isHost?1:0) || a.joinT-b.joinT);
     if (mode === 'gem'){
@@ -2663,80 +2796,17 @@ const NET = (() => {
     }
     if (st.players[myId]) st.mySlot = st.players[myId].slot;
   }
-
+  function publicPlayers(){
+    const o = {};
+    for (const id in st.players){ const p = st.players[id]; o[id] = { id: p.id, name: p.name, kitId: p.kitId, prefTeam: p.prefTeam, isHost: !!p.isHost, joinT: p.joinT }; }
+    return o;
+  }
   function broadcastRoom(){
     if (st.role !== 'host') return;
     assignSlots();
-    sendAll({ type: 'room_state', code: st.code, mode, aiFill: st.aiFill, players: st.players });
+    sendAll({ type: 'room_state', code: st.code, mode, aiFill: st.aiFill, players: publicPlayers(), inGame: !!inMatch() });
     renderModal();
   }
-
-  function createRoom(customCode){
-    cleanup();
-    st.code = (customCode || genCode()).toUpperCase();
-    st.role = 'host'; st.active = true; st.mySlot = 0;
-    st.players[myId] = { id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam, team: 0, isHost: true, joinT: Date.now(), slot: 0 };
-    setupChannel(st.code);
-    if (window.Peer){
-      try{
-        peer = new window.Peer(PREFIX + st.code);
-        peer.on('connection', conn => {
-          conn.on('open', () => { peerConns.set(conn.peer, conn); broadcastRoom(); });
-          conn.on('data', d => onMessage(d));
-          conn.on('close', () => {
-            for (const id in st.players) if (st.players[id].peerId === conn.peer) delete st.players[id];
-            peerConns.delete(conn.peer); broadcastRoom();
-          });
-        });
-        peer.on('error', () => {});
-      }catch(e){}
-    }
-    log(`방 [${st.code}] 생성 완료! 친구에게 방 코드를 공유하거나 다른 탭에서 참가하세요.`);
-    broadcastRoom();
-  }
-
-  function joinRoom(code){
-    code = (code || '').trim().toUpperCase();
-    if (!code || code.length < 2){ log('방 코드를 입력해 주세요.'); return; }
-    cleanup();
-    st.code = code; st.role = 'guest'; st.active = true;
-    setupChannel(code);
-    const req = { type: 'join_req', id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam };
-    sendToHost(req);
-    if (window.Peer){
-      try{
-        peer = new window.Peer();
-        peer.on('open', () => {
-          const conn = peer.connect(PREFIX + code, { reliable: true });
-          conn.on('open', () => { peerConns.set('HOST', conn); conn.send(Object.assign({ peerId: peer.id }, req)); });
-          conn.on('data', d => onMessage(d));
-        });
-        peer.on('error', () => {});
-      }catch(e){}
-    }
-    log(`방 [${code}]에 연결 요청 중...`);
-    renderModal();
-  }
-
-  function quickMatch(){
-    log('열려 있는 온라인 방을 검색 중...');
-    setupDiscovery();
-    let found = false;
-    if (lobbyBc){
-      const h = e => {
-        if (e.data && e.data.type === 'offer_room' && !found){
-          found = true; lobbyBc.removeEventListener('message', h); joinRoom(e.data.code);
-        }
-      };
-      lobbyBc.addEventListener('message', h);
-      lobbyBc.postMessage({ type: 'discover', from: myId });
-      setTimeout(() => {
-        lobbyBc.removeEventListener('message', h);
-        if (!found){ createRoom(); log(`열린 방이 없어 새 방 [${st.code}]을 생성했습니다!`); }
-      }, 600);
-    } else createRoom();
-  }
-
   function buildSlots(){
     assignSlots();
     const arr = new Array(6).fill(null);
@@ -2744,15 +2814,17 @@ const NET = (() => {
     for (const id in st.players){
       const p = st.players[id];
       if (p.slot >= 0 && p.slot < 6){
-        arr[p.slot] = { slot: p.slot, id: p.id, name: p.name, kitId: p.kitId, team: mode==='gem'?(p.slot<3?0:1):p.slot, isHost: p.isHost, isAI: false };
-        used.add(p.kitId);
+        const kitId = KITS[p.kitId] ? p.kitId : 'macro';
+        arr[p.slot] = { slot: p.slot, id: p.id, name: String(p.name || '플레이어').slice(0, 10), kitId, team: mode==='gem'?(p.slot<3?0:1):p.slot, isHost: !!p.isHost, isAI: false };
+        used.add(kitId);
       }
     }
     for (let i=0;i<6;i++){
       if (!arr[i]){
         const pool = mode==='gem' ? (i<3 ? IMMUNE : PATHO) : ALL_KITS;
         const avail = pool.filter(k => !used.has(k));
-        const kitId = (avail.length ? avail : pool)[i % pool.length];
+        const list = avail.length ? avail : pool;
+        const kitId = list[i % list.length];
         used.add(kitId);
         arr[i] = {
           slot: i, id: 'ai_'+i,
@@ -2764,8 +2836,273 @@ const NET = (() => {
     return arr;
   }
 
+  /* ---------- 방 만들기 (방장) ---------- */
+  async function createRoom(customCode, opts){
+    opts = opts || {};
+    if (st.busy && !opts.internal) return false;
+    let code = customCode ? normCode(customCode) : '';
+    if (customCode && !code){ log(ERR.badcode()); return false; }
+    cleanup(true);
+    st.busy = true; st.phase = 'connecting'; renderModal();
+    log('🏠 방을 여는 중... (온라인 서버에 연결)');
+    let p = null, lastErr = null;
+    for (let attempt = 0; attempt < (code ? 1 : 3) && !p; attempt++){
+      const c = code || genCode();
+      try { p = await openPeer(PREFIX + c); code = c; }
+      catch(e){ lastErr = e; if (e.code !== 'taken' || customCode) break; }
+    }
+    st.busy = false;
+    if (!p && lastErr && lastErr.code === 'taken'){ st.phase = 'idle'; renderModal(); log(errMsg('taken', code)); return false; }
+    if (!code) code = genCode();
+    st.code = code; st.role = 'host'; st.active = true; st.phase = 'room'; st.mySlot = 0; st.bcOnly = !p;
+    st.players = {}; st.players[myId] = { id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam, team: 0, isHost: true, joinT: Date.now(), slot: 0, via: 'self' };
+    openBc(code);
+    if (p){
+      peer = p; watchPeer(p);
+      p.on('connection', conn => {
+        conn.on('data', d => { if (peer === p) onHostMsg(d, conn); });
+        conn.on('close', () => { if (conn._pid && conns.get(conn._pid) === conn) removePlayer(conn._pid, 'lost'); });
+        conn.on('error', () => { if (conn._pid && conns.get(conn._pid) === conn) removePlayer(conn._pid, 'lost'); });
+      });
+      log(`✅ 방 [${code}] 생성 완료! 친구에게 방 코드를 알려 주세요. (최대 6명)`);
+    } else {
+      log(errMsg(lastErr ? lastErr.code : 'server') + (bc ? ' 지금은 이 기기의 다른 탭에서만 참가할 수 있어요.' : ''));
+    }
+    broadcastRoom();
+    return true;
+  }
+
+  /* ---------- 방 참가 (게스트) ---------- */
+  function tryBcJoin(code, ms){
+    return new Promise(res => {
+      if (typeof BroadcastChannel === 'undefined') return res(false);
+      st.role = null; openBc(code);
+      const req = { type: 'join_req', id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam, ver: VER, via: 'bc', from: myId };
+      st.joinWait = r => { clearTimeout(t); res(r); };
+      const t = setTimeout(() => { st.joinWait = null; closeBc(); res(false); }, ms);
+      bc.postMessage(req);
+    }).then(r => {
+      if (r === 'ok'){ st.transport = 'bc'; return true; }
+      if (r && r !== 'cancel' && r !== true){ closeBc(); return r; }
+      return false;
+    });
+  }
+  function connectToHost(code){
+    return new Promise((res, rej) => {
+      const target = PREFIX + code;
+      let done = false;
+      const conn = peer.connect(target, { reliable: true, serialization: 'json', metadata: { v: VER } });
+      const fin = (err) => {
+        if (done) return; done = true; clearTimeout(to); peer && peer.off('error', onErr);
+        if (err){ try{ conn.close(); }catch(_){} rej(err); } else res(conn);
+      };
+      const onErr = e => { if (e && e.type === 'peer-unavailable' && String(e.message || '').indexOf(target) >= 0) fin(netErr('notfound')); };
+      const to = setTimeout(() => fin(netErr('timeout')), 15000);
+      peer.on('error', onErr);
+      conn.on('open', () => fin(null));
+      conn.on('error', () => fin(netErr('conn')));
+    });
+  }
+  function handshake(conn, code, ms){
+    return new Promise(res => {
+      hostConn = conn; st.code = code; st.transport = 'peer';
+      conn.on('data', d => { if (hostConn === conn) onGuestMsg(d); });
+      conn.on('close', () => { if (hostConn === conn) hostLost('lost'); });
+      st.joinWait = r => { clearTimeout(t); res(r); };
+      const t = setTimeout(() => { st.joinWait = null; res('timeout'); }, ms);
+      rawSend(conn, { type: 'join_req', id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam, ver: VER, from: myId });
+    });
+  }
+  async function joinRoom(rawCode, opts){
+    opts = opts || {};
+    const code = normCode(rawCode);
+    if (!code){ log(ERR.badcode()); return 'badcode'; }
+    if (st.busy && !opts.internal) return 'busy';
+    if (!opts.keepPeer) cleanup(true);
+    st.busy = true; st.phase = 'connecting'; renderModal();
+    if (!opts.quiet) log(`🔌 방 [${code}]에 연결하는 중...`);
+    st.code = code;
+    const finish = (r) => {
+      st.busy = opts.internal ? st.busy : false;
+      if (r === 'ok'){
+        st.active = true; st.role = 'guest'; st.phase = 'room'; st.lastHost = performance.now();
+        log(`✅ 방 [${code}]에 참가했어요! 방장이 시작하면 경기가 시작돼요.`);
+      } else {
+        if (hostConn){ try{ hostConn.close(); }catch(e){} hostConn = null; }
+        st.active = false; st.role = null; st.phase = 'idle'; st.code = ''; st.transport = null;
+        if (!opts.quiet) log(errMsg(r, code));
+      }
+      renderModal();
+      return r;
+    };
+    // 1) 같은 브라우저의 다른 탭
+    const b = await tryBcJoin(code, 350);
+    if (b === true) return finish('ok');
+    if (typeof b === 'string') return finish(b);
+    // 2) PeerJS (실제 온라인 경로)
+    try {
+      if (!peer || peer.destroyed){ peer = await openPeer(null); watchPeer(peer); }
+      const conn = await connectToHost(code);
+      const r = await handshake(conn, code, 8000);
+      return finish(r === true ? 'ok' : r);
+    } catch(e){
+      if (!opts.keepPeer && peer){ try{ peer.destroy(); }catch(_){} peer = null; }
+      return finish(e.code || 'conn');
+    }
+  }
+
+  async function quickMatch(){
+    if (st.busy) return;
+    cleanup(true);
+    st.busy = true; st.phase = 'connecting'; renderModal();
+    log('🔎 열려 있는 방을 찾는 중...');
+    const local = await discoverBc(450);
+    if (local){ st.busy = false; joinRoom(local); return; }
+    try { if (!peer || peer.destroyed){ peer = await openPeer(null); watchPeer(peer); } }
+    catch(e){ st.busy = false; st.phase = 'idle'; renderModal(); log(errMsg(e.code)); return; }
+    let free = null;
+    for (const c of QUICK){
+      log(`🔎 빠른 매칭 방 [${c}] 확인 중...`);
+      const r = await joinRoom(c, { internal: true, keepPeer: true, quiet: true });
+      if (r === 'ok'){ st.busy = false; return; }
+      if (r === 'notfound' && !free) free = c;
+      if (r === 'server' || r === 'load' || r === 'webrtc'){ st.busy = false; log(errMsg(r)); return; }
+    }
+    if (peer){ try{ peer.destroy(); }catch(_){} peer = null; }
+    st.busy = false;
+    const order = free ? [free, ...QUICK.filter(c => c !== free)] : QUICK;
+    for (const c of order){
+      const ok = await createRoom(c, { internal: true });
+      if (ok && st.active){ if (st.bcOnly) return; log(`✅ 열린 방이 없어 빠른 매칭 방 [${c}]을 만들었어요. 다른 친구가 빠른 매칭을 누르면 들어와요!`); return; }
+    }
+  }
+
+  /* ---------- 방장: 메시지 처리 ---------- */
+  function onHostMsg(m, conn){
+    if (!m || typeof m !== 'object' || !st.active || st.role !== 'host') return;
+    if (m.type === 'join_req'){
+      const id = String(m.id || '').slice(0, 24); if (!id || id === myId) return;
+      const reply = msg => { if (conn) rawSend(conn, msg); else if (bc){ try{ bc.postMessage(Object.assign({ to: id }, msg)); }catch(e){} } };
+      if (m.ver !== VER){ reply({ type: 'join_reject', reason: 'version' }); return; }
+      if (!st.players[id]){
+        if (Object.keys(st.players).length >= MAX_PLAYERS){ reply({ type: 'join_reject', reason: 'full' }); return; }
+        if (inMatch()){ reply({ type: 'join_reject', reason: 'in_game' }); return; }
+      }
+      st.players[id] = { id, name: String(m.name || '게스트').slice(0, 10), kitId: KITS[m.kitId] ? m.kitId : 'macro', prefTeam: m.prefTeam === 1 ? 1 : 0,
+        isHost: false, joinT: st.players[id] ? st.players[id].joinT : Date.now(), via: conn ? 'peer' : 'bc' };
+      if (conn){ conn._pid = id; conns.set(id, conn); }
+      lastSeen.set(id, performance.now());
+      reply({ type: 'join_ok', code: st.code, id });
+      SND.play('select');
+      log(`🎉 [${st.players[id].name}] 님이 참가했어요! (${Object.keys(st.players).length}/${MAX_PLAYERS})`);
+      broadcastRoom();
+      return;
+    }
+    const pid = conn ? conn._pid : m.from;
+    if (!pid || !st.players[pid]) return;
+    if (!conn && st.players[pid].via !== 'bc') return;
+    lastSeen.set(pid, performance.now());
+    const slot = st.slotOf[pid];
+    switch (m.type){
+      case 'update_pick': {
+        const p = st.players[pid];
+        if (m.name) p.name = String(m.name).slice(0, 10);
+        if (KITS[m.kitId]) p.kitId = m.kitId;
+        if (m.prefTeam === 0 || m.prefTeam === 1) p.prefTeam = m.prefTeam;
+        if (!inMatch()) broadcastRoom();
+        break;
+      }
+      case 'input': {
+        if (slot == null || !inMatch() || m.mid !== st.mid) break;
+        const cur = st.remoteInputs[slot] || { mx:0, mz:0, facing:0, acts:[] };
+        const L = Math.hypot(+m.mx || 0, +m.mz || 0) || 1;
+        cur.mx = clamp((+m.mx || 0) / Math.max(1, L), -1, 1); cur.mz = clamp((+m.mz || 0) / Math.max(1, L), -1, 1); cur.facing = +m.facing || 0; cur.t = performance.now();
+        st.remoteInputs[slot] = cur;
+        break;
+      }
+      case 'act': {
+        if (slot == null || !inMatch() || m.mid !== st.mid) break;
+        const cur = st.remoteInputs[slot] || { mx:0, mz:0, facing:0, acts:[] };
+        if (cur.acts.length < 8) cur.acts.push(m);
+        st.remoteInputs[slot] = cur;
+        break;
+      }
+      case 'ping': sendTo(pid, { type: 'pong', t: m.t }); break;
+      case 'leave': removePlayer(pid, 'left'); break;
+    }
+  }
+  function removePlayer(pid, why){
+    const p = st.players[pid]; if (!p || p.isHost) return;
+    delete st.players[pid];
+    const conn = conns.get(pid); conns.delete(pid); lastSeen.delete(pid);
+    if (conn){ conn._pid = null; setTimeout(() => { try{ conn.close(); }catch(e){} }, 300); }
+    const slot = st.slotOf[pid]; delete st.slotOf[pid];
+    const msg = why === 'left' ? `👋 [${p.name}] 님이 나갔어요.` : `📴 [${p.name}] 님의 연결이 끊겼어요.`;
+    if (slot != null && inMatch() && G.units[slot]){
+      const u = G.units[slot];
+      u.isNetHuman = false; delete st.remoteInputs[slot];
+      sendAll({ type: 'notice', text: `${msg} AI가 대신 싸워요.` });
+      notice(`${msg} AI가 대신 싸워요.`);
+    }
+    log(msg + (inMatch() ? '' : ' 빈자리는 AI가 채워요.'));
+    broadcastRoom();
+  }
+  function notice(text){
+    if (state !== 'game' || !G) return;
+    const kf = $('#killfeed'); if (!kf) return;
+    const el = document.createElement('div'); el.className = 'kf'; el.textContent = text;
+    kf.prepend(el); while (kf.children.length > 4) kf.lastChild.remove();
+    setTimeout(() => el.remove(), 4500);
+  }
+
+  /* ---------- 게스트: 메시지 처리 ---------- */
+  function onGuestMsg(m){
+    if (!m || typeof m !== 'object') return;
+    if (st.joinWait){
+      if (m.type === 'join_ok'){ const w = st.joinWait; st.joinWait = null; w('ok'); }
+      else if (m.type === 'join_reject'){ const w = st.joinWait; st.joinWait = null; w(m.reason || 'conn'); return; }
+    }
+    if (st.role !== 'guest' && m.type !== 'room_state') return;
+    st.lastHost = performance.now();
+    switch (m.type){
+      case 'room_state':
+        if (m.code !== st.code) break;
+        st.aiFill = !!m.aiFill; st.players = m.players || {};
+        if (MODES[m.mode] && m.mode !== mode){ mode = m.mode; if (state === 'lobby') renderLobby(); }
+        assignSlots();
+        renderModal();
+        break;
+      case 'match_start': if (m.code === st.code) launchOnline(m); break;
+      case 'state': if (state === 'game' && G && G.netMid === m.mid) applyHostState(m); break;
+      case 'end': if (state === 'game' && G && G.netMid === m.mid) guestEnd(m); break;
+      case 'pong': {
+        if (typeof m.t !== 'number') break;
+        st.rtt = Math.max(1, Math.round(performance.now() - m.t));
+        const pill = $('#netHudPill');
+        if (pill && state === 'game' && G && G.netMid) pill.textContent = `🟢 P2P [${st.code}] · ${st.rtt}ms · 예측보간`;
+        break;
+      }
+      case 'notice': notice(String(m.text || '').slice(0, 80)); break;
+      case 'room_closed': hostLost('closed'); break;
+    }
+  }
+  function hostLost(why){
+    if (st.role !== 'guest') return;
+    const msg = why === 'closed' ? '🚪 방장이 방을 닫았어요. 새 방을 만들거나 다른 방에 참가하세요.' : '📴 방장과의 연결이 끊어졌어요. 다시 참가해 주세요.';
+    const wasGame = state === 'game' && G && G.netMid;
+    cleanup(true);
+    if (wasGame){
+      $('#resultModal').classList.add('hidden'); $('#pauseModal').classList.add('hidden'); paused = false;
+      showLobby();
+    }
+    if (state === 'lobby') $('#onlineModal').classList.remove('hidden');
+    renderModal();
+    log(msg);
+  }
+
+  /* ---------- 경기 시작 ---------- */
   function startOnlineMatch(){
-    if (!st.active || st.role !== 'host') return;
+    if (!st.active || st.role !== 'host' || st.busy) return;
     const netPlayers = buildSlots();
     const rows = mode === 'gem' ? gemRows() : sdRows();
     if (mode === 'sd'){
@@ -2775,100 +3112,88 @@ const NET = (() => {
         for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++){ const rr=r+dr, cc=c+dc; if (rr>=0&&cc>=0&&rr<25&&cc<25) rows[rr][cc] = '.'; }
       }
     }
-    const pkt = { type: 'match_start', code: st.code, mode, aiFill: st.aiFill, netPlayers, rows };
+    st.mid = (st.mid % 100000) + 1 + (Math.random()*1000|0) * 100000;
+    st.slotOf = {};
+    netPlayers.forEach(p => { if (!p.isAI) st.slotOf[p.id] = p.slot; });
+    const pkt = { type: 'match_start', code: st.code, mid: st.mid, mode, aiFill: st.aiFill, netPlayers, rows: rows.map(r => r.join ? r.join('') : r) };
     sendAll(pkt);
     launchOnline(pkt);
+    broadcastRoom();
   }
-
   function launchOnline(pkt){
-    $('#onlineModal').classList.add('hidden');
+    for (const id of ['onlineModal','resultModal','pauseModal','dexModal','helpModal']){ const el = $('#'+id); if (el) el.classList.add('hidden'); }
+    paused = false;
     const me = pkt.netPlayers.find(p => p && p.id === myId);
     st.mySlot = me ? me.slot : 0;
-    st.remoteInputs = {}; st.pendingActs = [];
-    startMatch({ mode: pkt.mode, mySlot: st.mySlot, netPlayers: pkt.netPlayers, rows: pkt.rows });
+    st.mid = pkt.mid; st.remoteInputs = {}; st.pendingActs = []; st.endSent = false; st.netAcc = 0; st.pkt = 0; st.lastIn = null;
+    if (st.role === 'guest') st.slotOf = {};
+    const rows = pkt.rows.map(r => typeof r === 'string' ? r.split('') : r.slice());
+    startMatch({ mode: pkt.mode, mySlot: st.mySlot, netPlayers: pkt.netPlayers, rows, mid: pkt.mid });
     const pill = $('#netHudPill');
     if (pill){
       pill.style.display = 'block';
       const hc = pkt.netPlayers.filter(p => !p.isAI).length;
-      pill.textContent = st.role === 'host'
-        ? `👑 방장 P2P [${st.code}] · ${hc}명 참가`
-        : `🟢 P2P 연결 [${st.code}] · 예측보간 활성`;
+      pill.textContent = st.role === 'host' ? `👑 방장 P2P [${st.code}] · ${hc}명 참가` : `🟢 P2P 연결 [${st.code}] · 예측보간 활성`;
     }
   }
 
-  function onMessage(m){
-    if (!m || !st.active) return;
-    if (st.role === 'host'){
-      if (m.type === 'join_req' && m.id !== myId){
-        st.players[m.id] = { id: m.id, peerId: m.peerId, name: m.name||'게스트', kitId: m.kitId||'macro', prefTeam: m.prefTeam||0, isHost: false, joinT: Date.now() };
-        SND.play('select');
-        log(`🎉 [${m.name}] 님이 참가했습니다!`);
-        broadcastRoom();
-      } else if (m.type === 'update_pick' && st.players[m.id]){
-        st.players[m.id].name = m.name || st.players[m.id].name;
-        st.players[m.id].kitId = m.kitId || st.players[m.id].kitId;
-        st.players[m.id].prefTeam = m.prefTeam != null ? m.prefTeam : st.players[m.id].prefTeam;
-        broadcastRoom();
-      } else if (m.type === 'input' && m.slot != null){
-        const cur = st.remoteInputs[m.slot] || { mx:0, mz:0, facing:0, acts:[] };
-        cur.mx = m.mx||0; cur.mz = m.mz||0; cur.facing = m.facing||0;
-        st.remoteInputs[m.slot] = cur;
-        if (m.t) sendAll({ type: 'pong', to: m.from, t: m.t });
-      } else if (m.type === 'act' && m.slot != null){
-        const cur = st.remoteInputs[m.slot] || { mx:0, mz:0, facing:0, acts:[] };
-        cur.acts.push(m);
-        st.remoteInputs[m.slot] = cur;
-      }
-    } else if (st.role === 'guest'){
-      if (m.type === 'room_state' && m.code === st.code){
-        mode = m.mode; st.aiFill = m.aiFill; st.players = m.players || {};
-        if (st.players[myId]) st.mySlot = st.players[myId].slot;
-        log(`✅ 방 [${st.code}]에 연결됨! 방장이 시작하면 출발합니다.`);
-        renderModal();
-      } else if (m.type === 'match_start' && m.code === st.code){
-        launchOnline(m);
-      } else if (m.type === 'state' && state === 'game' && G){
-        applyHostState(m);
-      } else if (m.type === 'pong' && m.to === myId){
-        st.rtt = Math.max(1, Math.round(performance.now() - m.t));
-        const pill = $('#netHudPill');
-        if (pill && state === 'game') pill.textContent = `🟢 P2P [${st.code}] · ${st.rtt}ms · 예측보간`;
-      }
-    }
-  }
-
+  /* ---------- 방장: 원격 유닛 조작 ---------- */
   function applyRemoteUnit(u, dt){
     const r = st.remoteInputs[u.netSlot];
     if (!r){ u.moveDir.x = 0; u.moveDir.z = 0; return; }
-    u.moveDir.x = r.mx; u.moveDir.z = r.mz; u.facing = r.facing;
+    if (performance.now() - (r.t || 0) > 700){ r.mx = 0; r.mz = 0; }   // 입력이 끊기면 제자리에 멈춤
+    u.moveDir.x = r.mx; u.moveDir.z = r.mz;
+    if (!(r.mx || r.mz)) u.facing = r.facing;
+    if (G.start > 0) return;
     while (r.acts && r.acts.length){
       const a = r.acts.shift();
-      if (a.kind === 'attack'){ u.ammo = Math.max(1, u.ammo); u.cdT = 0; fire(u, a.dir || forward(u), a.aimDist); }
-      else if (a.kind === 'super'){ u.superCharge = 1; useSuper(u, a.dir || forward(u), a.aimDist); }
-      else if (a.kind === 'gadget'){ u.gadgets = Math.max(1, u.gadgets); u.gadgetCd = 0; useGadget(u); }
+      const d = a.dir && isFinite(a.dir.x) && isFinite(a.dir.z) ? { x: +a.dir.x, z: +a.dir.z } : forward(u);
+      const L = Math.hypot(d.x, d.z) || 1; d.x /= L; d.z /= L;
+      const ad = isFinite(a.aimDist) ? +a.aimDist : 0;
+      if (a.kind === 'attack'){ if (u.ammo < 1 && u.reloadT > 0.6) u.ammo = 1; u.cdT = Math.min(u.cdT, 0); fire(u, d, ad); }
+      else if (a.kind === 'super'){ if (u.superCharge >= 0.97){ u.superCharge = 1; useSuper(u, d, ad); } }
+      else if (a.kind === 'gadget'){ if (u.gadgets > 0){ u.gadgetCd = 0; useGadget(u); } }
     }
   }
-
   function recordAction(kind, u, dir, aimDist){
-    if (st.suppressRecord) return;
+    if (st.suppressRecord || !G || !G.netMid) return;
     const idx = G.units.indexOf(u);
     if (idx < 0) return;
     st.pendingActs.push({ k: kind, i: idx, dx: dir?+dir.x.toFixed(3):0, dz: dir?+dir.z.toFixed(3):0, d: aimDist?+aimDist.toFixed(2):0 });
   }
-
+  function recordKill(u, src){
+    st.pendingActs.push({ k: 'kill', i: G.units.indexOf(u), s: src ? G.units.indexOf(src) : -1 });
+  }
+  function sdDeath(u, alive){
+    const idx = G.units.indexOf(u);
+    G.ranks[idx] = alive + 1;
+    const humanAlive = G.units.some(o => o.alive && (o.isPlayer || o.isNetHuman));
+    if (alive <= 1 || !humanAlive){
+      G.units.filter(o => o.alive).forEach((o, k) => { G.ranks[G.units.indexOf(o)] = k + 1; });
+      const my = G.ranks[G.units.indexOf(G.player)] || alive + 1;
+      endMatch(my === 1 ? 'win' : 'lose', my);
+    } else if (u.isPlayer){
+      showBanner(`${alive+1}등! 관전 중`);
+    }
+  }
   function sendAction(kind, dir, aimDist){
-    sendToHost({ type: 'act', slot: st.mySlot, kind, dir: dir?{x:+dir.x.toFixed(3),z:+dir.z.toFixed(3)}:null, aimDist: aimDist||0 });
+    if (!G || !G.netMid) return;
+    sendToHost({ type: 'act', mid: st.mid, kind, dir: dir?{x:+dir.x.toFixed(3),z:+dir.z.toFixed(3)}:null, aimDist: aimDist?+(+aimDist).toFixed(2):0 });
+    const p = G.player;
+    if (kind === 'super') p._superLock = G.time + 0.8;
+    if (kind === 'gadget') p._gadgetLock = G.time + 0.8;
   }
 
+  /* ---------- 주기 처리 ---------- */
   function tick(dt){
-    if (!st.active || !G) return;
+    if (!st.active || !G || !G.netMid) return;
     st.netAcc += dt;
     if (st.role === 'host'){
-      if (st.netAcc >= 0.04){
-        st.netAcc = 0;
+      if (st.netAcc >= 0.05 || (G.over && !st.endSent)){
+        st.netAcc = 0; st.pkt++;
         const pkt = {
-          type: 'state', clk: +G.clock.toFixed(1), lead: G.lead, cd: +G.cd.toFixed(1),
-          zr: G.zone ? +G.zone.r.toFixed(2) : 37, over: G.over,
+          type: 'state', mid: st.mid, clk: +G.clock.toFixed(2), lead: G.lead, cd: +G.cd.toFixed(2),
+          zr: G.zone ? +G.zone.r.toFixed(2) : 37, t: +G.time.toFixed(2),
           u: G.units.map(u => [
             +u.pos.x.toFixed(2), +u.pos.z.toFixed(2), +u.vel.x.toFixed(2), +u.vel.z.toFixed(2),
             +u.facing.toFixed(2), Math.round(u.hp), Math.round(u.maxHp), u.alive?1:0, +u.respawnT.toFixed(1),
@@ -2878,129 +3203,171 @@ const NET = (() => {
           ]),
           gm: G.gems.map(g => [+g.x.toFixed(2), +g.z.toFixed(2)]),
           cb: G.cubes.map(c => [+c.x.toFixed(2), +c.z.toFixed(2)]),
-          bx: [...G.map.boxes.entries()].map(([k,b]) => [k, Math.round(b.hp)]),
           acts: st.pendingActs.splice(0, st.pendingActs.length)
         };
+        if (st.pkt % 4 === 1 || pkt.acts.length) pkt.bx = [...G.map.boxes.entries()].map(([k,b]) => [k, Math.round(b.hp)]);
         sendAll(pkt);
+        if (G.over && !st.endSent){
+          st.endSent = true;
+          sendAll({ type: 'end', mid: st.mid, win: G.winTeam, ranks: G.ranks });
+        }
       }
     } else if (st.role === 'guest'){
-      if (st.netAcc >= 0.033){
-        st.netAcc = 0;
-        const p = G.player;
-        sendToHost({
-          type: 'input', slot: st.mySlot,
-          mx: +p.moveDir.x.toFixed(2), mz: +p.moveDir.z.toFixed(2), facing: +p.facing.toFixed(2),
-          t: performance.now()
-        });
+      st.inAcc += dt; st.pingAcc += dt;
+      const p = G.player;
+      const inp = [+p.moveDir.x.toFixed(2), +p.moveDir.z.toFixed(2), +p.facing.toFixed(2)];
+      const changed = !st.lastIn || inp[0] !== st.lastIn[0] || inp[1] !== st.lastIn[1] || Math.abs(inp[2] - st.lastIn[2]) > 0.05;
+      if ((changed && st.inAcc >= 0.033) || st.inAcc >= 0.25){
+        st.inAcc = 0; st.lastIn = inp;
+        sendToHost({ type: 'input', mid: st.mid, mx: inp[0], mz: inp[1], facing: inp[2] });
       }
     }
   }
+  // 1초마다: 핑, 연결 감시, 대기실 상태 유지
+  setInterval(() => {
+    if (!st.active) return;
+    const now = performance.now();
+    if (st.role === 'guest'){
+      sendToHost({ type: 'ping', t: now });
+      if (now - st.lastHost > HOST_TIMEOUT) hostLost('lost');
+    } else if (st.role === 'host'){
+      for (const [pid, t] of lastSeen) if (now - t > GUEST_TIMEOUT) removePlayer(pid, 'lost');
+      if (!inMatch()){ st.hb = (st.hb || 0) + 1; if (st.hb % 2 === 0) broadcastRoom(); }
+    }
+  }, 1000);
+  // 방장 탭이 백그라운드여서 화면 갱신(requestAnimationFrame)이 멈춰도 경기 진행은 계속되도록
+  setInterval(() => {
+    if (!st.active || st.role !== 'host' || state !== 'game' || !G || !G.netMid) return;
+    const now = performance.now();
+    if (now - lastGameStep < 300) return;
+    let steps = Math.min(40, Math.floor((now - lastGameStep) / 50));
+    while (steps-- > 0 && $('#resultModal').classList.contains('hidden')) updateGame(0.05);
+    lastGameStep = now;
+  }, 250);
 
+  /* ---------- 게스트: 방장 상태 반영 ---------- */
   function applyHostState(m){
     G.clock = m.clk; G.lead = m.lead; G.cd = m.cd;
     if (G.zone && m.zr != null){ G.zone.r = m.zr; if (G.fog) G.fog.uniforms.uR.value = m.zr; }
-    // 상자 동기화
     if (m.bx){
-      const aliveKeys = new Set(m.bx.map(x => x[0]));
-      for (const key of [...G.map.boxes.keys()]){
-        if (!aliveKeys.has(key)) damageBox(key, 99999);
-      }
-      for (const [k, hp] of m.bx){
-        const b = G.map.boxes.get(k); if (b) b.hp = hp;
-      }
+      const alive = new Set(m.bx.map(x => x[0]));
+      for (const key of [...G.map.boxes.keys()]) if (!alive.has(key)) damageBox(key, 1e9, true);
+      for (const [k, hp] of m.bx){ const b = G.map.boxes.get(k); if (b){ if (hp < b.hp) b.shake = 0.15; b.hp = hp; } }
     }
-    // 젬 & 큐브 동기화
     if (m.gm){
       while (G.gems.length > m.gm.length){ const g = G.gems.pop(); world.remove(g.m); }
       while (G.gems.length < m.gm.length) spawnGem(0,0,0,0);
-      for (let i=0;i<m.gm.length;i++){ G.gems[i].x = m.gm[i][0]; G.gems[i].z = m.gm[i][1]; G.gems[i].vx = 0; G.gems[i].vz = 0; G.gems[i].y = 0.6; G.gems[i].vy = 0; }
+      for (let i=0;i<m.gm.length;i++){ const g = G.gems[i]; g.x = m.gm[i][0]; g.z = m.gm[i][1]; g.vx = g.vz = g.vy = 0; g.y = 0.6; }
     }
     if (m.cb){
       while (G.cubes.length > m.cb.length){ const c = G.cubes.pop(); world.remove(c.m); }
       while (G.cubes.length < m.cb.length) spawnCube(0,0);
       for (let i=0;i<m.cb.length;i++){ G.cubes[i].x = m.cb[i][0]; G.cubes[i].z = m.cb[i][1]; }
     }
-    // 유닛 상태 동기화
     if (m.u){
       for (let i=0;i<m.u.length;i++){
         const d = m.u[i], u = G.units[i];
         if (!u || u.isIdleSlot) continue;
-        u._netTx = d[0]; u._netTz = d[1]; u.vel.x = d[2]; u.vel.z = d[3];
+        u._netTx = d[0]; u._netTz = d[1];
         const wasAlive = u.alive, nowAlive = !!d[7];
         if (wasAlive && !nowAlive){
-          u.alive = false; u.hp = 0; u.root.visible = false; u.el.style.display = 'none';
-          burst(u.pos.x,1,u.pos.z,u.kit.color,18,6);
+          u.alive = false; u.hp = 0; u.root.visible = false; u.el.style.display = 'none'; u.burst.length = 0; u.dashT = 0;
+          burst(u.pos.x,1,u.pos.z,u.kit.color,22,7);
+          if (u === G.player){ SND.play('die'); if (G.mode === 'sd') showBanner('탈락! 관전 중'); }
+          else sfxAt('kill', u.pos.x, u.pos.z, 0.7);
         } else if (!wasAlive && nowAlive){
-          u.alive = true; u.root.visible = true; u.pos.set(d[0],0,d[1]);
+          u.alive = true; u.root.visible = true; u.pos.set(d[0],0,d[1]); u.prev = [d[0], d[1]]; u.kb.x = u.kb.z = 0; u.ammo = d[9]; u.reloadT = 0;
+          ringFx(u.pos.x,u.pos.z,2,0xffffff,0.5);
+          if (u === G.player) SND.play('respawn');
         }
-        if (d[5] < u.hp) u.flashT = 0.12;
+        if (nowAlive && d[5] < u.hp - 1){
+          u.flashT = 0.12;
+          const vis = u.team === G.player.team || isVisibleTo(u, G.player.team);
+          if (vis && wasAlive) floatText(u.pos.x, 2.4, u.pos.z, Math.round(u.hp - d[5]), u === G.player ? 'me' : 'hurt');
+          if (u === G.player) SND.play('hurt', 0.8);
+        }
+        if (u === G.player){
+          if (d[13] > u.gems) SND.play('gem');
+          if (d[14] > u.cubes) SND.play('cube');
+        }
         u.hp = d[5]; u.maxHp = d[6]; u.respawnT = d[8];
-        u.ammo = d[9]; u.reloadT = d[10]; u.superCharge = d[11]; u.gadgets = d[12];
         u.gems = d[13]; u.cubes = d[14]; u.shieldT = d[15]; u.markT = d[16];
         u.weakT = d[17]; u.rootT = d[18]; u.slowT = d[19]; u.speedT = d[20];
-        u.stealthT = d[21]; u.dashT = d[22]; u.kills = d[23];
+        u.stealthT = d[21]; u.kills = d[23];
         if (u === G.player){
+          if (!(u._superLock > G.time)) u.superCharge = d[11];
+          if (!(u._gadgetLock > G.time)) u.gadgets = d[12];
+          if (!nowAlive) u.ammo = d[9];
           const err = Math.hypot(u._netTx - u.pos.x, u._netTz - u.pos.z);
-          if (err > 4.2){ u.pos.x = u._netTx; u.pos.z = u._netTz; }
+          if (nowAlive && err > 4.2){ u.pos.x = u._netTx; u.pos.z = u._netTz; u.prev = [u.pos.x, u.pos.z]; }
         } else {
+          u.vel.x = d[2]; u.vel.z = d[3];
+          u.ammo = d[9]; u.reloadT = d[10]; u.superCharge = d[11]; u.gadgets = d[12]; u.dashT = d[22];
           u.facing = d[4];
-          if (!u._netInit){ u.pos.x = u._netTx; u.pos.z = u._netTz; u._netInit = true; }
+          if (!u._netInit || Math.hypot(u._netTx - u.pos.x, u._netTz - u.pos.z) > 6){ u.pos.x = u._netTx; u.pos.z = u._netTz; u._netInit = true; }
         }
       }
     }
-    // 원격 공격/궁극기/가젯 이펙트 재생
     if (m.acts && m.acts.length){
       st.suppressRecord = true;
       for (const a of m.acts){
+        if (a.k === 'kill'){
+          const v = G.units[a.i], s = a.s >= 0 ? G.units[a.s] : null;
+          if (v) addKillfeed(s, v);
+          continue;
+        }
         const u = G.units[a.i];
-        if (!u || u === G.player) continue;
-        u.ammo = Math.max(1, u.ammo); u.cdT = 0;
-        if (a.k === 'attack') fire(u, { x: a.dx, z: a.dz }, a.d);
+        if (!u || u === G.player || !u.alive) continue;
+        u.cdT = 0; u.dashT = 0;
+        if (a.k === 'attack'){ u.ammo = Math.max(1, u.ammo); fire(u, { x: a.dx, z: a.dz }, a.d); }
         else if (a.k === 'super'){ u.superCharge = 1; useSuper(u, { x: a.dx, z: a.dz }, a.d); }
         else if (a.k === 'gadget'){ u.gadgets = Math.max(1, u.gadgets); u.gadgetCd = 0; useGadget(u); }
       }
       st.suppressRecord = false;
     }
-    if (m.over && !G.over){
-      if (G.mode === 'gem'){
-        const [a,b] = teamGems(); const mt = G.player.team; const myG = mt===0?a:b, thG = mt===0?b:a;
-        endMatch(myG >= thG ? 'win' : 'lose');
-      } else {
-        const alive = G.units.filter(o=>o.alive).length;
-        endMatch(G.player.alive ? 'win' : 'lose', G.player.alive ? 1 : alive + 1);
-      }
+  }
+  function guestEnd(m){
+    if (G.over) return;
+    if (G.mode === 'gem'){
+      const res = m.win == null || m.win < 0 ? 'draw' : m.win === G.player.team ? 'win' : 'lose';
+      endMatch(res);
+    } else {
+      const rk = (m.ranks && m.ranks[st.mySlot]) || 6;
+      endMatch(rk === 1 ? 'win' : 'lose', rk);
     }
   }
 
+  /* ---------- 게스트: 예측 + 보간 ---------- */
   function stepGuest(dt){
     const p = G.player;
-    // 1. 내 유닛 클라이언트 예측 이동 (Client-Side Prediction)
     if (p.alive){
-      updateUnit(p, dt);
+      updateUnit(p, dt);   // 내 유닛은 바로 움직인다 (클라이언트 예측)
       if (p._netTx != null){
         const err = Math.hypot(p._netTx - p.pos.x, p._netTz - p.pos.z);
-        if (err > 0.25 && err <= 4.2){
-          p.pos.x += (p._netTx - p.pos.x) * 0.22;
-          p.pos.z += (p._netTz - p.pos.z) * 0.22;
+        const moving = Math.abs(p.moveDir.x) + Math.abs(p.moveDir.z) > 0.1 || p.dashT > 0;
+        const lim = moving ? 1.4 : 0.15;
+        if (err > lim && err <= 4.2){
+          const k = Math.min(1, (moving ? 2 : 8) * dt);
+          movePos(p, (p._netTx - p.pos.x) * k, (p._netTz - p.pos.z) * k, p.radius);
         }
       }
     }
-    // 2. 원격 유닛 부드러운 예측 보간 (Entity Interpolation)
-    for (const u of G.units){
+    for (const u of G.units){   // 다른 유닛은 방장 위치로 부드럽게 보간
       if (u === p || !u.alive || u.isIdleSlot) continue;
-      for (const k of ['cdT','slowT','speedT','shieldT','gadgetCd','flashT','markT','weakT','rootT','stealthT']) u[k] -= dt;
+      for (const k of ['cdT','gadgetCd','flashT']) u[k] -= dt;
       while (u.burst.length && u.burst[0].t<=G.time){
         const b = u.burst.shift(); const a = u.kit.attack;
         if (a.type==='flame'){ const half = a.spreadDeg*Math.PI/360; const ang = Math.atan2(b.x,b.z) + rand(-half,half); spawnProj(u, u.pos.x, u.pos.z, Math.sin(ang), Math.cos(ang), a, 0, false); }
         else spawnProj(u, u.pos.x, u.pos.z, b.x, b.z, a, 0, false);
       }
       if (u._netTx != null){
-        u.pos.x += u.vel.x * dt * 0.4 + (u._netTx - u.pos.x) * 0.32;
-        u.pos.z += u.vel.z * dt * 0.4 + (u._netTz - u.pos.z) * 0.32;
+        const k = Math.min(1, dt * 12);
+        u.pos.x += u.vel.x * dt * 0.5 + (u._netTx - u.pos.x) * k;
+        u.pos.z += u.vel.z * dt * 0.5 + (u._netTz - u.pos.z) * k;
       }
       u.inBush = tileAt(u.pos.x, u.pos.z) === '*';
     }
-    separate();
+    if (G.fog) G.fog.uniforms.uT.value = G.time;
     updateProjectiles(dt);
     updateLobs(dt);
     updateMinions(dt);
@@ -3015,6 +3382,14 @@ const NET = (() => {
     }
   }
 
+  /* ---------- 결과 화면 ---------- */
+  function decorateResult(){
+    if (!st.active){ $('#resAgain').textContent = '다시 하기'; return; }
+    if (st.role === 'host'){ $('#resAgain').textContent = '🔁 재대결 (모두)'; $('#resLobby').textContent = '대기실로'; }
+    else { $('#resAgain').textContent = '대기실로 (방장 대기)'; $('#resLobby').textContent = '로비로'; }
+  }
+
+  /* ---------- 대기실 UI ---------- */
   function renderModal(){
     const k = KITS[selKit];
     const mb = $('#netMyBrawler');
@@ -3023,17 +3398,22 @@ const NET = (() => {
     if (rp) rp.style.display = st.active ? 'block' : 'none';
     const cd = $('#netCodeDisp');
     if (cd) cd.textContent = st.code || '----';
+    const host = st.active && st.role === 'host';
     const bm = $('#btnNetMode');
-    if (bm) bm.textContent = '모드: ' + MODES[mode].name;
+    if (bm){ bm.textContent = '모드: ' + MODES[mode].name; bm.disabled = !host; bm.style.opacity = host ? '' : '0.6'; }
     const bt = $('#btnNetTeam');
     if (bt){
       bt.style.display = mode === 'gem' ? '' : 'none';
       bt.textContent = st.myTeam === 0 ? '팀: 🔵 블루팀' : '팀: 🔴 레드팀';
     }
+    const af = $('#netAiFill'); if (af){ af.checked = st.aiFill; af.disabled = !host; }
+    const busy = st.busy || st.phase === 'connecting';
+    for (const id of ['btnCreateRoom','btnQuickMatch','btnJoinRoom']){ const b = $('#'+id); if (b) b.disabled = busy; }
     const stTxt = $('#netStateTxt');
     if (stTxt){
-      stTxt.textContent = st.active
-        ? (st.role === 'host' ? `🟢 방장 호스팅 (${st.code})` : `🟢 게스트 연결됨 (${st.code})`)
+      const n = Object.keys(st.players).length;
+      stTxt.textContent = busy ? '🟡 연결 중...' : st.active
+        ? (st.role === 'host' ? `👑 방장 (${st.code}) · ${n}/${MAX_PLAYERS}명${st.bcOnly ? ' · 이 기기 전용' : ''}` : `🟢 게스트 (${st.code}) · ${n}/${MAX_PLAYERS}명`)
         : '⚪ 대기 중';
     }
     const sl = $('#netSlotList');
@@ -3048,41 +3428,41 @@ const NET = (() => {
         const cls = isMe ? 'net-slot me' : (!p.isAI ? 'net-slot human' : 'net-slot');
         const tTag = mode === 'gem' ? (p.team === 0 ? '🔵 블루' : '🔴 레드') : `솔로 #${p.slot+1}`;
         const rTag = p.isHost ? '👑 방장' : (!p.isAI ? '👤 유저' : (p.isIdle ? '⚪ 빈자리' : '🤖 AI'));
-        return `<div class="${cls}"><div class="fc" style="background:${hexCss(kit.color)}">${kit.icon}</div><div><div><b>${p.name}</b></div><div style="font-size:11.5px;opacity:.85">${kit.name} · ${tTag} · ${rTag}</div></div></div>`;
+        return `<div class="${cls}"><div class="fc" style="background:${hexCss(kit.color)}">${kit.icon}</div><div><div><b>${escHtml(p.name)}</b>${isMe ? ' (나)' : ''}</div><div style="font-size:11.5px;opacity:.85">${kit.name} · ${tTag} · ${rTag}</div></div></div>`;
       }).join('');
     }
     const sb = $('#btnNetStart');
     if (sb){
-      sb.disabled = !(st.active && st.role === 'host');
+      sb.disabled = !host || st.busy;
       sb.textContent = st.active && st.role === 'guest' ? '⏳ 방장 시작 대기 중...' : '🚀 온라인 대전 시작!';
     }
   }
 
   setTimeout(() => {
     $('#onlineOpenBtn')?.addEventListener('click', () => {
-      SND.play('ui'); renderModal(); $('#onlineModal').classList.remove('hidden');
+      SND.init(); SND.play('ui'); renderModal(); $('#onlineModal').classList.remove('hidden');
     });
     const ni = $('#netNick');
     if (ni){
       ni.value = st.nick;
       ni.addEventListener('input', () => {
-        st.nick = ni.value.trim() || '면역사령관';
+        st.nick = (ni.value.trim() || '면역사령관').slice(0, 10);
         store.set('nick', st.nick);
         if (st.active){
           if (st.role === 'host' && st.players[myId]){ st.players[myId].name = st.nick; broadcastRoom(); }
-          else if (st.role === 'guest') sendToHost({ type: 'update_pick', id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam });
+          else if (st.role === 'guest') sendToHost({ type: 'update_pick', name: st.nick, kitId: selKit, prefTeam: st.myTeam });
         } else renderModal();
       });
     }
-    $('#btnCreateRoom')?.addEventListener('click', () => { SND.play('select'); createRoom($('#netCodeInp')?.value.trim()); });
-    $('#btnQuickMatch')?.addEventListener('click', () => { SND.play('select'); quickMatch(); });
-    $('#btnJoinRoom')?.addEventListener('click', () => { SND.play('select'); joinRoom($('#netCodeInp')?.value); });
-    $('#btnLeaveRoom')?.addEventListener('click', () => { SND.play('ui'); cleanup(); log('방에서 나왔습니다.'); });
+    $('#btnCreateRoom')?.addEventListener('click', () => { SND.init(); SND.play('select'); createRoom($('#netCodeInp')?.value.trim()); });
+    $('#btnQuickMatch')?.addEventListener('click', () => { SND.init(); SND.play('select'); quickMatch(); });
+    $('#btnJoinRoom')?.addEventListener('click', () => { SND.init(); SND.play('select'); joinRoom($('#netCodeInp')?.value); });
+    $('#netCodeInp')?.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); joinRoom(e.target.value); } });
+    $('#btnLeaveRoom')?.addEventListener('click', () => { SND.play('ui'); const was = st.active; leave(); log(was ? '방에서 나왔어요.' : '방 만들기 또는 방 코드로 친구와 연결하세요.'); });
     $('#btnCopyCode')?.addEventListener('click', () => {
       if (!st.code) return;
-      try{ navigator.clipboard.writeText(st.code); }catch(e){
-        const ta = document.createElement('textarea'); ta.value = st.code; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
-      }
+      const fallback = () => { const ta = document.createElement('textarea'); ta.value = st.code; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(e){} ta.remove(); };
+      try{ const pr = navigator.clipboard && navigator.clipboard.writeText(st.code); if (pr && pr.catch) pr.catch(fallback); else if (!pr) fallback(); }catch(e){ fallback(); }
       log(`📋 방 코드 [${st.code}] 복사 완료!`); SND.play('gem');
     });
     $('#btnNetMode')?.addEventListener('click', () => {
@@ -3093,15 +3473,16 @@ const NET = (() => {
       st.myTeam = st.myTeam === 0 ? 1 : 0; SND.play('ui');
       if (st.active){
         if (st.role === 'host' && st.players[myId]){ st.players[myId].prefTeam = st.myTeam; broadcastRoom(); }
-        else if (st.role === 'guest') sendToHost({ type: 'update_pick', id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam });
-      } else renderModal();
+        else if (st.role === 'guest') sendToHost({ type: 'update_pick', name: st.nick, kitId: selKit, prefTeam: st.myTeam });
+      }
+      renderModal();
     });
     $('#netAiFill')?.addEventListener('change', e => {
-      if (st.role !== 'host') return;
+      if (st.role !== 'host'){ e.target.checked = st.aiFill; return; }
       st.aiFill = e.target.checked; broadcastRoom();
     });
     $('#btnSingleFromModal')?.addEventListener('click', () => {
-      cleanup(); $('#onlineModal').classList.add('hidden'); startMatch();
+      leave(); $('#onlineModal').classList.add('hidden'); startMatch();
     });
     $('#btnNetStart')?.addEventListener('click', () => {
       if (st.active && st.role === 'host') startOnlineMatch();
@@ -3112,11 +3493,15 @@ const NET = (() => {
     get active(){ return st.active; },
     get role(){ return st.role; },
     get mySlot(){ return st.mySlot; },
-    leave: cleanup, startOnlineMatch, applyRemoteUnit, recordAction, sendAction, tick, stepGuest,
+    get code(){ return st.code; },
+    get players(){ return Object.keys(st.players).length; },
+    get phase(){ return st.busy ? 'connecting' : st.phase; },
+    leave, startOnlineMatch, applyRemoteUnit, recordAction, recordKill, sdDeath, sendAction, tick, stepGuest, decorateResult,
+    createRoom, joinRoom, quickMatch,
     syncPick(){
       if (!st.active) return;
-      if (st.role === 'host' && st.players[myId]){ st.players[myId].kitId = selKit; broadcastRoom(); }
-      else if (st.role === 'guest') sendToHost({ type: 'update_pick', id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam });
+      if (st.role === 'host' && st.players[myId]){ if (st.players[myId].kitId !== selKit){ st.players[myId].kitId = selKit; broadcastRoom(); } }
+      else if (st.role === 'guest') sendToHost({ type: 'update_pick', name: st.nick, kitId: selKit, prefTeam: st.myTeam });
     }
   };
 })();
