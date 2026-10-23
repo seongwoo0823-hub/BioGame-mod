@@ -1494,7 +1494,8 @@ function gameOver(){
     <div class="mb"><button class="btn big blue" data-m="new">새 게임</button><button class="btn big" data-m="title">타이틀로</button></div>`);
 }
 function showWin(){
-  sfx('victory');fireworks(7);
+  if(!showWin.now){sfx('victory');fireworks(7);bigText('승리!','#ffd34a');}
+  if(fxOn()&&!showWin.now){BUSY=true;setTimeout(()=>{BUSY=false;showWin.now=true;showWin();showWin.now=false;},1700/Math.sqrt(OPT.speed));return;}
   modal(`<h2 style="color:var(--gold)">승리!</h2><p style="text-align:center">앤티 8의 보스를 물리치고 몸을 지켜냈습니다!<br>무한 모드로 계속해서 더 높은 앤티에 도전할 수 있어요.</p>
     <table class="htab"><tr><td>최고 핸드 점수</td><td>${fmt(G.st.best)}</td></tr><tr><td>플레이한 핸드</td><td>${G.st.hands}</td></tr></table>
     <div class="mb"><button class="btn big orange" data-m="close">무한 모드 계속</button><button class="btn big" data-m="title">타이틀로</button></div>`);
