@@ -193,6 +193,29 @@ button:focus-visible{outline:2px solid var(--yolk);outline-offset:2px}
 @media (prefers-reduced-motion: reduce){ .logo span,.press{animation:none} }
 .hubbtn{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;z-index:5;background:rgba(7,30,42,.86);border:2px solid var(--edge);padding:6px 12px;font-size:15px;clip-path:var(--cut)}
 .hubbtn:hover{background:#0f3c4c}
+/* ---------- online ---------- */
+.netbtn{border-color:var(--cyto)!important;color:#d8ffe6}
+.netpill{background:#0c3020;border:2px solid var(--cyto);color:#d8ffe6;font-size:14px;padding:4px 10px;clip-path:var(--cut);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.netrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.netrow input{background:#03141c;border:2px solid #165466;color:var(--text);font:inherit;font-size:16px;padding:7px 9px;min-width:0;flex:1}
+.netrow input.code{text-transform:uppercase;font-family:var(--px);letter-spacing:2px;max-width:150px}
+.netrow .btn{width:auto;flex:1;margin:0;min-width:110px}
+.netcode{font-family:'Press Start 2P',monospace;font-size:22px;color:var(--yolk);letter-spacing:3px;background:#03141c;border:2px solid #165466;padding:6px 10px}
+.netlog{min-height:44px;font-size:15px;line-height:1.45;color:#ffe9a8;background:rgba(0,0,0,.3);border-left:3px solid var(--yolk);padding:6px 10px;margin:8px 0}
+.netplayers{list-style:none;margin:6px 0;padding:0;display:grid;gap:4px}
+.netplayers li{display:flex;justify-content:space-between;gap:8px;background:rgba(0,0,0,.34);border:2px solid #123c4a;padding:6px 10px;font-size:16px}
+.netplayers li.me{border-color:var(--cyan)}
+.netplayers small{font-family:var(--px);font-size:10px;color:var(--mute)}
+.netsong{font-size:16px;margin:6px 0;color:#c8e4f0}
+.netres{margin-top:12px;text-align:left;background:rgba(47,230,255,.07);border-left:3px solid var(--cyan);padding:10px 12px}
+.netres h3{margin:0 0 6px;font-weight:400;font-size:18px;color:var(--ice)}
+.netres ol{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.netres li{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;background:rgba(0,0,0,.3);padding:6px 8px;font-size:16px}
+.netres li.me{outline:2px solid var(--cyan)}
+.netres li b{font-family:'Press Start 2P',monospace;font-size:13px;font-weight:400;color:var(--yolk)}
+.netres li span.sc{font-family:'Press Start 2P',monospace;font-size:11px;text-align:right}
+.netres li small{display:block;font-family:var(--px);font-size:10px;color:var(--mute)}
+.netres .two{margin-top:8px}
 </style>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32.png">
@@ -229,7 +252,9 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
         <button data-act="home">HOME</button>
         <button class="cur">PLAY</button>
         <button data-act="settings">OPTION</button>
+        <button data-net="open">ONLINE</button>
       </nav>
+      <button class="netpill" id="netPill" data-net="open" hidden></button>
       <span class="qstat" id="qStat"></span>
       <div class="mode">4K · 25 SONGS</div>
     </div>
@@ -284,7 +309,8 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
         <div class="hint" id="practiceHint"></div>
         <button class="btn" data-act="calib">자동 싱크 맞추기</button>
         <button class="btn" data-act="settings">설정 열기</button>
-        <button class="start" id="startBtn" data-act="start">START<small>ENTER 로 시작</small></button>
+        <button class="btn netbtn" data-net="open" id="onlineBtn">🌐 온라인 대결 (2~4명)</button>
+        <button class="start" id="startBtn" data-act="start">START<small id="startSub">ENTER 로 시작</small></button>
       </section>
     </div>
     <div class="foot pnl">
@@ -313,6 +339,12 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
       <div class="rmisc"><span>최대 콤보 <b id="resCombo">0</b></span><span>FAST <b id="resFast">0</b></span><span>SLOW <b id="resSlow">0</b></span></div>
       <div class="timing" id="resTiming"></div>
       <button class="btn" data-act="applyAvg" id="avgBtn" hidden>평균 타이밍으로 싱크 보정</button>
+      <div class="netres" id="netRes" hidden>
+        <h3 id="netResH">온라인 순위</h3>
+        <ol id="netRank"></ol>
+        <div class="hint" id="netResHint"></div>
+        <div class="two" id="netResBtns"><button class="btn" data-net="again" id="netAgainBtn">🔁 같은 곡 재대결</button><button class="btn" data-act="toSelect">🎵 다른 곡 고르기</button></div>
+      </div>
       <div class="quiz" id="quiz">
         <div class="qh">생명과학 OX 퀴즈</div>
         <div class="qq" id="qQ"></div>
@@ -347,11 +379,28 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
     <button class="btn" data-act="closeCal">닫기</button>
   </div></div>
 
+  <div id="mNet" class="modal"><div class="mbox pnl">
+    <h2>🌐 온라인 대결 <small style="font-size:14px;color:var(--mute)">2~4명 · 같은 곡 동시 시작</small></h2>
+    <div class="netrow"><span>닉네임</span><input id="netNick" maxlength="10" autocomplete="off" aria-label="닉네임"></div>
+    <div id="netJoinBox">
+      <div class="netrow"><button class="btn" data-net="create" id="netCreateBtn">🏠 방 만들기</button></div>
+      <div class="netrow"><input id="netCode" class="code" maxlength="8" placeholder="방 코드" autocomplete="off" aria-label="방 코드"><button class="btn" data-net="join" id="netJoinBtn">🔑 코드로 참가</button></div>
+    </div>
+    <div id="netRoomBox" hidden>
+      <div class="netrow"><span>방 코드</span><span class="netcode" id="netCodeDisp">----</span><button class="btn" data-net="copy" style="flex:0;min-width:70px">복사</button></div>
+      <ul class="netplayers" id="netPlayers"></ul>
+      <div class="netsong" id="netSong"></div>
+    </div>
+    <div class="netlog" id="netLog" aria-live="polite">방을 만들거나 친구에게 받은 방 코드로 참가하세요. 방장이 곡과 난이도를 고르고, 노트 속도·키·싱크는 각자 설정을 써요.</div>
+    <div class="two"><button class="btn" data-net="start" id="netStartBtn" hidden>▶ 대결 시작</button><button class="btn" data-net="leave" id="netLeaveBtn" hidden>방 나가기</button></div>
+    <button class="btn" data-net="close">닫기 (곡 고르기)</button>
+  </div></div>
+
   <div id="mPause" class="modal"><div class="mbox pnl pausebox">
     <h2>PAUSE</h2>
     <button class="btn" data-act="resume">계속하기 (ESC)</button>
-    <button class="btn" data-act="retry">처음부터</button>
-    <button class="btn" data-act="quit">곡 선택으로</button>
+    <button class="btn" data-act="retry" id="pauseRetry">처음부터</button>
+    <button class="btn" data-act="quit" id="pauseQuit">곡 선택으로</button>
   </div></div>
 </div>
 
@@ -1635,9 +1684,11 @@ const LANECOL=[
  {main:'#2fd8ff',light:'#b0f6ff',dark:'#0a5a7a',hold:'rgba(47,216,255,0.42)',on:'rgba(150,240,255,0.85)'},
  {main:'#eaf4ff',light:'#ffffff',dark:'#5a6a80',hold:'rgba(220,235,255,0.42)',on:'rgba(255,255,255,0.78)'}];
 
-function startGame(){
+function startGame(net){
   if(!ready)return;
+  if(!net&&ONLINE.interceptStart())return;
   if(!initAudio()){alert('이 브라우저에서는 오디오를 사용할 수 없어요.');return;}
+  if(net){SEL.i=net.i;SEL.d=net.d;}
   if(actx.state==='suspended')actx.resume().catch(()=>{});
   pbStop(.1);if(previewTimer){clearTimeout(previewTimer);previewTimer=null;}
   const song=SONGS[SEL.i],data=DATA[song.id];if(!data)return;
@@ -1652,8 +1703,9 @@ function startGame(){
     cnt:{KOOL:0,COOL:0,GOOD:0,MISS:0,FAIL:0},combo:0,max:0,acc:0,total:chart.total,gauge:.5,fast:0,slow:0,cbump:0,jText:'',jT:0,fs:'',
     fx:[],parts:[],en:.3,paused:false,ended:false,failed:false,toast:null,endT:Math.max(lastEnd+2,data.duration),T0:0,pointers:new Map(),
     rate:SET.rate,auto:SET.auto,practice:SET.auto||SET.rate!==1,errs:[],autoDown:[0,0,0,0],countdown:0,cdT:null,mod:SET.mod};
+  if(net){PLAY.online=net;PLAY.rate=1;PLAY.practice=SET.auto;}
   showScreen('play');
-  const lead=3;PLAY.T0=actx.currentTime+lead;
+  const lead=3;PLAY.T0=net?ONLINE.ctxTimeAt(net.zero):actx.currentTime+lead;
   pbStart(song,data,0,PLAY.T0,Infinity,false,PLAY.rate);
 }
 const songNow=()=>PLAY?(audioNow()-PLAY.T0-SET.offset/1000)*PLAY.rate:0;
@@ -1716,6 +1768,7 @@ function finish(failed){
   if(st.practice){}
   else if(!failed&&score>0&&(!old||score>old.score)){REC[key]={score,rate:Math.round(rate*100)/100,grade,combo:Math.max(st.max,old?old.combo:0),fc:fc||(old&&old.fc)};isNew=true;saveRec();}
   else if(old&&!failed&&(fc&&!old.fc||st.max>old.combo)){old.fc=old.fc||fc;old.combo=Math.max(old.combo,st.max);saveRec();}
+  if(st.online)ONLINE.onFinish(st,{score,rate,grade,failed,fc});
   setTimeout(()=>{
     $('#resSong').textContent=st.song.ko;$('#resDiff').textContent=`${DIFF[st.diff].en} ${DIFF[st.diff].ko} · LV ${st.level} · ${st.song.genre}`;
     $('#resGrade').textContent=grade;$('#resGrade').style.color=failed?'#ff3a55':'';
@@ -1731,6 +1784,7 @@ function finish(failed){
     showQuiz(st.song.id);
     const tags=[];if(st.practice)tags.push(`<span class="n">${st.auto?'AUTO PLAY':'PRACTICE x'+st.rate}</span>`);if(failed)tags.push('<span class="f">STAGE FAILED</span>');if(ak)tags.push('<span>ALL KOOL</span>');else if(fc)tags.push('<span>FULL COMBO</span>');if(isNew)tags.push('<span class="n">NEW RECORD</span>');if(st.mod)tags.push(`<span>${st.mod===1?'MIRROR':'RANDOM'}</span>`);
     $('#resTags').innerHTML=tags.join('');
+    ONLINE.decorateResult(st);
     $('#mPause').classList.remove('on');showScreen('result');
   },failed?900:600);
 }
@@ -1739,8 +1793,8 @@ function placePauseBtn(px,pw,JY){const b=$('#pauseBtn');if(!b)return;const free=
   const pos=free>=74?`left:${px+pw+Math.round((free-58)/2)}px;top:${y}px`:`left:max(6px,env(safe-area-inset-left,0px));top:${y}px`;
   if(pos!==PBPOS){PBPOS=pos;b.style.cssText=pos;}}
 $('#pauseBtn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(PLAY&&!PLAY.ended){if(PLAY.paused)resumeGame();else pauseGame();}});
-function pauseGame(){const st=PLAY;if(!st||st.paused||st.ended)return;st.paused=true;if(actx)actx.suspend().catch(()=>{});$('#mPause').classList.add('on');}
-function resumeGame(){const st=PLAY;if(!st||!st.paused||st.countdown)return;$('#mPause').classList.remove('on');st.countdown=performance.now();
+function pauseGame(){const st=PLAY;if(st&&st.online&&!st.ended){ONLINE.togglePauseMenu();return;}if(!st||st.paused||st.ended)return;st.paused=true;if(actx)actx.suspend().catch(()=>{});$('#mPause').classList.add('on');}
+function resumeGame(){const st=PLAY;if(st&&st.online){$('#mPause').classList.remove('on');return;}if(!st||!st.paused||st.countdown)return;$('#mPause').classList.remove('on');st.countdown=performance.now();
   st.cdT=setTimeout(()=>{if(PLAY!==st)return;st.countdown=0;st.cdT=null;st.paused=false;if(actx)actx.resume().catch(()=>{});},1500);}
 let RES_AVG=0,QZ=null;
 function applyAvg(){if(!RES_AVG)return;SET.offset=clamp(SET.offset+RES_AVG,-300,300);saveSet();updateOpts();const ab=$('#avgBtn');ab.textContent=`싱크를 ${SET.offset}ms로 보정했어요`;ab.disabled=true;RES_AVG=0;}
@@ -1752,8 +1806,8 @@ function answerQuiz(v){if(!QZ||QZ.done)return;QZ.done=true;const ans=QZ.q[1],rig
   $$('#quiz [data-qa]').forEach(b=>{b.disabled=true;const bv=+b.dataset.qa;if((bv===1)===ans)b.classList.add('ok');else if(bv===v)b.classList.add('no');});
   $('#qE').textContent=(right?'정답이에요! ':`아쉬워요. 정답은 ${ans?'O':'X'}예요. `)+QZ.q[2];updateQStat();}
 function updateQStat(){const q=REC._quiz;$('#qStat').textContent=q&&q.t?`OX 퀴즈 ${q.r} / ${q.t}`:'';}
-function quitGame(){if(PLAY&&PLAY.cdT)clearTimeout(PLAY.cdT);$('#mPause').classList.remove('on');pbStop(.05);if(actx&&actx.state==='suspended')actx.resume().catch(()=>{});PLAY=null;showScreen('select');updateSelect();}
-function retryGame(){if(PLAY&&PLAY.cdT)clearTimeout(PLAY.cdT);$('#mPause').classList.remove('on');pbStop(.05);const go=()=>{PLAY=null;startGame();};if(actx&&actx.state==='suspended')actx.resume().then(go,go);else go();}
+function quitGame(){if(PLAY&&PLAY.online)ONLINE.onQuit(PLAY);if(PLAY&&PLAY.cdT)clearTimeout(PLAY.cdT);$('#mPause').classList.remove('on');pbStop(.05);if(actx&&actx.state==='suspended')actx.resume().catch(()=>{});PLAY=null;showScreen('select');updateSelect();}
+function retryGame(){if(ONLINE.interceptRetry())return;if(PLAY&&PLAY.cdT)clearTimeout(PLAY.cdT);$('#mPause').classList.remove('on');pbStop(.05);const go=()=>{PLAY=null;startGame();};if(actx&&actx.state==='suspended')actx.resume().then(go,go);else go();}
 
 /* ================= play rendering ================= */
 function layout(){
@@ -1881,6 +1935,7 @@ function drawPlay(){
   if(st.toast&&tnow-st.toast.at<1200)txt(st.toast.t,px+pw/2,JY*.62,Math.max(10,lw*.14),'#bff8ff',PXF,'center','#000');
   if(st.countdown){const left=Math.max(1,Math.ceil((1500-(tnow-st.countdown))/500));txt(String(left),px+pw/2,JY*.42,Math.max(24,lw*.7),'#ffe14a',PXF,'center','#000');}
   if(st.failed)txt('STAGE FAILED',px+pw/2,JY*.4,Math.max(14,lw*.28),'#ff3a55',PXF,'center','#000');
+  if(st.online)ONLINE.drawBoard(st,Lg);
 }
 
 /* ================= background rendering for menus ================= */
@@ -1947,7 +2002,7 @@ window.addEventListener('keydown',e=>{
 });
 window.addEventListener('keyup',e=>{if(screen==='play'&&PLAY){const l=laneOf(e.code);if(l>=0){e.preventDefault();release(l);}}});
 window.addEventListener('blur',()=>{if(screen==='play'&&PLAY)for(let l=0;l<4;l++)if(PLAY.keyDown[l])release(l);});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(screen==='play')pauseGame();else if(PB.preview)pbStop(.1);}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(screen==='play'&&!(PLAY&&PLAY.online))pauseGame();else if(PB.preview)pbStop(.1);}});
 cv.addEventListener('pointerdown',e=>{
   if(screen==='title'){if(ready){initAudio();showScreen('select');updateSelect();}return;}
   if(screen!=='play'||!PLAY)return;e.preventDefault();
@@ -1991,6 +2046,446 @@ document.addEventListener('click',e=>{
 });
 window.addEventListener('resize',resize);
 
+/* ================= online battle (PeerJS, 방장 = 허브) =================
+   - 방장이 곡·난이도를 고르고 시작하면, 데이터 채널 핑으로 잰 시계 차이를 이용해 모두 같은 순간에 곡이 시작된다.
+   - 플레이 중에는 점수·콤보·판정률·판정을 초당 약 7번 주고받아 옆에 실시간 순위를 보여 준다.
+   - 신호 서버 바꾸기(테스트용): ?peerhost=localhost&peerport=9000&peerpath=/myapp (기본값 = PeerJS 클라우드) */
+const ONLINE=(()=>{
+  const VER=1,PREFIX='biobeat-v1-',MAX=4,LEAD=4200,LIVE_MS=150,TIMEOUT=10000;
+  const myId='bb'+Math.random().toString(36).slice(2,10);
+  let peer=null,hostConn=null;
+  const conns=new Map();   // 방장: id -> DataConnection
+  const N={active:false,role:null,code:'',busy:false,nick:String(LS.get('biobeat_nick','')||('생명'+(10+Math.floor(Math.random()*89)))).slice(0,10),
+    players:{},pick:{i:0,d:1},mid:0,board:{},boardMid:0,offset:0,samples:[],lastHost:0,joinWait:null,match:null,liveT:0,lastLive:null,hb:0,startedAt:0,skew:null};
+  const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const now=()=>performance.now();
+  const netErr=c=>{const e=new Error(c);e.code=c;return e;};
+  const ERR={
+    notfound:c=>`❌ 방 [${c}]을(를) 찾을 수 없어요. 코드를 확인하거나 방장이 방을 열어 두었는지 확인하세요.`,
+    full:()=>'❌ 방이 가득 찼어요 (최대 4명).',
+    in_game:()=>'⏳ 이 방은 지금 대결 중이에요. 곡이 끝난 뒤 다시 참가하세요.',
+    version:()=>'❌ 게임 버전이 달라요. 모두 페이지를 새로고침한 뒤 다시 시도하세요.',
+    server:()=>'❌ 온라인 서버에 연결하지 못했어요. 인터넷 연결을 확인하고 다시 시도하세요. (학교·회사 네트워크는 P2P 연결을 막기도 해요 → 휴대폰 핫스팟 등 다른 네트워크로 시도해 보세요.)',
+    timeout:()=>'❌ 방장과 P2P 연결에 실패했어요. 방화벽이 WebRTC를 막고 있을 수 있어요. 잠시 후 다시 시도하거나 다른 네트워크를 이용하세요.',
+    conn:()=>'❌ 방장과 연결하지 못했어요. 잠시 후 다시 시도해 주세요.',
+    load:()=>'❌ P2P 모듈을 불러오지 못했어요. 페이지를 새로고침한 뒤 다시 시도하세요.',
+    webrtc:()=>'❌ 이 브라우저는 WebRTC를 지원하지 않아요. 최신 Chrome·Edge·Safari를 이용하세요.',
+    taken:c=>`❌ 방 코드 [${c}]는 이미 사용 중이에요. 다시 시도하세요.`,
+    badcode:()=>'방 코드를 확인하세요 (영문·숫자 2~8자).'
+  };
+  const errMsg=(c,code)=>(ERR[c]||ERR.conn)(code);
+  function log(t){const el=$('#netLog');if(el)el.textContent=t;}
+
+  /* ---------- PeerJS ---------- */
+  let peerLoad=null;
+  function loadPeerJS(){
+    if(window.Peer)return Promise.resolve(window.Peer);
+    if(peerLoad)return peerLoad;
+    peerLoad=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='../vendor/peerjs.min.js';sc.async=true;
+      sc.onload=()=>window.Peer?res(window.Peer):rej(netErr('load'));sc.onerror=()=>{peerLoad=null;sc.remove();rej(netErr('load'));};document.head.appendChild(sc);});
+    return peerLoad;
+  }
+  function peerOpts(){
+    const q=new URLSearchParams(location.search);
+    const o={debug:0,config:{iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']},
+      {urls:['turn:eu-0.turn.peerjs.com:3478','turn:us-0.turn.peerjs.com:3478'],username:'peerjs',credential:'peerjsp'}]}};
+    if(q.get('peerhost')){o.host=q.get('peerhost');o.port=+(q.get('peerport')||(location.protocol==='https:'?443:80));o.path=q.get('peerpath')||'/';
+      o.secure=q.has('peersecure')?/^(1|true)$/i.test(q.get('peersecure')):o.port===443;}
+    return o;
+  }
+  function openPeer(id){
+    return loadPeerJS().then(Peer=>new Promise((res,rej)=>{
+      let p;try{p=id?new Peer(id,peerOpts()):new Peer(peerOpts());}catch(e){rej(netErr('webrtc'));return;}
+      let done=false;
+      const fin=err=>{if(done)return;done=true;clearTimeout(to);p.off('open',onOpen);p.off('error',onErr);if(err){try{p.destroy();}catch(_){}rej(err);}else res(p);};
+      const onOpen=()=>fin(null);
+      const onErr=e=>fin(netErr(e&&e.type==='unavailable-id'?'taken':e&&e.type==='browser-incompatible'?'webrtc':'server'));
+      const to=setTimeout(()=>fin(netErr('server')),12000);
+      p.on('open',onOpen);p.on('error',onErr);
+      p.on('disconnected',()=>setTimeout(()=>{if(peer===p&&!p.destroyed&&p.disconnected){try{p.reconnect();}catch(_){}}},1500));
+    }));
+  }
+  function genCode(){const ch='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let c='';for(let i=0;i<4;i++)c+=ch[Math.floor(Math.random()*ch.length)];return c;}
+  const normCode=c=>{c=String(c||'').trim().toUpperCase();return /^[A-Z0-9]{2,8}$/.test(c)?c:'';};
+  const send=(conn,m)=>{if(conn&&conn.open){try{conn.send(m);}catch(e){}}};
+  const sendAll=m=>{for(const c of conns.values())send(c,m);};
+  const toHost=m=>send(hostConn,m);
+
+  /* ---------- 정리 ---------- */
+  function cleanup(){
+    if(N.joinWait){const w=N.joinWait;N.joinWait=null;w('cancel');}
+    for(const c of conns.values()){try{c.close();}catch(e){}}conns.clear();
+    if(hostConn){const h=hostConn;hostConn=null;try{h.close();}catch(e){}}
+    if(peer){const p=peer;peer=null;try{p.destroy();}catch(e){}}
+    N.active=false;N.role=null;N.code='';N.players={};N.samples=[];N.offset=0;N.match=null;
+    render();
+  }
+  function leave(){
+    if(N.active){if(N.role==='host')sendAll({type:'closed'});else toHost({type:'leave'});}
+    const c=[...conns.values()],h=hostConn,p=peer;conns.clear();hostConn=null;peer=null;
+    cleanup();
+    setTimeout(()=>{c.forEach(x=>{try{x.close();}catch(e){}});try{h&&h.close();}catch(e){}try{p&&p.destroy();}catch(e){}},250);
+  }
+  addEventListener('pagehide',()=>{if(N.active){if(N.role==='host')sendAll({type:'closed'});else toHost({type:'leave'});}});
+
+  /* ---------- 방장 ---------- */
+  async function create(){
+    if(N.busy)return;
+    if(N.active)leave();
+    N.busy=true;render();log('🏠 방을 여는 중... (온라인 서버에 연결)');
+    let p=null,code='',err=null;
+    for(let k=0;k<3&&!p;k++){code=genCode();try{p=await openPeer(PREFIX+code);}catch(e){err=e;if(e.code!=='taken')break;}}
+    N.busy=false;
+    if(!p){log(errMsg(err?err.code:'server',code));render();return;}
+    peer=p;N.active=true;N.role='host';N.code=code;N.mid=0;N.board={};
+    N.players={};N.players[myId]={id:myId,name:N.nick,host:true,synced:true,joinT:Date.now()};
+    N.pick={i:SEL.i,d:SEL.d};
+    p.on('connection',conn=>{
+      conn.on('data',d=>{if(peer===p)onHost(d,conn);});
+      const drop=()=>{if(conn._pid&&conns.get(conn._pid)===conn)removePlayer(conn._pid,'lost');};
+      conn.on('close',drop);conn.on('error',drop);
+    });
+    log(`✅ 방 [${code}]을 만들었어요! 친구에게 코드를 알려 주세요. 곡 선택 화면에서 곡과 난이도를 고른 뒤 '대결 시작'을 누르세요.`);
+    broadcastRoom();
+  }
+  function roomMsg(){
+    const pl=Object.values(N.players).sort((a,b)=>(b.host?1:0)-(a.host?1:0)||a.joinT-b.joinT).map(p=>({id:p.id,name:p.name,host:!!p.host,synced:!!p.synced,ping:p.ping||0}));
+    return {type:'room',code:N.code,players:pl,pick:N.pick,inGame:!!N.match&&!matchDone()};
+  }
+  function broadcastRoom(){if(N.role!=='host')return;sendAll(roomMsg());render();}
+  function onHost(m,conn){
+    if(!m||typeof m!=='object'||N.role!=='host')return;
+    if(m.type==='join_req'){
+      const id=String(m.id||'').slice(0,24);if(!id)return;
+      if(m.ver!==VER){send(conn,{type:'reject',reason:'version'});return;}
+      if(!N.players[id]){
+        if(Object.keys(N.players).length>=MAX){send(conn,{type:'reject',reason:'full'});return;}
+        if(N.match&&!matchDone()){send(conn,{type:'reject',reason:'in_game'});return;}
+      }
+      N.players[id]={id,name:String(m.name||'게스트').slice(0,10),host:false,synced:false,pings:0,joinT:Date.now(),seen:now()};
+      conn._pid=id;conns.set(id,conn);
+      send(conn,{type:'join_ok',code:N.code});
+      log(`🎉 [${N.players[id].name}] 님이 들어왔어요! (${Object.keys(N.players).length}/${MAX})`);
+      broadcastRoom();return;
+    }
+    const pid=conn._pid,p=pid&&N.players[pid];if(!p)return;
+    p.seen=now();
+    switch(m.type){
+      case'ping':send(conn,{type:'pong',t0:m.t0,th:now()});p.pings=(p.pings||0)+1;if(typeof m.rtt==='number')p.ping=Math.round(m.rtt);
+        if(!p.synced&&m.sync){p.synced=true;broadcastRoom();}break;
+      case'name':p.name=String(m.name||p.name).slice(0,10);broadcastRoom();break;
+      case'live':if(N.match&&m.mid===N.match.mid)setEntry(pid,m);break;
+      case'final':if(N.match&&m.mid===N.match.mid){setEntry(pid,m);sendBoard();}break;
+      case'leave':removePlayer(pid,'left');break;
+    }
+  }
+  function setEntry(pid,m){
+    const e=N.board[pid]||(N.board[pid]={id:pid});
+    if(m.type==='live'&&e.st&&e.st!=='play')return;
+    const p=N.players[pid];e.n=p?p.name:e.n||'?';
+    for(const k of['s','c','m','r','j','pr','st','g','fc','au','k','cg','gd','ms','f'])if(m[k]!=null)e[k]=m[k];
+    e.jt=now();
+  }
+  function removePlayer(pid,why){
+    const p=N.players[pid];if(!p||p.host)return;
+    delete N.players[pid];
+    const c=conns.get(pid);conns.delete(pid);if(c){c._pid=null;setTimeout(()=>{try{c.close();}catch(e){}},300);}
+    if(N.board[pid]&&N.board[pid].st==='play'){N.board[pid].st='left';sendBoard();}
+    log(why==='left'?`👋 [${p.name}] 님이 나갔어요.`:`📴 [${p.name}] 님의 연결이 끊겼어요.`);
+    toast(why==='left'?`${p.name} 님이 나갔어요`:`${p.name} 님 연결 끊김`);
+    broadcastRoom();
+  }
+  function matchDone(){if(!N.match)return true;return Object.values(N.board).every(e=>e.st&&e.st!=='play');}
+  function canStart(){
+    const pl=Object.values(N.players);
+    return N.role==='host'&&pl.length>=2&&pl.every(p=>p.synced)&&matchDone()&&!!DATA[SONGS[N.pick.i].id];
+  }
+  function hostStart(){
+    if(N.role!=='host')return;
+    const pl=Object.values(N.players);
+    if(pl.length<2){log('👥 2명 이상 모이면 시작할 수 있어요. 친구에게 방 코드를 알려 주세요.');openModal();return;}
+    if(!pl.every(p=>p.synced)){log('⏳ 친구의 시계를 맞추는 중이에요. 잠시 후 다시 눌러 주세요.');openModal();return;}
+    if(!matchDone()){toast('아직 플레이 중인 친구가 있어요');return;}
+    N.pick={i:SEL.i,d:SEL.d};
+    const mid=(N.mid=N.mid+1+Math.floor(Math.random()*1000)*1000);
+    const zero=now()+LEAD;
+    N.board={};for(const p of pl)N.board[p.id]={id:p.id,n:p.name,s:0,c:0,r:0,j:'',pr:0,st:'play'};
+    const msg={type:'start',mid,i:N.pick.i,d:N.pick.d,zero,hn:now()};
+    sendAll(msg);
+    broadcastRoom();
+    begin(msg,zero);
+  }
+
+  /* ---------- 게스트 ---------- */
+  async function join(raw){
+    const code=normCode(raw);if(!code){log(ERR.badcode());return;}
+    if(N.busy)return;
+    if(N.active)leave();
+    N.busy=true;render();log(`🔌 방 [${code}]에 연결하는 중...`);
+    let r='conn';
+    try{
+      peer=await openPeer(null);
+      const conn=await new Promise((res,rej)=>{
+        const target=PREFIX+code;let done=false;
+        const c=peer.connect(target,{reliable:true,serialization:'json',metadata:{v:VER}});
+        const fin=e=>{if(done)return;done=true;clearTimeout(to);peer.off('error',onE);if(e){try{c.close();}catch(_){}rej(e);}else res(c);};
+        const onE=e=>{if(e&&e.type==='peer-unavailable'&&String(e.message||'').indexOf(target)>=0)fin(netErr('notfound'));};
+        const to=setTimeout(()=>fin(netErr('timeout')),15000);
+        peer.on('error',onE);c.on('open',()=>fin(null));c.on('error',()=>fin(netErr('conn')));
+      });
+      hostConn=conn;N.code=code;
+      conn.on('data',d=>{if(hostConn===conn)onGuest(d);});
+      conn.on('close',()=>{if(hostConn===conn)hostLost('lost');});
+      r=await new Promise(res=>{N.joinWait=v=>{clearTimeout(t);res(v);};const t=setTimeout(()=>{N.joinWait=null;res('timeout');},8000);
+        send(conn,{type:'join_req',id:myId,name:N.nick,ver:VER});});
+    }catch(e){r=e.code||'conn';}
+    N.busy=false;
+    if(r==='ok'){
+      N.active=true;N.role='guest';N.lastHost=now();N.samples=[];
+      log(`✅ 방 [${code}]에 들어왔어요! 시계를 맞추는 중... 방장이 곡을 고르고 시작하면 동시에 시작해요.`);
+      for(let k=0;k<8;k++)setTimeout(ping,60+k*90);
+    }else{
+      if(hostConn){try{hostConn.close();}catch(e){}hostConn=null;}
+      if(peer){try{peer.destroy();}catch(e){}peer=null;}
+      N.code='';log(errMsg(r,code));
+    }
+    render();
+  }
+  function ping(){if(N.role==='guest'){const b=bestSample();toHost({type:'ping',t0:now(),sync:N.samples.length>=4,rtt:b?b.rtt:undefined});}}
+  function bestSample(){let b=null;for(const s of N.samples)if(!b||s.rtt<b.rtt)b=s;return b;}
+  function onGuest(m){
+    if(!m||typeof m!=='object')return;
+    if(N.joinWait){if(m.type==='join_ok'){const w=N.joinWait;N.joinWait=null;w('ok');}else if(m.type==='reject'){const w=N.joinWait;N.joinWait=null;w(m.reason||'conn');return;}}
+    N.lastHost=now();
+    switch(m.type){
+      case'pong':{const t1=now(),rtt=t1-m.t0;if(rtt<0||rtt>5000)break;N.samples.push({rtt,off:m.th+rtt/2-t1});if(N.samples.length>16)N.samples.shift();
+        const b=bestSample();N.offset=b.off;if(N.samples.length===4)ping();break;}
+      case'room':{
+        N.players={};(m.players||[]).forEach(p=>{N.players[p.id]=p;});
+        if(m.pick){
+          N.pick={i:clamp(m.pick.i|0,0,SONGS.length-1),d:clamp(m.pick.d|0,0,2)};
+          if(screen==='select'&&ready&&(SEL.i!==N.pick.i||SEL.d!==N.pick.d)){SEL.i=N.pick.i;SEL.d=N.pick.d;updateSelect();}
+        }
+        render();break;}
+      case'start':{
+        let zero;const b=bestSample();
+        zero=b?m.zero-N.offset:now()+(m.zero-m.hn);
+        begin(m,zero);break;}
+      case'board':if(N.match&&m.mid===N.match.mid){N.board={};(m.list||[]).forEach(e=>{N.board[e.id]=e;});N.board[myId]=Object.assign(N.board[myId]||{},myEntry());refreshResult();}break;
+      case'closed':hostLost('closed');break;
+    }
+  }
+  function hostLost(why){
+    if(N.role!=='guest')return;
+    const msg=why==='closed'?'🚪 방장이 방을 닫았어요. 새 방을 만들거나 다른 방에 참가하세요.':'📴 방장과의 연결이 끊어졌어요. 다시 참가해 주세요.';
+    const keepMatch=N.match;
+    cleanup();
+    N.match=keepMatch;   // 진행 중인 곡은 혼자서라도 끝까지 할 수 있게 둔다
+    if(N.match){N.match.lost=true;refreshResult();}
+    log(msg);toast(why==='closed'?'방장이 방을 닫았어요':'방장 연결 끊김');
+    if(screen!=='play')openModal();
+  }
+
+  /* ---------- 대결 시작 (공통) ---------- */
+  function begin(m,zeroLocal){
+    for(const id of['mSet','mCal','mPause','mNet'])$('#'+id).classList.remove('on');
+    if(typeof calStop==='function')calStop();
+    if(PLAY){if(PLAY.cdT)clearTimeout(PLAY.cdT);pbStop(.05);PLAY=null;}
+    N.match={mid:m.mid,i:m.i,d:m.d,zero:zeroLocal,lost:false,quit:false};N.liveT=0;N.lastLive=null;N.final=null;
+    if(N.role!=='host'){N.board={};}
+    if(!initAudio()){log('❌ 오디오를 사용할 수 없어 대결에 참가할 수 없어요.');return;}
+    const go=()=>{
+      startGame({i:m.i,d:m.d,zero:zeroLocal,mid:m.mid});
+      if(PLAY)N.startedAt=performance.timeOrigin+epochOfCtx(PLAY.T0);
+    };
+    if(actx.state!=='running')actx.resume().then(go,go);else go();
+  }
+  // 오디오 시계(contextTime) ↔ performance.now() 변환
+  function ctxStamp(){
+    try{const ts=actx.getOutputTimestamp&&actx.getOutputTimestamp();if(ts&&ts.performanceTime>0&&ts.contextTime>0)return{c:ts.contextTime,p:ts.performanceTime};}catch(e){}
+    return{c:actx.currentTime,p:now()};
+  }
+  function ctxTimeAt(perf){const s=ctxStamp();return s.c+(perf-s.p)/1000;}
+  function epochOfCtx(t){const s=ctxStamp();return s.p+(t-s.c)*1000;}
+
+  /* ---------- 플레이 중 실시간 점수 ---------- */
+  function myEntry(){
+    const st=PLAY;
+    if(!st||!st.online||!N.match||st.online.mid!==N.match.mid)return N.board[myId]||{id:myId,n:N.nick,s:0,c:0,r:0,st:'play'};
+    const judged=st.cnt.KOOL+st.cnt.COOL+st.cnt.GOOD+st.cnt.MISS+st.cnt.FAIL;
+    const e={id:myId,n:N.nick,s:st.total?Math.round(st.acc/st.total*1000000):0,c:st.combo,m:st.max,r:judged?Math.round(st.acc/judged*10000)/100:100,
+      j:st.jText||'',pr:Math.round(clamp(songNow()/st.endT,0,1)*100),st:st.ended?(st.failed?'fail':'done'):'play',au:st.auto?1:0,jt:st.jT};
+    if(st.ended&&N.final){Object.assign(e,N.final);}
+    return e;
+  }
+  setInterval(()=>{
+    if(!N.active||!PLAY||!PLAY.online||!N.match||PLAY.online.mid!==N.match.mid||PLAY.ended)return;
+    const e=myEntry();const msg={type:'live',mid:N.match.mid,s:e.s,c:e.c,m:e.m,r:e.r,j:e.j,pr:e.pr,st:'play',au:e.au};
+    if(N.role==='guest')toHost(msg);else{N.board[myId]=Object.assign(N.board[myId]||{},e);sendBoard();}
+  },LIVE_MS);
+  function sendBoard(){
+    if(N.role!=='host'||!N.match)return;
+    N.board[myId]=Object.assign(N.board[myId]||{},myEntry());
+    const list=Object.values(N.board).map(e=>({id:e.id,n:e.n,s:e.s,c:e.c,m:e.m,r:e.r,j:e.j,pr:e.pr,st:e.st,g:e.g,fc:e.fc,au:e.au,k:e.k,cg:e.cg,gd:e.gd,ms:e.ms,f:e.f}));
+    sendAll({type:'board',mid:N.match.mid,list});
+    refreshResult();
+  }
+  function onFinish(st,res){
+    if(!N.match||st.online.mid!==N.match.mid)return;
+    N.final={s:res.score,r:Math.round(res.rate*100)/100,g:res.grade,m:st.max,fc:res.fc?1:0,st:res.failed?'fail':'done',pr:100,
+      k:st.cnt.KOOL,cg:st.cnt.COOL,gd:st.cnt.GOOD,ms:st.cnt.MISS,f:st.cnt.FAIL,au:st.auto?1:0,c:st.combo,j:''};
+    const msg=Object.assign({type:'final',mid:N.match.mid},N.final);
+    if(N.role==='guest')toHost(msg);
+    else if(N.role==='host'){N.board[myId]=Object.assign(N.board[myId]||{id:myId,n:N.nick},N.final);sendBoard();}
+    N.board[myId]=Object.assign(N.board[myId]||{id:myId,n:N.nick},N.final);
+  }
+  function onQuit(st){
+    if(!N.match||!st.online||st.online.mid!==N.match.mid||st.ended)return;
+    N.final={st:'quit',pr:myEntry().pr,s:myEntry().s,r:myEntry().r,m:st.max,g:'-'};
+    const msg=Object.assign({type:'final',mid:N.match.mid},N.final);
+    if(N.role==='guest')toHost(msg);else if(N.role==='host'){N.board[myId]=Object.assign(N.board[myId]||{},N.final);sendBoard();}
+  }
+  const ORDER={done:0,fail:1,play:2,quit:3,left:4};
+  function ranked(){
+    const arr=Object.values(N.board).map(e=>e.id===myId&&PLAY&&PLAY.online&&!PLAY.ended?Object.assign({},e,myEntry()):e);
+    arr.sort((a,b)=>(b.s||0)-(a.s||0)||(b.m||0)-(a.m||0));
+    return arr;
+  }
+  const JC={KOOL:'#7ff6ff',COOL:'#ffe066',GOOD:'#8cff7a',MISS:'#ff8a8a',FAIL:'#ff3b6b'};
+  function drawBoard(st,Lg){
+    if(!N.match||st.online.mid!==N.match.mid)return;
+    N.board[myId]=Object.assign(N.board[myId]||{},myEntry());
+    const list=ranked();if(list.length<2&&!N.match.lost)return;
+    const {px,pw,JY}=Lg,free=px;
+    const wide=free>=150,bw=wide?Math.min(220,free-16):Math.min(190,Math.round(pw*.56)),x0=wide?px-bw-8:px+Math.round((pw-bw)/2),rh=wide?34:20,y0=wide?60:46;
+    ctx.fillStyle=wide?'rgba(2,14,22,0.78)':'rgba(2,14,22,0.5)';ctx.fillRect(x0,y0-4,bw,rh*list.length+(wide?26:20));
+    ctx.fillStyle='rgba(47,230,255,0.6)';ctx.fillRect(x0,y0-4,bw,2);
+    txt(N.match.lost?'LIVE (연결 끊김)':'LIVE RANK',x0+6,y0+6,wide?9:8,N.match.lost?'#ff8a8a':'#86a9ba',SKF,'left');
+    const tn=performance.now();
+    list.forEach((e,k)=>{
+      const y=y0+(wide?20:15)+k*rh,me=e.id===myId;
+      if(me){ctx.fillStyle='rgba(47,230,255,0.18)';ctx.fillRect(x0+2,y-2,bw-4,rh-2);}
+      const nm=(e.n||'?').slice(0,wide?8:6)+(e.au?'·A':''),stt=e.st==='left'?'나감':e.st==='quit'?'포기':e.st==='fail'?'FAIL':e.st==='done'?'완료':'';
+      txt(`${k+1}`,x0+8,y+(wide?8:7),wide?11:9,k===0?'#ffe14a':'#bff8ff',PXF,'left');
+      txt(nm,x0+24,y+(wide?8:7),wide?15:12,me?'#bff8ff':'#e6f6ff',KRF,'left');
+      txt(String(e.s||0).padStart(7,'0'),x0+bw-6,y+(wide?8:7),wide?10:8,'#bff8ff',PXF,'right');
+      if(wide){
+        txt(stt||(`${e.c||0} COMBO · ${(+e.r||0).toFixed(1)}%`),x0+24,y+24,8,stt?'#ffe14a':'#86a9ba',SKF,'left');
+        if(e.j&&!stt&&(me?tn-(PLAY.jT||0)<450:true))txt(e.j,x0+bw-6,y+24,8,JC[e.j]||'#fff',PXF,'right');
+      }
+    });
+  }
+
+  /* ---------- 결과 화면 ---------- */
+  function decorateResult(st){
+    const box=$('#netRes');
+    if(!st.online||!N.match||st.online.mid!==N.match.mid){box.hidden=true;return;}
+    box.hidden=false;refreshResult();
+  }
+  function refreshResult(){
+    const box=$('#netRes');if(!box||box.hidden||!N.match)return;
+    const list=ranked();
+    const done=list.every(e=>e.st&&e.st!=='play');
+    $('#netResH').textContent=done?'🏆 온라인 최종 순위':'⏳ 온라인 순위 (다른 플레이어 진행 중)';
+    $('#netRank').innerHTML=list.map((e,k)=>{
+      const stt=e.st==='left'?'연결 끊김':e.st==='quit'?'중도 포기':e.st==='fail'?'STAGE FAILED':e.st==='play'?`플레이 중 ${e.pr||0}%`:`${e.g||'-'} · ${(+e.r||0).toFixed(2)}% · MAX ${e.m||0}${e.fc?' · FC':''}`;
+      return `<li class="${e.id===myId?'me':''}"><b>${k+1}</b><div>${esc(e.n)}${e.au?' <small style="display:inline">AUTO</small>':''}<small>${esc(stt)}</small></div><span class="sc">${String(e.s||0).padStart(7,'0')}</span></li>`;
+    }).join('');
+    const host=N.role==='host';
+    $('#netResBtns').hidden=!host;
+    $('#netAgainBtn').disabled=!done||Object.keys(N.players).length<2;
+    $('#netResHint').textContent=N.match.lost?'방장과의 연결이 끊겨 순위가 더 이상 갱신되지 않아요.':host?(done?(Object.keys(N.players).length<2?'다른 플레이어가 모두 나갔어요.':'같은 곡으로 재대결하거나 다른 곡을 고르세요.'):'모두 끝나면 재대결할 수 있어요.'):(N.active?'방장이 다음 곡을 고르면 자동으로 시작돼요.':'');
+    const rb=$('.rbtns [data-act="retry"]');
+    if(rb){rb.hidden=N.active&&!host;rb.textContent=N.active&&host?'재대결 (R)':'다시 하기 (R)';}
+  }
+
+  /* ---------- 가로채기 ---------- */
+  function interceptStart(){
+    if(!N.active)return false;
+    if(N.role==='host')hostStart();
+    else{toast('방장이 곡을 고르고 시작해요');log('⏳ 방장이 곡과 난이도를 고르고 시작하면 자동으로 시작돼요.');openModal();}
+    return true;
+  }
+  function interceptRetry(){
+    if(!N.active)return false;
+    if(N.role==='host'){if(matchDone()){N.pick={i:N.match?N.match.i:SEL.i,d:N.match?N.match.d:SEL.d};SEL.i=N.pick.i;SEL.d=N.pick.d;hostStart();}else toast('아직 플레이 중인 친구가 있어요');}
+    else toast('방장이 다시 시작하면 자동으로 시작돼요');
+    return true;
+  }
+  function togglePauseMenu(){
+    const m=$('#mPause');
+    if(m.classList.contains('on')){m.classList.remove('on');return;}
+    $('#pauseRetry').hidden=true;$('#mPause h2').textContent='온라인 대결 중';m.classList.add('on');
+  }
+
+  /* ---------- 대기실 UI ---------- */
+  function openModal(){render();$('#mNet').classList.add('on');}
+  function render(){
+    const host=N.role==='host';
+    $('#netJoinBox').hidden=N.active;$('#netRoomBox').hidden=!N.active;
+    $('#netCreateBtn').disabled=N.busy;$('#netJoinBtn').disabled=N.busy;
+    $('#netCodeDisp').textContent=N.code||'----';
+    const pl=Object.values(N.players).sort((a,b)=>(b.host?1:0)-(a.host?1:0)||(a.joinT||0)-(b.joinT||0));
+    $('#netPlayers').innerHTML=pl.map(p=>`<li class="${p.id===myId?'me':''}"><span>${p.host?'👑 ':'🎧 '}${esc(p.name)}${p.id===myId?' (나)':''}</span><small>${p.host?'방장':p.synced?`준비 완료${p.ping?' · '+p.ping+'ms':''}`:'시계 맞추는 중…'}</small></li>`).join('')+
+      (N.active?Array.from({length:Math.max(0,MAX-pl.length)},()=>'<li><span style="color:var(--mute)">빈자리</span><small>대기</small></li>').join(''):'');
+    const s=SONGS[N.pick.i],d=DATA[s.id];
+    $('#netSong').textContent=N.active?`🎵 ${host?'고른 곡':'방장이 고른 곡'}: ${s.ko} · ${DIFF[N.pick.d].en} ${d?'LV '+d.charts[N.pick.d].level:''}`:'';
+    const sb=$('#netStartBtn');sb.hidden=!host;sb.disabled=!canStart();
+    sb.textContent=pl.length<2?'▶ 대결 시작 (2명부터)':'▶ 대결 시작';
+    $('#netLeaveBtn').hidden=!N.active;
+    const pill=$('#netPill');pill.hidden=!N.active;
+    if(N.active)pill.textContent=`🌐 ${N.code} · ${pl.length}명 · ${host?'방장':'게스트'}`;
+    const sub=$('#startSub');if(sub)sub.textContent=N.active?(host?'온라인 대결 시작 (ENTER)':'방장이 시작해요'):'ENTER 로 시작';
+  }
+  // 방장이 곡·난이도를 바꾸면 바로 알려 준다
+  setInterval(()=>{
+    if(!N.active)return;
+    const t=now();
+    if(N.role==='host'){
+      if(screen==='select'&&(N.pick.i!==SEL.i||N.pick.d!==SEL.d)&&matchDone()){N.pick={i:SEL.i,d:SEL.d};broadcastRoom();}
+      for(const id in N.players){const p=N.players[id];if(!p.host&&t-(p.seen||t)>TIMEOUT)removePlayer(id,'lost');}
+      if(++N.hb%8===0)broadcastRoom();
+    }else if(N.role==='guest'){
+      if(N.hb++%4===0)ping();
+      if(t-N.lastHost>TIMEOUT)hostLost('lost');
+    }
+  },250);
+
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-net]');if(!b)return;
+    initAudio();
+    switch(b.dataset.net){
+      case'open':openModal();break;
+      case'close':$('#mNet').classList.remove('on');break;
+      case'create':create();break;
+      case'join':join($('#netCode').value);break;
+      case'leave':{const was=N.active;leave();log(was?'방에서 나왔어요.':'');break;}
+      case'start':hostStart();break;
+      case'again':interceptRetry();break;
+      case'copy':{const c=N.code;if(!c)break;const fb=()=>{const ta=document.createElement('textarea');ta.value=c;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(_){}ta.remove();};
+        try{const pr=navigator.clipboard&&navigator.clipboard.writeText(c);if(pr&&pr.catch)pr.catch(fb);else if(!pr)fb();}catch(_){fb();}log(`📋 방 코드 [${c}]를 복사했어요.`);break;}
+    }
+  });
+  // 모달이 열려 있을 때 키 입력이 곡 선택 단축키로 새지 않게
+  window.addEventListener('keydown',e=>{
+    if(!$('#mNet').classList.contains('on'))return;
+    e.stopPropagation();
+    if(e.code==='Escape'){$('#mNet').classList.remove('on');return;}
+    if((e.code==='Enter'||e.code==='NumpadEnter')&&e.target&&e.target.id==='netCode'){e.preventDefault();join(e.target.value);}
+  },true);
+  const ni=$('#netNick');ni.value=N.nick;
+  ni.addEventListener('input',()=>{N.nick=(ni.value.trim()||'플레이어').slice(0,10);LS.set('biobeat_nick',N.nick);
+    if(N.role==='host'&&N.players[myId]){N.players[myId].name=N.nick;broadcastRoom();}else if(N.role==='guest')toHost({type:'name',name:N.nick});});
+  render();
+
+  // 테스트·디버그용 읽기 전용 정보
+  window.BIOBEAT_NET={get active(){return N.active;},get role(){return N.role;},get code(){return N.code;},get players(){return Object.keys(N.players).length;},
+    get synced(){return Object.values(N.players).every(p=>p.synced);},get offset(){return N.offset;},get samples(){return N.samples.length;},
+    get startedAt(){return N.startedAt;},get board(){return ranked();},get screen(){return screen;},
+    songNow(){return PLAY?songNow():null;},get playing(){return !!(PLAY&&PLAY.online&&!PLAY.ended);}};
+
+  return {interceptStart,interceptRetry,ctxTimeAt,onFinish,onQuit,decorateResult,drawBoard,togglePauseMenu};
+})();
 resize();updateOpts();boot();requestAnimationFrame(frame);
 })();
 </script>
