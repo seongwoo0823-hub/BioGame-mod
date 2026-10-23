@@ -191,7 +191,8 @@ body.portrait .modes,body.portrait .gar,body.portrait .help,body.portrait .netgr
 #msg.ex{color:#ff7ae0;font-size:3.6em;text-shadow:0 0 18px #f72585,3px 3px 0 var(--ink),-2px -2px 0 var(--ink)}
 .tb[data-k=exceed]{left:calc(var(--u)*1);bottom:calc(var(--u)*7.9);width:calc(var(--u)*6.2);height:calc(var(--u)*2.8);font-size:calc(var(--u)*.95)}
 .tb[data-k=exceed].ready{background:rgba(247,37,133,.7);box-shadow:0 0 0 3px #ffd23f,0 0 16px #f72585}
-#garGrid.gearMode{display:block}
+#garGrid.gearMode{display:block;background:rgba(18,12,38,.6);box-shadow:0 0 0 3px var(--ink);padding:.6em}
+body.touch #exKey{display:none}
 .gsec h4{margin:.1em 0 .45em;font-weight:400;color:var(--yolk);font-size:1em}
 .prow{display:grid;grid-template-columns:3.6em repeat(3,1fr);gap:.4em;margin-bottom:.45em}
 .prow>span{align-self:center;color:var(--teal);font-size:.9em}
@@ -446,7 +447,7 @@ const ITEM_BY={};ITEMS.forEach(it=>ITEM_BY[it.id]=it);
 const SPEED_GEAR=0.5;// 스피드전: 파츠·펫 효과 50%만 적용 (실력이 우선!)
 const GEAR_PARTS=[
 {slot:'엔진',opts:[{n:'표준 엔진',fx:{}},{n:'미토콘드리아 엔진',fx:{maxSpd:0.02}},{n:'해당과정 엔진',fx:{acc:0.08}}]},
-{slot:'타이어',opts:[{n:'표준 타이어',fx:{}},{n:'섬모 타이어',fx:{dCharge:0.10}},{n:'키틴 타이어',fx:{gripRec:0.25,offroad:-0.25}}]},
+{slot:'타이어',opts:[{n:'표준 타이어',fx:{}},{n:'섬모 타이어',fx:{dCharge:0.10}},{n:'키틴 타이어',fx:{gripRec:0.4,offroad:-0.25}}]},
 {slot:'핸들',opts:[{n:'표준 핸들',fx:{}},{n:'신경 핸들',fx:{turn:0.05}},{n:'근방추 핸들',fx:{ibWin:0.15}}]},
 {slot:'부스터',opts:[{n:'표준 부스터',fx:{}},{n:'ATP 터보',fx:{boostDur:0.10}},{n:'크레아틴 부스터',fx:{ibPow:0.12}}]},
 {slot:'배기관',opts:[{n:'표준 배기관',fx:{}},{n:'CO₂ 배기관',fx:{exFill:0.12}},{n:'젖산 배기관',fx:{exDur:0.15}}]},
@@ -886,13 +887,13 @@ function updKart(R,k,inp,dt){
         if(R.mode==='speed'){if(giveItem(R,k,'atp'))k.gauge-=1;else k.gauge=1;}
         else{boost(k,1.22,0.55);k.gauge=0;if(k.isP)ev(R,'ib',k,false);}
       }
-      if(k.drifting)addEx(R,k,as*sp*dt*0.00042);
+      if(k.drifting)addEx(R,k,as*sp*dt*0.00058);
     }
     if(k.drifting&&as>0.12)k.wasSliding=true;
     if(k.wasSliding&&!k.drifting&&as<0.09){k.wasSliding=false;k.ibWin=Math.max(k.ibWin,0.48*st.ibMul*(1+F.ibWin));ev(R,'ibwin',k);}
   }
   // 뒤처진 카트는 익시드 게이지가 천천히 자동 충전 (역전 기회)
-  if(R.state==='race'){const rf=rankFrac(R,k);if(rf>0.4)addEx(R,k,dt*0.012*rf);}
+  if(R.state==='race'){const rf=rankFrac(R,k);if(rf>0.3)addEx(R,k,dt*0.012*rf);}
   // 자석
   if(k.magT>0&&k.magTarget){const t=k.magTarget,a=Math.atan2(t.y-k.y,t.x-k.x);if(Math.hypot(t.x-k.x,t.y-k.y)>30){k.mvAng+=wrapA(a-k.mvAng)*Math.min(1,dt*3);k.ang+=wrapA(a-k.ang)*Math.min(1,dt*3);}}
   // 이동
@@ -1805,7 +1806,7 @@ function makeKartObj(k){
   // 펫 (카트 옆을 부드럽게 따라다님)
   let pet=null;if(k.pet>=0&&PETS[k.pet]){pet=new THREE.Mesh(petGeo(k.pet),VMAT);pet.castShadow=true;pet.position.set(k.x,10,k.y);scene.add(pet);}
   scene.add(root);
-  return {k,root,body,driver,wheels,boostPod,flames,sonicRing,shield,cage,badge,aura,exRing,pet,pp:{x:k.x,y:k.y},auraA:0,lastPetFx:0,rank:-1,podExt:0};
+  return {k,root,body,driver,wheels,boostPod,flames,sonicRing,shield,cage,badge,aura,exRing,pet,pp:{x:k.x,y:k.y},pa:k.ang,auraA:0,lastPetFx:0,rank:-1,podExt:0};
 }
 function syncKart(o,R,dt){
   const k=o.k,root=o.root;if(k.isIdleSlot){root.visible=false;if(o.pet)o.pet.visible=false;return;}root.visible=true;root.position.set(k.x,0,k.y);root.rotation.y=-k.ang;
@@ -1837,10 +1838,9 @@ function syncKart(o,R,dt){
     o.aura.material.color.setHSL(hue,1,0.58);o.aura.material.opacity=o.auraA*(0.2+0.14*pul);o.aura.scale.set(12.5+pul*1.4,6.2+pul*0.8,8.6+pul);
     const rp=(R.clock*2.2+k.i*0.13)%1;o.exRing.scale.setScalar(7+rp*9);o.exRing.material.opacity=o.auraA*0.75*(1-rp);}
   // 펫: 카트 뒤쪽 옆에서 둥실둥실 따라다니고, 스킬 발동 시 커지며 반짝
-  if(o.pet){const side=(k.i&1)?1:-1,ca=Math.cos(k.ang),sa=Math.sin(k.ang),lx=-6.5,lz=8.5*side;
-    const tx=k.x+lx*ca-lz*sa,tz=k.y+lx*sa+lz*ca;
-    if(Math.hypot(tx-o.pp.x,tz-o.pp.y)>90){o.pp.x=tx;o.pp.y=tz;}
-    o.pp.x+=(tx-o.pp.x)*ease(7);o.pp.y+=(tz-o.pp.y)*ease(7);
+  if(o.pet){// 카트 기준 좌표계에서 각도만 늦게 따라가게 해 고속에서도 카트 옆에 붙어 있고, 코너에서는 살짝 휘어 따라옴
+    o.pa+=wrapA(k.ang-o.pa)*ease(5);const side=(k.i&1)?1:-1,ca=Math.cos(o.pa),sa=Math.sin(o.pa),lx=-6.5-Math.min(5,Math.abs(k.spd)*0.012),lz=8.5*side;
+    o.pp.x=k.x+lx*ca-lz*sa;o.pp.y=k.y+lx*sa+lz*ca;
     const pf=k.petFx||0,bob=Math.sin(R.clock*3.1+k.i)*1.1,wob=Math.sin(R.clock*6+k.i);
     o.pet.visible=Math.hypot(o.pp.x-CAM.x,o.pp.y-CAM.y)<900;
     o.pet.position.set(o.pp.x,10.5+bob+pf*3,o.pp.y);
