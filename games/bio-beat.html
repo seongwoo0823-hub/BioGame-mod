@@ -24,6 +24,9 @@ html{height:100%;background:#05101a;scroll-padding-top:env(safe-area-inset-top,0
 body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--kr);overflow:hidden;position:relative;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 #app{position:absolute;inset:0;overflow:hidden}
 #play{pointer-events:none}
+#pauseBtn{position:absolute;width:58px;height:58px;pointer-events:auto;touch-action:manipulation;border:2px solid rgba(47,230,255,.65);border-radius:14px;background:rgba(3,16,24,.78);color:#bff8ff;font:700 22px/1 'Press Start 2P',monospace;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,.5);-webkit-tap-highlight-color:transparent}
+#pauseBtn i{display:block;width:7px;height:22px;background:#bff8ff;border-radius:2px}
+#pauseBtn:active{transform:scale(.94);background:rgba(47,230,255,.3)}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;touch-action:none}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible{outline:2px solid var(--yolk);outline-offset:2px}
@@ -285,7 +288,7 @@ button:focus-visible{outline:2px solid var(--yolk);outline-offset:2px}
     </div>
   </div>
 
-  <div id="play" class="screen"></div>
+  <div id="play" class="screen"><button id="pauseBtn" type="button" aria-label="일시정지"><i></i><i></i></button></div>
 
   <div id="result" class="screen">
     <div class="rbox pnl">
@@ -317,7 +320,7 @@ button:focus-visible{outline:2px solid var(--yolk);outline-offset:2px}
 
   <div id="mSet" class="modal"><div class="mbox pnl">
     <h2>설정</h2>
-    <div class="srow"><span>노트 속도</span><input type="range" id="iSpd" min="1" max="10" step="0.1"><output id="oSpd"></output></div>
+    <div class="srow"><span>노트 속도</span><input type="range" id="iSpd" min="1" max="15" step="0.1"><output id="oSpd"></output></div>
     <div class="srow"><span>싱크 오프셋</span><input type="range" id="iOff" min="-300" max="300" step="1"><output id="oOff"></output></div>
     <div class="hint">음악보다 노트가 늦게 느껴지면 오프셋을 올리고, 빠르게 느껴지면 내리세요. 블루투스 이어폰은 보통 +100~+250ms가 필요해요.</div>
     <div class="srow"><span>음악 볼륨</span><input type="range" id="iMus" min="0" max="100" step="1"><output id="oMus"></output></div>
@@ -513,11 +516,15 @@ function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt
 function rngOf(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
 const ENERGY={intro:.3,verse:.55,build:.75,chorus:1,break:.25,bridge:.6,outro:.35};
 
+// 곡 길이를 1분 30초~2분 30초 사이(목표 약 2분)로 맞춤
 function buildStructure(bpm){
-  const total=Math.max(48,Math.round(210*bpm/240/8)*8);
+  const bar=240/bpm,len=n=>n*8*bar+bar*1.5+.5;
+  let n=Math.max(4,Math.round(118/(8*bar)));
+  while(n>4&&len(n)>150)n--;
+  while(len(n)<90)n++;
   const cyc=['verse','build','chorus','break','verse','build','chorus','bridge','build','chorus','chorus'];
   const secs=['intro'];let k=0;
-  while((secs.length+1)*8<total){secs.push(cyc[k%cyc.length]);k++;}
+  while(secs.length<n-1){secs.push(cyc[k%cyc.length]);k++;}
   if(secs[secs.length-1]!=='chorus') secs[secs.length-1]='chorus';
   secs.push('outro');
   return secs;
@@ -1555,7 +1562,7 @@ function updateOpts(){
 $('#iAuto').addEventListener('change',e=>{SET.auto=e.target.checked;updateOpts();});
 $('#q').addEventListener('input',e=>{VIEW.q=e.target.value;updateSelect();});
 $('#sort').addEventListener('change',e=>{VIEW.sort=+e.target.value;updateSelect();});
-function chSpeed(d){SET.speed=Math.round(clamp(SET.speed+d,1,10)*10)/10;saveSet();updateOpts();syncSettingsUI();toast(`NOTE SPEED ${SET.speed.toFixed(1)}`);}
+function chSpeed(d){SET.speed=Math.round(clamp(SET.speed+d,1,15)*10)/10;saveSet();updateOpts();syncSettingsUI();toast(`NOTE SPEED ${SET.speed.toFixed(1)}`);}
 function chOffset(d){SET.offset=clamp(SET.offset+d,-300,300);saveSet();updateOpts();syncSettingsUI();toast(`SYNC ${SET.offset>0?'+':''}${SET.offset}ms`);}
 function toast(t){if(PLAY)PLAY.toast={t,at:performance.now()};}
 
@@ -1722,6 +1729,11 @@ function finish(failed){
     $('#mPause').classList.remove('on');showScreen('result');
   },failed?900:600);
 }
+let PBPOS='';
+function placePauseBtn(px,pw,JY){const b=$('#pauseBtn');if(!b)return;const free=W-(px+pw),y=Math.round(JY*.5-29);
+  const pos=free>=74?`left:${px+pw+Math.round((free-58)/2)}px;top:${y}px`:`left:max(6px,env(safe-area-inset-left,0px));top:${y}px`;
+  if(pos!==PBPOS){PBPOS=pos;b.style.cssText=pos;}}
+$('#pauseBtn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(PLAY&&!PLAY.ended){if(PLAY.paused)resumeGame();else pauseGame();}});
 function pauseGame(){const st=PLAY;if(!st||st.paused||st.ended)return;st.paused=true;if(actx)actx.suspend().catch(()=>{});$('#mPause').classList.add('on');}
 function resumeGame(){const st=PLAY;if(!st||!st.paused||st.countdown)return;$('#mPause').classList.remove('on');st.countdown=performance.now();
   st.cdT=setTimeout(()=>{if(PLAY!==st)return;st.countdown=0;st.cdT=null;st.paused=false;if(actx)actx.resume().catch(()=>{});},1500);}
@@ -1855,9 +1867,8 @@ function drawPlay(){
   ctx.fillStyle='#020a10';ctx.fillRect(px,H-info,pw,info);
   txt('SCORE',px+side+4,H-info/2,9,'#86a9ba',SKF,'left');txt(String(score).padStart(7,'0'),px+side+52,H-info/2,12,'#bff8ff',PXF,'left');
   txt('MAX '+String(st.max).padStart(4,'0'),px+pw-side-4,H-info/2,10,'#ffe14a',PXF,'right');
-  // pause button
-  const pbx=W-46,pby=8;ctx.fillStyle='rgba(3,16,24,0.8)';ctx.fillRect(pbx,pby,38,38);ctx.fillStyle='rgba(47,230,255,0.6)';ctx.fillRect(pbx,pby,38,2);
-  ctx.fillStyle='#bff8ff';ctx.fillRect(pbx+12,pby+11,5,16);ctx.fillRect(pbx+21,pby+11,5,16);
+  // 일시정지 버튼 위치: 레인 옆 빈 공간이 있으면 오른쪽 가운데, 좁은 화면이면 왼쪽 가운데 (판정선·키 영역과 겹치지 않게)
+  placePauseBtn(px,pw,JY);
   // countdown
   if(now<0){const c=-now;txt(c>1?'READY':'GO!',px+pw/2,JY*.42,Math.max(20,lw*.5),c>1?'#ffe14a':'#5fe08a',PXF,'center','#000');
     txt(song.en,px+pw/2,JY*.42+lw*.6,Math.max(10,lw*.16),'#e6f6ff',SKF,'center','#000');
@@ -1935,7 +1946,6 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){if(screen=
 cv.addEventListener('pointerdown',e=>{
   if(screen==='title'){if(ready){initAudio();showScreen('select');updateSelect();}return;}
   if(screen!=='play'||!PLAY)return;e.preventDefault();
-  if(e.clientX>W-54&&e.clientY<54){pauseGame();return;}
   const {px,side,lw}=layout();const r=cv.getBoundingClientRect();const x=e.clientX-r.left;
   const l=clamp(Math.floor((x-px-side)/lw),0,3);
   PLAY.pointers.set(e.pointerId,l);try{cv.setPointerCapture(e.pointerId);}catch(err){}press(l);
