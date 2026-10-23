@@ -478,6 +478,18 @@ function fxText(k,v){const L=FXL[k];if(!L)return '';const u=L[1];
 function fxList(f){return Object.keys(f).filter(k=>f[k]).map(k=>fxText(k,f[k]));}
 const randGear=()=>({parts:GEAR_PARTS.map(()=>Math.random()*3|0),pet:Math.random()*PETS.length|0});
 /* ================= 익시드(EXCEED) 규칙 ================= */
+/* ================= 조작감(핸들링) 튜닝값 ================= */
+const HND={
+  rampKey:5.2,rampTouch:3.4,rampDrift:8,ret:9,retDrift:10,   // 조향 램프 속도(1/s): 0→최대까지 약 0.19초(키보드)/0.29초(터치)
+  spdRef:95,spdFall:0.0019,spdMin:0.55,grip:14,               // 속도 감응 조향 & 일반 주행 접지력
+  dMinSpd:95,dHold:0.08,dHoldFast:0.05,dFastSpd:180,           // 드리프트 진입 조건 (Shift+방향 동시 입력 유지 시간)
+  kick:0.09,kickRate:15,dBase:0.66,dInto:1.18,dLim:0.8,dCntYaw:0.1,dCntGrip:2.6,slideCharge:0.3,
+  ibWin:0.5,ibMinDrift:0.12,                                   // 순간 부스터 타이밍 창(초) & 최소 드리프트 시간
+  wallRest:0.2,wallLossDiv:520};
+const RETIRE_T=15;
+const AIT={refD:0.45,refG:0.45,gain:4,dRatio:0.9,kLook:2.2,yawCap:2.6,liftR:1.05,brakeR:1.3};
+// AI 난이도: 최고속도 배율, 러버밴드(뒤처질 때 가속/앞설 때 감속 최대치), 순간 부스터·출발 부스터 성공률
+const AIDIFF={sb:[0.91,0.955,0.98],rbUp:[0.08,0.06,0.04],rbDn:[0.08,0.05,0.03],ib:[0.35,0.6,0.9],startB:[0.25,0.5,0.8]};
 const EXC={dur:{speed:4.5,item:3.6},spd:{speed:1.08,item:1.06},acc:1.4,dCharge:1.5,fill:{speed:1,item:0.8},aiFill:[0.75,0.9,1.0]};
 
 /* ================= 맵 생성기 ================= */
@@ -578,6 +590,9 @@ function buildTrack(map){
   const look=Math.round(380/sp),S=new Float32Array(N);
   for(let i=0;i<N;i++){let mx=0;for(let k=1;k<=look;k++){const v=Math.abs(wrapA(A[(i+k)%N]-A[i]));if(v>mx)mx=v;}S[i]=mx;}
   tr.S=S;tr.A=A;
+  // 구간 곡률(라디안/거리, ±3구간 평균) → AI 코너 진입 속도 관리용
+  const K=new Float32Array(N);for(let i=0;i<N;i++)K[i]=Math.abs(wrapA(A[(i+3)%N]-A[(i-3+N)%N]))/(6*sp);
+  tr.K=K;
   const circ=(a,b)=>{const d=Math.abs(a-b);return Math.min(d,N-d);};
   const cands=[];for(let i=30;i<N-20;i++)cands.push(i);cands.sort((a,b)=>S[a]-S[b]);
   const chosen=[],gap=N/(map.pads+1)*0.75;
@@ -641,7 +656,7 @@ function makeRace(o){
   const mySlot=o.mySlot!=null?o.mySlot:7;
   const R={o,map,tr,mode:o.mode,laps:map.laps,t:0,clock:0,state:'count',countT:3.9,karts:[],boxes:[],gi:[],proj:[],obs:[],ev:[],order:[],firstT:null,beatOn:true,goWin:0,lastCount:4};
   const cp=shuffle([...Array(15).keys()].filter(i=>i!==o.ci)),kp=shuffle([...Array(15).keys()].filter(i=>i!==o.ki));
-  const sb=[0.86,0.93,0.985][o.diff??1];
+  const dI=clamp(o.diff??1,0,2),sb=AIDIFF.sb[dI];
   for(let i=0;i<8;i++){
     const np=o.netPlayers&&o.netPlayers[i];
     const isP=(i===mySlot);
@@ -654,14 +669,14 @@ function makeRace(o){
     let gear=(np&&Array.isArray(np.parts))?{parts:np.parts,pet:np.pet??-1}:(isP&&!np&&Array.isArray(o.parts))?{parts:o.parts,pet:o.pet??-1}:randGear();
     const fx=gearFx(o.mode,gear.parts,gear.pet);
     const k={i,ci,ki,cid:CHARS[ci].id,ab:o.mode==='item'?CHARS[ci].id:'',isP,isNetHuman,isIdleSlot,auto:isP&&!!o.autoPlayer,name:kName,
-      parts:gear.parts.slice(),pet:gear.pet,fx,exG:0,exT:0,exMax:1,exShield:0,exAt:-9,petFx:0,petCD:0,pltCD:0,kick:0,steerS:0,cntS:0,grip:11.5,
+      parts:gear.parts.slice(),pet:gear.pet,fx,exG:0,exT:0,exMax:1,exShield:0,exAt:-9,petFx:0,petCD:0,pltCD:0,kick:0,steerS:0,cntS:0,grip:HND.grip,
       st:makeStats(o.mode,ki,ci,fx),x:p.x,y:p.y,ang:p.ang,mvAng:p.ang,spd:0,drifting:false,driftDir:0,recover:0,wasSliding:false,
       gauge:0,items:[],boostT:0,boostMul:1,spinT:0,spinDir:1,stunT:0,shieldT:0,invT:0,revT:0,slowT:0,cloudT:0,magT:0,magTarget:null,
       seg:0,prog:0,lat:0,dist:-back,lapsDone:0,lapStart:0,lapTimes:[],finished:isIdleSlot,finishT:0,rank:i+1,draftC:0,draftOn:0,ibWin:0,padCD:0,obsCD:0,
       wrongT:0,chloroT:0,lastUp:false,upAt:-9,stemPend:false,stuckT:0,rb:1,skill:1,hitFx:0};
     const L=locate(tr,k.x,k.y,Math.round((tr.len-back)/tr.sp),6);k.seg=L.i;k.prog=(L.i+L.u)*tr.sp;
     if((!isP&&!isNetHuman)||k.auto){k.skill=isP?0.97:sb*rnd(0.975,1.02);k.st.maxSpd*=k.skill;k.st.acc*=0.85+0.15*k.skill;
-      k.ai={lane:rnd(-0.4,0.4),laneT:rnd(1,3),dth:rnd(0.32,0.46),ibChance:[0.25,0.5,0.8][o.diff??1]*rnd(0.8,1.2),ibTry:0,itemCD:rnd(1,3),startB:Math.random()<[0.2,0.45,0.75][o.diff??1]*(1+fx.startWin*0.4),exMul:EXC.aiFill[o.diff??1],exWait:null,inp:{}};}
+      k.ai={lane:rnd(-0.4,0.4),laneT:rnd(1,3),dth:rnd(0.32,0.46),gain:AIT.gain,ibChance:AIDIFF.ib[dI]*rnd(0.85,1.15),ibTry:0,itemCD:rnd(1,3),startB:Math.random()<AIDIFF.startB[dI]*(1+fx.startWin*0.4),exMul:EXC.aiFill[dI],exWait:null,inp:{}};}
     R.karts.push(k);}
   R.player=R.karts[mySlot]||R.karts[7];
   if(o.mode==='item'){for(const s of tr.boxRows)for(const f of [-0.6,-0.3,0,0.3,0.6]){const p=posAt(tr,s,f*tr.hw);R.boxes.push({x:p.x,y:p.y,act:true,resp:0,ph:Math.random()*6});}}
@@ -752,12 +767,20 @@ function aiInput(R,k,dt){
   const turnA=wrapA(angAt(tr,k.prog+look*2.4)-angAt(tr,k.prog));
   const inside=clamp(turnA*0.9,-0.45,0.45);
   const P=posAt(tr,k.prog+look,(lane*0.75+inside)*tr.hw);
-  const ref=k.mvAng+wrapA(k.ang-k.mvAng)*0.45;
+  const ref=k.mvAng+wrapA(k.ang-k.mvAng)*(k.drifting?AIT.refD:AIT.refG);
   const diff=wrapA(Math.atan2(P.y-k.y,P.x-k.x)-ref);
-  inp.left=diff<-0.035;inp.right=diff>0.035;inp.up=true;inp.down=false;
-  if(!k.drifting)inp.drift=Math.abs(turnA)>ai.dth&&sp>150&&Math.abs(diff)>0.1;
+  // 아날로그 조향 (비례 제어) → 조향 램프와 맞물려 좌우로 떨지 않음
+  inp.ax=clamp(diff*ai.gain,-1,1);if(Math.abs(inp.ax)<0.04)inp.ax=0;
+  inp.left=inp.ax<0;inp.right=inp.ax>0;inp.up=true;inp.down=false;
+  // 필요한 회전율이 그립 주행으로 낼 수 있는 회전율(속도 감응 조향 반영)을 넘으면 드리프트
+  const needYaw=Math.abs(turnA)*sp/(look*2.4),availYaw=k.st.turn*clamp(1-(sp-HND.spdRef)*HND.spdFall,HND.spdMin,1);
+  if(!k.drifting){inp.drift=(Math.abs(turnA)>ai.dth||needYaw>availYaw*AIT.dRatio)&&sp>150&&Math.abs(diff)>0.1;if(inp.drift&&Math.abs(inp.ax)<0.6)inp.ax=Math.sign(diff);}
   else inp.drift=Math.abs(diff)>0.09&&Math.abs(turnA)>0.18;
   if(Math.abs(diff)>1.5&&sp>90){inp.up=false;inp.down=true;inp.drift=false;}
+  // 코너 진입 속도 관리: 앞 구간 최대 곡률로 낼 수 있는 한계 속도를 넘으면 가속을 풀고, 많이 넘으면 브레이크
+  {let mk=0;const i0=k.seg,n=Math.ceil((look*AIT.kLook)/tr.sp);for(let q=2;q<=n;q++){const v=tr.K[(i0+q)%tr.N];if(v>mk)mk=v;}
+    const vmax=mk>1e-4?AIT.yawCap/mk:1e9;ai.vmax=vmax;
+    if(sp>vmax*AIT.liftR){inp.up=false;if(sp>vmax*AIT.brakeR&&k.boostT<=0)inp.down=true;}}
   // 순간 부스터
   if(ai.ibTry===1){inp.up=true;ai.ibTry=2;}
   else if(k.ibWin>0&&ai.ibTry===0){ai.ibTry=Math.random()<ai.ibChance?1:2;if(ai.ibTry===1)inp.up=false;}
@@ -799,9 +822,14 @@ function updKart(R,k,inp,dt){
   let ctrl=true;
   if(k.spinT>0){k.spinT-=dt;ctrl=false;k.ang+=k.spinDir*13*dt;k.spd*=Math.pow(0.3,dt);if(k.spinT<=0){k.ang=k.mvAng;if(k.stemPend){boost(k,1.35,1.1);k.stemPend=false;}}}
   if(k.stunT>0){k.stunT-=dt;ctrl=false;k.spd*=Math.pow(0.005,dt);if(k.stunT<=0&&k.stemPend){boost(k,1.35,1.1);k.stemPend=false;}}
-  let steer=(inp.right?1:0)-(inp.left?1:0);if(k.revT>0)steer=-steer;if(!ctrl)steer=0;
-  // 부드러운 조향: 디지털 입력을 프레임 독립 지수 평활로 아날로그화 (드리프트 중엔 조금 더 묵직하게)
-  k.steer=steer;k.steerS+=(steer-k.steerS)*(1-Math.exp(-(k.drifting?11:17)*dt));if(steer===0&&Math.abs(k.steerS)<1e-3)k.steerS=0;
+  // 조향 입력: 키보드/터치는 -1/0/1 디지털, AI는 아날로그(inp.ax)
+  let steer=inp.ax!=null?clamp(+inp.ax||0,-1,1):(inp.right?1:0)-(inp.left?1:0);if(k.revT>0)steer=-steer;if(!ctrl)steer=0;
+  // 조향 램프: 짧게 톡 누르면 살짝, 길게 누르면 끝까지 꺾임 (선형 레이트 리밋 = 프레임 독립)
+  // 손을 떼거나 반대로 꺾을 때는 더 빠르게 중앙 복귀. 터치는 조금 더 완만하게. 무거운 카트는 아주 약간 묵직
+  {const s0=k.steerS,away=steer!==0&&(s0===0||Math.sign(steer)===Math.sign(s0))&&Math.abs(steer)>Math.abs(s0);
+    const rUp=(k.drifting?HND.rampDrift:inp.touch?HND.rampTouch:HND.rampKey)*(1-clamp(st.wgt-5,-4,8)*0.008);
+    const r=(away?rUp:k.drifting?HND.retDrift:HND.ret)*dt,d=steer-s0;k.steerS=Math.abs(d)<=r?steer:s0+Math.sign(d)*r;}
+  k.steer=steer;
   k.wheelRot=((k.wheelRot||0)+k.spd*dt*0.18)%TAU;
   const up=ctrl&&!!inp.up,dn=ctrl&&!!inp.down;
   // 카트라이더 순간 부스터 (방향키 재입력 또는 카운터스티어 직후 발동)
@@ -837,34 +865,41 @@ function updKart(R,k,inp,dt){
   if(!up&&!dn&&k.boostT<=0){const f=62*dt;k.spd=Math.abs(k.spd)<f?0:k.spd-Math.sign(k.spd)*f;}
   // 카트라이더 드리프트 물리 (부드러운 진입 킥, 연속 슬립각, 소프트 리미트, 그립 이징, 카운터 스티어링, 순부 타이밍)
   const sp=Math.abs(k.spd),sf=clamp(sp/65,0,1),ds=k.spd>=0?1:-1;
-  if(ctrl&&inp.drift&&steer!==0&&sp>72&&!k.drifting){
-    k.drifting=true;k.driftDir=steer;k.driftTime=0;k.driftHop=0.14;k.countered=false;
-    k.kick+=steer*0.12;// 진입 회전을 한 프레임에 꺾지 않고 약 0.1초에 걸쳐 나눠서 적용
+  // 드리프트 진입: Shift + 방향키를 '함께' 잠깐(고속 0.05초, 저속 0.08초) 눌러야 시작 → 스치듯 누른 Shift로 인한 오발동 방지
+  const dSteer=Math.abs(steer)>0.3?Math.sign(steer):0;
+  if(ctrl&&inp.drift&&dSteer!==0&&!k.drifting&&k.spd>0){k.dHold=(k.dDir===dSteer?(k.dHold||0):0)+dt;k.dDir=dSteer;}else{k.dHold=0;k.dDir=0;}
+  if(k.dHold>=(sp>=HND.dFastSpd?HND.dHoldFast:HND.dHold)-1e-6&&sp>HND.dMinSpd&&!k.drifting){
+    k.drifting=true;k.driftDir=dSteer;k.driftTime=0;k.driftHop=0.14;k.countered=false;k.dHold=0;k.cntMax=0;
+    k.kick+=dSteer*HND.kick;// 진입 회전을 한 프레임에 꺾지 않고 약 0.15초에 걸쳐 나눠서 적용
     if(k.isP)ev(R,'dstart',k);
   }
-  // 반대 방향키 카운터 스티어링 감지
-  if(k.drifting&&steer===-k.driftDir)k.countered=true;
+  // 반대 방향키 카운터 스티어링 정도 (조향 램프 값 기반 → 연속적, 튐 없음)
+  const cnt=k.drifting?Math.max(0,-k.steerS*k.driftDir):0;
+  if(k.drifting&&cnt>0.5)k.countered=true;
   if(k.drifting&&(!inp.drift||!ctrl||sp<48)){
     k.drifting=false;k.recover=0.32;
-    if((k.driftTime||0)>0.16){k.ibWin=0.50*st.ibMul*(1+F.ibWin);ev(R,'ibwin',k);}
+    // 순간 부스터 타이밍 창: 드리프트를 놓는 순간 열림 (짧은 끊어 타기도 0.12초 이상이면 가능)
+    if((k.driftTime||0)>=HND.ibMinDrift&&ctrl){k.ibWin=HND.ibWin*st.ibMul*(1+F.ibWin);ev(R,'ibwin',k);}else k.countered=false;
   }
-  // 카운터 스티어 정도를 0~1로 부드럽게 블렌딩 (토글 시 튐 방지)
-  k.cntS+=((k.drifting&&steer===-k.driftDir?1:0)-k.cntS)*(1-Math.exp(-12*dt));
+  k.cntS=cnt;
   if(k.spinT<=0){
-    if(k.kick){const d=k.kick*(1-Math.exp(-26*dt));k.ang+=d;k.kick-=d;if(Math.abs(k.kick)<1e-4){k.ang+=k.kick;k.kick=0;}}
+    if(k.kick){const d=k.kick*(1-Math.exp(-HND.kickRate*dt));k.ang+=d;k.kick-=d;if(Math.abs(k.kick)<1e-4){k.ang+=k.kick;k.kick=0;}}
     let gripT;const slip0=wrapA(k.ang-k.mvAng);
     if(k.drifting){
       k.driftTime=(k.driftTime||0)+dt;
-      const c=k.cntS,turnMul=1.28-0.33*c,base=0.58-0.36*c;
-      let push=(k.steerS*st.turn*turnMul+k.driftDir*base)*sf;
-      // 슬립각 소프트 리미트: 0.82rad를 넘으면 회전력이 점점 줄고 그립이 늘어 자연스럽게 수렴
-      const over=Math.max(0,Math.abs(slip0)-0.82);
+      // 슬라이드 각도 조절: 안쪽 방향키 = 더 깊게, 손 떼면 완만하게, 반대 방향키(카운터) = 빠르게 펴짐
+      const into=Math.max(0,k.steerS*k.driftDir),c=cnt,fD=clamp(1-(sp-150)*0.0008,0.8,1);
+      let push=k.driftDir*sf*fD*((HND.dBase+into*st.turn*HND.dInto)*(1-c)+HND.dCntYaw*c);
+      // 슬립각 소프트 리미트: dLim을 넘으면 회전력이 점점 줄고 그립이 늘어 자연스럽게 수렴
+      const over=Math.max(0,Math.abs(slip0)-HND.dLim);
       if(over>0&&Math.sign(push)===Math.sign(slip0))push*=Math.max(0,1-over/0.3);
       k.ang+=push*dt;
-      gripT=st.dgrip*(1+0.95*c)+over*9;
+      gripT=st.dgrip*(1+HND.dCntGrip*c)+over*9;
     }else{
-      k.ang+=k.steerS*st.turn*sf*dt*ds;
-      gripT=11.5;
+      // 속도 감응 조향: 고속일수록 핸들이 둔해져 직진 안정성↑ (저속 기동성은 그대로)
+      const fS=clamp(1-(sp-HND.spdRef)*HND.spdFall,HND.spdMin,1);
+      k.ang+=k.steerS*st.turn*sf*fS*dt*ds;
+      gripT=HND.grip;
       k.recover-=dt;
     }
     // 그립 이징: 진입은 빠르게 미끄러지고, 탈출은 천천히 접지력 회복 (키틴 타이어는 더 빠름)
@@ -881,7 +916,8 @@ function updKart(R,k,inp,dt){
     // 드리프트 부스터 게이지 충전 (스피드전 ATP 부스터 충전 + 불꽃 단계 상승) + 익시드 게이지 충전
     if(as>0.06&&sp>72){
       const cb=1+F.comeback*rankFrac(R,k);
-      const rate=(R.mode==='speed'?0.0082:0.0042)*(1+F.dCharge)*(exOn?EXC.dCharge:1)*cb;
+      // 드리프트 중에만 정상 충전, 드리프트를 놓은 뒤 남은 미끄러짐은 조금만 → 끊어 타기는 게이지가 적게 참
+      const rate=(R.mode==='speed'?0.0082:0.0042)*(1+F.dCharge)*(exOn?EXC.dCharge:1)*cb*(k.drifting?1:HND.slideCharge);
       k.gauge=Math.min(1,(k.gauge||0)+as*sp*dt*rate);
       if(k.gauge>=1){
         if(R.mode==='speed'){if(giveItem(R,k,'atp'))k.gauge-=1;else k.gauge=1;}
@@ -889,8 +925,6 @@ function updKart(R,k,inp,dt){
       }
       if(k.drifting)addEx(R,k,as*sp*dt*0.00058);
     }
-    if(k.drifting&&as>0.12)k.wasSliding=true;
-    if(k.wasSliding&&!k.drifting&&as<0.09){k.wasSliding=false;k.ibWin=Math.max(k.ibWin,0.48*st.ibMul*(1+F.ibWin));ev(R,'ibwin',k);}
   }
   // 뒤처진 카트는 익시드 게이지가 천천히 자동 충전 (역전 기회)
   if(R.state==='race'){const rf=rankFrac(R,k);if(rf>0.3)addEx(R,k,dt*0.012*rf);}
@@ -904,16 +938,19 @@ function updKart(R,k,inp,dt){
     let ex=tr.X[j]-tr.X[L.i],ey=tr.Y[j]-tr.Y[L.i];const el=Math.hypot(ex,ey);ex/=el;ey/=el;const nx=-ey,ny=ex;
     k.x-=nx*over*sg;k.y-=ny*over*sg;k.lat=sg*wall;
     const vx=Math.cos(k.mvAng)*k.spd,vy=Math.sin(k.mvAng)*k.spd,vn=vx*nx+vy*ny;
-    if(vn*sg>0){const nvx=vx-1.35*vn*nx,nvy=vy-1.35*vn*ny,ns=Math.hypot(nvx,nvy),old=k.mvAng;
+    // 벽: 튕겨 나가지 않고 벽을 따라 미끄러지듯 (반발 계수 낮춤, 감속 완화, 무거운 카트는 덜 감속)
+    if(vn*sg>0){const e=HND.wallRest,nvx=vx-(1+e)*vn*nx,nvy=vy-(1+e)*vn*ny,ns=Math.hypot(nvx,nvy),old=k.mvAng;
       if(ns>1){if(k.spd>=0){k.mvAng=Math.atan2(nvy,nvx);k.spd=ns;}else{k.mvAng=Math.atan2(-nvy,-nvx);k.spd=-ns;}}
-      k.ang+=wrapA(k.mvAng-old);k.spd*=1-Math.min(0.45,Math.abs(vn)/450)*(1+k.fx.wallLoss);if(Math.abs(vn)>70){ev(R,'wall',k);if(k.fx.wallLoss)petTrig(R,k,2);}}}
+      k.ang+=wrapA(k.mvAng-old);k.spd*=1-Math.min(0.38,Math.abs(vn)/HND.wallLossDiv)*(1+k.fx.wallLoss)*(1-clamp(st.wgt-5,-4,8)*0.01);
+      if(k.drifting&&Math.abs(vn)>150){k.drifting=false;k.recover=0.32;k.countered=false;}// 정면에 가까운 벽 충돌은 드리프트 해제
+      if(Math.abs(vn)>70){ev(R,'wall',k);if(k.fx.wallLoss)petTrig(R,k,2);}}}
   // 진행도
   const prog=(L.i+L.u)*tr.sp;let dp=prog-k.prog;if(dp<-tr.len/2)dp+=tr.len;else if(dp>tr.len/2)dp-=tr.len;k.dist+=dp;k.prog=prog;
   if(k.isP&&!k.auto&&R.state==='race'){if(Math.abs(k.spd)<8&&k.spinT<=0&&k.stunT<=0&&inp.up){k.stuckT+=dt;if(k.stuckT>3){respawn(R,k);k.stuckT=0;ev(R,'respawn',k);}}else k.stuckT=0;}
   const ta=tr.A[L.i];if(Math.cos(k.mvAng-ta)*k.spd<-25)k.wrongT+=dt;else k.wrongT=Math.max(0,k.wrongT-dt*2);
   if(!k.finished&&R.state==='race'){const lp=Math.floor(k.dist/tr.len);
     if(lp>k.lapsDone){k.lapTimes.push(R.t-k.lapStart);k.lapStart=R.t;k.lapsDone=lp;
-      if(lp>=R.laps){k.finished=true;k.finishT=R.t;if(R.firstT===null)R.firstT=R.t;ev(R,'finish',k);if(k.isP&&!k.auto){k.auto=true;k.ai={lane:0,laneT:1,dth:0.4,ibChance:0,ibTry:0,itemCD:99,inp:{}};k.st.maxSpd*=0.8;}}
+      if(lp>=R.laps){k.finished=true;k.finishT=R.t;if(R.firstT===null)R.firstT=R.t;ev(R,'finish',k);if(k.isP&&!k.auto){k.auto=true;k.ai={lane:0,laneT:1,dth:0.4,gain:AIT.gain,ibChance:0,ibTry:0,itemCD:99,inp:{}};k.st.maxSpd*=0.8;}}
       else ev(R,'lap',k,lp);}}
 }
 
@@ -937,7 +974,8 @@ function stepRace(R,pinp,dt){
     return;
   }
   // 러버밴드 (온라인 인간 플레이어는 공정성을 위해 러버밴드 제외)
-  for(const k of R.karts){if(k.isP||k.isNetHuman)continue;const gap=k.dist-P.dist;k.rb=gap>500?1-Math.min(0.07,(gap-500)/9000):gap<-500?1+Math.min(0.05,(-gap-500)/9000):1;}
+  {const dI=clamp(R.o.diff??1,0,2),up=AIDIFF.rbUp[dI],dn=AIDIFF.rbDn[dI];
+    for(const k of R.karts){if(k.isP||k.isNetHuman)continue;const gap=k.dist-P.dist;k.rb=gap>400?1-Math.min(dn,(gap-400)/8000):gap<-300?1+Math.min(up,(-gap-300)/6000):1;}}
   for(const k of R.karts){
     if(k.isIdleSlot)continue;
     let inp;
@@ -953,7 +991,9 @@ function stepRace(R,pinp,dt){
     if(A.invT>0&&B.invT<=0){wa=99;B.spd*=0.75;}if(B.invT>0&&A.invT<=0){wb=99;A.spd*=0.75;}
     const ra=wb/(wa+wb),rb=wa/(wa+wb);A.x-=nx*ov*ra;A.y-=ny*ov*ra;B.x+=nx*ov*rb;B.y+=ny*ov*rb;
     const va=Math.cos(A.mvAng)*A.spd*nx+Math.sin(A.mvAng)*A.spd*ny,vb=Math.cos(B.mvAng)*B.spd*nx+Math.sin(B.mvAng)*B.spd*ny;
-    if(va>vb){const dv=(va-vb)*0.5;A.spd-=dv*ra;B.spd+=dv*rb*0.6;if(A.isP||B.isP)ev(R,'bump',A.isP?A:B);}}
+    // 충돌 충격은 법선 방향 성분만큼만 각 카트의 진행 속도에 반영 (옆/정면 충돌로 속도가 비정상적으로 늘던 문제 수정)
+    if(va>vb){const dv=(va-vb)*0.5,ca=Math.cos(A.mvAng)*nx+Math.sin(A.mvAng)*ny,cb=Math.cos(B.mvAng)*nx+Math.sin(B.mvAng)*ny;
+      A.spd-=dv*ra*ca;B.spd+=dv*rb*0.6*cb;if(A.isP||B.isP)ev(R,'bump',A.isP?A:B);}}
   // 드래프트
   for(const k of K){let on=false;if(k.spd>140&&!k.finished)for(const o of K){if(o===k)continue;const dx=o.x-k.x,dy=o.y-k.y,d=Math.hypot(dx,dy);
       if(d>15&&d<80&&Math.abs(wrapA(Math.atan2(dy,dx)-k.ang))<0.22){on=true;break;}}
@@ -981,8 +1021,9 @@ function stepRace(R,pinp,dt){
   rankUpdate(R);
   // 종료 판정
   const all=K.every(k=>k.finished);
-  if(R.firstT!==null){const pf=P.finished&&!P._retired?P.finishT:null;
-    if((pf!==null&&R.t>=pf+3&&(all||R.t>=pf+8))||(pf===null&&R.t>=R.firstT+15)){R.state='done';for(const k of K)if(!k.finished)k.retired=true;ev(R,'done');}}
+  // 1위가 들어온 뒤 RETIRE_T초 안에 못 들어오면 리타이어 (HUD 카운트다운과 같은 규칙). 내가 완주했다면 최소 3초는 축하 연출
+  if(R.firstT!==null){const pf=P.finished?P.finishT:null,minT=pf!==null?pf+3:0;
+    if(R.t>=minT&&(all||R.t>=R.firstT+RETIRE_T)){R.state='done';for(const k of K)if(!k.finished)k.retired=true;ev(R,'done');}}
 }
 if(typeof module!=='undefined'&&typeof window==='undefined')module.exports={MAPS,CHARS,KARTS,ITEMS,getTrack,makeRace,stepRace,checkSpacing};
 
@@ -1335,7 +1376,7 @@ const cvs=document.getElementById('game');
 const fxc=document.getElementById('fx2d'),fctx=fxc.getContext('2d');
 const mcv=document.getElementById('mirror'),mctx=mcv.getContext('2d');
 let W=960,H=540,Y0=180;const MW=96,MH=38;
-const CAM={x:0,y:0,a:0,ca:1,sa:0,dist:68,shake:0,bf:0,lat:0,fov:54,dr:0,ex:0,exFlash:0};
+const CAM={x:0,y:0,a:0,ca:1,sa:0,dist:68,shake:0,bf:0,lat:0,fov:54,dr:0,ex:0,exFlash:0,dS:0,yr:0,pt:null};
 const A={};// 맵 자산
 let renderer;
 try{renderer=new THREE.WebGLRenderer({canvas:cvs,antialias:true,powerPreference:'high-performance'});}
@@ -1817,13 +1858,13 @@ function syncKart(o,R,dt){
   const hop=k.stunT>0?0:(k.driftHop>0?Math.sin(k.driftHop/0.14*Math.PI)*1.6:0)+Math.abs(Math.sin(slipV))*0.22*(0.5+0.5*Math.sin(R.clock*24));
   o.body.scale.set(sq,sq,sq);o.body.position.y=hop;
   // 카트라이더 특유의 드리프트 롤링 & 부스터 윌리 피칭 (프레임 독립 평활)
-  const targetRoll=-clamp(slipV*0.22,-0.19,0.19)-sS*0.05;
+  const targetRoll=-clamp(slipV*0.22,-0.19,0.19)-sS*0.03;
   const targetPitch=k.boostT>0||k.exT>0?0.075:(k.spd>10?-0.02:0);
   o.body.rotation.x+=(targetRoll-o.body.rotation.x)*ease(13);
   o.body.rotation.z+=(targetPitch-o.body.rotation.z)*ease(11);
   // 드라이버 헤드 모션
   if(o.driver){
-    o.driver.rotation.y=-sS*0.28-slipV*0.26;
+    o.driver.rotation.y=-sS*0.18-slipV*0.26;
     o.driver.rotation.x=-slipV*0.2;
     o.driver.position.y=6.9+(k.boostT>0?Math.sin(R.clock*35)*0.25:0);
   }
@@ -1892,20 +1933,27 @@ function flashMesh(col){const m=new THREE.Mesh(FLASHG,new THREE.MeshBasicMateria
 const _o=new THREE.Object3D();
 function poolMesh(arr,i,geoKind,shadow){let m=arr[i];if(!m){m=new THREE.Mesh(itemGeo(geoKind),VMAT);m.castShadow=!!shadow;STAT.add(m);arr[i]=m;}
   if(m.userData.kind!==geoKind){m.geometry=itemGeo(geoKind);m.userData.kind=geoKind;}m.visible=true;return m;}
+function camReset(R){Object.assign(CAM,{a:R.player.ang,yr:0,pt:null,dS:0,lat:0,bf:0,dr:0,ex:0,exFlash:0,shake:0});}
 function render(R,dt){
   const P=R.player,th=A.th;
   // 카트라이더 드리프트 카메라 앵글 & 측면 오프셋 연출
   // 프레임 독립 지수 평활 (저프레임에서도 같은 궤적, 떨림 없음)
   const ez=r=>1-Math.exp(-r*dt);
   const slip=clamp(wrapA(P.ang-P.mvAng),-1.2,1.2);
-  const tgt=P.spinT>0?P.mvAng:P.mvAng+slip*0.5;
-  CAM.a+=wrapA(tgt-CAM.a)*ez(R.state==='count'?20:7);CAM.a=wrapA(CAM.a);
+  // 일반 주행의 작은 차체 슬립에는 거의 반응하지 않고, 드리프트일 때만 슬라이드 각을 반영
+  CAM.dS+=((P.drifting?1:0)-CAM.dS)*ez(P.drifting?5:2.5);
+  const camSlip=slip*(0.18+0.27*CAM.dS);
+  const tgt=P.spinT>0?P.mvAng:P.mvAng+camSlip;
+  // 카메라 요(yaw): 목표 각속도를 피드포워드(평활)로 따라가고 남은 오차만 천천히 보정 → 코너에서 지연 없이, 작은 입력엔 덜 흔들림
+  if(dt>0){const jd=CAM.pt==null?0:wrapA(tgt-CAM.pt),tr=Math.abs(jd)>0.15?CAM.yr:jd/dt;CAM.pt=tgt;
+    CAM.yr+=(clamp(tr,-6,6)-CAM.yr)*ez(R.state==='count'?30:5.5);
+    CAM.a+=CAM.yr*dt+wrapA(tgt-CAM.a)*ez(R.state==='count'?20:4.2);CAM.a=wrapA(CAM.a);}
   CAM.ca=Math.cos(CAM.a);CAM.sa=Math.sin(CAM.a);
   const bf=P.boostT>0?Math.min(1.25,P.boostT*3.5)*(P.boostMul-1)*2.2:0;
   CAM.bf+=(bf-CAM.bf)*ez(5.5);
   CAM.dr+=((P.drifting?1:0)-CAM.dr)*ez(4);
   CAM.ex+=((P.exT>0?1:0)-CAM.ex)*ez(P.exT>0?6:2.5);CAM.exFlash=Math.max(0,CAM.exFlash-dt*2.2);
-  const targetLat=P.spinT>0?0:clamp(slip*13,-11,11);
+  const targetLat=P.spinT>0?0:clamp(slip*(4+8*CAM.dS),-10,10);
   CAM.lat+=(targetLat-CAM.lat)*ez(5);
   CAM.dist=64-11*CAM.bf-5*CAM.ex+4*CAM.dr;
   const perpX=-CAM.sa,perpY=CAM.ca;
@@ -2009,7 +2057,7 @@ function render(R,dt){
     }
   }
   if(P.ibWin>0&&!G.demo){// 순간 부스터 타이밍 큐: 바깥 링이 안쪽 기준 링으로 줄어드는 동안 ↑
-    const f=clamp(P.ibWin/(0.5*P.st.ibMul*(1+P.fx.ibWin)),0,1),cx=W/2,cy=H*0.56,r0=W*0.03;
+    const f=clamp(P.ibWin/(HND.ibWin*P.st.ibMul*(1+P.fx.ibWin)),0,1),cx=W/2,cy=H*0.56,r0=W*0.03;
     fctx.lineWidth=Math.max(2,W/400);fctx.strokeStyle='rgba(255,255,255,0.55)';fctx.beginPath();fctx.arc(cx,cy,r0,0,TAU);fctx.stroke();
     fctx.strokeStyle=`rgba(255,210,63,${0.5+0.4*f})`;fctx.lineWidth=Math.max(3,W/260);fctx.beginPath();fctx.arc(cx,cy,r0+W*0.06*f,0,TAU);fctx.stroke();
     fctx.fillStyle='rgba(255,230,120,0.95)';fctx.font=`bold ${Math.round(W*0.03)}px sans-serif`;fctx.textAlign='center';fctx.textBaseline='middle';fctx.fillText('↑',cx,cy);
@@ -2109,7 +2157,7 @@ function hud(R,dt){
   // 효과
   hudEl.cloud.style.opacity=P.cloudT>0?Math.min(1,P.cloudT):0;
   hudEl.warn.style.opacity=R.proj.some(p=>p.tgt===P)?(Math.sin(R.clock*20)>0?1:0.3):0;
-  if(R.firstT!==null&&!P.finished&&R.state==='race'){hudEl.retire.style.display='';hudEl.retire.textContent='RETIRE '+Math.max(0,Math.ceil(R.firstT+15-R.t));}else hudEl.retire.style.display='none';
+  if(R.firstT!==null&&!P.finished&&R.state==='race'){hudEl.retire.style.display='';hudEl.retire.textContent='RETIRE '+Math.max(0,Math.ceil(R.firstT+RETIRE_T-R.t));}else hudEl.retire.style.display='none';
   // 카운트다운 & 경고
   if(R.state==='count'){const c=Math.ceil(R.countT);hudEl.msg.textContent=c>3?'READY':String(c);hudEl.msg.className='show count';msgT=0.3;}
   else if(P.wrongT>0.8&&!P.finished){showMsg('역주행!','warn',0.2);}
@@ -2389,7 +2437,7 @@ function audioTick(R,dt){if(!AU.c)return;const C=AU.c,now=C.currentTime,L=AU.L,P
     set(L.rough.f.frequency,140+sp*0.9,0.04);
     const ms=R.proj.find(p=>p.tgt===P);if(ms){AU.warnT-=dt;if(AU.warnT<=0){sfx('warn',0.8);AU.warnT=ms.type==='toxin'?0.28:clamp(Math.hypot(ms.x-P.x,ms.y-P.y)/900,0.12,0.5);}}else AU.warnT=0;
     if(P.wrongT>0.8&&!P.finished){AU.wrongT-=dt;if(AU.wrongT<=0){sfx('wrong');AU.wrongT=0.7;}}else AU.wrongT=0;
-    if(R.firstT!==null&&!P.finished){const r=Math.ceil(R.firstT+15-R.t);if(r!==AU.lastRet){AU.lastRet=r;if(r<=10&&r>0)sfx('tick');}}else AU.lastRet=99;
+    if(R.firstT!==null&&!P.finished){const r=Math.ceil(R.firstT+RETIRE_T-R.t);if(r!==AU.lastRet){AU.lastRet=r;if(r<=10&&r>0)sfx('tick');}}else AU.lastRet=99;
     if(R.map.beat&&R.state==='race'){if(R.beatOn&&!AU.lastBeat)sfx('heart',0.7);AU.lastBeat=R.beatOn;}
   }else for(const k of ['eng','drift','boost','rough'])set(L[k].g.gain,0,0.03);
   set(AU.mus.gain,AU.bgm?0.34*AU.mv*(G.paused?0.35:1):0,0.1);
@@ -2414,7 +2462,7 @@ addEventListener('blur',()=>{for(const k in KEY)KEY[k]=false;for(const k in TOUC
 let tapUp=0;
 function readInput(first){const t=G.touch,auto=t&&G.autoAcc;
   let up=!!(KEY.up||TOUCH.up)||auto;if(auto&&tapUp>0){up=tapUp===2?false:true;if(first)tapUp--;}
-  const inp={up,down:!!(KEY.down||TOUCH.down),left:!!(KEY.left||TOUCH.left),right:!!(KEY.right||TOUCH.right),drift:!!(KEY.drift||TOUCH.drift),use:first&&EDGE.use,swap:first&&EDGE.swap,exceed:first&&EDGE.exceed};
+  const inp={up,down:!!(KEY.down||TOUCH.down),left:!!(KEY.left||TOUCH.left),right:!!(KEY.right||TOUCH.right),drift:!!(KEY.drift||TOUCH.drift),touch:!!(TOUCH.left||TOUCH.right)&&!(KEY.left||KEY.right),use:first&&EDGE.use,swap:first&&EDGE.swap,exceed:first&&EDGE.exceed};
   if(inp.down&&auto)inp.up=false;
   if(first){EDGE.use=false;EDGE.swap=false;EDGE.exceed=false;}return inp;}
 document.querySelectorAll('#touch [data-k]').forEach(b=>{const k=b.dataset.k;
@@ -2503,11 +2551,11 @@ function renderMaps(){const grid=$('#mapGrid');grid.innerHTML='';
   $('#mapFact').textContent=MAPS[S.map].fact;$('#mapMode').textContent=(S.mode==='speed'?'스피드전':'아이템전')+' / '+['쉬움','보통','어려움'][S.diff];}
 
 function startRace(){if(typeof NET!=="undefined"&&NET.active&&NET.role==="host"){NET.startOnlineMatch();return;}if(typeof NET!=="undefined")NET.leave();auInit();G.demo=false;G.paused=false;G.acc=0;PARTS.length=0;FX.length=0;lastItems='x';lastOrder='';
-  G.R=makeRace({map:S.map,mode:S.mode,ci:S.ci,ki:S.ki,diff:S.diff,parts:S.parts,pet:S.pet});buildAssets(G.R);CAM.a=G.R.player.ang;CAM.ex=0;CAM.exFlash=0;
+  G.R=makeRace({map:S.map,mode:S.mode,ci:S.ci,ki:S.ki,diff:S.diff,parts:S.parts,pet:S.pet});buildAssets(G.R);camReset(G.R);
   $('#hudModeTag').textContent=(S.mode==='speed'?'스피드전':'아이템전')+'  '+MAPS[S.map].name;
   show('race');}
 function newDemo(force){if(!force&&!G.demo)return;
-  G.demo=true;const mi=Math.random()*15|0;G.R=makeRace({map:mi,mode:'item',ci:Math.random()*15|0,ki:Math.random()*15|0,diff:1,autoPlayer:true});G.R.countT=0.01;buildAssets(G.R);CAM.a=G.R.player.ang;document.body.classList.add('demo');}
+  G.demo=true;const mi=Math.random()*15|0;G.R=makeRace({map:mi,mode:'item',ci:Math.random()*15|0,ki:Math.random()*15|0,diff:1,autoPlayer:true});G.R.countT=0.01;buildAssets(G.R);camReset(G.R);document.body.classList.add('demo');}
 function showResult(R){if(G.R!==R||(G.screen!=='race'&&G.screen!=='pause'))return;
   const P=R.player,key=R.mode+'-'+MAPS.indexOf(R.map);let rec=false;
   if(P.finished&&(!SAVE.best[key]||P.finishT<SAVE.best[key])){SAVE.best[key]=P.finishT;rec=true;persist();}
@@ -2777,7 +2825,7 @@ const NET = (() => {
     st.remoteInputs = {}; st.pendingEvs = [];
     auInit(); G.demo = false; G.paused = false; G.acc = 0; PARTS.length = 0; FX.length = 0; lastItems = 'x'; lastOrder = '';
     G.R = makeRace({ map: S.map, mode: S.mode, ci: S.ci, ki: S.ki, diff: S.diff, mySlot: st.mySlot, netPlayers: pkt.netPlayers });
-    buildAssets(G.R); CAM.a = G.R.player.ang;
+    buildAssets(G.R); camReset(G.R);
     $('#hudModeTag').textContent = '🌐 온라인 ' + (S.mode==='speed'?'스피드전':'아이템전') + ' · ' + MAPS[S.map].name;
     const badge = $('#netHudBadge');
     if(badge){
