@@ -1584,7 +1584,8 @@ function clearStatic(){
   if(STAT)scene.remove(STAT);
   for(const o of DISPOSE){if(o.dispose)o.dispose();}DISPOSE.length=0;
   for(const k of KOBJ){scene.remove(k.root);if(k.sonicRing)k.sonicRing.material.dispose();if(k.aura){k.aura.material.dispose();k.exRing.material.dispose();}if(k.pet)scene.remove(k.pet);}KOBJ.length=0;
-  for(const f of FX)if(f.m){scene.remove(f.m);f.m.material.dispose();}FX.length=0;FLASHES.length=0;PARTS.length=0;SKIDS.length=0;
+  // 폭발 플래시 메쉬는 FX가 먼저 비워져도 FLASHES 목록으로 확실히 제거 (레이스 재시작 시 씬 누수 방지)
+  for(const f of FX)if(f.m){scene.remove(f.m);f.m.material.dispose();}for(const m of FLASHES){scene.remove(m);m.material.dispose();}FX.length=0;FLASHES.length=0;PARTS.length=0;SKIDS.length=0;
 }
 
 /* ----- 맵별 시그니처 3D 바이오 랜드마크 & 터널/아치 생성 ----- */
