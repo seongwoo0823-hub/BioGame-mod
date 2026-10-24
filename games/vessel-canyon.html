@@ -1428,10 +1428,10 @@ CH.phage.skills[2].aim.r=42; // 지뢰: 밟으면 반경 42 폭발
 /* 밸런스 보정 (헤드리스 하네스 기준: 진영전·혼합전 승률 45~55% 목표)
    dmg: 가하는 피해 배율 · hp: 최대 체력 배율 · heal: 회복·보호막 배율 */
 const BAL={
-  macro:{dmg:1.08,hp:1.06},neutro:{dmg:1.06,hp:1.05},nk:{dmg:1.12,hp:1.06},killerT:{dmg:1.03,hp:1.03},helperT:{dmg:1.05,hp:1.04,heal:1.05},
-  bcell:{dmg:1.12,hp:1.06},rbc:{dmg:1.06,hp:1.06,heal:1.06},platelet:{dmg:1.1,hp:1.08,heal:1.1},dendri:{dmg:1.1,hp:1.06},mast:{dmg:1.02,hp:1.03},
-  flu:{dmg:.9,hp:.96},hiv:{dmg:1,hp:1},ecoli:{dmg:.96,hp:.98},tb:{dmg:.92,hp:.95},staph:{dmg:.84,hp:.92},
-  plasmo:{dmg:.92,hp:.96},candida:{dmg:.92,hp:.95,heal:.92},phage:{dmg:.93,hp:.97},prion:{dmg:.93,hp:.96},corona:{dmg:.98,hp:.98,heal:.95}
+  macro:{dmg:1.024,hp:1.018},neutro:{dmg:1.018,hp:1.015},nk:{dmg:1.036,hp:1.018},killerT:{dmg:1.009,hp:1.009},helperT:{dmg:1.015,hp:1.012,heal:1.015},
+  bcell:{dmg:1.036,hp:1.018},rbc:{dmg:1.018,hp:1.018,heal:1.018},platelet:{dmg:1.03,hp:1.024,heal:1.03},dendri:{dmg:1.03,hp:1.018},mast:{dmg:1.006,hp:1.009},
+  flu:{dmg:0.97,hp:0.988},hiv:{dmg:1,hp:1},ecoli:{dmg:0.988,hp:0.994},tb:{dmg:0.976,hp:0.985},staph:{dmg:0.952,hp:0.976},
+  plasmo:{dmg:0.976,hp:0.988},candida:{dmg:0.976,hp:0.985,heal:0.976},phage:{dmg:0.979,hp:0.991},prion:{dmg:0.979,hp:0.988},corona:{dmg:0.994,hp:0.994,heal:0.985}
 };
 CHAMPS.forEach(c=>{const b=BAL[c.id]||{};c.pw=b.dmg||1;c.hpw=b.hp||1;c.hw=b.heal||1;});
 
@@ -3823,7 +3823,7 @@ function drawAimGuide(gx,c,i,ax,ay,preview){
   const rect=(x,y,ang,len,w,col,al)=>{gx.save();gx.translate(x,y);gx.rotate(ang);gx.globalAlpha=al;gx.fillStyle=col;gx.fillRect(0,-w,len,w*2);gx.globalAlpha=1;gx.strokeStyle=DARK;gx.lineWidth=3;gx.strokeRect(0,-w,len,w*2);gx.strokeStyle=col;gx.lineWidth=1.4;gx.strokeRect(0,-w,len,w*2);
     gx.fillStyle=col;gx.beginPath();gx.moveTo(len,0);gx.lineTo(len-9,-w-3);gx.lineTo(len-9,w+3);gx.closePath();gx.fill();gx.restore();};
   const line=(x1,y1,x2,y2,col)=>{gx.setLineDash([5,4]);gx.strokeStyle=DARK;gx.lineWidth=3;gx.beginPath();gx.moveTo(x1,y1);gx.lineTo(x2,y2);gx.stroke();gx.strokeStyle=col;gx.lineWidth=1.4;gx.beginPath();gx.moveTo(x1,y1);gx.lineTo(x2,y2);gx.stroke();gx.setLineDash([]);};
-  if(rg>0&&A.t!=='self'){disc(c.x,c.y,rg,MAIN,.1);ring(c.x,c.y,rg,MAIN,2);}
+  if(rg>0&&A.t!=='self'){disc(c.x,c.y,rg,MAIN,.12);ring(c.x,c.y,rg,MAIN,2.8);}
   if(A.t==='self'){if(A.r>0){disc(c.x,c.y,A.r,A.ally?OK:AREA,.24);ring(c.x,c.y,A.r,A.ally?OK:AREA,2);}else ring(c.x,c.y,c.r+6,MAIN,1.6,[3,3]);return;}
   if(preview)return;
   const a=Math.atan2(ay-c.y,ax-c.x)||0,d=D2(c.x,c.y,ax,ay);
