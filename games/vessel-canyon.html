@@ -156,26 +156,54 @@ button:focus-visible,.chip:focus-visible{outline:2px solid var(--amber);outline-
 .slot .cdo{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.7)}
 #gold{color:var(--amber);font-size:16px;text-align:center;margin-top:2px}
 
-/* touch */
-#joy{position:absolute;left:calc(18px + env(safe-area-inset-left,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.2);touch-action:none}
-#joy i{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;background:rgba(242,143,173,.6);border:2px solid #ffd0dc}
-#tsk{position:absolute;right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));width:230px;height:200px;pointer-events:none}
+/* touch : 휴대폰·태블릿 가로 화면 전용 HUD.
+   왼쪽 위=내 정보, 위 가운데=점수, 오른쪽 위=메뉴·미니맵, 왼쪽 아래=이동 조이스틱, 오른쪽 아래=공격+스킬 부채꼴.
+   --ts 는 화면 높이에 맞춘 배율(JS가 설정)이라 작은 폰부터 태블릿까지 같은 배치가 유지된다 */
+:root{--ts:1}
+#joy{position:absolute;left:calc(22px + env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:128px;height:128px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.28);touch-action:none;transform:scale(var(--ts));transform-origin:left bottom}
+#joy i{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;background:rgba(242,143,173,.65);border:2px solid #ffd0dc}
+#tsk{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));width:250px;height:250px;pointer-events:none;transform:scale(var(--ts));transform-origin:right bottom}
 #tsk>*{position:absolute;pointer-events:auto}
-#tsk .atk{right:0;bottom:0;width:78px;height:78px;border-radius:50%;font-size:30px;background:rgba(168,20,52,.88);border:3px solid #ffb0c0;box-shadow:0 0 14px rgba(255,80,110,.5)}
-#tsk .sk{width:52px;height:52px;border-radius:50%}
+#tsk .atk{right:0;bottom:0;width:84px;height:84px;border-radius:50%;font-size:34px;background:rgba(168,20,52,.9);border:3px solid #ffb0c0;box-shadow:0 0 14px rgba(255,80,110,.5);color:#fff}
+#tsk .atk:active{transform:scale(.94)}
+#tsk .sk{width:54px;height:54px;border-radius:50%;font-size:24px;background:radial-gradient(circle at 50% 35%,#1d2c44,#08101c);border-width:3px}
+#tsk .sk.ult{width:60px;height:60px;font-size:27px;border-color:#c8aa6e}
+#tsk .sk.mini{width:42px;height:42px;font-size:19px;border-width:2px}
+#tsk .sk .key{left:50%;transform:translateX(-50%);bottom:-15px;font-size:11px;text-shadow:1px 1px 0 #000}
+#tsk .sk .pip{bottom:-4px;left:12px;right:12px}
+#tsk .sk .up{top:-19px;width:26px;height:18px;border-radius:9px;font-size:15px;line-height:18px}
+#tsk .sk .cdo{border-radius:50%}
 body:not(.touch) #joy, body:not(.touch) #tsk{display:none}
-body.touch #hud #mid .skrow, body.touch #stats{display:none}
-body.touch #hud{left:8px;transform:none;top:calc(48px + env(safe-area-inset-top,0px));bottom:auto;padding:4px;gap:6px;align-items:center}
-body.touch #por{width:44px;height:44px}
-body.touch #mid{width:130px}
-body.touch #allies{top:calc(152px + env(safe-area-inset-top,0px))}
-body.touch #allies .af{width:96px}
-body.touch #minimap{right:8px;left:auto;transform:none;top:calc(52px + env(safe-area-inset-top,0px));bottom:auto;width:136px;height:66px}
-body.touch #feed{top:calc(124px + env(safe-area-inset-top,0px))}
-body.touch #toast{bottom:auto;top:30%}
-body.touch .slot{width:28px;height:28px;font-size:14px}
-body.touch #inv{grid-template-columns:repeat(3,28px)}
-body.touch #tgtBox{display:none!important}
+body.touch #hud #mid .skrow, body.touch #stats, body.touch #tgtBox{display:none!important}
+body.touch #topbar{top:calc(4px + env(safe-area-inset-top,0px));font-size:15px;padding:2px 12px;gap:8px;border-width:1.5px}
+body.touch #topbar .tm{font-size:14px;padding:0 7px}
+body.touch #myKda{font-size:12px!important}
+body.touch #hud{left:calc(6px + env(safe-area-inset-left,0px));top:calc(4px + env(safe-area-inset-top,0px));bottom:auto;transform:scale(var(--ts));transform-origin:left top;padding:4px 6px;gap:6px;align-items:center;border-width:1.5px}
+body.touch #por{width:40px;height:40px;border-width:2px}
+body.touch #por b{font-size:11px;padding:0 4px;bottom:-5px}
+body.touch #por .atkBadge{display:none}
+body.touch #mid{width:112px;gap:3px}
+body.touch .bar{height:11px}body.touch .bar span{font-size:9px;line-height:10px}
+body.touch #mpb{height:7px!important}body.touch #mpb span{display:none}
+body.touch #inv{grid-template-columns:repeat(3,24px);gap:2px}
+body.touch .slot{width:24px;height:24px;font-size:13px;border-width:1.5px}
+body.touch #gold{font-size:13px;margin-top:1px}
+body.touch #allies{top:calc(10px + 66px*var(--ts) + env(safe-area-inset-top,0px));left:calc(6px + env(safe-area-inset-left,0px));flex-direction:row;gap:3px;transform:scale(var(--ts));transform-origin:left top}
+body.touch #allies .af{width:auto;flex-direction:column;gap:2px;padding:2px;border-radius:4px}
+body.touch #allies .af img{width:24px;height:24px}
+body.touch #allies .af .b{width:24px;flex:none;height:4px}
+body.touch #allies .af span{display:none}
+body.touch #btns{top:calc(4px + env(safe-area-inset-top,0px));right:calc(6px + env(safe-area-inset-right,0px));gap:5px;transform:scale(var(--ts));transform-origin:right top}
+body.touch .ib{width:38px;height:38px}
+body.touch .ib em{display:none}
+body.touch #minimap{right:calc(6px + env(safe-area-inset-right,0px));left:auto;top:calc(8px + 40px*var(--ts) + env(safe-area-inset-top,0px));bottom:auto;width:124px;height:60px;transform:scale(var(--ts));transform-origin:right top}
+body.touch #feed{top:calc(34px + env(safe-area-inset-top,0px));right:auto;left:50%;transform:translateX(-50%);align-items:center;font-size:12px;gap:2px}
+body.touch #feed div{padding:1px 7px}
+body.touch #feed div:nth-child(n+4){display:none}
+body.touch #announce{top:24%}
+body.touch #toast{bottom:auto;top:34%}
+body.touch #deathBox{top:40%;font-size:21px}
+body.touch #deathBox .recap{display:none}
 
 /* modals */
 .modal{position:absolute;inset:0;background:rgba(10,2,6,.74);display:flex;align-items:center;justify-content:center;z-index:20;backdrop-filter:blur(2px)}
@@ -232,12 +260,55 @@ table.sc img{width:24px;height:24px;image-rendering:pixelated;vertical-align:mid
 .help b{font-weight:400;color:var(--amber)}
 #endScr{z-index:30;background:rgba(10,2,6,.86)}
 #endScr .res{font-size:clamp(48px,10vw,110px);text-shadow:5px 5px 0 #8a0f2a;margin:0}
-#rot{position:fixed;inset:0;background:#12040a;z-index:99;display:none;align-items:center;justify-content:center;text-align:center;font-size:22px;padding:20px}
+#rot{position:fixed;inset:0;background:#12040a;z-index:99;display:none;flex-direction:column;gap:10px;align-items:center;justify-content:center;text-align:center;font-size:22px;padding:20px;line-height:1.4}
+#rot .ph{font-size:56px;animation:rotph 1.6s ease-in-out infinite}
+@keyframes rotph{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
 @media (orientation:portrait) and (max-width:700px){ body.ingame #rot{display:flex} }
 @media (max-width:760px){
   #selBody{flex-direction:column} #grid{flex:none;max-height:38vh} #detail{flex:1}
   #shopBody{flex-direction:column} #shopCats{flex-direction:row;border-right:0;border-bottom:2px solid #4a1222} #shopInfo{border-left:0;border-top:2px solid #4a1222;max-height:30vh}
 }
+/* 휴대폰 가로(낮은 화면): 메뉴·선택·상점이 잘리지 않도록 압축 배치 */
+@media (max-height:520px){
+  #title{gap:8px;padding:6px 0}
+  #title h1{font-size:min(9vw,15vh)}
+  #title h1 small{margin-top:6px}
+  #title p{font-size:12px;line-height:1.35}
+  #title p:last-of-type{display:none}
+  #title .bigbtn{font-size:16px;padding:7px 16px}
+  #title .row{gap:8px}
+  #selTop{padding:4px 10px;gap:4px 6px;flex-wrap:wrap}
+  #selTop h2{font-size:18px;margin-right:4px;white-space:nowrap}
+  #selTop .row{flex-wrap:wrap;gap:4px}
+  .chip{font-size:12px;padding:2px 7px;white-space:nowrap}
+  #selBody{flex-direction:row!important;padding:4px 8px;gap:8px}
+  #grid{flex:1.2!important;max-height:none!important;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:5px}
+  .card{padding:3px 2px}.card img{width:44px;height:44px}.card .nm{font-size:12px}.card .rl{font-size:10px}
+  #detail{padding:8px}#detail .hd img{width:56px;height:56px}#detail h3{font-size:21px}
+  .skl .ic{flex-basis:34px;height:34px;font-size:18px}.skl .tx{font-size:12px}
+  #selBot{padding:4px 10px;gap:5px 6px;flex-wrap:wrap}
+  #selBot .lbl{font-size:12px;white-space:nowrap}
+  .sum{width:32px;height:32px;font-size:16px;flex:none}
+  #selBot .row{flex-wrap:nowrap}
+  #selBot .bigbtn{font-size:14px!important;padding:5px 11px!important;white-space:nowrap;flex:none}
+  .panel{max-height:96vh}
+  #shop .panel{height:96vh!important}
+  .panel header{padding:4px 10px}.panel header h3{font-size:18px}
+  .x{width:30px;height:30px}
+  #shopCats{padding:4px;gap:3px}#shopCats .chip{font-size:12px}
+  #shopGrid{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:4px;padding:5px}
+  .itm{padding:3px 2px;font-size:11px}.itm .i{font-size:19px}
+  #shopInfo{padding:6px;font-size:12px}#shopInfo h4{font-size:17px}
+  #shopFoot{padding:4px 10px;gap:6px}
+  #shopFoot .bigbtn{font-size:15px!important;padding:5px 14px!important}
+  #pauseBody{padding:8px 12px;gap:7px;font-size:14px}
+  #pauseBody .bigbtn{font-size:14px!important;padding:5px 12px!important}
+}
+@media (max-height:520px) and (max-width:760px){
+  #shopBody{flex-direction:row!important}#shopCats{flex-direction:column!important;border-right:2px solid #4a1222!important;border-bottom:0!important}
+  #shopInfo{max-height:none!important;border-top:0!important;border-left:2px solid #4a1222!important}
+}
+@media (max-width:760px){ body.touch #myKda{display:none} body.touch #topbar{font-size:13px;padding:2px 8px} }
 @media (prefers-reduced-motion:reduce){ .bigbtn{transition:none} }
 
 /* ---------- 온라인 P2P 로비 모달 ---------- */
@@ -295,7 +366,7 @@ document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)no(e)
 document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,select'))no(e);},{passive:false});})();</script>
 </head>
 <body>
-<div id="rot">가로 화면으로 돌려주세요 📱↻<br><small style="color:#c79aa6">혈관 협곡은 가로 모드에서 플레이할 수 있어요</small></div>
+<div id="rot"><div class="ph">📱</div><div>가로 화면으로 돌려주세요</div><small style="color:#c79aa6;font-size:16px">혈관 협곡은 가로 모드에서 플레이할 수 있어요</small></div>
 
 <section id="title" class="screen">
   <canvas id="titleCv"></canvas>
@@ -3778,7 +3849,13 @@ function v3Reset(){
   if(!V3.ok)return;for(const [u,o] of V3.objs){V3.root.remove(o.grp);o.mat.dispose();}V3.objs.clear();
 }
 
+function hudScale(){
+  // 터치 HUD 배율: 화면이 낮은 폰은 작게, 태블릿은 크게
+  const w=window.innerWidth||960,h=window.innerHeight||540;
+  document.documentElement.style.setProperty('--ts',clamp(Math.min(h/400,w/780),.72,1.35).toFixed(3));
+}
 function resizeCanvas(){
+  hudScale();
   if(!CV)return;const w=window.innerWidth||960,h=window.innerHeight||540;
   VH=336;VW=Math.round(clamp(VH*w/h,420,740));
   CV_SCALE=Math.min(window.devicePixelRatio||1,2)*2.0;
@@ -4386,7 +4463,7 @@ function drawMinimap(){
 /* =========================================================
    AUDIO : 오케스트라풍 절차적 BGM + 입체 타격 효과음
    ========================================================= */
-const AU={ctx:null,master:null,music:null,sfxG:null,rev:null,on:false,next:0,beat:0,timer:null,mVol:.55,sVol:.7,last:{},intense:0,voices:0};
+const AU={ends:[],ctx:null,master:null,music:null,sfxG:null,rev:null,on:false,next:0,beat:0,timer:null,mVol:.55,sVol:.7,last:{},intense:0,voices:0};
 function mtof(m){return 440*Math.pow(2,(m-69)/12);}
 function auInit(){
   if(AU.ctx)return;
@@ -4396,8 +4473,7 @@ function auInit(){
     AU.master=c.createGain();AU.master.gain.value=.9;AU.master.connect(c.destination);
     const comp=c.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;comp.connect(AU.master);
     AU.music=c.createGain();AU.music.gain.value=AU.mVol*.4;AU.music.connect(comp);
-    const comp2=c.createDynamicsCompressor();comp2.threshold.value=-10;comp2.ratio.value=3;comp2.connect(AU.master);
-    AU.sfxG=c.createGain();AU.sfxG.gain.value=AU.sVol*1.5;AU.sfxG.connect(comp2);
+    auBuildSfxBus();
     const len=c.sampleRate*2.8,buf=c.createBuffer(2,len,c.sampleRate);
     for(let ch=0;ch<2;ch++){const d=buf.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6);}
     AU.rev=c.createConvolver();AU.rev.buffer=buf;const rg=c.createGain();rg.gain.value=.55;AU.rev.connect(rg);rg.connect(AU.music);
@@ -4405,7 +4481,26 @@ function auInit(){
     AU.on=true;
   }catch(e){AU.ctx=null;}
 }
-function auResume(){if(AU.ctx&&AU.ctx.state!=='running'){try{AU.ctx.resume();}catch(e){}}unlockIOS();}
+function auResume(){if(AU.ctx&&AU.ctx.state!=='running'){try{const p=AU.ctx.resume();if(p&&p.catch)p.catch(()=>{});}catch(e){}}unlockIOS();
+  // 음성 안내(TTS) 등으로 멈춘 무음 루프 오디오를 다시 재생해 iOS에서 효과음이 계속 나오게 한다
+  if(AU.unlockEl&&AU.unlockEl.paused){try{const p=AU.unlockEl.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}}}
+/* 오디오 감시: 선취점 음성 안내 뒤 오디오가 '중단(interrupted)'·'일시정지' 상태로 남아
+   모든 효과음이 사라지던 문제를 막는다. 효과음 버스가 NaN으로 오염되면 버스를 새로 만든다. */
+function auBuildSfxBus(){
+  const c=AU.ctx;
+  try{if(AU.sfxG)AU.sfxG.disconnect();if(AU.sfxComp)AU.sfxComp.disconnect();}catch(e){}
+  const comp2=c.createDynamicsCompressor();comp2.threshold.value=-10;comp2.ratio.value=3;comp2.connect(AU.master);AU.sfxComp=comp2;
+  AU.sfxG=c.createGain();AU.sfxG.gain.value=AU.sVol*1.5;AU.sfxG.connect(comp2);
+  AU.sfxAn=c.createAnalyser();AU.sfxAn.fftSize=256;comp2.connect(AU.sfxAn);AU.ends=[];
+}
+function auWatch(){
+  if(!AU.ctx||document.hidden)return;
+  if(AU.ctx.state!=='running'&&AU.ctx.state!=='closed')auResume();
+  if(AU.sfxAn){const d=AU.sfxBuf||(AU.sfxBuf=new Float32Array(AU.sfxAn.fftSize));AU.sfxAn.getFloatTimeDomainData(d);
+    for(let i=0;i<d.length;i+=8)if(!isFinite(d[i])){auBuildSfxBus();break;}}
+}
+setInterval(auWatch,1000);
+['pointerdown','touchend','keydown'].forEach(t=>document.addEventListener(t,()=>{if(AU.ctx&&AU.ctx.state!=='running')auResume();},true));
 function setVol(m,s){AU.mVol=m;AU.sVol=s;if(AU.music){AU.music.gain.value=m*.4;AU.sfxG.gain.value=s*1.5;}}
 const BPM=84,SPB=60/BPM;
 const CHORDS=[[50,53,57],[46,50,53],[53,57,60],[48,52,55],[50,53,57],[46,50,53],[43,46,50],[45,49,52]];
@@ -4471,7 +4566,7 @@ function unlockIOS(){
   try{
     const n=800,buf=new ArrayBuffer(44+n),v=new DataView(buf);const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
     w(0,'RIFF');v.setUint32(4,36+n,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,8000,true);v.setUint32(28,8000,true);v.setUint16(32,1,true);v.setUint16(34,8,true);w(36,'data');v.setUint32(40,n,true);for(let i=0;i<n;i++)v.setUint8(44+i,128);
-    const a=new Audio(URL.createObjectURL(new Blob([buf],{type:'audio/wav'})));a.loop=true;a.volume=.01;const p=a.play();if(p&&p.catch)p.catch(()=>{});
+    const a=new Audio(URL.createObjectURL(new Blob([buf],{type:'audio/wav'})));a.loop=true;a.volume=.01;a.setAttribute('playsinline','');AU.unlockEl=a;const p=a.play();if(p&&p.catch)p.catch(()=>{});
   }catch(e){}
   try{if(AU.ctx){const b=AU.ctx.createBuffer(1,1,22050),s=AU.ctx.createBufferSource();s.buffer=b;s.connect(AU.ctx.destination);s.start(0);}}catch(e){}
 }
@@ -4482,26 +4577,29 @@ function sfx(name,src,pitch){
   const c=AU.ctx,t0=c.currentTime;
   const gap=SFX_GAP[name]||.035;
   if(AU.last[name]&&t0-AU.last[name]<gap)return;
+  // 동시 발음 수는 끝나는 시각으로 센다 (onended가 오지 않아 카운터가 영구히 막히는 문제 방지)
+  if(AU.ends.length>40){AU.ends=AU.ends.filter(e=>e>t0);}
+  AU.voices=AU.ends.length;
   if(AU.voices>46&&!SFX_IMPORTANT[name])return;
   let vol=1,pan=0;
   if(src&&G&&G.player&&src!==G.player&&src.x!=null){
     const dx=src.x-G.player.x,dy=(src.y||0)-G.player.y,d=Math.hypot(dx,dy);
     if(d>440&&!SFX_IMPORTANT[name])return;
-    vol=Math.max(.12,1-d/440);pan=Math.max(-.8,Math.min(.8,dx/300));
+    vol=Math.max(.12,1-d/440);pan=Math.max(-.8,Math.min(.8,dx/300));if(!isFinite(vol))vol=1;if(!isFinite(pan))pan=0;
     if(src.team!=null&&src.kind==='minion')vol*=.55;
   }
   AU.last[name]=t0;
-  const pm=pitch||1;
+  const pm=(pitch>0&&isFinite(pitch))?pitch:1;
   let out=AU.sfxG;
   if(pan&&c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=pan;p.connect(AU.sfxG);out=p;}
-  const reg=node=>{AU.voices++;node.onended=()=>{AU.voices--;};};
+  const reg=(node,end)=>{AU.ends.push(end);};
   const tone=(type,f1,f2,dur,v,o)=>{o=o||{};const t=t0+(o.d||0);const os=c.createOscillator(),g=c.createGain();os.type=type;os.frequency.setValueAtTime(f1*pm,t);if(f2!==f1)os.frequency.exponentialRampToValueAtTime(Math.max(20,f2*pm),t+dur);
     g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v*vol,t+(o.a||.005));g.gain.exponentialRampToValueAtTime(.0001,t+dur);let n=os;
     if(o.lp||o.hp){const f=c.createBiquadFilter();f.type=o.lp?'lowpass':'highpass';f.frequency.value=o.lp||o.hp;os.connect(f);n=f;}
     if(o.vib){const l=c.createOscillator(),lg=c.createGain();l.frequency.value=o.vib;lg.gain.value=f1*pm*.06;l.connect(lg);lg.connect(os.frequency);l.start(t);l.stop(t+dur+.02);}
-    n.connect(g);g.connect(out);reg(os);os.start(t);os.stop(t+dur+.03);};
+    n.connect(g);g.connect(out);reg(os,t+dur+.03);os.start(t);os.stop(t+dur+.03);};
   const noise=(dur,v,o)=>{o=o||{};const t=t0+(o.d||0);const n=c.createBufferSource();n.buffer=AU.noise;const f=c.createBiquadFilter();f.type=o.type||'bandpass';f.frequency.setValueAtTime(o.f||1500,t);if(o.f2)f.frequency.exponentialRampToValueAtTime(o.f2,t+dur);f.Q.value=o.q||.9;
-    const g=c.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v*vol,t+(o.a||.004));g.gain.exponentialRampToValueAtTime(.0001,t+dur);n.connect(f);f.connect(g);g.connect(out);reg(n);n.start(t,Math.random()*.5);n.stop(t+dur+.03);};
+    const g=c.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v*vol,t+(o.a||.004));g.gain.exponentialRampToValueAtTime(.0001,t+dur);n.connect(f);f.connect(g);g.connect(out);reg(n,t+dur+.03);n.start(t,Math.random()*.5);n.stop(t+dur+.03);};
   const arp=(type,notes,step,dur,v,o)=>notes.forEach((f,i)=>tone(type,f,f,dur,v,Object.assign({d:i*step},o||{})));
   switch(name){
     case 'swing':noise(.11,.35,{f:700,f2:2600,q:1.2});break;
@@ -4587,10 +4685,12 @@ function sfx(name,src,pitch){
     case 'ghost':noise(.5,.3,{f:300,f2:1500,q:2});tone('sine',300,600,.4,.08,{vib:8});break;
   }
 }
-let VOICE_ON=true;
+// iOS·iPadOS는 음성 합성이 웹 오디오를 끊어 효과음이 사라지므로 기본으로 끈다 (설정에서 켤 수 있음)
+const IS_IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+let VOICE_ON=!IS_IOS;
 function speak(txt){
   if(!VOICE_ON||!txt)return;
-  try{if(!window.speechSynthesis||typeof SpeechSynthesisUtterance==='undefined')return;const u=new SpeechSynthesisUtterance(txt.replace(/[!·]/g,''));u.lang='ko-KR';u.rate=1.08;u.pitch=.8;u.volume=Math.min(1,AU.sVol+.2);speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}
+  try{if(!window.speechSynthesis||typeof SpeechSynthesisUtterance==='undefined')return;const u=new SpeechSynthesisUtterance(txt.replace(/[!·]/g,''));u.lang='ko-KR';u.rate=1.08;u.pitch=.8;u.volume=Math.min(1,AU.sVol+.2);u.onend=u.onerror=()=>{auResume();setTimeout(auResume,300);};speechSynthesis.cancel();speechSynthesis.speak(u);setTimeout(auResume,1500);}catch(e){}
 }
 
 /* =========================================================
@@ -4828,10 +4928,13 @@ function buildHUD(){
 
   for(let i=0;i<6;i++){const b=mkSkillBtn(i,i>=4);row.appendChild(b);SKEL.main.push(b);}
   const ts=$('tsk');ts.innerHTML='';SKEL.touch=[];
-  const atk=document.createElement('button');atk.className='atk';atk.textContent=isM?'🗡':'🏹';atk.addEventListener('pointerdown',e=>{e.preventDefault();touchAttack();});ts.appendChild(atk);
-  const posR=[{r:84,b:6},{r:74,b:68},{r:28,b:104},{r:110,b:120},{r:174,b:10},{r:160,b:66}];
-  for(let i=0;i<6;i++){const b=mkSkillBtn(i,false);b.style.right=posR[i].r+'px';b.style.bottom=posR[i].b+'px';if(i===3){b.style.width='58px';b.style.height='58px';}if(i>=4){b.style.width='40px';b.style.height='40px';b.style.fontSize='18px';}ts.appendChild(b);SKEL.touch.push(b);}
-  const pot=document.createElement('button');pot.className='sk';pot.style.cssText='right:6px;bottom:96px;width:40px;height:40px;font-size:18px;border-radius:50%';pot.textContent='🧃';pot.addEventListener('pointerdown',e=>{e.preventDefault();const ix=G.player.items.findIndex(i=>i&&i.id==='pot');if(ix>=0)useItem(G.player,ix);else{const z=G.player.items.findIndex(i=>i&&IT[i.id].act);if(z>=0)useItem(G.player,z);}});ts.appendChild(pot);
+  const atk=document.createElement('button');atk.className='atk';atk.textContent=isM?'🗡':'🏹';atk.setAttribute('aria-label','일반 공격');atk.addEventListener('pointerdown',e=>{e.preventDefault();auResume();touchAttack();});ts.appendChild(atk);
+  // 공격 버튼(오른쪽 아래)을 중심으로 Q·W·E·R은 안쪽 부채꼴, 소환사 주문(D·F)과 물약은 바깥 부채꼴에 배치해 엄지로 닿기 쉽고 겹치지 않게 한다
+  const AC=42,place=(el,ang,rad,size)=>{const a=ang*Math.PI/180;
+    el.style.right=Math.round(AC-Math.cos(a)*rad-size/2)+'px';el.style.bottom=Math.round(AC+Math.sin(a)*rad-size/2)+'px';};
+  const ring=[[180,112,54],[150,112,54],[120,112,54],[90,112,60],[172,182,42],[142,182,42]];
+  for(let i=0;i<6;i++){const b=mkSkillBtn(i,false);if(i===3)b.classList.add('ult');if(i>=4)b.classList.add('mini');place(b,ring[i][0],ring[i][1],ring[i][2]);ts.appendChild(b);SKEL.touch.push(b);}
+  const pot=document.createElement('button');pot.className='sk mini';pot.setAttribute('aria-label','물약·사용 아이템');place(pot,112,182,42);pot.innerHTML='<span class="ic">🧃</span>';pot.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();const ix=G.player.items.findIndex(i=>i&&i.id==='pot');if(ix>=0)useItem(G.player,ix);else{const z=G.player.items.findIndex(i=>i&&IT[i.id].act);if(z>=0)useItem(G.player,z);else toast('사용할 물약·아이템이 없습니다');}});ts.appendChild(pot);
   const inv=$('inv');inv.innerHTML='';
   for(let i=0;i<6;i++){const s=document.createElement('div');s.className='slot';s.innerHTML='<span></span><em></em><div class="cdo"></div>';s.addEventListener('pointerdown',e=>{e.preventDefault();useItem(G.player,i);});inv.appendChild(s);}
   const al=$('allies');al.innerHTML='';
@@ -5252,7 +5355,7 @@ function initInput(){
   const netQuit=()=>{if(NET.role)NET.leaveRoom(true);NET.active=false;};
   $('bQuit').onclick=()=>{toggleModal('pause',false);netQuit();G=null;clearCaps();show('title');musicStart(false);AU.intense=0;requestAnimationFrame(titleLoop);};
   $('volM').oninput=$('volS').oninput=()=>setVol($('volM').value/100,$('volS').value/100);
-  $('optVoice').onchange=e=>{VOICE_ON=e.target.checked;};
+  $('optVoice').checked=VOICE_ON;$('optVoice').onchange=e=>{VOICE_ON=e.target.checked;if(!VOICE_ON)try{speechSynthesis.cancel();}catch(_){}};
   $('optAuto').onchange=e=>{OPT.autoLevel=e.target.checked;};
   $('optTouch').onchange=e=>setTouch(e.target.checked);
   $('bPlay').onclick=()=>{auInit();auResume();musicStart(false);if(!SEL.champ)SEL.champ=CHAMPS[0].id;show('select');buildSelect();requestAnimationFrame(titleLoop);sfx('ui');};
