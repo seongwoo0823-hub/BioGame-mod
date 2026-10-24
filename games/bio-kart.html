@@ -2610,6 +2610,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.scree
 /* ================= 방장 권한 P2P + 예측 보간 온라인 엔진 (NET) ================= */
 const NET = (() => {
   const PREFIX = 'biokart-p2p-v1-';
+  const NET_TIMEOUT = 3500; // ms
   let peer = null, peerConns = new Map(), bc = null, lobbyBc = null;
   let myId = 'p_' + Math.random().toString(36).slice(2, 9);
   const st = {
@@ -2845,7 +2846,8 @@ const NET = (() => {
     S.mode = pkt.mode; S.map = pkt.map; S.diff = pkt.diff; st.aiFill = pkt.aiFill;
     const meEntry = pkt.netPlayers.find(p => p && p.id === myId);
     st.mySlot = meEntry ? meEntry.slot : 7;
-    st.remoteInputs = {}; st.pendingEvs = [];
+    st.remoteInputs = {}; st.pendingEvs = []; st.lastState = performance.now(); st.lastUp = false;
+    if(st.role === 'host') for(const p of pkt.netPlayers) if(p && !p.isAI && p.id !== myId) st.remoteInputs[p.slot] = { up:false, down:false, left:false, right:false, drift:false, useQ:0, swapQ:0, exQ:0, at: performance.now() + 4000 };
     auInit(); G.demo = false; G.paused = false; G.acc = 0; PARTS.length = 0; FX.length = 0; lastItems = 'x'; lastOrder = '';
     G.R = makeRace({ map: S.map, mode: S.mode, ci: S.ci, ki: S.ki, diff: S.diff, mySlot: st.mySlot, netPlayers: pkt.netPlayers });
     buildAssets(G.R); camReset(G.R);
@@ -2886,7 +2888,11 @@ const NET = (() => {
 
         if(m.swap) cur.swapQ = (cur.swapQ || 0) + 1;
         if(m.exceed) cur.exQ = (cur.exQ || 0) + 1;
+        cur.at = performance.now();
         st.remoteInputs[m.slot] = cur;
+        // 잠깐 끊겼던(탭 전환 등) 게스트가 돌아오면 다시 직접 조종
+        const dk = G.R && !G.demo ? G.R.karts[m.slot] : null;
+        if(dk && dk._netDrop && !dk.finished && Object.values(st.players).some(p => p.slot === m.slot)){ dk._netDrop = false; dk.isNetHuman = true; }
         if(m.t){ sendAll({ type: 'pong', to: m.from, t: m.t }); }
       }
     } else if(st.role === 'guest'){
@@ -2899,6 +2905,7 @@ const NET = (() => {
       } else if(m.type === 'match_start' && m.code === st.code){
         launchOnlineRace(m);
       } else if(m.type === 'state' && G.R && !G.demo){
+        st.lastState = performance.now();
         applyHostSnapshot(G.R, m);
       } else if(m.type === 'pong' && m.to === myId){
         st.rtt = Math.max(1, Math.round(performance.now() - m.t));
@@ -2914,7 +2921,7 @@ const NET = (() => {
     if(!R || G.demo || slot == null) return;
     const k = R.karts[slot];
     if(!k || !k.isNetHuman) return;
-    k.isNetHuman = false; k.ai = cruiseAI(); k.ai.ibChance = 0.5; k.ai.itemCD = 2;
+    k.isNetHuman = false; k._netDrop = true; k.ai = cruiseAI(); k.ai.ibChance = 0.5; k.ai.itemCD = 2;
     delete st.remoteInputs[slot];
     if(G.screen === 'race') showFeed(`📴 <b>${name || '플레이어'}</b> 연결 끊김 · AI가 대신 달려요`, 2.2);
   }
@@ -2971,6 +2978,20 @@ const NET = (() => {
   function tick(R, dt){
     if(!st.active) return;
     st.netTickAcc += dt;
+    // 연결 감시: WebRTC 'close'는 늦게 오거나 안 올 수 있어서, 입력/스냅샷이 끊긴 시간으로 판단
+    const now = performance.now();
+    if(st.role === 'host' && R.state === 'race'){
+      for(const k of R.karts){
+        if(!k.isNetHuman || k.isP) continue;
+        const r = st.remoteInputs[k.i];
+        if(r && r.at && now - r.at > NET_TIMEOUT){
+          const id = Object.keys(st.players).find(id => st.players[id].slot === k.i);
+          dropToAI(k.i, id ? st.players[id].name : k.name);
+        }
+      }
+    } else if(st.role === 'guest' && (R.state === 'race' || R.state === 'count') && st.lastState && now - st.lastState > NET_TIMEOUT + 1000){
+      hostLost(); return;
+    }
     if(st.role === 'host'){
       if(st.netTickAcc >= 0.04){ // 25Hz 방장 권한 월드 스냅샷 브로드캐스트
         st.netTickAcc = 0;
@@ -3191,6 +3212,7 @@ const NET = (() => {
 
   return {
     get active(){ return st.active; },
+    get state(){ return st; },
     leave: cleanup,
     startOnlineMatch,
     get role(){ return st.role; },
