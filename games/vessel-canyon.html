@@ -1428,10 +1428,10 @@ CH.phage.skills[2].aim.r=42; // 지뢰: 밟으면 반경 42 폭발
 /* 밸런스 보정 (헤드리스 하네스 기준: 진영전·혼합전 승률 45~55% 목표)
    dmg: 가하는 피해 배율 · hp: 최대 체력 배율 · heal: 회복·보호막 배율 */
 const BAL={
-  macro:{dmg:1.039,hp:1.027},neutro:{dmg:1.024,hp:1.019},nk:{dmg:1.043,hp:1.022},killerT:{dmg:1.014,hp:1.012},helperT:{dmg:0.985,hp:0.994,heal:0.985},
-  bcell:{dmg:1.038,hp:1.019},rbc:{dmg:1.023,hp:1.021,heal:1.023},platelet:{dmg:1.054,hp:1.038,heal:1.054},dendri:{dmg:1.067,hp:1.04},mast:{dmg:1.002,hp:1.007},
-  flu:{dmg:0.947,hp:0.974},hiv:{dmg:1.025,hp:1.015},ecoli:{dmg:0.984,hp:0.992},tb:{dmg:0.968,hp:0.98},staph:{dmg:0.909,hp:0.95},
-  plasmo:{dmg:0.971,hp:0.985},candida:{dmg:0.958,hp:0.974,heal:0.958},phage:{dmg:0.975,hp:0.989},prion:{dmg:0.966,hp:0.98},corona:{dmg:1.013,hp:1.005,heal:1.004}
+  macro:{dmg:1.054,hp:1.036},neutro:{dmg:1.007,hp:1.009},nk:{dmg:1.067,hp:1.036},killerT:{dmg:1.006,hp:1.007},helperT:{dmg:0.944,hp:0.969,heal:0.944},
+  bcell:{dmg:1.032,hp:1.016},rbc:{dmg:1.006,hp:1.011,heal:1.006},platelet:{dmg:1.062,hp:1.043,heal:1.062},dendri:{dmg:1.117,hp:1.07},mast:{dmg:0.968,hp:0.987},
+  flu:{dmg:0.919,hp:0.957},hiv:{dmg:1.064,hp:1.039},ecoli:{dmg:0.992,hp:0.997},tb:{dmg:0.979,hp:0.986},staph:{dmg:0.876,hp:0.93},
+  plasmo:{dmg:0.98,hp:0.991},candida:{dmg:0.956,hp:0.973,heal:0.956},phage:{dmg:0.972,hp:0.987},prion:{dmg:0.952,hp:0.972},corona:{dmg:1.05,hp:1.027,heal:1.041}
 };
 CHAMPS.forEach(c=>{const b=BAL[c.id]||{};c.pw=b.dmg||1;c.hpw=b.hp||1;c.hw=b.heal||1;});
 
