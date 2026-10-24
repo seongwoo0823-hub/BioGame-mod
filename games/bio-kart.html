@@ -344,7 +344,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
       <label class="opt">효과음 볼륨 <input type="range" id="volSfx" min="0" max="1" step="0.05"></label>
       <h3>조작 (키보드)</h3>
       <p><kbd>↑</kbd> 가속 <kbd>↓</kbd> 브레이크/후진 <kbd>←</kbd><kbd>→</kbd> 방향</p>
-      <p><kbd>SHIFT</kbd> + 방향키: 드리프트</p>
+      <p><kbd>SHIFT</kbd> + 방향키를 함께 누르면 드리프트 (스치듯 짧게 누른 SHIFT로는 발동하지 않아요). 드리프트 중 안쪽 방향키를 누르면 더 깊게, 떼면 완만하게, 반대 방향키(카운터)를 누르면 빠르게 똑바로 펴져요.</p>
       <p><kbd>CTRL</kbd> 또는 <kbd>SPACE</kbd>: 부스터/아이템 사용</p>
       <p><kbd>ALT</kbd> 또는 <kbd>Z</kbd>: 아이템 순서 교체</p>
       <p><kbd>X</kbd> 또는 <kbd>E</kbd>: 익시드(EXCEED) 발동</p>
@@ -352,7 +352,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
       <h3>조작 (휴대폰)</h3>
       <p>가로 화면 권장. 자동 가속이 켜져 있으면 ◀ ▶와 드리프트만으로 달릴 수 있어요. 드리프트가 끝나는 순간 ↑ 버튼을 누르면 순간 부스터!</p>
       <h3>달리기 기술</h3>
-      <ul><li>출발 부스터: 카운트 1이 끝나는 순간 ↑</li><li>순간 부스터: 드리프트를 풀고 차가 똑바로 서는 순간 ↑를 다시 누르기</li><li>드래프트: 앞 카트 바로 뒤를 1초 넘게 따라가면 가속</li><li>노란 화살표 발판: 부스터 존</li></ul>
+      <ul><li>출발 부스터: 카운트 1이 끝나는 순간 ↑</li><li>순간 부스터: 드리프트(SHIFT)를 놓는 순간 화면 가운데 노란 링이 줄어드는 동안 ↑를 다시 누르기 (카운터 방향키를 누른 채 ↑를 유지해도 발동)</li><li>끊어 타기: SHIFT를 짧게 톡 눌러 방향만 살짝 바꾸기 (게이지는 조금만 차요)</li><li>고속에서는 핸들이 조금 둔해져요. 급커브는 드리프트로!</li><li>드래프트: 앞 카트 바로 뒤를 1초 넘게 따라가면 가속</li><li>노란 화살표 발판: 부스터 존</li></ul>
       <h3>익시드 (EXCEED)</h3>
       <ul><li>화면 아래 분홍 익시드 게이지는 <b>드리프트</b>, <b>드래프트</b>, <b>순간·출발 부스터</b>, <b>ATP 부스터 사용</b>으로 차요.</li>
       <li>순위가 낮을수록 최대 1.9배 빨리 차고, 하위권에서는 조금씩 저절로 차요. (역전 찬스!)</li>
@@ -756,7 +756,10 @@ function updObs(R){const tr=R.tr;for(const o of R.obs){let s,lat;
   if(o.k==='flow'){s=o.s0+o.v*R.clock;lat=o.lat*tr.hw;}else{s=o.s0;lat=o.amp*tr.hw*Math.sin(TAU*R.clock/o.per+o.ph);}
   const p=posAt(tr,s,lat);o.x=p.x;o.y=p.y;o.ang=p.ang+(o.v<0?Math.PI:0);}}
 
+// 완주 후 자동 주행(아이템·순간부스터 없이 천천히) / 연결이 끊긴 온라인 카트 대체용 AI
+function cruiseAI(){return {lane:0,laneT:1,dth:0.4,gain:AIT.gain,ibChance:0,ibTry:0,itemCD:99,exWait:null,inp:{}};}
 function aiInput(R,k,dt){
+  if(!k.ai)k.ai=cruiseAI();// 안전장치: AI 정보가 없는 카트(예: 연결 끊긴 온라인 카트)도 멈추거나 오류 없이 주행
   const tr=R.tr,ai=k.ai,inp=ai.inp;
   ai.laneT-=dt;if(ai.laneT<=0){ai.lane=rnd(-0.5,0.5);ai.laneT=rnd(1.5,4);}
   const sp=Math.max(60,Math.abs(k.spd)),look=34+sp*0.36;
@@ -809,7 +812,8 @@ function aiInput(R,k,dt){
     if(ai.exWait<=0&&(Math.abs(turnA)<0.35||k.rank>=5||R.proj.some(p=>p.tgt===k))){inp.exceed=true;ai.exWait=null;}}
   else ai.exWait=null;
   return inp;}
-function respawn(R,k){const p=posAt(R.tr,k.prog,0);k.x=p.x;k.y=p.y;k.ang=k.mvAng=p.ang;k.spd=40;k.drifting=false;k.wrongT=0;k.spinT=0;k.stunT=0;}
+function respawn(R,k){const p=posAt(R.tr,k.prog,0);k.x=p.x;k.y=p.y;k.ang=k.mvAng=p.ang;k.spd=40;k.drifting=false;k.wrongT=0;k.spinT=0;k.stunT=0;
+  k.kick=0;k.steerS=0;k.cntS=0;k.grip=HND.grip;k.ibWin=0;k.countered=false;k.dHold=0;k.recover=0;k.stuckT=0;k.lat=0;}
 
 function updKart(R,k,inp,dt){
   const tr=R.tr,st=k.st,F=k.fx;
@@ -950,7 +954,7 @@ function updKart(R,k,inp,dt){
   const ta=tr.A[L.i];if(Math.cos(k.mvAng-ta)*k.spd<-25)k.wrongT+=dt;else k.wrongT=Math.max(0,k.wrongT-dt*2);
   if(!k.finished&&R.state==='race'){const lp=Math.floor(k.dist/tr.len);
     if(lp>k.lapsDone){k.lapTimes.push(R.t-k.lapStart);k.lapStart=R.t;k.lapsDone=lp;
-      if(lp>=R.laps){k.finished=true;k.finishT=R.t;if(R.firstT===null)R.firstT=R.t;ev(R,'finish',k);if(k.isP&&!k.auto){k.auto=true;k.ai={lane:0,laneT:1,dth:0.4,gain:AIT.gain,ibChance:0,ibTry:0,itemCD:99,inp:{}};k.st.maxSpd*=0.8;}}
+      if(lp>=R.laps){k.finished=true;k.finishT=R.t;if(R.firstT===null)R.firstT=R.t;ev(R,'finish',k);if((k.isP||k.isNetHuman)&&!k.auto){k.auto=true;k.ai=cruiseAI();k.st.maxSpd*=0.8;}}
       else ev(R,'lap',k,lp);}}
 }
 
@@ -980,13 +984,14 @@ function stepRace(R,pinp,dt){
     if(k.isIdleSlot)continue;
     let inp;
     if(k.isP&&!k.auto)inp=pinp;
-    else if(k.isNetHuman&&typeof NET!=='undefined'&&NET.active)inp=NET.consumeRemoteInput(k.i);
+    else if(k.isNetHuman&&!k.auto&&typeof NET!=='undefined'&&NET.active)inp=NET.consumeRemoteInput(k.i);
     else inp=aiInput(R,k,dt);
     updKart(R,k,inp,dt);
   }
   // 충돌
   const K=R.karts;
-  for(let a=0;a<K.length;a++)for(let b=a+1;b<K.length;b++){const A=K[a],B=K[b],dx=B.x-A.x,dy=B.y-A.y,d2=dx*dx+dy*dy;if(d2>=324||d2<0.01)continue;
+  for(let a=0;a<K.length;a++)for(let b=a+1;b<K.length;b++){const A=K[a],B=K[b];if(A.isIdleSlot||B.isIdleSlot)continue;// 빈 온라인 슬롯(보이지 않는 카트)과는 충돌하지 않음
+    const dx=B.x-A.x,dy=B.y-A.y,d2=dx*dx+dy*dy;if(d2>=324||d2<0.01)continue;
     const d=Math.sqrt(d2),nx=dx/d,ny=dy/d,ov=18-d;let wa=A.st.wgt,wb=B.st.wgt;
     if(A.invT>0&&B.invT<=0){wa=99;B.spd*=0.75;}if(B.invT>0&&A.invT<=0){wb=99;A.spd*=0.75;}
     const ra=wb/(wa+wb),rb=wa/(wa+wb);A.x-=nx*ov*ra;A.y-=ny*ov*ra;B.x+=nx*ov*rb;B.y+=ny*ov*rb;
@@ -995,17 +1000,17 @@ function stepRace(R,pinp,dt){
     if(va>vb){const dv=(va-vb)*0.5,ca=Math.cos(A.mvAng)*nx+Math.sin(A.mvAng)*ny,cb=Math.cos(B.mvAng)*nx+Math.sin(B.mvAng)*ny;
       A.spd-=dv*ra*ca;B.spd+=dv*rb*0.6*cb;if(A.isP||B.isP)ev(R,'bump',A.isP?A:B);}}
   // 드래프트
-  for(const k of K){let on=false;if(k.spd>140&&!k.finished)for(const o of K){if(o===k)continue;const dx=o.x-k.x,dy=o.y-k.y,d=Math.hypot(dx,dy);
+  for(const k of K){let on=false;if(k.spd>140&&!k.finished)for(const o of K){if(o===k||o.isIdleSlot)continue;const dx=o.x-k.x,dy=o.y-k.y,d=Math.hypot(dx,dy);
       if(d>15&&d<80&&Math.abs(wrapA(Math.atan2(dy,dx)-k.ang))<0.22){on=true;break;}}
     k.draftOn=on;if(on){k.draftC+=dt*(1+k.fx.draft);addEx(R,k,dt*0.04);if(k.draftC>1.3){boost(k,1.18,1.1+k.fx.draftDur);k.draftC=0;ev(R,'draft',k);addEx(R,k,0.05);if(k.pet>=0&&PETS[k.pet].id==='amoeba')petTrig(R,k);}}else k.draftC=Math.max(0,k.draftC-dt*2);}
   // 아이템 박스
   for(const b of R.boxes){if(!b.act){b.resp-=dt;if(b.resp<=0)b.act=true;continue;}
-    for(const k of K){const rr=k.ab==='bact'?24:13;if(Math.abs(k.x-b.x)<rr&&Math.abs(k.y-b.y)<rr){b.act=false;b.resp=3;ev(R,'box',k);
+    for(const k of K){if(k.isIdleSlot)continue;const rr=k.ab==='bact'?24:13;if(Math.abs(k.x-b.x)<rr&&Math.abs(k.y-b.y)<rr){b.act=false;b.resp=3;ev(R,'box',k);
         let id=rollItem(R,k);if(k.fx.reroll>0&&Math.random()<k.fx.reroll){id=rollItem(R,k,Math.min(K.length,k.rank+3));petTrig(R,k);}
         if(giveItem(R,k,id)&&k.ab==='ribo'&&Math.random()<0.25)giveItem(R,k,rollItem(R,k));break;}}}
   // 바닥 설치물
   for(let i=R.gi.length-1;i>=0;i--){const g=R.gi[i];g.life-=dt;g.arm-=dt;let rm=g.life<=0;
-    if(!rm)for(const k of K){if(k===g.src&&g.arm>0)continue;if(Math.hypot(k.x-g.x,k.y-g.y)<g.r+8){hit(R,k,g.type==='mucus'?'slip':'bump',g.src);rm=true;break;}}
+    if(!rm)for(const k of K){if(k.isIdleSlot||(k===g.src&&g.arm>0))continue;if(Math.hypot(k.x-g.x,k.y-g.y)<g.r+8){hit(R,k,g.type==='mucus'?'slip':'bump',g.src);rm=true;break;}}
     if(rm)R.gi.splice(i,1);}
   // 투사체
   for(let i=R.proj.length-1;i>=0;i--){const p=R.proj[i];let rm=false;
@@ -1017,7 +1022,7 @@ function stepRace(R,pinp,dt){
       if(p.t>=p.dur){for(const k of K){if(k===p.src)continue;if(Math.hypot(k.x-p.x,k.y-p.y)<55)hit(R,k,'stun',p.src);}rm=true;ev(R,'splash',null,{x:p.x,y:p.y});}}
     if(rm)R.proj.splice(i,1);}
   // 장애물
-  for(const o of R.obs)for(const k of K){if(k.obsCD>0)continue;if(Math.hypot(k.x-o.x,k.y-o.y)<o.r+8){k.obsCD=1.0;hit(R,k,'bump',null);}}
+  for(const o of R.obs)for(const k of K){if(k.obsCD>0||k.isIdleSlot)continue;if(Math.hypot(k.x-o.x,k.y-o.y)<o.r+8){k.obsCD=1.0;hit(R,k,'bump',null);}}
   rankUpdate(R);
   // 종료 판정
   const all=K.every(k=>k.finished);
@@ -2172,7 +2177,7 @@ function handleEvents(R){
     switch(e.t){
       case 'count':if(!dm)sfx('count');break;
       case 'go':if(!dm){showMsg('GO!','go',0.9);sfx('go');}break;
-      case 'startb':if(me){showSub('출발 부스터!');sfx('startb');}break;
+      case 'startb':if(me){showSub('출발 부스터!');sfx('startb');if(typeof NET!=='undefined'&&NET.active&&NET.role==='guest')NET.sendStartBoost();}break;
       case 'ib':if(me){showSub(e.a?'⚡ 슈퍼 순간 부스터!':'순간 부스터!',1.1);sfx('ib');}break;
       case 'ibwin':if(me&&!G.touch){showSub('↑ 순간 부스터 타이밍!',0.45);}break;
       case 'draft':if(me){showSub('드래프트!',1);sfx('draft');}break;
@@ -2199,7 +2204,7 @@ function handleEvents(R){
       case 'bump':if(!dm)sfx('kbump');break;
       case 'respawn':if(me){showSub('트랙으로 복귀!',1.2);sfx('respawn');}break;
       case 'lap':if(me){if(e.a===R.laps-1){showMsg('FINAL LAP','lap',1.6);sfx('final');}else{showMsg('LAP '+(e.a+1),'lap',1.2);sfx('lap');}}break;
-      case 'finish':if(me){showMsg(P.rank===1?'1st WIN!':'FINISH','go',2.5);sfx(P.rank<=3?'win':'finish');}break;
+      case 'finish':if(me&&!P._finMsg){P._finMsg=1;showMsg(P.rank===1?'1st WIN!':'FINISH','go',2.5);sfx(P.rank<=3?'win':'finish');}break;
       case 'done':if(dm)setTimeout(()=>newDemo(),1500);else setTimeout(()=>showResult(R),1600);break;
     }}
   if(typeof NET!=='undefined'&&NET.active&&NET.role==='host'&&!G.demo)NET.recordEvents(R.ev);
@@ -2466,7 +2471,7 @@ function readInput(first){const t=G.touch,auto=t&&G.autoAcc;
   if(inp.down&&auto)inp.up=false;
   if(first){EDGE.use=false;EDGE.swap=false;EDGE.exceed=false;}return inp;}
 document.querySelectorAll('#touch [data-k]').forEach(b=>{const k=b.dataset.k;
-  const on=e=>{e.preventDefault();b.setPointerCapture&&b.setPointerCapture(e.pointerId);b.classList.add('on');
+  const on=e=>{e.preventDefault();try{b.setPointerCapture&&b.setPointerCapture(e.pointerId);}catch(_){}b.classList.add('on');
     if(k==='use'||k==='swap'||k==='exceed')EDGE[k]=true;else if(k==='tap'){if(G.autoAcc)tapUp=2;else TOUCH.up=true;}else TOUCH[k]=true;};
   const off=e=>{b.classList.remove('on');if(k==='tap'){if(!G.autoAcc)TOUCH.up=false;}else TOUCH[k]=false;};
   b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off);});
@@ -2595,9 +2600,11 @@ let petDexDone=false;function drawPetDex(){if(petDexDone)return;petDexDone=true;
 $('#partDex').innerHTML=GEAR_PARTS.map((P,si)=>`<div class="dex"><div><b>${P.slot}</b><small>${P.opts.slice(1).map((o,j)=>o.n+' ('+fxList(partFx(si,j+1,'item')).join(', ')+')').join(' / ')}</small></div></div>`).join('');
 const STEP=1/60;
 function loop(ts){requestAnimationFrame(loop);let dt=(ts-(G.last||ts))/1000;G.last=ts;if(dt>0.1)dt=0.1;const R=G.R;if(!R)return;
-  if(!G.paused){G.acc+=dt;let first=true,n=0;while(G.acc>=STEP&&n<6){const pinp=G.demo?{}:readInput(first);if(typeof NET!=='undefined'&&NET.active&&!G.demo)NET.onLocalInput(pinp);stepRace(R,pinp,STEP);first=false;G.acc-=STEP;n++;}if(n>=6)G.acc=0;handleEvents(R);if(typeof NET!=='undefined'&&NET.active&&!G.demo)NET.tick(R,dt);}
+  // 온라인 레이스는 일시정지 화면을 띄워도 멈추지 않음 (다른 플레이어와 같은 시간으로 진행, 내 입력만 중립)
+  const netLive=typeof NET!=='undefined'&&NET.active&&!G.demo;
+  if(!G.paused||netLive){G.acc+=dt;let first=true,n=0;while(G.acc>=STEP&&n<6){const pinp=G.demo||G.paused?{}:readInput(first);if(netLive)NET.onLocalInput(pinp);stepRace(R,pinp,STEP);first=false;G.acc-=STEP;n++;}if(n>=6)G.acc=0;handleEvents(R);if(netLive)NET.tick(R,dt);}
   CAM.shake=Math.max(0,CAM.shake-dt);cvs.style.transform=CAM.shake>0?`translate(${(Math.random()-.5)*CAM.shake*14}px,${(Math.random()-.5)*CAM.shake*14}px)`:'';
-  render(R,G.paused?0:dt);if(!G.demo)hud(R,dt);audioTick(R,dt);}
+  render(R,G.paused&&!netLive?0:dt);if(!G.demo)hud(R,dt);audioTick(R,dt);}
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.screen==='race'&&!G.demo)togglePause();for(const k in KEY)KEY[k]=false;for(const k in TOUCH)TOUCH[k]=false;if(AU.c&&AU.c.state==='running')AU.c.suspend();}else if(AU.c&&AU.c.state==='suspended')AU.c.resume();});
 
 /* ================= 방장 권한 P2P + 예측 보간 온라인 엔진 (NET) ================= */
@@ -2621,6 +2628,21 @@ const NET = (() => {
     document.head.appendChild(sc);
   }
   loadPeerJS();
+
+  // 자체 PeerServer 지정: ?peerhost=localhost&peerport=9000&peerpath=/myapp&peersecure=0 (없으면 PeerJS 기본 클라우드 서버)
+  function peerOpts(){
+    try{
+      const q = new URLSearchParams(location.search), o = {};
+      if(q.get('peerhost')) o.host = q.get('peerhost');
+      if(q.get('peerport')) o.port = +q.get('peerport');
+      if(q.get('peerpath')) o.path = q.get('peerpath');
+      if(q.has('peersecure')) o.secure = q.get('peersecure') === '1';
+      else if(o.host) o.secure = location.protocol === 'https:';
+      if(q.get('peerdebug')) o.debug = +q.get('peerdebug');
+      return o;
+    }catch(e){ return {}; }
+  }
+  const noBC = /[?&]nobc=1/.test(location.search); // 테스트용: BroadcastChannel 끄고 PeerJS만 사용
 
   function log(msg){
     const el = $('#netLogMsg');
@@ -2677,14 +2699,14 @@ const NET = (() => {
 
   function setupChannel(code){
     if(bc){ try{ bc.close(); }catch(e){} }
-    if(typeof BroadcastChannel !== 'undefined'){
+    if(typeof BroadcastChannel !== 'undefined' && !noBC){
       bc = new BroadcastChannel(PREFIX + code);
       bc.onmessage = e => onMessage(e.data, null);
     }
   }
 
   function setupLobbyDiscovery(){
-    if(lobbyBc || typeof BroadcastChannel === 'undefined') return;
+    if(lobbyBc || typeof BroadcastChannel === 'undefined' || noBC) return;
     lobbyBc = new BroadcastChannel(PREFIX + 'LOBBY');
     lobbyBc.onmessage = e => {
       const m = e.data;
@@ -2704,7 +2726,7 @@ const NET = (() => {
     setupChannel(st.code);
     if(window.Peer){
       try{
-        peer = new window.Peer(PREFIX + st.code);
+        peer = new window.Peer(PREFIX + st.code, peerOpts());
         peer.on('open', () => { renderLobby(); });
         peer.on('connection', conn => {
           conn.on('open', () => {
@@ -2714,7 +2736,7 @@ const NET = (() => {
           conn.on('data', data => onMessage(data, conn));
           conn.on('close', () => {
             for(const id in st.players){
-              if(st.players[id].peerId === conn.peer) delete st.players[id];
+              if(st.players[id].peerId === conn.peer){ dropToAI(st.players[id].slot, st.players[id].name); delete st.players[id]; }
             }
             peerConns.delete(conn.peer);
             broadcastRoomState();
@@ -2737,7 +2759,7 @@ const NET = (() => {
     sendToHost(joinReq);
     if(window.Peer){
       try{
-        peer = new window.Peer();
+        peer = new window.Peer(peerOpts());
         peer.on('open', () => {
           const conn = peer.connect(PREFIX + code, { reliable: true });
           conn.on('open', () => {
@@ -2745,6 +2767,7 @@ const NET = (() => {
             conn.send(Object.assign({ peerId: peer.id }, joinReq));
           });
           conn.on('data', data => onMessage(data, conn));
+          conn.on('close', () => { if(peerConns.get('HOST') === conn) hostLost(); });
         });
         peer.on('error', () => {});
       }catch(e){}
@@ -2851,10 +2874,16 @@ const NET = (() => {
         st.players[m.id].ci = m.ci; st.players[m.id].ki = m.ki;
         if(Array.isArray(m.parts)) st.players[m.id].parts = m.parts; if(m.pet != null) st.players[m.id].pet = m.pet;
         broadcastRoomState();
+      } else if(m.type === 'input' && m.slot != null && m.startb){
+        // 게스트가 자기 화면에서 성공한 출발 부스터 (GO 직후 0.7초 안에만 인정)
+        const R = G.R, k = R && !G.demo ? R.karts[m.slot] : null;
+        if(k && k.isNetHuman && R.state === 'race' && R.t < 0.7 && !k._startB){ k._startB = true; boost(k,1.35,1.1); addEx(R,k,0.05); }
       } else if(m.type === 'input' && m.slot != null){
         const cur = st.remoteInputs[m.slot] || { up:false, down:false, left:false, right:false, drift:false, useQ:0, swapQ:0, exQ:0 };
-        cur.up = !!m.up; cur.down = !!m.down; cur.left = !!m.left; cur.right = !!m.right; cur.drift = !!m.drift;
+        cur.up = !!m.up; cur.down = !!m.down; cur.left = !!m.left; cur.right = !!m.right; cur.drift = !!m.drift; cur.touch = !!m.touch;
         if(m.use) cur.useQ = (cur.useQ || 0) + 1;
+        if(m.upEdge) cur.upQ = Math.min(2, (cur.upQ || 0) + 1); // 순간 부스터용 ↑ 재입력 (30Hz 샘플링에 놓치지 않도록 따로 전달)
+
         if(m.swap) cur.swapQ = (cur.swapQ || 0) + 1;
         if(m.exceed) cur.exQ = (cur.exQ || 0) + 1;
         st.remoteInputs[m.slot] = cur;
@@ -2879,13 +2908,37 @@ const NET = (() => {
     }
   }
 
+  // 레이스 중 연결이 끊긴 사람 카트는 AI가 이어서 운전 (멈춘 카트가 트랙을 막지 않도록)
+  function dropToAI(slot, name){
+    const R = G.R;
+    if(!R || G.demo || slot == null) return;
+    const k = R.karts[slot];
+    if(!k || !k.isNetHuman) return;
+    k.isNetHuman = false; k.ai = cruiseAI(); k.ai.ibChance = 0.5; k.ai.itemCD = 2;
+    delete st.remoteInputs[slot];
+    if(G.screen === 'race') showFeed(`📴 <b>${name || '플레이어'}</b> 연결 끊김 · AI가 대신 달려요`, 2.2);
+  }
+  // 게스트: 방장 연결이 끊기면 지금 레이스를 내 컴퓨터에서 이어서 진행 (방장 카트는 AI로)
+  function hostLost(){
+    if(st.role !== 'guest') return;
+    const R = G.R, inRace = R && !G.demo && (G.screen === 'race' || G.screen === 'pause');
+    if(inRace){
+      for(const k of R.karts){ if(k.isNetHuman){ k.isNetHuman = false; k.ai = cruiseAI(); k.ai.ibChance = 0.5; k.ai.itemCD = 2; } k._netInit = false; }
+      showFeed('📴 방장 연결이 끊겼어요 · 혼자서 계속 달려요', 2.6);
+    }
+    cleanup();
+    log('방장과의 연결이 끊겼습니다.');
+  }
+
   function consumeRemoteInput(slot){
     const r = st.remoteInputs[slot];
     if(!r) return { up:true, down:false, left:false, right:false, drift:false, use:false, swap:false };
     const out = {
-      up: r.up, down: r.down, left: r.left, right: r.right, drift: r.drift,
+      up: r.up, down: r.down, left: r.left, right: r.right, drift: r.drift, touch: !!r.touch,
       use: r.useQ > 0, swap: r.swapQ > 0, exceed: r.exQ > 0
     };
+    // ↑ 재입력 재현: 한 프레임 떼었다가 다음 프레임 누름 → 방장 쪽에서도 순간 부스터 상승 에지가 생김
+    if(r.upQ > 0){ if(!r.upPh){ out.up = false; r.upPh = 1; } else { out.up = true; r.upPh = 0; r.upQ--; } }
     if(r.exQ > 0) r.exQ--;
     if(r.useQ > 0) r.useQ--;
     if(r.swapQ > 0) r.swapQ--;
@@ -2894,13 +2947,17 @@ const NET = (() => {
 
   function onLocalInput(pinp){
     if(!st.active || st.role !== 'guest' || !G.R) return;
-    if(pinp.use || pinp.swap || pinp.exceed){
+    const upEdge = !!pinp.up && !st.lastUp; st.lastUp = !!pinp.up;
+    if(pinp.use || pinp.swap || pinp.exceed || (upEdge && G.R.player.ibWin > 0)){
       sendToHost({
         type: 'input', slot: st.mySlot,
         up: pinp.up, down: pinp.down, left: pinp.left, right: pinp.right, drift: pinp.drift,
-        use: pinp.use, swap: pinp.swap, exceed: !!pinp.exceed, t: performance.now()
+        use: pinp.use, swap: pinp.swap, exceed: !!pinp.exceed, upEdge: upEdge && G.R.player.ibWin > 0, touch: !!pinp.touch, t: performance.now()
       });
     }
+  }
+  function sendStartBoost(){
+    if(st.active && st.role === 'guest') sendToHost({ type: 'input', slot: st.mySlot, startb: true, up: true });
   }
 
   function recordEvents(evs){
@@ -2938,10 +2995,10 @@ const NET = (() => {
     } else if(st.role === 'guest'){
       if(st.netTickAcc >= 0.033){ // 30Hz 게스트 입력 전송
         st.netTickAcc = 0;
-        const inp = readInput(false);
+        const inp = G.paused ? {} : readInput(false);
         sendToHost({
           type: 'input', slot: st.mySlot,
-          up: inp.up, down: inp.down, left: inp.left, right: inp.right, drift: inp.drift,
+          up: inp.up, down: inp.down, left: inp.left, right: inp.right, drift: inp.drift, touch: !!inp.touch,
           use: false, swap: false, t: performance.now()
         });
       }
@@ -3015,9 +3072,9 @@ const NET = (() => {
         }
       }
     }
-    // 2. 원격 카트 데드레커닝 + 부드러운 위치·각도 보간 (Interpolation)
+    // 2. 원격 카트 데드레커닝 + 부드러운 위치·각도 보간 (Interpolation). 완주한 내 카트도 방장 위치를 따라감
     for(const k of R.karts){
-      if(k === P || k.isIdleSlot) continue;
+      if((k === P && !P.finished) || k.isIdleSlot) continue;
       if(k._netTx != null){
         k.spd += ((k._netTspd||0) - k.spd) * 0.3;
         k.x += Math.cos(k.mvAng) * k.spd * dt + (k._netTx - k.x) * 0.32;
@@ -3140,7 +3197,7 @@ const NET = (() => {
     get mySlot(){ return st.mySlot; },
     get returnToOnline(){ return st.returnToOnline; },
     set returnToOnline(v){ st.returnToOnline = !!v; },
-    renderLobby, consumeRemoteInput, onLocalInput, recordEvents, tick, stepGuest,
+    renderLobby, consumeRemoteInput, onLocalInput, recordEvents, tick, stepGuest, sendStartBoost,
     syncMyGaragePick(){
       if(!st.active) return;
       if(st.role === 'host' && st.players[myId]){ st.players[myId].ci = S.ci; st.players[myId].ki = S.ki; st.players[myId].parts = S.parts.slice(); st.players[myId].pet = S.pet; broadcastRoomState(); }
