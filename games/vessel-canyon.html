@@ -1424,6 +1424,16 @@ function deriveAim(sk){
   return{t:'self',r:0};
 }
 CHAMPS.forEach(c=>c.skills.forEach(sk=>{sk.aim=deriveAim(sk);}));
+CH.phage.skills[2].aim.r=42; // 지뢰: 밟으면 반경 42 폭발
+/* 밸런스 보정 (헤드리스 하네스 기준: 진영전·혼합전 승률 45~55% 목표)
+   dmg: 가하는 피해 배율 · hp: 최대 체력 배율 · heal: 회복·보호막 배율 */
+const BAL={
+  macro:{dmg:1.08,hp:1.06},neutro:{dmg:1.06,hp:1.05},nk:{dmg:1.12,hp:1.06},killerT:{dmg:1.03,hp:1.03},helperT:{dmg:1.05,hp:1.04,heal:1.05},
+  bcell:{dmg:1.12,hp:1.06},rbc:{dmg:1.06,hp:1.06,heal:1.06},platelet:{dmg:1.1,hp:1.08,heal:1.1},dendri:{dmg:1.1,hp:1.06},mast:{dmg:1.02,hp:1.03},
+  flu:{dmg:.9,hp:.96},hiv:{dmg:1,hp:1},ecoli:{dmg:.96,hp:.98},tb:{dmg:.92,hp:.95},staph:{dmg:.84,hp:.92},
+  plasmo:{dmg:.92,hp:.96},candida:{dmg:.92,hp:.95,heal:.92},phage:{dmg:.93,hp:.97},prion:{dmg:.93,hp:.96},corona:{dmg:.98,hp:.98,heal:.95}
+};
+CHAMPS.forEach(c=>{const b=BAL[c.id]||{};c.pw=b.dmg||1;c.hpw=b.hp||1;c.hw=b.heal||1;});
 
 /* =========================================================
    SUMMONER SPELLS
@@ -1643,7 +1653,7 @@ function recalc(c){
   if(c.def.role==='mage')st.mp5*=1.4;
   if(c.def.role==='adc'&&G&&G.time-(c.adcT||-9)<2.5)st.asBonus+=Math.min(5,c.adcS||0)*8;
   if(c.def.passive.mod)c.def.passive.mod(c,st);
-  st.ap*=1+st.apPct;st.ad*=1+st.adPct;
+  st.ap*=1+st.apPct;st.ad*=1+st.adPct;st.maxHp*=c.def.hpw||1;
   st.as=Math.min(2.5,Math.max(.25,b.as*(1+st.asBonus/100)));
   st.crit=Math.min(1,st.crit);
   st.ms=(b.ms+st.msFlat)*(1+st.msPct);
@@ -1678,7 +1688,7 @@ function dot(src,t,id,dur,dps,type,o){
 }
 function empower(c,n,dur,fn){c.empower.push({n,t:dur,fn});}
 function shield(src,t,amt,dur,raw){
-  if(!t||t.dead)return;let a=amt;if(!raw&&src&&src.st)a*=1+(src.st.hsp||0);if(t.st&&t.st.healRecv)a*=1+t.st.healRecv;
+  if(!t||t.dead)return;let a=amt;if(!raw&&src&&src.st)a*=1+(src.st.hsp||0);if(!raw&&src&&src.def&&src.def.hw)a*=src.def.hw;if(t.st&&t.st.healRecv)a*=1+t.st.healRecv;
   t.shields.push({a,t:dur});
   if(t.kind==='champ'){sfx('sk_shield',t);fxShield(t);}
   if(src&&src!==t&&t.kind==='champ'){if(src.def&&src.def.id==='corona')buff(t,'coP',2,{msPct:.18});if(hasItem(src,'ardent'))buff(t,'ardent',5,{asBonus:25});}
@@ -1686,7 +1696,7 @@ function shield(src,t,amt,dur,raw){
 function heal(src,t,amt,o){
   if(!t||t.dead||amt<=0)return 0;o=o||{};
   if(NET.active&&NET.role==='guest'){if(t.kind==='champ'&&amt>22&&!o.quiet&&!o.raw)fxHeal(t);return 0;}
-  let a=amt;if(!o.raw&&src&&src.st)a*=1+(src.st.hsp||0);if(t.st&&t.st.healRecv)a*=1+t.st.healRecv;if(t.grievT>0)a*=.6;
+  let a=amt;if(!o.raw&&src&&src.st)a*=1+(src.st.hsp||0);if(!o.raw&&src&&src.def&&src.def.hw)a*=src.def.hw;if(t.st&&t.st.healRecv)a*=1+t.st.healRecv;if(t.grievT>0)a*=.6;
   const real=Math.min(a,t.maxHp-t.hp);t.hp+=real;
   if(real>22&&!o.quiet&&!o.raw&&t.kind==='champ'){sfx('sk_heal',t);fxHeal(t);}
   if(src&&src.kind==='champ'&&t.kind==='champ'&&src!==t){src.healDone+=real;if(hasItem(src,'ardent'))buff(t,'ardent',5,{asBonus:25});}
@@ -1773,6 +1783,7 @@ function hurt(src,t,amt,type,o){
   if(isStruct(t)){if(!structTargetable(t)||o.skill||o.dot)return 0;}
   let m=1;
   if(src&&src.st&&src.st.dmgAmp)m*=1+src.st.dmgAmp;
+  if(s&&s.kind==='champ'&&s.def.pw)m*=s.def.pw;
   if(s&&s.kind==='champ'&&src===s){if(s.def.passive.amp)m*=s.def.passive.amp(s,t,type,o);if(o.skill&&s.st.skillAmp)m*=1+s.st.skillAmp;}
   if(s&&s.kind==='champ'&&s.def.role==='assassin'&&t.kind==='champ'&&!G.champs.some(a=>a!==t&&a.team===t.team&&!a.dead&&dist(a,t)<120))m*=1.15;
   let ta=0;for(const b of t.buffs)if(b.st&&b.st.takenAmp)ta+=b.st.takenAmp;
@@ -2726,7 +2737,7 @@ function aiSums(c,near,hpR){
     if((id==='heal'||id==='barrier')&&hpR<.28&&near.length){castSum(c,i,c.x,c.y);return;}
     if(id==='flash'&&hpR<.18&&near.some(e=>dist(c,e)<110)){castSum(c,i,c.x-TDIR[c.team]*100,c.y);return;}
     if(id==='ghost'&&(c.ai.mode==='base'&&near.length)){castSum(c,i,c.x,c.y);return;}
-    if(id==='cleanse'&&(c.stunT>.6||c.rootT>.6)&&near.length){castSum(c,i,c.x,c.y);return;}
+    if(id==='cleanse'&&(c.stunT>.6||c.rootT>.6||c.tauntT>.5||c.fearT>.5)&&near.length){castSum(c,i,c.x,c.y);return;}
     const low=near.find(e=>e.hp/e.maxHp<.25&&dist(c,e)<150);
     if(id==='ignite'&&low){castSum(c,i,low.x,low.y);return;}
     if(id==='exhaust'&&hpR<.5&&near.length){const e=near.sort((p,q)=>q.st.ad-p.st.ad)[0];if(dist(c,e)<160){castSum(c,i,e.x,e.y);return;}}
@@ -4876,7 +4887,7 @@ function updateHUD(){
     let cdp=0;if(it&&IT[it.id].act){const r=(c.itemCd[it.id]||0)-G.time;if(r>0)cdp=r/IT[it.id].act.cd*100;}el.children[2].style.height=cdp+'%';el.dataset.tip=it?IT[it.id].n+' — '+(IT[it.id].d||''):'';el.dataset.item=it?it.id:'';
   }
   $('gold').textContent='💰 '+Math.floor(c.gold);
-  Array.from($('allies').children).forEach(d=>{const x=d._c;d.classList.toggle('dead',x.dead);d.querySelector('i').style.width=(x.dead?0:x.hp/x.maxHp*100)+'%';d.querySelector('span').textContent=x.dead?Math.ceil(x.respawnT):x.level;});
+  Array.from($('allies').children).forEach(d=>{const x=d._c;d.classList.toggle('dead',x.dead);d.querySelector('i').style.width=(x.dead?0:x.hp/x.maxHp*100)+'%';d.querySelector('span').textContent=x.isIdleSlot?'—':x.dead?Math.ceil(x.respawnT):x.level;});
   // 타겟 정보창 (#tgtBox) 업데이트
   const tgt=c.target||INPUT.hover;
   const tb=$('tgtBox');
@@ -5237,8 +5248,9 @@ function initInput(){
   $('bUndo').onclick=()=>{if(undoShop(G.player)){sfx('sell');toast('되돌렸습니다');}else toast('되돌릴 수 있는 거래가 없습니다');refreshShop(true);};
   $('bResume').onclick=()=>toggleModal('pause',false);
   $('bHelp2').onclick=()=>$('helpM').classList.remove('hidden');
-  $('bSurrender').onclick=()=>{if(!G||G.over)return;toggleModal('pause',false);G.over=true;G.winner=1-G.player.team;G.endT=G.time-2.5;};
-  $('bQuit').onclick=()=>{toggleModal('pause',false);G=null;show('title');musicStart(false);AU.intense=0;requestAnimationFrame(titleLoop);};
+  $('bSurrender').onclick=()=>{if(!G||G.over)return;if(NET.active&&NET.role==='guest'){toast('온라인 경기의 항복은 방장만 할 수 있습니다');return;}toggleModal('pause',false);G.over=true;G.winner=1-G.player.team;G.endT=G.time-2.5;};
+  const netQuit=()=>{if(NET.role)NET.leaveRoom(true);NET.active=false;};
+  $('bQuit').onclick=()=>{toggleModal('pause',false);netQuit();G=null;clearCaps();show('title');musicStart(false);AU.intense=0;requestAnimationFrame(titleLoop);};
   $('volM').oninput=$('volS').oninput=()=>setVol($('volM').value/100,$('volS').value/100);
   $('optVoice').onchange=e=>{VOICE_ON=e.target.checked;};
   $('optAuto').onchange=e=>{OPT.autoLevel=e.target.checked;};
@@ -5247,8 +5259,8 @@ function initInput(){
   $('bHelp').onclick=()=>$('helpM').classList.remove('hidden');
   $('bRand').onclick=()=>{if(SEL.rerolls<=0)return;SEL.rerolls--;let pool=CHAMPS.filter(c=>c.id!==SEL.champ);SEL.champ=pool[Math.floor(Math.random()*pool.length)].id;SEL.fac=-1;SEL.role='all';buildSelect();sfx('ui');};
   $('bStart').onclick=()=>{auInit();auResume();if(NET.pickingForOnline&&NET.role){NET.pickingForOnline=false;NET.openModal();return;}sfx('announce');startGame();};
-  $('bAgain').onclick=()=>{$('endScr').classList.add('hidden');G=null;SEL.rerolls=2;show('select');buildSelect();AU.intense=0;requestAnimationFrame(titleLoop);};
-  $('bMenu').onclick=()=>{$('endScr').classList.add('hidden');G=null;show('title');AU.intense=0;requestAnimationFrame(titleLoop);};
+  $('bAgain').onclick=()=>{$('endScr').classList.add('hidden');netQuit();clearCaps();G=null;SEL.rerolls=2;show('select');buildSelect();AU.intense=0;requestAnimationFrame(titleLoop);};
+  $('bMenu').onclick=()=>{$('endScr').classList.add('hidden');netQuit();clearCaps();G=null;show('title');AU.intense=0;requestAnimationFrame(titleLoop);};
 }
 function setTouch(on){OPT.touch=on;document.body.classList.toggle('touch',on);const cb=$('optTouch');if(cb)cb.checked=on;}
 
