@@ -1794,7 +1794,14 @@ function buildAssets(R){
   A.obs=R.obs.map(o=>{const m=new THREE.Mesh(decoGeo(o.spr,th.dc[0],th.dc[1]),VMAT);m.scale.setScalar(o.r*2.6);m.castShadow=true;STAT.add(m);return m;});
   A.pool={gi:[],proj:[]};
   for(const k of R.karts)KOBJ.push(makeKartObj(k));
+  pruneKartGeo(R);
   buildMinimap(tr);
+}
+// 카트 모델 캐시(최대 15x15 조합)가 레이스마다 계속 늘어 GPU 메모리를 잡아먹지 않도록, 이번 레이스에 없는 조합은 정리
+function pruneKartGeo(R){
+  const keep=new Set(R.karts.map(k=>'k'+k.ki+'_'+k.ci));keep.add('k'+S.ki+'_'+S.ci);
+  const keys=Object.keys(GEO).filter(k=>/^k\d+_\d+$/.test(k));if(keys.length<=24)return;
+  for(const key of keys){if(keep.has(key))continue;const e=GEO[key];for(const g of [e.g,e.glass,e.head,e.wheel,e.pod])if(g&&g.dispose)g.dispose();delete GEO[key];}
 }
 
 /* ----- 카트 오브젝트 (회전 휠 + 부스터 변신 파츠 + 제트 플레임 + 스키드마크) ----- */
