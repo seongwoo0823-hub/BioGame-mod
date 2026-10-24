@@ -2513,7 +2513,7 @@ function pickMinionTarget(m){
   return best;
 }
 function updatePet(p,dt){
-  tickStatus(p,dt);if(p.dead)return;p.life-=dt;if(p.life<=0||p.owner.dead){p.dead=true;burst(p.x,p.y,'#fff',6);return;}
+  tickStatus(p,dt);if(p.dead)return;p.life-=dt;if(p.life<=0||!p.owner||p.owner.dead){p.dead=true;burst(p.x,p.y,'#fff',6);return;}
   p.thinkT-=dt;
   if(p.thinkT<=0){
     p.thinkT=.28;const o=p.owner;let t=o.target&&!isStruct(o.target)&&validTarget(p,o.target)&&dist(p,o.target)<240?o.target:null;
@@ -4704,15 +4704,16 @@ function startGame(netOpts){
   musicStart(true);
   announce('혈관 협곡에 오신 것을 환영합니다','미니언 생성까지 10초 · 적을 우클릭해 일반 공격!',G.player.team);
   toast('우물에서 아이템을 구매하세요 (P) · 적 우클릭: 일반 공격');
-  LAST=performance.now();requestAnimationFrame(loop);
+  LAST=performance.now();const tok=loop.tok=(loop.tok||0)+1;requestAnimationFrame(t=>loop(t,tok));
 }
-function loop(now){
-  if(STATE!=='game')return;
-  try{frame(now);}catch(e){if(!loop._errN){console.error('게임 루프 오류:',e);}loop._errN=(loop._errN||0)+1;}
-  requestAnimationFrame(loop);
+function loop(now,tok){
+  // 게임을 다시 시작해도 이전 루프가 겹쳐 돌지 않도록 토큰으로 한 개만 유지
+  if(STATE!=='game'||tok!==loop.tok)return;
+  try{frame(performance.now());}catch(e){if(!loop._errN){console.error('게임 루프 오류:',e);}loop._errN=(loop._errN||0)+1;}
+  requestAnimationFrame(t=>loop(t,tok));
 }
 function frame(now){
-  let dt=Math.min(.05,(now-LAST)/1000);LAST=now;
+  let dt=clamp((now-LAST)/1000,0,.05);LAST=now;
   if(G&&!G.paused){
     step(dt);const pl=G.player;
     if(!pl.dead&&pl.moving){STEPT-=dt;if(STEPT<=0){STEPT=.3;sfx('step');}}
@@ -5454,6 +5455,7 @@ const NET={
 
   leaveRoom(silent){
     clearTimeout(this._joinWatch);
+    if(this.active&&this.role==='guest'&&G&&!G.over){G.over=true;G.winner=-1;G.endT=G.time-2.5;}
     if(this.role){
       if(this.role==='guest')this.sendToHost({type:'leave',id:this.myId});
       else if(this.role==='host')this.broadcast({type:'hostLeft'});
@@ -5629,7 +5631,7 @@ const NET={
         startGame({netPlayers:this.fullRoster,mySlot:this.mySlot,diff:data.diff||'normal'});
         this.updateTopBadge();
       }else if(data.type==='state'&&this.active&&G){
-        this.applySnapshot(data);
+        try{this.applySnapshot(data);}catch(e){if(!this._snapErr){this._snapErr=1;console.error('스냅샷 적용 오류:',e);}}
       }else if(data.type==='pong'&&data.to===this.myId){
         this.rtt=Math.round(this.rtt*0.7+(performance.now()-data.t)*0.3);
         this.updateTopBadge();
