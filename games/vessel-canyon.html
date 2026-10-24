@@ -195,7 +195,7 @@ body.touch #tgtBox{display:none!important}
 #shopInfo .tree{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0}
 #shopInfo .tree span{background:#14040a;border:1px solid #57172a;padding:2px 6px;border-radius:3px;font-size:12px}
 /* LoL식 아이템 조합 트리 (상위 조합 → 아이템 → 하위 재료). 트리의 모든 아이템은 가격 버튼으로 바로 구매 */
-.itree{margin:8px 0 4px;padding:8px 4px;background:rgba(0,0,0,.28);border:1px solid #4a1426;border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.itree{margin:6px 0 4px;padding:6px 4px;background:rgba(0,0,0,.28);border:1px solid #4a1426;border-radius:6px;display:flex;flex-direction:column;align-items:center;gap:4px}
 .itree .tlab{font-size:11px;color:var(--dim);align-self:flex-start;margin-left:4px}
 .itree .trow{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 .itree .tkids{display:flex;gap:10px;justify-content:center;align-items:flex-start;flex-wrap:wrap;position:relative;padding-top:8px;border-top:2px solid #6b4a24;margin-top:2px}
@@ -4986,9 +4986,9 @@ function refreshShop(full){
     if(info._k!==k||full){
       info._k=k;
       info.innerHTML=`<h4>${it.icon} ${it.n}</h4><div style="color:var(--amber)">가격 ${pl.price} G ${pl.price!==it.cost?`<s style="color:#a07080">(${it.cost})</s> <small style="color:#5dff7a">보유 재료 할인</small>`:''}</div>
+      ${shopTreeHTML(it.id)}<div style="font-size:11px;color:var(--dim)">아이콘: 해당 아이템 보기 · 가격 버튼: 바로 구매 (보유 재료만큼 할인)</div>
       ${it.st?`<div class="st">${Object.entries(it.st).map(([k,v])=>fmtStat(k,v)).join('<br>')}</div>`:''}
-      ${it.p?`<div class="ps">고유: ${it.p}</div>`:''}${it.d?`<div class="ps">${it.d}</div>`:''}
-      ${shopTreeHTML(it.id)}<div style="font-size:11px;color:var(--dim)">아이콘: 해당 아이템 보기 · 가격 버튼: 바로 구매 (보유 재료만큼 할인)</div>`;
+      ${it.p?`<div class="ps">고유: ${it.p}</div>`:''}${it.d?`<div class="ps">${it.d}</div>`:''}`;
     }
     // 가격·구매 가능 여부·부족 골드는 매번 갱신 (구조는 그대로 두어 클릭이 끊기지 않게)
     info.querySelectorAll('.tn').forEach(n=>{const id=n.dataset.id,P=buyPlan(c,id).price,r=canBuy(c,id),own=c.items.some(i=>i&&i.id===id);
