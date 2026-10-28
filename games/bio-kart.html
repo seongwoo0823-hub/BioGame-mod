@@ -2612,12 +2612,12 @@ function loop(ts){requestAnimationFrame(loop);let dt=(ts-(G.last||ts))/1000;G.la
   if(!G.paused||netLive){G.acc+=dt;let first=true,n=0;while(G.acc>=STEP&&n<6){const pinp=G.demo||G.paused?{}:readInput(first);if(netLive)NET.onLocalInput(pinp);stepRace(R,pinp,STEP);first=false;G.acc-=STEP;n++;}if(n>=6)G.acc=0;handleEvents(R);if(netLive)NET.tick(R,dt);}
   CAM.shake=Math.max(0,CAM.shake-dt);cvs.style.transform=CAM.shake>0?`translate(${(Math.random()-.5)*CAM.shake*14}px,${(Math.random()-.5)*CAM.shake*14}px)`:'';
   render(R,G.paused&&!netLive?0:dt);if(!G.demo)hud(R,dt);audioTick(R,dt);}
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.screen==='race'&&!G.demo)togglePause();for(const k in KEY)KEY[k]=false;for(const k in TOUCH)TOUCH[k]=false;if(AU.c&&AU.c.state==='running')AU.c.suspend();}else if(AU.c&&AU.c.state==='suspended')AU.c.resume();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.screen==='race'&&!G.demo&&!(typeof NET!=='undefined'&&NET.active))togglePause();for(const k in KEY)KEY[k]=false;for(const k in TOUCH)TOUCH[k]=false;if(AU.c&&AU.c.state==='running')AU.c.suspend();}else if(AU.c&&AU.c.state==='suspended')AU.c.resume();});
 
 /* ================= 방장 권한 P2P + 예측 보간 온라인 엔진 (NET) ================= */
 const NET = (() => {
   const PREFIX = 'biokart-p2p-v1-';
-  const NET_TIMEOUT = 3500; // ms
+  const NET_TIMEOUT = 10000; // ms (와이파이/모바일 지터 및 일시적 탭 전환 허용)
   let peer = null, peerConns = new Map(), bc = null, lobbyBc = null;
   let myId = 'p_' + Math.random().toString(36).slice(2, 9);
   const st = {
@@ -2640,7 +2640,13 @@ const NET = (() => {
   // 자체 PeerServer 지정: ?peerhost=localhost&peerport=9000&peerpath=/myapp&peersecure=0 (없으면 PeerJS 기본 클라우드 서버)
   function peerOpts(){
     try{
-      const q = new URLSearchParams(location.search), o = {};
+      const q = new URLSearchParams(location.search), o = {
+        debug: 0,
+        config: { iceServers: [
+          { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] },
+          { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' }
+        ] }
+      };
       if(q.get('peerhost')) o.host = q.get('peerhost');
       if(q.get('peerport')) o.port = +q.get('peerport');
       if(q.get('peerpath')) o.path = q.get('peerpath');
@@ -2664,18 +2670,34 @@ const NET = (() => {
     return c;
   }
 
+  let pktSeq = 0;
+  const seenSeq = new Map();
+  function isDupMsg(m){
+    if(!m || !m._s || !m._f) return false;
+    const prev = seenSeq.get(m._f) || 0;
+    if(m._s <= prev && prev - m._s < 5000) return true;
+    seenSeq.set(m._f, m._s);
+    return false;
+  }
+
   function sendAll(msg){
-    if(bc){ try{ bc.postMessage(msg); }catch(e){} }
+    msg._f = myId; msg._s = ++pktSeq;
+    let sentPeer = false;
     for(const conn of peerConns.values()){
-      if(conn && conn.open){ try{ conn.send(msg); }catch(e){} }
+      if(conn && conn.open){ try{ conn.send(msg); sentPeer = true; }catch(e){} }
+    }
+    if(bc && (!sentPeer || !(window.BIO_RT && window.BIO_RT.isDedicatedServer))){
+      try{ bc.postMessage(msg); }catch(e){}
     }
   }
 
   function sendToHost(msg){
-    msg.from = myId;
-    if(bc){ try{ bc.postMessage(msg); }catch(e){} }
+    msg.from = myId; msg._f = myId; msg._s = ++pktSeq;
     const h = peerConns.get('HOST');
-    if(h && h.open){ try{ h.send(msg); }catch(e){} }
+    if(h && h.open){
+      try{ h.send(msg); return; }catch(e){}
+    }
+    if(bc){ try{ bc.postMessage(msg); }catch(e){} }
   }
 
   function cleanup(){
@@ -2784,9 +2806,23 @@ const NET = (() => {
     renderLobby();
   }
 
-  function quickMatch(){
-    log('열려 있는 온라인 방을 탐색 중입니다...');
+  async function quickMatch(){
+    log('⚡ 실시간 매칭 서버에서 열려 있는 방을 탐색 중입니다...');
     setupLobbyDiscovery();
+    if(window.BIO_RT){
+      try{
+        const res = await window.BIO_RT.quickMatch(PREFIX, ['QM1','QM2','QM3','QM4'], 8);
+        if(res && res.action === 'join' && res.code){
+          joinRoom(res.code);
+          return;
+        }
+        if(res && res.action === 'create' && res.code){
+          createRoom(res.code);
+          log(`⚡ 빠른 매칭 대기방 [${st.code}]을 열었습니다! AI와 바로 출발하거나 다른 레이서를 기다리세요.`);
+          return;
+        }
+      }catch(e){}
+    }
     let found = false;
     if(lobbyBc){
       const handler = e => {
@@ -2802,12 +2838,12 @@ const NET = (() => {
       setTimeout(() => {
         lobbyBc.removeEventListener('message', handler);
         if(!found){
-          createRoom();
-          log(`열린 방이 없어 새 방 [${st.code}]을 만들고 방장이 되었습니다! AI와 바로 출발하거나 친구를 기다리세요.`);
+          createRoom('QM1');
+          log(`열린 방이 없어 빠른 매칭 방 [${st.code}]을 만들고 방장이 되었습니다! AI와 바로 출발하거나 친구를 기다리세요.`);
         }
-      }, 650);
+      }, 450);
     } else {
-      createRoom();
+      createRoom('QM1');
     }
   }
 
@@ -2871,7 +2907,7 @@ const NET = (() => {
   }
 
   function onMessage(m, conn){
-    if(!m || !st.active) return;
+    if(!m || !st.active || isDupMsg(m)) return;
     if(st.role === 'host'){
       if(m.type === 'join_req' && m.id !== myId){
         st.players[m.id] = { id: m.id, peerId: m.peerId, name: m.name || '게스트', ci: m.ci||0, ki: m.ki||0, parts: Array.isArray(m.parts) ? m.parts : [0,0,0,0,0,0], pet: m.pet ?? -1, isHost: false, joinT: Date.now(), rtt: 0 };
@@ -3144,9 +3180,10 @@ const NET = (() => {
 
     const tBadge = $('#netTransBadge');
     if(tBadge){
+      const modeTag = (window.BIO_RT && window.BIO_RT.isDedicatedServer) ? '⚡ 전용 실시간 서버(uWS)' : '🟢 하이브리드 P2P(UDP)';
       tBadge.textContent = st.active
-        ? (st.role === 'host' ? `🟢 방장 호스팅 중 (코드: ${st.code})` : `🟢 게스트 연결됨 (코드: ${st.code})`)
-        : '⚪ 오프라인 (방을 만들거나 참가하세요)';
+        ? (st.role === 'host' ? `${modeTag} · 방장 호스팅 중 (코드: ${st.code})` : `${modeTag} · 게스트 연결됨 (코드: ${st.code})`)
+        : '⚪ 오프라인 (방을 만들거나 빠른 매칭을 누르세요)';
     }
 
     const slotEl = $('#netSlotList');
@@ -3216,6 +3253,18 @@ const NET = (() => {
       if(st.active && st.role === 'host'){ sfx('start'); startOnlineMatch(); }
     });
   }, 0);
+
+  // 방장 탭이 백그라운드로 가려져도 물리 연산과 25Hz 스냅샷 전송이 멈추지 않도록 Web Worker 타이머 연동
+  setTimeout(() => {
+    if(window.BIO_RT && window.BIO_RT.onBackgroundTick){
+      window.BIO_RT.onBackgroundTick(dt => {
+        if(!st.active || st.role !== 'host' || !G.R || G.demo) return;
+        stepRace(G.R, {}, STEP);
+        handleEvents(G.R);
+        tick(G.R, dt);
+      });
+    }
+  }, 200);
 
   return {
     get active(){ return st.active; },

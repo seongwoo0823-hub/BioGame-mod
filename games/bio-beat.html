@@ -383,7 +383,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
     <h2>🌐 온라인 대결 <small style="font-size:14px;color:var(--mute)">2~4명 · 같은 곡 동시 시작</small></h2>
     <div class="netrow"><span>닉네임</span><input id="netNick" maxlength="10" autocomplete="off" aria-label="닉네임"></div>
     <div id="netJoinBox">
-      <div class="netrow"><button class="btn" data-net="create" id="netCreateBtn">🏠 방 만들기</button></div>
+      <div class="netrow"><button class="btn" data-net="create" id="netCreateBtn">🏠 방 만들기</button><button class="btn" data-net="quick" id="netQuickBtn" style="border-color:var(--cyan);color:var(--ice)">⚡ 빠른 매칭</button></div>
       <div class="netrow"><input id="netCode" class="code" maxlength="8" placeholder="방 코드" autocomplete="off" aria-label="방 코드"><button class="btn" data-net="join" id="netJoinBtn">🔑 코드로 참가</button></div>
     </div>
     <div id="netRoomBox" hidden>
@@ -2128,13 +2128,13 @@ const ONLINE=(()=>{
   }
   addEventListener('pagehide',()=>{if(N.active){if(N.role==='host')sendAll({type:'closed'});else toHost({type:'leave'});}});
 
-  /* ---------- 방장 ---------- */
-  async function create(){
+  /* ---------- 방장 & 빠른 매칭 ---------- */
+  async function create(customCode){
     if(N.busy)return;
     if(N.active)leave();
-    N.busy=true;render();log('🏠 방을 여는 중... (온라인 서버에 연결)');
+    N.busy=true;render();log('🏠 방을 여는 중... (실시간 서버 연결)');
     let p=null,code='',err=null;
-    for(let k=0;k<3&&!p;k++){code=genCode();try{p=await openPeer(PREFIX+code);}catch(e){err=e;if(e.code!=='taken')break;}}
+    for(let k=0;k<(customCode?1:3)&&!p;k++){code=(customCode||genCode()).toUpperCase();try{p=await openPeer(PREFIX+code);}catch(e){err=e;if(e.code!=='taken'||customCode)break;}}
     N.busy=false;
     if(!p){log(errMsg(err?err.code:'server',code));render();return;}
     peer=p;N.active=true;N.role='host';N.code=code;N.mid=0;N.board={};
@@ -2242,8 +2242,9 @@ const ONLINE=(()=>{
     N.busy=false;
     if(r==='ok'){
       N.active=true;N.role='guest';N.lastHost=now();N.samples=[];
-      log(`✅ 방 [${code}]에 들어왔어요! 시계를 맞추는 중... 방장이 곡을 고르고 시작하면 동시에 시작해요.`);
-      for(let k=0;k<8;k++)setTimeout(ping,60+k*90);
+      const isWS=window.BIO_RT&&window.BIO_RT.isDedicatedServer;
+      log(`✅ 방 [${code}]에 들어왔어요! (${isWS?'⚡전용 실시간 서버':'P2P'}) 시계를 맞추는 중...`);
+      for(let k=0;k<8;k++)setTimeout(ping,isWS?(15+k*35):(60+k*90));
     }else{
       if(hostConn){try{hostConn.close();}catch(e){}hostConn=null;}
       if(peer){try{peer.destroy();}catch(e){}peer=null;}
@@ -2423,7 +2424,7 @@ const ONLINE=(()=>{
   function render(){
     const host=N.role==='host';
     $('#netJoinBox').hidden=N.active;$('#netRoomBox').hidden=!N.active;
-    $('#netCreateBtn').disabled=N.busy;$('#netJoinBtn').disabled=N.busy;
+    $('#netCreateBtn').disabled=N.busy;$('#netJoinBtn').disabled=N.busy;if($('#netQuickBtn'))$('#netQuickBtn').disabled=N.busy;
     $('#netCodeDisp').textContent=N.code||'----';
     const pl=Object.values(N.players).sort((a,b)=>(b.host?1:0)-(a.host?1:0)||(a.joinT||0)-(b.joinT||0));
     $('#netPlayers').innerHTML=pl.map(p=>`<li class="${p.id===myId?'me':''}"><span>${p.host?'👑 ':'🎧 '}${esc(p.name)}${p.id===myId?' (나)':''}</span><small>${p.host?'방장':p.synced?`준비 완료${p.ping?' · '+p.ping+'ms':''}`:'시계 맞추는 중…'}</small></li>`).join('')+
@@ -2434,7 +2435,8 @@ const ONLINE=(()=>{
     sb.textContent=pl.length<2?'▶ 대결 시작 (2명부터)':'▶ 대결 시작';
     $('#netLeaveBtn').hidden=!N.active;
     const pill=$('#netPill');pill.hidden=!N.active;
-    if(N.active)pill.textContent=`🌐 ${N.code} · ${pl.length}명 · ${host?'방장':'게스트'}`;
+    const srvTag=(window.BIO_RT&&window.BIO_RT.isDedicatedServer)?'⚡서버':'🌐P2P';
+    if(N.active)pill.textContent=`${srvTag} ${N.code} · ${pl.length}명 · ${host?'방장':'게스트'}`;
     const sub=$('#startSub');if(sub)sub.textContent=N.active?(host?'온라인 대결 시작 (ENTER)':'방장이 시작해요'):'ENTER 로 시작';
   }
   // 방장이 곡·난이도를 바꾸면 바로 알려 준다
@@ -2458,6 +2460,7 @@ const ONLINE=(()=>{
       case'open':openModal();break;
       case'close':$('#mNet').classList.remove('on');break;
       case'create':create();break;
+      case'quick':(async()=>{if(N.busy)return;log('⚡ 열려 있는 대결 방을 즉시 탐색 중...');await loadPeerJS().catch(()=>{});if(window.BIO_RT){const r=await window.BIO_RT.quickMatch(PREFIX,['QM1','QM2','QM3','QM4'],MAX);if(r&&r.action==='join'){await join(r.code);if(!N.active)await create(r.code);}else await create(r?r.code:'QM1');}else await create();})();break;
       case'join':join($('#netCode').value);break;
       case'leave':{const was=N.active;leave();log(was?'방에서 나왔어요.':'');break;}
       case'start':hostStart();break;

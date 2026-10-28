@@ -2936,10 +2936,13 @@ const NET = (() => {
       renderModal();
       return r;
     };
-    // 1) 같은 브라우저의 다른 탭
-    const b = await tryBcJoin(code, 350);
-    if (b === true) return finish('ok');
-    if (typeof b === 'string') return finish(b);
+    // 1) 전용 실시간 서버(uWebSockets.js) 연결 시 대기 없이 즉시 서버로 진입, 아닐 때만 로컬 탭 BroadcastChannel 확인
+    await loadPeerJS().catch(() => {});
+    if (!(window.BIO_RT && window.BIO_RT.isDedicatedServer)) {
+      const b = await tryBcJoin(code, 220);
+      if (b === true) return finish('ok');
+      if (typeof b === 'string') return finish(b);
+    }
     // 2) PeerJS (실제 온라인 경로)
     try {
       if (!peer || peer.destroyed){ peer = await openPeer(null); watchPeer(peer); }
@@ -2956,26 +2959,28 @@ const NET = (() => {
     if (st.busy) return;
     cleanup(true);
     st.busy = true; st.phase = 'connecting'; renderModal();
-    log('🔎 열려 있는 방을 찾는 중...');
-    const local = await discoverBc(450);
-    if (local){ st.busy = false; joinRoom(local); return; }
-    try { if (!peer || peer.destroyed){ peer = await openPeer(null); watchPeer(peer); } }
-    catch(e){ st.busy = false; st.phase = 'idle'; renderModal(); log(errMsg(e.code)); return; }
-    let free = null;
-    for (const c of QUICK){
-      log(`🔎 빠른 매칭 방 [${c}] 확인 중...`);
-      const r = await joinRoom(c, { internal: true, keepPeer: true, quiet: true });
-      if (r === 'ok'){ st.busy = false; return; }
-      if (r === 'notfound' && !free) free = c;
-      if (r === 'server' || r === 'load' || r === 'webrtc'){ st.busy = false; log(errMsg(r)); return; }
+    log('⚡ 실시간 매칭 서버에서 열려 있는 방을 찾는 중...');
+    await loadPeerJS().catch(() => {});
+    if (!(window.BIO_RT && window.BIO_RT.isDedicatedServer)) {
+      const local = await discoverBc(250);
+      if (local){ st.busy = false; joinRoom(local); return; }
     }
-    if (peer){ try{ peer.destroy(); }catch(_){} peer = null; }
+    if (window.BIO_RT) {
+      const qm = await window.BIO_RT.quickMatch(PREFIX, QUICK, MAX_PLAYERS);
+      if (qm && qm.action === 'join' && qm.code) {
+        const r = await joinRoom(qm.code, { internal: true, quiet: true });
+        if (r === 'ok') { st.busy = false; renderModal(); return; }
+      }
+      st.busy = false;
+      const targetCode = (qm && qm.code) ? qm.code : QUICK[0];
+      const ok = await createRoom(targetCode, { internal: true });
+      if (ok && st.active) {
+        log(`✅ 열린 방이 없어 빠른 매칭 방 [${st.code}]을 만들었어요. 다른 친구가 빠른 매칭을 누르면 즉시 들어와요!`);
+        return;
+      }
+    }
     st.busy = false;
-    const order = free ? [free, ...QUICK.filter(c => c !== free)] : QUICK;
-    for (const c of order){
-      const ok = await createRoom(c, { internal: true });
-      if (ok && st.active){ if (st.bcOnly) return; log(`✅ 열린 방이 없어 빠른 매칭 방 [${c}]을 만들었어요. 다른 친구가 빠른 매칭을 누르면 들어와요!`); return; }
-    }
+    await createRoom(QUICK[0], { internal: true });
   }
 
   /* ---------- 방장: 메시지 처리 ---------- */
@@ -3414,8 +3419,9 @@ const NET = (() => {
     const stTxt = $('#netStateTxt');
     if (stTxt){
       const n = Object.keys(st.players).length;
+      const srvTag = (window.BIO_RT && window.BIO_RT.isDedicatedServer) ? '⚡전용서버' : '🟢P2P';
       stTxt.textContent = busy ? '🟡 연결 중...' : st.active
-        ? (st.role === 'host' ? `👑 방장 (${st.code}) · ${n}/${MAX_PLAYERS}명${st.bcOnly ? ' · 이 기기 전용' : ''}` : `🟢 게스트 (${st.code}) · ${n}/${MAX_PLAYERS}명`)
+        ? (st.role === 'host' ? `👑 방장 (${st.code} · ${srvTag}) · ${n}/${MAX_PLAYERS}명${st.bcOnly ? ' · 이 기기 전용' : ''}` : `${srvTag} 게스트 (${st.code}) · ${n}/${MAX_PLAYERS}명`)
         : '⚪ 대기 중';
     }
     const sl = $('#netSlotList');

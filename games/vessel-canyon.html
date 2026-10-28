@@ -5377,10 +5377,17 @@ const NET={
   players:[], remoteCmds:{}, pendingEv:[], snapAcc:0, rtt:18, pingT:0, _replaying:false,
   minionMap:new Map(), pickingForOnline:false, seq:0, seenA:new Set(), seenB:new Set(), namesDirty:true, namesT:0, aiCache:[null,null],
 
-  // ?peerhost=&peerport=&peerpath=&peersecure= 로 자체 PeerServer 지정 (기본: PeerJS 공용 서버)
+  // ?peerhost=&peerport=&peerpath=&peersecure= 로 자체 PeerServer 지정 (기본: uWebSockets.js 전용 서버 또는 STUN/TURN P2P)
   peerOpts(){
-    try{const q=new URLSearchParams(location.search),h=q.get('peerhost');if(!h)return null;
-      return{host:h,port:+(q.get('peerport')||(q.get('peersecure')==='1'?443:9000)),path:q.get('peerpath')||'/',secure:q.get('peersecure')==='1',debug:0};}catch(e){return null;}
+    try{
+      const ice={iceServers:[
+        {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.cloudflare.com:3478']},
+        {urls:['turn:eu-0.turn.peerjs.com:3478','turn:us-0.turn.peerjs.com:3478'],username:'peerjs',credential:'peerjsp'}
+      ]};
+      const q=new URLSearchParams(location.search),h=q.get('peerhost');
+      if(!h)return{debug:0,config:ice};
+      return{host:h,port:+(q.get('peerport')||(q.get('peersecure')==='1'?443:9000)),path:q.get('peerpath')||'/',secure:q.get('peersecure')==='1',debug:0,config:ice};
+    }catch(e){return null;}
   },
   esc(t){return tipEsc(String(t==null?'':t));},
   cleanNick(n){return String(n||'').replace(/[<>&"'`]/g,'').trim().slice(0,10);},
@@ -5481,13 +5488,14 @@ const NET={
   sendToHost(msg){
     this.stamp(msg);
     if(this.role==='host'){this.onMessage(Object.assign({},msg,{from:'self'}),null);return;}
-    if(this.hostConn&&this.hostConn.open){try{this.hostConn.send(msg);}catch(e){}}
+    if(this.hostConn&&this.hostConn.open){try{this.hostConn.send(msg);return;}catch(e){}}
     if(this.bc){try{this.bc.postMessage(msg);}catch(e){}}
   },
   broadcast(msg){
     this.stamp(msg);
-    for(const conn of new Set(this.conns.values())){if(conn&&conn.open){try{conn.send(msg);}catch(e){}}}
-    if(this.bc){try{this.bc.postMessage(msg);}catch(e){}}
+    let sent=false;
+    for(const conn of new Set(this.conns.values())){if(conn&&conn.open){try{conn.send(msg);sent=true;}catch(e){}}}
+    if(this.bc&&(!sent||!(window.BIO_RT&&window.BIO_RT.isDedicatedServer))){try{this.bc.postMessage(msg);}catch(e){}}
   },
   // 같은 기기의 탭끼리는 BroadcastChannel과 WebRTC 양쪽으로 같은 메시지가 올 수 있음 → 발신자+순번으로 중복 제거
   isDup(d){
@@ -5564,7 +5572,19 @@ const NET={
     },this.peerOpts()?4000:2500);
   },
 
-  quickMatch(){
+  async quickMatch(){
+    this.setStatus('⚡ 실시간 매칭 서버에서 열려 있는 5:5 대전을 탐색 중...','#ffe066');
+    if(window.BIO_RT){
+      try{
+        const r=await window.BIO_RT.quickMatch('biocanyon-room-',['QM51','QM52','QM53','QM54','QM55'],10);
+        if(r&&r.action==='join'&&r.code){this.joinRoom(r.code,true);return;}
+        if(r&&r.action==='create'&&r.code){
+          this.createRoom(r.code);
+          this.setStatus('⚡ 빠른 매칭 대기방 ['+this.code+']의 방장이 되었습니다! 언제든 시작할 수 있습니다.','#5dff7a');
+          return;
+        }
+      }catch(e){}
+    }
     this.joinRoom('QM55',true);
   },
 
@@ -5995,7 +6015,8 @@ const NET={
     const el=$('netTopBadge');if(!el)return;
     if(!this.active){el.style.display='none';return;}
     el.style.display='inline';
-    el.textContent=this.role==='host'?`👑 방장 P2P (${this.code})`:`🌐 P2P (${this.code}) · ${this.rtt}ms`;
+    const srv=(window.BIO_RT&&window.BIO_RT.isDedicatedServer)?'⚡서버':'🌐P2P';
+    el.textContent=this.role==='host'?`👑 방장 ${srv} (${this.code})`:`${srv} (${this.code}) · ${this.rtt}ms`;
   }
 };
 /* 참가자 화면: 버프·보호막·둔화의 남은 시간만 줄임 (판정은 방장) */
@@ -6013,7 +6034,8 @@ function boot(){
   setTouch(!!touchDev);
   show('title');requestAnimationFrame(titleLoop);
 }
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(STATE==='game'&&G&&!G.over&&!G.paused)toggleModal('pause',true);if(AU.ctx&&AU.ctx.state==='running')AU.ctx.suspend();}else if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(STATE==='game'&&G&&!G.over&&!G.paused&&!NET.active)toggleModal('pause',true);if(AU.ctx&&AU.ctx.state==='running')AU.ctx.suspend();}else if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();});
+setTimeout(()=>{if(window.BIO_RT&&window.BIO_RT.onBackgroundTick){window.BIO_RT.onBackgroundTick(dt=>{if(STATE==='game'&&G&&!G.paused&&NET.active&&NET.role==='host'){try{step(dt);}catch(_){}}});}},200);
 if(!window.__HEADLESS)boot();
 </script>
 </body></html>

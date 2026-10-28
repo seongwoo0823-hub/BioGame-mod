@@ -1,0 +1,17 @@
+{
+  "name": "biogame-realtime-server",
+  "version": "2.0.0",
+  "description": "uWebSockets.js 기반 BIO ARCADE 통합 초저지연 실시간 매칭 및 릴레이 서버 (4종 멀티플레이 게임 지원)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "install-uws": "npm install uNetworking/uWebSockets.js#v20.48.0"
+  },
+  "OptionalDependencies": {
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.48.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}
