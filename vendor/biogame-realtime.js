@@ -80,7 +80,8 @@
     pendingOpens: new Map(), // reqId -> { peer, resolve, reject }
     pendingQuick: new Map(), // reqId -> resolve
     waiters: [],
-
+// vendor/biogame-realtime.js 내 resolveCandidateUrls() 안에 한 줄 추가 예시
+list.push('wss://biogame-mod.onrender.com/ws');
     resolveCandidateUrls() {
       const q = new URLSearchParams(global.location ? global.location.search : '');
       if (q.get('p2p') === '1' || q.get('nop2pws') === '1') return [];
