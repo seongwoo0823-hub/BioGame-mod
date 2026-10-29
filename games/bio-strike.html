@@ -2416,8 +2416,18 @@ function updateMonsters(dt){
     if (m.type === 'boss'){ updateBoss(m, dt, tgt); continue; }
     const dx = P.pos.x - m.foot.x, dz = P.pos.z - m.foot.z, dist = Math.hypot(dx, dz) || 0.01;
     m.losT -= dt; if (m.losT <= 0){ m.losT = rand(0.2, 0.35); m.los = P.alive && PHYS.los(W, c, tgt); }
+    // 막힘 감지: 2초마다 플레이어에게 가까워졌는지 확인 → 길찾기 강제 → 오래 막히면 재배치
+    m.progT = (m.progT || 0) - dt;
+    if (m.progT <= 0){
+      m.progT = 2;
+      const far = dist > (d.ranged ? d.range * 0.9 : (d.reach || 1.5) + 1.5);
+      if (far && m.lastDist != null && m.lastDist - dist < 0.6){ m.stuck = (m.stuck || 0) + 1; m.navT = 3; } else if (!far || m.lastDist - dist > 1.5) m.stuck = 0;
+      m.lastDist = dist;
+      if (m.stuck >= 4){ const [sx, sz] = pickMSpawn(); m.foot.set(sx, d.fly ? 1.5 : 0, sz); m.vel.set(0, 0, 0); m.stuck = 0; m.lastDist = null; }
+    }
+    if (m.navT > 0) m.navT -= dt;
     let mx = dx / dist, mz = dz / dist;
-    if (!m.los && dist > 2.5){ if (!f) f = G.nav.field(P.pos.x, P.pos.z, G.time); if (G.nav.dir(f, m.foot.x, m.foot.z, _md)){ mx = _md.x; mz = _md.z; } }
+    if ((!m.los || m.navT > 0) && dist > 2.5){ if (!f) f = G.nav.field(P.pos.x, P.pos.z, G.time); if (G.nav.dir(f, m.foot.x, m.foot.z, _md)){ mx = _md.x; mz = _md.z; } }
     let spd = d.spd;
     if (!P.alive){ mx = -mx * 0.2; mz = -mz * 0.2; spd *= 0.3; }
     else if (d.ranged && m.los){
