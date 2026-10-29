@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BIO ARCADE · 생명과학 게임 아케이드</title>
-<meta name="description" content="리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터, 핀볼, 3D 난투와 플랫포머까지 — 1인칭 슈팅까지 — 생명과학으로 만든 게임 10종을 한곳에서 즐기세요.">
+<meta name="description" content="리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터, 핀볼, 3D 난투와 플랫포머까지 — 1인칭 슈팅, 핵앤슬래시 RPG까지 — 생명과학으로 만든 게임 11종을 한곳에서 즐기세요.">
 <meta name="theme-color" content="#0b0f1e">
 <link rel="manifest" href="manifest.webmanifest?v=2">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-v2-32.png">
@@ -262,7 +262,7 @@ header.hero{
   box-shadow:0 6px 18px -4px var(--c);
 }
 
-.c1{--c:#38bdf8}.c2{--c:#f472b6}.c3{--c:#facc15}.c4{--c:#fb7185}.c5{--c:#c084fc}.c6{--c:#fb923c}.c7{--c:#4ade80}.c8{--c:#e879f9}.c9{--c:#fda4af}.c10{--c:#5eead4}
+.c1{--c:#38bdf8}.c2{--c:#f472b6}.c3{--c:#facc15}.c4{--c:#fb7185}.c5{--c:#c084fc}.c6{--c:#fb923c}.c7{--c:#4ade80}.c8{--c:#e879f9}.c9{--c:#fda4af}.c10{--c:#5eead4}.c11{--c:#f59e0b}
 
 /* ---------- Tips Glass Cards ---------- */
 .tips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:28px}
@@ -418,7 +418,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
       <span>BIO ARCADE</span>
     </div>
     <div class="filters" role="tablist" aria-label="장르 필터">
-      <button class="fbtn on" type="button" data-filter="all">전체 10</button>
+      <button class="fbtn on" type="button" data-filter="all">전체 11</button>
       <button class="fbtn" type="button" data-filter="online">🌐 온라인 멀티</button>
       <button class="fbtn" type="button" data-filter="action">⚡ 액션·대전</button>
       <button class="fbtn" type="button" data-filter="casual">🏎️ 레이싱·아케이드</button>
@@ -438,7 +438,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
   <header class="hero">
     <div class="hero-main">
       <h1 class="logo">BIO ARCADE</h1>
-      <span class="tag">생명과학 게임 10종</span>
+      <span class="tag">생명과학 게임 11종</span>
       <p class="lead">세포·유전·면역·생태 테마 아케이드 컬렉션 · PC &amp; 모바일 즉시 플레이</p>
     </div>
     <div class="hero-stats">
@@ -594,6 +594,19 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
         <div class="foot"><span class="rec" data-rec="bio-strike">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
       </div>
     </a>
+    <a class="card c11" href="games/infection-lord.html" data-id="infection-lord" data-cat="action" data-kw="감염의 군주 디아블로 RPG 핵앤슬래시 액션 직업 스킬 트리 아이템 던전 보스 대식세포 T세포 형질세포 수지상세포">
+      <div class="shot">
+        <img src="assets/infection-lord.jpg" alt="감염의 군주 플레이 화면" width="640" height="360">
+        <span class="genre">ACTION RPG</span>
+      </div>
+      <div class="body">
+        <div class="title"><h2>감염의 군주</h2><small>LORD OF INFECTION · 핵앤슬래시 RPG</small></div>
+        <p class="desc">면역 세포 영웅 4직업 중 하나를 골라 피부·혈관·장·폐·뇌 5장을 정화하는 쿼터뷰 액션 RPG. 매번 새로 생기는 지도, 무작위 옵션 장비, 스킬 트리로 페이션트 제로를 쓰러뜨리세요.</p>
+        <ul class="feat"><li>직업 4 · 스킬 60 · 만렙 60</li><li>병원체 50종+ · 보스 11 · 3난이도</li><li>부위별 장비 30종 · 고유 아이템 30</li></ul>
+        <div class="keys">클릭 이동·공격 · 우클릭 스킬 · <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> 스킬 · <kbd>I</kbd> 소지품 · <kbd>T</kbd> 스킬 트리</div>
+        <div class="foot"><span class="rec" data-rec="infection-lord">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
+      </div>
+    </a>
   </main>
 
   <section class="tips" aria-label="플레이 안내">
@@ -659,7 +672,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
         <button class="g-btn pri" id="btnSaveStudent" type="button">💾 내 기록 등록·실시간 전송</button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <select id="rankGameFilter" class="g-inp" style="font-size:12.5px;padding:6px 10px">
-            <option value="total">🏅 10종 게임 종합 점수 순위</option>
+            <option value="total">🏅 11종 게임 종합 점수 순위</option>
             <option value="bio-beat">🎵 BIO BEAT (리듬)</option>
             <option value="immune-strike">🔫 면역 특공대 (액션)</option>
             <option value="bio-kart">🏎️ 바이오 카트 레이서</option>
@@ -670,6 +683,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
             <option value="cell-brawl">💥 셀 브롤 (3D 난투)</option>
             <option value="only-up">🧗 ONLY UP (소화 대탈출)</option>
             <option value="bio-strike">🔫 바이오 스트라이크 (FPS)</option>
+            <option value="infection-lord">👑 감염의 군주 (RPG)</option>
           </select>
           <button class="g-btn" id="btnRefreshRank" type="button">🔄 새로고침</button>
         </div>
@@ -830,6 +844,11 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
       if(s.surv&&s.surv.wave)out.push(`생존 <b>${s.surv.wave}</b>웨이브`);
       if(s.mp&&s.mp.k)out.push(`온라인 <b>${s.mp.k}</b>킬`);
       return out.join(' · ');
+    },
+    'infection-lord'(){
+      const s=get('infectionLord');if(!s||!s.lvl)return '';
+      const D=['일반','악몽','지옥'];
+      return `최고 <b>Lv ${s.lvl}</b> ${s.cls||''} · 보스 <b>${s.bosses||0}</b> · ${D[s.diff||0]}`;
     },
     'vessel-canyon'(){
       const s=get('vesselCanyonStats');if(!s||!(s.w||s.l))return '';
@@ -1009,7 +1028,8 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
     {id:'cell-pinball',name:'세포 탐사대'},
     {id:'cell-brawl',name:'셀 브롤'},
     {id:'only-up',name:'ONLY UP'},
-    {id:'bio-strike',name:'바이오 스트라이크'}
+    {id:'bio-strike',name:'바이오 스트라이크'},
+    {id:'infection-lord',name:'감염의 군주'}
   ];
 
   function collectLocalGameMetrics(){
@@ -1106,6 +1126,14 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
           const lb=[];if(cl)lb.push(`스토리 ${cl}/5장`);if(sw)lb.push(`생존 ${sw}웨이브`);if(mk)lb.push(`온라인 ${mk}킬`);
           games['bio-strike']={pts,label:lb.join(' · ')};
         }
+      }
+    }
+    {
+      const s=get('infectionLord');
+      if(s&&s.lvl){
+        const D=['일반','악몽','지옥'];
+        const pts=s.lvl*40+(s.bosses||0)*120+(s.diff||0)*600;
+        games['infection-lord']={pts,label:`Lv ${s.lvl} · 보스 ${s.bosses||0} · ${D[s.diff||0]}`};
       }
     }
     for(const k of Object.keys(games)){
@@ -1253,7 +1281,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
         <td><b>${r.stId&&r.stId!=='미입력'?escapeHtml(r.stId)+' ':''}${escapeHtml(r.name)}</b>${isMe?' <span class="env-pill" style="color:#7dd3fc">나</span>':''}</td>
         <td><span class="env-pill">${escapeHtml(r.env||'Web')}</span></td>
         <td><b style="color:#fde047;font-size:13.5px">${scVal.toLocaleString('en-US')}점</b></td>
-        <td>${r.playedCount||Object.keys(r.games||{}).length} / 10종</td>
+        <td>${r.playedCount||Object.keys(r.games||{}).length} / 11종</td>
         <td style="white-space:normal;min-width:230px">${detailTxt}</td>
         <td style="color:var(--dim)">${tStr}</td>
         ${adminTd}

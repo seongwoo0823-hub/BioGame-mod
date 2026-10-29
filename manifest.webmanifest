@@ -2,7 +2,7 @@
   "id": "./?pwa=v2",
   "name": "BIO ARCADE",
   "short_name": "BIO ARCADE",
-  "description": "리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터, 핀볼, 3D 난투, 플랫포머, 1인칭 슈팅까지 생명과학으로 만든 게임 10종",
+  "description": "리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터, 핀볼, 3D 난투, 플랫포머, 1인칭 슈팅, 핵앤슬래시 RPG까지 생명과학으로 만든 게임 11종",
   "lang": "ko",
   "start_url": "./index.html?pwa=v2",
   "scope": "./",
@@ -151,6 +151,18 @@
       "name": "바이오 스트라이크",
       "short_name": "생명과학 FPS",
       "url": "./games/bio-strike.html",
+      "icons": [
+        {
+          "src": "icons/icon-v2-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "감염의 군주",
+      "short_name": "생명과학 RPG",
+      "url": "./games/infection-lord.html",
       "icons": [
         {
           "src": "icons/icon-v2-192.png",
