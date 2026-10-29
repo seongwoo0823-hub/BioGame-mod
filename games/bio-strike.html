@@ -2605,6 +2605,7 @@ function clearGame(){
 }
 function beginPlay(){
   G.state = 'play'; G.hadLock = false;
+  ['#result', '#pause', '#dialog'].forEach(x => $(x).classList.add('hidden'));
   showScreen(null); $('#hud').classList.remove('hidden');
   if (IS_TOUCH) $('#touch').classList.remove('hidden');
   updateAbilHud(true);
@@ -3030,8 +3031,9 @@ function storyWin(){
   SFX.play('win');
 }
 function onLocalDeath(){
-  if (G.story){ G.frozen = true; centerMsg('요원 쓰러짐', '면역 방어선이 무너졌다…', 2); SFX.play('lose'); setTimeout(() => { if (G.story) showStoryResult(false); }, 1800); }
-  if (G.surv){ G.frozen = true; centerMsg('GAME OVER', `웨이브 ${G.surv.wave}에서 쓰러졌다`, 2); SFX.play('lose'); setTimeout(() => { if (G.surv) showSurvResult(); }, 1800); }
+  const S = G.story, V = G.surv;
+  if (S){ G.frozen = true; centerMsg('요원 쓰러짐', '면역 방어선이 무너졌다…', 2); SFX.play('lose'); setTimeout(() => { if (G.story === S) showStoryResult(false); }, 1800); }
+  if (V){ G.frozen = true; centerMsg('GAME OVER', `웨이브 ${V.wave}에서 쓰러졌다`, 2); SFX.play('lose'); setTimeout(() => { if (G.surv === V) showSurvResult(); }, 1800); }
 }
 function showStoryResult(win){
   const S = G.story, p = G.player;
