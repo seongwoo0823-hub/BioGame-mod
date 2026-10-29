@@ -6,9 +6,9 @@
 <title>BIO ARCADE · 생명과학 게임 아케이드</title>
 <meta name="description" content="리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터, 핀볼, 3D 난투와 플랫포머까지 — 생명과학으로 만든 게임 9종을 한곳에서 즐기세요.">
 <meta name="theme-color" content="#0b0f1e">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-v2-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-v2.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -414,7 +414,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
 <div class="wrap">
   <nav class="topbar" aria-label="아케이드 탐색 바">
     <div class="brand-pill">
-      <img src="icons/icon-192.png" alt="BIO ARCADE 아이콘" width="30" height="30" style="width:30px;height:30px;border-radius:8px;box-shadow:0 4px 12px rgba(56,189,248,0.45)">
+      <img src="icons/icon-v2-192.png" alt="BIO ARCADE 아이콘" width="30" height="30" style="width:30px;height:30px;border-radius:8px;box-shadow:0 4px 12px rgba(56,189,248,0.45)">
       <span>BIO ARCADE</span>
     </div>
     <div class="filters" role="tablist" aria-label="장르 필터">
@@ -596,14 +596,14 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
   <div class="glass-modal sm">
     <div class="m-head">
       <h3 id="pwaModalTitle">
-        <img src="icons/icon-192.png" alt="" width="28" height="28" style="width:28px;height:28px;border-radius:7px">
+        <img src="icons/icon-v2-192.png" alt="" width="28" height="28" style="width:28px;height:28px;border-radius:7px">
         <span>BIO ARCADE 앱(PWA) 설치</span>
       </h3>
       <button class="m-close" type="button" data-close="pwaModal" aria-label="닫기">✕</button>
     </div>
     <div class="m-body">
       <div class="guide-box" style="display:flex;align-items:center;gap:14px;background:rgba(56,189,248,0.12);border-color:rgba(56,189,248,0.35);color:#e0f2fe">
-        <img src="icons/icon-192.png" alt="BIO ARCADE" width="56" height="56" style="width:56px;height:56px;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,0.45);flex:none">
+        <img src="icons/icon-v2-192.png" alt="BIO ARCADE" width="56" height="56" style="width:56px;height:56px;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,0.45);flex:none">
         <div>
           <b style="color:#fff;font-size:14.5px">BIO ARCADE 전용 앱 설치</b><br>
           바탕화면이나 스마트폰 홈 화면에 세련된 전용 아이콘으로 설치하고 전체 화면·오프라인에서도 즉시 플레이하세요.
@@ -727,7 +727,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
   // 아래 DEFAULT_GAS_URL 따옴표 안에 넣어 두시면 모든 학생 기기에서 별도 설정 없이 즉시 연동됩니다!
   // (또는 사이트의 🔐 관리자 모드[비번 1211]에서도 URL을 등록하고 배포 링크를 복사할 수 있습니다.)
   // =========================================================================
-  const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwO6iyqGg_MthXxpnaORNcOoGef0p2P1t5vZvnJt1a6vO3B32ojQKoZZWWhGZc_3j2KEQ/exec';
+  const DEFAULT_GAS_URL = '';
   const ADMIN_PASS = '1211';
 
   const get=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}};

@@ -1,6 +1,5 @@
-/* BIO ARCADE 서비스 워커: 처음 접속할 때 전체 게임을 저장해 두고, 이후에는 오프라인에서도 실행.
-   파일을 바꾸면 VERSION을 올려야 사용자 기기의 캐시가 새 버전으로 교체됩니다. */
-const VERSION = 'biogame-hub-v6-sleek-icon-sheets';
+/* BIO ARCADE 서비스 워커: 처음 접속할 때 전체 게임을 저장해 두고, 이후에는 오프라인에서도 실행. */
+const VERSION = 'biogame-hub-v7-icon-fix';
 const FONT_CACHE = 'bio-arcade-fonts';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
@@ -10,8 +9,8 @@ const CORE = [
   './assets/bio-beat.jpg', './assets/immune-strike.jpg', './assets/bio-kart.jpg',
   './assets/vessel-canyon.jpg', './assets/biotro.jpg', './assets/cell-bound.jpg',
   './assets/cell-pinball.jpg', './assets/cell-brawl.jpg', './assets/only-up.jpg',
-  './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png',
-  './icons/apple-touch-icon.png', './icons/favicon-32.png',
+  './icons/icon-v2-192.png', './icons/icon-v2-512.png', './icons/icon-v2-maskable-512.png',
+  './icons/apple-touch-icon-v2.png', './icons/favicon-v2-32.png',
   './vendor/three.min.js', './vendor/peerjs.min.js',
 ];
 
@@ -31,7 +30,6 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // 구글 폰트: 캐시 우선, 없으면 받아서 저장
   if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
     e.respondWith(caches.open(FONT_CACHE).then(async c => {
       const hit = await c.match(req);
@@ -43,7 +41,20 @@ self.addEventListener('fetch', e => {
   }
   if (url.origin !== location.origin) return;
 
-  // 같은 사이트 파일: 캐시를 바로 보여주고 뒤에서 새 버전으로 갱신 (다음 실행 때 반영)
+  // manifest 및 아이콘 파일은 항상 네트워크 우선(Network-First)으로 최신 아이콘 보장
+  if (url.pathname.endsWith('.webmanifest') || url.pathname.includes('/icons/')) {
+    e.respondWith(caches.open(VERSION).then(async c => {
+      try {
+        const res = await fetch(req, {cache: 'reload'});
+        if (res && res.ok) c.put(req, res.clone());
+        return res;
+      } catch (_) {
+        return (await c.match(req, {ignoreSearch: true})) || Response.error();
+      }
+    }));
+    return;
+  }
+
   e.respondWith(caches.open(VERSION).then(async c => {
     const hit = await c.match(req, {ignoreSearch: true});
     const net = fetch(req).then(res => { if (res.ok) c.put(req, res.clone()); return res; }).catch(() => null);
