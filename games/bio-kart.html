@@ -2987,6 +2987,10 @@ $('#petDex').innerHTML=PETS.map((p,i)=>`<div class="dex"><canvas data-pet="${i}"
 let petDexDone=false;function drawPetDex(){if(petDexDone)return;petDexDone=true;document.querySelectorAll('#petDex canvas').forEach(c=>c.getContext('2d').drawImage(thumb3('p',+c.dataset.pet,0),0,0));}
 $('#partDex').innerHTML=GEAR_PARTS.map((P,si)=>`<div class="dex"><div><b>${P.slot}</b><small>${P.opts.slice(1).map((o,j)=>o.n+' ('+fxList(partFx(si,j+1,'item')).join(', ')+')').join(' / ')}</small></div></div>`).join('');
 const STEP=1/60;
+/* 온라인 레이스 중 탭이 가려져도 진행이 멈추지 않도록 워커 타이머로 계속 진행 (입력은 중립) */
+(()=>{const bg=()=>{const R=G.R;if(!document.hidden||!R||G.demo||!(typeof NET!=='undefined'&&NET.active))return;const now=performance.now();let dt=(now-(G.last||now))/1000;G.last=now;if(dt>0.1)dt=0.1;
+  try{G.acc+=dt;let n=0;while(G.acc>=STEP&&n<6){const pinp={};NET.onLocalInput(pinp);stepRace(R,pinp,STEP);G.acc-=STEP;n++;}if(n>=6)G.acc=0;handleEvents(R);NET.tick(R,dt);}catch(e){}};
+  try{const w=new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},50)'],{type:'text/javascript'})));w.onmessage=bg;}catch(e){setInterval(bg,100);}})();
 function loop(ts){requestAnimationFrame(loop);let dt=(ts-(G.last||ts))/1000;G.last=ts;if(dt>0.1)dt=0.1;const R=G.R;if(!R)return;
   // 온라인 레이스는 일시정지 화면을 띄워도 멈추지 않음 (다른 플레이어와 같은 시간으로 진행, 내 입력만 중립)
   const netLive=typeof NET!=='undefined'&&NET.active&&!G.demo;

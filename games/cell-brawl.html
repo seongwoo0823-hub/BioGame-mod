@@ -3237,15 +3237,17 @@ const NET = (() => {
       if (!inMatch()){ st.hb = (st.hb || 0) + 1; if (st.hb % 2 === 0) broadcastRoom(); }
     }
   }, 1000);
-  // 방장 탭이 백그라운드여서 화면 갱신(requestAnimationFrame)이 멈춰도 경기 진행은 계속되도록
-  setInterval(() => {
-    if (!st.active || st.role !== 'host' || state !== 'game' || !G || !G.netMid) return;
+  // 방장 탭이 백그라운드여서 화면 갱신(requestAnimationFrame)이 멈춰도 경기 진행은 계속되도록.
+  // 일반 setInterval은 백그라운드에서 1초 간격으로 느려져 게스트 화면이 뚝뚝 끊기므로 워커 타이머(50ms)를 쓴다.
+  const bgStep = () => {
+    if (!document.hidden || !st.active || st.role !== 'host' || state !== 'game' || !G || !G.netMid) return;
     const now = performance.now();
-    if (now - lastGameStep < 300) return;
     let steps = Math.min(40, Math.floor((now - lastGameStep) / 50));
+    if (steps <= 0) return;
     while (steps-- > 0 && $('#resultModal').classList.contains('hidden')) updateGame(0.05);
     lastGameStep = now;
-  }, 250);
+  };
+  try { const wk = new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},50)'],{type:'text/javascript'}))); wk.onmessage = bgStep; } catch(e){ setInterval(bgStep, 250); }
 
   /* ---------- 게스트: 방장 상태 반영 ---------- */
   function applyHostState(m){
