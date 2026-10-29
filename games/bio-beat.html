@@ -26,6 +26,8 @@ body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var
 #play{pointer-events:none}
 #pauseBtn{position:absolute;width:58px;height:58px;pointer-events:auto;touch-action:manipulation;border:2px solid rgba(47,230,255,.65);border-radius:14px;background:rgba(3,16,24,.78);color:#bff8ff;font:700 22px/1 'Press Start 2P',monospace;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 14px rgba(0,0,0,.5);-webkit-tap-highlight-color:transparent}
 #pauseBtn i{display:block;width:7px;height:22px;background:#bff8ff;border-radius:2px}
+#playHubBtn{position:fixed;left:14px;top:calc(14px + env(safe-area-inset-top,0px));z-index:25;padding:8px 13px;border-radius:999px;border:1px solid rgba(191,248,255,.35);background:rgba(8,20,36,.68);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#bff8ff;font-family:var(--kr);font-size:14px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+#playHubBtn:hover{background:rgba(47,230,255,.22);border-color:#2fe6ff}
 #pauseBtn:active{transform:scale(.94);background:rgba(47,230,255,.3)}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;touch-action:none}
 button{font:inherit;color:inherit;cursor:pointer}
@@ -320,7 +322,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
     </div>
   </div>
 
-  <div id="play" class="screen"><button id="pauseBtn" type="button" aria-label="일시정지"><i></i><i></i></button></div>
+  <div id="play" class="screen"><button id="playHubBtn" type="button" data-act="hub" aria-label="게임 목록으로 돌아가기">🏠 게임 목록</button><button id="pauseBtn" type="button" aria-label="일시정지"><i></i><i></i></button></div>
 
   <div id="result" class="screen">
     <div class="rbox pnl">
@@ -352,7 +354,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
         <div class="qb"><button class="btn" data-qa="1" aria-label="O, 맞다">O</button><button class="btn" data-qa="0" aria-label="X, 틀리다">X</button></div>
         <div class="qe" id="qE"></div>
       </div>
-      <div class="rbtns"><button class="btn" data-act="retry">다시 하기 (R)</button><button class="btn" data-act="toSelect">곡 선택 (ENTER)</button></div>
+      <div class="rbtns"><button class="btn" data-act="retry">다시 하기 (R)</button><button class="btn" data-act="toSelect">곡 선택 (ENTER)</button><button class="btn" data-act="hub">🏠 게임 목록</button></div>
     </div>
   </div>
 
@@ -402,6 +404,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
     <button class="btn" data-act="resume">계속하기 (ESC)</button>
     <button class="btn" data-act="retry" id="pauseRetry">처음부터</button>
     <button class="btn" data-act="quit" id="pauseQuit">곡 선택으로</button>
+    <button class="btn" data-act="hub">🏠 게임 목록으로</button>
   </div></div>
 </div>
 

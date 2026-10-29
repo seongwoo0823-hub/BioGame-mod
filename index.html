@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BIO ARCADE · 생명과학 게임 아케이드</title>
 <meta name="description" content="리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터, 핀볼, 3D 난투와 플랫포머까지 — 생명과학으로 만든 게임 9종을 한곳에서 즐기세요.">
-<meta name="theme-color" content="#0a0612">
+<meta name="theme-color" content="#0b0f1e">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -15,210 +15,467 @@
 <meta name="apple-mobile-web-app-title" content="BIO ARCADE">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0a0612; --bg2:#140a22; --panel:#1a1030; --edge:#3a2a5a; --ink:#f4eaff; --dim:#a898c4;
-  --pink:#ff6aa8; --yolk:#ffe060; --cyan:#2fe6ff; --lime:#8cff7a;
-  --px:'Press Start 2P',monospace; --kr:'Do Hyeon','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --bg:#080b16;
+  --glass:rgba(255,255,255,0.085);
+  --glass-hover:rgba(255,255,255,0.135);
+  --glass-strong:rgba(255,255,255,0.16);
+  --glass-pill:rgba(255,255,255,0.07);
+  --border:rgba(255,255,255,0.18);
+  --border-strong:rgba(255,255,255,0.34);
+  --ink:#f5f7ff;
+  --sub:rgba(235,240,255,0.72);
+  --dim:rgba(210,220,245,0.52);
+  --shadow:0 22px 50px -12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.28);
+  --radius-xl:28px;
+  --radius-lg:22px;
+  --radius-md:14px;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:border-box}
-html{background:var(--bg)}
-body{margin:0;min-height:100vh;color:var(--ink);font-family:var(--kr);font-size:17px;line-height:1.5;
+html{background:var(--bg);scroll-behavior:smooth}
+body{
+  margin:0;min-height:100vh;color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.55;
+  background:var(--bg);overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0);
+}
+a{color:inherit;text-decoration:none}
+
+/* ---------- iOS Dynamic Ambient Mesh Wallpaper ---------- */
+.ambient{
+  position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%,rgba(255,106,168,.18),transparent 70%),
-    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px) 0 0/16px 16px,
-    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px) 0 0/16px 16px,
-    var(--bg);
-  padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0)}
-a{color:inherit}
-.wrap{max-width:1160px;margin:0 auto;padding:0 16px}
+    radial-gradient(circle at 15% 15%, rgba(56,189,248,0.26), transparent 42%),
+    radial-gradient(circle at 85% 18%, rgba(244,114,182,0.24), transparent 45%),
+    radial-gradient(circle at 50% 82%, rgba(139,92,246,0.24), transparent 50%),
+    radial-gradient(circle at 18% 85%, rgba(52,211,153,0.18), transparent 42%),
+    linear-gradient(180deg, #080c1a 0%, #0b1024 52%, #070a14 100%);
+}
+.orb{
+  position:absolute;border-radius:50%;filter:blur(70px);opacity:0.55;
+  animation:floatOrb 18s ease-in-out infinite alternate;
+}
+.orb.o1{width:460px;height:460px;left:-100px;top:-80px;background:#38bdf8}
+.orb.o2{width:520px;height:520px;right:-140px;top:60px;background:#f472b6;animation-duration:22s;animation-delay:-4s}
+.orb.o3{width:480px;height:480px;left:28%;bottom:-140px;background:#818cf8;animation-duration:25s;animation-delay:-9s}
+@keyframes floatOrb{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  100%{transform:translate3d(40px,28px,0) scale(1.08)}
+}
 
-/* ---------- header ---------- */
-header{text-align:center;padding:48px 0 28px}
-.logo{font-family:var(--px);font-size:clamp(28px,6.4vw,58px);line-height:1.1;letter-spacing:2px;margin:0;color:#fff;
-  text-shadow:4px 4px 0 #8a1a5a,8px 8px 0 #3a0a2a,0 0 30px rgba(255,106,168,.35)}
-.logo span{color:var(--cyan);text-shadow:4px 4px 0 #0a5a7a,8px 8px 0 #052a3a,0 0 30px rgba(47,230,255,.35)}
-.tag{margin:18px 0 0;font-size:clamp(19px,3.4vw,26px);color:var(--yolk);text-shadow:2px 2px 0 #3a2a00}
-.lead{margin:10px auto 0;max-width:640px;color:var(--dim);font-size:16px}
-.cells{display:flex;justify-content:center;gap:10px;margin-top:22px}
-.cells i{width:12px;height:12px;display:block;background:var(--pink);box-shadow:0 0 0 2px #3a0a2a;animation:hop 1.2s steps(3) infinite}
-.cells i:nth-child(2){background:var(--cyan);animation-delay:.15s}.cells i:nth-child(3){background:var(--lime);animation-delay:.3s}.cells i:nth-child(4){background:var(--yolk);animation-delay:.45s}
-@keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.wrap{max-width:1220px;margin:0 auto;padding:0 20px 48px}
 
-/* ---------- game cards ---------- */
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;padding-bottom:28px}
-.card{--c:var(--pink);position:relative;display:flex;flex-direction:column;background:var(--panel);border:3px solid var(--edge);
-  text-decoration:none;box-shadow:6px 6px 0 #05020a;transition:transform .12s,border-color .12s,box-shadow .12s}
-.card:hover,.card:focus-visible{transform:translate(-3px,-3px);border-color:var(--c);box-shadow:9px 9px 0 #05020a,0 0 0 1px var(--c);outline:none}
-.card:active{transform:translate(0,0);box-shadow:3px 3px 0 #05020a}
-.shot{position:relative;aspect-ratio:16/9;overflow:hidden;background:#000;border-bottom:3px solid var(--edge)}
-.shot img{display:block;width:100%;height:100%;object-fit:cover;image-rendering:pixelated;transition:transform .3s}
-.card:hover .shot img{transform:scale(1.04)}
-.genre{position:absolute;left:10px;top:10px;font-family:var(--px);font-size:10px;padding:6px 8px;background:var(--c);color:#12081a;box-shadow:2px 2px 0 #05020a}
-.recent{position:absolute;right:10px;top:10px;font-size:14px;padding:3px 8px;background:#12081a;color:var(--yolk);border:2px solid var(--yolk)}
-.body{display:flex;flex-direction:column;gap:8px;padding:16px 18px 18px;flex:1}
-.title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.title h2{margin:0;font-weight:400;font-size:28px;line-height:1.15}
-.title small{font-family:var(--px);font-size:10px;color:var(--c)}
-.desc{margin:0;color:#ddd0f0}
-.feat{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 0;padding:0;list-style:none}
-.feat li{font-size:14px;padding:2px 8px;background:#100820;border:2px solid #2a1a44;color:var(--dim)}
-.keys{font-size:14px;color:var(--dim)}
-.keys kbd{font-family:var(--kr);font-size:14px;line-height:1;padding:2px 6px;background:#100820;border:1px solid #3a2a5a;color:var(--ink)}
-.foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:10px;border-top:2px dashed #2a1a44}
-.rec{font-size:15px;color:var(--dim);min-width:0}
-.rec b{color:var(--yolk);font-weight:400}
-.play{flex:none;font-family:var(--px);font-size:12px;padding:10px 14px;background:var(--c);color:#12081a;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),3px 3px 0 #05020a}
-.c1{--c:#2fe6ff}.c2{--c:#ff6aa8}.c3{--c:#ffd23f}.c4{--c:#ff5a5a}.c5{--c:#b07aff}.c6{--c:#ff8a3a}.c7{--c:#7cf06a}.c8{--c:#ff4fc8}.c9{--c:#ff9d7a}
+/* ---------- Top Navigation Glass Bar ---------- */
+.topbar{
+  position:sticky;top:14px;z-index:30;margin-top:16px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:10px 16px;border-radius:999px;
+  background:rgba(18,24,46,0.62);
+  backdrop-filter:blur(30px) saturate(190%);
+  -webkit-backdrop-filter:blur(30px) saturate(190%);
+  border:1px solid var(--border);
+  box-shadow:0 14px 36px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.brand-pill{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:-0.02em}
+.brand-dot{
+  width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:15px;
+  background:linear-gradient(135deg,#38bdf8,#818cf8,#f472b6);
+  box-shadow:0 4px 12px rgba(56,189,248,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.filters{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.fbtn{
+  appearance:none;border:1px solid transparent;background:transparent;color:var(--sub);
+  font:inherit;font-size:13.5px;font-weight:600;padding:6px 13px;border-radius:999px;cursor:pointer;
+  transition:all .2s cubic-bezier(.2,.8,.2,1);
+}
+.fbtn:hover{color:#fff;background:rgba(255,255,255,0.08)}
+.fbtn.on{
+  color:#fff;background:rgba(255,255,255,0.18);
+  border-color:rgba(255,255,255,0.28);
+  box-shadow:0 4px 14px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.35);
+}
+.top-actions{display:flex;align-items:center;gap:8px}
+.search-box{
+  position:relative;display:flex;align-items:center;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);
+  border-radius:999px;padding:5px 12px;transition:border-color .2s,background .2s;
+}
+.search-box:focus-within{background:rgba(255,255,255,0.14);border-color:rgba(255,255,255,0.38)}
+.search-box input{
+  background:transparent;border:none;outline:none;color:#fff;font:inherit;font-size:13.5px;width:135px;
+}
+.search-box input::placeholder{color:var(--dim)}
+.icon-pill{
+  appearance:none;border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.08);
+  color:var(--ink);font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;cursor:pointer;
+  transition:all .18s ease;
+}
+.icon-pill:hover{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.3)}
 
-/* ---------- tips ---------- */
-.tips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:28px}
-.tip{background:rgba(26,16,48,.7);border:2px solid #2a1a44;padding:12px 14px;font-size:15px;color:var(--dim)}
-.tip b{display:block;color:var(--ink);font-weight:400;font-size:17px;margin-bottom:2px}
-#install{display:inline-flex;align-items:center;gap:8px;margin-top:18px;padding:10px 18px;border:2px solid var(--yolk);border-radius:8px;
-  background:#2a2000;color:var(--yolk);font:inherit;font-size:17px;cursor:pointer;box-shadow:0 4px 0 #6a5000}
-#install:hover{background:#3a2c00}#install:active{transform:translateY(2px);box-shadow:0 2px 0 #6a5000}
+/* ---------- Compact Slim Hero Bar ---------- */
+header.hero{
+  display:flex;align-items:center;justify-content:space-between;gap:12px 18px;flex-wrap:wrap;
+  padding:11px 18px;margin:12px 0 16px;
+  border-radius:18px;
+  background:linear-gradient(145deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.035) 100%);
+  backdrop-filter:blur(28px) saturate(190%);
+  -webkit-backdrop-filter:blur(28px) saturate(190%);
+  border:1px solid var(--border);
+  box-shadow:0 10px 28px -8px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.22);
+  position:relative;overflow:hidden;
+}
+.hero-main{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0}
+.logo{
+  font-size:17px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;margin:0;
+  background:linear-gradient(135deg,#ffffff 0%,#bae6fd 60%,#f5d0fe 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.tag{
+  margin:0;font-size:12px;font-weight:600;color:#7dd3fc;
+  padding:2px 8px;border-radius:999px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.25);
+}
+.lead{margin:0;color:var(--sub);font-size:12.5px;line-height:1.4}
+.hero-stats{
+  display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;
+}
+.stat-chip{
+  padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:500;color:var(--sub);
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
+}
+.stat-chip b{color:#fff;font-weight:700}
+
+#install{
+  display:inline-flex;align-items:center;gap:6px;padding:5px 12px;
+  border:1px solid rgba(255,255,255,0.32);border-radius:999px;
+  background:rgba(255,255,255,0.16);backdrop-filter:blur(14px);
+  color:#fff;font:inherit;font-size:12px;font-weight:600;cursor:pointer;
+  transition:transform .15s,background .15s;
+}
+#install:hover{background:rgba(255,255,255,0.25);transform:translateY(-1px)}
 #install[hidden],#iosHint[hidden]{display:none}
-#iosHint{margin:14px auto 0;max-width:420px;padding:10px 14px;border:1px dashed var(--edge);border-radius:8px;color:var(--dim);font-size:15px}
-#iosHint b{color:var(--ink);font-weight:400}
-footer{text-align:center;color:#6a5a88;font-size:14px;padding:6px 0 36px}
+#iosHint{
+  width:100%;margin:4px 0 0;padding:6px 12px;
+  background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:10px;
+  color:var(--sub);font-size:12px;text-align:center;
+}
 
-@media (max-width:820px){
-  header{padding:34px 0 22px}
+/* ---------- Frosted Glass Game Cards Grid ---------- */
+.grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;padding-bottom:28px;
+}
+.card{
+  --c:#38bdf8;
+  position:relative;display:flex;flex-direction:column;
+  border-radius:var(--radius-lg);overflow:hidden;
+  background:var(--glass);
+  backdrop-filter:blur(28px) saturate(190%);
+  -webkit-backdrop-filter:blur(28px) saturate(190%);
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+  transition:transform .26s cubic-bezier(.2,.8,.2,1), background .26s, border-color .26s, box-shadow .26s;
+}
+.card:hover,.card:focus-visible{
+  transform:translateY(-6px) scale(1.01);
+  background:var(--glass-hover);
+  border-color:var(--border-strong);
+  box-shadow:0 28px 60px -12px rgba(0,0,0,0.65), 0 0 28px -6px var(--c), inset 0 1px 0 rgba(255,255,255,0.45);
+  outline:none;
+}
+.card:active{transform:translateY(-2px) scale(0.995)}
+.card[hidden]{display:none!important}
+
+.shot{
+  position:relative;aspect-ratio:16/9;overflow:hidden;
+  background:rgba(0,0,0,0.35);border-bottom:1px solid rgba(255,255,255,0.12);
+}
+.shot img{
+  display:block;width:100%;height:100%;object-fit:cover;
+  transition:transform .45s cubic-bezier(.2,.8,.2,1);
+}
+.card:hover .shot img{transform:scale(1.06)}
+.shot::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg, rgba(0,0,0,0.05) 45%, rgba(8,11,22,0.55) 100%);
+  pointer-events:none;
+}
+.genre{
+  position:absolute;left:12px;top:12px;z-index:2;
+  font-size:11px;font-weight:700;letter-spacing:0.06em;padding:5px 11px;border-radius:999px;
+  background:rgba(15,20,38,0.62);
+  backdrop-filter:blur(14px) saturate(180%);
+  -webkit-backdrop-filter:blur(14px) saturate(180%);
+  border:1px solid rgba(255,255,255,0.28);
+  color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.3);
+}
+.online-tag{
+  position:absolute;left:12px;bottom:10px;z-index:2;
+  font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;
+  background:rgba(16,185,129,0.28);backdrop-filter:blur(12px);
+  border:1px solid rgba(110,231,183,0.45);color:#a7f3d0;
+}
+.recent{
+  position:absolute;right:12px;top:12px;z-index:2;
+  font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;
+  background:rgba(250,204,21,0.24);backdrop-filter:blur(14px);
+  border:1px solid rgba(253,224,71,0.5);color:#fef08a;
+}
+
+.body{display:flex;flex-direction:column;gap:10px;padding:18px 20px 20px;flex:1}
+.title{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.title h2{margin:0;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#fff}
+.title small{font-size:12px;font-weight:600;color:var(--c);opacity:0.95}
+.desc{margin:0;color:var(--sub);font-size:14px;line-height:1.55}
+
+.feat{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 0;padding:0;list-style:none}
+.feat li{
+  font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;
+  background:var(--glass-pill);border:1px solid rgba(255,255,255,0.12);color:var(--sub);
+}
+.keys{font-size:12.5px;color:var(--dim);margin-top:2px}
+.keys kbd{
+  font-family:var(--font);font-size:11.5px;font-weight:600;line-height:1;
+  padding:2px 7px;border-radius:6px;
+  background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:var(--ink);
+}
+
+.foot{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1);
+}
+.rec{font-size:13px;color:var(--sub);min-width:0}
+.rec b{color:#fde047;font-weight:700}
+.play{
+  flex:none;font-size:13px;font-weight:700;letter-spacing:0.03em;
+  padding:8px 16px;border-radius:999px;
+  background:rgba(255,255,255,0.16);
+  border:1px solid rgba(255,255,255,0.28);
+  color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.35);
+  transition:all .2s ease;
+}
+.card:hover .play{
+  background:var(--c);color:#080c18;border-color:transparent;
+  box-shadow:0 6px 18px -4px var(--c);
+}
+
+.c1{--c:#38bdf8}.c2{--c:#f472b6}.c3{--c:#facc15}.c4{--c:#fb7185}.c5{--c:#c084fc}.c6{--c:#fb923c}.c7{--c:#4ade80}.c8{--c:#e879f9}.c9{--c:#fda4af}
+
+/* ---------- Tips Glass Cards ---------- */
+.tips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:28px}
+.tip{
+  background:var(--glass);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:16px 18px;font-size:14px;color:var(--sub);
+  box-shadow:0 12px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.22);
+}
+.tip b{display:block;color:#fff;font-weight:700;font-size:15.5px;margin-bottom:4px}
+
+footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
+
+@media (max-width:1040px){
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:720px){
+  .topbar{border-radius:20px;padding:10px 12px}
   .grid{grid-template-columns:1fr}
   .tips{grid-template-columns:1fr}
-}
-@media (max-width:420px){
-  .body{padding:14px}
-  .title h2{font-size:24px}
-  .foot{flex-direction:column;align-items:stretch}
-  .play{text-align:center}
+  .search-box{flex:1}
+  .search-box input{width:100%}
 }
 @media (prefers-reduced-motion:reduce){
-  .cells i{animation:none}
+  .orb{animation:none}
   .card,.shot img{transition:none}
 }
 </style>
 </head>
 <body>
+<div class="ambient" aria-hidden="true">
+  <div class="orb o1"></div>
+  <div class="orb o2"></div>
+  <div class="orb o3"></div>
+</div>
+
 <div class="wrap">
-  <header>
-    <h1 class="logo">BIO <span>ARCADE</span></h1>
-    <p class="tag">생명과학 게임 아케이드</p>
-    <p class="lead">세포·유전·면역·생태를 무대로 한 게임 9종. 브라우저에서 바로 플레이하거나 앱으로 설치해 오프라인에서도 즐기세요.</p>
-    <button id="install" type="button" hidden>📲 앱으로 설치하기</button>
-    <p id="iosHint" hidden>📲 홈 화면에 설치하려면 Safari 아래쪽 <b>공유 버튼</b>을 누르고 <b>「홈 화면에 추가」</b>를 선택하세요.</p>
-    <div class="cells" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <nav class="topbar" aria-label="아케이드 탐색 바">
+    <div class="brand-pill">
+      <span class="brand-dot">🧬</span>
+      <span>BIO ARCADE</span>
+    </div>
+    <div class="filters" role="tablist" aria-label="장르 필터">
+      <button class="fbtn on" type="button" data-filter="all">전체 9</button>
+      <button class="fbtn" type="button" data-filter="online">🌐 온라인 멀티</button>
+      <button class="fbtn" type="button" data-filter="action">⚡ 액션·대전</button>
+      <button class="fbtn" type="button" data-filter="casual">🏎️ 레이싱·아케이드</button>
+    </div>
+    <div class="top-actions">
+      <label class="search-box" aria-label="게임 검색">
+        <span style="font-size:13px;margin-right:6px;opacity:.7">🔎</span>
+        <input id="gameSearch" type="search" placeholder="게임·단원 검색">
+      </label>
+      <button class="icon-pill" id="uiSndBtn" type="button" title="인터페이스 효과음 전환">🔊 사운드</button>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-main">
+      <h1 class="logo">BIO ARCADE</h1>
+      <span class="tag">생명과학 게임 9종</span>
+      <p class="lead">세포·유전·면역·생태 테마 아케이드 컬렉션 · PC &amp; 모바일 즉시 플레이</p>
+    </div>
+    <div class="hero-stats">
+      <span class="stat-chip">🌐 온라인 멀티 <b>4종</b></span>
+      <span class="stat-chip">🏠 인게임 <b>목록 복귀</b></span>
+      <button id="install" type="button" hidden>📲 앱 설치</button>
+    </div>
+    <p id="iosHint" hidden>📲 홈 화면에 설치하려면 Safari 아래쪽 <b>공유 버튼</b> → <b>「홈 화면에 추가」</b>를 선택하세요.</p>
   </header>
 
   <main class="grid" id="games">
-    <a class="card c1" href="games/bio-beat.html" data-id="bio-beat">
-      <div class="shot"><img src="assets/bio-beat.jpg" alt="BIO BEAT 플레이 화면: 4개의 레인으로 노트가 떨어지는 리듬게임" width="640" height="360"><span class="genre">RHYTHM</span></div>
+    <a class="card c1" href="games/bio-beat.html" data-id="bio-beat" data-cat="online casual" data-kw="리듬 음악 퀴즈 세포 유전 생태 온라인">
+      <div class="shot">
+        <img src="assets/bio-beat.jpg" alt="BIO BEAT 플레이 화면" width="640" height="360">
+        <span class="genre">RHYTHM</span>
+        <span class="online-tag">🌐 온라인 2~4인</span>
+      </div>
       <div class="body">
         <div class="title"><h2>BIO BEAT</h2><small>생명과학 리듬게임</small></div>
         <p class="desc">세포에서 생태계까지 단원별 25곡을 4키로 연주해요. 곡이 끝나면 생명과학 OX 퀴즈가 나와요.</p>
-        <ul class="feat"><li>25곡 × 3난이도</li><li>오토 싱크 보정</li><li>온라인 대결 (2~4명)</li></ul>
+        <ul class="feat"><li>25곡 × 3난이도</li><li>오토 싱크 보정</li><li>실시간 대결 · 빠른 매칭</li></ul>
         <div class="keys"><kbd>D</kbd> <kbd>F</kbd> <kbd>J</kbd> <kbd>K</kbd> 연주 · 모바일은 레인 터치</div>
-        <div class="foot"><span class="rec" data-rec="bio-beat">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+        <div class="foot"><span class="rec" data-rec="bio-beat">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
       </div>
     </a>
 
-    <a class="card c2" href="games/immune-strike.html" data-id="immune-strike">
-      <div class="shot"><img src="assets/immune-strike.jpg" alt="면역 특공대 플레이 화면: 혈관 속에서 면역세포가 세균과 싸우는 횡스크롤 액션" width="640" height="360"><span class="genre">ACTION</span></div>
+    <a class="card c2" href="games/immune-strike.html" data-id="immune-strike" data-cat="action" data-kw="면역 특공대 액션 슈팅 호중구 대식세포 T세포 NK세포">
+      <div class="shot">
+        <img src="assets/immune-strike.jpg" alt="면역 특공대 플레이 화면" width="640" height="360">
+        <span class="genre">RUN &amp; GUN</span>
+      </div>
       <div class="body">
         <div class="title"><h2>면역 특공대</h2><small>IMMUNE STRIKE</small></div>
         <p class="desc">호중구·대식세포·T세포·NK세포 중 하나로 출동해 세균, 바이러스, 암세포가 기다리는 3스테이지를 돌파하는 런앤건 액션.</p>
         <ul class="feat"><li>면역세포 4종</li><li>보스 3 + 중간 보스</li><li>게임패드 지원</li></ul>
         <div class="keys"><kbd>←</kbd><kbd>→</kbd> 이동 · <kbd>Z</kbd> 사격 · <kbd>X</kbd> 점프 · <kbd>C</kbd> 폭탄 · <kbd>V</kbd> 특수기</div>
-        <div class="foot"><span class="rec" data-rec="immune-strike">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+        <div class="foot"><span class="rec" data-rec="immune-strike">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
       </div>
     </a>
 
-    <a class="card c3" href="games/bio-kart.html" data-id="bio-kart">
-      <div class="shot"><img src="assets/bio-kart.jpg" alt="바이오 카트 레이서 플레이 화면: 카트라이더풍 3D 트랙을 달리는 카트들" width="640" height="360"><span class="genre">RACING</span></div>
+    <a class="card c3" href="games/bio-kart.html" data-id="bio-kart" data-cat="online casual" data-kw="바이오 카트 레이서 카트라이더 레이싱 드리프트 온라인">
+      <div class="shot">
+        <img src="assets/bio-kart.jpg" alt="바이오 카트 레이서 플레이 화면" width="640" height="360">
+        <span class="genre">KART RACING</span>
+        <span class="online-tag">🌐 온라인 8인</span>
+      </div>
       <div class="body">
-        <div class="title"><h2>바이오 카트 레이서</h2><small>BIO KART</small></div>
-        <p class="desc">세포막 서킷부터 DNA 이중나선까지, 몸속 15개 트랙을 카트라이더풍 3D로 달리는 카트 레이싱. 드리프트와 순간 부스터로 속도를 올리거나 생명과학 아이템으로 승부해요.</p>
-        <ul class="feat"><li>카트라이더풍 3D</li><li>캐릭터 15 · 카트 15</li><li>온라인 멀티 (P2P)</li></ul>
+        <div class="title"><h2>바이오 카트 레이서</h2><small>CLASSIC TOON 3D</small></div>
+        <p class="desc">클래식 카트라이더 감성의 툰 그래픽과 UI! 개성 넘치는 카트바디 15종으로 점프대·언덕·장애물이 가득한 몸속 15개 트랙을 질주하세요.</p>
+        <ul class="feat"><li>개성형 카트 15 · 캐릭터 15</li><li>언덕·점프대 입체 트랙</li><li>온라인 멀티 (P2P)</li></ul>
         <div class="keys"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 주행 · <kbd>SHIFT</kbd> 드리프트 · <kbd>SPACE</kbd> 아이템</div>
-        <div class="foot"><span class="rec" data-rec="bio-kart">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+        <div class="foot"><span class="rec" data-rec="bio-kart">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
       </div>
     </a>
 
-    <a class="card c4" href="games/vessel-canyon.html" data-id="vessel-canyon">
-      <div class="shot"><img src="assets/vessel-canyon.jpg" alt="혈관 협곡 플레이 화면: 3D 협곡에서 세포와 감염원이 맞붙는 롤 스타일 대전" width="640" height="360"><span class="genre">5 vs 5</span></div>
+    <a class="card c4" href="games/vessel-canyon.html" data-id="vessel-canyon" data-cat="online action" data-kw="혈관 협곡 롤 MOBA 5대5 세포 감염원 온라인">
+      <div class="shot">
+        <img src="assets/vessel-canyon.jpg" alt="혈관 협곡 플레이 화면" width="640" height="360">
+        <span class="genre">5 vs 5 MOBA</span>
+        <span class="online-tag">🌐 온라인 10인</span>
+      </div>
       <div class="body">
-        <div class="title"><h2>혈관 협곡</h2><small>세포 대전</small></div>
-        <p class="desc">세포 10종과 감염원 10종이 3D 혈관 협곡에서 5대5로 맞붙는 칼바람 모드 대전. 롤 스타일 HUD와 아이템 트리 상점, 포지션 배정 온라인 멀티까지 지원해요.</p>
-        <ul class="feat"><li>3D 그래픽 · 롤 스타일 HUD</li><li>챔피언 20종</li><li>온라인 멀티 (P2P)</li></ul>
+        <div class="title"><h2>혈관 협곡</h2><small>세포 5:5 대전</small></div>
+        <p class="desc">세포 10종과 감염원 10종이 3D 혈관 협곡에서 5대5로 맞붙는 칼바람 대전. 단계별 아이템 조합 트리 상점과 온라인 멀티를 지원해요.</p>
+        <ul class="feat"><li>챔피언 20종</li><li>3단 조합 트리 상점</li><li>온라인 멀티 (P2P)</li></ul>
         <div class="keys">마우스 우클릭 이동·공격 · <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> 스킬 · <kbd>P</kbd> 상점</div>
-        <div class="foot"><span class="rec" data-rec="vessel-canyon">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+        <div class="foot"><span class="rec" data-rec="vessel-canyon">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
       </div>
     </a>
-    <a class="card c5" href="games/biotro.html" data-id="biotro">
-      <div class="shot"><img src="assets/biotro.jpg" alt="BIOTRO 플레이 화면: 생명과학 조커와 카드로 포커 족보 점수를 계산하는 모습" width="640" height="360"><span class="genre">CARD</span></div>
+
+    <a class="card c5" href="games/biotro.html" data-id="biotro" data-cat="casual" data-kw="바이오트로 포커 카드 덱빌딩 로그라이크 조커">
+      <div class="shot">
+        <img src="assets/biotro.jpg" alt="BIOTRO 플레이 화면" width="640" height="360">
+        <span class="genre">DECK ROGUELIKE</span>
+      </div>
       <div class="body">
         <div class="title"><h2>BIOTRO</h2><small>세포 포커 로그라이크</small></div>
-        <p class="desc">포커 족보로 칩 × 배수 점수를 쌓아 블라인드를 돌파하는 덱빌딩 로그라이크. 생명과학 조커, 소기관 카드, 시약 카드로 나만의 덱을 키워요.</p>
-        <ul class="feat"><li>조커 150종 (전설 5종)</li><li>보스 블라인드 27종</li><li>인장 · 에디션 · 바우처 32종</li></ul>
-        <div class="keys">카드 클릭으로 선택 · <kbd>Enter</kbd> 핸드 플레이 · 조커와 카드는 끌어서 순서 변경</div>
-        <div class="foot"><span class="rec" data-rec="biotro">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+        <p class="desc">포커 족보로 칩 × 배수 점수를 쌓아 블라인드를 돌파하는 덱빌딩 로그라이크. 생명과학 조커, 소기관 카드, 시약 카드로 덱을 키워요.</p>
+        <ul class="feat"><li>조커 150종 (전설 5종)</li><li>보스 블라인드 27종</li><li>인장 · 에디션 · 바우처</li></ul>
+        <div class="keys">카드 클릭 선택 · <kbd>Enter</kbd> 핸드 플레이 · 드래그로 순서 변경</div>
+        <div class="foot"><span class="rec" data-rec="biotro">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
       </div>
     </a>
-    <a class="card c6" href="games/cell-bound.html" data-id="cell-bound">
-      <div class="shot"><img src="assets/cell-bound.jpg" alt="CELL BOUND 플레이 화면: 세포가 눈물을 쏘며 방 안의 세균과 싸우는 모습" width="640" height="360"><span class="genre">ROGUELIKE</span></div>
+
+    <a class="card c6" href="games/cell-bound.html" data-id="cell-bound" data-cat="action" data-kw="셀 바운드 아이작 로그라이크 던전 슈터 세포">
+      <div class="shot">
+        <img src="assets/cell-bound.jpg" alt="CELL BOUND 플레이 화면" width="640" height="360">
+        <span class="genre">ISAAC ROGUELIKE</span>
+      </div>
       <div class="body">
-        <div class="title"><h2>CELL BOUND</h2><small>세포의 속박 · 탐험 슈터</small></div>
-        <p class="desc">세포가 되어 세포질에서 핵까지 8개 층을 내려가는 방 탐험 슈터. 무작위로 만들어지는 층에서 아이템을 모아 보스를 쓰러뜨리세요.</p>
-        <ul class="feat"><li>세포 8종</li><li>아이템 157종 · 장신구 203종</li><li>카드 70종 · 알약 32종 · 보스 22종</li></ul>
+        <div class="title"><h2>CELL BOUND</h2><small>세포의 속박 · 리버스 에디션</small></div>
+        <p class="desc">바인딩 오브 아이작 스타일의 입체적인 던전과 문, 기괴한 병원체 보스를 물리치며 세포질에서 핵까지 8개 층을 탐험하는 슈터.</p>
+        <ul class="feat"><li>입체 던전 &amp; 특수 방문</li><li>아이템 157종 · 장신구 203종</li><li>보스 22종 · 세포 8종</li></ul>
         <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> 공격 · <kbd>E</kbd> 폭탄 · <kbd>Space</kbd> 액티브</div>
-        <div class="foot"><span class="rec" data-rec="cell-bound">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+        <div class="foot"><span class="rec" data-rec="cell-bound">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
       </div>
     </a>
 
-    <a class="card c7" href="games/cell-pinball.html" data-id="cell-pinball">
-      <div class="shot"><img src="assets/cell-pinball.jpg" alt="세포 탐사대 플레이 화면: 세포핵과 골지체, 미토콘드리아로 꾸민 핀볼 테이블" width="640" height="360"><span class="genre">PINBALL</span></div>
+    <a class="card c7" href="games/cell-pinball.html" data-id="cell-pinball" data-cat="casual" data-kw="세포 탐사대 핀볼 소기관 미토콘드리아 골지체">
+      <div class="shot">
+        <img src="assets/cell-pinball.jpg" alt="세포 탐사대 플레이 화면" width="640" height="360">
+        <span class="genre">GLASS PINBALL</span>
+      </div>
       <div class="body">
-        <div class="title"><h2>세포 탐사대</h2><small>CELL CADET · 생명과학 핀볼</small></div>
-        <p class="desc">세포 속을 옮겨 놓은 핀볼 테이블. 범퍼와 램프, 세포핵을 맞히며 실험 미션을 하나씩 완수하고 연구 등급을 올리세요.</p>
-        <ul class="feat"><li>실험 미션 16종</li><li>구성 요소 도감</li><li>최대 4인 번갈아 플레이</li></ul>
+        <div class="title"><h2>세포 탐사대</h2><small>CELL CADET · 핀볼</small></div>
+        <p class="desc">아이폰 글래스 UI로 깔끔하게 정돈된 세포 속 핀볼 테이블. 범퍼와 혈관 램프, 세포핵을 맞히며 16가지 실험 미션을 완수하세요.</p>
+        <ul class="feat"><li>글래스 HUD · 미션 16종</li><li>생명과학 도감</li><li>최대 4인 교대 플레이</li></ul>
         <div class="keys"><kbd>Z</kbd> <kbd>/</kbd> 플리퍼 · <kbd>Space</kbd> 발사 · <kbd>C</kbd> 코인 · <kbd>F2</kbd> 시작</div>
-        <div class="foot"><span class="rec" data-rec="cell-pinball">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+        <div class="foot"><span class="rec" data-rec="cell-pinball">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
       </div>
     </a>
 
-    <a class="card c8" href="games/cell-brawl.html" data-id="cell-brawl">
-      <div class="shot"><img src="assets/cell-brawl.jpg" alt="셀 브롤 플레이 화면: 면역 세포와 병원체가 3D 경기장에서 맞붙는 모습" width="640" height="360"><span class="genre">3D BRAWL</span></div>
+    <a class="card c8" href="games/cell-brawl.html" data-id="cell-brawl" data-cat="online action" data-kw="셀 브롤 브롤스타즈 3D 난투 면역 병원체 온라인">
+      <div class="shot">
+        <img src="assets/cell-brawl.jpg" alt="셀 브롤 플레이 화면" width="640" height="360">
+        <span class="genre">3D BRAWL</span>
+        <span class="online-tag">🌐 온라인 6인</span>
+      </div>
       <div class="body">
         <div class="title"><h2>셀 브롤</h2><small>면역 대작전</small></div>
-        <p class="desc">면역 세포와 병원체가 3D 경기장에서 맞붙는 실시간 난투. 3대3 ATP 그랩이나 혼자 살아남는 생존 쇼다운으로 트로피를 모으세요.</p>
-        <ul class="feat"><li>면역 세포 7 · 병원체 7</li><li>ATP 그랩 / 생존 쇼다운</li><li>온라인 멀티 (P2P)</li></ul>
+        <p class="desc">면역 세포와 병원체가 3D 경기장에서 맞붙는 실시간 난투. 3대3 ATP 그랩이나 생존 쇼다운으로 트로피를 모으세요.</p>
+        <ul class="feat"><li>브롤러 14종</li><li>ATP 그랩 / 쇼다운</li><li>온라인 멀티 (P2P)</li></ul>
         <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · 클릭 공격 · <kbd>E</kbd> 궁극기 · <kbd>Q</kbd> 가젯</div>
-        <div class="foot"><span class="rec" data-rec="cell-brawl">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+        <div class="foot"><span class="rec" data-rec="cell-brawl">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
       </div>
     </a>
 
-    <a class="card c9" href="games/only-up.html" data-id="only-up">
-      <div class="shot"><img src="assets/only-up.jpg" alt="ONLY UP 플레이 화면: 소화관 속 발판을 밟고 위로 올라가는 3D 플랫포머" width="640" height="360"><span class="genre">3D PLATFORMER</span></div>
+    <a class="card c9" href="games/only-up.html" data-id="only-up" data-cat="casual" data-kw="온리 업 소화 대탈출 3D 플랫포머 점프">
+      <div class="shot">
+        <img src="assets/only-up.jpg" alt="ONLY UP 플레이 화면" width="640" height="360">
+        <span class="genre">3D PLATFORMER</span>
+      </div>
       <div class="body">
         <div class="title"><h2>ONLY UP</h2><small>거꾸로 소화 대탈출</small></div>
         <p class="desc">나노봇이 되어 항문에서 입까지 소화관을 거꾸로 거슬러 오르는 3D 점프 플랫포머. 한 번 떨어지면 아래 구간까지 미끄러져요.</p>
-        <ul class="feat"><li>소화 기관 7구간</li><li>체크포인트 이어하기</li><li>약 15분</li></ul>
-        <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · <kbd>Space</kbd> 점프 · 마우스 시점 · <kbd>R</kbd> 체크포인트</div>
-        <div class="foot"><span class="rec" data-rec="only-up">아직 기록이 없어요</span><span class="play">PLAY ▶</span></div>
+        <ul class="feat"><li>소화 기관 7구간</li><li>체크포인트 이어하기</li><li>3D 물리 점프</li></ul>
+        <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · <kbd>Space</kbd> 점프 · 마우스 시점 · <kbd>R</kbd> 복귀</div>
+        <div class="foot"><span class="rec" data-rec="only-up">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
       </div>
     </a>
   </main>
 
   <section class="tips" aria-label="플레이 안내">
-    <div class="tip"><b>🔊 소리를 켜 주세요</b>모든 음악과 효과음은 브라우저에서 실시간으로 만들어져요.</div>
-    <div class="tip"><b>📱 휴대폰은 가로로</b>액션·레이싱·대전 게임은 가로 화면에서 터치 버튼이 나타나요.</div>
-    <div class="tip"><b>💾 기록은 이 기기에 저장</b>최고 점수와 설정은 브라우저에 저장돼 다음에도 이어져요.</div>
+    <div class="tip"><b>🔊 풍부한 실시간 사운드</b>모든 음악과 타격·엔진·환경 효과음은 브라우저 WebAudio 신디사이저로 즉시 생성됩니다.</div>
+    <div class="tip"><b>📱 PC &amp; 모바일 자동 최적화</b>화면에 맞춰 PC 키보드/마우스 UI와 모바일 터치 패드 UI가 자동으로 전환됩니다.</div>
+    <div class="tip"><b>🏠 언제든 게임 목록으로 복귀</b>모든 게임 플레이 화면과 일시정지 메뉴에 「게임 목록」 버튼이 준비되어 있습니다.</div>
   </section>
 
-  <footer>BIO ARCADE · 게임 안의 「게임 목록」 버튼으로 언제든 이 화면에 돌아올 수 있어요</footer>
+  <footer>BIO ARCADE · iOS Frosted Glass Edition · 모든 게임 진행 기록은 기기에 안전하게 자동 저장됩니다</footer>
 </div>
 
 <script>
@@ -226,6 +483,40 @@ footer{text-align:center;color:#6a5a88;font-size:14px;padding:6px 0 36px}
   const get=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}};
   const set=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
   const fmtT=t=>{const m=Math.floor(t/60),s=t-m*60;return m+':'+s.toFixed(2).padStart(5,'0');};
+
+  // iOS Glass UI Sound Synthesizer
+  let actx=null, uiSnd=get('bioArcadeUiSnd')!==false;
+  const sndBtn=document.getElementById('uiSndBtn');
+  const syncSndBtn=()=>{if(sndBtn)sndBtn.textContent=uiSnd?'🔊 사운드':'🔇 무음';};
+  syncSndBtn();
+  function playUiTone(kind){
+    if(!uiSnd)return;
+    try{
+      if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
+      if(actx.state==='suspended')actx.resume();
+      const t=actx.currentTime;
+      const o=actx.createOscillator(),g=actx.createGain();
+      o.type=kind==='launch'?'triangle':'sine';
+      if(kind==='hover'){
+        o.frequency.setValueAtTime(680,t);o.frequency.exponentialRampToValueAtTime(880,t+0.035);
+        g.gain.setValueAtTime(0.018,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.04);
+        o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+0.045);
+      }else if(kind==='tap'){
+        o.frequency.setValueAtTime(520,t);o.frequency.exponentialRampToValueAtTime(1040,t+0.065);
+        g.gain.setValueAtTime(0.055,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.075);
+        o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+0.08);
+      }else if(kind==='launch'){
+        [523.25,659.25,783.99,1046.5].forEach((f,i)=>{
+          const osc=actx.createOscillator(),gn=actx.createGain();
+          osc.type='triangle';osc.frequency.setValueAtTime(f,t+i*0.035);
+          gn.gain.setValueAtTime(0.06,t+i*0.035);gn.gain.exponentialRampToValueAtTime(0.0001,t+i*0.035+0.14);
+          osc.connect(gn);gn.connect(actx.destination);osc.start(t+i*0.035);osc.stop(t+i*0.035+0.15);
+        });
+      }
+    }catch(e){}
+  }
+  if(sndBtn)sndBtn.addEventListener('click',()=>{uiSnd=!uiSnd;set('bioArcadeUiSnd',uiSnd);syncSndBtn();playUiTone('tap');});
+
   const REC={
     'bio-beat'(){
       const r=get('biobeat_rec_v1');if(!r||typeof r!=='object')return '';
@@ -277,14 +568,41 @@ footer{text-align:center;color:#6a5a88;font-size:14px;padding:6px 0 36px}
     if(h)el.innerHTML=h;
   }
   const last=get('bioArcadeLast');
-  for(const a of document.querySelectorAll('.card')){
-    if(a.dataset.id===last){const t=document.createElement('span');t.className='recent';t.textContent='최근 플레이';a.querySelector('.shot').appendChild(t);}
-    a.addEventListener('click',()=>set('bioArcadeLast',a.dataset.id));
+  const cards=Array.from(document.querySelectorAll('.card'));
+  for(const a of cards){
+    if(a.dataset.id===last){
+      const t=document.createElement('span');t.className='recent';t.textContent='최근 플레이';
+      a.querySelector('.shot').appendChild(t);
+    }
+    a.addEventListener('pointerenter',()=>playUiTone('hover'));
+    a.addEventListener('click',()=>{set('bioArcadeLast',a.dataset.id);playUiTone('launch');});
   }
-  // 뒤로 가기(bfcache)로 돌아왔을 때 기록을 다시 읽는다
+
+  // Category & Search Filtering
+  let curFilter='all';
+  const searchIn=document.getElementById('gameSearch');
+  function applyFilter(){
+    const q=(searchIn&&searchIn.value||'').trim().toLowerCase();
+    for(const c of cards){
+      const catMatch=curFilter==='all'||(c.dataset.cat||'').split(' ').includes(curFilter);
+      const txt=(c.textContent+' '+(c.dataset.kw||'')).toLowerCase();
+      const qMatch=!q||txt.includes(q);
+      c.hidden=!(catMatch&&qMatch);
+    }
+  }
+  document.querySelectorAll('[data-filter]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      curFilter=btn.dataset.filter;
+      document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('on',b===btn));
+      playUiTone('tap');
+      applyFilter();
+    });
+  });
+  if(searchIn)searchIn.addEventListener('input',applyFilter);
+
   window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
 
-  // 앱 설치 (PWA)
+  // PWA Install
   const standalone=matchMedia('(display-mode: standalone),(display-mode: fullscreen)').matches||navigator.standalone;
   const btn=document.getElementById('install');let deferred=null;
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;if(!standalone)btn.hidden=false;});

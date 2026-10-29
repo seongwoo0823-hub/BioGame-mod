@@ -156,7 +156,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
 <div id="touch" hidden>
   <div id="joy"><i></i></div>
   <button id="jumpbtn" type="button">점프</button>
-  <button id="pausebtn" type="button" class="ghost">일시정지</button>
+  <div style="position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto"><button id="pausebtn" type="button" class="ghost" style="position:static;transform:none">일시정지</button><button type="button" class="ghost" onclick="location.href='../index.html'" style="font-size:15px;padding:4px 12px;box-shadow:none">🏠 게임 목록</button></div>
 </div>
 
 <div id="loading"><p id="load-text">세포 배양 중…</p><div class="bar"><div id="load-bar"></div></div></div>

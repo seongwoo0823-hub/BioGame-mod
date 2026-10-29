@@ -38,6 +38,9 @@ body.touch.playing #touch{display:block}
 #tbMap{right:calc(62px + env(safe-area-inset-right,0px));top:calc(86px + env(safe-area-inset-top,0px));width:42px;height:42px}
 #rot{position:fixed;inset:0;z-index:5;background:#000;color:#ddd;display:none;flex-direction:column;align-items:center;justify-content:center;font:20px 'Do Hyeon',sans-serif;text-align:center;gap:10px}
 #rot b{font-size:44px}
+#hubQuickBtn{position:fixed;left:calc(12px + env(safe-area-inset-left,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:10;padding:6px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.26);background:rgba(16,12,24,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#f5e8ff;font:14px 'Do Hyeon',sans-serif;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.45);transition:background .15s,transform .12s}
+#hubQuickBtn:hover{background:rgba(255,90,120,.32);border-color:#ff8aa0;transform:translateY(-1px)}
+body.touch.playing #hubQuickBtn{bottom:auto;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%)}
 @media (orientation:portrait){body.touch #rot{display:flex}}
 </style>
 <style>html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}</style>
@@ -48,6 +51,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
 </head>
 <body>
 <div id="wrap"><canvas id="cv" width="960" height="540" tabindex="0"></canvas></div>
+<button id="hubQuickBtn" type="button" onclick="location.href='../index.html'" aria-label="게임 목록으로 돌아가기">🏠 게임 목록</button>
 <div id="touch">
   <div class="stick" id="stL"><div class="knob"></div></div>
   <div class="stick" id="stR"><div class="knob"></div></div>
@@ -594,10 +598,11 @@ function rockSpr(th,v,kind){return spr(`rk_${th}_${v}_${kind}`,28,28,(g)=>{
   line(g,6,13,12,15,shade(c,.28),1);
   for(let i=0;i<3;i++){const x=6+rnd()*14,y=15+rnd()*6;line(g,x,y,x+1,y+3,shade(c,-.45));}
   if(kind==='tint'){
-    // 색 바위: 박혀 있는 푸른 발광 크리스탈 결정
-    line(g,9,14,7,7,'#2a68c8',3);line(g,9,14,7,7,'#7ad0ff',1);
-    line(g,14,15,18,8,'#2a68c8',3);line(g,14,15,18,8,'#9ae8ff',1);
-    line(g,12,17,13,10,'#4a90ff',2);P(g,7,7,2,2,'#ffffff');P(g,17,8,2,2,'#ffffff');
+    // 아이작 시그니처 X 표시 색 바위(Tinted Rock) + 푸른 소울 결정
+    line(g,8,9,15,16,'#1e2842',2);line(g,15,9,8,16,'#1e2842',2);
+    line(g,8,8,15,15,'#8ad8ff',1.4);line(g,15,8,8,15,'#8ad8ff',1.4);
+    line(g,17,15,20,9,'#2a68c8',3);line(g,17,15,20,9,'#9ae8ff',1);
+    P(g,19,8,2,2,'#ffffff');
   }
 });}
 
@@ -3673,155 +3678,368 @@ function shake(n){G.shake=Math.max(G.shake,n);}
    2.5D 입체 배경 · 문 · 차세대 렌더링 · HUD · 메뉴
    ========================================================= */
 const BGC={};
-function bgCanvas(th){if(BGC[th])return BGC[th];const [c,g]=mkc(480,270);const T=THEME[th],rn=srand(th*991+7);
-  const fx0=RX/2,fy0=RY/2,fw=RW/2,fh=RH/2; // fx0=58, fy0=37, fw=364, fh=196
-  const ox=10,oy=8,ow=460,oh=254;
-  // 1) 최외곽 심연 테두리 & 상단 벽체 천장 단면(Crown Molding)
-  P(g,0,0,480,270,shade(T.wl,-.45));
-  P(g,ox,oy,ow,oh,shade(T.wl,-.15));
-  P(g,ox+1,oy+1,ow-2,2,shade(T.ac,.18)); // 상단 외곽 하이라이트 림
-  // 2) 4면 3D 원근 벽면 (북쪽 수직 벽면 + 좌/우 사선 경사 벽면 + 남쪽 단면)
-  // 북쪽 벽 (y: oy+3 .. fy0) - 3/4 시점에서 정면으로 보이는 입체 수직 벽
-  for(let y=oy+3;y<fy0;y++){
-    const k=(y-(oy+3))/(fy0-(oy+3));
-    P(g,ox+3,y,ow-6,1,shade(T.wl2,.12-k*.28));
+// 바인딩 오브 아이작: 리버스(Rebirth) 스타일 풀해상도(960×540) 2.5D 다층 베벨 던전 아키텍처
+function bgCanvas(th){
+  if(BGC[th])return BGC[th];
+  const [c,g]=mkc(W,H);
+  const T=THEME[th],rn=srand(th*991+7);
+  const fx0=RX,fy0=RY,fw=RW,fh=RH; // RX=116, RY=74, RW=728, RH=392
+  const ox=18,oy=12,ow=W-36,oh=H-24;
+
+  // 1) 최외곽 암흑 심연 + 3D 벽 상단 크라운 몰딩(Crown Molding)
+  g.fillStyle=shade(T.wl,-.55);g.fillRect(0,0,W,H);
+  g.fillStyle=shade(T.wl,-.32);g.fillRect(ox,oy,ow,oh);
+  g.strokeStyle=shade(T.ac,.24);g.lineWidth=2;g.strokeRect(ox+2,oy+2,ow-4,oh-4);
+
+  // 2) 사다리꼴 4면 입체 경사 벽체 (Top / Bottom / Left / Right Trapezoids)
+  const poly=(pts,col)=>{g.fillStyle=col;g.beginPath();pts.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.fill();};
+  // 북쪽(상단) 주 벽면 — 다단 석재/세포벽 층(3단 베벨)
+  const nGrad=g.createLinearGradient(0,oy+4,0,fy0);
+  nGrad.addColorStop(0,shade(T.wl2,.22));
+  nGrad.addColorStop(0.55,T.wl2);
+  nGrad.addColorStop(1,shade(T.wl,-.28));
+  poly([[ox+4,oy+4],[ox+ow-4,oy+4],[fx0+fw,fy0],[fx0,fy0]],nGrad);
+
+  // 남쪽(하단) 벽면
+  const sGrad=g.createLinearGradient(0,fy0+fh,0,oy+oh-4);
+  sGrad.addColorStop(0,shade(T.wl,-.18));
+  sGrad.addColorStop(1,shade(T.wl,-.46));
+  poly([[fx0,fy0+fh],[fx0+fw,fy0+fh],[ox+ow-4,oy+oh-4],[ox+4,oy+oh-4]],sGrad);
+
+  // 서쪽(좌측) 벽면
+  const wGrad=g.createLinearGradient(ox+4,0,fx0,0);
+  wGrad.addColorStop(0,shade(T.wl2,.15));
+  wGrad.addColorStop(1,shade(T.wl,-.24));
+  poly([[ox+4,oy+4],[fx0,fy0],[fx0,fy0+fh],[ox+4,oy+oh-4]],wGrad);
+
+  // 동쪽(우측) 벽면
+  const eGrad=g.createLinearGradient(fx0+fw,0,ox+ow-4,0);
+  eGrad.addColorStop(0,shade(T.wl,-.22));
+  eGrad.addColorStop(1,shade(T.wl2,.08));
+  poly([[fx0+fw,fy0],[ox+ow-4,oy+4],[ox+ow-4,oy+oh-4],[fx0+fw,fy0+fh]],eGrad);
+
+  // 3) 아이작 스타일 벽면 가로 적층 단차(Ledge Bands) & 벽돌/근섬유 이음새
+  for(const frac of [0.34,0.68]){
+    const bx0=lerp(ox+4,fx0,frac),by0=lerp(oy+4,fy0,frac);
+    const bx1=lerp(ox+ow-4,fx0+fw,frac),by1=lerp(oy+oh-4,fy0+fh,frac);
+    g.strokeStyle=shade(T.wl,-.42);g.lineWidth=3;g.strokeRect(bx0,by0,bx1-bx0,by1-by0);
+    g.strokeStyle=shade(T.ac,.16);g.lineWidth=1;g.strokeRect(bx0+1,by0+1,bx1-bx0-2,by1-by0-2);
   }
-  // 좌측 벽 (수광면/음영 경사) & 우측 벽
-  for(let x=ox+3;x<fx0;x++){
-    const k=(x-(ox+3))/(fx0-(ox+3));
-    const y0=Math.round(lerp(oy+3,fy0,k)),y1=Math.round(lerp(oy+oh-3,fy0+fh,k));
-    P(g,x,y0,1,y1-y0,shade(T.wl,.05-k*.22));
-    const rx=480-1-x;
-    P(g,rx,y0,1,y1-y0,shade(T.wl,-.08-k*.25));
-  }
-  // 남쪽 하단 벽 (단면 두께)
-  for(let y=fy0+fh;y<oy+oh-2;y++){
-    const k=(y-(fy0+fh))/(oy+oh-2-(fy0+fh));
-    P(g,ox+3,y,ow-6,1,shade(T.wl,-.28-k*.2));
-  }
-  // 북쪽 벽 입체 기둥(Ribs)과 오목 벽감(Alcove) 디테일
+
+  // 북쪽/남쪽 벽 입체 부벽 기둥(Buttress Pillars) & 조각 몰딩
   for(let i=0;i<=COLS;i++){
-    const px=fx0+i*28;
-    if(i===6||i===7)continue; // 중앙 문 자리 비움
-    P(g,px-3,oy+5,6,fy0-oy-7,shade(T.wl,-.25));
-    P(g,px-2,oy+5,3,fy0-oy-7,shade(T.wl2,.18));
-    P(g,px-1,oy+5,1,fy0-oy-7,shade(T.ac,.22));
-    // 기둥 하단 주초(Base)
-    P(g,px-4,fy0-5,8,4,shade(T.wl2,.1));
-    P(g,px-4,fy0-5,8,1,shade(T.ac,.28));
+    if(i===6||i===7)continue;
+    const t=i/COLS;
+    const txTop=lerp(ox+18,ox+ow-18,t),bxTop=fx0+i*TS;
+    // 상단 벽 기둥
+    poly([[txTop-8,oy+6],[txTop+8,oy+6],[bxTop+6,fy0],[bxTop-6,fy0]],shade(T.wl,-.22));
+    poly([[txTop-5,oy+6],[txTop+2,oy+6],[bxTop+2,fy0],[bxTop-4,fy0]],shade(T.wl2,.18));
+    // 기둥 주초(Pedestal Base)
+    g.fillStyle=shade(T.ac,.18);g.fillRect(bxTop-8,fy0-7,16,6);
+    g.fillStyle=shade(T.wl,-.42);g.fillRect(bxTop-8,fy0-2,16,2);
+    // 하단 벽 기둥
+    const txBot=lerp(ox+18,ox+ow-18,t);
+    poly([[bxTop-6,fy0+fh],[bxTop+6,fy0+fh],[txBot+8,oy+oh-6],[txBot-8,oy+oh-6]],shade(T.wl,-.36));
   }
-  // 좌·우측 벽 입체 가로 리브(Ribs)
-  for(let r=1;r<ROWS;r++){
+  // 좌·우측 벽 입체 석조 리브(Side Wall Ribs)
+  for(let r=0;r<=ROWS;r++){
     if(r===3||r===4)continue;
-    const py=fy0+r*28;
-    line(g,ox+5,py-6,fx0,py,shade(T.ac,.15),2);
-    line(g,ox+5,py-4,fx0,py+2,shade(T.wl,-.35),2);
-    line(g,480-ox-5,py-6,fx0+fw,py,shade(T.ac,.1),2);
-    line(g,480-ox-5,py-4,fx0+fw,py+2,shade(T.wl,-.38),2);
+    const t=r/ROWS;
+    const lyOut=lerp(oy+14,oy+oh-14,t),lyIn=fy0+r*TS;
+    poly([[ox+6,lyOut-5],[fx0,lyIn-4],[fx0,lyIn+4],[ox+6,lyOut+5]],shade(T.wl,-.24));
+    poly([[ox+6,lyOut-3],[fx0,lyIn-2],[fx0,lyIn+1],[ox+6,lyOut+1]],shade(T.ac,.14));
+    const rxOut=ox+ow-6,rxIn=fx0+fw;
+    poly([[rxIn,lyIn-4],[rxOut,lyOut-5],[rxOut,lyOut+5],[rxIn,lyIn+4]],shade(T.wl,-.3));
   }
-  // 벽 유기적 세포 조직 질감
-  for(let i=0;i<160;i++){
-    const x=ox+6+rn()*(ow-12),y=oy+5+rn()*(oh-10);
-    if(x>fx0-4&&x<fx0+fw+4&&y>fy0-4&&y<fy0+fh+4)continue;
-    const r=2+rn()*4;circ(g,x,y,r,shade(T.wl2,(rn()-.5)*.22));
-    P(g,x-r*.3,y-r*.3,1,1,shade(T.ac,.18));
-  }
-  // 4개 모서리 45도 입체 연귀(Miter) 이음선
-  line(g,ox+2,oy+2,fx0,fy0,shade(T.wl,-.45),2);line(g,ox+3,oy+2,fx0,fy0-1,shade(T.ac,.18),1);
-  line(g,ox+ow-2,oy+2,fx0+fw,fy0,shade(T.wl,-.45),2);
-  line(g,ox+2,oy+oh-2,fx0,fy0+fh,shade(T.wl,-.48),2);
-  line(g,ox+ow-2,oy+oh-2,fx0+fw,fy0+fh,shade(T.wl,-.48),2);
-  // 벽 하단 걸레받이(Baseboard) 림
-  P(g,fx0-2,fy0-3,fw+4,3,shade(T.wl,-.35));
-  P(g,fx0-2,fy0-3,fw+4,1,shade(T.ac,.2));
 
-  // 3) 3D 베벨 타일 바닥 (13×7 격자 입체감)
-  P(g,fx0,fy0,fw,fh,T.fl);
-  for(let r=0;r<ROWS;r++)for(let col=0;col<COLS;col++){
-    const tx=fx0+col*28,ty=fy0+r*28;
-    const alt=(col+r)%2===0?.02:-.02;
-    P(g,tx,ty,28,28,shade(T.fl,alt));
-    // 타일 사이 오목 줄눈(Groove) + 좌상단 하이라이트 베벨
-    P(g,tx,ty,28,1,shade(T.fl,-.14));
-    P(g,tx,ty,1,28,shade(T.fl,-.14));
-    P(g,tx+1,ty+1,26,1,shade(T.fl,.08));
-    P(g,tx+1,ty+1,1,26,shade(T.fl,.06));
-  }
-  // 바닥 세부 질감 & 챕터별 입체 무늬
-  for(let i=0;i<500;i++)P(g,fx0+rn()*fw,fy0+rn()*fh,1+Math.floor(rn()*2),1,T.fl2);
-  for(let i=0;i<110;i++)P(g,fx0+rn()*fw,fy0+rn()*fh,1,1,shade(T.fl,.16));
-  if(th===0){for(let i=0;i<16;i++){const x=fx0+12+rn()*(fw-24),y=fy0+12+rn()*(fh-24);ell(g,x,y,4+rn()*4,2+rn()*2,shade(T.fl,-.14));ell(g,x-1,y-1,2,1,shade(T.fl,.14));}}
-  if(th===1){for(let i=0;i<8;i++){let x=fx0+rn()*fw,y=fy0+rn()*fh;for(let s=0;s<40;s++){x+=rn()*4-2;y+=rn()*4-1.5;if(x>fx0&&x<fx0+fw&&y>fy0&&y<fy0+fh){P(g,x,y,1,2,'#480c14');P(g,x,y-1,1,1,'#902830');}}}}
-  if(th===2){for(let x=fx0+14;x<fx0+fw;x+=28)for(let y=fy0+14;y<fy0+fh;y+=28){ring(g,x,y,5,shade(T.fl,-.12));P(g,x-2,y-2,1,1,shade(T.fl,.15));}}
-  if(th===3){for(let k=0;k<3;k++){const y0=fy0+30+k*64;for(let x=fx0+4;x<fx0+fw-4;x++){const s=Math.sin(x/9)*6;P(g,x,y0+s,1,2,shade(T.fl,.15));P(g,x,y0-s,1,2,shade(T.fl,-.14));}}}
+  // 4) 4대 코너 대형 사선 보강 기둥(Corner Bastions) & 연귀(Miter) 그림자
+  const corners=[
+    [[ox+4,oy+4],[ox+46,oy+4],[fx0+20,fy0],[fx0,fy0+20],[ox+4,oy+38]],
+    [[ox+ow-4,oy+4],[ox+ow-4,oy+38],[fx0+fw,fy0+20],[fx0+fw-20,fy0],[ox+ow-46,oy+4]],
+    [[ox+4,oy+oh-4],[ox+4,oy+oh-38],[fx0,fy0+fh-20],[fx0+20,fy0+fh],[ox+46,oy+oh-4]],
+    [[ox+ow-4,oy+oh-4],[ox+ow-46,oy+oh-4],[fx0+fw-20,fy0+fh],[fx0+fw,fy0+fh-20],[ox+ow-4,oy+oh-38]]
+  ];
+  corners.forEach(pts=>{
+    poly(pts,shade(T.wl,-.34));
+    g.strokeStyle=shade(T.ac,.2);g.lineWidth=1.5;
+    g.beginPath();pts.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.stroke();
+  });
 
-  // 4) 북쪽·서쪽 벽이 바닥에 드리우는 다단계 3D 드리움 그림자(Cast Shadow) & 코너 AO
-  for(let i=0;i<14;i++){
-    const a=(1-i/14)*.34;
-    g.fillStyle=`rgba(0,0,0,${a*.22})`;
-    g.fillRect(fx0,fy0+i,fw,1);
-    g.fillRect(fx0+i,fy0,1,fh);
+  // 5) 바닥: 바인딩 오브 아이작 스타일 입체 판재/석판 타일 + 못자국 + 균열 + 코너 거미줄/섬유소
+  g.fillStyle=T.fl;g.fillRect(fx0,fy0,fw,fh);
+  for(let r=0;r<ROWS;r++){
+    for(let col=0;col<COLS;col++){
+      const tx=fx0+col*TS,ty=fy0+r*TS;
+      const v=(rn()-.5)*.06+((col+r)%2===0?.02:-.02);
+      g.fillStyle=shade(T.fl,v);
+      g.fillRect(tx,ty,TS,TS);
+      // 판재 가로 결(Plank Seams) & 입체 베벨
+      g.fillStyle=shade(T.fl,-.16);
+      g.fillRect(tx,ty,TS,2);g.fillRect(tx,ty,2,TS);
+      g.fillRect(tx,ty+TS/2,TS,1);
+      g.fillStyle=shade(T.fl,.1);
+      g.fillRect(tx+2,ty+2,TS-3,2);g.fillRect(tx+2,ty+TS/2+1,TS-3,1);
+      // 구석 리벳/못 디테일
+      g.fillStyle=shade(T.fl,-.28);
+      g.fillRect(tx+5,ty+5,2,2);g.fillRect(tx+TS-7,ty+5,2,2);
+      g.fillRect(tx+5,ty+TS/2+5,2,2);g.fillRect(tx+TS-7,ty+TS/2+5,2,2);
+      // 무작위 바닥 균열 & 자갈/세포 흔적
+      if(rn()<0.28){
+        g.strokeStyle=shade(T.fl,-.24);g.lineWidth=1.2;
+        const cx=tx+12+rn()*32,cy=ty+12+rn()*32;
+        g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+rn()*14-7,cy+rn()*12-6);g.lineTo(cx+rn()*18-9,cy+rn()*16-8);g.stroke();
+      }
+    }
   }
-  for(let i=0;i<6;i++){
-    g.fillStyle=`rgba(0,0,0,${(1-i/6)*.22})`;
-    g.fillRect(fx0,fy0+fh-1-i,fw,1);
-    g.fillRect(fx0+fw-1-i,fy0,1,fh);
+  // 챕터별 시그니처 바닥 디테일
+  if(th===0){
+    // 세포질: 반투명 소포 자국과 미세소관 섬유 결
+    for(let i=0;i<24;i++){
+      const x=fx0+24+rn()*(fw-48),y=fy0+24+rn()*(fh-48),r0=6+rn()*10;
+      g.fillStyle=shade(T.fl,-.12);g.beginPath();g.ellipse(x,y,r0,r0*.65,0,0,Math.PI*2);g.fill();
+      g.strokeStyle=shade(T.ac,.12);g.lineWidth=1;g.stroke();
+    }
+  }else if(th===1){
+    // 혈관: 입체 모세혈관 줄기와 응고 반점
+    for(let i=0;i<12;i++){
+      let x=fx0+rn()*fw,y=fy0+rn()*fh;
+      g.strokeStyle='#420912';g.lineWidth=2.5;g.beginPath();g.moveTo(x,y);
+      for(let s=0;s<8;s++){x=clamp(x+rn()*36-18,fx0+8,fx0+fw-8);y=clamp(y+rn()*28-14,fy0+8,fy0+fh-8);g.lineTo(x,y);}
+      g.stroke();
+      g.strokeStyle='#8e202c';g.lineWidth=1;g.stroke();
+    }
+  }else if(th===2){
+    // 림프절: 면역 결절 링 문양
+    for(let x=fx0+TS;x<fx0+fw;x+=TS*2)for(let y=fy0+TS;y<fy0+fh;y+=TS*2){
+      g.strokeStyle=shade(T.fl,-.16);g.lineWidth=2;g.beginPath();g.arc(x,y,14,0,Math.PI*2);g.stroke();
+      g.strokeStyle=shade(T.ac,.14);g.lineWidth=1;g.beginPath();g.arc(x,y,9,0,Math.PI*2);g.stroke();
+    }
+  }else if(th===3){
+    // 핵: 염색질 이중나선 바닥 문양
+    for(let k=0;k<3;k++){
+      const y0=fy0+60+k*130;
+      g.strokeStyle=shade(T.ac,.16);g.lineWidth=2;g.beginPath();
+      for(let x=fx0+12;x<fx0+fw-12;x+=6){const y=y0+Math.sin(x/18)*12;x===fx0+12?g.moveTo(x,y):g.lineTo(x,y);}
+      g.stroke();
+    }
   }
-  // 남쪽 바닥 가장자리 전면 립 하이라이트
-  P(g,fx0,fy0+fh,fw,2,shade(T.ac,.18));
+
+  // 코너 거미줄/피브린 망(Corner Webbing)
+  g.strokeStyle='rgba(255,245,255,0.12)';g.lineWidth=1.2;
+  for(const [cx,cy,sx,sy] of [[fx0,fy0,1,1],[fx0+fw,fy0,-1,1],[fx0,fy0+fh,1,-1],[fx0+fw,fy0+fh,-1,-1]]){
+    for(let r=14;r<=42;r+=14){
+      g.beginPath();g.moveTo(cx+sx*r,cy);g.quadraticCurveTo(cx+sx*r*.45,cy+sy*r*.45,cx,cy+sy*r);g.stroke();
+    }
+  }
+
+  // 6) 벽체 내측 테두리 깊은 3D 드리움 그림자(Wall Cast Shadow & Vignette)
+  const topSh=g.createLinearGradient(0,fy0,0,fy0+36);
+  topSh.addColorStop(0,'rgba(0,0,0,0.62)');topSh.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=topSh;g.fillRect(fx0,fy0,fw,36);
+
+  const botSh=g.createLinearGradient(0,fy0+fh-20,0,fy0+fh);
+  botSh.addColorStop(0,'rgba(0,0,0,0)');botSh.addColorStop(1,'rgba(0,0,0,0.48)');
+  g.fillStyle=botSh;g.fillRect(fx0,fy0+fh-20,fw,20);
+
+  const lfSh=g.createLinearGradient(fx0,0,fx0+28,0);
+  lfSh.addColorStop(0,'rgba(0,0,0,0.52)');lfSh.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=lfSh;g.fillRect(fx0,fy0,28,fh);
+
+  const rtSh=g.createLinearGradient(fx0+fw-28,0,fx0+fw,0);
+  rtSh.addColorStop(0,'rgba(0,0,0,0)');rtSh.addColorStop(1,'rgba(0,0,0,0.52)');
+  g.fillStyle=rtSh;g.fillRect(fx0+fw-28,fy0,28,fh);
+
+  // 내벽-바닥 경계 석조 걸레받이 프레임(Inner Wall Plinth)
+  g.strokeStyle=shade(T.wl,-.48);g.lineWidth=4;g.strokeRect(fx0-2,fy0-2,fw+4,fh+4);
+  g.strokeStyle=shade(T.ac,.24);g.lineWidth=1.5;g.strokeRect(fx0-1,fy0-1,fw+2,fh+2);
+
   return BGC[th]=c;
 }
 
-function drawTutorial(){ctx.save();ctx.globalAlpha=.46;ctx.fillStyle='#2a1810';ctx.textAlign='center';ctx.font='22px "Do Hyeon"';
+function drawTutorial(){ctx.save();ctx.globalAlpha=.55;ctx.fillStyle='#1e100c';ctx.strokeStyle='rgba(255,235,215,.22)';ctx.lineWidth=2;ctx.textAlign='center';
   const items=usingTouch?[['이동','왼쪽 스틱'],['공격','오른쪽 스틱'],['폭탄','폭탄 버튼'],['액티브','액티브 버튼'],['카드·알약','카드 버튼']]:[['이동','W A S D'],['공격','← ↑ ↓ →'],['폭탄','E / Shift'],['액티브','Space'],['카드·알약','Q']];
-  items.forEach(([a,b],i)=>{const x=RX+80+i*142,y=RY+110;ctx.font='24px "Do Hyeon"';ctx.fillText(a,x,y);ctx.font='20px "Do Hyeon"';ctx.fillText(b,x,y+30);});
-  ctx.font='16px "Do Hyeon"';ctx.fillText(usingTouch?'교체 버튼: 장신구 버리기 · 지도 버튼을 누르고 있으면 큰 지도':'Tab 지도 · Ctrl 장신구 버리기 · Esc 일시정지 · R 길게 다시 시작',DOORX,RY+RH-60);ctx.restore();}
+  items.forEach(([a,b],i)=>{
+    const x=RX+86+i*138,y=RY+112;
+    ctx.fillStyle='rgba(0,0,0,.22)';ctx.fillRect(x-56,y-30,112,72);ctx.strokeRect(x-56,y-30,112,72);
+    ctx.fillStyle='#ead4c0';ctx.font='23px "Do Hyeon"';ctx.fillText(a,x,y);
+    ctx.fillStyle='#c4a48c';ctx.font='18px "Do Hyeon"';ctx.fillText(b,x,y+28);
+  });
+  ctx.fillStyle='#d4b8a0';ctx.font='16px "Do Hyeon"';ctx.fillText(usingTouch?'교체 버튼: 장신구 버리기 · 지도 버튼: 큰 지도 · 상단 버튼: 게임 목록':'Tab 지도 · Ctrl 장신구 버리기 · Esc 일시정지 · 좌하단: 게임 목록',DOORX,RY+RH-46);ctx.restore();}
 
-const DOOR_COL={normal:null,treasure:'#e0b030',shop:'#4aa060',boss:'#7a1018',secret:'#3a3030',curse:'#a01020',devil:'#1a0a10',angel:'#f0f0ff'};
-function drawDoor(s){const st=doorState(s);if(st==='none'||st==='hidden')return;const type=doorType(s);const p=doorPos(s),T=THEME[chap()];
+const DOOR_COL={normal:null,treasure:'#e6b422',shop:'#4aa866',boss:'#7a141c',secret:'#3a3030',curse:'#9e1224',devil:'#260c18',angel:'#f2f4ff'};
+// 바인딩 오브 아이작: 리버스 스타일 입체 아치형 문 (일반문 / 황금 보물방문 / 해골 보스방문 / 상점문 / 저주·악마·천사방문 / 비밀방 폭파 구멍)
+function drawDoor(s){
+  const st=doorState(s);if(st==='none'||st==='hidden')return;
+  const type=doorType(s);const p=doorPos(s),T=THEME[chap()];
   ctx.save();ctx.translate(p.x,p.y);ctx.rotate({u:0,d:Math.PI,l:-Math.PI/2,r:Math.PI/2}[s]);
-  const fc=DOOR_COL[type]||T.ac,dk=shade(fc,-.38),dk2=shade(fc,-.55),lt=shade(fc,.28);
+  const fc=DOOR_COL[type]||T.ac,dk=shade(fc,-.38),dk2=shade(fc,-.58),lt=shade(fc,.32),lt2=shade(fc,.55);
+
+  // 1) 비밀방(Secret Room): 폭탄으로 뚫린 입체 암벽 동굴 구멍 + 파편 + 신비한 보라빛 안개
   if(type==='secret'){
-    ctx.fillStyle='#080406';ctx.beginPath();ctx.moveTo(-28,0);ctx.lineTo(-22,-32);ctx.lineTo(-6,-44);ctx.lineTo(10,-40);ctx.lineTo(24,-26);ctx.lineTo(28,0);ctx.fill();
-    ctx.strokeStyle=shade(T.wl,-.3);ctx.lineWidth=3;ctx.stroke();
-    drawGlow(0,-16,34,'#8a7aff',.2);ctx.restore();return;
-  }
-  if(type==='treasure'||type==='angel'||type==='devil')drawGlow(0,-24,50,type==='treasure'?'#ffd040':type==='angel'?'#fff8c0':'#ff2030',.25);
-  // 열린 문에서 바닥으로 쏟아지는 입체 바닥 빛줄기
-  if(st==='open'){
-    const beamCol=type==='treasure'?'rgba(255,215,80,.16)':type==='boss'?'rgba(255,40,60,.16)':type==='angel'?'rgba(255,255,220,.22)':type==='devil'?'rgba(220,20,50,.18)':'rgba(255,240,220,.08)';
-    ctx.fillStyle=beamCol;ctx.beginPath();ctx.moveTo(-22,0);ctx.lineTo(22,0);ctx.lineTo(38,34);ctx.lineTo(-38,34);ctx.closePath();ctx.fill();
-  }
-  // 3D 문틀 외곽 그림자 & 좌우 입체 기둥(Pilasters)
-  ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(-42,-60,84,62);
-  ctx.fillStyle=dk2;ctx.fillRect(-39,-58,78,58);
-  ctx.fillStyle=fc;ctx.fillRect(-35,-54,70,54);
-  // 좌·우 돌출 기둥 입체 음영
-  ctx.fillStyle=lt;ctx.fillRect(-35,-54,8,54);ctx.fillRect(27,-54,4,54);
-  ctx.fillStyle=dk;ctx.fillRect(-27,-54,4,54);ctx.fillRect(31,-54,4,54);
-  // 상단 인방(Lintel) & 쐐기돌(Keystone)
-  ctx.fillStyle=lt;ctx.fillRect(-37,-56,74,7);
-  ctx.fillStyle=dk;ctx.fillRect(-37,-49,74,3);
-  ctx.fillStyle=lt;ctx.fillRect(-8,-60,16,12);ctx.fillStyle=fc;ctx.fillRect(-6,-58,12,9);
-  // 문 안쪽 깊이감 있는 턱(Recessed Threshold)
-  ctx.fillStyle=dk2;ctx.fillRect(-25,-45,50,45);
-  ctx.fillStyle='#050204';ctx.fillRect(-22,-42,44,42);
-  if(type==='boss'){ctx.fillStyle='#e8e0d0';for(let i=0;i<5;i++){ctx.fillRect(-20+i*9,-42,5,9);}ctx.fillStyle='#ff3030';ctx.fillRect(-14,-54,5,5);ctx.fillRect(9,-54,5,5);}
-  if(type==='curse'||type==='devil'){ctx.fillStyle=type==='devil'?'#ff2838':'#e8d8d0';for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(-34+i*22,-56);ctx.lineTo(-27+i*22,-70);ctx.lineTo(-20+i*22,-56);ctx.fill();}}
-  if(type==='treasure'){ctx.fillStyle='#fff6b0';ctx.fillRect(-5,-55,10,5);}
-  if(type==='shop'){ctx.fillStyle='#ffe060';ctx.font='12px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('$',0,-48);}
-  if(type==='angel'){ctx.fillStyle='rgba(255,255,220,.55)';ctx.fillRect(-22,-42,44,42);}
-  if(st==='closed'||st==='locked'){
-    // 입체 문짝 패널 (좌/우 짝 + 가로 철장 + 중앙 분할선)
-    ctx.fillStyle=shade(fc,-.12);ctx.fillRect(-22,-42,21,42);ctx.fillRect(1,-42,21,42);
-    ctx.fillStyle=lt;ctx.fillRect(-20,-40,3,38);ctx.fillRect(3,-40,3,38);
-    ctx.fillStyle=dk2;for(let i=0;i<4;i++)ctx.fillRect(-22,-38+i*10,44,3);
-    if(st==='locked'){
-      ctx.fillStyle='#3a2408';ctx.fillRect(-10,-27,20,16);
-      ctx.fillStyle='#ffd850';ctx.fillRect(-9,-26,18,14);
-      ctx.strokeStyle='#ffd850';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,-26,6,Math.PI,0);ctx.stroke();
-      ctx.fillStyle='#2a1808';ctx.fillRect(-2,-22,4,6);
+    drawGlow(0,-20,48,'#8a7aff',.28+.08*Math.sin(S.time*.1));
+    ctx.fillStyle='rgba(0,0,0,.55)';ctx.beginPath();ctx.ellipse(0,4,34,10,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=shade(T.wl,-.48);
+    ctx.beginPath();ctx.moveTo(-34,2);ctx.lineTo(-30,-30);ctx.lineTo(-18,-50);ctx.lineTo(2,-54);ctx.lineTo(22,-46);ctx.lineTo(32,-26);ctx.lineTo(34,2);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#06020a';
+    ctx.beginPath();ctx.moveTo(-26,2);ctx.lineTo(-22,-26);ctx.lineTo(-10,-42);ctx.lineTo(6,-44);ctx.lineTo(20,-34);ctx.lineTo(25,2);ctx.closePath();ctx.fill();
+    // 입구 주변 무너진 돌 파편
+    for(const [rx,ry,rw,rh] of [[-30,4,8,5],[-18,6,6,4],[16,5,9,5],[26,3,6,4]]){
+      ctx.fillStyle=shade(T.wl,-.2);ctx.fillRect(rx,ry,rw,rh);
+      ctx.fillStyle=shade(T.ac,.15);ctx.fillRect(rx,ry,rw,2);
     }
+    ctx.restore();return;
+  }
+
+  // 특수 방 오라 조명
+  if(type==='treasure'||type==='angel'||type==='devil'||type==='boss'){
+    const gCol=type==='treasure'?'#ffd84a':type==='angel'?'#fffbe0':type==='boss'?'#ff2438':'#d01030';
+    drawGlow(0,-26,64,gCol,.26+.06*Math.sin(S.time*.08));
+  }
+
+  // 2) 열린 문 바닥으로 퍼지는 볼류메트릭 빛줄기(Floor Light Spill) & 바닥 문지방(Threshold Slab)
+  ctx.fillStyle=dk2;ctx.fillRect(-44,-4,88,8);
+  ctx.fillStyle=shade(fc,-.15);ctx.fillRect(-40,-3,80,5);
+  if(st==='open'){
+    const beamCol=type==='treasure'?'rgba(255,220,75,.24)':type==='boss'?'rgba(255,35,55,.22)':type==='angel'?'rgba(255,255,230,.3)':type==='devil'?'rgba(220,15,45,.24)':type==='shop'?'rgba(110,235,145,.18)':'rgba(255,240,215,.11)';
+    const bGr=ctx.createLinearGradient(0,0,0,46);
+    bGr.addColorStop(0,beamCol);bGr.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=bGr;
+    ctx.beginPath();ctx.moveTo(-24,0);ctx.lineTo(24,0);ctx.lineTo(44,46);ctx.lineTo(-44,46);ctx.closePath();ctx.fill();
+  }
+
+  // 3) 3D 아치형 외곽 문설주(Archway Frame & Pilasters)
+  ctx.fillStyle='rgba(0,0,0,.52)';
+  ctx.beginPath();ctx.moveTo(-46,2);ctx.lineTo(-46,-42);ctx.arc(0,-42,46,Math.PI,0);ctx.lineTo(46,2);ctx.closePath();ctx.fill();
+
+  // 외곽 석조/금속 아치 몸체
+  ctx.fillStyle=dk2;
+  ctx.beginPath();ctx.moveTo(-42,0);ctx.lineTo(-42,-38);ctx.arc(0,-38,42,Math.PI,0);ctx.lineTo(42,0);ctx.closePath();ctx.fill();
+  ctx.fillStyle=fc;
+  ctx.beginPath();ctx.moveTo(-38,0);ctx.lineTo(-38,-37);ctx.arc(0,-37,38,Math.PI,0);ctx.lineTo(38,0);ctx.closePath();ctx.fill();
+
+  // 아치 테두리 하이라이트 베벨 & 좌우 기둥 음영
+  ctx.strokeStyle=lt;ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(-37,0);ctx.lineTo(-37,-37);ctx.arc(0,-37,37,Math.PI,0);ctx.lineTo(37,0);ctx.stroke();
+  ctx.fillStyle=dk;ctx.fillRect(-38,-38,7,38);ctx.fillRect(31,-38,7,38);
+  ctx.fillStyle=lt;ctx.fillRect(-36,-38,3,38);ctx.fillRect(33,-38,3,38);
+  // 기둥 상·하단 주두/주초(Capitals & Bases)
+  for(const sx of [-1,1]){
+    ctx.fillStyle=dk2;ctx.fillRect(sx*34-7,-6,14,6);ctx.fillRect(sx*34-7,-42,14,6);
+    ctx.fillStyle=lt;ctx.fillRect(sx*34-6,-5,12,3);ctx.fillRect(sx*34-6,-41,12,3);
+  }
+
+  // 4) 문 안쪽 깊은 통로 암부(Recessed Doorway Abyss)
+  ctx.fillStyle=dk2;
+  ctx.beginPath();ctx.moveTo(-28,0);ctx.lineTo(-28,-34);ctx.arc(0,-34,28,Math.PI,0);ctx.lineTo(28,0);ctx.closePath();ctx.fill();
+  ctx.fillStyle=type==='angel'?'#fffbe8':'#060208';
+  ctx.beginPath();ctx.moveTo(-24,0);ctx.lineTo(-24,-33);ctx.arc(0,-33,24,Math.PI,0);ctx.lineTo(24,0);ctx.closePath();ctx.fill();
+
+  // 5) 문이 열려 있을 때 좌우로 젖혀진 입체 문짝(Swung-Open Door Leaves)
+  if(st==='open'&&type!=='angel'){
+    const leafCol=type==='treasure'?'#c8961e':type==='boss'?'#4a1218':'#5c3824';
+    for(const sx of [-1,1]){
+      ctx.fillStyle=shade(leafCol,-.25);
+      ctx.beginPath();ctx.moveTo(sx*24,0);ctx.lineTo(sx*31,11);ctx.lineTo(sx*31,-26);ctx.lineTo(sx*24,-35);ctx.closePath();ctx.fill();
+      ctx.fillStyle=leafCol;
+      ctx.beginPath();ctx.moveTo(sx*24,-1);ctx.lineTo(sx*29,8);ctx.lineTo(sx*29,-25);ctx.lineTo(sx*24,-33);ctx.closePath();ctx.fill();
+    }
+  }
+
+  // 6) 문이 닫혀 있거나 잠겨 있을 때: 정교한 양문형 문짝(Double Door Leaves + Iron Straps + Lock)
+  if(st==='closed'||st==='locked'){
+    const leafBase=type==='treasure'?'#d8a428':type==='boss'?'#481016':type==='shop'?'#6e482c':type==='devil'?'#280e1a':type==='angel'?'#e8ecf8':'#684028';
+    const leafLt=shade(leafBase,.24),leafDk=shade(leafBase,-.32);
+    ctx.save();
+    ctx.beginPath();ctx.moveTo(-24,0);ctx.lineTo(-24,-33);ctx.arc(0,-33,24,Math.PI,0);ctx.lineTo(24,0);ctx.closePath();ctx.clip();
+    // 좌·우 문짝 바탕
+    ctx.fillStyle=leafBase;ctx.fillRect(-24,-58,23.5,58);ctx.fillRect(0.5,-58,23.5,58);
+    // 세로 널빤지 결(Wood Planks)
+    for(let x=-22;x<=22;x+=6){
+      ctx.fillStyle=leafDk;ctx.fillRect(x,-58,1,58);
+      ctx.fillStyle=leafLt;ctx.fillRect(x+1,-58,1,58);
+    }
+    // 가로 철제 경첩 스트랩(Iron Hinges & Rivets)
+    const strapCol=type==='treasure'?'#fff0a0':type==='boss'?'#2a080c':'#2a2630';
+    for(const y of [-12,-28,-44]){
+      ctx.fillStyle=strapCol;ctx.fillRect(-24,y,48,4);
+      ctx.fillStyle=shade(strapCol,.35);ctx.fillRect(-24,y,48,1);
+      for(const rx of [-20,-12,-5,5,12,20]){ctx.fillStyle='#d8dce8';ctx.fillRect(rx,y+1,2,2);}
+    }
+    // 중앙 문틈 & 둥근 문고리 링
+    ctx.fillStyle='#050206';ctx.fillRect(-1,-58,2,58);
+    ctx.strokeStyle=type==='treasure'?'#fff6b0':'#c8ccd8';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(-5,-20,3.2,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.arc(5,-20,3.2,0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+
+    // 잠긴 문(보물방/상점): 쇠사슬 + 대형 황금 자물쇠(Keyhole Padlock)
+    if(st==='locked'){
+      ctx.strokeStyle='#8890a4';ctx.lineWidth=3;
+      ctx.beginPath();ctx.moveTo(-24,-38);ctx.lineTo(24,-12);ctx.moveTo(24,-38);ctx.lineTo(-24,-12);ctx.stroke();
+      ctx.fillStyle='#2a1808';ctx.fillRect(-11,-32,22,18);
+      ctx.fillStyle='#ffd84a';ctx.fillRect(-10,-31,20,16);
+      ctx.fillStyle='#fff6b0';ctx.fillRect(-9,-30,18,3);
+      ctx.strokeStyle='#ffd84a';ctx.lineWidth=3.5;ctx.beginPath();ctx.arc(0,-31,6.5,Math.PI,0);ctx.stroke();
+      // 열쇠 구멍
+      ctx.fillStyle='#1a0c04';ctx.beginPath();ctx.arc(0,-25,2.6,0,Math.PI*2);ctx.fill();ctx.fillRect(-1.5,-25,3,6);
+    }
+  }
+
+  // 7) 방 종류별 아이작 시그니처 상단 조각 장식(Crest & Relief)
+  if(type==='treasure'){
+    // 보물방: 빛나는 황금 왕관(Golden Crown) & 보석 장식
+    ctx.fillStyle='#4a3000';ctx.beginPath();ctx.moveTo(-16,-56);ctx.lineTo(-20,-72);ctx.lineTo(-9,-64);ctx.lineTo(0,-76);ctx.lineTo(9,-64);ctx.lineTo(20,-72);ctx.lineTo(16,-56);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#ffd84a';ctx.beginPath();ctx.moveTo(-14,-57);ctx.lineTo(-18,-70);ctx.lineTo(-8,-62);ctx.lineTo(0,-73);ctx.lineTo(8,-62);ctx.lineTo(18,-70);ctx.lineTo(14,-57);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#fff8c0';ctx.fillRect(-14,-59,28,2);
+    // 왕관 보석(루비·사파이어)
+    ctx.fillStyle='#ff2848';ctx.beginPath();ctx.arc(0,-63,2.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#38b8ff';ctx.beginPath();ctx.arc(-8,-61,1.8,0,Math.PI*2);ctx.arc(8,-61,1.8,0,Math.PI*2);ctx.fill();
+  }else if(type==='boss'){
+    // 보스방: 뿔 달린 대형 해골 부조(Horned Boss Skull) & 붉은 안광 + 아치 송곳니
+    ctx.fillStyle='#dcd2c4';
+    for(let i=-2;i<=2;i++){
+      ctx.beginPath();ctx.moveTo(i*8-3,-56);ctx.lineTo(i*8,-47);ctx.lineTo(i*8+3,-56);ctx.closePath();ctx.fill();
+    }
+    // 좌우 악마 뿔
+    ctx.strokeStyle='#b8a898';ctx.lineWidth=4;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(-12,-66);ctx.quadraticCurveTo(-26,-70,-28,-80);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(12,-66);ctx.quadraticCurveTo(26,-70,28,-80);ctx.stroke();
+    ctx.lineCap='butt';
+    // 해골 두개골 & 턱뼈
+    ctx.fillStyle='#2a1418';ctx.beginPath();ctx.arc(0,-67,13,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#e8dfd2';ctx.beginPath();ctx.arc(0,-67,11.5,0,Math.PI*2);ctx.fill();
+    ctx.fillRect(-7,-60,14,7);
+    // 붉게 타오르는 눈구멍
+    ctx.fillStyle='#1a0408';ctx.beginPath();ctx.arc(-4.5,-67,3.2,0,Math.PI*2);ctx.arc(4.5,-67,3.2,0,Math.PI*2);ctx.fill();
+    const eyePulse=.7+.3*Math.sin(S.time*.15);
+    ctx.fillStyle=`rgba(255,35,50,${eyePulse})`;ctx.beginPath();ctx.arc(-4.5,-67,2,0,Math.PI*2);ctx.arc(4.5,-67,2,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#2a1418';ctx.beginPath();ctx.moveTo(0,-64);ctx.lineTo(-2,-60);ctx.lineTo(2,-60);ctx.closePath();ctx.fill();
+  }else if(type==='shop'){
+    // 상점: 황금 동전 간판(¢)
+    ctx.fillStyle='#2a1a08';ctx.beginPath();ctx.arc(0,-65,11,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ffd040';ctx.beginPath();ctx.arc(0,-65,9.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#5a3808';ctx.font='11px "Press Start 2P"';ctx.textAlign='center';ctx.fillText('$',0,-60);
+  }else if(type==='curse'||type==='devil'){
+    // 저주방/악마방: 안쪽으로 돋아난 날카로운 가시 이빨 & 역오망성 인장
+    ctx.fillStyle=type==='devil'?'#ff2038':'#e8d4d4';
+    for(const sx of [-1,1])for(let y=-10;y>=-34;y-=10){
+      ctx.beginPath();ctx.moveTo(sx*26,y-3);ctx.lineTo(sx*18,y);ctx.lineTo(sx*26,y+3);ctx.closePath();ctx.fill();
+    }
+    for(let i=-2;i<=2;i++){
+      ctx.beginPath();ctx.moveTo(i*12-4,-58);ctx.lineTo(i*12,-74);ctx.lineTo(i*12+4,-58);ctx.closePath();ctx.fill();
+    }
+  }else if(type==='angel'){
+    // 천사방: 좌우 순백 날개 & 황금 후광
+    ctx.fillStyle='#ffffff';
+    for(const sx of [-1,1]){
+      ctx.beginPath();ctx.ellipse(sx*22,-64,14,6,sx*-0.35,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.ellipse(sx*18,-58,10,4,sx*-0.2,0,Math.PI*2);ctx.fill();
+    }
+    ctx.strokeStyle='#ffe066';ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(0,-72,11,4,0,0,Math.PI*2);ctx.stroke();
+  }else{
+    // 일반 문: 상단 쐐기돌(Keystone) 문양
+    ctx.fillStyle=dk2;ctx.beginPath();ctx.moveTo(-9,-54);ctx.lineTo(-11,-66);ctx.lineTo(11,-66);ctx.lineTo(9,-54);ctx.closePath();ctx.fill();
+    ctx.fillStyle=lt;ctx.beginPath();ctx.moveTo(-7,-55);ctx.lineTo(-9,-64);ctx.lineTo(9,-64);ctx.lineTo(7,-55);ctx.closePath();ctx.fill();
   }
   ctx.restore();
 }
@@ -3893,6 +4111,20 @@ function renderGame(){
     if(c.k==='acid'||c.k==='gas'||c.k==='tox'){ctx.fillStyle=c.k==='tox'?'#f0a0ff':'#e0ff90';const bx=c.x+Math.cos(S.time*.07+(c.seed||0))*c.r*.4,by=c.y+Math.sin(S.time*.09+(c.seed||0))*c.r*.25;ctx.beginPath();ctx.arc(bx,by,2.5,0,7);ctx.fill();}
   }ctx.globalAlpha=1;
   for(const s of ['u','d','l','r'])drawDoor(s);
+  // 바인딩 오브 아이작 스타일 벽면 횃불/생체 발광 등잔(Wall Sconces)
+  {
+    const th=chap(),flk=Math.sin(S.time*.28)*1.5+Math.cos(S.time*.19);
+    const tCol=['#ff9a38','#ff3858','#7aff90','#a880ff'][th];
+    const sconces=[[RX+140,RY-18],[RX+RW-140,RY-18],[RX-18,RY+96],[RX-18,RY+RH-96],[RX+RW+18,RY+96],[RX+RW+18,RY+RH-96]];
+    for(let i=0;i<sconces.length;i++){
+      const [sx,sy]=sconces[i];
+      drawGlow(sx,sy,46+flk*3,tCol,.18+.03*Math.sin(S.time*.2+i));
+      ctx.fillStyle='#2a1c24';ctx.fillRect(sx-4,sy,8,9);
+      ctx.fillStyle='#685058';ctx.fillRect(sx-5,sy-2,10,3);
+      ctx.fillStyle=tCol;ctx.beginPath();ctx.arc(sx,sy-5+(i%2?flk*.4:-flk*.4),4.5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(sx,sy-4,2,0,Math.PI*2);ctx.fill();
+    }
+  }
   // 지형 (3D 연결형 구덩이 · 가시)
   for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const t=RM.grid[r][c];if(!t)continue;const p=tileC(c,r);
     if(t.t==='pit'){drawPit3D(c,r);continue;}
@@ -4502,7 +4734,7 @@ function renderOptions(){drawTitleBg();krText('설정',480,90,34,'#fff','center'
   krText('← → 조절 · Esc 돌아가기',480,500,16,'#9a8a8a','center',3);}
 function renderPause(){renderGame();ctx.fillStyle='rgba(0,0,0,.74)';ctx.fillRect(0,0,W,H);
   krText('일시정지',480,64,34,'#fff','center',5);
-  menuList(['계속하기','설정','저장하고 타이틀로'],210,140,G.pauseSel,46,22);
+  menuList(['계속하기','설정','저장하고 타이틀로','게임 목록'],210,130,G.pauseSel,42,22);
   krText(`${CH_BY[PL.ch].n} · ${FLOOR_N[S.floor-1]} · 처치 ${S.kills}`,210,300,16,'#c8b8a8','center',3);
   krText(`고유 특성: ${CH_BY[PL.ch].traitN}`,210,328,15,'#ffd870','center',3);
   krText('W/S 메뉴 · A/D 아이템 보기 · Esc 계속',210,510,14,'#9a8a8a','center',3);
@@ -4519,12 +4751,12 @@ function renderDead(){renderGame();ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(
   krText('사망했습니다',480,140,38,'#3a1a10','center',0);krText('사인: '+(PL.lastHit||'?'),480,186,20,'#5a2a20','center',0);
   krText(FLOOR_N[S.floor-1]+'에서 쓰러짐',480,222,18,'#5a3a30','center',0);
   krText(`처치 ${S.kills} · 아이템 ${PL.items.length}개 · ${Math.floor(S.time/3600)}분 ${Math.floor(S.time/60)%60}초`,480,252,16,'#5a3a30','center',0);
-  menuList(['다시 하기','타이틀로'],480,330,G.menu,48,24);}
+  menuList(['다시 하기','타이틀로','게임 목록'],480,316,G.menu,42,24);}
 function renderWin(){drawTitleBg();drawGlow(480,120,200,'#ffd040',.3);krText('승리!',480,120,60,'#ffe080','center',8);
   krText('종양 심장을 쓰러뜨리고 몸을 지켜냈습니다.',480,180,22,'#fff','center',4);
   krText(`${CH_BY[PL.ch].n} · 처치 ${S.kills} · 아이템 ${PL.items.length}개 · ${Math.floor(S.time/3600)}분 ${Math.floor(S.time/60)%60}초`,480,220,17,'#e8d8c8','center',3);
   PL.items.slice(0,24).forEach((id,i)=>drawS(iconSpr(IT[id].ic),300+(i%12)*33,280+Math.floor(i/12)*36,{sc:.85}));
-  menuList(['다시 하기','타이틀로'],480,400,G.menu,48,24);}
+  menuList(['다시 하기','타이틀로','게임 목록'],480,386,G.menu,42,24);}
 
 /* =========================================================
    메뉴 입력 & 메인 루프
@@ -4550,13 +4782,13 @@ function optUpdate(){if(IN.up){G.optSel=(G.optSel+2)%3;sfx('menu');}if(IN.down){
   if(ch){if(G.optSel===0)OPT.sfx=clamp(Math.round((OPT.sfx+ch)*10)/10,0,1);if(G.optSel===1)OPT.music=clamp(Math.round((OPT.music+ch)*10)/10,0,1);saveOpt();if(AU.sfx)AU.sfx.gain.value=OPT.sfx;sfx('menu');}
   if(AU.sfx)AU.sfx.gain.value=OPT.sfx;
   if(IN.back||IN.ok&&G.optSel===2){G.mode=G.optFrom==='pause'?'pause':'title';sfx('menu');}}
-function pauseUpdate(){if(IN.up){G.pauseSel=(G.pauseSel+2)%3;sfx('menu');}if(IN.down){G.pauseSel=(G.pauseSel+1)%3;sfx('menu');}
+function pauseUpdate(){if(IN.up){G.pauseSel=(G.pauseSel+3)%4;sfx('menu');}if(IN.down){G.pauseSel=(G.pauseSel+1)%4;sfx('menu');}
   const n=G.pauseList||0;if(IN.right&&n){G.itemSel=(G.itemSel+1)%n;sfx('menu');}if(IN.left&&n){G.itemSel=(G.itemSel+n-1)%n;sfx('menu');}
-  if(PTR.click){for(let i=0;i<n;i++){const x=470+(i%10)*42,y=140+Math.floor(i/10)*42;if(Math.abs(PTR.x-x)<20&&Math.abs(PTR.y-y)<20){G.itemSel=i;return;}}const pk=menuPick(3,210,140,46);if(pk>=0){G.pauseSel=pk;IN.ok=true;}}
+  if(PTR.click){for(let i=0;i<n;i++){const x=470+(i%10)*42,y=140+Math.floor(i/10)*42;if(Math.abs(PTR.x-x)<20&&Math.abs(PTR.y-y)<20){G.itemSel=i;return;}}const pk=menuPick(4,210,130,42);if(pk>=0){G.pauseSel=pk;IN.ok=true;}}
   if(IN.pause&&!PRESS.Space){G.mode='play';return;}
-  if(IN.ok){sfx('select');if(G.pauseSel===0)G.mode='play';else if(G.pauseSel===1){G.mode='options';G.optFrom='pause';G.optSel=0;}else{saveRun();G.mode='title';G.menu=0;S=null;}}}
-function deadUpdate(){navMenu(2);const y=G.mode==='win'?400:330;const pk=menuPick(2,480,y,48);if(pk>=0){G.menu=pk;IN.ok=true;}
-  if(IN.ok){sfx('select');if(G.menu===0)startGame(PL.ch);else{G.mode='title';G.menu=0;S=null;}}}
+  if(IN.ok){sfx('select');if(G.pauseSel===0)G.mode='play';else if(G.pauseSel===1){G.mode='options';G.optFrom='pause';G.optSel=0;}else if(G.pauseSel===2){saveRun();G.mode='title';G.menu=0;S=null;}else{saveRun();location.href='../index.html';}}}
+function deadUpdate(){navMenu(3);const y=G.mode==='win'?386:316;const pk=menuPick(3,480,y,42);if(pk>=0){G.menu=pk;IN.ok=true;}
+  if(IN.ok){sfx('select');if(G.menu===0)startGame(PL.ch);else if(G.menu===1){G.mode='title';G.menu=0;S=null;}else{location.href='../index.html';}}}
 
 function playUpdate(){
   if(IN.pause){G.mode='pause';G.pauseSel=0;G.itemSel=-1;sfx('menu');return;}
