@@ -403,7 +403,6 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
 }
 
 </style>
-<script src="vendor/peerjs.min.js" defer></script>
 </head>
 <body>
 <div class="ambient" aria-hidden="true">
@@ -415,7 +414,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
 <div class="wrap">
   <nav class="topbar" aria-label="아케이드 탐색 바">
     <div class="brand-pill">
-      <span class="brand-dot">🧬</span>
+      <img src="icons/icon-192.png" alt="BIO ARCADE 아이콘" width="30" height="30" style="width:30px;height:30px;border-radius:8px;box-shadow:0 4px 12px rgba(56,189,248,0.45)">
       <span>BIO ARCADE</span>
     </div>
     <div class="filters" role="tablist" aria-label="장르 필터">
@@ -429,7 +428,8 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
         <span style="font-size:13px;margin-right:6px;opacity:.7">🔎</span>
         <input id="gameSearch" type="search" placeholder="게임·단원 검색">
       </label>
-      <button class="rank-btn" id="openRankBtn" type="button" title="학생 기록 및 실시간 랭킹 보드">🏆 학생 기록·랭킹</button>
+      <button class="rank-btn" id="openRankBtn" type="button" title="구글 스프레드시트 실시간 랭킹 확인">🏆 랭킹 확인</button>
+      <button class="icon-pill" id="openAdminBtn" type="button" title="관리자 모드 (기록 수정·삭제)">🔐 관리자</button>
       <button class="pwa-btn" id="topInstallBtn" type="button" title="바탕화면/홈 화면에 PWA 앱으로 설치">📲 앱 설치</button>
       <button class="icon-pill" id="uiSndBtn" type="button" title="인터페이스 효과음 전환">🔊 사운드</button>
     </div>
@@ -595,59 +595,55 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
 <div class="modal-backdrop" id="pwaModal" hidden role="dialog" aria-modal="true" aria-labelledby="pwaModalTitle">
   <div class="glass-modal sm">
     <div class="m-head">
-      <h3 id="pwaModalTitle">📲 BIO ARCADE 앱(PWA) 설치</h3>
+      <h3 id="pwaModalTitle">
+        <img src="icons/icon-192.png" alt="" width="28" height="28" style="width:28px;height:28px;border-radius:7px">
+        <span>BIO ARCADE 앱(PWA) 설치</span>
+      </h3>
       <button class="m-close" type="button" data-close="pwaModal" aria-label="닫기">✕</button>
     </div>
     <div class="m-body">
-      <div class="guide-box" style="background:rgba(56,189,248,0.12);border-color:rgba(56,189,248,0.35);color:#e0f2fe">
-        <b style="color:#fff;font-size:14px">✨ 오프라인 실행 &amp; 전체 화면 아케이드 앱</b><br>
-        설치 후에는 인터넷 연결이 불안정한 교실 환경에서도 9종의 모든 게임을 즉시 전체 화면으로 실행할 수 있습니다.
+      <div class="guide-box" style="display:flex;align-items:center;gap:14px;background:rgba(56,189,248,0.12);border-color:rgba(56,189,248,0.35);color:#e0f2fe">
+        <img src="icons/icon-192.png" alt="BIO ARCADE" width="56" height="56" style="width:56px;height:56px;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,0.45);flex:none">
+        <div>
+          <b style="color:#fff;font-size:14.5px">BIO ARCADE 전용 앱 설치</b><br>
+          바탕화면이나 스마트폰 홈 화면에 세련된 전용 아이콘으로 설치하고 전체 화면·오프라인에서도 즉시 플레이하세요.
+        </div>
       </div>
-      <div id="pwaDirectBox" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 15px;border-radius:14px;background:rgba(34,197,94,0.15);border:1px solid rgba(74,222,128,0.4)" hidden>
+      <div id="pwaDirectBox" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 15px;border-radius:14px;background:rgba(34,197,94,0.15);border:1px solid rgba(74,222,180,0.4)" hidden>
         <div>
           <b style="color:#bbf7d0;font-size:14px">🚀 원클릭 바로 설치 가능!</b>
-          <div style="font-size:12px;color:var(--sub)">현재 브라우저에서 즉시 앱 설치 팝업을 띄울 수 있습니다.</div>
+          <div style="font-size:12px;color:var(--sub)">아래 버튼을 누르면 브라우저 앱 설치 창이 바로 열립니다.</div>
         </div>
         <button class="g-btn pri" id="pwaPromptNowBtn" type="button" style="padding:8px 16px;font-size:13.5px">지금 설치하기</button>
       </div>
       <div id="pwaDeviceSteps" style="display:flex;flex-direction:column;gap:8px"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--dim);padding-top:4px">
         <span id="swStatusTxt">🔄 서비스 워커 오프라인 캐시 확인 중...</span>
-        <button class="g-btn" type="button" data-close="pwaModal">확인</button>
+        <button class="g-btn" type="button" data-close="pwaModal">닫기</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ========== 2. 학생 기록 & 멀티 웹 환경 통합 랭킹 모달 ========== -->
+<!-- ========== 2. 구글 스프레드시트 실시간 랭킹 & 관리자 모드(1211) 모달 ========== -->
 <div class="modal-backdrop" id="rankModal" hidden role="dialog" aria-modal="true" aria-labelledby="rankModalTitle">
   <div class="glass-modal">
     <div class="m-head">
-      <h3 id="rankModalTitle">🏆 학생 플레이 기록 &amp; 통합 랭킹 보드</h3>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span id="rankSyncBadge" class="env-pill" style="color:#a7f3d0;border-color:rgba(110,231,183,0.4)">🟢 실시간 P2P 대기</span>
+      <h3 id="rankModalTitle">🏆 실시간 학생 랭킹 보드</h3>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span id="rankSyncBadge" class="env-pill" style="color:#a7f3d0;border-color:rgba(110,231,183,0.4)">🟢 실시간 연동 대기</span>
+        <button class="g-btn" id="modalAdminToggleBtn" type="button" style="padding:4px 10px;font-size:12px">🔐 관리자 모드</button>
         <button class="m-close" type="button" data-close="rankModal" aria-label="닫기">✕</button>
       </div>
     </div>
     <div class="m-body">
-      <!-- 학생 프로필 & 학급 방 동기화 바 -->
+      <!-- 학생 내 기록 등록 바 -->
       <div class="student-bar">
-        <label>🎓 학번/반 <input id="stIdInp" class="g-inp" style="width:92px" placeholder="예: 20315" maxlength="12"></label>
-        <label>이름 <input id="stNameInp" class="g-inp" style="width:105px" placeholder="예: 김생명" maxlength="12"></label>
-        <label>📡 학급 코드 <input id="stRoomInp" class="g-inp" style="width:90px;text-transform:uppercase" value="BIO2026" maxlength="10"></label>
-        <button class="g-btn pri" id="btnSaveStudent" type="button">💾 내 기록 반영 &amp; 동기화</button>
-        <button class="g-btn gold" id="btnHostClass" type="button" title="선생님 PC에서 누르면 학생들의 기록을 실시간 P2P로 자동 수집합니다">👑 교사 집계방 열기</button>
-      </div>
-
-      <!-- 탭 메뉴 -->
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-        <div class="rtabs" role="tablist">
-          <button class="rtab on" type="button" data-rtab="board">📊 실시간 종합/게임별 랭킹</button>
-          <button class="rtab" type="button" data-rtab="cloud">☁️ 구글 시트(서버리스 DB) 연동</button>
-          <button class="rtab" type="button" data-rtab="code">🔑 오프라인 기록 코드 취합</button>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <select id="rankGameFilter" class="g-inp" style="font-size:12px;padding:5px 8px">
+        <label>🎓 학번 <input id="stIdInp" class="g-inp" style="width:96px" placeholder="예: 20315" maxlength="15"></label>
+        <label>이름 <input id="stNameInp" class="g-inp" style="width:110px" placeholder="예: 김생명" maxlength="15"></label>
+        <button class="g-btn pri" id="btnSaveStudent" type="button">💾 내 기록 등록·실시간 전송</button>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <select id="rankGameFilter" class="g-inp" style="font-size:12.5px;padding:6px 10px">
             <option value="total">🏅 9종 게임 종합 점수 순위</option>
             <option value="bio-beat">🎵 BIO BEAT (리듬)</option>
             <option value="immune-strike">🔫 면역 특공대 (액션)</option>
@@ -659,99 +655,65 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
             <option value="cell-brawl">💥 셀 브롤 (3D 난투)</option>
             <option value="only-up">🧗 ONLY UP (소화 대탈출)</option>
           </select>
-          <button class="g-btn" id="btnExportCsv" type="button">📥 엑셀(CSV) 다운로드</button>
-          <button class="g-btn" id="btnClearBoard" type="button" style="color:#fda4af">🗑️ 목록 초기화</button>
+          <button class="g-btn" id="btnRefreshRank" type="button">🔄 새로고침</button>
         </div>
       </div>
 
-      <!-- 탭 1: 실시간 랭킹 테이블 -->
-      <div id="rtab-board">
-        <div class="rtable-wrap">
-          <table class="rtable">
-            <thead>
-              <tr>
-                <th>순위</th>
-                <th>학번·이름</th>
-                <th>접속 웹·기기 환경</th>
-                <th>종합 점수</th>
-                <th>플레이 게임 수</th>
-                <th>선택 종목 기록 / 종목별 요약</th>
-                <th>최근 갱신</th>
-              </tr>
-            </thead>
-            <tbody id="rankTbody"></tbody>
-          </table>
-        </div>
-        <div style="font-size:12px;color:var(--dim);margin-top:8px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px">
-          <span>💡 같은 <b>학급 코드</b>를 입력한 학생들은 서로 다른 기기(PC·태블릿·스마트폰)에서도 P2P로 기록이 실시간 공유됩니다.</span>
-          <span id="cloudStatusShort">☁️ 클라우드 DB: 미연결 (P2P + 로컬 저장 활성)</span>
-        </div>
-      </div>
-
-      <!-- 탭 2: 구글 스프레드시트(Google Apps Script) 클라우드 영구 연동 -->
-      <div id="rtab-cloud" hidden>
-        <div class="guide-box">
-          <h4>☁️ 어떤 웹 환경에서 플레이하든 24시간 영구 기록되는 구글 스프레드시트 연동</h4>
-          선생님 PC가 꺼져 있거나 학생들이 각자 집·스마트폰에서 과제로 플레이할 때도 모든 학생의 점수와 접속 환경을 한곳에 자동 누적하려면 <b>구글 스프레드시트(무료)</b>를 연결하세요. 별도 유료 서버 없이 1분이면 설정됩니다!
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
-            <input id="cloudUrlInp" class="g-inp" style="flex:1;min-width:240px" placeholder="https://script.google.com/macros/s/.../exec (구글 Apps Script 웹 앱 URL)">
-            <button class="g-btn pri" id="btnSaveCloudUrl" type="button">🔗 클라우드 URL 저장 &amp; 불러오기</button>
-            <button class="g-btn" id="btnShareCloudLink" type="button">📋 학생 배포용 링크 복사</button>
+      <!-- 🔐 관리자 전용 패널 (비밀번호 1211 인증 시 표시) -->
+      <div id="adminPanel" class="guide-box" style="background:rgba(244,63,94,0.1);border-color:rgba(251,113,133,0.4)" hidden>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <h4 style="margin:0;color:#fda4af">🛠️ 관리자 모드 활성화됨 (목록별 기록 수정·삭제 및 구글 시트 URL 관리)</h4>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="g-btn" id="btnExportCsv" type="button">📥 엑셀(CSV) 다운로드</button>
+            <button class="g-btn" id="btnClearAllCloud" type="button" style="color:#fda4af;border-color:rgba(251,113,133,0.45)">🗑️ 전체 기록 초기화</button>
+            <button class="g-btn" id="btnExitAdmin" type="button">🔒 관리자 종료</button>
           </div>
-          <div style="margin-top:12px">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <b style="color:#bae6fd;font-size:12.5px">📌 구글 시트 → [확장 프로그램] → [Apps Script]에 아래 코드를 붙여넣고 [배포 → 새 배포 → 웹 앱(모든 사용자)]로 배포하세요:</b>
-              <button class="g-btn" id="btnCopyGasCode" type="button">📋 Apps Script 코드 복사</button>
-            </div>
-            <pre class="code-pre" id="gasCodeBlock">function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = JSON.parse(e.postData.contents);
-  var rows = sheet.getDataRange().getValues();
-  var foundRow = -1;
-  for (var i = 1; i &lt; rows.length; i++) {
-    if (String(rows[i][0]) === String(data.uid)) { foundRow = i + 1; break; }
-  }
-  var rowData = [data.uid, data.stId, data.name, data.env, data.totalScore, data.playedCount, JSON.stringify(data.games), new Date().toISOString()];
-  if (foundRow &gt; 0) sheet.getRange(foundRow, 1, 1, rowData.length).setValues([rowData]);
-  else {
-    if (rows.length === 0 || rows[0][0] !== 'UID') sheet.appendRow(['UID','학번','이름','웹환경','종합점수','플레이수','게임별상세JSON','갱신시각']);
-    sheet.appendRow(rowData);
-  }
-  return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);
-}
-function doGet(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var rows = sheet.getDataRange().getValues();
-  var out = [];
-  for (var i = 1; i &lt; rows.length; i++) {
-    if (!rows[i][0]) continue;
-    var g = {}; try { g = JSON.parse(rows[i][6] || '{}'); } catch(_) {}
-    out.push({uid:rows[i][0], stId:rows[i][1], name:rows[i][2], env:rows[i][3], totalScore:Number(rows[i][4])||0, playedCount:Number(rows[i][5])||0, games:g, updatedAt:rows[i][7]});
-  }
-  return ContentService.createTextOutput(JSON.stringify({ok:true, records:out})).setMimeType(ContentService.MimeType.JSON);
-}</pre>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:12px;color:#fecdd3;font-weight:600">구글 시트 웹 앱 URL:</span>
+          <input id="cloudUrlInp" class="g-inp" style="flex:1;min-width:240px;font-size:12px" placeholder="https://script.google.com/macros/s/.../exec">
+          <button class="g-btn pri" id="btnSaveCloudUrl" type="button">🔗 URL 저장 &amp; 동기화</button>
+          <button class="g-btn" id="btnShareCloudLink" type="button">📋 학생 배포 링크 복사</button>
+        </div>
+      </div>
+
+      <!-- 🛠️ 관리자용 개별 학생 기록 수정 폼 (수정 버튼 클릭 시 표시) -->
+      <div id="adminEditBox" class="guide-box" style="background:rgba(56,189,248,0.12);border-color:rgba(56,189,248,0.45)" hidden>
+        <h4 style="margin:0 0 8px;color:#bae6fd">✏️ 학생 기록 수정</h4>
+        <input type="hidden" id="editUid">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:12px">학번 <input id="editStId" class="g-inp" style="width:90px"></label>
+          <label style="font-size:12px">이름 <input id="editName" class="g-inp" style="width:105px"></label>
+          <label style="font-size:12px">종합 점수 <input id="editTotalScore" type="number" class="g-inp" style="width:95px"></label>
+          <label style="font-size:12px">접속 환경 <input id="editEnv" class="g-inp" style="width:155px"></label>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button class="g-btn pri" id="btnConfirmEdit" type="button">✅ 수정 저장</button>
+            <button class="g-btn" id="btnCancelEdit" type="button">취소</button>
           </div>
         </div>
       </div>
 
-      <!-- 탭 3: 오프라인 기록 코드 복사 & 교사용 일괄 취합 -->
-      <div id="rtab-code" hidden>
-        <div class="guide-box">
-          <h4>🔑 학생용: 내 플레이 기록 코드 복사 (구글 클래스룸·카톡·패들렛 제출용)</h4>
-          학교 방화벽 등으로 네트워크가 분리되어 있을 때, 아래 버튼을 눌러 내 9종 게임 기록 코드를 복사해 선생님께 제출하세요.
-          <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-            <input id="myRecordCodeOut" class="g-inp" style="flex:1;font-family:monospace;font-size:12px" readonly>
-            <button class="g-btn pri" id="btnCopyMyCode" type="button">📋 내 기록 코드 복사</button>
-          </div>
-        </div>
-        <div class="guide-box" style="margin-top:10px">
-          <h4>📥 교사용: 학생들이 제출한 기록 코드 일괄 등록</h4>
-          학생들이 제출한 기록 코드(여러 줄 붙여넣기 가능)를 아래 칸에 붙여넣고 등록하면 즉시 위 순위표와 엑셀(CSV)에 합산됩니다.
-          <textarea id="importCodesArea" class="g-inp" rows="4" style="width:100%;margin-top:8px;font-family:monospace;font-size:12px" placeholder="BIO-REC:... 코드를 한 줄에 하나씩 또는 여러 개 붙여넣으세요"></textarea>
-          <div style="display:flex;justify-content:flex-end;margin-top:8px">
-            <button class="g-btn gold" id="btnImportCodes" type="button">➕ 기록 코드 일괄 반영하기</button>
-          </div>
-        </div>
+      <!-- 실시간 랭킹 테이블 -->
+      <div class="rtable-wrap">
+        <table class="rtable">
+          <thead>
+            <tr>
+              <th>순위</th>
+              <th>학번·이름</th>
+              <th>접속 웹·기기 환경</th>
+              <th>점수</th>
+              <th>플레이 종목</th>
+              <th>종목별 상세 기록</th>
+              <th>최근 갱신</th>
+              <th id="adminColHead" hidden>관리 (수정·삭제)</th>
+            </tr>
+          </thead>
+          <tbody id="rankTbody"></tbody>
+        </table>
+      </div>
+      <div style="font-size:12px;color:var(--dim);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px">
+        <span>💡 게임을 플레이하고 메인 화면으로 돌아오면 내 기록이 구글 스프레드시트 랭킹에 실시간으로 자동 반영됩니다.</span>
+        <span id="cloudStatusShort">☁️ 구글 스프레드시트 실시간 연동</span>
       </div>
     </div>
   </div>
@@ -759,6 +721,15 @@ function doGet(e) {
 
 <script>
 (()=>{
+  // =========================================================================
+  // ★ 구글 스프레드시트(Apps Script) 웹 앱 기본 URL 설정란
+  // 배포하신 Google Apps Script 웹 앱 URL(https://script.google.com/macros/s/.../exec)을
+  // 아래 DEFAULT_GAS_URL 따옴표 안에 넣어 두시면 모든 학생 기기에서 별도 설정 없이 즉시 연동됩니다!
+  // (또는 사이트의 🔐 관리자 모드[비번 1211]에서도 URL을 등록하고 배포 링크를 복사할 수 있습니다.)
+  // =========================================================================
+  const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbwO6iyqGg_MthXxpnaORNcOoGef0p2P1t5vZvnJt1a6vO3B32ojQKoZZWWhGZc_3j2KEQ/exec';
+  const ADMIN_PASS = '1211';
+
   const get=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}};
   const set=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
   const fmtT=t=>{const m=Math.floor(t/60),s=t-m*60;return m+':'+s.toFixed(2).padStart(5,'0');};
@@ -935,19 +906,19 @@ function doGet(e) {
       steps=[
         ['1','Safari 브라우저 하단(아이패드는 상단)의 <b>공유 버튼 [↑]</b>을 탭하세요.'],
         ['2','메뉴를 아래로 스크롤하여 <b>「홈 화면에 추가 ➕」</b>를 선택하세요.'],
-        ['3','오른쪽 위 <b>「추가」</b>를 누르면 홈 화면에 <b>BIO ARCADE</b> 전용 앱이 생성됩니다!']
+        ['3','오른쪽 위 <b>「추가」</b>를 누르면 홈 화면에 세련된 <b>BIO ARCADE</b> 전용 앱이 생성됩니다!']
       ];
     }else if(isAndroid){
       steps=[
         ['1','크롬/삼성 인터넷 우측 상단 <b>메뉴 [⋮]</b> 또는 하단 메뉴를 여세요.'],
         ['2','<b>「앱 설치」</b> 또는 <b>「홈 화면에 추가」</b>를 탭하세요.'],
-        ['3','설치가 완료되면 앱 서랍과 홈 화면에서 전체 화면 게임 앱으로 바로 실행됩니다!']
+        ['3','설치가 완료되면 홈 화면에서 전체 화면 게임 앱으로 바로 실행됩니다!']
       ];
     }else{
       steps=[
         ['1','PC 크롬(Chrome)·엣지(Edge)·웨일(Whale) 주소창 오른쪽 끝의 <b>[⊕ 앱 설치]</b> 아이콘을 클릭하세요.'],
         ['2','또는 브라우저 우측 상단 <b>메뉴 [⋮] → [전송, 저장, 공유] → [페이지를 앱으로 설치...]</b>를 선택하세요.'],
-        ['3','바탕화면과 작업 표시줄에 <b>BIO ARCADE</b> 단독 앱 창이 생성되며 오프라인에서도 작동합니다!']
+        ['3','바탕화면과 작업 표시줄에 <b>BIO ARCADE</b> 단독 앱이 생성되며 오프라인에서도 작동합니다!']
       ];
     }
     if(pwaDeviceSteps){
@@ -990,10 +961,9 @@ function doGet(e) {
       if(swStatusTxt)swStatusTxt.textContent='ℹ️ 웹 브라우저 모드로 실행 중';
     });
   }else if(swStatusTxt){
-    swStatusTxt.textContent='ℹ️ 로컬 파일(file://) 모드 — 웹 서버(GitHub Pages 등) 배포 시 원클릭 PWA 설치가 활성화됩니다.';
+    swStatusTxt.textContent='ℹ️ 로컬 파일(file://) 모드 — 웹 호스팅(GitHub Pages 등) 배포 시 원클릭 PWA 설치가 활성화됩니다.';
   }
 
-  // 모달 닫기 공통 핸들러
   document.querySelectorAll('[data-close]').forEach(b=>{
     b.addEventListener('click',()=>{
       const el=document.getElementById(b.dataset.close);
@@ -1005,7 +975,7 @@ function doGet(e) {
     m.addEventListener('click',e=>{if(e.target===m)m.hidden=true;});
   });
 
-  // ================= 2. 학생 플레이 기록 추출 & 멀티 환경 통합 랭킹 시스템 =================
+  // ================= 2. 구글 스프레드시트 실시간 랭킹 & 관리자 모드(1211) =================
   const GAME_META=[
     {id:'bio-beat',name:'BIO BEAT'},
     {id:'immune-strike',name:'면역 특공대'},
@@ -1018,12 +988,9 @@ function doGet(e) {
     {id:'only-up',name:'ONLY UP'}
   ];
 
-  // 각 게임의 localStorage 데이터를 읽어 표준 점수(pts)와 요약 텍스트(label)로 변환
   function collectLocalGameMetrics(){
     const games={};
     let totalScore=0, playedCount=0;
-
-    // 1) BIO BEAT
     {
       const r=get('biobeat_rec_v1');
       if(r&&typeof r==='object'){
@@ -1037,7 +1004,6 @@ function doGet(e) {
         }
       }
     }
-    // 2) 면역 특공대
     {
       const hs=get('immuneStrikeHS');
       if(Array.isArray(hs)&&hs.length&&hs[0]&&hs[0].s>0){
@@ -1045,7 +1011,6 @@ function doGet(e) {
         games['immune-strike']={pts:Math.min(5000,Math.round(s/50)),label:`${s.toLocaleString('en-US')}점`};
       }
     }
-    // 3) 바이오 카트
     {
       const s=get('biokart');const b=s&&s.best;
       if(b&&typeof b==='object'){
@@ -1058,7 +1023,6 @@ function doGet(e) {
         }
       }
     }
-    // 4) 혈관 협곡
     {
       const s=get('vesselCanyonStats');
       if(s&&(s.w||s.l)){
@@ -1066,7 +1030,6 @@ function doGet(e) {
         games['vessel-canyon']={pts:w*250+l*60,label:`${w}승 ${l}패`};
       }
     }
-    // 5) BIOTRO
     {
       const s=get('biotroStats');
       if(s&&s.runs){
@@ -1075,7 +1038,6 @@ function doGet(e) {
         games['biotro']={pts,label:`앤티 ${ante}`+(wins?` · ${wins}승`:'')+` · 최고 ${bh.toLocaleString('en-US')}`};
       }
     }
-    // 6) CELL BOUND
     {
       const s=get('cellBoundStats');
       if(s&&s.runs){
@@ -1084,7 +1046,6 @@ function doGet(e) {
         games['cell-bound']={pts,label:(wins?`승리 ${wins}회`:`최고 ${fl}층`)+` · 처치 ${kills}`};
       }
     }
-    // 7) 세포 탐사대 (핀볼)
     {
       const hs=get('cellCadetHS');
       if(Array.isArray(hs)&&hs.length&&hs[0]&&hs[0].score>0){
@@ -1092,7 +1053,6 @@ function doGet(e) {
         games['cell-pinball']={pts:Math.min(5000,Math.round(sc/120)),label:`${sc.toLocaleString('en-US')}점`};
       }
     }
-    // 8) 셀 브롤
     {
       const t=get('cellbrawl:trophies');
       if(t&&typeof t==='object'){
@@ -1103,7 +1063,6 @@ function doGet(e) {
         }
       }
     }
-    // 9) ONLY UP
     {
       const s=get('onlyupBioStats'),p=get('onlyupBio');
       if(s&&s.clears){
@@ -1113,7 +1072,6 @@ function doGet(e) {
         games['only-up']={pts:(p.cp+1)*95,label:`진행 ${p.cp+1}/7 구간`};
       }
     }
-
     for(const k of Object.keys(games)){
       totalScore+=games[k].pts||0;
       playedCount++;
@@ -1121,30 +1079,39 @@ function doGet(e) {
     return {games,totalScore,playedCount};
   }
 
-  // 학생 프로필 및 로컬/클라우드/P2P 랭킹 스토어
   const urlParams=new URLSearchParams(location.search);
   const profile=get('bioArcadeStudentProfile')||{
     uid:'u_'+Math.random().toString(36).slice(2,10),
     stId:'',
     name:'',
-    room:(urlParams.get('room')||'BIO2026').toUpperCase(),
-    cloudUrl:urlParams.get('rankurl')||''
+    cloudUrl:urlParams.get('gas')||urlParams.get('rankurl')||DEFAULT_GAS_URL
   };
-  if(urlParams.get('rankurl'))profile.cloudUrl=urlParams.get('rankurl');
-  if(urlParams.get('room'))profile.room=urlParams.get('room').toUpperCase();
+  if(urlParams.get('gas')||urlParams.get('rankurl')){
+    profile.cloudUrl=urlParams.get('gas')||urlParams.get('rankurl');
+  }else if(!profile.cloudUrl&&DEFAULT_GAS_URL){
+    profile.cloudUrl=DEFAULT_GAS_URL;
+  }
   set('bioArcadeStudentProfile',profile);
 
   const boardMap=new Map();
   const savedBoard=get('bioArcadeLeaderboard')||[];
   if(Array.isArray(savedBoard))savedBoard.forEach(r=>{if(r&&r.uid)boardMap.set(r.uid,r);});
 
+  let isAdmin=false;
+  let pollTimer=null;
+
+  function persistBoard(){
+    const arr=Array.from(boardMap.values()).sort((a,b)=>(b.totalScore||0)-(a.totalScore||0)).slice(0,300);
+    set('bioArcadeLeaderboard',arr);
+  }
+
   function buildMyRecord(){
     const m=collectLocalGameMetrics();
+    const existing=boardMap.get(profile.uid);
     const rec={
       uid:profile.uid,
-      stId:(profile.stId||'').trim()||'미입력',
-      name:(profile.name||'').trim()||('학생_'+profile.uid.slice(-4)),
-      room:(profile.room||'BIO2026').trim().toUpperCase(),
+      stId:(profile.stId||'').trim()||(existing&&existing.stId)||'미입력',
+      name:(profile.name||'').trim()||(existing&&existing.name)||('학생_'+profile.uid.slice(-4)),
       env:detectEnvLabel(),
       totalScore:m.totalScore,
       playedCount:m.playedCount,
@@ -1160,26 +1127,6 @@ function doGet(e) {
     return rec;
   }
 
-  function persistBoard(){
-    const arr=Array.from(boardMap.values()).sort((a,b)=>(b.totalScore||0)-(a.totalScore||0)).slice(0,250);
-    set('bioArcadeLeaderboard',arr);
-  }
-
-  function encodeRecordCode(rec){
-    try{
-      const payload=JSON.stringify({u:rec.uid,i:rec.stId,n:rec.name,e:rec.env,t:rec.totalScore,p:rec.playedCount,g:rec.games,d:rec.updatedAt});
-      return 'BIO-REC:'+btoa(unescape(encodeURIComponent(payload)));
-    }catch(e){return '';}
-  }
-  function decodeRecordCode(str){
-    try{
-      const clean=str.trim().replace(/^BIO-REC:/i,'');
-      const o=JSON.parse(decodeURIComponent(escape(atob(clean))));
-      if(!o||!o.u)return null;
-      return {uid:o.u,stId:o.i||'미입력',name:o.n||'학생',env:o.e||'Web',totalScore:Number(o.t)||0,playedCount:Number(o.p)||0,games:o.g||{},updatedAt:o.d||new Date().toISOString()};
-    }catch(e){return null;}
-  }
-
   const rankModal=document.getElementById('rankModal');
   const rankTbody=document.getElementById('rankTbody');
   const rankGameFilter=document.getElementById('rankGameFilter');
@@ -1187,22 +1134,51 @@ function doGet(e) {
   const cloudStatusShort=document.getElementById('cloudStatusShort');
   const stIdInp=document.getElementById('stIdInp');
   const stNameInp=document.getElementById('stNameInp');
-  const stRoomInp=document.getElementById('stRoomInp');
   const cloudUrlInp=document.getElementById('cloudUrlInp');
-  const myRecordCodeOut=document.getElementById('myRecordCodeOut');
+  const adminPanel=document.getElementById('adminPanel');
+  const adminColHead=document.getElementById('adminColHead');
+  const adminEditBox=document.getElementById('adminEditBox');
+  const modalAdminToggleBtn=document.getElementById('modalAdminToggleBtn');
 
-  function initRankInputs(){
-    if(stIdInp)stIdInp.value=profile.stId||'';
-    if(stNameInp)stNameInp.value=profile.name||'';
-    if(stRoomInp)stRoomInp.value=profile.room||'BIO2026';
-    if(cloudUrlInp)cloudUrlInp.value=profile.cloudUrl||'';
+  function syncAdminUI(){
+    if(adminPanel)adminPanel.hidden=!isAdmin;
+    if(adminColHead)adminColHead.hidden=!isAdmin;
+    if(!isAdmin&&adminEditBox)adminEditBox.hidden=true;
+    if(modalAdminToggleBtn){
+      modalAdminToggleBtn.textContent=isAdmin?'🛠️ 관리자 활성중':'🔐 관리자 모드';
+      modalAdminToggleBtn.style.borderColor=isAdmin?'#fb7185':'rgba(255,255,255,0.22)';
+      modalAdminToggleBtn.style.color=isAdmin?'#fecdd3':'#fff';
+    }
+    renderRankingTable();
   }
-  initRankInputs();
+
+  function requestAdminAuth(){
+    playUiTone('tap');
+    if(isAdmin){
+      if(rankModal&&rankModal.hidden){
+        openRankModal();
+      }
+      return;
+    }
+    const pw=prompt('관리자 비밀번호를 입력하세요:');
+    if(pw===null)return;
+    if(pw.trim()===ADMIN_PASS){
+      isAdmin=true;
+      playUiTone('launch');
+      if(rankModal&&rankModal.hidden)openRankModal();
+      syncAdminUI();
+    }else{
+      alert('비밀번호가 일치하지 않습니다.');
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
 
   function renderRankingTable(){
     if(!rankTbody)return;
-    const myRec=buildMyRecord();
-    if(myRecordCodeOut)myRecordCodeOut.value=encodeRecordCode(myRec);
+    buildMyRecord();
     const filter=rankGameFilter?rankGameFilter.value:'total';
     let list=Array.from(boardMap.values());
     if(filter!=='total'){
@@ -1211,8 +1187,9 @@ function doGet(e) {
     }else{
       list.sort((a,b)=>(b.totalScore||0)-(a.totalScore||0));
     }
+    const colSpan=isAdmin?8:7;
     if(!list.length){
-      rankTbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--dim)">아직 등록된 플레이 기록이 없습니다. 게임을 플레이하거나 상단에서 학번·이름을 저장해 보세요!</td></tr>`;
+      rankTbody.innerHTML=`<tr><td colspan="${colSpan}" style="text-align:center;padding:26px;color:var(--dim)">아직 등록된 학생 기록이 없습니다. 상단에서 학번·이름을 입력하고 [내 기록 등록]을 눌러보세요!</td></tr>`;
       return;
     }
     rankTbody.innerHTML=list.map((r,idx)=>{
@@ -1222,222 +1199,210 @@ function doGet(e) {
       let detailTxt='';
       if(filter!=='total'){
         const gm=r.games&&r.games[filter];
-        detailTxt=gm?`<b style="color:#fde047">${gm.label}</b> (${gm.pts}pt)`:'-';
+        detailTxt=gm?`<b style="color:#fde047">${escapeHtml(gm.label)}</b> (${Number(gm.pts)||0}pt)`:'-';
       }else{
-        const parts=GAME_META.filter(m=>r.games&&r.games[m.id]).map(m=>`<span class="env-pill">${m.name}: <b style="color:#fff">${r.games[m.id].label}</b></span>`);
+        const parts=GAME_META.filter(m=>r.games&&r.games[m.id]).map(m=>`<span class="env-pill">${m.name}: <b style="color:#fff">${escapeHtml(r.games[m.id].label)}</b></span>`);
         detailTxt=parts.length?parts.join(' '):'<span style="color:var(--dim)">플레이 기록 없음</span>';
       }
-      const scVal=filter==='total'?(r.totalScore||0):((r.games&&r.games[filter]&&r.games[filter].pts)||0);
-      const tStr=r.updatedAt?new Date(r.updatedAt).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}):'-';
+      const scVal=filter==='total'?(Number(r.totalScore)||0):((r.games&&r.games[filter]&&Number(r.games[filter].pts))||0);
+      const tStr=r.updatedAt?new Date(r.updatedAt).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'-';
+      const adminTd=isAdmin?`<td>
+        <div style="display:flex;gap:5px">
+          <button class="g-btn" type="button" data-edit-uid="${escapeHtml(r.uid)}" style="padding:3px 8px;font-size:11.5px">✏️ 수정</button>
+          <button class="g-btn" type="button" data-del-uid="${escapeHtml(r.uid)}" style="padding:3px 8px;font-size:11.5px;color:#fda4af;border-color:rgba(251,113,133,0.4)">🗑️ 삭제</button>
+        </div>
+      </td>`:'';
       return `<tr class="${isMe?'me-row':''}">
         <td><span class="${rkCls}">${rk}</span></td>
-        <td><b>${r.stId&&r.stId!=='미입력'?r.stId+' ':''}${r.name}</b>${isMe?' <span class="env-pill" style="color:#7dd3fc">나</span>':''}</td>
-        <td><span class="env-pill">${r.env||'Web'}</span></td>
+        <td><b>${r.stId&&r.stId!=='미입력'?escapeHtml(r.stId)+' ':''}${escapeHtml(r.name)}</b>${isMe?' <span class="env-pill" style="color:#7dd3fc">나</span>':''}</td>
+        <td><span class="env-pill">${escapeHtml(r.env||'Web')}</span></td>
         <td><b style="color:#fde047;font-size:13.5px">${scVal.toLocaleString('en-US')}점</b></td>
         <td>${r.playedCount||Object.keys(r.games||{}).length} / 9종</td>
-        <td style="white-space:normal;min-width:240px">${detailTxt}</td>
+        <td style="white-space:normal;min-width:230px">${detailTxt}</td>
         <td style="color:var(--dim)">${tStr}</td>
+        ${adminTd}
       </tr>`;
     }).join('');
   }
 
-  // ---- 실시간 WebRTC P2P + BroadcastChannel 학급 랭킹 동기화 ----
-  let rankPeer=null, rankConns=new Map(), rankBc=null, isTeacherHost=false;
-  const RANK_PREFIX='bioarcade-rank-v1-';
-
-  function mergeIncomingRecords(arr){
-    if(!Array.isArray(arr))return;
-    let changed=false;
-    for(const r of arr){
-      if(!r||!r.uid)continue;
-      const cur=boardMap.get(r.uid);
-      if(!cur||(r.totalScore||0)>=(cur.totalScore||0)||new Date(r.updatedAt||0)>new Date(cur.updatedAt||0)){
-        boardMap.set(r.uid,r);
-        changed=true;
-      }
-    }
-    if(changed){persistBoard();renderRankingTable();}
+  // ---- 구글 스프레드시트(Google Apps Script) 실시간 통신 ----
+  function getGasUrl(){
+    return ((profile.cloudUrl||DEFAULT_GAS_URL)||'').trim();
   }
 
-  function broadcastMyRankP2P(){
-    const rec=buildMyRecord();
-    const pkt={type:'rank_sync',records:isTeacherHost?Array.from(boardMap.values()):[rec]};
-    if(rankBc){try{rankBc.postMessage(pkt);}catch(e){}}
-    for(const c of rankConns.values()){if(c&&c.open){try{c.send(pkt);}catch(e){}}}
-  }
-
-  function connectRankRoom(forceHost){
-    const room=(profile.room||'BIO2026').trim().toUpperCase();
-    if(rankBc){try{rankBc.close();}catch(e){}}
-    if(typeof BroadcastChannel!=='undefined'){
-      rankBc=new BroadcastChannel(RANK_PREFIX+room);
-      rankBc.onmessage=e=>{if(e.data&&e.data.type==='rank_sync')mergeIncomingRecords(e.data.records);};
-    }
-    if(!window.Peer)return;
-    if(rankPeer){try{rankPeer.destroy();}catch(e){}rankPeer=null;rankConns.clear();}
-    const hostPeerId=RANK_PREFIX+room;
-    const p=new window.Peer(forceHost?hostPeerId:undefined);
-    rankPeer=p;
-    p.on('open',id=>{
-      if(id===hostPeerId){
-        isTeacherHost=true;
-        if(rankSyncBadge)rankSyncBadge.textContent=`👑 교사 집계 호스트 [${room}] 활성`;
-      }else{
-        isTeacherHost=false;
-        if(rankSyncBadge)rankSyncBadge.textContent=`🟢 학급방 [${room}] P2P 연결 중`;
-        const conn=p.connect(hostPeerId,{reliable:true});
-        conn.on('open',()=>{
-          rankConns.set(conn.peer,conn);
-          if(rankSyncBadge)rankSyncBadge.textContent=`🟢 학급방 [${room}] 실시간 동기화됨`;
-          conn.send({type:'rank_sync',records:[buildMyRecord()]});
-        });
-        conn.on('data',d=>{if(d&&d.type==='rank_sync')mergeIncomingRecords(d.records);});
-      }
-    });
-    p.on('connection',conn=>{
-      conn.on('open',()=>{
-        rankConns.set(conn.peer,conn);
-        conn.send({type:'rank_sync',records:Array.from(boardMap.values())});
+  async function postToGas(payload){
+    const url=getGasUrl();
+    if(!url)return false;
+    try{
+      await fetch(url,{
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify(payload)
       });
-      conn.on('data',d=>{
-        if(d&&d.type==='rank_sync'){
-          mergeIncomingRecords(d.records);
-          broadcastMyRankP2P();
-        }
-      });
-    });
-    p.on('error',err=>{
-      // 아직 호스트가 없으면 첫 접속자가 자동으로 학급 집계 호스트 역할을 겸함
-      if(err&&err.type==='peer-unavailable'&&!forceHost){
-        connectRankRoom(true);
-      }
-    });
+      return true;
+    }catch(e){
+      return false;
+    }
   }
 
-  // ---- 구글 스프레드시트(Apps Script) 클라우드 DB 동기화 ----
-  async function syncWithCloud(pushMe){
-    const url=(profile.cloudUrl||'').trim();
+  async function fetchFromGas(){
+    const url=getGasUrl();
     if(!url){
-      if(cloudStatusShort)cloudStatusShort.textContent='☁️ 클라우드 DB: 미연결 (학급 코드 P2P 실시간 동기화 활성)';
+      if(rankSyncBadge)rankSyncBadge.textContent='⚪ 시트 URL 미설정 (관리자 모드에서 등록)';
+      if(cloudStatusShort)cloudStatusShort.textContent='ℹ️ 관리자 모드(비번 1211)에서 구글 스프레드시트 웹 앱 URL을 입력하면 실시간 랭킹이 연동됩니다.';
       return;
     }
-    if(cloudStatusShort)cloudStatusShort.textContent='☁️ 클라우드 DB 동기화 중...';
-    const rec=buildMyRecord();
-    if(pushMe&&(rec.playedCount>0||profile.name)){
-      try{
-        await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(rec)});
-      }catch(e){}
-    }
+    if(rankSyncBadge)rankSyncBadge.textContent='🔄 실시간 랭킹 불러오는 중...';
     try{
-      const res=await fetch(url+(url.includes('?')?'&':'?')+'t='+Date.now());
+      const res=await fetch(url+(url.includes('?')?'&':'?')+'t='+Date.now(),{cache:'no-store'});
       const data=await res.json();
       if(data&&Array.isArray(data.records)){
-        mergeIncomingRecords(data.records);
-        if(cloudStatusShort)cloudStatusShort.textContent=`☁️ 클라우드 DB 연동 완료 (${data.records.length}명 기록 수신)`;
+        boardMap.clear();
+        data.records.forEach(r=>{if(r&&r.uid)boardMap.set(String(r.uid),r);});
+        buildMyRecord();
+        persistBoard();
+        renderRankingTable();
+        if(rankSyncBadge)rankSyncBadge.textContent=`🟢 실시간 연동됨 (${data.records.length}명)`;
+        if(cloudStatusShort)cloudStatusShort.textContent=`☁️ 구글 스프레드시트 실시간 동기화 완료 · 총 ${data.records.length}명 기록`;
       }
     }catch(e){
-      if(cloudStatusShort)cloudStatusShort.textContent='☁️ 클라우드 DB 전송 완료 (P2P 병행 활성)';
+      if(rankSyncBadge)rankSyncBadge.textContent='🟡 로컬+클라우드 병행 모드';
     }
   }
 
-  // 이벤트 바인딩
+  async function syncMyScoreToSheet(forcePush){
+    const rec=buildMyRecord();
+    const url=getGasUrl();
+    if(url&&(forcePush||rec.playedCount>0||profile.name||profile.stId)){
+      await postToGas(Object.assign({action:'upsert'},rec));
+      setTimeout(fetchFromGas,450);
+    }else{
+      fetchFromGas();
+    }
+  }
+
   function openRankModal(){
     playUiTone('tap');
-    initRankInputs();
-    renderRankingTable();
+    if(stIdInp)stIdInp.value=profile.stId||'';
+    if(stNameInp)stNameInp.value=profile.name||'';
+    if(cloudUrlInp)cloudUrlInp.value=getGasUrl();
+    syncAdminUI();
     if(rankModal)rankModal.hidden=false;
-    if(!rankPeer)connectRankRoom(false);
-    else broadcastMyRankP2P();
-    syncWithCloud(false);
+    fetchFromGas();
+    clearInterval(pollTimer);
+    pollTimer=setInterval(()=>{
+      if(rankModal&&!rankModal.hidden)fetchFromGas();
+      else clearInterval(pollTimer);
+    },8000);
   }
+
   document.getElementById('openRankBtn')?.addEventListener('click',openRankModal);
   document.getElementById('myProfileChip')?.addEventListener('click',openRankModal);
+  document.getElementById('openAdminBtn')?.addEventListener('click',requestAdminAuth);
+  modalAdminToggleBtn?.addEventListener('click',()=>{
+    if(isAdmin){isAdmin=false;syncAdminUI();}
+    else requestAdminAuth();
+  });
+  document.getElementById('btnExitAdmin')?.addEventListener('click',()=>{
+    isAdmin=false;syncAdminUI();playUiTone('tap');
+  });
+
+  document.getElementById('btnRefreshRank')?.addEventListener('click',()=>{
+    playUiTone('tap');
+    fetchFromGas();
+  });
   rankGameFilter?.addEventListener('change',()=>renderRankingTable());
 
-  document.querySelectorAll('[data-rtab]').forEach(tb=>{
-    tb.addEventListener('click',()=>{
-      playUiTone('tap');
-      const target=tb.dataset.rtab;
-      document.querySelectorAll('[data-rtab]').forEach(b=>b.classList.toggle('on',b===tb));
-      ['board','cloud','code'].forEach(k=>{
-        const el=document.getElementById('rtab-'+k);
-        if(el)el.hidden=(k!==target);
-      });
-    });
-  });
-
-  document.getElementById('btnSaveStudent')?.addEventListener('click',()=>{
-    playUiTone('tap');
+  document.getElementById('btnSaveStudent')?.addEventListener('click',async()=>{
+    playUiTone('launch');
     profile.stId=(stIdInp?.value||'').trim();
     profile.name=(stNameInp?.value||'').trim();
-    const newRoom=((stRoomInp?.value||'BIO2026').trim()||'BIO2026').toUpperCase();
-    const roomChanged=newRoom!==profile.room;
-    profile.room=newRoom;
     set('bioArcadeStudentProfile',profile);
-    buildMyRecord();
     renderRankingTable();
-    if(roomChanged||!rankPeer)connectRankRoom(false);
-    else broadcastMyRankP2P();
-    syncWithCloud(true);
+    await syncMyScoreToSheet(true);
   });
 
-  document.getElementById('btnHostClass')?.addEventListener('click',()=>{
-    playUiTone('launch');
-    profile.room=((stRoomInp?.value||'BIO2026').trim()||'BIO2026').toUpperCase();
-    set('bioArcadeStudentProfile',profile);
-    connectRankRoom(true);
-    renderRankingTable();
-  });
-
-  document.getElementById('btnSaveCloudUrl')?.addEventListener('click',()=>{
+  document.getElementById('btnSaveCloudUrl')?.addEventListener('click',async()=>{
     playUiTone('tap');
     profile.cloudUrl=(cloudUrlInp?.value||'').trim();
     set('bioArcadeStudentProfile',profile);
-    syncWithCloud(true);
+    await syncMyScoreToSheet(true);
+    alert('구글 스프레드시트 웹 앱 URL이 저장되고 동기화되었습니다!');
   });
 
   document.getElementById('btnShareCloudLink')?.addEventListener('click',()=>{
     const u=new URL(location.href);
-    u.searchParams.set('room',profile.room||'BIO2026');
-    if(profile.cloudUrl)u.searchParams.set('rankurl',profile.cloudUrl);
+    const gas=getGasUrl();
+    if(gas)u.searchParams.set('gas',gas);
     navigator.clipboard?.writeText(u.toString());
     playUiTone('tap');
-    alert('학생 배포용 링크가 복사되었습니다! 이 링크로 접속한 학생들은 학급 코드와 클라우드 DB가 자동 설정됩니다.');
+    alert('학생 배포용 링크가 복사되었습니다! 이 링크로 접속하면 학생 기기에서도 같은 구글 스프레드시트 랭킹이 즉시 연동됩니다.');
   });
 
-  document.getElementById('btnCopyGasCode')?.addEventListener('click',()=>{
-    const code=document.getElementById('gasCodeBlock')?.textContent||'';
-    navigator.clipboard?.writeText(code);
-    playUiTone('tap');
-    alert('Google Apps Script 코드가 복사되었습니다!');
-  });
-
-  document.getElementById('btnCopyMyCode')?.addEventListener('click',()=>{
-    const rec=buildMyRecord();
-    const code=encodeRecordCode(rec);
-    if(myRecordCodeOut)myRecordCodeOut.value=code;
-    navigator.clipboard?.writeText(code);
-    playUiTone('tap');
-    alert('내 플레이 기록 코드가 복사되었습니다! 선생님께 제출하세요.');
-  });
-
-  document.getElementById('btnImportCodes')?.addEventListener('click',()=>{
-    const raw=document.getElementById('importCodesArea')?.value||'';
-    const tokens=raw.split(/\s+/).filter(x=>x.includes('BIO-REC:')||x.length>20);
-    let cnt=0;
-    tokens.forEach(tk=>{
-      const r=decodeRecordCode(tk);
-      if(r){boardMap.set(r.uid,r);cnt++;}
-    });
-    if(cnt>0){
+  // 관리자 목록별 기록 수정 & 삭제 이벤트 위임
+  rankTbody?.addEventListener('click',async e=>{
+    if(!isAdmin)return;
+    const editBtn=e.target.closest('[data-edit-uid]');
+    if(editBtn){
+      const uid=editBtn.dataset.editUid;
+      const rec=boardMap.get(uid);
+      if(!rec)return;
+      playUiTone('tap');
+      document.getElementById('editUid').value=rec.uid;
+      document.getElementById('editStId').value=rec.stId||'';
+      document.getElementById('editName').value=rec.name||'';
+      document.getElementById('editTotalScore').value=Number(rec.totalScore)||0;
+      document.getElementById('editEnv').value=rec.env||'Web';
+      if(adminEditBox)adminEditBox.hidden=false;
+      return;
+    }
+    const delBtn=e.target.closest('[data-del-uid]');
+    if(delBtn){
+      const uid=delBtn.dataset.delUid;
+      const rec=boardMap.get(uid);
+      if(!rec)return;
+      if(!confirm(`[${rec.stId||''} ${rec.name}] 학생의 기록을 랭킹에서 삭제하시겠습니까?`))return;
+      playUiTone('tap');
+      boardMap.delete(uid);
       persistBoard();
       renderRankingTable();
-      broadcastMyRankP2P();
-      playUiTone('launch');
-      alert(`${cnt}명의 학생 기록 코드가 순위표에 성공적으로 반영되었습니다!`);
-    }else{
-      alert('유효한 BIO-REC 기록 코드를 찾지 못했습니다.');
+      await postToGas({action:'delete',adminPass:ADMIN_PASS,uid});
+      setTimeout(fetchFromGas,500);
     }
+  });
+
+  document.getElementById('btnConfirmEdit')?.addEventListener('click',async()=>{
+    if(!isAdmin)return;
+    const uid=document.getElementById('editUid').value;
+    const rec=boardMap.get(uid);
+    if(!rec)return;
+    rec.stId=document.getElementById('editStId').value.trim()||'미입력';
+    rec.name=document.getElementById('editName').value.trim()||'학생';
+    rec.totalScore=Number(document.getElementById('editTotalScore').value)||0;
+    rec.env=document.getElementById('editEnv').value.trim()||'Web';
+    rec.updatedAt=new Date().toISOString();
+    boardMap.set(uid,rec);
+    persistBoard();
+    if(adminEditBox)adminEditBox.hidden=true;
+    renderRankingTable();
+    playUiTone('launch');
+    await postToGas(Object.assign({action:'update',adminPass:ADMIN_PASS},rec));
+    setTimeout(fetchFromGas,500);
+  });
+
+  document.getElementById('btnCancelEdit')?.addEventListener('click',()=>{
+    if(adminEditBox)adminEditBox.hidden=true;
+  });
+
+  document.getElementById('btnClearAllCloud')?.addEventListener('click',async()=>{
+    if(!isAdmin)return;
+    if(!confirm('정말로 구글 스프레드시트와 랭킹 보드의 모든 학생 기록을 전체 삭제하시겠습니까?'))return;
+    boardMap.clear();
+    persistBoard();
+    renderRankingTable();
+    await postToGas({action:'clear',adminPass:ADMIN_PASS});
+    setTimeout(fetchFromGas,500);
   });
 
   document.getElementById('btnExportCsv')?.addEventListener('click',()=>{
@@ -1454,22 +1419,14 @@ function doGet(e) {
     const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
     const a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download=`BIO_ARCADE_학생기록랭킹_${profile.room||'ALL'}_${new Date().toISOString().slice(0,10)}.csv`;
+    a.download=`BIO_ARCADE_학생랭킹_${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
   });
 
-  document.getElementById('btnClearBoard')?.addEventListener('click',()=>{
-    if(!confirm('현재 기기에 저장된 랭킹 목록을 초기화할까요? (내 게임 플레이 원본 기록은 유지됩니다)'))return;
-    boardMap.clear();
-    buildMyRecord();
-    persistBoard();
-    renderRankingTable();
-  });
-
-  // 초기 로드 시 내 점수 산출 및 백그라운드 P2P/클라우드 자동 동기화
+  // 페이지 진입 시 내 점수 자동 계산 및 구글 시트와 백그라운드 동기화
   buildMyRecord();
   window.addEventListener('load',()=>{
-    setTimeout(()=>{connectRankRoom(false);syncWithCloud(true);},600);
+    setTimeout(()=>syncMyScoreToSheet(false),400);
   });
 })();
 </script>
