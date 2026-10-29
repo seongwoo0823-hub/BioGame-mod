@@ -817,16 +817,30 @@ function genChart(data,diff){
 
 /* ================= audio ================= */
 let actx=null,musicGain,hitGain,NOISE,IMP,DIST;
+/* ---- 음 끊김·지지직 방지 ----
+   (1) 음악+타격음을 마지막에 리미터로 묶어 0dB를 넘는 클리핑(지지직)을 막는다.
+   (2) 저사양 기기(코어 4개 이하·모바일)나 프레임이 자주 끊기는 기기는 '라이트 모드'로 동시 발음 수와 유니즌 오실레이터를 줄인다.
+   (3) 저사양 기기는 오디오 버퍼를 넉넉히('balanced') 잡고, 늘어난 지연만큼 판정 시계를 자동 보정한다. */
+const LITE_DEV=(navigator.hardwareConcurrency||8)<=4||matchMedia('(pointer:coarse)').matches;
+const VB={act:[],cap:LITE_DEV?28:56,lite:LITE_DEV,slow:0};
+let AUDIO_COMP=0;
 function initAudio(){
   if(actx){if(actx.state==='suspended'&&!(PLAY&&PLAY.paused))actx.resume().catch(()=>{});return true;}
-  try{actx=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});}catch(e){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e2){actx=null;return false;}}
+  const AC=window.AudioContext||window.webkitAudioContext;
+  // 저사양 기기는 버퍼를 약 40ms로 넉넉히 → 오디오 스레드가 밀려 생기는 지지직(언더런)을 막는다
+  try{actx=new AC({latencyHint:LITE_DEV?.04:'interactive'});}catch(e){try{actx=new AC();}catch(e2){actx=null;return false;}}
+  // 기본(interactive ≈ 10ms) 대비 늘어난 버퍼 지연만큼 판정 시계를 당겨 준다 (사용자 SYNC 설정은 그대로 유지)
+  AUDIO_COMP=LITE_DEV?clamp((actx.baseLatency||0)-.01,0,.12):0;
   const comp=actx.createDynamicsCompressor();
   comp.threshold.value=-16;comp.knee.value=12;comp.ratio.value=4;comp.attack.value=.004;comp.release.value=.2;
-  musicGain=actx.createGain();musicGain.connect(comp);comp.connect(actx.destination);
-  hitGain=actx.createGain();hitGain.connect(actx.destination);
+  const lim=actx.createDynamicsCompressor();
+  lim.threshold.value=-3;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=.002;lim.release.value=.12;
+  const master=actx.createGain();master.gain.value=.92;master.connect(lim);lim.connect(actx.destination);
+  musicGain=actx.createGain();musicGain.connect(comp);comp.connect(master);
+  hitGain=actx.createGain();hitGain.connect(master);
   const sr=actx.sampleRate;
   NOISE=actx.createBuffer(1,sr*2,sr);{const d=NOISE.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
-  const il=Math.floor(sr*2.4);IMP=actx.createBuffer(2,il,sr);
+  const il=Math.floor(sr*(LITE_DEV?1.4:2.4));IMP=actx.createBuffer(2,il,sr);   // 저사양: 잔향 길이를 줄여 계산량 감소
   for(let c=0;c<2;c++){const d=IMP.getChannelData(c);for(let i=0;i<il;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/il,3);}
   DIST=new Float32Array(1024);for(let i=0;i<1024;i++){const x=i/512-1;DIST[i]=(Math.PI+40)*x/(Math.PI+40*Math.abs(x));}
   applyVolumes();
@@ -848,9 +862,25 @@ function makeBus(song){
   const rs=actx.createGain();rs.connect(cv);
   return {out,pump,ds,rs,song};
 }
+// 동시에 울리는 음 수 관리: 너무 많으면 화음·아르페지오부터 생략해 오디오 스레드 과부하(끊김)를 막는다
+function vbAllow(prio,end){
+  const now=actx.currentTime;
+  if(VB.act.length>8){let j=0;for(let i=0;i<VB.act.length;i++)if(VB.act[i]>now)VB.act[j++]=VB.act[i];VB.act.length=j;}
+  const n=VB.act.length,cap=VB.lite?Math.round(VB.cap*.7):VB.cap;
+  if(prio>=2&&n>cap*.6)return false;
+  if(prio===1&&n>cap*.85)return false;
+  if(n>cap*1.25)return false;
+  VB.act.push(end);return true;
+}
 function voice(b,p){
-  const t=p.t,f=p.f,g=actx.createGain(),gg=g.gain;
+  const t=p.t,f=p.f;
   const a=p.a||.005,dc=p.dcy||.1,s=p.s==null?.8:p.s,r=p.r||.08,pk=Math.max(.0002,p.peak);
+  if(!vbAllow(p.prio||0,t+Math.max(p.d,a+.01)+r*2.2+.05))return;
+  if(VB.lite){ // 라이트 모드: 유니즌 오실레이터를 줄이고 비브라토·센드를 생략
+    if(p.oscs.length>1){const main=p.oscs.reduce((m,o)=>(o[3]==null||o[3]>=1)&&!m?o:m,null)||p.oscs[0];p={...p,oscs:[main],peak:p.peak*1.35};}
+    if((p.prio||0)>=1){p.vib=0;p.ds=0;p.rs=0;}
+  }
+  const g=actx.createGain(),gg=g.gain;
   gg.setValueAtTime(.0001,t);gg.linearRampToValueAtTime(pk,t+a);gg.setTargetAtTime(Math.max(.0001,pk*s),t+a,Math.max(.005,dc/3));
   const e=t+Math.max(p.d,a+.01);gg.setTargetAtTime(.0001,e,Math.max(.005,r/3));
   const stop=e+r*2.2+.05;
@@ -874,7 +904,7 @@ function voice(b,p){
   if(p.rs){const x=actx.createGain();x.gain.value=p.rs;g.connect(x);x.connect(b.rs);}
 }
 function inst(kind,f,t,d,v,b,dest){
-  const P={t,f,d,dest};let o;
+  const P={t,f,d,dest,prio:inst.__prio||0};let o;
   switch(kind){
     case'chip':o={oscs:[['square',1,0]],a:.003,dcy:.08,s:.7,r:.04,peak:.1*v};break;
     case'chiptri':o={oscs:[['triangle',1,0],['square',1,0,.15]],a:.01,dcy:.2,s:.7,r:.1,peak:.12*v};break;
@@ -915,6 +945,8 @@ function inst(kind,f,t,d,v,b,dest){
   }
   Object.assign(P,o);voice(b,P);
 }
+// 우선순위(prio)를 붙여 연주: 0=드럼·베이스·멜로디(항상), 1=아르페지오·화음 아래 두 음, 2=화음 나머지 음
+function instP(kind,f,t,d,v,b,dest,prio){inst.__prio=prio;try{inst(kind,f,t,d,v,b,dest);}finally{inst.__prio=0;}}
 const BASS_MAP={saw:'bsaw',chip:'bchip'};
 function nz(b,t,v,type,freq,q,decay,dest,rsend){
   const s=actx.createBufferSource();s.buffer=NOISE;const f=actx.createBiquadFilter();f.type=type;f.frequency.setValueAtTime(freq,t);if(q)f.Q.value=q;
@@ -965,8 +997,8 @@ function playEvent(e,w,b){
     case'v':nz(b,w,.05*e.v,'highpass',2500,0,.012);break;
     case'b':inst(BASS_MAP[b.song.bassKind]||b.song.bassKind,mtof(e.m),w,e.d,e.v,b,b.out);break;
     case'l':inst(e.w,mtof(e.m),w,e.d,e.v,b,b.out);break;
-    case'a':inst(e.w,mtof(e.m),w,e.d,e.v,b,b.pump);break;
-    case'p':for(const m of e.m)inst(e.w,mtof(m),w,e.d,e.v*.55,b,b.pump);break;
+    case'a':instP(e.w,mtof(e.m),w,e.d,e.v,b,b.pump,1);break;
+    case'p':for(let k=0;k<e.m.length;k++)instP(e.w,mtof(e.m[k]),w,e.d,e.v*.55,b,b.pump,k<2?1:2);break;
   }
 }
 const PB={timer:null,bus:null,ev:null,idx:0,t0:0,end:Infinity,song:null,preview:false,loopT:null,rate:1};
@@ -982,7 +1014,7 @@ function pbTick(){
   while(PB.idx<PB.ev.length){
     const e=PB.ev[PB.idx];if(e.t>PB.end)break;
     const w=PB.t0+e.t/PB.rate;if(w>ahead)break;
-    if(w>=now-.05){try{playEvent(PB.rate===1||e.d==null?e:Object.assign({},e,{d:e.d/PB.rate}),Math.max(w,now),PB.bus);}catch(err){console.warn(err);}}
+    if(w>=now-.05){try{playEvent(PB.rate===1||e.d==null?e:Object.assign({},e,{d:e.d/PB.rate}),Math.max(w,now+.012),PB.bus);}catch(err){console.warn(err);}}
     PB.idx++;
   }
 }
@@ -1007,9 +1039,9 @@ function previewSong(){
   },220);
 }
 function hitSound(){
-  if(!actx||SET.hit<=0)return;const t=actx.currentTime;
-  const o=actx.createOscillator(),g=actx.createGain();o.type='square';o.frequency.setValueAtTime(1800,t);o.frequency.exponentialRampToValueAtTime(700,t+.03);
-  g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.0005,t+.05);o.connect(g);g.connect(hitGain);o.start(t);o.stop(t+.06);
+  if(!actx||SET.hit<=0||actx.state!=='running')return;const t=actx.currentTime+.006;
+  const o=actx.createOscillator(),g=actx.createGain();o.type='triangle';o.frequency.setValueAtTime(1900,t);o.frequency.exponentialRampToValueAtTime(800,t+.03);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.2,t+.002);g.gain.exponentialRampToValueAtTime(.0005,t+.05);o.connect(g);g.connect(hitGain);o.start(t);o.stop(t+.07);
 }
 
 /* ================= pixel drawing helpers ================= */
@@ -1712,7 +1744,7 @@ function startGame(net){
   const lead=3;PLAY.T0=net?ONLINE.ctxTimeAt(net.zero):actx.currentTime+lead;
   pbStart(song,data,0,PLAY.T0,Infinity,false,PLAY.rate);
 }
-const songNow=()=>PLAY?(audioNow()-PLAY.T0-SET.offset/1000)*PLAY.rate:0;
+const songNow=()=>PLAY?(audioNow()-PLAY.T0-SET.offset/1000-AUDIO_COMP)*PLAY.rate:0;
 function judge(j,dt,isTail){
   const st=PLAY;st.cnt[j]++;
   if(j==='KOOL'||j==='COOL'||j==='GOOD'){st.combo++;if(st.combo>st.max)st.max=st.combo;st.cbump=1;}else st.combo=0;
@@ -1955,8 +1987,10 @@ function drawMenu(){
   ctx.fillStyle=screen==='title'?'rgba(0,6,12,0.25)':'rgba(0,8,14,0.55)';ctx.fillRect(0,0,W,H);
   if(screen==='select'){renderScene(jctx,song,64,64,t,beat,.8,pu,false);}
 }
+let lastFrameT=0;
 function frame(){
   requestAnimationFrame(frame);
+  const tf=performance.now();if(lastFrameT&&screen==='play'){const d=tf-lastFrameT;if(d>45&&d<1000){if(++VB.slow>=12&&!VB.lite){VB.lite=true;console.info('BIO BEAT: 프레임 지연이 잦아 라이트 오디오 모드로 전환');}}else if(VB.slow>0)VB.slow-=.02;}lastFrameT=tf;
   try{
     resize();
     if(screen==='play'&&PLAY)drawPlay();else drawMenu();
@@ -2133,14 +2167,17 @@ const ONLINE=(()=>{
   addEventListener('pagehide',()=>{if(N.active){if(N.role==='host')sendAll({type:'closed'});else toHost({type:'leave'});}});
 
   /* ---------- 방장 ---------- */
-  async function create(){
-    if(N.busy)return;
+  // custom: 빠른 매칭 방(QM1~4)처럼 정해진 코드로 열 때 사용. 이전에는 인자를 무시하고 무작위 코드를 만들어
+  // 빠른 매칭끼리 서로 만나지 못했다.
+  async function create(custom){
+    if(N.busy)return false;
     if(N.active)leave();
     N.busy=true;render();log('🏠 방을 여는 중... (온라인 서버에 연결)');
     let p=null,code='',err=null;
-    for(let k=0;k<3&&!p;k++){code=genCode();try{p=await openPeer(PREFIX+code);}catch(e){err=e;if(e.code!=='taken')break;}}
+    const fixed=normCode(custom);
+    for(let k=0;k<(fixed?1:3)&&!p;k++){code=fixed||genCode();try{p=await openPeer(PREFIX+code);}catch(e){err=e;if(e.code!=='taken'||fixed)break;}}
     N.busy=false;
-    if(!p){log(errMsg(err?err.code:'server',code));render();return;}
+    if(!p){if(!fixed||!err||err.code!=='taken')log(errMsg(err?err.code:'server',code));render();return false;}
     peer=p;N.active=true;N.role='host';N.code=code;N.mid=0;N.board={};
     N.players={};N.players[myId]={id:myId,name:N.nick,host:true,synced:true,joinT:Date.now()};
     N.pick={i:SEL.i,d:SEL.d};
@@ -2151,6 +2188,7 @@ const ONLINE=(()=>{
     });
     log(`✅ 방 [${code}]을 만들었어요! 친구에게 코드를 알려 주세요. 곡 선택 화면에서 곡과 난이도를 고른 뒤 '대결 시작'을 누르세요.`);
     broadcastRoom();
+    return true;
   }
   function roomMsg(){
     const pl=Object.values(N.players).sort((a,b)=>(b.host?1:0)-(a.host?1:0)||a.joinT-b.joinT).map(p=>({id:p.id,name:p.name,host:!!p.host,synced:!!p.synced,ping:p.ping||0}));
@@ -2279,7 +2317,7 @@ const ONLINE=(()=>{
     const order=freeCode?[freeCode,...pool.filter(x=>x!==freeCode)]:pool;
     for(const c of order){
       await create(c);
-      if(N.active){
+      if(N.active&&N.code===c){
         log(`⚡ 열린 방이 없어 빠른 매칭 방 [${c}]을 열었어요! 다른 플레이어가 빠른 매칭을 누르면 바로 참가합니다.`);
         return;
       }
