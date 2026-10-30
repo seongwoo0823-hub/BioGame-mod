@@ -1,12 +1,12 @@
 /* BIO ARCADE 서비스 워커: 처음 접속할 때 전체 게임을 저장해 두고, 이후에는 오프라인에서도 실행. */
-const VERSION = 'biogame-hub-v12-il-assets';
+const VERSION = 'biogame-hub-v13-il-frames';
 const FONT_CACHE = 'bio-arcade-fonts';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './games/bio-beat.html', './games/immune-strike.html', './games/bio-kart.html',
   './games/vessel-canyon.html', './games/biotro.html', './games/cell-bound.html',
   './games/cell-pinball.html', './games/cell-brawl.html', './games/only-up.html', './games/bio-strike.html', './games/infection-lord.html',
-  './games/il-assets/meta.js', './games/il-assets/art.webp', './games/il-assets/boss.webp', './games/il-assets/fam.webp', './games/il-assets/hero_alchemist.webp', './games/il-assets/hero_guardian.webp', './games/il-assets/hero_mancer.webp', './games/il-assets/hero_swordsman.webp', './games/il-assets/icons.webp', './games/il-assets/mon.webp', './games/il-assets/npc.webp', './games/il-assets/props.webp', './games/il-assets/vfx.webp',
+  './games/il-assets/meta.js', './games/il-assets/art.webp', './games/il-assets/boss.webp', './games/il-assets/fam.webp', './games/il-assets/hero_alchemist.webp', './games/il-assets/hero_guardian.webp', './games/il-assets/hero_mancer.webp', './games/il-assets/hero_swordsman.webp', './games/il-assets/icons.webp', './games/il-assets/mon.webp', './games/il-assets/npc.webp', './games/il-assets/props.webp', './games/il-assets/vfx.webp', './games/il-assets/vfx_anim.webp', './games/il-assets/fam_anim.webp', './games/il-assets/props_anim.webp', './games/il-assets/mon_c1.webp', './games/il-assets/boss_c1.webp', './games/il-assets/floor_c1.webp', './games/il-assets/wall_c1.webp',
   './assets/bio-beat.jpg', './assets/immune-strike.jpg', './assets/bio-kart.jpg',
   './assets/vessel-canyon.jpg', './assets/biotro.jpg', './assets/cell-bound.jpg',
   './assets/cell-pinball.jpg', './assets/cell-brawl.jpg', './assets/only-up.jpg', './assets/bio-strike.jpg', './assets/infection-lord.jpg',

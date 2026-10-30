@@ -1335,12 +1335,10 @@ function smat(color, o){
   o = o || {};
   const key = color + '|' + (o.em || '') + '|' + (o.ei || '') + '|' + (o.op || '') + '|' + (o.r || '') + '|' + (o.m || '') + '|' + (o.flat ? 1 : 0);
   if (!o.unique && MATC.has(key)) return MATC.get(key);
-  const p = { color: new THREE.Color(color), gradientMap: GRADMAP };
+  const p = { color: new THREE.Color(color) }; { const c = p.color, l = (c.r + c.g + c.b) / 3; c.setRGB(l + (c.r - l) * 0.7, l + (c.g - l) * 0.7, l + (c.b - l) * 0.7).multiplyScalar(0.85); }
   if (o.em){ p.emissive = new THREE.Color(o.em); p.emissiveIntensity = o.ei || 1; }
   if (o.op != null){ p.transparent = true; p.opacity = o.op; p.depthWrite = o.op > 0.9; }
-  const m = new THREE.MeshToonMaterial(p); if (o.flat) m.flatShading = true;
-  m.userData.rim = o.m ? 0.55 : o.rim != null ? o.rim * 0.65 : 0.3;
-  m.onBeforeCompile = toonCompile;
+  const m = new THREE.MeshLambertMaterial(p); if (o.flat) m.flatShading = true;
   if (!o.unique) MATC.set(key, m);
   return m;
 }
@@ -1400,8 +1398,8 @@ function glowEyes(parent, y, z, sp, r, col){
 /* ===================== 스프라이트 (에셋 팩 아틀라스) ===================== */
 const IM = window.IL_META || {};
 const ATL = {}, ATL_IMG = {};
-const ATL_FILES = { hero_guardian: 'hero_guardian.webp', hero_alchemist: 'hero_alchemist.webp', hero_mancer: 'hero_mancer.webp', hero_swordsman: 'hero_swordsman.webp', npc: 'npc.webp', mon: 'mon.webp', boss: 'boss.webp', icons: 'icons.webp', props: 'props.webp', vfx: 'vfx.webp', fam: 'fam.webp', art: 'art.webp' };
-const ATL_GRID = { hero: [4, 8, 128], npc: [4, 8, 128], mon: [8, 7, 128], boss: [5, 2, 256], icons: [16, 16, 96], props: [8, 3, 128], vfx: [4, 4, 128], fam: [4, 4, 128] };
+const ATL_FILES = { hero_guardian: 'hero_guardian.webp', hero_alchemist: 'hero_alchemist.webp', hero_mancer: 'hero_mancer.webp', hero_swordsman: 'hero_swordsman.webp', npc: 'npc.webp', mon: 'mon.webp', boss: 'boss.webp', icons: 'icons.webp', props: 'props.webp', vfx: 'vfx.webp', fam: 'fam.webp', art: 'art.webp', vfxa: 'vfx_anim.webp', fama: 'fam_anim.webp', propa: 'props_anim.webp', mon_c1: 'mon_c1.webp', boss_c1: 'boss_c1.webp' };
+const ATL_GRID = { hero: [10, 8, 128], npc: [8, 8, 128], monc: [13, 22, 128], bossc: [13, 4, 208], vfxa: [8, 16, 128], fama: [13, 8, 128], propa: [8, 7, 128], mon: [8, 7, 128], boss: [5, 2, 256], icons: [16, 16, 96], props: [8, 3, 128], vfx: [4, 4, 128], fam: [4, 4, 128] };
 function loadAtlases(onProg){
   const keys = Object.keys(ATL_FILES); let done = 0;
   return Promise.all(keys.map(k => new Promise((res) => {
@@ -1411,7 +1409,21 @@ function loadAtlases(onProg){
     img.src = 'il-assets/' + ATL_FILES[k];
   })));
 }
-function gridOf(key){ return key.startsWith('hero_') ? ATL_GRID.hero : ATL_GRID[key]; }
+function gridOf(key){ return key.startsWith('hero_') ? ATL_GRID.hero : key.startsWith('mon_c') ? ATL_GRID.monc : key.startsWith('boss_c') ? ATL_GRID.bossc : ATL_GRID[key]; }
+// 장별 몬스터·보스 동작 아틀라스: 필요할 때 불러오고, 최근 두 장만 GPU에 남긴다
+const CH_LOAD = {}, CH_LRU = [];
+function texOf(img){ const t = new THREE.Texture(img); t.needsUpdate = true; t.minFilter = THREE.LinearFilter; t.magFilter = THREE.LinearFilter; t.generateMipmaps = false; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t; }
+function chapterAtlas(ch){
+  if (!(ch >= 1 && ch <= 5)) return Promise.resolve();
+  const i = CH_LRU.indexOf(ch); if (i >= 0) CH_LRU.splice(i, 1); CH_LRU.push(ch);
+  while (CH_LRU.length > 2){ const o = CH_LRU.shift(); ['mon_c', 'boss_c'].forEach(k => { if (ATL[k + o]) ATL[k + o].dispose(); }); }
+  if (CH_LOAD[ch]) return CH_LOAD[ch];
+  return CH_LOAD[ch] = Promise.all(['mon_c', 'boss_c'].map(k => ATL[k + ch] ? null : new Promise(res => {
+    const img = new Image(); img.decoding = 'async';
+    img.onload = () => { ATL_IMG[k + ch] = img; ATL[k + ch] = texOf(img); res(); };
+    img.onerror = () => res(); img.src = 'il-assets/' + k + ch + '.webp';
+  })));
+}
 function cellRect(key, col, row){ const [c, r] = gridOf(key), img = ATL_IMG[key]; const W = img ? img.width : c * gridOf(key)[2], H = img ? img.height : r * gridOf(key)[2], cs = gridOf(key)[2]; return [col * cs / W, 1 - (row + 1) * cs / H, cs / W, cs / H]; }
 const SPRITE_MAT = new THREE.ShaderMaterial({
   uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { map: { value: null }, rect: { value: new THREE.Vector4(0, 0, 1, 1) }, flip: { value: 0 }, lit: { value: new THREE.Color(1, 1, 1) }, flash: { value: new THREE.Vector4(0, 0, 0, 0) }, opacity: { value: 1 }, dark: { value: 0 }, glow: { value: 0 } }]),
@@ -1457,6 +1469,7 @@ function updSprites(){
   for (const S of SPRITES){
     if (!S.g.parent || (S.owner && S.owner !== G.lv) || !S.g.visible) continue;
     if (relayout) S.layout();
+    if (S.arow != null) S.setFrame(Math.floor(G.time * 9 + S.aph) % 8, S.arow);
     S.g.getWorldPosition(_wp);
     S.hold.rotation.y = Math.atan2(cp.x - _wp.x, cp.z - _wp.z) - (S.g.parent ? S.g.parent.rotation.y : 0);
     if (!S.noLight) lightAt(_wp.x, _wp.z, S.mat.uniforms.lit.value);
@@ -1479,16 +1492,16 @@ function equipHero(H, eq){ H.wpnBase = eq && eq.weapon ? BASES[eq.weapon.b] : nu
 function animHero(H, dt, moving, spd){
   const S = H.spr; if (!S) return;
   H.t += dt;
-  if (H.npc){ S.setFrame(Math.floor(H.t * 4) % 4, H.npcRow); S.setFlip(!!H.flip); return; }
-  if (H.dead > 0){ H.dead = Math.min(1, H.dead + dt * 1.6); S.setFrame(Math.min(3, Math.floor(H.dead * 4)), SPR_STATES.death); return; }
-  let row = SPR_STATES.idle, col = Math.floor(H.t * 5) % 4;
+  if (H.npc){ S.setFrame(Math.floor(H.t * 7) % 8, H.npcRow); S.setFlip(!!H.flip); return; }
+  if (H.dead > 0){ H.dead = Math.min(1, H.dead + dt * 1.3); S.setFrame(Math.min(9, Math.floor(H.dead * 10)), SPR_STATES.death); return; }
+  let row = SPR_STATES.idle, col = Math.floor(H.t * 8) % 10;
   if (H.act){
     H.actT += dt * (H.actSpd || 3);
     const k = Math.min(0.999, H.actT);
     const a = H.act === 'swing' ? 'attack' : H.act === 'shoot' ? 'attack' : H.act === 'cast' ? 'skill' : H.act === 'hit' ? 'hit' : H.act === 'spin' ? 'attack' : H.act === 'dodge' ? 'dodge' : 'attack';
-    row = SPR_STATES[a]; col = H.act === 'spin' ? Math.floor(H.t * 14) % 4 : Math.floor(k * 4);
+    row = SPR_STATES[a]; col = H.act === 'spin' ? Math.floor(H.t * 24) % 8 : Math.min(9, Math.floor(k * 9.5));
     if (H.actT >= 1 && H.act !== 'spin') H.act = null;
-  } else if (moving){ row = spd > 0.85 ? SPR_STATES.run : SPR_STATES.walk; col = Math.floor(H.t * (6 + spd * 4)) % 4; }
+  } else if (moving){ row = spd > 0.85 ? SPR_STATES.run : SPR_STATES.walk; col = Math.floor(H.t * (11 + spd * 7)) % 10; }
   S.setFrame(col, row); S.setFlip(!!H.flip);
 }
 function heroAct(H, act, spd){ H.act = act; H.actT = 0; H.actSpd = spd || 3; }
@@ -1500,13 +1513,14 @@ function buildNPC(kind){
 }
 /* ---- 몬스터 스프라이트 ---- */
 function buildMonsterModel(def, mods){
-  const boss = !!def.boss, key = boss ? 'boss' : 'mon';
-  const idx = boss ? def.bspr : def.spr;
+  const boss = !!def.boss, idx = boss ? def.bspr : def.spr;
+  const ch = boss ? idx % 5 + 1 : Math.floor(idx / 11) + 1, akey = (boss ? 'boss_c' : 'mon_c') + ch;
+  const key = ATL[akey] ? akey : boss ? 'boss' : 'mon';
   const meta = boss ? (IM.boss || [])[idx] : (IM.mon || [])[idx];
   const fs = boss ? def.size * 2.5 : 1.3 + def.size * 1.8;
   const S = makeSprite(key, fs, meta ? meta.foot : 0.9, { shadow: (boss ? 0.32 : 0.28) * fs });
-  const cols = gridOf(key)[0]; S.setFrame(idx % cols, Math.floor(idx / cols));
-  const R = { g: S.g, inner: S.hold, spr: S, mats: [S.mat], parts: {}, h: fs * ((meta ? meta.foot - meta.top : 0.8)) * SPR_Y * 0.8, flyH: def.ai === 'flyer' ? 0.7 : 0, fs };
+  const cols = gridOf(key)[0]; if (key === akey) S.setFrame(0, 0); else S.setFrame(idx % cols, Math.floor(idx / cols));
+  const R = { g: S.g, inner: S.hold, spr: S, mats: [S.mat], parts: {}, h: fs * ((meta ? meta.foot - meta.top : 0.8)) * SPR_Y * 0.8, flyH: def.ai === 'flyer' ? 0.7 : 0, fs, akey, arow: boss ? (idx >= 5 ? 2 : 0) : (idx % 11) * 2, anim: key === akey, hitT: 0, dieT: -1, rate: 0.9 + Math.random() * 0.25, walkHz: Math.min(2.2, 0.55 + (def.spd || 3) * 0.28) };
   if (R.flyH) S.lift = R.flyH, S.layout();
   if (mods && (mods.champ || mods.unique)){
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.5 * fs * 0.45, 0.62 * fs * 0.45, 32), new THREE.MeshBasicMaterial({ color: mods.unique ? '#ffcf3a' : '#6a7aff', transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
@@ -1516,13 +1530,26 @@ function buildMonsterModel(def, mods){
   if (boss){ S.mat.uniforms.glow.value = 0.18; }
   return R;
 }
+const MA = (IM.monAnim || {}).states || { idle: [0, 4], walk: [4, 8], attack: [12, 6], hit: [18, 2], death: [20, 6] };
+function monFrame(R, st, k){
+  const S = R.spr;
+  if (!R.anim){ if (!ATL[R.akey]) return false; S.key = R.akey; S.mat.uniforms.map.value = ATL[R.akey]; S.init = false; R.anim = true; }
+  const a = MA[st], f = a[0] + Math.max(0, Math.min(a[1] - 1, Math.floor(k * a[1])));
+  S.setFrame(f % 13, R.arow + Math.floor(f / 13)); return true;
+}
+// 상태 → 프레임 (대기·이동·공격·피격·사망). 출렁이는 크기 변형 대신 그려진 동작 프레임을 재생
 function animMonster(R, t, dt, moving, atk){
   const S = R.spr, p = R.parts;
-  // 숨쉬기 · 걷기 흔들림 · 공격 돌진(앞으로 기울기)
-  const bob = moving ? Math.abs(Math.sin(t * 9)) * 0.08 : Math.sin(t * 2.2) * 0.03;
-  S.mesh.position.x = atk > 0 ? Math.sin((1 - atk) * Math.PI) * 0.35 * (S.flipX ? -1 : 1) * R.fs * 0.3 : 0;
-  S.mesh.rotation.z = atk > 0 ? -Math.sin((1 - atk) * Math.PI) * 0.18 * (S.flipX ? -1 : 1) : (moving ? Math.sin(t * 9) * 0.04 : 0);
-  S.lift = R.flyH + (R.flyH ? Math.sin(t * 3) * 0.15 : 0) + bob * R.fs * 0.4;
+  if (R.hitT > 0) R.hitT -= dt;
+  let st = 'idle', k = (t * 0.7 * R.rate) % 1;
+  if (atk > 0){ st = 'attack'; k = 1 - atk; }
+  else if (R.hitT > 0){ st = 'hit'; k = 1 - R.hitT / 0.24; }
+  else if (moving){ st = 'walk'; k = (t * R.walkHz * R.rate) % 1; }
+  const ok = monFrame(R, st, k);
+  const lunge = atk > 0 && atk < 0.5 ? Math.sin(atk / 0.5 * Math.PI) : 0;
+  S.mesh.position.x = lunge * 0.12 * R.fs * (S.flipX ? -1 : 1);
+  S.mesh.rotation.z = ok ? 0 : (atk > 0 ? -lunge * 0.12 * (S.flipX ? -1 : 1) : 0);
+  S.lift = R.flyH + (R.flyH ? Math.sin(t * 2.4) * 0.12 : 0) + (ok ? 0 : (moving ? Math.abs(Math.sin(t * 6)) * 0.03 * R.fs : 0));
   S.layout();
   if (p.ring) p.ring.rotation.z += dt;
 }
@@ -1635,7 +1662,13 @@ const TEXC = {};
 function chapterTex(ci){
   if (TEXC[ci]) return TEXC[ci];
   const th = CHAPTERS[ci].theme;
-  return TEXC[ci] = { floor: floorTex(th, 11 + ci * 7), wall: wallTex(th, 5 + ci * 3) };
+  // 에셋 팩 바닥 타일을 펼쳐 만든 손그림 질감 (불러오기 실패 시 절차적 질감)
+  const T2 = TEXC[ci] = { floor: floorTex(th, 11 + ci * 7), wall: wallTex(th, 5 + ci * 3) };
+  const load = (f, cb) => { const img = new Image(); img.onload = () => cb(img); img.src = 'il-assets/' + f; };
+  const apply = (t, img) => { t.image = img; t.needsUpdate = true; };
+  load('floor_c' + (ci + 1) + '.webp', img => { apply(T2.floor.col, img); LEVELS.forEach(lv => { if (lv.ci === ci && lv.floorMap) apply(lv.floorMap, img); }); });
+  load('wall_c' + (ci + 1) + '.webp', img => apply(T2.wall, img));
+  return T2;
 }
 function zoneLevel(ci, zi){ const C = CHAPTERS[ci]; if (zi < 0) return 1; return C.lvl + zi * 3 + DIFFS[G.diff].lvl; }
 function levelName(ci, zi){ return zi < 0 ? CHAPTERS[ci].town : CHAPTERS[ci].zones[zi].name; }
@@ -1694,7 +1727,7 @@ function buildLevel(ci, zi){
   const lv = { ci, zi, C, Z, town, type, w: M.w, h: M.h, g: M.g, dist: M.dist, M, rng, root: new THREE.Group(), mons: [], items: [], objs: [], decals: [], corpses: [], lights: [], walls: [], seen: new Uint8Array(M.w * M.h), mlvl: zoneLevel(ci, zi), name: levelName(ci, zi), flow: null, flowCell: -1 };
   const tex = chapterTex(ci);
   // 바닥
-  const fmap = tex.floor.col.clone(); fmap.needsUpdate = true; fmap.repeat.set(M.w * T / 9, M.h * T / 9); lv.floorMap = fmap;
+  const fmap = tex.floor.col.clone(); fmap.needsUpdate = true; fmap.repeat.set(M.w * T / 11, M.h * T / 11); lv.floorMap = fmap;
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(M.w * T, M.h * T), new THREE.MeshLambertMaterial({ map: fmap, color: town ? '#b8b0a4' : '#a8a8a8' }));
   floor.rotation.x = -Math.PI / 2; floor.position.set(M.w * T / 2, 0, M.h * T / 2); lv.root.add(floor);
   // 벽
@@ -1705,7 +1738,7 @@ function buildLevel(ci, zi){
     if (adj) wallCells.push([i, j]);
   }
   const organic = type === 'cave' || type === 'town' || type === 'arena';
-  const wmat = new THREE.MeshToonMaterial({ map: tex.wall, gradientMap: GRADMAP, color: town ? '#a89a80' : '#c8c8c8', flatShading: organic }); wmat.userData.rim = 0.2; wmat.onBeforeCompile = toonCompile;
+  const wmat = new THREE.MeshLambertMaterial({ map: tex.wall, color: town ? '#d0c6b0' : '#f0e8e0', emissive: '#1a1612', flatShading: organic });
   const wgeo = organic ? new THREE.DodecahedronGeometry(1.35, 0) : new THREE.BoxGeometry(T, 1, T).translate(0, 0.5, 0);
   const wim = new THREE.InstancedMesh(wgeo, wmat, wallCells.length);
   wallCells.forEach(([i, j], k) => {
@@ -1714,15 +1747,15 @@ function buildLevel(ci, zi){
     o.i = i; o.j = j; o.k = k; o.cut = false; lv.walls.push(o);
     _e.set(o.rx || 0, o.ry, 0); _q.setFromEuler(_e); _s.set(o.sx, o.sy, o.sz); _p.set(o.x, o.y, o.z); _m4.compose(_p, _q, _s); wim.setMatrixAt(k, _m4);
   });
-  wim.instanceMatrix.needsUpdate = true; lv.root.add(wim); lv.wim = wim; inkify(wim);
+  wim.instanceMatrix.needsUpdate = true; lv.root.add(wim); lv.wim = wim;
   // 벽 아래 접촉 그림자 (그림 같은 깊이감)
   const ao = new THREE.InstancedMesh(cgeo('aoPlane', () => new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2)), new THREE.MeshBasicMaterial({ map: SHADOW_TEX, transparent: true, depthWrite: false, opacity: 0.75 }), wallCells.length);
   lv.walls.forEach((o, k) => { _q.identity(); _s.set(4.2, 1, 4.2); _p.set(cx2w(o.i), 0.025, cx2w(o.j)); _m4.compose(_p, _q, _s); ao.setMatrixAt(k, _m4); });
   ao.instanceMatrix.needsUpdate = true; ao.renderOrder = 1; lv.root.add(ao);
   if (!organic){ // 벽 위 장식 띠 (밝게 칠한 윗면)
-    const tm = new THREE.MeshToonMaterial({ map: tex.wall, gradientMap: GRADMAP, color: '#8a8a8a' }); tm.userData.rim = 0.1; tm.onBeforeCompile = toonCompile; const trim = new THREE.InstancedMesh(new THREE.BoxGeometry(T * 1.06, 0.22, T * 1.06), tm, wallCells.length);
+    const tm = new THREE.MeshLambertMaterial({ map: tex.wall, color: '#d8d0c8', emissive: '#2a241e' }); const trim = new THREE.InstancedMesh(new THREE.BoxGeometry(T * 1.06, 0.22, T * 1.06), tm, wallCells.length);
     lv.walls.forEach((o, k) => { _q.identity(); _s.set(1, 1, 1); _p.set(o.x, o.sy, o.z); _m4.compose(_p, _q, _s); trim.setMatrixAt(k, _m4); });
-    trim.instanceMatrix.needsUpdate = true; lv.root.add(trim); lv.trim = trim; inkify(trim);
+    trim.instanceMatrix.needsUpdate = true; lv.root.add(trim); lv.trim = trim;
   }
   decorate(lv, rng, th);
   // 오브젝트
@@ -1749,7 +1782,6 @@ function buildLevel(ci, zi){
     for (let k = 0; k < 4 + Math.floor(rng() * 4); k++){ const c = randFloorCell(lv, rng, 10, avoid); if (!c) break; avoid.push([c[0], c[1], 5]); addHazard(lv, c[0], c[1], rng() < 0.5 ? 'gas' : 'coil'); lv.g[c[1] * lv.w + c[0]] = 0; }
     populate(lv, rng);
   }
-  inkify(lv.root, 0.12);
   return lv;
 }
 function randNear(lv, i, j, rMin, rMax){
@@ -1801,7 +1833,8 @@ function decorate(lv, rng, th){
 /* ---- 오브젝트 ---- */
 function addObj(lv, o){ o.x = o.x != null ? o.x : 0; lv.objs.push(o); if (o.mesh){ o.mesh.position.set(o.x, 0, o.z); lv.root.add(o.mesh); } return o; }
 function propSprite(name, size, opts){
-  const m = (IM.prop || {})[name] || { i: 0, foot: 0.9 };
+  const m = (IM.prop || {})[name] || { i: 0, foot: 0.9 }, ar = (IM.propAnim || {})[name];
+  if (ar != null && ATL.propa){ const S = makeSprite('propa', size, m.foot, opts); S.arow = ar; S.aph = Math.random() * 8; S.setFrame(0, ar); return S; }
   const S = makeSprite('props', size, m.foot, opts); S.setFrame(m.i % 8, Math.floor(m.i / 8)); return S;
 }
 function iconSprite(name, size, opts){
@@ -1988,7 +2021,7 @@ function recalc(){
   const L = PL.lvl;
   let maxHp = c.life[0] + c.life[1] * (L - 1) + c.life[2] * (VIT - c.base.vit) + (st.life || 0);
   let maxMp = c.mana[0] + c.mana[1] * (L - 1) + c.mana[2] * (ENE - c.base.ene) + (st.mana || 0);
-  maxHp *= 1 + (st.lifePct || 0) / 100; maxMp *= 1 + (st.manaPct || 0) / 100;
+  maxHp *= (1 + (st.lifePct || 0) / 100) * 1.15; maxMp *= 1 + (st.manaPct || 0) / 100;
   let def = (armorDef + (st.def || 0) + Math.floor(DEX / 4)) * (1 + (st.defPct || 0) / 100);
   const pen = DIFFS[G.diff].penalty, ra = (st.ares || 0) + (st.resAll || 0);
   const res = { fire: (st.fres || 0) + ra - pen, cold: (st.cres || 0) + ra - pen, ltng: (st.lres || 0) + ra - pen, pois: (st.pres || 0) + ra - pen, mag: 0 };
@@ -2173,19 +2206,20 @@ function updVFX(dt){
 VFX.sprs = [];
 FX.pack = (spr, stage, x, z, size, o) => {
   o = o || {}; const base = (IM.vfx || {})[spr]; if (base == null || !ATL.vfx) return null;
-  const ix = base + stage, flat = !!o.flat;
-  const S = makeSprite('vfx', size, flat ? 0.5 : 0.92, { additive: !!o.add, noShadow: true, flat });
-  S.setFrame(ix % 4, Math.floor(ix / 4)); S.noLight = true; S.mat.uniforms.lit.value.setRGB(1, 1, 1); S.mat.uniforms.glow.value = 0.25;
+  const ix = base + stage, flat = !!o.flat, va = (IM.vfxAnim || {})[spr], anim = va != null && ATL.vfxa;
+  const S = makeSprite(anim ? 'vfxa' : 'vfx', size, flat ? 0.5 : 0.92, { additive: !!o.add, noShadow: true, flat });
+  if (anim){ S.vrow = va + stage; S.setFrame(0, S.vrow); } else S.setFrame(ix % 4, Math.floor(ix / 4)); S.noLight = true; S.mat.uniforms.lit.value.setRGB(1, 1, 1); S.mat.uniforms.glow.value = 0.25;
   S.g.position.set(x, flat ? 0.08 : (o.y || 0), z); scene.add(S.g);
   const e = { m: S.g, S, t: 0, dur: o.dur || 0.6, size, flat, spin: o.spin || 0, follow: o.follow || null };
   VFX.sprs.push(e); return e;
 };
 function updPackVFX(dt){
   for (let i = VFX.sprs.length - 1; i >= 0; i--){ const e = VFX.sprs[i]; e.t += dt; const k = e.t / e.dur, S = e.S;
-    const sc = e.flat ? 0.7 + Math.min(1, k * 4) * 0.4 : (k < 0.2 ? 0.6 + k * 2.2 : 1.04 + (k - 0.2) * 0.12);
+    if (S.vrow != null) S.setFrame(Math.min(7, Math.floor(k * 8)), S.vrow);
+    const sc = S.vrow != null ? (e.flat ? 1 : 1 + k * 0.08) : e.flat ? 0.7 + Math.min(1, k * 4) * 0.4 : (k < 0.2 ? 0.6 + k * 2.2 : 1.04 + (k - 0.2) * 0.12);
     S.size = e.size * sc; S.layout(); if (e.flat) S.hold.rotation.z += dt * e.spin;
     if (e.follow){ e.m.position.x = e.follow.x; e.m.position.z = e.follow.z; }
-    S.mat.uniforms.opacity.value = k < 0.15 ? k / 0.15 : k > 0.65 ? Math.max(0, (1 - k) / 0.35) : 1;
+    S.mat.uniforms.opacity.value = S.vrow != null ? (k > 0.85 ? Math.max(0, (1 - k) / 0.15) : 1) : k < 0.15 ? k / 0.15 : k > 0.65 ? Math.max(0, (1 - k) / 0.35) : 1;
     if (k >= 1){ scene.remove(e.m); disposeSprite(S); VFX.sprs.splice(i, 1); } }
 }
 function clsSpr(){ return PL ? CLASSES[PL.cls].spr : 'guardian'; }
@@ -2218,13 +2252,13 @@ const EMODS = {
 };
 const UNQ_PRE = ['부패한', '피에 굶주린', '거대한', '교활한', '썩어 가는', '불타는', '얼어붙은', '미쳐 버린', '검은', '창백한', '증식하는', '돌연변이', '잠복한', '굶주린'];
 const UNQ_SUF = ['군주', '도살자', '포식자', '파괴자', '숙주', '변종', '원종', '감시자', '여왕', '전령'];
-function monScale(def, lvl){ const d = DIFFS[G.diff]; const k = 1 + (def.boss ? 0.1 : 0.24) * (lvl - 1), kd = 1 + (def.boss ? 0.045 : 0.085) * (lvl - 1); return { hp: def.hp * k * d.hp, dmg: [def.dmg[0] * kd * d.dmg, def.dmg[1] * kd * d.dmg] }; }
+function monScale(def, lvl){ const d = DIFFS[G.diff]; const k = 1 + (def.boss ? 0.1 : 0.24) * (lvl - 1), kd = 1 + (def.boss ? 0.045 : 0.085) * (lvl - 1); return { hp: def.hp * k * d.hp, dmg: [def.dmg[0] * kd * d.dmg * 0.76, def.dmg[1] * kd * d.dmg * 0.76] }; }
 function spawnMon(lv, id, x, z, o){
   o = o || {};
   const def = MON[id]; if (!def) return null;
   const lvl = lv.mlvl + (o.champ ? 2 : 0) + (o.unique ? 3 : 0) + (def.boss ? 2 : 0) + (o.lvlAdd || 0);
   const sc = monScale(def, lvl);
-  let hp = sc.hp * (o.champ ? 3 : o.unique ? 4 : 1) * (o.hpMul || 1), dmg = sc.dmg.slice(), spd = def.spd;
+  let hp = sc.hp * (o.champ ? 3 : o.unique ? 4 : 1) * (o.hpMul || 1), dmg = sc.dmg.slice(), spd = def.spd * 0.74;
   const res = Object.assign({ phys: 0, fire: 0, cold: 0, ltng: 0, pois: 0, mag: 0 }, def.res || {});
   if (def.elem !== 'phys') res[def.elem] += 35;
   for (const k of ['fire', 'cold', 'ltng', 'pois']) res[k] += DIFFS[G.diff].res;
@@ -2346,7 +2380,7 @@ function monShoot(m, tx, tz, n){
   const a0 = Math.atan2(tx - m.x, tz - m.z);
   for (let k = 0; k < cnt; k++){
     const a = a0 + (cnt > 1 ? (k - (cnt - 1) / 2) * 0.22 : 0);
-    spawnProj({ x: m.x + Math.sin(a) * m.r, z: m.z + Math.cos(a) * m.r, y: 0.8 + (m.R ? m.R.flyH : 0), dx: Math.sin(a), dz: Math.cos(a), speed: pr.speed, owner: 'mon', src: m, pkt: monPkt(m, 0.9, pr.elem), style: pr.style || 'spit', elem: pr.elem, life: 1.6 });
+    spawnProj({ x: m.x + Math.sin(a) * m.r, z: m.z + Math.cos(a) * m.r, y: 0.8 + (m.R ? m.R.flyH : 0), dx: Math.sin(a), dz: Math.cos(a), speed: pr.speed * 0.8, owner: 'mon', src: m, pkt: monPkt(m, 0.9, pr.elem), style: pr.style || 'spit', elem: pr.elem, life: 2.0 });
   }
   SND.play(pr.elem === 'ltng' ? 'ltng' : pr.elem === 'fire' ? 'fire' : pr.elem === 'cold' ? 'cold' : 'pois', 0.35, m);
 }
@@ -2403,7 +2437,7 @@ function updMon(m, dt){
   }
   const melee = () => {
     if (d <= reach){
-      if (m.cd <= 0){ const base = { swarm: 0.85, brute: 1.9, boss: 1.5 }[m.ai] || 1.25; m.atkDur = (m.ai === 'brute' ? 0.7 : 0.45) / (m.mods.includes('fast') ? 1.3 : 1); m.atk = m.atkDur; m.atkHit = false; m.atkMul = m.ai === 'brute' ? 1.25 : 1; m.cd = base * (m.mods.includes('fast') ? 0.75 : 1); }
+      if (m.cd <= 0){ const base = { swarm: 0.85, brute: 1.9, boss: 1.5 }[m.ai] || 1.25; m.atkDur = (m.ai === 'brute' ? 0.92 : 0.62) / (m.mods.includes('fast') ? 1.3 : 1); m.atk = m.atkDur; m.atkHit = false; m.atkMul = m.ai === 'brute' ? 1.25 : 1; m.cd = base * 1.15 * (m.mods.includes('fast') ? 0.75 : 1); }
       m.face = Math.atan2(tx - m.x, tz - m.z);
     } else {
       let [dx, dz] = chaseDir(m, tx, tz, isH);
@@ -2498,7 +2532,7 @@ function bossAbility(m, ab, tgt){
       later(0.9, () => { if (!m.alive) return; FX.wave(m.x, m.z, r * 1.1, col, 0.55, 0.16); FX.wave(m.x, m.z, r * 0.7, '#ffffff', 0.4, 0.1); for (let i = 0; i < 3; i++) setTimeout(() => FX.ring(m.x, m.z, r, col, 40), i * 60); flash(m, col, 5, 16, 0.4); shake(0.35); SND.play(el === 'fire' ? 'fireBoom' : el === 'ltng' ? 'ltng' : el === 'cold' ? 'shatter' : 'pois', 0.9, m); aoeHurt(m.x, m.z, r, monPkt(m, 1.4, el), m); }); break; }
     case 'charge': { const l = Math.max(0.1, Math.hypot(tgt.x - m.x, tgt.z - m.z)); const dx = (tgt.x - m.x) / l, dz = (tgt.z - m.z) / l; groundRing(m.x + dx * 4, m.z + dz * 4, 1.5, '#ff4a2a', 0.5, true, 0.25); m.busyT = 0.5; SND.play('growl', 1, m); later(0.5, () => { if (m.alive) m.dash = { t: 0.75, dx, dz }; }); break; }
     case 'barrage': { m.busyT = 1; const pr = { elem: el, speed: 13, style: el === 'fire' ? 'fireball' : el === 'cold' ? 'icebolt' : el === 'ltng' ? 'spark' : 'spit' };
-      for (let v = 0; v < 3; v++) later(0.25 + v * 0.3, () => { if (!m.alive || !m.tgt) return; const a0 = Math.atan2(m.tgt.x - m.x, m.tgt.z - m.z), n = 7 + m.phase * 2; for (let i = 0; i < n; i++){ const a = a0 + (i - (n - 1) / 2) * 0.17 + (v % 2) * 0.08; spawnProj({ x: m.x + Math.sin(a) * m.r, z: m.z + Math.cos(a) * m.r, y: 1.2, dx: Math.sin(a), dz: Math.cos(a), speed: pr.speed, owner: 'mon', src: m, pkt: monPkt(m, 0.7, el), style: pr.style, elem: el, life: 2 }); } SND.play(el === 'fire' ? 'fire' : el === 'ltng' ? 'ltng' : 'pois', 0.6, m); }); break; }
+      for (let v = 0; v < 3; v++) later(0.25 + v * 0.3, () => { if (!m.alive || !m.tgt) return; const a0 = Math.atan2(m.tgt.x - m.x, m.tgt.z - m.z), n = 7 + m.phase * 2; for (let i = 0; i < n; i++){ const a = a0 + (i - (n - 1) / 2) * 0.17 + (v % 2) * 0.08; spawnProj({ x: m.x + Math.sin(a) * m.r, z: m.z + Math.cos(a) * m.r, y: 1.2, dx: Math.sin(a), dz: Math.cos(a), speed: pr.speed * 0.8, owner: 'mon', src: m, pkt: monPkt(m, 0.7, el), style: pr.style, elem: el, life: 2 }); } SND.play(el === 'fire' ? 'fire' : el === 'ltng' ? 'ltng' : 'pois', 0.6, m); }); break; }
     case 'pool': { m.busyT = 0.7; for (let i = 0; i < 4 + m.phase; i++){ const x = tgt.x + (i ? (Math.random() - 0.5) * 8 : 0), z = tgt.z + (i ? (Math.random() - 0.5) * 8 : 0); groundRing(x, z, 2, col, 1.1, true, 0.25); later(1.1, () => { if (!m.alive) return; addArea({ x, z, r: 2, dur: 5, elem: el, dps: rand(m.dmg[0], m.dmg[1]) * 0.45, owner: 'mon', src: m, style: 'pool' }); SND.play('pois', 0.4, { x, z }); }); } break; }
     case 'meteor': { m.busyT = 0.6; for (let i = 0; i < 3 + m.phase; i++){ const x = tgt.x + (i ? (Math.random() - 0.5) * 7 : 0), z = tgt.z + (i ? (Math.random() - 0.5) * 7 : 0); const dl = 1.1 + i * 0.25; groundRing(x, z, 2.6, col, dl, true, 0.28); groundRing(x, z, 2.6, col, dl, false, 0.9); later(dl - 0.35, () => { for (let k = 0; k < 10; k++) emit(PADD, x + 2, 9 - k * 0.3, z - 2, -6, -24, 6, 0.35, 1.4, 0.6, col, 0, 0); }); later(dl, () => { if (!m.alive) return; FX.burst(x, 0.5, z, col, 50, 9, 0.8, 0.6); FX.ring(x, z, 2.6, col, 26); flash({ x, z }, col, 5, 14, 0.4); shake(0.4); SND.play('fireBoom', 0.8, { x, z }); splat(x, z, '#1a0a05', 3.5); aoeHurt(x, z, 2.6, monPkt(m, 1.3, el), m); }); } break; }
     case 'slam': { const r = 4.6; groundRing(m.x, m.z, r, '#ff3a1a', 0.85, true, 0.3); groundRing(m.x, m.z, r, '#ff3a1a', 0.85, false, 0.9); m.busyT = 1.1; SND.play('growl', 1, m);
@@ -2664,7 +2698,7 @@ function spawnProj(o){
   const p = Object.assign({ y: 1, life: 1.4, r: 0.35, pierce: 0, hit: new Set(), t: 0 }, o);
   p.mesh = projMesh(p.style);
   const PSPR = { flask: 'alchemist', bladewave: 'swordsman', spore: p.owner === 'mon' ? null : 'mancer', spear: 'mancer' };
-  if (PSPR[p.style] && ATL.vfx){ const S = makeSprite('vfx', p.style === 'bladewave' ? 2.2 : 1.5, 0.55, { noShadow: true }); const ix = (IM.vfx || {})[PSPR[p.style]] + 1; S.setFrame(ix % 4, Math.floor(ix / 4)); S.noLight = true; S.mat.uniforms.lit.value.setRGB(1.2, 1.2, 1.2); S.setFlip(p.dx - p.dz < 0); p.mesh.add(S.g); p.spr = S; p.mesh.children[0].visible = false; } p.mesh.position.set(p.x, p.y, p.z); p.mesh.rotation.y = Math.atan2(p.dx, p.dz); scene.add(p.mesh);
+  if (PSPR[p.style] && ATL.vfx){ const va = ATL.vfxa ? (IM.vfxAnim || {})[PSPR[p.style]] : null; const S = makeSprite(va != null ? 'vfxa' : 'vfx', p.style === 'bladewave' ? 2.2 : 1.5, 0.55, { noShadow: true }); const ix = (IM.vfx || {})[PSPR[p.style]] + 1; if (va != null){ S.vrow = va + 1; S.setFrame(2, S.vrow); } else S.setFrame(ix % 4, Math.floor(ix / 4)); S.noLight = true; S.mat.uniforms.lit.value.setRGB(1.2, 1.2, 1.2); S.setFlip(p.dx - p.dz < 0); p.mesh.add(S.g); p.spr = S; p.mesh.children[0].visible = false; } p.mesh.position.set(p.x, p.y, p.z); p.mesh.rotation.y = Math.atan2(p.dx, p.dz); scene.add(p.mesh);
   const st = PSTYLE[p.style] || PSTYLE.bolt; p.trail = makeTrail(st.col, Math.max(0.12, st.w * 1.3), p.owner === 'mon' ? 8 : 12); trailPush(p.trail, p.x, p.y, p.z);
   PROJ.push(p); return p;
 }
@@ -2692,6 +2726,7 @@ function projExplode(p){
 function updProj(dt){
   for (let i = PROJ.length - 1; i >= 0; i--){
     const p = PROJ[i]; p.t += dt; p.life -= dt;
+    if (p.spr && p.spr.vrow != null) p.spr.setFrame(2 + Math.floor(p.t * 16) % 6, p.spr.vrow);
     const st = PSTYLE[p.style] || PSTYLE.bolt;
     if (p.homing && p.owner !== 'mon'){ let best = null, bd = 9; for (const m of G.lv.mons){ if (!m.alive || p.hit.has(m)) continue; const d = Math.hypot(m.x - p.x, m.z - p.z); if (d < bd){ bd = d; best = m; } } if (best){ const a = Math.atan2(best.x - p.x, best.z - p.z), c = Math.atan2(p.dx, p.dz); let da = a - c; while (da > Math.PI) da -= TAU; while (da < -Math.PI) da += TAU; const n = c + clamp(da, -6 * dt, 6 * dt); p.dx = Math.sin(n); p.dz = Math.cos(n); } }
     if (p.jitter){ const c = Math.atan2(p.dx, p.dz) + (Math.random() - 0.5) * 1.6; p.dx = Math.sin(c); p.dz = Math.cos(c); }
@@ -2792,14 +2827,19 @@ function minionModel(kind){
   let S, H = null;
   const famSpr = (i, size) => { const m = (IM.fam || [])[i] || { foot: 0.9 }; const sp = makeSprite('fam', size, m.foot, { shadow: 0.45 }); sp.setFrame(i % 4, Math.floor(i / 4)); return sp; };
   const monSpr = (id, size) => { const d = MON[id], m = (IM.mon || [])[d.spr] || { foot: 0.9 }; const sp = makeSprite('mon', size, m.foot, { shadow: 0.5 }); sp.setFrame(d.spr % 8, Math.floor(d.spr / 8)); return sp; };
-  if (kind === 'lacto') S = famSpr(8, 2.1);
-  else if (kind === 'phage') S = famSpr(9, 2.1);
-  else if (kind === 'golem'){ S = monSpr('m02', 3.3); S.mat.uniforms.glow.value = 0.15; }
-  else if (kind === 'nk'){ S = monSpr('m51', 3.9); S.mat.uniforms.flash.value.set(0.4, 1, 0.5, 0.18); }
+  let an = null;
+  const famAnim = (fi, size) => { if (!ATL.fama) return famSpr(fi * 4, size); const m = (IM.fam || [])[fi * 4] || { foot: 0.9 }; an = { akey: 'fama', arow: fi * 2 }; return makeSprite('fama', size, m.foot, { shadow: 0.45 }); };
+  const monAnim = (id, size) => { const d = MON[id], ak = 'mon_c' + (Math.floor(d.spr / 11) + 1); if (!ATL[ak]) return monSpr(id, size); an = { akey: ak, arow: (d.spr % 11) * 2 }; const m = (IM.mon || [])[d.spr] || { foot: 0.9 }; return makeSprite(ak, size, m.foot, { shadow: 0.5 }); };
+  if (kind === 'lacto') S = famAnim(0, 2.1);
+  else if (kind === 'phage') S = famAnim(1, 2.1);
+  else if (kind === 'golem'){ S = monAnim('m02', 3.3); S.mat.uniforms.glow.value = 0.15; }
+  else if (kind === 'nk'){ S = monAnim('m51', 3.9); S.mat.uniforms.flash.value.set(0.4, 1, 0.5, 0.18); }
   else if (kind === 'merc'){ H = buildNPC('merc'); H.npc = false; S = H.spr; H.npcStatic = true; }
   else { H = buildHero(PL.cls); S = H.spr; S.mat.uniforms.opacity.value = 0.62; S.mat.uniforms.flash.value.set(0.3, 0.6, 1, 0.35); }
   if (kind === 'merc'){ H = { root: S.g, spr: S, npc: true, npcRow: NPC_ROW.merc, t: 0, flip: false }; }
-  return { g: S.g, inner: S.hold, H, spr: S };
+  const R = { g: S.g, inner: S.hold, H, spr: S };
+  if (an) Object.assign(R, an, { anim: true, parts: {}, flyH: 0, fs: S.size, hitT: 0, rate: 1, walkHz: 1.6 });
+  return R;
 }
 function summonMinion(kind, L, x, z){
   const D = MINION[kind], pl = 1 + PL.lvl * 0.035;
@@ -2859,6 +2899,7 @@ function updMinions(dt){
     // 렌더
     mi.R.g.position.set(mi.x, 0, mi.z); { const fl = Math.sin(mi.face) - Math.cos(mi.face) < 0; if (mi.R.H) mi.R.H.flip = fl; else if (mi.R.spr) mi.R.spr.setFlip(fl !== !!mi.R.revFlip); }
     if (mi.R.H) animHero(mi.R.H, dt, moving, mi.D.spd);
+    else if (mi.R.akey){ const lg = mi.lunge > 0 ? mi.lunge / 0.25 : 0; if (mi.lunge > 0) mi.lunge -= dt; animMonster(mi.R, mi.t, dt, moving, lg); }
     else { const Sp = mi.R.spr; Sp.lift = moving ? Math.abs(Math.sin(mi.t * 10)) * 0.12 : Math.sin(mi.t * 2) * 0.03; if (mi.lunge > 0){ mi.lunge -= dt; Sp.mesh.position.x = Math.sin(mi.lunge / 0.25 * Math.PI) * 0.4 * (Sp.flipX ? -1 : 1); Sp.mesh.rotation.z = -Math.sin(mi.lunge / 0.25 * Math.PI) * 0.15 * (Sp.flipX ? -1 : 1); } else { Sp.mesh.position.x = 0; Sp.mesh.rotation.z = 0; } Sp.layout(); }
   }
 }
@@ -3330,7 +3371,7 @@ function clearTransient(){
 function enterLevel(ci, zi, arrive, extra){
   if (G.lv){ scene.remove(G.lv.root); }
   clearTransient();
-  const lv = getLevel(ci, zi); G.lv = lv; scene.add(lv.root);
+  const lv = getLevel(ci, zi); G.lv = lv; scene.add(lv.root); chapterAtlas(ci + 1);
   let p = lv.M.start;
   if (arrive === 'next' && lv.nextAt) p = randNear(lv, lv.nextAt[0], lv.nextAt[1], 1.5, 3);
   else if (arrive === 'town' || arrive === 'tp'){ if (lv.town) p = randNear(lv, lv.M.spots.fire[0], lv.M.spots.fire[1], 2.5, 4); }
@@ -3914,7 +3955,7 @@ function drawMap(cv, scale, cx, cy, full){
   if (!full){ x.fillStyle = 'rgba(0,0,0,.45)'; x.beginPath(); x.arc(W / 2, H / 2, W / 2, 0, TAU); x.fill(); x.save(); x.beginPath(); x.arc(W / 2, H / 2, W / 2 - 2, 0, TAU); x.clip(); }
   const hi = HERO.x / T, hj = HERO.z / T;
   // 아이소메트릭 방향(45°)으로 회전해 화면과 일치
-  x.save(); x.translate(cx, cy); x.rotate(-Math.PI / 4); x.scale(scale, scale); x.translate(-hi, -hj);
+  x.save(); x.translate(cx, cy); x.rotate(Math.PI / 4); x.scale(scale, scale); x.translate(-hi, -hj);
   const r = full ? 200 : Math.ceil(W / scale);
   x.fillStyle = full ? 'rgba(120,110,90,.18)' : 'rgba(140,125,95,.35)';
   for (let j = Math.max(0, Math.floor(hj - r)); j < Math.min(lv.h, hj + r); j++) for (let i = Math.max(0, Math.floor(hi - r)); i < Math.min(lv.w, hi + r); i++){ const k = j * lv.w + i; if (!lv.seen[k]) continue; if (lv.g[k]) x.fillRect(i, j, 1.02, 1.02); }
@@ -4332,7 +4373,10 @@ function updMonsters(dt){
     const d = Math.hypot(m.x - HERO.x, m.z - HERO.z);
     if (!m.alive){
       if (!m.R) continue; m.deadT += dt; const k = Math.min(1, m.deadT / 0.45);
-      const Sp = m.R.spr; Sp.mesh.rotation.z = k * 1.35 * (Sp.flipX ? -1 : 1); Sp.lift = (m.R.flyH || 0) * (1 - k) - k * Sp.size * 0.18; Sp.layout(); Sp.mat.uniforms.dark.value = k * 0.55; Sp.mat.uniforms.flash.value.set(0.4, 0, 0, k * 0.25);
+      const Sp = m.R.spr, kd = Math.min(0.66, m.deadT / 0.75 * 0.66);
+      if (monFrame(m.R, 'death', m.deadT > 36 ? 0.67 + (m.deadT - 36) / 4 * 0.33 : kd)){ Sp.mesh.rotation.z = 0; Sp.mesh.position.x = 0; Sp.lift = (m.R.flyH || 0) * (1 - k); Sp.mat.uniforms.dark.value = kd * 0.25; Sp.mat.uniforms.flash.value.set(0.4, 0, 0, 0); }
+      else { Sp.mesh.rotation.z = k * 1.35 * (Sp.flipX ? -1 : 1); Sp.lift = (m.R.flyH || 0) * (1 - k) - k * Sp.size * 0.18; Sp.mat.uniforms.dark.value = k * 0.55; Sp.mat.uniforms.flash.value.set(0.4, 0, 0, k * 0.25); }
+      Sp.layout();
       if (m.deadT > 0.45 && !m.darkened){ m.darkened = true; m.corpse = true; if (m.R.parts.ring) m.R.parts.ring.visible = false; }
       if (m.deadT > 30) Sp.mat.uniforms.opacity.value = Math.max(0, 1 - (m.deadT - 30) / 10);
       if (m.deadT > 40 || d > 60){ lv.root.remove(m.R.g); disposeSprite(m.R.spr); m.R = null; m.gone = true; m.corpse = false; }
@@ -4349,7 +4393,7 @@ function updMonsters(dt){
   for (let i = 0; i < act.length; i++){ const a = act[i]; for (let j = i + 1; j < act.length; j++){ const b = act[j]; const dx = b.x - a.x, dz = b.z - a.z, rr = (a.r + b.r) * 0.85; if (Math.abs(dx) > rr || Math.abs(dz) > rr) continue; const d = Math.hypot(dx, dz); if (d < rr && d > 1e-3){ const p = (rr - d) / d * 0.5, wa = a.boss ? 0 : b.boss ? 2 : 1, wb = b.boss ? 0 : a.boss ? 2 : 1; const ax = a.x - dx * p * wa, az = a.z - dz * p * wa, bx = b.x + dx * p * wb, bz = b.z + dz * p * wb; if (walkable(lv, ax, az, 0.3)){ a.x = ax; a.z = az; } if (walkable(lv, bx, bz, 0.3)){ b.x = bx; b.z = bz; } } } }
   for (const m of act){
     const R = m.R; R.g.position.set(m.x, m.jumpY || 0, m.z); { const sx = Math.sin(m.face) - Math.cos(m.face); if (Math.abs(sx) > 0.2) R.spr.setFlip(sx < 0); }
-    if (m.squash > 0){ m.squash = Math.max(0, m.squash - dt * 1.6); const q = Math.sin(m.squash / 0.28 * Math.PI) * m.squash; R.g.scale.set(1 + q * 0.7, 1 - q, 1 + q * 0.7); } else if (R.g.scale.y !== 1) R.g.scale.set(1, 1, 1);
+    if (m.squash > 0){ m.squash = 0; R.hitT = 0.24; }
     if (m.castAnim > 0) m.castAnim -= dt;
     const atk = m.atk > 0 ? m.atk / m.atkDur : m.castAnim > 0 ? m.castAnim / 0.5 : m.fuse != null ? 0.5 : 0;
     const sf = m.freeze > 0 || m.stun > 0 ? 0 : 1;
