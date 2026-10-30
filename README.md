@@ -21,6 +21,7 @@
 index.html        메인 화면 (게임 선택, 이 기기에 저장된 기록 표시)
 games/            게임 11종 (각각 하나의 HTML 파일)
 assets/           메인 화면 썸네일
+games/il-assets/  감염의 군주 스프라이트·아이콘 아틀라스 (WebP)
 vendor/           three.js r128 (3D 게임용, MIT 라이선스)
 icons/            앱 아이콘
 manifest.webmanifest, sw.js   앱 설치(PWA) · 오프라인 실행
