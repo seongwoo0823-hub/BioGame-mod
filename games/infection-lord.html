@@ -436,6 +436,33 @@ body:not(.mobile) #xpBarD2{display:block}
 #selArt{position:absolute;left:3vw;bottom:13vh;height:62vh;pointer-events:none;filter:drop-shadow(0 10px 30px #000)}
 body.mobile #selArt{display:none}
 body.mobile .cpick.art{height:30vh;width:22vw}
+
+/* ===================== 하단 바 (단순화: 겹침 없는 한 줄) ===================== */
+#d2bar,#d2bar .crest{display:none!important}
+#skillDock{position:absolute!important;left:50%!important;right:auto!important;top:auto!important;bottom:8px!important;width:auto!important;height:auto!important;transform:translateX(-50%) scale(var(--ui,1))!important;transform-origin:50% 100%!important;display:grid!important;grid-template-areas:"l belt hot r";grid-template-columns:auto auto auto auto;align-items:center;gap:10px;padding:8px 12px;background:rgba(10,8,6,.86);border:2px solid #5a4630;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.7);z-index:3;pointer-events:auto!important}
+#skillDock>*{pointer-events:auto}
+#sbL{grid-area:l}#sbR{grid-area:r}
+#belt{grid-area:belt;position:static!important;transform:none!important;display:flex!important;flex-direction:row!important;gap:4px!important;margin:0!important;padding-right:10px;border-right:1px solid #4a3a26}
+#hotbar{grid-area:hot;position:static!important;transform:none!important;display:flex!important;gap:4px!important;margin:0!important;padding:0!important;width:auto!important;height:auto!important}
+.bslot,#hotbar .hk,#skillDock #hotbar .hk{position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;width:44px!important;height:44px!important;transform:none!important;border-radius:6px!important;border:2px solid #7a6038!important;background:#16110c!important;box-shadow:inset 0 0 8px #000!important;font-size:22px!important;display:grid;place-items:center;overflow:hidden}
+.bslot>*,#hotbar .hk>*:not(.cdm){transform:none!important}
+.bslot small,#hotbar .hk small{display:block!important;position:absolute;left:3px;top:1px;font:700 10px var(--cin);color:#d8c090;transform:none!important;z-index:2}
+.bslot em{position:absolute;right:3px;bottom:1px;font:700 11px var(--cin);color:#fff;transform:none!important;text-shadow:0 1px 2px #000}
+.bslot .pi .ico{width:34px!important;height:34px!important}
+#hotbar .hk.sel{border-color:#9ad8ff!important}
+.sbtn,#sbL,#sbR{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;width:56px!important;height:56px!important;border-radius:8px!important;border:2px solid #c8a060!important;font-size:28px!important;margin:0!important}
+#xpBarD2{bottom:calc(76px * var(--ui,1))!important;width:600px!important}
+html body #skillDock>#hotbar,html body #skillDock>#belt{position:static!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;width:auto!important;height:auto!important;margin:0!important;display:flex!important}
+html body #skillDock>.sbtn{position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important}
+html body #skillDock .hk,html body #skillDock .bslot{position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important}
+body.mobile #skillDock{left:auto!important;right:8px!important;bottom:8px!important;transform:scale(var(--ui,1))!important;transform-origin:100% 100%!important;grid-template-areas:"belt belt" "hot hot" "r l";grid-template-columns:auto auto;justify-items:end;gap:8px;padding:8px;background:rgba(10,8,6,.55)}
+body.mobile #belt{padding-right:0;border-right:0}
+body.mobile .bslot,body.mobile #hotbar .hk{width:48px!important;height:48px!important}
+body.mobile #sbL{width:84px!important;height:84px!important;border-radius:50%!important;font-size:40px!important}
+body.mobile #sbR{width:64px!important;height:64px!important;border-radius:50%!important;align-self:end}
+body.mobile .sbtn small{display:none}
+body.mobile #ctxBtn:not(.hidden){bottom:calc(var(--ui,1) * 290px)!important}
+body.mobile #targetBar{bottom:calc(300px * var(--ui,1))!important}
 </style>
 </head>
 <body>
@@ -492,11 +519,11 @@ body.mobile .cpick.art{height:30vh;width:22vw}
   <div class="d2orb pe" id="orbL"><div class="statue"></div><div class="glass"><i class="fill"></i><i class="shine"></i></div><span class="otx"></span></div>
   <div class="d2orb pe" id="orbR"><div class="statue"></div><div class="glass"><i class="fill"></i><i class="shine"></i></div><span class="otx"></span></div>
   <div id="xpBarD2"><i></i></div>
-  <div id="belt" class="pe"></div>
   <div id="skillDock" class="pe">
+    <div class="sbtn" id="sbL"><span></span><small>L</small></div>
+    <div id="belt"></div>
     <div id="hotbar"></div>
     <div class="sbtn" id="sbR"><span></span><small>R</small><div class="cdm" style="transform:scaleY(0)"></div></div>
-    <div class="sbtn" id="sbL"><span></span><small>L</small></div>
   </div>
   <div id="miniBtns" class="pe">
     <button class="mb" data-p="char" title="캐릭터 (C)">👤<small>C</small></button><button class="mb" data-p="inv" title="소지품 (I)">🎒<small>I</small></button><button class="mb" data-p="skills" id="mbSk" title="스킬 트리 (T)">✨<small>T</small></button><button class="mb" data-p="quest" title="임무 (J)">📜<small>J</small></button><button class="mb" data-p="map" title="지도 (Tab)">🗺️<small>Tab</small></button><button class="mb" data-p="tp" title="귀환 포털 (B)">🌀<small>B</small></button><button class="mb" data-p="wp" id="mbWp" title="웨이포인트">⛩️<small>WP</small></button><button class="mb" data-p="menu" title="메뉴 (Esc)">⚙️<small>Esc</small></button>
@@ -1202,24 +1229,34 @@ function makePost(){
     fragmentShader: 'uniform sampler2D tex; uniform float thr; varying vec2 vUv; void main(){ vec3 c = texture2D(tex, vUv).rgb; float l = max(c.r, max(c.g, c.b)); float k = smoothstep(thr, thr + 0.32, l); gl_FragColor = vec4(c * k, 1.0); }', depthTest: false, depthWrite: false });
   const blur = new THREE.ShaderMaterial({ uniforms: { tex: { value: null }, dir: { value: new THREE.Vector2() } }, vertexShader: qv,
     fragmentShader: 'uniform sampler2D tex; uniform vec2 dir; varying vec2 vUv; void main(){ vec3 c = texture2D(tex, vUv).rgb * 0.227; c += (texture2D(tex, vUv + dir * 1.385).rgb + texture2D(tex, vUv - dir * 1.385).rgb) * 0.316; c += (texture2D(tex, vUv + dir * 3.231).rgb + texture2D(tex, vUv - dir * 3.231).rgb) * 0.070; gl_FragColor = vec4(c, 1.0); }', depthTest: false, depthWrite: false });
-  const comp = new THREE.ShaderMaterial({ uniforms: { tex: { value: null }, bloom: { value: null }, str: { value: 0.85 }, sat: { value: 1.12 }, tint: { value: new THREE.Color('#ffffff') }, vig: { value: 0.55 }, hurt: { value: 0 } }, vertexShader: qv,
-    fragmentShader: 'uniform sampler2D tex; uniform sampler2D bloom; uniform float str; uniform float sat; uniform vec3 tint; uniform float vig; uniform float hurt; varying vec2 vUv;\n' +
-      'void main(){ vec3 c = texture2D(tex, vUv).rgb; vec3 b = texture2D(bloom, vUv).rgb; c += b * str; float l = dot(c, vec3(0.299, 0.587, 0.114)); c = mix(vec3(l), c, sat); c = (c - 0.5) * 1.06 + 0.5; c *= tint;\n' +
-      ' vec2 d = vUv - 0.5; float v = smoothstep(0.85, 0.25, length(d * vec2(1.0, 0.85))); c *= mix(1.0 - vig, 1.0, v); c = mix(c, vec3(0.55, 0.0, 0.02), hurt * (1.0 - v) * 0.8); gl_FragColor = vec4(max(c, 0.0), 1.0); }', depthTest: false, depthWrite: false });
+  const comp = new THREE.ShaderMaterial({ uniforms: { tex: { value: null }, bloom: { value: null }, str: { value: OPT.px ? 0.55 : 0.85 }, sat: { value: 1.12 }, tint: { value: new THREE.Color('#ffffff') }, vig: { value: 0.55 }, hurt: { value: 0 }, px: { value: OPT.px ? 1 : 0 }, res: { value: new THREE.Vector2(1, 1) } }, vertexShader: qv,
+    fragmentShader: 'uniform sampler2D tex; uniform sampler2D bloom; uniform float str; uniform float sat; uniform vec3 tint; uniform float vig; uniform float hurt; uniform float px; uniform vec2 res; varying vec2 vUv;\n' +
+      'float bayer(vec2 p){ vec2 q = mod(floor(p), 4.0); float i = q.x + q.y * 4.0; return mod(i * 9.0 + floor(i / 4.0) * 7.0, 16.0) / 16.0; }\n' +
+      'void main(){ vec2 uv = px > 0.5 ? (floor(vUv * res) + 0.5) / res : vUv; vec3 c = texture2D(tex, uv).rgb; vec3 b = texture2D(bloom, uv).rgb; c += b * str; float l = dot(c, vec3(0.299, 0.587, 0.114)); c = mix(vec3(l), c, sat); c = (c - 0.5) * 1.06 + 0.5; c *= tint;\n' +
+      ' vec2 d = uv - 0.5; float v = smoothstep(0.85, 0.25, length(d * vec2(1.0, 0.85))); c *= mix(1.0 - vig, 1.0, v); c = mix(c, vec3(0.55, 0.0, 0.02), hurt * (1.0 - v) * 0.8);\n' +
+      ' if (px > 0.5){ vec2 cell = floor(vUv * res); float d = bayer(cell) - 0.5; c = floor(max(c, 0.0) * 14.0 + 0.5 + d * 0.9) / 14.0; }\n' +
+      ' gl_FragColor = vec4(max(c, 0.0), 1.0); }', depthTest: false, depthWrite: false });
   P.comp = comp;
   P.resize = () => {
     const v = renderer.getDrawingBufferSize(new THREE.Vector2());
     [P.main, P.a, P.b].forEach(r => r && r.dispose());
-    P.on = OPT.q !== 'low';
+    P.on = OPT.q !== 'low' || OPT.px;
     if (!P.on) return;
-    const MS = renderer.capabilities.isWebGL2 && OPT.q === 'high' && THREE.WebGLMultisampleRenderTarget;
-    P.main = MS ? new THREE.WebGLMultisampleRenderTarget(v.x, v.y, Object.assign({}, opts, { depthBuffer: true })) : new THREE.WebGLRenderTarget(v.x, v.y, Object.assign({}, opts, { depthBuffer: true }));
-    const bw = Math.max(2, v.x >> 2), bh = Math.max(2, v.y >> 2);
+    // 도트 모드: 장면 전체를 저해상도(점 하나 ≈ 2~3 CSS 픽셀)로 그려 최근접 확대 → 배경·3D 요소까지 모두 도트
+    let tw = v.x, th = v.y;
+    if (OPT.px){ const D = clamp(Math.min(innerWidth / 560, innerHeight / 330), 1.8, 3.6); tw = Math.max(64, Math.round(innerWidth / D)); th = Math.max(64, Math.round(innerHeight / D)); }
+    P.tw = tw; P.th = th; comp.uniforms.res.value.set(tw, th);
+    const MS = !OPT.px && renderer.capabilities.isWebGL2 && OPT.q === 'high' && THREE.WebGLMultisampleRenderTarget;
+    const mopts = Object.assign({}, opts, { depthBuffer: true }, OPT.px ? { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter } : {});
+    P.main = MS ? new THREE.WebGLMultisampleRenderTarget(tw, th, mopts) : new THREE.WebGLRenderTarget(tw, th, mopts);
+    if (PADD) PADD.mat.uniforms.scale.value = PNRM.mat.uniforms.scale.value = th / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+    const bw = Math.max(2, tw >> (OPT.px ? 1 : 2)), bh = Math.max(2, th >> (OPT.px ? 1 : 2));
     P.a = mk(bw, bh); P.b = mk(bw, bh); P.bw = bw; P.bh = bh;
   };
   P.render = () => {
     if (!P.on){ renderer.setRenderTarget(null); renderer.render(scene, camera); return; }
     renderer.setRenderTarget(P.main); renderer.render(scene, camera);
+    if (OPT.q === 'low'){ quad.material = comp; comp.uniforms.tex.value = P.main.texture; comp.uniforms.bloom.value = P.main.texture; comp.uniforms.str.value = 0; renderer.setRenderTarget(null); renderer.render(quadScene, quadCam); return; }
     quad.material = bright; bright.uniforms.tex.value = P.main.texture; renderer.setRenderTarget(P.a); renderer.render(quadScene, quadCam);
     quad.material = blur;
     for (let k = 0; k < 2; k++){
@@ -1342,7 +1379,7 @@ function smat(color, o){
   const p = { color: new THREE.Color(color) }; { const c = p.color, l = (c.r + c.g + c.b) / 3; c.setRGB(l + (c.r - l) * 0.7, l + (c.g - l) * 0.7, l + (c.b - l) * 0.7).multiplyScalar(0.85); }
   if (o.em){ p.emissive = new THREE.Color(o.em); p.emissiveIntensity = o.ei || 1; }
   if (o.op != null){ p.transparent = true; p.opacity = o.op; p.depthWrite = o.op > 0.9; }
-  const m = new THREE.MeshLambertMaterial(p); if (o.flat) m.flatShading = true;
+  const m = new THREE.MeshLambertMaterial(p); if (o.flat || OPT.px) m.flatShading = true;
   if (!o.unique) MATC.set(key, m);
   return m;
 }
@@ -1416,7 +1453,7 @@ function loadAtlases(onProg){
 function gridOf(key){ return key.startsWith('hero_') ? ATL_GRID.hero : key.startsWith('mon_c') ? ATL_GRID.monc : key.startsWith('boss_c') ? ATL_GRID.bossc : ATL_GRID[key]; }
 // 장별 몬스터·보스 동작 아틀라스: 필요할 때 불러오고, 최근 두 장만 GPU에 남긴다
 const CH_LOAD = {}, CH_LRU = [];
-function texOf(img){ const t = new THREE.Texture(img); t.needsUpdate = true; t.minFilter = THREE.LinearFilter; t.magFilter = OPT.px ? THREE.NearestFilter : THREE.LinearFilter; t.generateMipmaps = false; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t; }
+function texOf(img){ const t = new THREE.Texture(img); t.needsUpdate = true; t.minFilter = THREE.LinearFilter; t.magFilter = THREE.LinearFilter; t.generateMipmaps = false; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t; }
 function chapterAtlas(ch){
   if (!(ch >= 1 && ch <= 5)) return Promise.resolve();
   const i = CH_LRU.indexOf(ch); if (i >= 0) CH_LRU.splice(i, 1); CH_LRU.push(ch);
@@ -1669,7 +1706,7 @@ function chapterTex(ci){
   // 에셋 팩 바닥 타일을 펼쳐 만든 손그림 질감 (불러오기 실패 시 절차적 질감)
   const T2 = TEXC[ci] = { floor: floorTex(th, 11 + ci * 7), wall: wallTex(th, 5 + ci * 3) };
   const load = (f, cb) => { const img = new Image(); img.onload = () => cb(img); img.src = ADIR + f; };
-  const apply = (t, img) => { t.image = img; if (OPT.px) t.magFilter = THREE.NearestFilter; t.needsUpdate = true; };
+  const apply = (t, img) => { t.image = img; t.needsUpdate = true; };
   load('floor_c' + (ci + 1) + '.webp', img => { apply(T2.floor.col, img); LEVELS.forEach(lv => { if (lv.ci === ci && lv.floorMap) apply(lv.floorMap, img); }); });
   load('wall_c' + (ci + 1) + '.webp', img => apply(T2.wall, img));
   return T2;
@@ -1742,7 +1779,7 @@ function buildLevel(ci, zi){
     if (adj) wallCells.push([i, j]);
   }
   const organic = type === 'cave' || type === 'town' || type === 'arena';
-  const wmat = new THREE.MeshLambertMaterial({ map: tex.wall, color: town ? '#d0c6b0' : '#f0e8e0', emissive: '#1a1612', flatShading: organic });
+  const wmat = new THREE.MeshLambertMaterial({ map: tex.wall, color: town ? '#d0c6b0' : '#f0e8e0', emissive: '#1a1612', flatShading: organic || OPT.px });
   const wgeo = organic ? new THREE.DodecahedronGeometry(1.35, 0) : new THREE.BoxGeometry(T, 1, T).translate(0, 0.5, 0);
   const wim = new THREE.InstancedMesh(wgeo, wmat, wallCells.length);
   wallCells.forEach(([i, j], k) => {
@@ -4491,7 +4528,7 @@ function boot(){
   initRenderer();
   PADD = makeParticles(5000, THREE.AdditiveBlending); PNRM = makeParticles(2000, THREE.NormalBlending);
   scene.add(PADD.pts); scene.add(PNRM.pts);
-  const setPS = () => { const sc = innerHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * Math.min(devicePixelRatio || 1, 1.75); PADD.mat.uniforms.scale.value = PNRM.mat.uniforms.scale.value = sc / Math.min(devicePixelRatio || 1, 1.75) * renderer.getPixelRatio(); };
+  const setPS = () => { if (OPT.px && POST && POST.th){ PADD.mat.uniforms.scale.value = PNRM.mat.uniforms.scale.value = POST.th / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))); return; } const sc = innerHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * Math.min(devicePixelRatio || 1, 1.75); PADD.mat.uniforms.scale.value = PNRM.mat.uniforms.scale.value = sc / Math.min(devicePixelRatio || 1, 1.75) * renderer.getPixelRatio(); };
   setPS(); addEventListener('resize', setPS);
   loadAtlases(k => { $('#loading').textContent = '⚔ 감염의 군주 불러오는 중... ' + Math.round(k * 100) + '%'; }).then(() => {
     $('#loading').classList.add('hidden');
