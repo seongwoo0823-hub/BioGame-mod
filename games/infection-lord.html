@@ -1440,7 +1440,9 @@ function glowEyes(parent, y, z, sp, r, col){
 const IM = window.IL_META || {};
 const ATL = {}, ATL_IMG = {};
 const ATL_FILES = { hero_guardian: 'hero_guardian.webp', hero_alchemist: 'hero_alchemist.webp', hero_mancer: 'hero_mancer.webp', hero_swordsman: 'hero_swordsman.webp', npc: 'npc.webp', mon: 'mon.webp', boss: 'boss.webp', icons: 'icons.webp', props: 'props.webp', vfx: 'vfx.webp', fam: 'fam.webp', art: 'art.webp', vfxa: 'vfx_anim.webp', fama: 'fam_anim.webp', propa: 'props_anim.webp', mon_c1: 'mon_c1.webp', boss_c1: 'boss_c1.webp' };
-const ATL_GRID = { hero: [10, 8, 128], npc: [8, 8, 128], monc: [13, 22, 128], bossc: [13, 4, 208], vfxa: [8, 16, 128], fama: [13, 8, 128], propa: [8, 7, 128], mon: [8, 7, 128], boss: [5, 2, 256], icons: [16, 16, 96], props: [8, 3, 128], vfx: [4, 4, 128], fam: [4, 4, 128] };
+// 도트 모드 영웅: 8방향 × 8동작 (행 = 방향*4 + 동작/2, 열 = (동작%2)*8 + 프레임)
+const HERO8 = !!OPT.px;
+const ATL_GRID = { hero: HERO8 ? [16, 32, 88] : [10, 8, 128], npc: [8, 8, 128], monc: [13, 22, 128], bossc: [13, 4, 208], vfxa: [8, 16, 128], fama: [13, 8, 128], propa: [8, 7, 128], mon: [8, 7, 128], boss: [5, 2, 256], icons: [16, 16, 96], props: [8, 3, 128], vfx: [4, 4, 128], fam: [4, 4, 128] };
 function loadAtlases(onProg){
   const keys = Object.keys(ATL_FILES); let done = 0;
   return Promise.all(keys.map(k => new Promise((res) => {
@@ -1522,8 +1524,8 @@ const HERO_LOOK = { macro: { bulk: 1 }, tcell: { bulk: 1 }, plasma: { bulk: 1 },
 function buildHero(cls, look){
   const sprKey = 'hero_' + (CLASSES[cls] ? CLASSES[cls].spr : 'guardian');
   const meta = (IM.hero || {})[CLASSES[cls] ? CLASSES[cls].spr : 'guardian'] || { foot: 0.9 };
-  const S = makeSprite(sprKey, 2.7 * (look && look.scale || 1), meta.foot, { shadow: 0.55 });
-  const H = { root: S.g, spr: S, cls, t: Math.random() * 6, act: null, actT: 0, actSpd: 3, dead: 0, runK: 0, flip: false, body: S.hold, head: S.hold, legs: [], arms: [{ userData: { hand: new THREE.Group(), el: new THREE.Group() } }, { userData: { hand: new THREE.Group(), el: new THREE.Group() } }] };
+  const S = HERO8 ? makeSprite(sprKey, 3.15 * (look && look.scale || 1), 80 / 88, { shadow: 0.55 }) : makeSprite(sprKey, 2.7 * (look && look.scale || 1), meta.foot, { shadow: 0.55 });
+  const H = { root: S.g, spr: S, cls, t: Math.random() * 6, act: null, actT: 0, actSpd: 3, dead: 0, runK: 0, flip: false, face: 0, body: S.hold, head: S.hold, legs: [], arms: [{ userData: { hand: new THREE.Group(), el: new THREE.Group() } }, { userData: { hand: new THREE.Group(), el: new THREE.Group() } }] };
   return H;
 }
 function weaponMesh(){ return new THREE.Group(); }
@@ -1534,6 +1536,7 @@ function animHero(H, dt, moving, spd){
   const S = H.spr; if (!S) return;
   H.t += dt;
   if (H.npc){ S.setFrame(Math.floor(H.t * 7) % 8, H.npcRow); S.setFlip(!!H.flip); return; }
+  if (HERO8) return animHero8(H, dt, moving, spd);
   if (H.dead > 0){ H.dead = Math.min(1, H.dead + dt * 1.3); S.setFrame(Math.min(9, Math.floor(H.dead * 10)), SPR_STATES.death); return; }
   let row = SPR_STATES.idle, col = Math.floor(H.t * 8) % 10;
   if (H.act){
@@ -1544,6 +1547,31 @@ function animHero(H, dt, moving, spd){
     if (H.actT >= 1 && H.act !== 'spin') H.act = null;
   } else if (moving){ row = spd > 0.85 ? SPR_STATES.run : SPR_STATES.walk; col = Math.floor(H.t * (11 + spd * 7)) % 10; }
   S.setFrame(col, row); S.setFlip(!!H.flip);
+}
+// 카메라 기준 8방향: 0 = 화면 아래(카메라 쪽), 2 = 오른쪽, 4 = 위, 6 = 왼쪽
+const HS8 = { idle: [0, 8], walk: [1, 8], run: [2, 8], attack: [3, 8], skill: [4, 8], hit: [5, 4], death: [6, 8], dodge: [7, 6] };
+const _cd = new V3();
+const _cq = new THREE.Quaternion();
+function heroDir8(face){
+  // 바라보는 방향을 화면 공간으로 옮겨 각도 계산 (카메라 기울기 반영)
+  _cq.copy(camera.quaternion).invert(); _cd.set(Math.sin(face), 0, Math.cos(face)).applyQuaternion(_cq);
+  const a = Math.atan2(_cd.x, -_cd.y);
+  return ((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8;
+}
+function animHero8(H, dt, moving, spd){
+  const S = H.spr; H.t += dt;
+  let dir = heroDir8(H.face || 0), st = 'idle', f = Math.floor(H.t * 7) % 8;
+  if (H.dead > 0){ H.dead = Math.min(1, H.dead + dt * 1.25); st = 'death'; f = Math.min(7, Math.floor(H.dead * 8)); }
+  else if (H.act){
+    H.actT += dt * (H.actSpd || 3);
+    const k = Math.min(0.999, H.actT), a = H.act;
+    st = a === 'cast' ? 'skill' : a === 'hit' ? 'hit' : a === 'dodge' ? 'dodge' : 'attack';
+    if (a === 'spin'){ f = 3 + Math.floor(H.t * 14) % 3; dir = (dir + Math.floor(H.t * 18)) % 8; }   // 회전 베기: 방향을 돌리며 휘두름
+    else f = Math.min(HS8[st][1] - 1, Math.floor(k * HS8[st][1]));
+    if (H.actT >= 1 && a !== 'spin') H.act = null;
+  } else if (moving){ st = spd > 0.85 ? 'run' : 'walk'; f = Math.floor(H.t * (st === 'run' ? 13 : 9) * Math.max(0.6, Math.min(1.5, spd))) % 8; }
+  const si = HS8[st][0];
+  S.setFrame((si % 2) * 8 + f, dir * 4 + (si >> 1)); S.setFlip(false);
 }
 function heroAct(H, act, spd){ H.act = act; H.actT = 0; H.actSpd = spd || 3; }
 const NPC_ROW = { elder: 0, shop: 1, alch: 2, heal: 3, vault: 4, merc: 5, seer: 6, archon: 7 };
@@ -2946,7 +2974,7 @@ function updMinions(dt){
       }
     } else if (dH > 3.2){ const ang = i * 1.3; if (dH > 6) toHero(mi.D.spd * 1.4); else mv(HERO.x + Math.cos(ang) * 2 - mi.x, HERO.z + Math.sin(ang) * 2 - mi.z, mi.D.spd); }
     // 렌더
-    mi.R.g.position.set(mi.x, 0, mi.z); { const fl = Math.sin(mi.face) - Math.cos(mi.face) < 0; if (mi.R.H) mi.R.H.flip = fl; else if (mi.R.spr) mi.R.spr.setFlip(fl !== !!mi.R.revFlip); }
+    mi.R.g.position.set(mi.x, 0, mi.z); { const fl = Math.sin(mi.face) - Math.cos(mi.face) < 0; if (mi.R.H){ mi.R.H.flip = fl; mi.R.H.face = mi.face; } else if (mi.R.spr) mi.R.spr.setFlip(fl !== !!mi.R.revFlip); }
     if (mi.R.H) animHero(mi.R.H, dt, moving, mi.D.spd);
     else if (mi.R.akey){ const lg = mi.lunge > 0 ? mi.lunge / 0.25 : 0; if (mi.lunge > 0) mi.lunge -= dt; animMonster(mi.R, mi.t, dt, moving, lg); }
     else { const Sp = mi.R.spr; Sp.lift = moving ? Math.abs(Math.sin(mi.t * 10)) * 0.12 : Math.sin(mi.t * 2) * 0.03; if (mi.lunge > 0){ mi.lunge -= dt; Sp.mesh.position.x = Math.sin(mi.lunge / 0.25 * Math.PI) * 0.4 * (Sp.flipX ? -1 : 1); Sp.mesh.rotation.z = -Math.sin(mi.lunge / 0.25 * Math.PI) * 0.15 * (Sp.flipX ? -1 : 1); } else { Sp.mesh.position.x = 0; Sp.mesh.rotation.z = 0; } Sp.layout(); }
@@ -3253,7 +3281,7 @@ function finishHero(dt, moving){
   for (const m of G.lv.mons){ if (!m.alive || !m.R) continue; const dx = H.x - m.x, dz = H.z - m.z, d = Math.hypot(dx, dz), mr = m.r + 0.35; if (d < mr && d > 1e-3){ const push = (mr - d) * (m.boss ? 1 : 0.5); const nx = H.x + dx / d * push, nz = H.z + dz / d * push; if (walkable(G.lv, nx, nz, 0.35)){ H.x = nx; H.z = nz; } m.x -= dx / d * (mr - d) * 0.5 * (m.boss ? 0 : 1); m.z -= dz / d * (mr - d) * 0.5 * (m.boss ? 0 : 1); } }
   H.moving = moving;
   H.H.root.position.x = H.x; H.H.root.position.z = H.z;
-  { const sx = Math.sin(H.face) - Math.cos(H.face); if (Math.abs(sx) > 0.15) H.H.flip = sx < 0; }
+  { const sx = Math.sin(H.face) - Math.cos(H.face); if (Math.abs(sx) > 0.15) H.H.flip = sx < 0; } H.H.face = H.face;
   animHero(H.H, dt, moving, S.speed / 5.4);
   if (moving){ H.stepT -= dt * S.speed / 5.4; if (H.stepT <= 0){ H.stepT = 0.33; SND.play('step', 0.5); } }
   if (H.cape){ }
@@ -4516,7 +4544,7 @@ function selFrame(dt){
   SEL.t += dt;
   SEL.fireLight.intensity = 1.5 + Math.sin(SEL.t * 13) * 0.18 + Math.random() * 0.12;
   if (Math.random() < 0.5) FX.fire(0, 0.6, 0.2, 0.8); if (Math.random() < 0.2) FX.smoke(0, 2.2, 0); if (Math.random() < 0.2) FX.spark(0, 1, 0, '#ffb050');
-  for (const k in SEL.heroes){ const H = SEL.heroes[k]; if (!H.root.visible) continue; const on = G.mode === 'create' && SEL.cls === k; const target = on ? H.home.clone().multiplyScalar(0.62).add(new V3(0, 0, 1.6)) : H.home; const mv = H.root.position.distanceTo(target) > 0.05; const dx = target.x - H.root.position.x; H.root.position.lerp(target, Math.min(1, dt * 3)); H.flip = mv ? dx < 0 : H.home.x > 0; animHero(H, dt, mv, 0.6); if (on && !mv && !H.act && Math.random() < dt * 0.4) heroAct(H, Math.random() < 0.5 ? 'swing' : 'cast', 1.6); }
+  for (const k in SEL.heroes){ const H = SEL.heroes[k]; if (!H.root.visible) continue; const on = G.mode === 'create' && SEL.cls === k; const target = on ? H.home.clone().multiplyScalar(0.62).add(new V3(0, 0, 1.6)) : H.home; const mv = H.root.position.distanceTo(target) > 0.05; const dx = target.x - H.root.position.x; H.root.position.lerp(target, Math.min(1, dt * 3)); H.flip = mv ? dx < 0 : H.home.x > 0; const dz = target.z - H.root.position.z; H.face = mv ? Math.atan2(dx, dz) : Math.atan2(-H.root.position.x * 0.3, 1); animHero(H, dt, mv, 0.6); if (on && !mv && !H.act && Math.random() < dt * 0.4) heroAct(H, Math.random() < 0.5 ? 'swing' : 'cast', 1.6); }
   if (SEL.show){ animHero(SEL.show, dt, false, 1); if (!SEL.show.act && Math.random() < dt * 0.3) heroAct(SEL.show, Math.random() < 0.5 ? 'swing' : 'cast', 1.6); }
   if (G.mode === 'create'){ const H = SEL.heroes[SEL.cls]; SEL.spot.target.position.lerp(H.root.position, Math.min(1, dt * 4)); }
   camera.position.set(Math.sin(SEL.t * 0.12) * 0.6, 3.4, 9.5); camera.lookAt(0, 1.3, 0);
