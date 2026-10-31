@@ -91,7 +91,14 @@ def view_normal(N, yaw):
     cp, sp = math.cos(PITCH), math.sin(PITCH)
     return np.stack([Q[:, 0], Q[:, 1] * cp - Q[:, 2] * sp, Q[:, 1] * sp + Q[:, 2] * cp], 1)
 
-def render(model, yaw, W=88, H=88, foot_y=80, smear=None, fit=True):
+def render(model, yaw, W=88, H=88, foot_y=80, smear=None, fit=True, scale=None, dissolve=0.0, dark=0.0):
+    global SCALE
+    _sc = SCALE
+    if scale is not None: SCALE = scale
+    try: return _render(model, yaw, W, H, foot_y, smear, fit, dissolve, dark)
+    finally: SCALE = _sc
+
+def _render(model, yaw, W, H, foot_y, smear, fit, dissolve, dark):
     allp = []; alln = []; mats = []; pids = []
     for (p, n, m, pid) in model.parts:
         allp.append(p); alln.append(n); mats += [m]; pids.append(np.full(len(p), len(mats) - 1))
@@ -165,6 +172,10 @@ def render(model, yaw, W=88, H=88, foot_y=80, smear=None, fit=True):
     res = img.copy()
     res[out, :3] = OUTLINE; res[out, 3] = 255
     res[gl, :3] = glowc[gl]; res[gl, 3] = 255
+    if dark > 0: res[..., :3] = (res[..., :3] * (1 - dark)).astype(np.uint8)
+    if dissolve > 0:
+        yy, xx = np.mgrid[0:H, 0:W]; h = ((xx * 73856093) ^ (yy * 19349663)) % 1000 / 1000.0
+        res[h < dissolve, 3] = 0
     return res
 
 OUTLINE = hexc('#140c14')
