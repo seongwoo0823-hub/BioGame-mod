@@ -3555,6 +3555,7 @@ function updHero(dt){
   if (H.busy){ const b = H.busy; b.t += dt; if (!b.fired && b.t >= b.hitAt){ b.fired = true; execSkill(b); } if (b.t >= b.dur) H.busy = null; finishHero(dt, false); return; }
   if (H.stun > 0){ finishHero(dt, false); return; }
   // 상호작용 대상으로 걷기
+  if (H.pickup && !G.lv.items.includes(H.pickup)) H.pickup = null;   // 이미 사라진 아이템을 주우러 가지 않음
   const goal = H.interact || H.pickup;
   if (goal && !H.path && Math.hypot(goal.x - H.x, goal.z - H.z) >= (goal.r || 1) + 0.7){ if ((H.goalWait = (H.goalWait || 0) + dt) > 0.25){ H.goalWait = 0; const g = goal; H.interact = H.pickup = null; const p = findPath(G.lv, H.x, H.z, g.x, g.z); if (p && p.length) { H.path = p; if (g.it) H.pickup = g; else H.interact = g; H.goalTry = (H.goalTry || 0) + 1; if (H.goalTry > 3){ H.goalTry = 0; H.path = null; H.interact = H.pickup = null; } } } } else H.goalWait = 0;
   if (goal){ const d = Math.hypot(goal.x - H.x, goal.z - H.z); if (d < (goal.r || 1) + 0.7){ H.goalTry = 0; H.path = null; H.dest = null; if (H.interact){ const o = H.interact; H.interact = null; doInteract(o); } else { const it = H.pickup; H.pickup = null; pickupGround(it); } } }
@@ -3823,7 +3824,7 @@ function pickupGround(gi){
   if (gi.it.gold){ PL.gold += gi.it.gold; SND.play('gold', 0.7); floatNum(gi.x, 1, gi.z, '+' + gi.it.gold, '#e8d49a'); }
   else if (!addToInv(gi.it)){ invFullMsg(); return; }
   else { SND.play(itemSnd(gi.it, 'pick'), 0.6); if (gi.it.rar !== 'normal' && !gi.it.pot) logMsg('<span style="color:' + RARHEX[gi.it.rar] + '">' + esc(gi.it.nm) + '</span> 획득'); }
-  lv.root.remove(gi.mesh); freeMesh(gi.mesh); if (gi.lab) gi.lab.remove(); lv.items.splice(i, 1); G.uiDirty = true;
+  lv.root.remove(gi.mesh); freeMesh(gi.mesh); if (gi.lab) gi.lab.remove(); lv.items.splice(i, 1); G.uiDirty = true; if (G.hoverItem === gi){ G.hoverItem = null; hideTip(); } if (G.hover && G.hover.o === gi) G.hover = null;
 }
 // 주운 아이템의 스프라이트 재질·빛기둥 재질 해제 (계속 쌓이면 렌더가 점점 무거워짐)
 function freeMesh(root){ root.traverse(o => { if (o.userData && o.userData.spr) disposeSprite(o.userData.spr); else if (o.isMesh && o.material && o.material.userData && o.material.userData.own) o.material.dispose(); }); }
@@ -4662,7 +4663,7 @@ function updHover(){
   for (const m of G.lv.mons){ if (!m.alive || !m.R || !m.R.g.visible) continue; if (Math.abs(m.x - HERO.x) > 30 || Math.abs(m.z - HERO.z) > 30) continue; const [sx, sy] = toScreen(m.x, m.R.h * 0.55 + m.R.flyH + (m.jumpY || 0), m.z); const d = Math.hypot(sx - mx, sy - my), rad = Math.max(26, m.r * 70) * k * 1.2; if (d < rad && d < bd){ bd = d; best = { kind: 'mon', o: m }; } }
   if (!best) for (const o of G.lv.objs){ if (o.used && o.type !== 'shrine') continue; if (!['npc', 'chest', 'pod', 'shrine', 'exit', 'wp', 'stash', 'tp'].includes(o.type)) continue; const [sx, sy] = toScreen(o.x, 1, o.z); const d = Math.hypot(sx - mx, sy - my); if (d < 42 * k && d < bd){ bd = d; best = { kind: 'obj', o }; } }
   if (!best) for (const gi of G.lv.items){ if (!canTake(gi.it)) continue; const [sx, sy] = toScreen(gi.x, 0.3, gi.z); const d = Math.hypot(sx - mx, sy - my); if (d < 22 * k && d < bd){ bd = d; best = { kind: 'item', o: gi }; } }
-  if (G.hoverItem) best = { kind: 'item', o: G.hoverItem };
+  if (G.hoverItem && !(G.lv.items.includes(G.hoverItem) && G.hoverItem.lab && G.hoverItem.lab.isConnected && G.hoverItem.lab.style.display !== 'none')) G.hoverItem = null;   // 주운 아이템의 이름표가 사라져도 남아 있던 '마우스 아래 아이템' 기억 때문에 클릭마다 그 자리로 끌려가던 버그
   G.hover = best;
   document.body.style.cursor = best ? 'pointer' : '';
 }
@@ -4683,7 +4684,7 @@ addEventListener('mousedown', e => {
     HERO.interact = HERO.pickup = null; HERO.target = null;
     if (h && h.kind === 'mon' && !e.shiftKey){ G.lHold = { mon: h.o }; HERO.target = h.o; }
     else if (h && h.kind === 'obj' && !e.shiftKey){ HERO.interact = h.o; moveHeroTo(h.o.x, h.o.z); G.lHold = null; }
-    else if (h && h.kind === 'item' && !e.shiftKey){ HERO.pickup = h.o; moveHeroTo(h.o.x, h.o.z); G.lHold = null; }
+    else if (h && h.kind === 'item' && !e.shiftKey && G.lv.items.includes(h.o)){ HERO.pickup = h.o; moveHeroTo(h.o.x, h.o.z); G.lHold = null; }
     else { G.lHold = { move: true, t: 0 }; if (!e.shiftKey) moveHeroTo(G.mouse.wx, G.mouse.wz); }
   } else if (e.button === 2){ G.mouse.r = true; G.rHoldMon = G.hover && G.hover.kind === 'mon' ? G.hover.o : null; }
 });
@@ -4694,7 +4695,7 @@ addEventListener('touchstart', e => { if (G.mode !== 'play' || e.target !== rend
   if (G.paused || !HERO || HERO.dead) return; const t = e.touches[0]; G.mouse.x = t.clientX; G.mouse.y = t.clientY; G.mouse.overUI = false; mouseWorld(); updHover();
   if (e.touches.length >= 2){ G.mouse.l = false; G.lHold = null; G.mouse.r = true; return; }
   G.mouse.l = true; const h = G.hover; HERO.interact = HERO.pickup = null;
-  if (h && h.kind === 'mon'){ G.lHold = { mon: h.o }; } else if (h && h.kind === 'obj'){ HERO.interact = h.o; moveHeroTo(h.o.x, h.o.z); } else if (h && h.kind === 'item'){ HERO.pickup = h.o; moveHeroTo(h.o.x, h.o.z); } else { G.lHold = { move: true, t: 0 }; moveHeroTo(G.mouse.wx, G.mouse.wz); } }, { passive: false });
+  if (h && h.kind === 'mon'){ G.lHold = { mon: h.o }; } else if (h && h.kind === 'obj'){ HERO.interact = h.o; moveHeroTo(h.o.x, h.o.z); } else if (h && h.kind === 'item' && G.lv.items.includes(h.o)){ HERO.pickup = h.o; moveHeroTo(h.o.x, h.o.z); } else { G.lHold = { move: true, t: 0 }; moveHeroTo(G.mouse.wx, G.mouse.wz); } }, { passive: false });
 addEventListener('touchmove', e => { if (G.mode !== 'play' || !e.touches.length) return; const t = e.touches[0]; G.mouse.x = t.clientX; G.mouse.y = t.clientY; }, { passive: true });
 addEventListener('touchend', e => { if (!e.touches.length){ G.mouse.l = false; G.mouse.r = false; G.lHold = null; } });
 addEventListener('touchcancel', () => { G.mouse.l = G.mouse.r = false; G.lHold = null; });
