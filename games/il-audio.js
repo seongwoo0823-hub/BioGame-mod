@@ -126,7 +126,7 @@ const S = {
   dropRare: r => chimes(r, 0.9, [1319, 1760, 2093, 2637], 0.35, 0.05), dropUnique: r => mixInto(pad(r, 1.6, [262, 392, 523, 659], 'a', 0.05), chimes(r, 1.6, [1047, 1319, 1568, 2093, 2637], 0.6, 0.07), 0.6),
   dropRing0: r => chimes(r, 0.3, [3000, 4500], 0.08, 0),
   equipWeapon: r => mixInto(whoosh(r, 0.2, 3000, 6000, 3, true), impact(r, { body: 320, metal: 1600, ringD: 0.3, dur: 0.4 }), 0.4, 0.1), equipArmor: r => mixInto(chitter(r, 0.3, 35, 3800), impact(r, { body: 130, crack: 0.3, dur: 0.2 }), 0.5),
-  equipRing: r => chimes(r, 0.35, [2600, 3900, 5200], 0.09, 0.015), potion: r => { const d = mk(0.7); for (let k = 0; k < 3; k++) mixInto(d, goo(r, 0.16, 260 + r() * 80, 1), 0.8, 0.08 + k * 0.17); mixInto(d, chimes(r, 0.2, [2400, 3100], 0.05, 0), 0.25, 0); return fin(d, 0.8); },
+  equipRing: r => chimes(r, 0.35, [2600, 3900, 5200], 0.09, 0.015), globe: r => mixInto(goo(r, 0.25, 600, 3), chimes(r, 0.5, [784, 1175, 1568], 0.18, 0.04), 0.6), potion: r => { const d = mk(0.7); for (let k = 0; k < 3; k++) mixInto(d, goo(r, 0.16, 260 + r() * 80, 1), 0.8, 0.08 + k * 0.17); mixInto(d, chimes(r, 0.2, [2400, 3100], 0.05, 0), 0.25, 0); return fin(d, 0.8); },
   // 세계 · 사건
   chest: r => { const d = mk(1.2); const cr = mk(0.6), n = noiseGen('white', r), bp = BQ('bp'); let ph = 0; for (let i = 0; i < cr.length; i++){ const t = i / SR; ph += (90 + 60 * Math.sin(t * 7)) / SR; cr[i] = bp(((ph % 1) * 2 - 1) * 0.6 + n() * 0.4, 700 + 400 * Math.sin(t * 5), 6) * swell(t, 0.6, 0.5); }
     mixInto(d, fin(cr, 0.6), 0.8, 0); mixInto(d, impact(r, { body: 100, crack: 0.4, dur: 0.25 }), 0.6, 0.55); mixInto(d, chimes(r, 0.6, [1568, 2093, 2637], 0.25, 0.06), 0.4, 0.6); return fin(d, 0.85); },
