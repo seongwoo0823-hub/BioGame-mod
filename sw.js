@@ -1,5 +1,5 @@
 /* BIO ARCADE 서비스 워커: 처음 접속할 때 전체 게임을 저장해 두고, 이후에는 오프라인에서도 실행. */
-const VERSION = 'biogame-hub-v18-il-env8';
+const VERSION = 'biogame-hub-v19-il-d3sys';
 const FONT_CACHE = 'bio-arcade-fonts';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
