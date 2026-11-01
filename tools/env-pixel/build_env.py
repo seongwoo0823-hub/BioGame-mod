@@ -12,7 +12,7 @@ def autoscale(fn, cell, fill=0.82, flat=False, **kw):
     P = np.concatenate([p for p, n, m, i in M.parts]); ext = max(P[:, 1].max() - P[:, 1].min(), (P[:, 0].max() - P[:, 0].min()) * 0.8, (P[:, 2].max() - P[:, 2].min()) * 0.7)
     if flat: ext = max(P[:, 0].max() - P[:, 0].min(), P[:, 2].max() - P[:, 2].min())
     return fill * cell / ext
-def frames(fn, cell, n, foot, flat=False, yaw=0.0, kw=None):
+def frames(fn, cell, n, foot, flat=False, yaw=0.0, kw=None, steep=False):
     kw = kw or {}; out = []
     s = autoscale(lambda M, **a: fn(M, 0.0, 1.0, **a) if fn.__code__.co_argcount >= 3 else fn(M, 0.0, 1.0), cell, flat=flat, **kw)
     for f in range(n):
@@ -22,7 +22,12 @@ def frames(fn, cell, n, foot, flat=False, yaw=0.0, kw=None):
             try: im = render(M, yaw, cell, cell, cell // 2, scale=1.0, fit=False)
             finally: rig.PITCH = old
         else:
-            settle(M); im = render(M, yaw, cell, cell, foot, scale=1.0)
+            settle(M)
+            if steep:
+                old = rig.PITCH; rig.PITCH = math.radians(42)
+                try: im = render(M, yaw, cell, cell, foot, scale=1.0)
+                finally: rig.PITCH = old
+            else: im = render(M, yaw, cell, cell, foot, scale=1.0)
         out.append(Image.fromarray(im))
     return out
 class Packer:
@@ -44,7 +49,7 @@ for name, (fn, size, n, arg) in PROPS.items():
     kw = {'col': arg} if arg else {}
     if name.startswith('chest'):
         imgs = [frames(lambda M, t, s: p_chest(M, t, s, opened=False), c, 1, foot)[0], frames(lambda M, t, s: p_chest(M, t, s, opened=True), c, 1, foot)[0]]
-    else: imgs = frames(fn, c, n, foot, flat=flat, yaw=0.0 if flat else 0.0, kw=kw)
+    else: imgs = frames(fn, c, n, foot, flat=flat, yaw=0.0, kw=kw, steep=name.startswith(('exit_', 'wp_', 'gate')))
     x, y = pk.add(imgs, c); meta['prop8'][name] = dict(x=x, y=y, c=c, n=len(imgs), foot=round((c // 2 if flat else foot) / c, 3), size=size)
     print('prop', name, c, len(imgs), flush=True)
 print('props8', pk.save(OUT + 'props8.webp'))

@@ -198,3 +198,48 @@ PROPS = {  # 이름: (함수, 월드 크기, 프레임 수, 추가 인자)
     'tent0': (p_tent, 5.0, 1, '#6a4a3a'), 'tent1': (p_tent, 5.0, 1, '#4a3a6a'), 'tent2': (p_tent, 5.0, 1, '#6a2a2a'), 'torch': (p_torch, 3.0, 8, None), 'stash': (p_stash, 2.6, 4, None),
     'tile03_golden_immune_mosaic': (p_mosaic, 3.6, 1, '#d8a838'), 'tile04_blue_dna_crystal_floor': (p_mosaic, 3.6, 1, '#4a8ad8'),
 }
+
+# ---- 던전 입구 · 귀환 계단 · 마을 관문 · 웨이포인트 단 (장별 색) ----
+def p_entrance(M, t, s, ch=0, up=False):
+    c = CHC[ch]; st = M_(c['s']); dk = M_(c['d'])
+    # 바위 아치
+    for k in range(13):
+        a = math.pi * k / 12; r = 13
+        M.add(ellipsoid([math.cos(a) * r * s, (2 + math.sin(a) * 15) * s, 0], (3.6 * s, 3.2 * s, 3.4 * s)), st if k % 2 else dk)
+    for x in (-15, 15):
+        for y in (2, 7): M.add(ellipsoid([x * s, y * s, 1 * s], (3.4 * s, 3.4 * s, 3.2 * s)), st)
+    # 안쪽 (내려가면 어둠, 올라가면 빛)
+    M.add(box([0, 7 * s, -1.5 * s], np.eye(3), (10 * s, 9 * s, 0.6 * s)), M_('#06040a') if not up else M_('#fff4d0', True))
+    for k in range(6):   # 계단
+        y = (0.6 + (k * 1.6 if up else -k * 0.2)) * s; z = (6 - k * 1.8) * s; w = (9 - k * 0.6) * s
+        M.add(box([0, y, z], np.eye(3), (w, 0.7 * s, 0.9 * s)), M_(c['s'] if not up else '#d8d0c0') if (k < 4 or up) else dk)
+    if up:
+        for k in range(5): M.add(ellipsoid([math.sin(t * 6.28 + k) * 4 * s, (4 + ((t + k / 5) % 1) * 14) * s, 1 * s], 0.6 * s), M_('#fffbe0', True))
+    # 양쪽 횃불
+    for x in (-16, 16):
+        M.add(capsule([x * s, 10 * s, 3 * s], [x * s, 14 * s, 3 * s], 0.8 * s), M_('#4a3420'))
+        for q in range(3): h = (3 + 1.5 * math.sin(t * 12.56 + q * 2 + x)) * s; M.add(capsule([x * s + (q - 1) * 0.6 * s, 14.5 * s, 3 * s], [x * s + math.sin(t * 6.28 + q) * 0.6 * s, 14.5 * s + h, 3 * s], 1.2 * s, 0.3 * s), M_(c['g'] if q == 1 else '#ffb050', True))
+    # 테마 덩굴 · 빛 점
+    for k in range(6): a = math.pi * (0.15 + 0.7 * k / 5); M.add(ellipsoid([math.cos(a) * 14 * s, (2 + math.sin(a) * 16.5) * s, 3 * s], 0.9 * s), M_(c['g'], True))
+def p_gate(M, t, s):
+    for x in (-14, 14):
+        M.add(box([x * s, 14 * s, 0], np.eye(3), (2.6 * s, 14 * s, 2.6 * s)), M_('#6a6470')); M.add(box([x * s, 29 * s, 0], np.eye(3), (3.4 * s, 1.4 * s, 3.4 * s)), M_('#4a4450'))
+        M.add(ellipsoid([x * s, 31.5 * s, 0], 1.8 * s), M_('#ffb050', True))
+        for k in range(5): M.add(box([x * s + (3.5 if x < 0 else -3.5) * s, (24 - k * 3) * s, 2.8 * s + math.sin(t * 6.28 + k * 0.8) * 0.8 * s], np.eye(3), (2.0 * s, 1.5 * s, 0.3 * s)), M_('#8a2a2a' if x < 0 else '#2a3a8a'))
+    M.add(box([0, 27 * s, 0], np.eye(3), (16 * s, 1.6 * s, 2.0 * s)), M_('#7a7480'))
+    for k in range(10): y = (22 + k * 0.6) * s; a = k * 0.7 + t * 6.28; M.add(ellipsoid([math.cos(a) * 2.5 * s, y + 4 * s, 2.4 * s], 0.7 * s), M_('#ffd060' if k % 2 else '#7ad0ff', True))
+def p_wpdais(M, t, s, ch=0):
+    c = CHC[ch]
+    M.add(ellipsoid([0, 1.2 * s, 0], (16 * s, 1.6 * s, 16 * s)), M_(c['s'])); M.add(ellipsoid([0, 3.0 * s, 0], (12 * s, 1.4 * s, 12 * s)), M_(c['d']))
+    for k in range(12): a = k / 12 * 2 * math.pi; M.add(box([math.cos(a) * 14 * s, 1.6 * s, math.sin(a) * 14 * s], rot_y(-a), (1.6 * s, 1.4 * s, 3.4 * s)), M_(c['s']))
+    for k in range(16):
+        a = k / 16 * 2 * math.pi + t * 0.785; M.add(ellipsoid([math.cos(a) * 8 * s, 4.8 * s, math.sin(a) * 8 * s], 0.9 * s), M_(c['g'], True))
+    for k in range(4):
+        a = k / 4 * 2 * math.pi + 0.785; x = math.cos(a) * 13 * s; z = math.sin(a) * 13 * s
+        M.add(box([x, 8 * s, z], rot_y(a), (1.6 * s, 6 * s, 1.6 * s)), M_(c['s'])); M.add(box([x, 15 * s, z], rot_y(0.785) @ rot_x(0.0), (1.4 * s, 1.4 * s, 1.4 * s)), M_(c['g'], True))
+    M.add(ellipsoid([0, (8 + math.sin(t * 6.28) * 1.2) * s, 0], (2.4 * s, 3.2 * s, 2.4 * s)), M_('#e8f4ff', True))
+for _ch in range(5):
+    PROPS['exit_down_%d' % (_ch + 1)] = (lambda M, t, s, ch=_ch: p_entrance(M, t, s, ch, False), 4.4, 8, None)
+    PROPS['exit_up_%d' % (_ch + 1)] = (lambda M, t, s, ch=_ch: p_entrance(M, t, s, ch, True), 4.4, 8, None)
+    PROPS['wp_%d' % (_ch + 1)] = (lambda M, t, s, ch=_ch: p_wpdais(M, t, s, ch), 4.2, 8, None)
+PROPS['gate'] = (p_gate, 5.4, 8, None)

@@ -464,6 +464,8 @@ body.mobile .sbtn small{display:none}
 body.mobile #ctxBtn:not(.hidden){bottom:calc(var(--ui,1) * 290px)!important}
 body.mobile #targetBar{bottom:calc(300px * var(--ui,1))!important}
 
+.ico.i8{display:inline-block;image-rendering:pixelated;background-repeat:no-repeat;vertical-align:middle}
+.item{display:grid;place-items:center}
 /* ===================== 디아블로 3식 스킬 창 · 물약 · 소지품 ===================== */
 #trees{display:block!important}
 .d3bar{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
@@ -492,6 +494,25 @@ body.mobile #targetBar{bottom:calc(300px * var(--ui,1))!important}
 .bslot.pot.empty{opacity:.45}
 .cmp{border-top:1px solid #3a3022;margin-top:4px;padding-top:2px}
 body.mobile .d3bar{grid-template-columns:repeat(2,1fr)}
+
+/* ===================== 도트 UI (도트 그래픽 모드) ===================== */
+body.px .frame{border:5px solid transparent;border-image:url(il-assets/px/ui/frame.png) 12 fill / 12px / 0 round;background:#120e0b;box-shadow:0 10px 30px rgba(0,0,0,.8);image-rendering:pixelated}
+body.px .frame h3{background:none;border-bottom:2px solid #3a2e20;font-family:var(--cin)}
+body.px .dbtn{border:none;border-image:url(il-assets/px/ui/btn.png) 6 fill / 6px stretch;background:none;box-shadow:none;image-rendering:pixelated}
+body.px .dbtn:hover{filter:brightness(1.25)}
+body.px .eslot,body.px .bslot,body.px #hotbar .hk,body.px #skillDock #hotbar .hk,body.px .d3slot .ic{background:url(il-assets/px/ui/slot.png) 0 0/100% 100%!important;border:none!important;border-radius:0!important;box-shadow:none!important;image-rendering:pixelated}
+body.px .inv{background:url(il-assets/px/ui/slot.png) 0 0/40px 40px,#0c0a08;border:2px solid #2a2016;image-rendering:pixelated}
+body.px #skillDock{border:5px solid transparent!important;border-image:url(il-assets/px/ui/frame_s.png) 9 fill / 9px / 0 round!important;background:#120e0b!important;border-radius:0!important}
+body.px .sbtn,body.px #sbL,body.px #sbR{border-radius:4px!important;border:2px solid #8a7248!important;box-shadow:0 0 0 2px #0a0806!important}
+body.px .d2orb .glass{background:#0a0606;box-shadow:none}
+body.px .d2orb .fill{background-size:134px 134px!important;background-position:center bottom!important;background-repeat:no-repeat!important;image-rendering:pixelated}
+body.px #orbL .fill{background-image:url(il-assets/px/ui/orb_hp.png)!important}
+body.px #orbL.pois .fill{background-image:url(il-assets/px/ui/orb_ps.png)!important}
+body.px #orbR .fill{background-image:url(il-assets/px/ui/orb_mp.png)!important}
+body.px .d2orb .fill::before,body.px .d2orb .shine{display:none}
+body.px .d2orb::after{content:"";position:absolute;inset:-5px;background:url(il-assets/px/ui/ring.png) center/100% 100%;image-rendering:pixelated;pointer-events:none}
+body.px #selLogo .t1 canvas{image-rendering:pixelated;display:block;margin:0 auto;filter:drop-shadow(0 4px 0 #000)}
+body.px #selLogo .t1{background:none;-webkit-text-fill-color:initial}
 </style>
 </head>
 <body>
@@ -617,6 +638,23 @@ const LS = {
 const OPT = Object.assign({ vol: 0.75, mus: 0.45, q: (matchMedia('(pointer: coarse)').matches && navigator.maxTouchPoints > 0) ? 'mid' : 'high', nums: true, px: true }, LS.get('il_opt', {}));
 // 도트 그래픽: 작은 점으로 다시 찍은 아틀라스(il-assets/px)와 최근접 필터 사용
 const ADIR = OPT.px ? 'il-assets/px/' : 'il-assets/';
+if (OPT.px) document.body.classList.add('px');
+// 제목을 도트 글씨로: 작은 캔버스에 쓰고 가장자리를 딱 잘라 금빛 단계 색 + 외곽선 → 확대
+function pixelLogo(){
+  const el = $('#selLogo .t1'); if (!el || el.dataset.px) return; const txt = el.textContent.trim(); if (!txt) return;
+  const fam = getComputedStyle(el).fontFamily, fs = 24, cv = document.createElement('canvas'), x = cv.getContext('2d');
+  x.font = '800 ' + fs + 'px ' + fam; const w = Math.ceil(x.measureText(txt).width) + 10, h = fs + 12; cv.width = w; cv.height = h;
+  x.font = '800 ' + fs + 'px ' + fam; x.textBaseline = 'top'; x.fillStyle = '#fff'; x.fillText(txt, 5, 5);
+  const d = x.getImageData(0, 0, w, h), a = d.data, solid = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) solid[i] = a[i * 4 + 3] > 120 ? 1 : 0;
+  const G = [[255, 246, 200], [240, 200, 100], [200, 140, 50], [140, 84, 26], [230, 180, 80], [110, 60, 18]];
+  for (let y = 0; y < h; y++) for (let X = 0; X < w; X++){ const i = y * w + X, o = i * 4;
+    if (solid[i]){ const t = (y - 5) / fs, k = t < 0.25 ? 0 : t < 0.45 ? 1 : t < 0.55 ? 3 : t < 0.75 ? 4 : t < 0.9 ? 2 : 5; a[o] = G[k][0]; a[o + 1] = G[k][1]; a[o + 2] = G[k][2]; a[o + 3] = 255; }
+    else { const nb = (X > 0 && solid[i - 1]) || (X < w - 1 && solid[i + 1]) || (y > 0 && solid[i - w]) || (y < h - 1 && solid[i + w]); if (nb){ a[o] = 30; a[o + 1] = 10; a[o + 2] = 8; a[o + 3] = 255; } else a[o + 3] = 0; } }
+  x.putImageData(d, 0, 0);
+  const sc = Math.max(2, Math.floor(Math.min(innerWidth * 0.62, 640) / w)); cv.style.width = w * sc + 'px'; cv.style.height = h * sc + 'px';
+  el.textContent = ''; el.appendChild(cv); el.dataset.px = 1;
+}
 if (OPT.px){ const st = document.createElement('style'); st.textContent = '.pa,#orbL .statue,#orbR .statue,#d2bar .crest{background-image:url(il-assets/px/props.webp)!important;image-rendering:pixelated}.skico{background-image:url(il-assets/px/vfx.webp)!important;image-rendering:pixelated}.ico,.portrait,img{image-rendering:pixelated}'; document.head.appendChild(st); }
 function saveOpt(){ LS.set('il_opt', OPT); }
 
@@ -1520,9 +1558,9 @@ function loadAtlases(onProg){
     img.src = ADIR + ATL_FILES[k];
   })));
 }
-if (HERO8){ delete ATL_FILES.mon_c1; delete ATL_FILES.boss_c1; Object.assign(ATL_FILES, { mon8_c1: 'mon8_c1.webp', boss8_c1: 'boss8_c1.webp', props8: 'props8.webp', npc8: 'npc8.webp', hero_merc: 'hero_merc.webp', sum8: 'sum8.webp', deco8_c1: 'deco8_c1.webp' }); }
+if (HERO8){ delete ATL_FILES.mon_c1; delete ATL_FILES.boss_c1; Object.assign(ATL_FILES, { items8: 'items8.webp', fx8: 'fx8.webp', mon8_c1: 'mon8_c1.webp', boss8_c1: 'boss8_c1.webp', props8: 'props8.webp', npc8: 'npc8.webp', hero_merc: 'hero_merc.webp', sum8: 'sum8.webp', deco8_c1: 'deco8_c1.webp' }); }
 const M8 = (HERO8 && IM.mon8) || null;   // 몬스터·보스 방향별 도트 시트 정보
-function gridOf(key){ if (key.startsWith('mon8_c') || key.startsWith('boss8_c') || key === 'props8' || key === 'sum8' || key.startsWith('deco8_c')) return [1, 1, 1]; if (key === 'npc8') return [16, 40, 88]; return key.startsWith('hero_') ? ATL_GRID.hero : key.startsWith('mon_c') ? ATL_GRID.monc : key.startsWith('boss_c') ? ATL_GRID.bossc : ATL_GRID[key]; }
+function gridOf(key){ if (key.startsWith('mon8_c') || key.startsWith('boss8_c') || key === 'props8' || key === 'sum8' || key === 'items8' || key.startsWith('deco8_c')) return [1, 1, 1]; if (key === 'npc8') return [16, 40, 88]; return key.startsWith('hero_') ? ATL_GRID.hero : key.startsWith('mon_c') ? ATL_GRID.monc : key.startsWith('boss_c') ? ATL_GRID.bossc : ATL_GRID[key]; }
 // 장별 몬스터·보스 동작 아틀라스: 필요할 때 불러오고, 최근 두 장만 GPU에 남긴다
 const CH_LOAD = {}, CH_LRU = [];
 function texOf(img){ const t = new THREE.Texture(img); t.needsUpdate = true; t.minFilter = THREE.LinearFilter; t.magFilter = THREE.LinearFilter; t.generateMipmaps = false; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t; }
@@ -1558,8 +1596,9 @@ function makeSprite(key, size, foot, opts){
   const S = { g, hold, mesh, mat, key, size, foot: foot == null ? 0.9 : foot, col: 0, row: 0, flipX: false, lift: 0, flat: !!opts.flat };
   S.setFrame = (col, row) => { if (S.col === col && S.row === row && S.init) return; S.col = col; S.row = row; S.init = true; const r = cellRect(S.key, col, row); mat.uniforms.rect.value.set(r[0], r[1], r[2], r[3]); };
   S.setFlip = f => { S.flipX = f; mat.uniforms.flip.value = f ? 1 : 0; };
+  S.setRect = (x, y, w, h) => { const img = ATL_IMG[S.key]; if (!img) return; S.init = false; mat.uniforms.rect.value.set(x / img.width, 1 - (y + h) / img.height, w / img.width, h / img.height); };
   S.setPx = (x, y, c) => { if (S.px === x && S.py === y) return; S.px = x; S.py = y; S.init = false; const img = ATL_IMG[S.key]; if (!img) return; mat.uniforms.rect.value.set(x / img.width, 1 - (y + c) / img.height, c / img.width, c / img.height); };
-  S.layout = () => { const z = S.size; if (S.flat){ hold.rotation.set(-Math.PI / 2, 0, 0); mesh.scale.set(z, z, 1); mesh.position.set(0, -z / 2, 0); return; } mesh.scale.set(z, z * SPR_Y, 1); mesh.position.y = -(1 - S.foot) * z * SPR_Y + S.lift; };
+  S.layout = () => { const z = S.size; if (S.flat){ hold.rotation.set(-Math.PI / 2, 0, 0); mesh.scale.set(z * (S.ax || 1), z, 1); mesh.position.set(0, -z / 2, 0); return; } mesh.scale.set(z, z * SPR_Y, 1); mesh.position.y = -(1 - S.foot) * z * SPR_Y + S.lift; };
   S.setFrame(0, 0); S.layout();
   if (!opts.noShadow && !S.flat) g.add(blobShadow(opts.shadow || size * 0.22));
   g.userData.spr = S; if (!S.flat) SPRITES.add(S);
@@ -1603,7 +1642,21 @@ function buildHero(cls, look){
 }
 function weaponMesh(){ return new THREE.Group(); }
 function offMesh(){ return new THREE.Group(); }
-function equipHero(H, eq){ H.wpnBase = eq && eq.weapon ? BASES[eq.weapon.b] : null; }
+// 장비 → 외형: 갑옷 등급(0 생체 · 1 티타늄 · 2 나노) × 무기 계열 × 방패
+const WC_GROUP = { sword: 'b', axe: 'b', dagger: 'b', mace: 'u', maul: 'u', spear: 'p', staff: 'p', wand: 'w' };
+const LOOK_LOAD = {};
+function lookKey(cls, eq){
+  const spr = CLASSES[cls].spr, ar = eq && eq.armor ? BASES[eq.armor.b] : null, w = eq && eq.weapon ? BASES[eq.weapon.b] : null, off = eq && eq.off ? BASES[eq.off.b] : null;
+  const t = ar ? ar.t : 0, g = w ? (WC_GROUP[w.wc] || 'b') : (spr === 'mancer' ? 'p' : 'b'), sh = off && off.sub === 's' ? 1 : 0;
+  return 'hero_' + spr + '_' + t + g + sh;
+}
+function setHeroLook(H, key){
+  const S = H.spr; if (!S || S.key === key) return;
+  if (ATL[key]){ S.key = key; S.mat.uniforms.map.value = ATL[key]; S.init = false; S.setFrame(S.col, S.row); return; }
+  if (!LOOK_LOAD[key]) LOOK_LOAD[key] = new Promise(res => { const img = new Image(); img.onload = () => { ATL_IMG[key] = img; ATL[key] = texOf(img); res(); }; img.onerror = () => res(); img.src = ADIR + 'looks/' + key + '.webp'; });
+  LOOK_LOAD[key].then(() => { if (H.lookWant === key && ATL[key]) setHeroLook(H, key); });
+}
+function equipHero(H, eq){ H.wpnBase = eq && eq.weapon ? BASES[eq.weapon.b] : null; if (HERO8 && H.cls && CLASSES[H.cls]){ H.lookWant = lookKey(H.cls, eq); setHeroLook(H, H.lookWant); } }
 // 상태 → 스프라이트 행, 진행도 → 프레임
 function animHero(H, dt, moving, spd){
   const S = H.spr; if (!S) return;
@@ -2082,13 +2135,18 @@ function portalMesh(col, kind){
 }
 function addExit(lv, i, j, to, label, col){
   const door = !(col === '#ffcf3a' || col === '#4a8aff');
-  const m = portalMesh(col || '#6aa8ff', door ? 'door' : 'portal');
+  let m = null;
+  if (HERO8 && IM.prop8 && ATL.props8){ // 장 테마 입구: 내려가는 계단 · 올라가는 계단 · 마을 관문
+    const ch = lv.ci + 1, kind = col === '#6aa8ff' ? 'exit_up_' + ch : col === '#ff6a4a' ? (lv.town ? 'gate' : 'exit_down_' + ch) : null;
+    if (kind && IM.prop8[kind]){ const S = propSprite(kind, kind === 'gate' ? 5.4 : 4.6, { shadow: 1.6 }); S.owner = lv; m = S.g; }
+  }
+  if (!m) m = portalMesh(col || '#6aa8ff', door ? 'door' : 'portal');
   const o = addObj(lv, { type: 'exit', x: cx2w(i), z: cx2w(j), r: 1.8, mesh: m, to, label, col });
   lv.lights.push({ x: o.x, z: o.z, y: 1.6, col: col, f: 0, steady: true });
   return o;
 }
 function addWaypoint(lv, i, j, key){
-  const S = propSprite('town03_blue_waypoint_pad', 3.6, { noShadow: true }); const g = S.g;
+  const wk = 'wp_' + (lv.ci + 1), S = HERO8 && (IM.prop8 || {})[wk] ? propSprite(wk, 4.2, { noShadow: true }) : propSprite('town03_blue_waypoint_pad', 3.6, { noShadow: true }); const g = S.g; S.owner = lv;
   const rune = addm(new THREE.RingGeometry(1.0, 1.5, 32), new THREE.MeshBasicMaterial({ map: RUNE_TEX, color: '#4a7aff', transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false }), 0, 0.06, 0, g);
   rune.rotation.x = -Math.PI / 2; g.userData.rune = rune;
   return addObj(lv, { type: 'wp', x: cx2w(i), z: cx2w(j), r: 2, mesh: g, key, label: '웨이포인트' });
@@ -2398,7 +2456,33 @@ const TRAIL_MAT = new THREE.ShaderMaterial({ uniforms: { col: { value: new THREE
   transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
 const VFX = { slashes: [], stars: [], waves: [], trails: [], flames: [], beams: [] };
 function vfxAdd(list, o){ list.push(o); scene.add(o.m); return o; }
+/* ---- 도트 이펙트 플립북 (fx8): 화면을 향하고 진행 방향으로 회전 ---- */
+const PXFX = []; const PX_GEO = new THREE.PlaneGeometry(1, 1); const _q2 = new THREE.Quaternion(), _zq = new THREE.Quaternion(), _ZAX = new V3(0, 0, 1);
+const PJ_MAP = { bolt: 'bolt', arrow: 'arrow', firebolt: 'fireball', fireball: 'fireball', icebolt: 'icebolt', spark: 'spark', acid: 'spit', needle: 'needle', spear: 'spear', spore: 'spore', spit: 'spit', flask: 'flask', bladewave: 'bladewave' };
+function pxFx(name, x, y, z, o){
+  o = o || {}; const e = (IM.fx8 || {})[name]; if (!HERO8 || !e || !ATL.fx8 || PXFX.length > 90) return null;
+  const mat = SPRITE_MAT.clone(); mat.uniforms.map.value = ATL.fx8; mat.depthWrite = false; mat.uniforms.lit.value.setRGB(1, 1, 1); mat.fog = false;
+  if (o.tint){ const c = new THREE.Color(o.tint); mat.uniforms.flash.value.set(c.r, c.g, c.b, o.tintA || 0.55); }
+  const m = new THREE.Mesh(PX_GEO, mat); m.position.set(x, y, z); m.renderOrder = 5; const s = o.size || 1.6; m.scale.set(s * e[2] / e[3], s, 1);
+  if (o.flat){ m.rotation.set(-Math.PI / 2, 0, o.rot || 0); m.position.y = 0.06; }
+  scene.add(m);
+  const fx = { m, mat, e, t: 0, fps: o.fps || 16, loop: !!o.loop, rot: o.rot || 0, flat: !!o.flat, follow: o.follow || null, dead: false };
+  setPxFrame(fx, 0); PXFX.push(fx); return fx;
+}
+function setPxFrame(fx, f){ const e = fx.e, img = ATL_IMG.fx8; fx.mat.uniforms.rect.value.set((e[0] + f * e[2]) / img.width, 1 - (e[1] + e[3]) / img.height, e[2] / img.width, e[3] / img.height); }
+function screenAngle(x, y, z, dx, dz){ const [ax, ay] = toScreen(x, y, z), [bx, by] = toScreen(x + dx, y, z + dz); return Math.atan2(-(by - ay), bx - ax); }
+function updPxFx(dt){
+  for (let i = PXFX.length - 1; i >= 0; i--){
+    const f = PXFX[i]; f.t += dt; let fr = Math.floor(f.t * f.fps);
+    if (fr >= f.e[4]){ if (f.loop && !f.dead) fr %= f.e[4]; else { scene.remove(f.m); f.mat.dispose(); PXFX.splice(i, 1); continue; } }
+    setPxFrame(f, fr);
+    if (f.follow){ f.m.position.set(f.follow.x, f.follow.y != null ? f.follow.y : f.m.position.y, f.follow.z); }
+    if (!f.flat){ _zq.setFromAxisAngle(_ZAX, f.rot); f.m.quaternion.copy(camera.quaternion).multiply(_zq); }
+  }
+}
+function pxElem(col){ const c = new THREE.Color(col), h = {}; c.getHSL(h); if (h.s < 0.25) return 'phys'; const d = h.h * 360; return d < 45 || d > 330 ? 'fire' : d < 70 ? 'ltng' : d < 160 ? 'pois' : d < 230 ? 'cold' : 'mag'; }
 FX.slash = (x, z, face, R, col, o) => {
+  if (HERO8){ const a = screenAngle(x, 1, z, Math.sin(face), Math.cos(face)); pxFx('slash', x + Math.sin(face) * R * 0.35, 1.0, z + Math.cos(face) * R * 0.35, { size: R * 1.5, rot: a - Math.PI / 2 + Math.PI / 2, tint: col, tintA: 0.5, fps: 20 }); }
   o = o || {}; const arc = o.arc || 2.3, mat = SLASH_MAT.clone();
   mat.uniforms.col.value.set(col); mat.uniforms.arc.value = arc; mat.uniforms.w.value = o.w || 0.34;
   const fa = Math.atan2(-Math.cos(face), Math.sin(face));
@@ -2409,7 +2493,7 @@ FX.slash = (x, z, face, R, col, o) => {
 };
 FX.wave = (x, z, R, col, dur, w, y) => { const mat = WAVE_MAT.clone(); mat.uniforms.col.value.set(col); mat.uniforms.w.value = w || 0.16; const m = new THREE.Mesh(FX_FLAT, mat); m.position.set(x, y || 0.12, z); m.scale.setScalar(R); m.renderOrder = 3; return vfxAdd(VFX.waves, { m, t: 0, dur: dur || 0.4 }); };
 FX.star = (x, y, z, col, size, dur) => { const mat = new THREE.SpriteMaterial({ map: STAR_TEX, color: col, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, rotation: Math.random() * TAU }); const m = new THREE.Sprite(mat); m.position.set(x, y, z); m.scale.setScalar(0.01); m.renderOrder = 9; if (VFX.stars.length > 24){ const old = VFX.stars.shift(); scene.remove(old.m); old.m.material.dispose(); } return vfxAdd(VFX.stars, { m, t: 0, dur: dur || 0.16, size: size || 1.6 }); };
-FX.beam = (x, z, col, h, r, dur) => { const m = new THREE.Mesh(cgeo('beamFx', () => new THREE.CylinderGeometry(1, 1, 1, 16, 1, true).translate(0, 0.5, 0)), new THREE.MeshBasicMaterial({ map: canvasBeam(), color: col, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); m.position.set(x, 0, z); m.scale.set(r || 0.8, h || 6, r || 0.8); return vfxAdd(VFX.beams, { m, t: 0, dur: dur || 0.6 }); };
+FX.beam = (x, z, col, h, r, dur) => { if (HERO8 && h >= 6) pxFx('beam', x, h * 0.3, z, { size: h * 0.6, fps: 10, tint: col, tintA: 0.3 }); const m = new THREE.Mesh(cgeo('beamFx', () => new THREE.CylinderGeometry(1, 1, 1, 16, 1, true).translate(0, 0.5, 0)), new THREE.MeshBasicMaterial({ map: canvasBeam(), color: col, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); m.position.set(x, 0, z); m.scale.set(r || 0.8, h || 6, r || 0.8); return vfxAdd(VFX.beams, { m, t: 0, dur: dur || 0.6 }); };
 let _beamTex = null; function canvasBeam(){ if (!_beamTex){ _beamTex = canvasTex(8, 64, (x) => { const g = x.createLinearGradient(0, 64, 0, 0); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 8, 64); }); _beamTex.wrapS = _beamTex.wrapT = THREE.ClampToEdgeWrapping; } return _beamTex; }
 // 리본 궤적
 function makeTrail(col, width, n, y){
@@ -2784,6 +2868,7 @@ function bossAbility(m, ab, tgt){
   }
 }
 function killMon(m, killer, noFx){
+  if (!noFx && HERO8) pxFx('puff', m.x, 0.8, m.z, { size: 1.6 + (m.boss ? 2 : m.def.size), fps: 14 });
   if (!m.alive) return;
   m.alive = false; m.deadT = 0; m.hp = 0;
   G.kills = (G.kills || 0) + 1;
@@ -2855,6 +2940,7 @@ function hitMon(m, pkt, src){
   if (pkt.stun && !m.boss) m.stun = Math.max(m.stun, pkt.stun);
   if (pkt.knock && !m.boss && m.def.size < 1.3){ const a = Math.atan2(m.x - HERO.x, m.z - HERO.z); m.kx = Math.sin(a) * pkt.knock * 3; m.kz = Math.cos(a) * pkt.knock * 3; }
   else if (pkt.melee && !m.boss && tot > m.maxHp * 0.12){ const a = Math.atan2(m.x - HERO.x, m.z - HERO.z); m.kx = Math.sin(a) * 3; m.kz = Math.cos(a) * 3; }
+  if (m.R && HERO8 && (m.pxT || 0) < G.time){ m.pxT = G.time + 0.1; pxFx('hit_' + best, m.x, (m.R.h || 1) * 0.55 + (m.R.flyH || 0), m.z, { size: 1.2 + (m.boss ? 1 : 0) + Math.min(1, tot / m.maxHp * 4), fps: 22 }); }
   if (m.R){ flashMonster(m.R, best === 'phys' ? '#ffffff' : ELEM[best].col); m.flash = 0.09; m.squash = Math.min(0.28, 0.1 + tot / m.maxHp); }
   if (G.time - (G.starT || 0) > 0.03 || pkt.crit){ G.starT = G.time; const hy = (m.R ? m.R.h * 0.6 + m.R.flyH : 0.8) + 0.2; FX.star(m.x + (Math.random() - 0.5) * 0.4, hy, m.z + (Math.random() - 0.5) * 0.4, pkt.crit ? '#ffcf5a' : best === 'phys' ? (src === 'hero' ? CLASS_FX[PL.cls] : '#ffffff') : ELEM[best].col, (pkt.crit ? 2.6 : 1.3) * Math.min(1.6, 0.8 + m.r), pkt.crit ? 0.24 : 0.15); if (pkt.crit) FX.slash(m.x, m.z, Math.random() * TAU, 1.3, '#ffcf5a', { arc: 1.2, w: 0.5, dur: 0.22, y: hy }); }
   const h = (m.R ? m.R.h + m.R.flyH : 1) + 0.6;
@@ -2887,6 +2973,7 @@ function hurtHero(pkt, m){
   let tot = 0;
   for (const el of ELK){ let v = pkt[el]; if (!v) continue; if (el === 'phys') v *= 1 - S.dr / 100; else v *= 1 - (S.res[el] || 0) / 100; if (el === 'pois' && pkt.dot){ HERO.pois = { dps: v / pkt.dot, t: pkt.dot }; v *= 0.2; } tot += v; }
   if (HERO.curse && HERO.curse.amp && HERO.curse.t > 0) tot *= 1.3;
+  if (HERO8 && tot > 0 && (HERO.pxT || 0) < G.time){ HERO.pxT = G.time + 0.15; const el = ELK.filter(k => pkt[k]).sort((a, b) => pkt[b] - pkt[a])[0] || 'phys'; pxFx('hit_' + el, HERO.x, 1.2, HERO.z, { size: 1.3, fps: 22 }); }
   if (HERO.absorb > 0){ const a = Math.min(HERO.absorb, tot); HERO.absorb -= a; tot -= a; if (HERO.absorb <= 0) FX.burst(HERO.x, 1.2, HERO.z, '#c9a0ff', 20, 5, 0.4, 0.4); }
   if (pkt.chill){ HERO.chill = Math.max(HERO.chill, pkt.chill); }
   PL.hp -= tot;
@@ -2947,6 +3034,8 @@ function spawnProj(o){
   const PSPR = { flask: 'alchemist', bladewave: 'swordsman', spore: p.owner === 'mon' ? null : 'mancer', spear: 'mancer' };
   if (PSPR[p.style] && ATL.vfx){ const va = ATL.vfxa ? (IM.vfxAnim || {})[PSPR[p.style]] : null; const S = makeSprite(va != null ? 'vfxa' : 'vfx', p.style === 'bladewave' ? 2.2 : 1.5, 0.55, { noShadow: true }); const ix = (IM.vfx || {})[PSPR[p.style]] + 1; if (va != null){ S.vrow = va + 1; S.setFrame(2, S.vrow); } else S.setFrame(ix % 4, Math.floor(ix / 4)); S.noLight = true; S.mat.uniforms.lit.value.setRGB(1.2, 1.2, 1.2); S.setFlip(p.dx - p.dz < 0); p.mesh.add(S.g); p.spr = S; p.mesh.children[0].visible = false; } p.mesh.position.set(p.x, p.y, p.z); p.mesh.rotation.y = Math.atan2(p.dx, p.dz); scene.add(p.mesh);
   const st = PSTYLE[p.style] || PSTYLE.bolt; p.trail = makeTrail(st.col, Math.max(0.12, st.w * 1.3), p.owner === 'mon' ? 8 : 12); trailPush(p.trail, p.x, p.y, p.z);
+  const pj = HERO8 && pxFx('pj_' + (PJ_MAP[p.style] || 'bolt'), p.x, p.y, p.z, { size: p.style === 'spear' || p.style === 'bladewave' ? 1.5 : 1.0, loop: true, fps: 12 });
+  if (pj){ p.px = pj; p.mesh.visible = false; pj.follow = p; }
   PROJ.push(p); return p;
 }
 function segD(px, pz, ax, az, bx, bz){ const vx = bx - ax, vz = bz - az, l2 = vx * vx + vz * vz; let t = l2 ? ((px - ax) * vx + (pz - az) * vz) / l2 : 0; t = t < 0 ? 0 : t > 1 ? 1 : t; return Math.hypot(px - (ax + vx * t), pz - (az + vz * t)); }
@@ -2971,6 +3060,7 @@ function projExplode(p){
   } else FX.burst(p.x, p.y, p.z, st.col, 8, 3, 0.3, 0.25);
 }
 function updProj(dt){
+  for (const p of PROJ) if (p.px) p.px.rot = screenAngle(p.x, p.y, p.z, p.dx, p.dz);
   for (let i = PROJ.length - 1; i >= 0; i--){
     const p = PROJ[i]; p.t += dt; p.life -= dt;
     if (p.spr && p.spr.vrow != null) p.spr.setFrame(2 + Math.floor(p.t * 16) % 6, p.spr.vrow);
@@ -2996,7 +3086,7 @@ function updProj(dt){
     if (dead){ projExplode(p); removeProj(i); }
   }
 }
-function removeProj(i){ const p = PROJ[i]; scene.remove(p.mesh); if (p.spr) disposeSprite(p.spr); if (p.trail) p.trail.dying = true; PROJ.splice(i, 1); }
+function removeProj(i){ const p = PROJ[i]; if (p.px) p.px.dead = true, p.px.loop = false, p.px.t = 99; scene.remove(p.mesh); if (p.spr) disposeSprite(p.spr); if (p.trail) p.trail.dying = true; PROJ.splice(i, 1); }
 // 연쇄 번개 (즉발)
 function chainLightning(x, z, tx, tz, n, pkt, src, maxR){
   let cur = { x, z }, hit = new Set(), first = null;
@@ -3086,7 +3176,7 @@ function minionModel(kind){
   else if (kind === 'nk'){ S = monAnim('m51', 3.9); S.mat.uniforms.flash.value.set(0.4, 1, 0.5, 0.18); }
   else if (kind === 'merc' && HERO8 && ATL.hero_merc){ S = makeSprite('hero_merc', 3.15, 80 / 88, { shadow: 0.55 }); H = { root: S.g, spr: S, cls: 'merc', t: 0, act: null, actT: 0, actSpd: 3, dead: 0, flip: false, face: 0 }; }
   else if (kind === 'merc'){ H = buildNPC('merc'); H.npc = false; S = H.spr; H.npcStatic = true; }
-  else { H = buildHero(PL.cls); S = H.spr; S.mat.uniforms.opacity.value = 0.62; S.mat.uniforms.flash.value.set(0.3, 0.6, 1, 0.35); }
+  else { H = buildHero(PL.cls); equipHero(H, PL.eq); S = H.spr; S.mat.uniforms.opacity.value = 0.62; S.mat.uniforms.flash.value.set(0.3, 0.6, 1, 0.35); }
   if (kind === 'merc' && !(HERO8 && ATL.hero_merc)){ H = { root: S.g, spr: S, npc: true, npcRow: NPC_ROW.merc, t: 0, flip: false }; }
   const R = { g: S.g, inner: S.hold, H, spr: S };
   if (an) Object.assign(R, an, { anim: true, parts: {}, flyH: 0, fs: S.size, hitT: 0, rate: 1, walkHz: 1.6 });
@@ -3591,7 +3681,13 @@ function iconIndex(it){
 }
 // CSS 아이콘 (아틀라스 위치)
 function iconCSS(ix){ const c = ix % 16, r = Math.floor(ix / 16); return 'background-image:url(' + ADIR + 'icons.webp);background-size:1600% 1600%;background-position:' + (c / 15 * 100).toFixed(3) + '% ' + (r / 15 * 100).toFixed(3) + '%'; }
-function iconHTML(it, size){ if (it.gold) return '🪙'; return '<i class="ico" style="' + iconCSS(iconIndex(it)) + (size ? ';width:' + size + 'px;height:' + size + 'px' : '') + '"></i>'; }
+// 도트 아이템 아이콘 (items8): 1x1 = 48x48, 1x2 = 48x96
+function icon8(it){ if (!HERO8 || !IM.items8) return null; return IM.items8[it.pot ? 'pot_' + it.pot : it.b] || null; }
+function iconHTML(it, size, h){ if (it.gold) return '🪙';
+  const e = icon8(it);
+  if (e){ const W = size || 40, Hh = h || size || 40, k = Math.min(W / e[2], Hh / e[3]), sw = Math.round(e[2] * k), sh = Math.round(e[3] * k);
+    return '<i class="ico i8" style="width:' + sw + 'px;height:' + sh + 'px;background-image:url(' + ADIR + 'items8.webp);background-size:' + Math.round(1152 * k) + 'px ' + Math.round(960 * k) + 'px;background-position:' + Math.round(-e[0] * k) + 'px ' + Math.round(-e[1] * k) + 'px"></i>'; }
+  return '<i class="ico" style="' + iconCSS(iconIndex(it)) + (size ? ';width:' + size + 'px;height:' + size + 'px' : '') + '"></i>'; }
 function itemIcon(it){ if (it.gold) return '🪙'; if (it.pot) return POTIONS[it.pot].ic; return BASES[it.b].ic; }
 function itemColor(it){ if (it.gold) return '#e8d49a'; if (it.pot) return POTIONS[it.pot].col; return RARHEX[it.rar]; }
 function itemLabel(it){ if (it.gold) return it.gold + ' 금화'; if (it.pot) return POTIONS[it.pot].n; return it.nm; }
@@ -3600,7 +3696,7 @@ function dropAt(it, x, z, quiet){
   for (let t = 0; t < 12; t++){ const a = Math.random() * TAU, r = 0.4 + Math.random() * 1.4; const nx = x + Math.cos(a) * r, nz = z + Math.sin(a) * r; if (walkable(lv, nx, nz, 0.2)){ px = nx; pz = nz; break; } }
   const g = new THREE.Group();
   if (it.gold){ const m = smat('#e8c050', { m: 0.9, r: 0.3, em: '#5a4000', ei: 0.3 }); for (let k = 0; k < Math.min(6, 2 + it.gold / 40); k++) cyl(0.12, 0.12, 0.04, m, (Math.random() - 0.5) * 0.3, 0.03 + k * 0.035, (Math.random() - 0.5) * 0.3, g, 10); }
-  else { const col = itemColor(it); const ix = iconIndex(it); const Sp = makeSprite('icons', it.pot ? 1.0 : 1.35, 0.5, { flat: true }); Sp.setFrame(ix % 16, Math.floor(ix / 16)); Sp.hold.rotation.x = -Math.PI / 2 + 0.75; Sp.hold.position.y = 0.35; Sp.mesh.position.set(0, -Sp.size / 2, 0); Sp.mat.uniforms.lit.value.setRGB(1.1, 1.1, 1.1); g.add(Sp.g); g.userData.spr = Sp;
+  else { const col = itemColor(it); const ix = iconIndex(it), e8 = icon8(it); const Sp = e8 && ATL.items8 ? makeSprite('items8', it.pot ? 1.0 : e8[3] > 48 ? 1.6 : 1.2, 0.5, { flat: true }) : makeSprite('icons', it.pot ? 1.0 : 1.35, 0.5, { flat: true }); if (e8 && ATL.items8){ Sp.ax = e8[2] / e8[3]; Sp.setRect(e8[0], e8[1], e8[2], e8[3]); Sp.layout(); } else Sp.setFrame(ix % 16, Math.floor(ix / 16)); Sp.hold.rotation.x = -Math.PI / 2 + 0.75; Sp.hold.position.y = 0.35; Sp.mesh.position.set(0, -Sp.size / 2, 0); Sp.mat.uniforms.lit.value.setRGB(1.1, 1.1, 1.1); g.add(Sp.g); g.userData.spr = Sp;
     if (it.rar === 'unique' || it.rar === 'rare'){ const beam = new THREE.Mesh(cgeo('beam', () => new THREE.CylinderGeometry(0.12, 0.25, 6, 8, 1, true).translate(0, 3, 0)), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false })); g.add(beam); } }
   g.position.set(x, 0, z); lv.root.add(g);
   const gi = { it, x: px, z: pz, mesh: g, t: 0, fx: x, fz: z, r: 0.6 };
@@ -3614,7 +3710,7 @@ function invFits(list, W, H, sz, x, y, ignore){
   for (const o of list){ if (o === ignore) continue; const s = itemSize(o); if (x < o.x + s[0] && x + sz[0] > o.x && y < o.y + s[1] && y + sz[1] > o.y) return false; }
   return true;
 }
-function itemSize(it){ if (it.pot) return [1, 1]; const sl = BASES[it.b].slot; return sl === 'ring' || sl === 'amulet' ? [1, 1] : [1, 2]; }
+function itemSize(it){ if (it.pot) return [1, 1]; const sl = BASES[it.b].slot; return sl === 'ring' || sl === 'amulet' || sl === 'belt' ? [1, 1] : [1, 2]; }
 // 소지품 다시 정리 (크기 순으로 빈틈 없이)
 function repack(list, W, H){
   const items = list.splice(0).sort((a, b) => itemSize(b)[1] - itemSize(a)[1] || (a.pot ? 1 : 0) - (b.pot ? 1 : 0) || String(a.b || a.pot).localeCompare(String(b.b || b.pot)));
@@ -3652,6 +3748,7 @@ function itemValue(it){
 function progD(){ if (!PL.prog[G.diff]) PL.prog[G.diff] = { ch: 0, q: {} }; return PL.prog[G.diff]; }
 function wpList(){ if (!PL.wps[G.diff]) PL.wps[G.diff] = ['0-t']; return PL.wps[G.diff]; }
 function clearTransient(){
+  PXFX.splice(0).forEach(f => { scene.remove(f.m); f.mat.dispose(); });
   PROJ.splice(0).forEach(p => { scene.remove(p.mesh); if (p.spr) disposeSprite(p.spr); if (p.trail) p.trail.dying = true; });
   AREAS.length = 0; DELAY.length = 0; ANIMS.length = 0;
   TRAPS.splice(0).forEach(t => scene.remove(t.mesh));
@@ -3861,7 +3958,7 @@ G.cur = null;
 function itemDiv(it, x, y, w, h, ctx){
   const d = document.createElement('div'); d.className = 'item ' + (it.rar || '') + (it.pot || canUse(it) ? '' : ' bad');
   d.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h + 'px;font-size:' + Math.min(34, 18 + Math.min(w, h) / 6) + 'px';
-  d.innerHTML = iconHTML(it, Math.min(w, h) - 2) + (it.pot && (it.n || 1) > 1 ? '<em class="stk">' + it.n + '</em>' : '');
+  d.innerHTML = iconHTML(it, w - 2, h - 2) + (it.pot && (it.n || 1) > 1 ? '<em class="stk">' + it.n + '</em>' : '');
   d.addEventListener('mouseenter', e => { if (!G.cur) showTip(itemTip(it, ctx), e.clientX, e.clientY); });
   d.addEventListener('mousemove', e => { if (!G.cur && !TIP.classList.contains('hidden')) placeTip(e.clientX, e.clientY); });
   d.addEventListener('mouseleave', hideTip);
@@ -3944,7 +4041,7 @@ function ctrlMove(it, list, ctx){
 function updCursor(){
   const c = $('#cursorItem');
   if (!G.cur){ c.classList.add('hidden'); return; }
-  const sz = itemSize(G.cur); c.classList.remove('hidden'); c.style.width = sz[0] * 40 + 'px'; c.style.height = sz[1] * 40 + 'px'; c.style.fontSize = '0'; c.innerHTML = iconHTML(G.cur, Math.min(sz[0], sz[1]) * 40 - 4);
+  const sz = itemSize(G.cur); c.classList.remove('hidden'); c.style.width = sz[0] * 40 + 'px'; c.style.height = sz[1] * 40 + 'px'; c.style.fontSize = '0'; c.innerHTML = iconHTML(G.cur, sz[0] * 40 - 4, sz[1] * 40 - 4);
   c.style.left = (G.mouse.x - sz[0] * 20) + 'px'; c.style.top = (G.mouse.y - sz[1] * 20) + 'px';
 }
 function dropCursorToGround(){ if (!G.cur) return; dropAt(G.cur, HERO.x, HERO.z, true); SND.play('drop', 0.5); G.cur = null; updCursor(); refreshPanels(); }
@@ -4779,7 +4876,7 @@ function frame(){
   if (G.mode === 'play' && G.lv && HERO) guard(playFrame, rdt);
   else if (SEL.root && (G.mode === 'select' || G.mode === 'create')) selFrame(rdt);
   updParticles(PADD, rdt); updParticles(PNRM, rdt);
-  updSprites(); if (G.lv && G.mode === 'play') updDeco8(G.lv);
+  updSprites(); if (G.lv && G.mode === 'play') updDeco8(G.lv); updPxFx(rdt);
   POST.render();
 }
 function playFrame(rdt){
@@ -4830,6 +4927,7 @@ function boot(){
     const MBI = { char: 'icon04_combat_helix_emblem', inv: 'icon03_horadric_stash_chest', skills: 'buff02_neural_shock', quest: 'icon01_scroll_of_identify', tp: 'icon02_tome_of_town_portal' };
     $$('.mb').forEach(b => { const k = MBI[b.dataset.p]; if (k == null) return; const sm = b.querySelector('small'); b.innerHTML = '<i class="ico" style="' + iconCSS((IM.icons || {})[k] || 0) + '"></i>'; if (sm) b.appendChild(sm); b.classList.add('ic'); });
     toSelect();
+    if (OPT.px) (document.fonts ? document.fonts.ready : Promise.resolve()).then(pixelLogo);
     requestAnimationFrame(frame);
   });
 }
