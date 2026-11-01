@@ -1,5 +1,5 @@
 /* BIO ARCADE 서비스 워커: 처음 접속할 때 전체 게임을 저장해 두고, 이후에는 오프라인에서도 실행. */
-const VERSION = 'biogame-hub-v25-il-stale-hover-fix';
+const VERSION = 'biogame-hub-v26-il-netfirst';
 const FONT_CACHE = 'bio-arcade-fonts';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
@@ -52,6 +52,15 @@ self.addEventListener('fetch', e => {
       } catch (_) {
         return (await c.match(req, {ignoreSearch: true})) || Response.error();
       }
+    }));
+    return;
+  }
+
+  // 게임 페이지·스크립트는 네트워크 우선: 고친 버전이 다음 새로고침에 바로 적용되도록 (오프라인이면 저장본)
+  if (req.mode === 'navigate' || /\.(html|js)$/.test(url.pathname)) {
+    e.respondWith(caches.open(VERSION).then(async c => {
+      try { const res = await fetch(req, {cache: 'no-cache'}); if (res && res.ok) c.put(req, res.clone()); return res; }
+      catch (_) { return (await c.match(req, {ignoreSearch: true})) || (req.mode === 'navigate' ? (await c.match('./index.html')) : null) || Response.error(); }
     }));
     return;
   }
