@@ -213,6 +213,7 @@ button{font-family:var(--serif);cursor:pointer}
 #tooltip.skt{text-align:left;max-width:380px}
 #tooltip.skt .nm{color:var(--gold2)}
 #tooltip.skt .nx{color:#9ab4ff}
+#itemAct{position:fixed;z-index:80;display:flex;flex-direction:column;gap:4px;padding:6px;background:#140f0c;border:1px solid #8a7a5a;box-shadow:0 4px 18px #000a;min-width:120px}#itemAct button{font:inherit;font-size:15px;padding:9px 12px;background:#2a2018;color:#e8d8b0;border:1px solid #5a4a30;text-align:left}#itemAct b{font-size:13px;padding:2px 4px}
 #cursorItem{position:fixed;z-index:70;pointer-events:none;font-size:30px;display:grid;place-items:center;background:rgba(80,80,140,.3);border:1px solid #8a7a5a}
 
 /* 대화 · 오버레이 */
@@ -611,7 +612,7 @@ body.px #selLogo .t1{background:none;-webkit-text-fill-color:initial}
   <button class="dbtn" id="mHub">저장하고 게임 목록으로</button>
 </div></div>
 <div id="tooltip" class="hidden"></div>
-<div id="cursorItem" class="hidden"></div>
+<div id="cursorItem" class="hidden"></div><div id="itemAct" class="hidden"></div>
 <div id="skillPick" class="hidden"></div>
 <div id="loading">⚔ 감염의 군주 불러오는 중...</div>
 <div id="toast"></div>
@@ -1446,7 +1447,9 @@ const cone = (r, h, m, x, y, z, p, seg) => addm(cgeo('k' + r + ',' + h + ',' + s
 function fib(n){ const pts = [], inc = Math.PI * (3 - Math.sqrt(5)); for (let i = 0; i < n; i++){ const y = 1 - (i / (n - 1)) * 2, r = Math.sqrt(1 - y * y), th = i * inc; pts.push(new V3(Math.cos(th) * r, y, Math.sin(th) * r)); } return pts; }
 const UPV = new V3(0, 1, 0);
 function orient(o, d){ o.quaternion.setFromUnitVectors(UPV, d.clone().normalize()); }
-function blobShadow(r){ const m = new THREE.Mesh(new THREE.PlaneGeometry(r * 2.4, r * 2.4), new THREE.MeshBasicMaterial({ map: SHADOW_TEX, transparent: true, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.y = 0.03; m.renderOrder = 1; return m; }
+let SHADOW_MAT = null; const CHAMP_MAT = {};
+const champMat = c => CHAMP_MAT[c] || (CHAMP_MAT[c] = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+function blobShadow(r){ const m = new THREE.Mesh(cgeo('blobSh', () => new THREE.PlaneGeometry(1, 1)), (SHADOW_MAT || (SHADOW_MAT = new THREE.MeshBasicMaterial({ map: SHADOW_TEX, transparent: true, depthWrite: false })))); m.scale.set(r * 2.4, r * 2.4, 1); m.rotation.x = -Math.PI / 2; m.position.y = 0.03; m.renderOrder = 1; return m; }
 function glowEyes(parent, y, z, sp, r, col){
   const m = smat('#000000', { em: col || '#ff3a2a', ei: 2.2 });
   for (const s of [-1, 1]){ const e = sph(r, m, s * sp, y, z, parent, 8, 6); }
@@ -1482,8 +1485,9 @@ function chapterAtlas(ch){
   if (CH_LOAD[ch]) return CH_LOAD[ch];
   return CH_LOAD[ch] = Promise.all(CH_KEYS.map(k => ATL[k + ch] ? null : new Promise(res => {
     const img = new Image(); img.decoding = 'async';
-    img.onload = () => { ATL_IMG[k + ch] = img; ATL[k + ch] = texOf(img); res(); };
-    img.onerror = () => res(); img.src = ADIR + k + ch + '.webp';
+    const done = () => { ATL_IMG[k + ch] = img; ATL[k + ch] = texOf(img); res(); };
+    img.onload = () => { (img.decode ? img.decode() : Promise.resolve()).then(done, done); };
+    img.onerror = () => { delete CH_LOAD[ch]; res(); }; img.src = ADIR + k + ch + '.webp';
   })));
 }
 function cellRect(key, col, row){ const [c, r] = gridOf(key), img = ATL_IMG[key]; const W = img ? img.width : c * gridOf(key)[2], H = img ? img.height : r * gridOf(key)[2], cs = gridOf(key)[2] * W / (c * gridOf(key)[2]); return [col * cs / W, 1 - (row + 1) * cs / H, cs / W, cs / H]; }
@@ -1563,8 +1567,15 @@ function lookKey(cls, eq){
 function setHeroLook(H, key){
   const S = H.spr; if (!S || S.key === key) return;
   if (ATL[key]){ S.key = key; S.mat.uniforms.map.value = ATL[key]; S.init = false; S.setFrame(S.col, S.row); return; }
-  if (!LOOK_LOAD[key]) LOOK_LOAD[key] = new Promise(res => { const img = new Image(); img.onload = () => { ATL_IMG[key] = img; ATL[key] = texOf(img); res(); }; img.onerror = () => res(); img.src = ADIR + 'looks/' + key + '.webp'; });
-  LOOK_LOAD[key].then(() => { if (H.lookWant === key && ATL[key]) setHeroLook(H, key); });
+  if (!LOOK_LOAD[key]) LOOK_LOAD[key] = new Promise(res => { const img = new Image(); img.decoding = 'async';
+    const done = () => { ATL_IMG[key] = img; ATL[key] = texOf(img); res(); };
+    img.onload = () => { (img.decode ? img.decode() : Promise.resolve()).then(done, done); }; img.onerror = () => { delete LOOK_LOAD[key]; res(); }; img.src = ADIR + 'looks/' + key + '.webp'; });
+  LOOK_LOAD[key].then(() => { if (H.lookWant === key && ATL[key]){ setHeroLook(H, key); pruneLooks(); } });
+}
+// 장비를 바꿀 때마다 외형 텍스처(장당 수 MB)가 GPU에 쌓여 멈춤·튕김이 생기던 문제: 쓰지 않는 외형은 해제
+function pruneLooks(){
+  const keep = new Set(); for (const S of SPRITES) keep.add(S.key);
+  for (const k in LOOK_LOAD){ if (keep.has(k) || !ATL[k]) continue; ATL[k].dispose(); delete ATL[k]; delete ATL_IMG[k]; delete LOOK_LOAD[k]; }
 }
 function equipHero(H, eq){ H.wpnBase = eq && eq.weapon ? BASES[eq.weapon.b] : null; if (HERO8 && H.cls && CLASSES[H.cls]){ H.lookWant = lookKey(H.cls, eq); setHeroLook(H, H.lookWant); } }
 // 상태 → 스프라이트 행, 진행도 → 프레임
@@ -1635,8 +1646,8 @@ function buildMonsterModel(def, mods){
   const R = { g: S.g, inner: S.hold, spr: S, mats: [S.mat], parts: {}, h: fs * ((meta ? meta.foot - meta.top : 0.8)) * SPR_Y * 0.8, flyH: def.ai === 'flyer' ? 0.7 : 0, fs, akey, arow: boss ? (idx >= 5 ? 2 : 0) : (idx % 11) * 2, anim: key === akey, hitT: 0, dieT: -1, rate: 0.9 + Math.random() * 0.25, walkHz: Math.min(2.2, 0.55 + (def.spd || 3) * 0.28) };
   if (R.flyH) S.lift = R.flyH, S.layout();
   if (mods && (mods.champ || mods.unique)){
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.5 * fs * 0.45, 0.62 * fs * 0.45, 32), new THREE.MeshBasicMaterial({ color: mods.unique ? '#ffcf3a' : '#6a7aff', transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
-    ring.rotation.x = -Math.PI / 2; ring.position.y = 0.05; S.g.add(ring); R.parts.ring = ring;
+    const ring = new THREE.Mesh(cgeo('champRing', () => new THREE.RingGeometry(0.806, 1, 32)), champMat(mods.unique ? '#ffcf3a' : '#6a7aff'));
+    ring.scale.setScalar(0.62 * fs * 0.45); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.05; S.g.add(ring); R.parts.ring = ring;
     if (mods.champ && !mods.unique) S.mat.uniforms.glow.value = 0.12;
   }
   if (boss){ S.mat.uniforms.glow.value = 0.18; }
@@ -1652,8 +1663,8 @@ function buildMonster8(def, mods, e){
   const R = { g: S.g, inner: S.hold, spr: S, mats: [S.mat], parts: {}, h: e.h / D * SPR_Y * 0.95, flyH: def.ai === 'flyer' ? 0.7 : 0, fs: e.c / D, m8: e, m8ok: ready, scaleMul: 1, face: 0, hitT: 0, rate: 0.9 + Math.random() * 0.25, walkHz: Math.min(2.4, 0.6 + (def.spd || 3) * 0.3) };
   if (ready) monFrame8(R, 'idle', 0);
   if (mods && (mods.champ || mods.unique)){
-    const fs = e.h / D * 1.4, ring = new THREE.Mesh(new THREE.RingGeometry(0.5 * fs * 0.45, 0.62 * fs * 0.45, 32), new THREE.MeshBasicMaterial({ color: mods.unique ? '#ffcf3a' : '#6a7aff', transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
-    ring.rotation.x = -Math.PI / 2; ring.position.y = 0.05; S.g.add(ring); R.parts.ring = ring;
+    const fs = e.h / D * 1.4, ring = new THREE.Mesh(cgeo('champRing', () => new THREE.RingGeometry(0.806, 1, 32)), champMat(mods.unique ? '#ffcf3a' : '#6a7aff'));
+    ring.scale.setScalar(0.62 * fs * 0.45); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.05; S.g.add(ring); R.parts.ring = ring;
     if (mods.champ && !mods.unique) S.mat.uniforms.glow.value = 0.12;
   }
   if (boss) S.mat.uniforms.glow.value = 0.12;
@@ -1789,7 +1800,7 @@ function genArena(rng){
 function genTown(rng){
   const w = 46, h = 50, M = newGrid(w, h), cx = 23, cy = 22;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++){ const a = Math.atan2(y - cy, x - cx); const r = 17 + Math.sin(a * 3 + 1) * 1.5 + Math.sin(a * 7) * 0.8; if (Math.hypot(x - cx, (y - cy) * 1.05) < r) M.g[y * w + x] = 1; }
-  carve(M, cx - 2, cy + 12, cx + 2, h - 3);
+  carve(M, cx - 4, cy + 12, cx + 4, h - 3); carve(M, cx - 7, h - 11, cx + 7, h - 3);   // 관문까지 넓은 길 + 관문 앞 광장
   M.start = [cx, cy + 3]; M.far = [cx, h - 5]; M.dist = bfsDist(M, cx, cy + 3); M.rooms = [];
   M.spots = { fire: [cx, cy], elder: [cx - 6, cy - 4], shop: [cx + 6, cy - 5], heal: [cx + 7, cy + 4], stash: [cx - 7, cy + 4], wp: [cx, cy + 8], exit: [cx, h - 5], alch: [cx + 1, cy - 9], vault: [cx - 9, cy + 2], merc: [cx - 11, cy - 4], seer: [cx + 11, cy - 1], archon: [cx + 3, cy + 9] };
   return M;
@@ -1922,7 +1933,15 @@ function buildLevel(ci, zi){
     for (let k = 0; k < 4 + Math.floor(rng() * 4); k++){ const c = randFloorCell(lv, rng, 10, avoid); if (!c) break; avoid.push([c[0], c[1], 5]); addHazard(lv, c[0], c[1], rng() < 0.5 ? 'gas' : 'coil'); lv.g[c[1] * lv.w + c[0]] = 0; }
     populate(lv, rng);
   }
+  clearDecoNearObjs(lv);
   return lv;
+}
+// 장식이 창고·웨이포인트·입구·상자 위에 겹쳐 '합성한 것처럼' 보이던 문제: 오브젝트 주변 장식은 숨김
+function clearDecoNearObjs(lv){
+  const pts = lv.objs.map(o => [o.x, o.z, (o.type === 'exit' || o.type === 'wp' ? 3.4 : o.type === 'npc' ? 1.6 : 2.2)]).concat((lv.dress || []).map(o => [o.x, o.z, o.r + 0.6]));
+  for (const d of lv.deco8 || []){ let ch = false;
+    d.items.forEach((it, i) => { for (const [x, z, r] of pts){ if (Math.hypot(it.x - x, it.z - z) < r + (it.flat ? it.size * 0.4 : 0.3)){ d.O[i * 4] = 0; ch = true; break; } } });
+    if (ch) d.m.geometry.attributes.iOpt.needsUpdate = true; }
 }
 function randNear(lv, i, j, rMin, rMax){
   for (let t = 0; t < 200; t++){ const a = Math.random() * TAU, r = rMin + Math.random() * (rMax - rMin); const x = Math.round(i + Math.cos(a) * r), y = Math.round(j + Math.sin(a) * r); if (isFloor(lv, x, y) && isFloor(lv, x + 1, y) && isFloor(lv, x - 1, y) && isFloor(lv, x, y + 1) && isFloor(lv, x, y - 1)) return [x, y]; }
@@ -1946,7 +1965,7 @@ function decoMesh(lv, key, items){
   g.instanceCount = n;
   const mat = new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { map: { value: null }, texSize: { value: new THREE.Vector2(1, 1) }, time: { value: 0 }, camR: { value: new V3(1, 0, 0) }, sprY: { value: 1 }, lit: { value: new THREE.Color(1, 1, 1) } }]), vertexShader: DECO_VS, fragmentShader: DECO_FS, fog: true, side: THREE.DoubleSide });
   const m = new THREE.Mesh(g, mat); m.frustumCulled = false; m.visible = false; lv.root.add(m);
-  (lv.deco8 = lv.deco8 || []).push({ m, mat, key });
+  (lv.deco8 = lv.deco8 || []).push({ m, mat, key, items, O });
 }
 const _dr = new V3(), _lc = new THREE.Color();
 function updDeco8(lv){
@@ -2048,7 +2067,7 @@ function addExit(lv, i, j, to, label, col){
   let m = null;
   if (HERO8 && IM.prop8 && ATL.props8){ // 장 테마 입구: 내려가는 계단 · 올라가는 계단 · 마을 관문
     const ch = lv.ci + 1, kind = col === '#6aa8ff' ? 'exit_up_' + ch : col === '#ff6a4a' ? (lv.town ? 'gate' : 'exit_down_' + ch) : null;
-    if (kind && IM.prop8[kind]){ const S = propSprite(kind, kind === 'gate' ? 5.4 : 4.6, { shadow: 1.6 }); S.owner = lv; m = S.g; }
+    if (kind && IM.prop8[kind]){ const S = propSprite(kind, kind === 'gate' ? 6.0 : 4.6, { shadow: kind === 'gate' ? 0 : 1.6, noShadow: kind === 'gate' }); S.owner = lv; m = S.g; }
   }
   if (!m) m = portalMesh(col || '#6aa8ff', door ? 'door' : 'portal');
   const o = addObj(lv, { type: 'exit', x: cx2w(i), z: cx2w(j), r: 1.8, mesh: m, to, label, col });
@@ -2057,8 +2076,8 @@ function addExit(lv, i, j, to, label, col){
 }
 function addWaypoint(lv, i, j, key){
   const wk = 'wp_' + (lv.ci + 1), S = HERO8 && (IM.prop8 || {})[wk] ? propSprite(wk, 4.2, { noShadow: true }) : propSprite('town03_blue_waypoint_pad', 3.6, { noShadow: true }); const g = S.g; S.owner = lv;
-  const rune = addm(new THREE.RingGeometry(1.0, 1.5, 32), new THREE.MeshBasicMaterial({ map: RUNE_TEX, color: '#4a7aff', transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false }), 0, 0.06, 0, g);
-  rune.rotation.x = -Math.PI / 2; g.userData.rune = rune;
+  const rune = addm(cgeo('wpRing', () => new THREE.RingGeometry(1.0, 1.5, 32)), new THREE.MeshBasicMaterial({ map: RUNE_TEX, color: '#4a7aff', transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false }), 0, 0.06, 0, g);
+  rune.rotation.x = -Math.PI / 2; g.userData.rune = rune; if (HERO8 && (IM.prop8 || {})[wk]) rune.visible = false;
   return addObj(lv, { type: 'wp', x: cx2w(i), z: cx2w(j), r: 2, mesh: g, key, label: '웨이포인트' });
 }
 function addContainer(lv, i, j, kind, rng){
@@ -2102,7 +2121,7 @@ function buildTownObjects(lv, M){
   addObj(lv, { type: 'fire', x: cx2w(sp.fire[0]), z: cx2w(sp.fire[1]), r: 1.4, mesh: fs.g, solid: true });
   lv.lights.push({ x: cx2w(sp.fire[0]), z: cx2w(sp.fire[1]), y: 1.4, col: '#ff9a4a', f: 0, big: true, fireFx: true });
   // 바닥 모자이크 (마을 광장)
-  for (const [nm, i, j] of [['tile03_golden_immune_mosaic', sp.wp[0], sp.wp[1] - 1], ['tile04_blue_dna_crystal_floor', sp.stash[0], sp.stash[1] - 1]]){ if (HERO8 && (IM.prop8 || {})[nm]){ const t = propSprite(nm, 3.6, { noShadow: true, flat: true }); t.g.position.set(cx2w(i), 0.03, cx2w(j)); lv.root.add(t.g); continue; } const t = propSprite(nm, 3.6, { noShadow: true }); t.g.position.set(cx2w(i), -0.9, cx2w(j)); t.mat.uniforms.opacity.value = 0.9; lv.root.add(t.g); }
+  for (const [nm, i, j] of [['tile03_golden_immune_mosaic', sp.wp[0], sp.wp[1] - 1], ['tile04_blue_dna_crystal_floor', sp.stash[0], sp.stash[1] - 1]]){ if (HERO8 && (IM.prop8 || {})[nm]) continue; const t = propSprite(nm, 3.6, { noShadow: true }); t.g.position.set(cx2w(i), -0.9, cx2w(j)); t.mat.uniforms.opacity.value = 0.9; lv.root.add(t.g); }
   // 천막·상자
   const tm = [smat('#4a3a2e'), smat('#3a2e4a'), smat('#4a2a22')];
   for (const [i, j, k] of [[sp.elder[0] - 3, sp.elder[1] - 3, 0], [sp.shop[0] + 3, sp.shop[1] - 3, 1], [sp.heal[0] + 3, sp.heal[1] + 2, 2]]){
@@ -2122,11 +2141,36 @@ function buildTownObjects(lv, M){
     addObj(lv, { type: 'npc', x: cx2w(s[0]), z: cx2w(s[1]), r: 1.6, H, npc: n, label: n.nm, home: [cx2w(s[0]), cx2w(s[1])], solid: true });
   });
   // 창고 (호라드릭 상자)
-  const st = HERO8 && ATL.props8 ? propSprite('stash', 2.6) : iconSprite('icon03_horadric_stash_chest', 2.4);
+  const st = HERO8 && ATL.props8 ? propSprite('stash', 3.2, { noShadow: true }) : iconSprite('icon03_horadric_stash_chest', 2.4);
   addObj(lv, { type: 'stash', x: cx2w(sp.stash[0]), z: cx2w(sp.stash[1]), r: 1.6, mesh: st.g, label: '공유 창고', solid: true });
   addWaypoint(lv, sp.wp[0], sp.wp[1], lv.ci + '-t');
   addExit(lv, sp.exit[0], sp.exit[1], { ci: lv.ci, zi: 0, arrive: 'start' }, '➜ ' + C.zones[0].name, '#ff6a4a');
   lv.nextAt = [sp.exit[0], sp.exit[1] - 3];
+  if (HERO8 && (IM.prop8 || {}).barrel) dressTown(lv, sp);
+}
+// 마을 생활 소품: 상점 옆 통·상자·수레, 길가 등불, 모닥불 둘레 의자, 관문 깃발과 이정표, 화분
+function dressTown(lv, sp){
+  const spots = Object.values(sp), ex = sp.exit, path = (i, j) => Math.abs(i - sp.wp[0]) < 3 && j > sp.wp[1] - 2;   // 웨이포인트→관문 큰길은 비움
+  const put = (nm, size, i, j, solid, opt) => {
+    if (!(IM.prop8 || {})[nm]) return false;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!isFloor(lv, i + dx, j + dy)) return false;
+    if (spots.some(p => Math.hypot(p[0] - i, p[1] - j) < (p === ex ? 3.5 : 2.6)) || (path(i, j) && !(opt && opt.road))) return false;
+    if (lv.objs.concat(lv.dress || []).some(o => Math.hypot(o.x - cx2w(i), o.z - cx2w(j)) < (o.r || 1) + 1.2)) return false;
+    const S = propSprite(nm, size, { shadow: size * 0.18 }); S.owner = lv; if (opt && opt.flip && S.setFlip) S.setFlip(true);
+    S.g.position.set(cx2w(i) + ((opt && opt.ox) || 0), 0, cx2w(j)); lv.root.add(S.g);
+    if (solid) lv.g[j * lv.w + i] = 0;
+    (lv.dress = lv.dress || []).push({ x: cx2w(i), z: cx2w(j), r: size * 0.35 });
+    return true;
+  };
+  const near = (nm, size, c, solid, list) => { for (const [dx, dy] of list) if (put(nm, size, c[0] + dx, c[1] + dy, solid)) return; };
+  near('crates', 2.2, sp.shop, true, [[2, -2], [-2, -2], [3, 1], [-3, 1]]); near('barrel', 1.5, sp.shop, true, [[3, -1], [-3, -1], [2, 2]]);
+  near('cart', 3.2, sp.alch, true, [[4, 1], [-4, 1], [4, -2]]); near('barrel', 1.5, sp.heal, true, [[2, 2], [-2, 2], [3, 0]]);
+  near('crates', 2.2, sp.vault, true, [[-2, 2], [-3, -1], [2, 3]]); near('barrel', 1.5, sp.merc, true, [[-2, 2], [2, 2], [-2, -2]]);
+  near('planter', 2.0, sp.stash, true, [[-2, -2], [2, -2], [-3, 0]]); near('planter', 2.0, sp.elder, true, [[2, 2], [-2, 2]]);
+  [[-3, -3], [3, -3], [-4, 2], [4, 2]].forEach(([dx, dy]) => put('bench', 2.2, sp.fire[0] + dx, sp.fire[1] + dy, false, { flip: dx > 0 }));
+  for (let j = sp.wp[1] + 4; j < ex[1] - 3; j += 6) for (const sd of [-1, 1]) put('lamp', 3.0, sp.wp[0] + sd * 3, j, true, { road: true, flip: sd > 0 });
+  for (const sd of [-1, 1]) put('banner', 3.2, ex[0] + sd * 5, ex[1] - 2, true, { road: true, flip: sd > 0 });
+  put('signpost', 2.6, ex[0] + 4, ex[1] - 6, true, { road: true });
 }
 // 벽 잘라 보기: 카메라와 영웅 사이의 벽을 낮춘다
 function updateCutaway(lv, px, pz){
@@ -3706,7 +3750,7 @@ function dropAt(it, x, z, quiet){
   const g = new THREE.Group();
   if (it.gold){ const m = smat('#e8c050', { m: 0.9, r: 0.3, em: '#5a4000', ei: 0.3 }); for (let k = 0; k < Math.min(6, 2 + it.gold / 40); k++) cyl(0.12, 0.12, 0.04, m, (Math.random() - 0.5) * 0.3, 0.03 + k * 0.035, (Math.random() - 0.5) * 0.3, g, 10); }
   else { const col = itemColor(it); const ix = iconIndex(it), e8 = icon8(it); const Sp = e8 && ATL.items8 ? makeSprite('items8', it.pot ? 1.0 : e8[3] > 48 ? 1.6 : 1.2, 0.5, { flat: true }) : makeSprite('icons', it.pot ? 1.0 : 1.35, 0.5, { flat: true }); if (e8 && ATL.items8){ Sp.ax = e8[2] / e8[3]; Sp.setRect(e8[0], e8[1], e8[2], e8[3]); Sp.layout(); } else Sp.setFrame(ix % 16, Math.floor(ix / 16)); Sp.hold.rotation.x = -Math.PI / 2 + 0.75; Sp.hold.position.y = 0.35; Sp.mesh.position.set(0, -Sp.size / 2, 0); Sp.mat.uniforms.lit.value.setRGB(1.1, 1.1, 1.1); g.add(Sp.g); g.userData.spr = Sp;
-    if (it.rar === 'unique' || it.rar === 'rare' || it.rar === 'set'){ const beam = new THREE.Mesh(cgeo('beam', () => new THREE.CylinderGeometry(0.12, 0.25, 6, 8, 1, true).translate(0, 3, 0)), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false })); g.add(beam); } }
+    if (it.rar === 'unique' || it.rar === 'rare' || it.rar === 'set'){ const beam = new THREE.Mesh(cgeo('beam', () => new THREE.CylinderGeometry(0.12, 0.25, 6, 8, 1, true).translate(0, 3, 0)), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending, depthWrite: false })); beam.material.userData.own = true; g.add(beam); } }
   g.position.set(x, 0, z); lv.root.add(g);
   const gi = { it, x: px, z: pz, mesh: g, t: 0, fx: x, fz: z, r: 0.6 };
   lv.items.push(gi);
@@ -3743,8 +3787,10 @@ function pickupGround(gi){
   if (gi.it.gold){ PL.gold += gi.it.gold; SND.play('gold', 0.7); floatNum(gi.x, 1, gi.z, '+' + gi.it.gold, '#e8d49a'); }
   else if (!addToInv(gi.it)){ toast('소지품이 가득 찼습니다'); SND.play('nomana', 0.5); return; }
   else { SND.play(itemSnd(gi.it, 'pick'), 0.6); if (gi.it.rar !== 'normal' && !gi.it.pot) logMsg('<span style="color:' + RARHEX[gi.it.rar] + '">' + esc(gi.it.nm) + '</span> 획득'); }
-  lv.root.remove(gi.mesh); if (gi.lab) gi.lab.remove(); lv.items.splice(i, 1); G.uiDirty = true;
+  lv.root.remove(gi.mesh); freeMesh(gi.mesh); if (gi.lab) gi.lab.remove(); lv.items.splice(i, 1); G.uiDirty = true;
 }
+// 주운 아이템의 스프라이트 재질·빛기둥 재질 해제 (계속 쌓이면 렌더가 점점 무거워짐)
+function freeMesh(root){ root.traverse(o => { if (o.userData && o.userData.spr) disposeSprite(o.userData.spr); else if (o.isMesh && o.material && o.material.userData && o.material.userData.own) o.material.dispose(); }); }
 function itemValue(it){
   if (it.pot) return POTIONS[it.pot].price;
   const b = BASES[it.b]; let v = (b.lvl + 6) * 9 * (1 + b.t * 0.6);
@@ -3898,6 +3944,32 @@ function openPanel(p){
 function closePanel(p){
   if (G.panels.has(p)) SND.play('uiClose', 0.4); G.panels.delete(p); $(PANEL_EL[p]).classList.add('hidden'); hideTip(); layoutPanels();
   if (p === 'vendor') G.vendor = null;
+  hideItemAct();
+  if (G.cur && !G.panels.has('inv') && !G.panels.has('stash')) returnCursor();
+}
+// 손에 든 아이템을 가방으로 되돌리거나(가득 차면) 발밑에 내려놓기 — 아이템이 사라지거나 손에 남아 먹통이 되는 문제 방지
+function returnCursor(){ if (!G.cur) return; const it = G.cur; G.cur = null; if (!addToInv(it) && HERO) dropAt(it, HERO.x, HERO.z, true); updCursor(); refreshPanels(); }
+/* 모바일: 아이템을 탭하면 손에 들지 않고 동작 메뉴를 띄움 */
+function hideItemAct(){ const m = document.getElementById('itemAct'); if (m) m.classList.add('hidden'); }
+function showItemAct(it, x, y, opts){
+  const m = $('#itemAct'); m.innerHTML = '<b class="' + (it.rar || '') + '">' + esc(itemLabel(it)) + '</b>';
+  opts.forEach(([t, fn]) => { const b = document.createElement('button'); b.textContent = t; b.onclick = e => { e.stopPropagation(); hideItemAct(); hideTip(); try { fn(); } catch(err){ console.error(err); } refreshPanels(); }; m.appendChild(b); });
+  const c = document.createElement('button'); c.textContent = '취소'; c.onclick = e => { e.stopPropagation(); hideItemAct(); hideTip(); }; m.appendChild(c);
+  m.classList.remove('hidden'); const r = m.getBoundingClientRect();
+  m.style.left = clamp(x - r.width / 2, 4, innerWidth - r.width - 4) + 'px'; m.style.top = clamp(y + 12, 4, innerHeight - r.height - 4) + 'px';
+}
+function invActions(it, list, ctx){
+  const o = [], rm = () => { const i = list.indexOf(it); if (i >= 0) list.splice(i, 1); };
+  if (ctx === 'inv'){
+    if (it.pot) o.push(['마시기', () => rightClickInv(it)]);
+    else if (it.b) o.push(['착용', () => equipFromInv(it)]);
+    if (G.vendor) o.push(['판매 (' + sellPrice(it) + ' 금화)', () => { rm(); sellItem(it); }]);
+    if (G.panels.has('stash')) o.push(['창고로', () => ctrlMove(it, list, ctx)]);
+    o.push(['버리기', () => { rm(); dropAt(it, HERO.x, HERO.z, true); SND.play('drop', 0.5); }]);
+  } else if (ctx === 'stash'){
+    o.push(['가방으로', () => ctrlMove(it, list, ctx)]);
+  }
+  return o;
 }
 function togglePanel(p){ if (G.panels.has(p)) closePanel(p); else { openPanel(p); SND.play('ui', 0.5); } }
 function closeAllPanels(){ for (const p of [...G.panels]) closePanel(p); closeDialog(); $('#skillPick').classList.add('hidden'); }
@@ -3981,7 +4053,7 @@ function renderInv(){
     const s = document.createElement('div'); s.className = 'eslot'; s.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h + 'px';
     if (G.cur && !G.cur.pot && G.cur.b) s.classList.add(BASES[G.cur.b].slot === slotOf(k) && canUse(G.cur) ? 'can' : 'cant');
     if (it){ const d = itemDiv(it, 0, 0, w - 2, h - 2, 'eq'); d.style.position = 'absolute'; s.appendChild(d); } else s.innerHTML = '<span class="ph">' + EQ_PH[k] + '</span>';
-    s.addEventListener('mousedown', e => { e.stopPropagation(); if (e.button === 0) clickEquip(k); else if (e.button === 2 && it){ unequipToInv(k); } });
+    s.addEventListener('mousedown', e => { e.stopPropagation(); if (G.mobile && !G.cur){ if (it){ hideTip(); showItemAct(it, e.clientX, e.clientY, [['해제', () => unequipToInv(k)], ['버리기', () => { delete PL.eq[k]; dropAt(it, HERO.x, HERO.z, true); afterEquip(); }]]); } return; } if (e.button === 0) clickEquip(k); else if (e.button === 2 && it){ unequipToInv(k); } });
     eq.appendChild(s);
   }
   renderGrid($('#invGrid'), PL.inv, INV_W, INV_H, 'inv');
@@ -4001,6 +4073,7 @@ function gridClick(e, el, list, W, H, ctx){
   if (ctx === 'vend'){ if (hit && e.button === 0 && !G.cur) buyItem(hit); else if (G.cur){ sellItem(G.cur); G.cur = null; updCursor(); refreshPanels(); } return; }
   if (e.button === 2){ if (hit && ctx === 'inv') rightClickInv(hit); return; }
   if (e.ctrlKey && hit && !G.cur){ ctrlMove(hit, list, ctx); return; }
+  if (G.mobile && !G.cur){ if (hit){ hideTip(); showItemAct(hit, e.clientX, e.clientY, invActions(hit, list, ctx)); SND.play('ui', 0.4); } else hideItemAct(); return; }
   if (G.cur){
     const sz = itemSize(G.cur), x = Math.round(fx - sz[0] / 2), y = Math.round(fy - sz[1] / 2);
     const tx = clamp(x, 0, W - sz[0]), ty = clamp(y, 0, H - sz[1]);
@@ -4023,7 +4096,7 @@ function equipFromInv(it){
   let k = b.slot; if (k === 'ring') k = !PL.eq.ring1 ? 'ring1' : !PL.eq.ring2 ? 'ring2' : 'ring1';
   if (!checkHands(k, it)) return;
   const old = PL.eq[k]; PL.inv.splice(PL.inv.indexOf(it), 1); PL.eq[k] = it; G.eqK = k;
-  if (old){ const sp = findSpace(PL.inv, INV_W, INV_H, itemSize(old)); if (sp){ old.x = sp[0]; old.y = sp[1]; PL.inv.push(old); } else { G.cur = old; updCursor(); } }
+  if (old){ const sp = findSpace(PL.inv, INV_W, INV_H, itemSize(old)); if (sp){ old.x = sp[0]; old.y = sp[1]; PL.inv.push(old); } else if (G.mobile){ dropAt(old, HERO.x, HERO.z, true); toast('소지품이 가득 차 벗은 장비를 발밑에 내려놓았습니다'); } else { G.cur = old; updCursor(); } }
   afterEquip(G.eqK);
 }
 function checkHands(k, it){
@@ -4575,7 +4648,9 @@ addEventListener('mousedown', e => {
 });
 addEventListener('mouseup', e => { if (e.button === 0){ G.mouse.l = false; G.lHold = null; } if (e.button === 2){ G.mouse.r = false; G.rHoldMon = null; } });
 // 터치: 탭 = 왼쪽 클릭, 두 손가락 = 오른쪽 스킬
-addEventListener('touchstart', e => { if (G.mode !== 'play' || e.target !== renderer.domElement) return; e.preventDefault(); SND.init(); const t = e.touches[0]; G.mouse.x = t.clientX; G.mouse.y = t.clientY; G.mouse.overUI = false; mouseWorld(); updHover();
+addEventListener('touchstart', e => { if (G.mode !== 'play' || e.target !== renderer.domElement) return; e.preventDefault(); SND.init(); hideItemAct();
+  if (G.cur){ returnCursor(); return; }
+  if (G.paused || !HERO || HERO.dead) return; const t = e.touches[0]; G.mouse.x = t.clientX; G.mouse.y = t.clientY; G.mouse.overUI = false; mouseWorld(); updHover();
   if (e.touches.length >= 2){ G.mouse.l = false; G.lHold = null; G.mouse.r = true; return; }
   G.mouse.l = true; const h = G.hover; HERO.interact = HERO.pickup = null;
   if (h && h.kind === 'mon'){ G.lHold = { mon: h.o }; } else if (h && h.kind === 'obj'){ HERO.interact = h.o; moveHeroTo(h.o.x, h.o.z); } else if (h && h.kind === 'item'){ HERO.pickup = h.o; moveHeroTo(h.o.x, h.o.z); } else { G.lHold = { move: true, t: 0 }; moveHeroTo(G.mouse.wx, G.mouse.wz); } }, { passive: false });
@@ -4587,7 +4662,14 @@ addEventListener('touchcancel', () => { G.mouse.l = G.mouse.r = false; G.lHold =
   const stop = e => { e.preventDefault(); };
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, stop, { passive: false }));
   document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
-  let lastTap = 0; document.addEventListener('touchend', e => { const now = Date.now(); if (now - lastTap < 320 && !(e.target.closest && e.target.closest('input,select,textarea'))) e.preventDefault(); lastTap = now; }, { passive: false });
+  // 빠른 두 번째 탭은 확대를 막기 위해 기본 동작을 취소하되, 버튼·인벤토리가 반응하도록 마우스 이벤트를 직접 만들어 전달
+  let lastTap = 0; document.addEventListener('touchend', e => { const now = Date.now(), quick = now - lastTap < 320; lastTap = now;
+    if (!quick || e.touches.length || (e.target.closest && e.target.closest('input,select,textarea'))) return;
+    e.preventDefault(); if (e.target === renderer.domElement) return;
+    const t = e.changedTouches[0]; if (!t) return; const el = document.elementFromPoint(t.clientX, t.clientY); if (!el) return;
+    const o = { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY, button: 0, buttons: 1, view: window };
+    try { el.dispatchEvent(new MouseEvent('mousedown', o)); el.dispatchEvent(new MouseEvent('mouseup', o)); el.dispatchEvent(new MouseEvent('click', o)); } catch(_){ }
+  }, { passive: false });
   document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
   addEventListener('wheel', e => { if (e.ctrlKey && G.mode === 'play') e.preventDefault(); }, { passive: false });
   // 모바일: 게임 시작 시 전체 화면 (지원 기기만)

@@ -30,13 +30,13 @@ function whoosh(r, dur, f0, f1, q, ring){ const d = mk(dur), n = noiseGen('white
     if (ring){ ph += TAU * (rf + 300 * u) / SR; x += Math.sin(ph) * 0.18 * env(t, 0.02, 0.09); }
     d[i] = x * swell(t, dur, 0.38); } return fin(d, 0.8); }
 function impact(r, o){ // 몸통(사인 하강) + 금속 배음 + 부서지는 잡음
-  const dur = o.dur || 0.35, d = mk(dur), n = noiseGen('white', r), lp = BQ('lp'), bp = BQ('bp'); let ph = 0; const parts = (o.metal ? [1, 2.76, 5.4, 8.93] : []).map(k => [k * (o.metal * (0.9 + r() * 0.2)), r() * TAU]);
+  const dur = o.dur || 0.35, d = mk(dur), n = noiseGen('white', r), lp = BQ('lp'), bp = BQ('bp'), cf = 900 + r() * 1400; let ph = 0; const parts = (o.metal ? [1, 2.76, 5.4, 8.93] : []).map(k => [k * (o.metal * (0.9 + r() * 0.2)), r() * TAU]);
   for (let i = 0; i < d.length; i++){ const t = i / SR; const f = o.body * (1 + (o.drop || 2) * Math.exp(-t / 0.018));
     ph += TAU * f / SR; let x = Math.sin(ph) * env(t, 0.002, o.bodyD || 0.08) * (o.bodyA || 1);
-    x += lp(n(), o.crackF || 3000, 0.7) * env(t, 0.001, o.crackD || 0.025) * (o.crack || 0.8);
-    if (o.crunch) x += bp(n(), 900 + r() * 2200, 3) * (r() < 0.3 ? 1 : 0.2) * env(t, 0.001, o.crunchD || 0.06) * o.crunch;
+    x += lp(n(), Math.min(o.crackF || 3000, 4200), 0.6) * env(t, 0.0015, o.crackD || 0.022) * (o.crack || 0.8) * 0.8;
+    if (o.crunch) x += bp(n(), cf, 1.6) * env(t, 0.002, o.crunchD || 0.05) * o.crunch * 0.6;
     for (const p of parts){ p[1] += TAU * p[0] / SR; x += Math.sin(p[1]) * 0.22 * env(t, 0.001, (o.ringD || 0.25) / (1 + p[0] / 4000)); }
-    d[i] = sat(x * 1.4); } return fin(d, o.gain || 0.95); }
+    d[i] = sat(x * 0.9); } return fin(d, o.gain || 0.95); }
 function goo(r, dur, f0, wet){ const d = mk(dur), n = noiseGen('white', r), bp = BQ('bp'), lp = BQ('lp'); let wob = 0, bub = [];
   for (let k = 0; k < (wet || 3); k++) bub.push([r() * dur * 0.8, 180 + r() * 500, 0]);
   for (let i = 0; i < d.length; i++){ const t = i / SR; wob += (r() - 0.5) * 0.3; wob *= 0.995;
@@ -57,10 +57,10 @@ function chimes(r, dur, freqs, decay, shimmer){ const d = mk(dur); const ps = fr
   for (let i = 0; i < d.length; i++){ const t = i / SR; let x = 0;
     for (const p of ps){ const tt = t - p.t0; if (tt < 0) continue; p.ph += TAU * p.f * (1 + 0.003 * Math.sin(tt * 30)) / SR; x += (Math.sin(p.ph) + 0.25 * Math.sin(p.ph * 2.01)) * env(tt, 0.004, decay); }
     d[i] = x / Math.sqrt(ps.length); } return fin(d, 0.75); }
-function zap(r, dur, f0, crack){ const d = mk(dur), n = noiseGen('white', r), hp = BQ('hp'); let ph = 0, mph = 0;
+function zap(r, dur, f0, crack){ const d = mk(dur), n = noiseGen('white', r), hp = BQ('hp'), lpz = BQ('lp'); let ph = 0, mph = 0;
   for (let i = 0; i < d.length; i++){ const t = i / SR; mph += TAU * (70 + r() * 30) / SR; ph += TAU * (f0 * (1 + 0.8 * Math.sin(mph)) * (r() < 0.02 ? 2 : 1)) / SR;
     let x = (((ph / TAU) % 1) * 2 - 1) * 0.6 * env(t, 0.002, dur * 0.4) + hp(n(), 2500, 0.7) * (crack || 0.5) * env(t, 0.001, 0.05) * (r() < 0.4 ? 1 : 0.3);
-    d[i] = sat(x * 1.5); } return fin(d, 0.8); }
+    d[i] = lpz(sat(x * 1.1), 3800, 0.7); } return fin(d, 0.8); }
 // 성대 + 모음 공명 (영웅 신음 · 괴물 울음)
 const VOW = { a: [800, 1150, 2900], o: [450, 800, 2830], u: [325, 700, 2530], e: [400, 1600, 2700], i: [270, 2140, 2950] };
 function voice(r, dur, f0, f1, vow, rough, breath){ const d = mk(dur), n = noiseGen('white', r), F = VOW[vow] || VOW.a, b = [BQ('bp'), BQ('bp'), BQ('bp')]; let ph = 0;
@@ -86,6 +86,17 @@ function amb(r, dur, f, layers){ const d = mk(dur), br = noiseGen('brown', r), p
   for (let i = 0; i < d.length; i++){ const t = i / SR; d[i] = lp(br(), f, 0.8) * 0.8 + bp(pk(), f * 4 * (1 + 0.3 * Math.sin(t * 0.7)), 1.5) * 0.25 * (0.6 + 0.4 * Math.sin(t * 0.37)); }
   if (layers) layers(d); return fin(d, 0.7); }
 function mixInto(a, b, gain, off){ off = Math.floor((off || 0) * SR); for (let i = 0; i < b.length && i + off < a.length; i++) a[i + off] += b[i] * gain; return a; }
+// 부드러운 발소리: 뒤꿈치 + 앞꿈치 두 번의 먹먹한 접지음 (찌그러짐·쇳소리 없음)
+function foot(r, o){ const dur = 0.16, d = mk(dur), pk = noiseGen('pink', r), lp = BQ('lp'), lp2 = BQ('lp'), hp = BQ('hp'); const t2 = 0.035 + r() * 0.02; let ph = 0;
+  for (let i = 0; i < d.length; i++){ const t = i / SR; const e = env(t, 0.003, 0.018) + 0.55 * (t > t2 ? env(t - t2, 0.003, 0.02) : 0);
+    ph += TAU * (o.body || 90) * (1 + 0.4 * Math.exp(-t / 0.01)) / SR;
+    let x = lp(pk(), o.cut || 1400, 0.6) * e * 1.2 + Math.sin(ph) * env(t, 0.004, 0.025) * (o.thump || 0.5);
+    if (o.grit) x += lp2(hp(pk(), 1800, 0.7), 4200, 0.7) * env(t, 0.002, 0.012) * o.grit;
+    d[i] = x; } return fin(d, 0.8); }
+function tick(r, f, dec){ const d = mk(0.06), pk = noiseGen('pink', r), lp = BQ('lp'); let ph = 0;
+  for (let i = 0; i < d.length; i++){ const t = i / SR; ph += TAU * f / SR; d[i] = Math.sin(ph) * env(t, 0.0015, dec || 0.012) * 0.8 + lp(pk(), 2600, 0.7) * env(t, 0.001, 0.006) * 0.4; } return fin(d, 0.7); }
+function swish(r, dur, f0, f1){ const d = mk(dur), pk = noiseGen('pink', r), bp = BQ('bp'), lp = BQ('lp');
+  for (let i = 0; i < d.length; i++){ const t = i / SR, u = t / dur; d[i] = lp(bp(pk(), f0 * Math.pow(f1 / f0, u), 0.9), 5000, 0.7) * swell(t, dur, 0.35); } return fin(d, 0.7); }
 // ---------------- 소리 목록 ----------------
 const S = {
   // 휘두르기 (무기 계열)
@@ -117,9 +128,9 @@ const S = {
   // 영웅 목소리
   heroHurt: r => voice(r, 0.22, 170 + r() * 30, 120, pickR(r, ['u', 'a', 'o']), 0.4, 0.3), heroAtk: r => voice(r, 0.15, 190, 150, 'a', 0.2, 0.35), heroDie: r => voice(r, 1.1, 160, 70, 'o', 0.5, 0.25),
   // 아이템 · UI
-  ui: r => impact(r, { body: 1400, crack: 0.2, drop: 0.2, bodyD: 0.015, dur: 0.05, gain: 0.5 }), uiOpen: r => mixInto(hiss(r, 0.18, 2400, 0.8), impact(r, { body: 500, crack: 0.1, dur: 0.06 }), 0.4),
-  uiClose: r => mixInto(hiss(r, 0.12, 1600, 0.8), impact(r, { body: 380, crack: 0.1, dur: 0.05 }), 0.5), nomana: r => buzz(r, 0.18, 110, 30),
-  pickup: r => impact(r, { body: 700, crack: 0.3, drop: 0.3, bodyD: 0.03, dur: 0.08, gain: 0.6 }), drop: r => impact(r, { body: 140, crack: 0.5, crunch: 0.4, dur: 0.15 }),
+  ui: r => tick(r, 1250, 0.01), uiOpen: r => mixInto(swish(r, 0.16, 700, 1900), tick(r, 640, 0.02), 0.35, 0.02),
+  uiClose: r => mixInto(swish(r, 0.12, 1700, 650), tick(r, 520, 0.02), 0.35, 0.05), nomana: r => mixInto(tick(r, 330, 0.03), tick(r, 247, 0.04), 0.8, 0.07),
+  pickup: r => mixInto(swish(r, 0.1, 900, 2200), tick(r, 880, 0.025), 0.6, 0.03), drop: r => foot(r, { cut: 1300, body: 120, thump: 0.6 }),
   dropWeapon: r => mixInto(impact(r, { body: 210, crack: 0.6, metal: 1400, ringD: 0.18, dur: 0.35 }), impact(r, { body: 260, metal: 1700, ringD: 0.1, dur: 0.2 }), 0.5, 0.11),
   dropArmor: r => mixInto(impact(r, { body: 110, crack: 0.4, crunch: 0.5, dur: 0.25 }), chitter(r, 0.25, 40, 4200), 0.3), dropRing: r => mixInto(chimes(r, 0.4, [3200, 4800], 0.08, 0), chimes(r, 0.3, [3300, 4900], 0.05, 0), 0.6, 0.12),
   dropPotion: r => mixInto(chimes(r, 0.3, [2100, 2900], 0.06, 0), goo(r, 0.2, 700, 2), 0.3), gold: r => { const d = mk(0.5); for (let k = 0; k < 6; k++) mixInto(d, chimes(r, 0.2, [2400 + r() * 2200, 5300 + r() * 1300], 0.04, 0), 0.7, k * 0.045 + r() * 0.02); return fin(d, 0.7); },
@@ -139,9 +150,9 @@ const S = {
   quest: r => brass(r, 2.0, [262, 330, 392, 523, 392, 523], 0.16), unlock: r => mixInto(chimes(r, 1.0, [784, 988, 1175, 1568], 0.35, 0.07), whoosh(r, 0.6, 600, 3000, 2), 0.3),
   death: r => mixInto(pad(r, 2.6, [110, 131, 156], 'u', 0.1), brass(r, 2.6, [392, 330, 262, 196, 131], 0.32), 0.7), victory: r => brass(r, 2.4, [392, 523, 659, 784, 659, 784, 1047], 0.14),
   roar: r => mixInto(voice(r, 1.5, 85, 55, 'a', 0.9, 0.35), boom(r, 1.2, 40), 0.35), bossDie: r => mixInto(voice(r, 2.2, 90, 35, 'o', 0.8, 0.4), boom(r, 2.0, 35), 0.6),
-  step: r => impact(r, { body: 90, crack: 0.3, crackF: 1600, crunch: 0.2, dur: 0.07, gain: 0.5 }), stepStone: r => impact(r, { body: 160, crack: 0.5, crackF: 3500, crunch: 0.2, dur: 0.07, gain: 0.5 }),
-  stepGoo: r => goo(r, 0.12, 300, 1), stepDirt: r => impact(r, { body: 80, crack: 0.25, crackF: 1200, crunch: 0.8, crunchD: 0.05, dur: 0.1, gain: 0.5 }),
-  stepCrystal: r => mixInto(impact(r, { body: 200, crack: 0.4, dur: 0.06 }), chimes(r, 0.15, [3000 + r() * 1500], 0.04, 0), 0.25), jingle: r => chitter(r, 0.14, 50, 4600),
+  step: r => foot(r, { cut: 1200, body: 85 }), stepStone: r => foot(r, { cut: 1700, body: 110, thump: 0.35, grit: 0.12 }),
+  stepGoo: r => mixInto(foot(r, { cut: 700, body: 70, thump: 0.6 }), goo(r, 0.1, 260, 1), 0.18, 0.02), stepDirt: r => foot(r, { cut: 1000, body: 75, thump: 0.45, grit: 0.06 }),
+  stepCrystal: r => mixInto(foot(r, { cut: 1900, body: 120, thump: 0.3, grit: 0.08 }), chimes(r, 0.15, [2600 + r() * 900], 0.04, 0), 0.08), jingle: r => mixInto(tick(r, 2400 + r() * 600, 0.02), tick(r, 3100 + r() * 500, 0.015), 0.5, 0.03),
   // 위치 반복음 · 환경음
   L_fire: r => loopify(crackle(r, 4.2, 22, 1.4)), L_torch: r => loopify(crackle(r, 3.2, 10, 0.6)), L_portal: r => loopify(mixInto(pad(r, 4.2, [110, 165, 222, 331], 'u', 0.3), whoosh(r, 4.2, 300, 700, 0.6), 0.4)),
   L_wp: r => loopify(pad(r, 4.2, [98, 147, 196, 294], 'o', 0.3)), L_gas: r => loopify(hiss(r, 3.6, 1600, 0.8)), L_coil: r => loopify(mixInto(buzz(r, 3.2, 100, 50), zap(r, 3.2, 60, 0.15), 0.2)),
@@ -167,6 +178,13 @@ const PLAN_V = {
   spinner: { aggro: r => mixInto(buzz(r, 0.7, 240, 12), zap(r, 0.3, 300, 0.3), 0.3), atk: r => whoosh(r, 0.4, 800, 4000, 2, true), hurt: r => zap(r, 0.18, 400, 0.8), die: r => mixInto(zap(r, 0.6, 160, 1), boom(r, 0.5, 90), 0.5) }
 };
 for (const p in PLAN_V) for (const k in PLAN_V[p]) S['mv_' + p + '_' + k] = PLAN_V[p][k];
+// 소리별 기본 음량 (모든 샘플이 같은 크기로 정규화되므로 여기서 균형을 잡는다)
+const GAIN = { step: 0.4, stepStone: 0.4, stepGoo: 0.4, stepDirt: 0.42, stepCrystal: 0.4, jingle: 0.18, ui: 0.45, uiOpen: 0.4, uiClose: 0.35, nomana: 0.45, pickup: 0.55, drop: 0.5,
+  swing: 0.55, swingBlade: 0.55, swingHeavy: 0.6, swingBlunt: 0.6, swingDagger: 0.5, swingPole: 0.6, hit: 0.65, hitSlash: 0.65, hitBlunt: 0.65, hitFlesh: 0.62, hitGoo: 0.6, hitChitin: 0.55, hitMetal: 0.5, hitCrack: 0.55,
+  crit: 0.7, block: 0.55, bone: 0.55, spark: 0.5, tesla: 0.5, ltng: 0.65, buzz: 0.4, heroAtk: 0.5, heroHurt: 0.6, gold: 0.6, gas: 0.45, L_coil: 0.5 };
+// 마무리: 고역 부드럽게(쇳소리 제거) + 직류 제거 + 짧은 페이드인(딸깍 방지)
+function polish(d, name){ const loop = name.startsWith('A_') || name.startsWith('L_'), lp = BQ('lp'), lp2 = BQ('lp'), cut = name.startsWith('step') || name === 'drop' ? 5000 : 8500; let dc = 0;
+  for (let i = 0; i < d.length; i++){ dc += (d[i] - dc) * 0.0015; let x = lp2(lp(d[i] - dc, cut, 0.6), cut * 1.2, 0.6); if (!loop && i < 66) x *= i / 66; d[i] = x; } return d; }
 const LIMIT = { ui: 3, step: 2, stepStone: 2, stepGoo: 2, stepDirt: 2, stepCrystal: 2, gold: 2, hit: 5, hitSlash: 5, hitBlunt: 4, hitFlesh: 4, hitGoo: 4, hitChitin: 4, hitMetal: 3, hitCrack: 4, fireBoom: 3, explode: 3 };
 
 function makeSND(OPT, clamp, pick){
@@ -177,20 +195,21 @@ function makeSND(OPT, clamp, pick){
     const gen = S[name]; if (!gen) return null;
     b = [];
     const nv = name.startsWith('A_') || name.startsWith('L_') ? 1 : 3;
-    for (let v = 0; v < nv; v++){ const d = gen(rng(v * 977 + name.length * 131 + name.charCodeAt(0))); const ab = ctx.createBuffer(1, d.length, SR); ab.getChannelData(0).set(d); b.push(ab); }
+    for (let v = 0; v < nv; v++){ const d = polish(gen(rng(v * 977 + name.length * 131 + name.charCodeAt(0))), name); const ab = ctx.createBuffer(1, d.length, SR); ab.getChannelData(0).set(d); b.push(ab); }
     cache.set(name, b); return b;
   }
   function init(){
     if (ctx){ if (ctx.state === 'suspended') ctx.resume(); return; }
     try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return; }
-    const lim = ctx.createDynamicsCompressor(); lim.threshold.value = -8; lim.ratio.value = 10; lim.attack.value = 0.003; lim.release.value = 0.2;
-    master = ctx.createGain(); master.gain.value = 0.9; master.connect(lim); lim.connect(ctx.destination);
+    const lim = ctx.createDynamicsCompressor(); lim.threshold.value = -16; lim.knee.value = 12; lim.ratio.value = 4; lim.attack.value = 0.006; lim.release.value = 0.25;
+    const shelf = ctx.createBiquadFilter(); shelf.type = 'highshelf'; shelf.frequency.value = 5200; shelf.gain.value = -5;
+    master = ctx.createGain(); master.gain.value = 0.8; master.connect(shelf); shelf.connect(lim); lim.connect(ctx.destination);
     sfxG = ctx.createGain(); sfxG.gain.value = OPT.vol; sfxG.connect(master);
     ambG = ctx.createGain(); ambG.gain.value = OPT.vol * 0.55; ambG.connect(master);
     musG = ctx.createGain(); musG.gain.value = OPT.mus * 0.6; musG.connect(master);
     const il = Math.floor(ctx.sampleRate * 2.2), ir = ctx.createBuffer(2, il, ctx.sampleRate);
-    for (let c = 0; c < 2; c++){ const x = ir.getChannelData(c); for (let i = 0; i < il; i++) x[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / il, 3) * (i < 300 ? i / 300 : 1); }
-    rev = ctx.createConvolver(); rev.buffer = ir; revG = ctx.createGain(); revG.gain.value = 0.35; rev.connect(revG); revG.connect(master);
+    for (let c = 0; c < 2; c++){ const x = ir.getChannelData(c); let y = 0; for (let i = 0; i < il; i++){ const k = 0.55 - 0.45 * i / il; y += ((Math.random() * 2 - 1) - y) * k; x[i] = y * Math.pow(1 - i / il, 3.2) * (i < 600 ? i / 600 : 1); } }
+    rev = ctx.createConvolver(); rev.buffer = ir; revG = ctx.createGain(); revG.gain.value = 0.26; rev.connect(revG); revG.connect(master);
     // 자주 쓰는 소리 미리 합성 (첫 재생 끊김 방지)
     const first = ['ui', 'uiOpen', 'uiClose', 'A_town', 'L_fire', 'stepStone', 'swing', 'swingBlade', 'hitSlash', 'hitFlesh', 'hitGoo', 'hit', 'pickup', 'gold', 'fire', 'magic', 'heroHurt'];
     const warm = first.concat(Object.keys(S).filter(n => !first.includes(n)));
@@ -202,7 +221,7 @@ function makeSND(OPT, clamp, pick){
     if (!ctx) return; opt = opt || {};
     if (!S[name]) name = ALIAS[name] || name; if (!S[name]) return;
     const n = active.get(name) || 0; if (n >= (LIMIT[name] || 6)) return;
-    let v = vol == null ? 1 : vol, pan = 0, cut = 20000;
+    let v = (vol == null ? 1 : vol) * (GAIN[name] || 0.72), pan = 0, cut = 20000;
     if (pos && listener){ const dx = pos.x - listener.x, dz = pos.z - listener.z, d = Math.hypot(dx, dz); v *= clamp(1.25 - d / 32, 0, 1); if (v < 0.025) return; pan = clamp((dx - dz) / 26, -0.85, 0.85); cut = clamp(16000 - d * 520, 1200, 16000); }
     const bufs = getBufs(name); if (!bufs) return;
     const t = ctx.currentTime + (opt.delay || 0) + 0.002;

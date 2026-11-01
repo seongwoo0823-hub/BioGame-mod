@@ -183,10 +183,72 @@ def p_tent(M, t, s, col):
 def p_torch(M, t, s):
     M.add(capsule([0, 0, 0], [0, 22 * s, 0], 1.0 * s, 0.8 * s), M_('#4a3420')); M.add(ellipsoid([0, 23 * s, 0], (2.2 * s, 1.2 * s, 2.2 * s)), M_('#5a4a3a'))
     for k in range(3): h = (4 + 2 * math.sin(TAU * t * 2 + k * 2)) * s; M.add(capsule([math.cos(k * 2.1) * s, 24 * s, math.sin(k * 2.1) * s], [math.sin(TAU * t + k) * 0.8 * s, 24 * s + h, 0], 1.5 * s, 0.3 * s), M_('#ff9a3a' if k else '#ffe070', True))
+def slab_disc(M, s, R, col, col2, n=12, y=0.5):
+    # 둥근 판석 바닥: 바깥 판석 고리 + 안쪽 원판 (소품이 땅에 붙어 보이도록)
+    M.add(ellipsoid([0, y * 0.4 * s, 0], (R * s, 0.7 * s, R * s * 0.92)), M_(col2))
+    for k in range(n):
+        a = k / n * TAU; M.add(box([math.cos(a) * (R - 2.2) * s, y * s, math.sin(a) * (R - 2.2) * s * 0.92], rot_y(-a), (1.9 * s, 0.55 * s, (R * 0.26) * s)), M_(col if k % 2 else col2))
 def p_stash(M, t, s):
-    M.add(box([0, 6 * s, 0], np.eye(3), (10 * s, 6 * s, 6 * s)), M_('#5a3a6a'))
-    for x in (-9, 0, 9): M.add(box([x * s, 6 * s, 0], np.eye(3), (1 * s, 6.2 * s, 6.2 * s)), M_(GOLDM))
-    M.add(box([0, 13 * s, 0], np.eye(3), (10.4 * s, 1.8 * s, 6.4 * s)), M_('#6a4a7a')); M.add(ellipsoid([0, 9 * s, 6.3 * s], 1.8 * s), M_('#c890ff', True))
+    # 판석 받침 + 낮은 돌 기단 위의 유물함 (둥근 뚜껑 · 금속 띠 · 빛나는 자물쇠 · 양옆 작은 등불)
+    slab_disc(M, s, 13, '#6e6a62', '#55524c', 14)
+    M.add(box([0, 1.6 * s, 0], np.eye(3), (11.5 * s, 1.4 * s, 7.5 * s)), M_('#5e5a56'))
+    M.add(box([0, 6.5 * s, 0], np.eye(3), (9.5 * s, 3.6 * s, 5.6 * s)), M_('#4a2e5a'))
+    M.add(capsule([-9.2 * s, 10.2 * s, 0], [9.2 * s, 10.2 * s, 0], 5.4 * s), M_('#5a3a6e'))
+    M.add(box([0, 8.6 * s, 0], np.eye(3), (9.8 * s, 0.6 * s, 5.9 * s)), M_('#c89a3a'))
+    for x in (-7.5, 0, 7.5):
+        M.add(box([x * s, 6.5 * s, 0], np.eye(3), (0.8 * s, 3.8 * s, 5.8 * s)), M_('#c89a3a'))
+        M.add(capsule([x * s, 10.2 * s, -0.1 * s], [x * s, 10.3 * s, 0.1 * s], 5.7 * s), M_('#b88a2e'))
+    M.add(box([0, 7.4 * s, 5.8 * s], np.eye(3), (1.8 * s, 2.2 * s, 0.5 * s)), M_('#d8b050'))
+    M.add(ellipsoid([0, 7.6 * s, 6.3 * s], (0.9 + 0.15 * math.sin(TAU * t)) * s), M_('#d8a0ff', True))
+    for x in (-11.5, 11.5):
+        M.add(capsule([x * s, 3 * s, 5 * s], [x * s, 9 * s, 5 * s], 0.6 * s), M_('#3a3036'))
+        M.add(box([x * s, 10 * s, 5 * s], np.eye(3), (1.1 * s, 1.3 * s, 1.1 * s)), M_('#2a2228'))
+        M.add(ellipsoid([x * s, 10 * s, 5 * s], (0.8 + 0.12 * math.sin(TAU * t * 2 + x)) * s), M_('#ffc870', True))
+# ---- 마을 생활 소품 (자연스러운 마을 구성) ----
+def p_barrel(M, t, s):
+    M.add(capsule([0, 1 * s, 0], [0, 11 * s, 0], 4.6 * s, 4.6 * s), M_('#7a5030'))
+    for y in (2.2, 6, 9.8): M.add(ellipsoid([0, y * s, 0], (4.9 * s, 0.55 * s, 4.9 * s)), M_('#4a4448'))
+    M.add(ellipsoid([0, 12.2 * s, 0], (4.0 * s, 0.4 * s, 4.0 * s)), M_('#5a3a22'))
+    M.add(ellipsoid([0, 12.6 * s, 0], (2.6 * s, 0.3 * s, 2.6 * s)), M_('#8aff6a', True))
+def p_crates(M, t, s):
+    for (x, y, z, h, a) in ((-3.5, 0, 0, 4.2, 0.1), (4, 0, 1, 3.6, -0.25), (0.5, 8.4, 0.5, 3.4, 0.35)):
+        R = rot_y(a); M.add(box([x * s, (y + h) * s, z * s], R, (h * s, h * s, h * s)), M_('#8a6038'))
+        for sx in (-1, 1): M.add(box(np.array([x * s, (y + h) * s, z * s]) + R @ np.array([sx * h * 0.85 * s, 0, 0]), R, (0.5 * s, h * 1.02 * s, h * 1.02 * s)), M_('#5a3a20'))
+def p_lamp(M, t, s):
+    M.add(box([0, 0.8 * s, 0], np.eye(3), (2.6 * s, 0.8 * s, 2.6 * s)), M_('#5a5660'))
+    M.add(capsule([0, 1.5 * s, 0], [0, 22 * s, 0], 0.8 * s, 0.6 * s), M_('#3a3440'))
+    M.add(capsule([0, 21 * s, 0], [4 * s, 23 * s, 0], 0.5 * s), M_('#3a3440'))
+    M.add(box([4.5 * s, 19.5 * s, 0], np.eye(3), (1.6 * s, 2.2 * s, 1.6 * s)), M_('#2a2630'))
+    M.add(ellipsoid([4.5 * s, 19.5 * s, 0], (1.2 + 0.15 * math.sin(TAU * t * 2)) * s), M_('#a8ff9a', True))
+def p_bench(M, t, s):
+    M.add(box([0, 4.2 * s, 0], np.eye(3), (9 * s, 0.7 * s, 2.6 * s)), M_('#8a6a44'))
+    M.add(box([0, 8 * s, -2.4 * s], rot_x(-0.15), (9 * s, 1.6 * s, 0.5 * s)), M_('#7a5a38'))
+    for x in (-7, 7): M.add(box([x * s, 2 * s, 0], np.eye(3), (0.9 * s, 2 * s, 2.4 * s)), M_('#4a4448'))
+def p_planter(M, t, s):
+    M.add(ellipsoid([0, 2.4 * s, 0], (6 * s, 2.6 * s, 6 * s)), M_('#6e6a62'))
+    M.add(ellipsoid([0, 4.6 * s, 0], (5.0 * s, 0.6 * s, 5.0 * s)), M_('#3a2a1a'))
+    for k in range(7):
+        a = k * 0.9; h = (6 + (k % 3) * 2.5) * s; M.add(capsule([math.cos(a) * 2 * s, 4.6 * s, math.sin(a) * 2 * s], [math.cos(a) * 4 * s, 4.6 * s + h, math.sin(a) * 4 * s], 1.2 * s, 0.4 * s), M_('#5a9a3a' if k % 2 else '#7ab84a'))
+        M.add(ellipsoid([math.cos(a) * 4 * s, 4.8 * s + h, math.sin(a) * 4 * s], 1.0 * s), M_('#ff9ad8' if k % 3 == 0 else '#c8ff7a', k % 3 == 0))
+def p_signpost(M, t, s):
+    M.add(capsule([0, 0, 0], [0, 20 * s, 0], 0.9 * s), M_('#5a3e24'))
+    for k, (y, a, c) in enumerate(((17, 0.15, '#9a7a50'), (13, -0.6, '#8a6a44'), (9, 0.9, '#9a7a50'))):
+        R = rot_y(a); M.add(box(np.array([0, y * s, 0]) + R @ np.array([4 * s, 0, 0]), R, (4.6 * s, 1.3 * s, 0.4 * s)), M_(c))
+def p_cart(M, t, s):
+    M.add(box([0, 6 * s, 0], np.eye(3), (8 * s, 1 * s, 5 * s)), M_('#7a5634'))
+    for z in (-5, 5): M.add(box([0, 8.5 * s, z * s], np.eye(3), (8 * s, 2.2 * s, 0.4 * s)), M_('#6a4a2c'))
+    for x in (-8, 8): M.add(box([x * s, 8.5 * s, 0], np.eye(3), (0.4 * s, 2.2 * s, 5 * s)), M_('#6a4a2c'))
+    for z in (-5.6, 5.6): M.add(ellipsoid([-1 * s, 4.2 * s, z * s], (4 * s, 4 * s, 0.7 * s)), M_('#4a3420'))
+    for k in range(5): M.add(ellipsoid([(-5 + k * 2.4) * s, 9.5 * s, (-1 + (k % 2) * 2) * s], 2.0 * s), M_('#c8a050' if k % 2 else '#9ac850'))
+    M.add(capsule([8 * s, 6 * s, 0], [16 * s, 2.5 * s, 0], 0.5 * s), M_('#5a3e24'))
+def p_banner(M, t, s):
+    M.add(box([0, 0.8 * s, 0], np.eye(3), (2.4 * s, 0.8 * s, 2.4 * s)), M_('#5a5660'))
+    M.add(capsule([0, 1 * s, 0], [0, 26 * s, 0], 0.6 * s), M_('#4a3a2a'))
+    M.add(capsule([-0.5 * s, 24.5 * s, 0], [7 * s, 24.5 * s, 0], 0.4 * s), M_('#4a3a2a'))
+    for k in range(6):
+        y = (23 - k * 2.4) * s; w = math.sin(TAU * t + k * 0.6) * 0.8 * s
+        M.add(box([3.5 * s, y, w], np.eye(3), (3.2 * s, 1.25 * s, 0.25 * s)), M_('#8a2a3a' if k < 5 else '#c89a3a'))
+    M.add(ellipsoid([3.5 * s, 18.5 * s, 0.6 * s], 1.2 * s), M_('#ffd860', True))
 def p_mosaic(M, t, s, col):
     for k in range(37):
         a = k * 2.4; r_ = math.sqrt(k) * 2.4 * s; M.add(box([math.cos(a) * r_, 0.3 * s, math.sin(a) * r_], rot_y(a), (1.1 * s, 0.3 * s, 1.1 * s)), M_(col if k % 3 else '#e8e0c8'))
@@ -195,7 +257,7 @@ PROPS = {  # 이름: (함수, 월드 크기, 프레임 수, 추가 인자)
     'destructible04_explosive_spore_sac': (p_sac, 2.0, 8, None), 'dungeon02_gothic_archway_door': (p_door, 3.6, 1, None), 'dungeon04_crimson_boss_portal': (p_portal, 3.4, 8, None),
     'town03_blue_waypoint_pad': (p_waypoint, 3.6, 8, None), 'shrine01_angelic_healing_well': (p_well, 2.8, 8, None), 'shrine02_golden_atp_obelisk': (p_obelisk, 2.8, 8, None),
     'town01_dna_helix_campfire': (p_campfire, 3.2, 8, None), 'trap03_poison_gas_vent': (p_gasvent, 2.2, 8, None), 'trap04_neural_tesla_coil': (p_tesla, 2.6, 8, None),
-    'tent0': (p_tent, 5.0, 1, '#6a4a3a'), 'tent1': (p_tent, 5.0, 1, '#4a3a6a'), 'tent2': (p_tent, 5.0, 1, '#6a2a2a'), 'torch': (p_torch, 3.0, 8, None), 'stash': (p_stash, 2.6, 4, None),
+    'tent0': (p_tent, 5.0, 1, '#6a4a3a'), 'tent1': (p_tent, 5.0, 1, '#4a3a6a'), 'tent2': (p_tent, 5.0, 1, '#6a2a2a'), 'torch': (p_torch, 3.0, 8, None), 'stash': (p_stash, 3.2, 4, None),
     'tile03_golden_immune_mosaic': (p_mosaic, 3.6, 1, '#d8a838'), 'tile04_blue_dna_crystal_floor': (p_mosaic, 3.6, 1, '#4a8ad8'),
 }
 
@@ -222,24 +284,41 @@ def p_entrance(M, t, s, ch=0, up=False):
     # 테마 덩굴 · 빛 점
     for k in range(6): a = math.pi * (0.15 + 0.7 * k / 5); M.add(ellipsoid([math.cos(a) * 14 * s, (2 + math.sin(a) * 16.5) * s, 3 * s], 0.9 * s), M_(c['g'], True))
 def p_gate(M, t, s):
+    for k in range(7):   # 문턱 판석 길
+        z = (-6 + k * 2.4) * s; M.add(box([0, 0.4 * s, z], rot_y(0.04 * (k % 3 - 1)), (9.5 * s, 0.45 * s, 1.1 * s)), M_('#6e6a62' if k % 2 else '#5e5a54'))
     for x in (-14, 14):
-        M.add(box([x * s, 14 * s, 0], np.eye(3), (2.6 * s, 14 * s, 2.6 * s)), M_('#6a6470')); M.add(box([x * s, 29 * s, 0], np.eye(3), (3.4 * s, 1.4 * s, 3.4 * s)), M_('#4a4450'))
-        M.add(ellipsoid([x * s, 31.5 * s, 0], 1.8 * s), M_('#ffb050', True))
-        for k in range(5): M.add(box([x * s + (3.5 if x < 0 else -3.5) * s, (24 - k * 3) * s, 2.8 * s + math.sin(t * 6.28 + k * 0.8) * 0.8 * s], np.eye(3), (2.0 * s, 1.5 * s, 0.3 * s)), M_('#8a2a2a' if x < 0 else '#2a3a8a'))
-    M.add(box([0, 27 * s, 0], np.eye(3), (16 * s, 1.6 * s, 2.0 * s)), M_('#7a7480'))
-    for k in range(10): y = (22 + k * 0.6) * s; a = k * 0.7 + t * 6.28; M.add(ellipsoid([math.cos(a) * 2.5 * s, y + 4 * s, 2.4 * s], 0.7 * s), M_('#ffd060' if k % 2 else '#7ad0ff', True))
+        sd = -1 if x < 0 else 1
+        M.add(box([x * s, 2 * s, 0], np.eye(3), (4 * s, 2 * s, 4 * s)), M_('#5a5660'))                 # 받침
+        M.add(box([x * s, 15 * s, 0], np.eye(3), (2.8 * s, 12 * s, 2.8 * s)), M_('#6a6470'))
+        M.add(box([x * s, 28 * s, 0], np.eye(3), (3.6 * s, 1.4 * s, 3.6 * s)), M_('#4a4450'))
+        M.add(box([(x + sd * 9) * s, 5 * s, 0], np.eye(3), (6 * s, 5 * s, 2.2 * s)), M_('#5e5a62'))      # 양옆 낮은 담
+        M.add(box([(x + sd * 9) * s, 10.4 * s, 0], np.eye(3), (6.4 * s, 0.6 * s, 2.6 * s)), M_('#4a4650'))
+        M.add(ellipsoid([x * s, 30.6 * s, 0], (1.6 + 0.2 * math.sin(TAU * t * 2 + x)) * s), M_('#ffb050', True))
+        for k in range(5): M.add(box([x * s - sd * 3.6 * s, (24 - k * 3) * s, 3.0 * s + math.sin(t * TAU + k * 0.8) * 0.7 * s], np.eye(3), (2.0 * s, 1.5 * s, 0.3 * s)), M_('#8a2a2a' if x < 0 else '#2a3a8a'))
+    M.add(box([0, 26.5 * s, 0], np.eye(3), (17 * s, 1.8 * s, 2.2 * s)), M_('#7a7480'))
+    M.add(box([0, 29.4 * s, 0], np.eye(3), (12 * s, 1.1 * s, 1.8 * s)), M_('#6a6470'))
+    M.add(box([0, 26.5 * s, 2.3 * s], np.eye(3), (5 * s, 1.3 * s, 0.3 * s)), M_('#c89a3a'))
+    for k in range(8): a = k * 0.8 + t * TAU; M.add(ellipsoid([math.cos(a) * 2.2 * s, (31.5 + k * 0.5) * s, 0.4 * s], 0.6 * s), M_('#ffd060' if k % 2 else '#7ad0ff', True))
 def p_wpdais(M, t, s, ch=0):
     c = CHC[ch]
-    M.add(ellipsoid([0, 1.2 * s, 0], (16 * s, 1.6 * s, 16 * s)), M_(c['s'])); M.add(ellipsoid([0, 3.0 * s, 0], (12 * s, 1.4 * s, 12 * s)), M_(c['d']))
-    for k in range(12): a = k / 12 * 2 * math.pi; M.add(box([math.cos(a) * 14 * s, 1.6 * s, math.sin(a) * 14 * s], rot_y(-a), (1.6 * s, 1.4 * s, 3.4 * s)), M_(c['s']))
-    for k in range(16):
-        a = k / 16 * 2 * math.pi + t * 0.785; M.add(ellipsoid([math.cos(a) * 8 * s, 4.8 * s, math.sin(a) * 8 * s], 0.9 * s), M_(c['g'], True))
-    for k in range(4):
-        a = k / 4 * 2 * math.pi + 0.785; x = math.cos(a) * 13 * s; z = math.sin(a) * 13 * s
-        M.add(box([x, 8 * s, z], rot_y(a), (1.6 * s, 6 * s, 1.6 * s)), M_(c['s'])); M.add(box([x, 15 * s, z], rot_y(0.785) @ rot_x(0.0), (1.4 * s, 1.4 * s, 1.4 * s)), M_(c['g'], True))
-    M.add(ellipsoid([0, (8 + math.sin(t * 6.28) * 1.2) * s, 0], (2.4 * s, 3.2 * s, 2.4 * s)), M_('#e8f4ff', True))
+    slab_disc(M, s, 18, c['s'], c['d'], 16, 0.6)
+    M.add(ellipsoid([0, 1.4 * s, 0], (13 * s, 1.3 * s, 13 * s * 0.92)), M_(c['s']))       # 1단
+    M.add(ellipsoid([0, 2.6 * s, 0], (9.8 * s, 1.1 * s, 9.8 * s * 0.92)), M_(c['d']))     # 2단
+    for k in range(24):   # 새겨진 빛 고리 (천천히 회전)
+        a = k / 24 * TAU + t * TAU / 24; on = (k + int(t * 8)) % 3 == 0
+        M.add(box([math.cos(a) * 11 * s, 2.6 * s, math.sin(a) * 11 * s], rot_y(-a), (0.5 * s, 0.25 * s, 1.1 * s)), M_(c['g'] if on else c['a'], on))
+    for k in range(6): a = k / 6 * TAU; M.add(box([math.cos(a) * 6 * s, 3.8 * s, math.sin(a) * 6 * s], rot_y(-a), (0.4 * s, 0.2 * s, 2.2 * s)), M_(c['g'], True))
+    for k in range(4):    # 낮은 등불 기둥
+        a = k / 4 * TAU + 0.785; x = math.cos(a) * 15 * s; z = math.sin(a) * 15 * s * 0.92
+        M.add(box([x, 3 * s, z], rot_y(a), (1.3 * s, 3 * s, 1.3 * s)), M_(c['s'])); M.add(box([x, 6.4 * s, z], rot_y(a), (1.7 * s, 0.5 * s, 1.7 * s)), M_(c['d']))
+        M.add(ellipsoid([x, 7.6 * s, z], (0.9 + 0.15 * math.sin(TAU * t + k)) * s), M_(c['g'], True))
+    y = (9 + math.sin(t * TAU) * 1.0) * s   # 떠 있는 결정
+    M.add(ellipsoid([0, y, 0], (1.8 * s, 3.4 * s, 1.8 * s)), M_('#e8f4ff', True))
+    M.add(ellipsoid([0, y, 0], (2.6 * s, 0.4 * s, 2.6 * s)), M_(c['g'], True))
 for _ch in range(5):
     PROPS['exit_down_%d' % (_ch + 1)] = (lambda M, t, s, ch=_ch: p_entrance(M, t, s, ch, False), 4.4, 8, None)
     PROPS['exit_up_%d' % (_ch + 1)] = (lambda M, t, s, ch=_ch: p_entrance(M, t, s, ch, True), 4.4, 8, None)
     PROPS['wp_%d' % (_ch + 1)] = (lambda M, t, s, ch=_ch: p_wpdais(M, t, s, ch), 4.2, 8, None)
-PROPS['gate'] = (p_gate, 5.4, 8, None)
+PROPS['gate'] = (p_gate, 6.0, 8, None)
+PROPS.update({'barrel': (p_barrel, 1.5, 1, None), 'crates': (p_crates, 2.2, 1, None), 'lamp': (p_lamp, 3.0, 4, None), 'bench': (p_bench, 2.2, 1, None),
+  'planter': (p_planter, 2.0, 1, None), 'signpost': (p_signpost, 2.6, 1, None), 'cart': (p_cart, 3.2, 1, None), 'banner': (p_banner, 3.2, 8, None)})
