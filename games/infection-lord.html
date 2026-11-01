@@ -428,6 +428,7 @@ body:not(.mobile) #xpBarD2{display:block}
 #xpBarD2 i{display:block;height:100%;width:0;background:linear-gradient(180deg,#f0d080,#9a7a2a)}
 /* 스킬 아이콘: 직업 이펙트 그림 + 기호 */
 .skico{position:absolute;inset:0;border-radius:inherit;background-image:url(il-assets/vfx.webp);background-size:400% 400%;background-repeat:no-repeat;display:grid;place-items:center;overflow:hidden}
+.skico8{position:absolute;inset:0;border-radius:inherit;background-image:url(il-assets/px/skills8.webp);background-repeat:no-repeat;image-rendering:pixelated;image-rendering:crisp-edges}
 .skico b{position:absolute;right:1px;bottom:0;font-size:.55em;filter:drop-shadow(0 1px 2px #000);font-style:normal}
 .mb .ico{width:26px;height:26px}
 .mb.ic{font-size:0!important}
@@ -846,12 +847,38 @@ SK('p_blink',  { cls: 'plasma', tree: 1, row: 0, col: 2, name: '활동전위 질
   desc: '신경 신호처럼 번개같이 앞으로 내달린다. 빠르게 이동하는 스킬.', bio: '도약 전도 덕분에 신호는 미엘린 마디 사이를 건너뛰며 내달린다.' });
 SK('d_burrow', { cls: 'dend', tree: 1, row: 0, col: 2, name: '균사 잠행', icon: '🕳️', kind: 'teleport', mobility: true, range: 12, mana: L => 6, cd: 0.6,
   desc: '땅속 균사망을 타고 가까운 곳으로 순식간에 이동한다. 빠르게 이동하는 스킬.', bio: '균사망은 숲 전체를 잇는 지하 통신망이다.' });
+/* ---------- 기본기 (마나 생성) : 마나를 쓰지 않고, 쓸 때마다 마나를 채운다 ---------- */
+const PRIM = (o) => Object.assign({ tree: -1, row: 0, col: 0, primary: true, mana: () => 0 }, o);
+SK('m_p_strike', PRIM({ cls: 'macro', name: '나선 타격', icon: '🔨', kind: 'attack', mult: lin(15, 4), gen: [4, 0.07], sfx: 'hitBlunt', ulv: 1,
+  desc: '빠르고 묵직한 한 방. 칠 때마다 마나를 채운다.', bio: '세포는 ATP를 분해할 때 나오는 에너지로 움직인다.' }));
+SK('m_p_cleave', PRIM({ cls: 'macro', name: '효소 휩쓸기', icon: '🪓', kind: 'attack', mult: lin(-10, 3), arc: 2.1, exec: () => 0, gen: [3, 0.06], ulv: 4,
+  desc: '앞쪽 부채꼴의 적을 한꺼번에 휩쓴다. 여러 적에게 좋고, 휘두를 때마다 마나를 채운다.' }));
+SK('m_p_ember', PRIM({ cls: 'macro', name: '열충격 망치', icon: '♨️', kind: 'attack', mult: lin(0, 3), add: { elem: 'fire', dmg: L => [3 + 2 * (L - 1), 6 + 3 * (L - 1)] }, knock: 2, gen: [5, 0.08], sfx: 'hitBlunt', ulv: 9,
+  desc: '달군 망치로 내리쳐 발열 피해를 더하고 적을 밀쳐 낸다. 마나를 많이 채운다.' }));
+SK('t_p_vial', PRIM({ cls: 'tcell', name: '산성 물약', icon: '🧴', kind: 'proj', elem: 'pois', dmg: L => [4 + 3 * (L - 1), 7 + 4.5 * (L - 1)], speed: 20, style: 'acid', gen: [4, 0.07], ulv: 1,
+  desc: '산성 물약을 던져 독소 피해를 준다. 던질 때마다 마나를 채운다.' }));
+SK('t_p_shard', PRIM({ cls: 'tcell', name: '결정 파편', icon: '💠', kind: 'proj', elem: 'cold', count: () => 3, spread: 0.5, dmg: L => [2 + 1.6 * (L - 1), 4 + 2.4 * (L - 1)], speed: 26, style: 'icebolt', gen: [3, 0.06], ulv: 4,
+  desc: '얼음 결정 파편 세 개를 부채꼴로 흩뿌려 적을 둔화시킨다.' }));
+SK('t_p_spark', PRIM({ cls: 'tcell', name: '촉매 불씨', icon: '🧨', kind: 'proj', elem: 'fire', dmg: L => [5 + 3.5 * (L - 1), 8 + 5 * (L - 1)], speed: 18, style: 'firebolt', gen: [5, 0.08], ulv: 9,
+  desc: '불붙은 촉매를 던져 발열 피해를 준다. 마나를 많이 채운다.' }));
+SK('p_p_jab', PRIM({ cls: 'plasma', name: '시냅스 찌르기', icon: '🤺', kind: 'attack', mult: lin(-25, 3), hits: 2, add: { elem: 'ltng', dmg: L => [1 + 1 * (L - 1), 3 + 1.6 * (L - 1)] }, gen: [3, 0.05], ulv: 1,
+  desc: '번개처럼 두 번 찌른다. 한 번 쓸 때마다 마나를 채운다.' }));
+SK('p_p_arc', PRIM({ cls: 'plasma', name: '전류 베기', icon: '🔪', kind: 'attack', mult: lin(-15, 3), arc: 1.7, exec: () => 0, add: { elem: 'ltng', dmg: L => [2 + 1.4 * (L - 1), 4 + 2 * (L - 1)] }, gen: [3, 0.06], ulv: 4,
+  desc: '전류가 흐르는 칼날로 앞쪽 부채꼴을 벤다.' }));
+SK('p_p_pulse', PRIM({ cls: 'plasma', name: '신경 파동탄', icon: '📡', kind: 'proj', elem: 'ltng', dmg: L => [3 + 2.6 * (L - 1), 6 + 3.6 * (L - 1)], pierce: 99, speed: 30, style: 'spark', gen: [5, 0.07], ulv: 9,
+  desc: '일직선으로 꿰뚫는 신경 파동을 쏜다. 멀리 있는 적에게 좋다.' }));
+SK('d_p_spore', PRIM({ cls: 'dend', name: '포자 화살', icon: '🏹', kind: 'proj', elem: 'mag', dmg: L => [4 + 3 * (L - 1), 7 + 4.5 * (L - 1)], speed: 24, style: 'spore', gen: [4, 0.07], ulv: 1,
+  desc: '단단한 포자를 쏘아 마법 피해를 준다. 쏠 때마다 마나를 채운다.' }));
+SK('d_p_frost', PRIM({ cls: 'dend', name: '서리 균사', icon: '🌨️', kind: 'proj', elem: 'cold', dmg: L => [3 + 2.6 * (L - 1), 6 + 3.6 * (L - 1)], speed: 20, style: 'icebolt', gen: [4, 0.07], ulv: 4,
+  desc: '차가운 균사 덩이를 날려 적을 얼어붙게 만든다.' }));
+SK('d_p_leech', PRIM({ cls: 'dend', name: '흡혈 덩굴', icon: '🥀', kind: 'proj', elem: 'pois', dmg: L => [4 + 3 * (L - 1), 6 + 4 * (L - 1)], speed: 19, style: 'spit', leechHit: 0.04, gen: [5, 0.08], ulv: 9,
+  desc: '독 덩굴을 쏘아 피해를 주고, 맞힐 때마다 생명력을 조금 회복한다. 마나를 많이 채운다.' }));
 const SKILL_IDS = Object.keys(SKILLS);
 /* ---- 디아블로 3식 스킬: 레벨로 해금 · 레벨에 맞춰 자동 강화 · 6칸(L R 1~4) · 룬 · 패시브 4칸 ---- */
 const UNLOCK = {};
 (function(){ const LV = [1, 2, 4, 6, 8, 10, 12, 14, 16, 19, 21, 23, 26, 28, 30];
-  for (const c of Object.keys(CLASSES)){ SKILL_IDS.filter(id => SKILLS[id].cls === c && !SKILLS[id].mobility).sort((a, b) => SKILLS[a].row - SKILLS[b].row || SKILLS[a].tree - SKILLS[b].tree).forEach((id, i) => UNLOCK[id] = LV[i] || 30); } })();
-SKILL_IDS.forEach(id => { if (SKILLS[id].mobility) UNLOCK[id] = 3; });
+  for (const c of Object.keys(CLASSES)){ SKILL_IDS.filter(id => SKILLS[id].cls === c && !SKILLS[id].mobility && !SKILLS[id].primary).sort((a, b) => SKILLS[a].row - SKILLS[b].row || SKILLS[a].tree - SKILLS[b].tree).forEach((id, i) => UNLOCK[id] = LV[i] || 30); } })();
+SKILL_IDS.forEach(id => { if (SKILLS[id].mobility) UNLOCK[id] = 3; if (SKILLS[id].primary) UNLOCK[id] = SKILLS[id].ulv; });
 const RUNE_LV = [2, 6, 11, 16, 22];
 const CLASS_ELEM = { macro: 'fire', tcell: 'pois', plasma: 'ltng', dend: 'cold' };
 const RUNE_SETS = {
@@ -918,11 +945,14 @@ function applyRune(p, sk){
 function setMult(sk){ return S && S.setMult && S.setMult[sk.id] || 1; }
 function autoSlot(id){
   if (SKILLS[id].kind === 'passive') return;
+  if (SKILLS[id].primary){ if (!PL.lSkill || PL.lSkill === 'attack') PL.lSkill = id; return; }
   if (Object.values(PL.hot).includes(id) || PL.lSkill === id || PL.rSkill === id) return;
   if (!PL.rSkill || PL.rSkill === 'attack'){ PL.rSkill = id; return; }
   for (const k of ['1', '2', '3', '4']) if (!PL.hot[k]){ PL.hot[k] = id; logMsg('<span style="color:#e8d49a">' + SKILLS[id].name + '</span> → ' + k + '번 칸'); return; }
 }
-const ATTACK = { id: 'attack', name: '기본 공격', icon: '⚔️', kind: 'attack', mana: () => 0, mult: () => 0, desc: '장착한 무기로 공격한다.' };
+const ATTACK = { id: 'attack', name: '기본 공격', icon: '⚔️', kind: 'attack', mana: () => 0, mult: () => 0, gen: [2, 0.04], desc: '장착한 무기로 공격한다. 칠 때마다 마나를 조금 채운다.' };
+// 기본기 마나 생성량 (고정 + 최대 마나 비율)
+function genMana(sk){ return sk && sk.gen ? Math.round((sk.gen[0] + sk.gen[1] * (S ? S.maxMp : 0)) * 10) / 10 : 0; }
 
 /* ===================== 몬스터 데이터 (일반 55 + 보스 10, 에셋 팩 스프라이트) ===================== */
 // M(id, 장, 이름, 계열, 색1(피·잔해), 색2(빛), 크기, AI, 생명력, [최소,최대 피해], 속도, 원소, 경험치, 추가)
@@ -3287,7 +3317,8 @@ function useSkill(id, tx, tz, tgt){
   if (sk !== ATTACK && sk.kind !== 'attack') FX.pack(clsSpr(), 0, HERO.x, HERO.z, 3.4, { flat: true, dur: dur + 0.35, spin: 1.5, follow: HERO });
   return true;
 }
-function execSkill(b){ CUR_SK = b.sk; try { execSkill0(b); runeAfter(b); } finally { CUR_SK = null; } }
+function execSkill(b){ CUR_SK = b.sk; try { execSkill0(b); runeAfter(b); } finally { CUR_SK = null; }
+  const g = genMana(b.sk); if (g > 0 && PL.mp < S.maxMp){ PL.mp = Math.min(S.maxMp, PL.mp + g); G.uiDirty = true; if (Math.random() < 0.35) emit(PADD, HERO.x, 1.4, HERO.z, 0, 2, 0, 0.3, 0.5, 0.08, '#6a8aff', 0, 0); } }
 const rR = (sk, L) => sk.r(L) * ((runeDef(sk) || {}).rmul || 1);
 function runeArea(x, z, el, sk, L, r){ const pk = sk.dmg ? spellPkt(sk, L) : weaponPkt(0, 60); let t = 0; for (const e of ['phys', 'fire', 'cold', 'ltng', 'pois', 'mag']) t += pk[e] || 0;
   addArea({ x, z, r: r || 2.6, dur: 3.5, elem: el, dps: t * 0.35, owner: 'hero', style: el === 'fire' ? 'burn' : 'pool' }); }
@@ -3342,7 +3373,7 @@ function execSkill0(b){
         const aa = a + (n > 1 ? (k / (n - 1) - 0.5) * spread : 0) + (sk.jitter ? (Math.random() - 0.5) * 0.3 : 0);
         let pkt, expPkt = null;
         if (sk.fromWeapon){ pkt = weaponPkt(0, sk.mult(L)); if (sk.add){ const ad = sk.add.dmg(L); const v = roll(ad); if (sk.explode) expPkt = { [sk.add.elem]: v * (1 + synPct(sk) / 100) * (1 + elemPct(sk.add.elem) / 100), freeze: sk.freeze }; else pkt[sk.add.elem] = (pkt[sk.add.elem] || 0) + v; } }
-        else pkt = spellPkt(sk, L);
+        else { pkt = spellPkt(sk, L); if (sk.leechHit) pkt.rleech = sk.leechHit; }
         spawnProj({ x: hx + Math.sin(aa) * 0.6, z: hz + Math.cos(aa) * 0.6, y: 1.15, dx: Math.sin(aa), dz: Math.cos(aa), speed: sk.speed || 20, owner: 'hero', pkt, expPkt: expPkt || pkt, style: RD.el ? EL_STYLE[RD.el] : sk.style || 'bolt', elem: RD.el || (sk.add ? sk.add.elem : el || 'phys'), life: sk.speed > 25 ? 0.9 : 1.3, pierce: RD.pierce ? 99 : sk.pierce || 0, explode: RD.explode || sk.explode || 0, homing: sk.homing, chillHit: sk.chill, freeze: sk.freeze, jitter: sk.jitter });
       }
       SND.play(sk.fromWeapon ? 'bow' : el === 'fire' ? 'fire' : el === 'cold' ? 'cold' : el === 'ltng' ? 'ltng' : el === 'pois' ? 'pois' : 'magic', 0.55);
@@ -3525,11 +3556,12 @@ function updHero(dt){
   if (H.stun > 0){ finishHero(dt, false); return; }
   // 상호작용 대상으로 걷기
   const goal = H.interact || H.pickup;
-  if (goal){ const d = Math.hypot(goal.x - H.x, goal.z - H.z); if (d < (goal.r || 1) + 0.7){ H.path = null; H.dest = null; if (H.interact){ const o = H.interact; H.interact = null; doInteract(o); } else { const it = H.pickup; H.pickup = null; pickupGround(it); } } }
+  if (goal && !H.path && Math.hypot(goal.x - H.x, goal.z - H.z) >= (goal.r || 1) + 0.7){ if ((H.goalWait = (H.goalWait || 0) + dt) > 0.25){ H.goalWait = 0; const g = goal; H.interact = H.pickup = null; const p = findPath(G.lv, H.x, H.z, g.x, g.z); if (p && p.length) { H.path = p; if (g.it) H.pickup = g; else H.interact = g; H.goalTry = (H.goalTry || 0) + 1; if (H.goalTry > 3){ H.goalTry = 0; H.path = null; H.interact = H.pickup = null; } } } } else H.goalWait = 0;
+  if (goal){ const d = Math.hypot(goal.x - H.x, goal.z - H.z); if (d < (goal.r || 1) + 0.7){ H.goalTry = 0; H.path = null; H.dest = null; if (H.interact){ const o = H.interact; H.interact = null; doInteract(o); } else { const it = H.pickup; H.pickup = null; pickupGround(it); } } }
   // 이동
   if (H.path && H.path.length){
     const [tx, tz] = H.path[0], dx = tx - H.x, dz = tz - H.z, d = Math.hypot(dx, dz), sp = S.speed * slowF * dt;
-    if (d <= sp + 0.02){ if (walkable(G.lv, tx, tz, 0.3)){ H.x = tx; H.z = tz; } H.path.shift(); }
+    if (d <= sp + 0.02){ if (walkable(G.lv, tx, tz, 0.35)){ H.x = tx; H.z = tz; } H.path.shift(); }
     else { const nx = H.x + dx / d * sp, nz = H.z + dz / d * sp; let ok = false; if (walkable(G.lv, nx, H.z, 0.35)){ H.x = nx; ok = true; } if (walkable(G.lv, H.x, nz, 0.35)){ H.z = nz; ok = true; } if (!ok){ const g = H.path[H.path.length - 1]; if (!H.repath){ H.repath = true; const p2 = findPath(G.lv, H.x, H.z, g[0], g[1], true); H.path = p2 && p2.length ? p2 : null; } else H.path = null; } H.face = Math.atan2(dx, dz); }
     moving = true;
     if (H.path && !H.path.length) H.path = null;
@@ -3538,7 +3570,7 @@ function updHero(dt){
 }
 // 벽 속에 끼었을 때(도약 착지·밀려남 등) 가장 가까운 바닥으로 빼낸다
 function unstickHero(){
-  const H = HERO; if (H.leap || walkable(G.lv, H.x, H.z, 0.3)) return;
+  const H = HERO; if (H.leap || walkable(G.lv, H.x, H.z, 0.35)) return;
   const ci = w2c(H.x), cj = w2c(H.z);
   for (let r = 0; r < 12; r++){ let best = null, bd = 1e9;
     for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++){ if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; const x = cx2w(ci + dx), z = cx2w(cj + dy); if (!walkable(G.lv, x, z, 0.35)) continue; const d = Math.hypot(x - H.x, z - H.z); if (d < bd){ bd = d; best = [x, z]; } }
@@ -3746,7 +3778,8 @@ function itemColor(it){ if (it.gold) return '#e8d49a'; if (it.pot) return POTION
 function itemLabel(it){ if (it.gold) return it.gold + ' 금화'; if (it.pot) return POTIONS[it.pot].n; return it.nm; }
 function dropAt(it, x, z, quiet){
   const lv = G.lv; let px = x, pz = z;
-  for (let t = 0; t < 12; t++){ const a = Math.random() * TAU, r = 0.4 + Math.random() * 1.4; const nx = x + Math.cos(a) * r, nz = z + Math.sin(a) * r; if (walkable(lv, nx, nz, 0.2)){ px = nx; pz = nz; break; } }
+  let ok = false; for (let t = 0; t < 16; t++){ const a = Math.random() * TAU, r = 0.6 + Math.random() * 1.6; const nx = x + Math.cos(a) * r, nz = z + Math.sin(a) * r; if (walkable(lv, nx, nz, 0.45)){ px = nx; pz = nz; ok = true; break; } }
+  if (!ok){ const ci = w2c(x), cj = w2c(z); outer: for (let r = 0; r < 8; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++){ const nx = cx2w(ci + dx), nz = cx2w(cj + dy); if (walkable(lv, nx, nz, 0.45)){ px = nx; pz = nz; break outer; } } }
   const g = new THREE.Group();
   if (it.gold){ const m = smat('#e8c050', { m: 0.9, r: 0.3, em: '#5a4000', ei: 0.3 }); for (let k = 0; k < Math.min(6, 2 + it.gold / 40); k++) cyl(0.12, 0.12, 0.04, m, (Math.random() - 0.5) * 0.3, 0.03 + k * 0.035, (Math.random() - 0.5) * 0.3, g, 10); }
   else { const col = itemColor(it); const ix = iconIndex(it), e8 = icon8(it); const Sp = e8 && ATL.items8 ? makeSprite('items8', it.pot ? 1.0 : e8[3] > 48 ? 1.6 : 1.2, 0.5, { flat: true }) : makeSprite('icons', it.pot ? 1.0 : 1.35, 0.5, { flat: true }); if (e8 && ATL.items8){ Sp.ax = e8[2] / e8[3]; Sp.setRect(e8[0], e8[1], e8[2], e8[3]); Sp.layout(); } else Sp.setFrame(ix % 16, Math.floor(ix / 16)); Sp.hold.rotation.x = -Math.PI / 2 + 0.75; Sp.hold.position.y = 0.35; Sp.mesh.position.set(0, -Sp.size / 2, 0); Sp.mat.uniforms.lit.value.setRGB(1.1, 1.1, 1.1); g.add(Sp.g); g.userData.spr = Sp;
@@ -3782,10 +3815,13 @@ function addToInv(it){
   const sp = findSpace(PL.inv, INV_W, INV_H, itemSize(it)); if (!sp) return false;
   it.x = sp[0]; it.y = sp[1]; PL.inv.push(it); return true;
 }
+// 소지품에 넣을 수 있는가 (금화는 항상)
+function canTake(it){ return !!(it.gold || (it.pot && PL.inv.some(o => o.pot === it.pot && (o.n || 1) < POT_STACK)) || findSpace(PL.inv, INV_W, INV_H, itemSize(it))); }
+function invFullMsg(){ if ((G.time || 0) - (G.fullT || -9) > 2){ G.fullT = G.time || 0; toast('소지품이 가득 찼습니다'); SND.play('nomana', 0.5); } }
 function pickupGround(gi){
   const lv = G.lv; const i = lv.items.indexOf(gi); if (i < 0) return;
   if (gi.it.gold){ PL.gold += gi.it.gold; SND.play('gold', 0.7); floatNum(gi.x, 1, gi.z, '+' + gi.it.gold, '#e8d49a'); }
-  else if (!addToInv(gi.it)){ toast('소지품이 가득 찼습니다'); SND.play('nomana', 0.5); return; }
+  else if (!addToInv(gi.it)){ invFullMsg(); return; }
   else { SND.play(itemSnd(gi.it, 'pick'), 0.6); if (gi.it.rar !== 'normal' && !gi.it.pot) logMsg('<span style="color:' + RARHEX[gi.it.rar] + '">' + esc(gi.it.nm) + '</span> 획득'); }
   lv.root.remove(gi.mesh); freeMesh(gi.mesh); if (gi.lab) gi.lab.remove(); lv.items.splice(i, 1); G.uiDirty = true;
 }
@@ -4190,7 +4226,9 @@ function skillLines(sk, L){
   if (sk.count && sk.kind !== 'summon') o.push('발사 수: ' + sk.count(L));
   if (sk.chain) o.push('연쇄 횟수: ' + (typeof sk.chain === 'function' ? sk.chain(L) : sk.chain));
   if (sk.heal) o.push('입힌 피해의 ' + sk.heal(L) + '% 생명력 회복');
-  if (sk.exec) o.push('생명력 ' + Math.round(sk.exec(L)) + '% 이하 일반 적 즉시 소화');
+  if (sk.exec && sk.exec(L) > 0) o.push('생명력 ' + Math.round(sk.exec(L)) + '% 이하 일반 적 즉시 소화');
+  if (sk.arc && sk.primary) o.push('부채꼴 범위 공격');
+  if (sk.leechHit) o.push('입힌 피해의 ' + Math.round(sk.leechHit * 100) + '% 생명력 회복');
   if (sk.r && sk.kind !== 'orbit') o.push('반경: ' + fmt(sk.r(L)) + 'm');
   if (sk.dur && sk.kind !== 'whirl' && sk.kind !== 'wall' && sk.kind !== 'storm') o.push('지속 시간: ' + fmt(typeof sk.dur === 'function' ? sk.dur(L) : sk.dur) + '초');
   if (sk.aura) o.push('주변 초당 발열 피해: ' + fmt(sk.aura.dps(L)));
@@ -4213,6 +4251,7 @@ function skillTip(sk){
   h += '<div style="color:#8a7d63;margin-top:3px">해금 레벨 ' + UNLOCK[sk.id] + ' · 레벨이 오르면 자동으로 강해집니다' + (runeOf(sk.id) ? ' · 룬: ' + runeList(sk.id)[runeOf(sk.id) - 1].n : '') + '</div>';
   if (Le > 0){ h += '<div style="margin-top:5px;color:#e8d49a">현재 랭크 ' + Le + (b ? ' (+' + b + ' 아이템)' : '') + '</div>' + skillLines(sk, Le).map(t => '<div>' + esc(t) + '</div>').join(''); }
   if (!skillUnlocked(sk.id)){ h += '<div class="nx" style="margin-top:5px">해금 시</div>' + skillLines(sk, 1).map(t => '<div class="nx">' + esc(t) + '</div>').join(''); }
+  if (sk.gen) h += '<div style="color:#7a9aff;margin-top:4px">마나 생성: 쓸 때마다 +' + genMana(sk) + ' (마나 소모 없음)</div>';
   if (sk.syn && sk.syn.length) h += '<div style="color:#c9a0ff;margin-top:5px">연계: ' + sk.syn.map(([id, p]) => SKILLS[id].name + ' 랭크당 +' + p + '%').join(', ') + ' (현재 +' + synPct(sk) + '%)</div>';
   if (sk.bio) h += '<div class="lore" style="color:#a9c48a">🔬 ' + esc(sk.bio) + '</div>';
   h += '<div class="hint">' + (skillUnlocked(sk.id) ? '스킬 창(T)에서 원하는 칸에 넣어 사용하세요' : '레벨 ' + UNLOCK[sk.id] + '에 해금') + '</div>';
@@ -4242,7 +4281,7 @@ function renderSkills(){
   const cur = slotGet(G.skSel);
   const pick = document.createElement('div'); pick.className = 'd3pick';
   pick.innerHTML = '<div class="hd">' + SLOT_NM[G.skSel] + ' 칸에 넣을 스킬</div>';
-  const groups = [['기본', ['attack']]].concat(C.trees.map((tn, ti) => [tn, SKILL_IDS.filter(id => SKILLS[id].cls === PL.cls && SKILLS[id].tree === ti && SKILLS[id].kind !== 'passive').sort((a, b) => UNLOCK[a] - UNLOCK[b])]));
+  const groups = [['기본기 (마나 생성)', ['attack'].concat(SKILL_IDS.filter(id => SKILLS[id].cls === PL.cls && SKILLS[id].primary).sort((a, b) => UNLOCK[a] - UNLOCK[b]))]].concat(C.trees.map((tn, ti) => [tn, SKILL_IDS.filter(id => SKILLS[id].cls === PL.cls && SKILLS[id].tree === ti && SKILLS[id].kind !== 'passive').sort((a, b) => UNLOCK[a] - UNLOCK[b])]));
   groups.forEach(([gn, ids]) => { if (!ids.length) return; const row = document.createElement('div'); row.className = 'grp'; row.innerHTML = '<small>' + esc(gn) + '</small>';
     ids.forEach(id => { const sk = skillOf(id), ok = skillUnlocked(id); const d = document.createElement('div'); d.className = 'opt' + (cur === id ? ' on' : '') + (ok ? '' : ' lock');
       d.innerHTML = skIcon(id) + (ok ? '' : '<em>Lv ' + UNLOCK[id] + '</em>');
@@ -4385,6 +4424,8 @@ $('#bRevive').onclick = revive;
 const SK_STAGE = { attack: 1, whirl: 1, leap: 2, dash: 1, proj: 1, strafe: 1, nova: 3, meteor: 2, storm: 2, wall: 2, buff: 0, shout: 0, passive: 0, trap: 2, summon: 0, curse: 0, teleport: 3, orbit: 3, corpse: 3, armor: 0, static: 3 };
 function skIcon(id){
   const sk = skillOf(id); if (!sk) return '';
+  const K = IM.sk8; if (K && K.ix[id] != null){ const i = K.ix[id], c = K.cols, r = Math.ceil(Object.keys(K.ix).length / c);   // 스킬마다 고유한 도트 아이콘
+    return '<span class="skico8" style="background-size:' + c * 100 + '% ' + r * 100 + '%;background-position:' + ((i % c) / (c - 1) * 100) + '% ' + (Math.floor(i / c) / (r - 1) * 100) + '%"></span>'; }
   if (id === 'attack' || !sk.cls) return '<span class="skico" style="background:radial-gradient(circle,#3a2a40,#120a18)"><b style="font-size:.8em;position:static">' + sk.icon + '</b></span>';
   const base = (IM.vfx || {})[CLASSES[sk.cls].spr] || 0, st = sk.row === 4 ? 3 : (SK_STAGE[sk.kind] != null ? SK_STAGE[sk.kind] : 1), ix = base + st;
   const hue = ((sk.tree * 17 + sk.row * 7 + sk.col * 5) % 24) - 12;
@@ -4620,7 +4661,7 @@ function updHover(){
   let best = null, bd = 1e9; const mx = G.mouse.x, my = G.mouse.y, k = innerHeight / 900;
   for (const m of G.lv.mons){ if (!m.alive || !m.R || !m.R.g.visible) continue; if (Math.abs(m.x - HERO.x) > 30 || Math.abs(m.z - HERO.z) > 30) continue; const [sx, sy] = toScreen(m.x, m.R.h * 0.55 + m.R.flyH + (m.jumpY || 0), m.z); const d = Math.hypot(sx - mx, sy - my), rad = Math.max(26, m.r * 70) * k * 1.2; if (d < rad && d < bd){ bd = d; best = { kind: 'mon', o: m }; } }
   if (!best) for (const o of G.lv.objs){ if (o.used && o.type !== 'shrine') continue; if (!['npc', 'chest', 'pod', 'shrine', 'exit', 'wp', 'stash', 'tp'].includes(o.type)) continue; const [sx, sy] = toScreen(o.x, 1, o.z); const d = Math.hypot(sx - mx, sy - my); if (d < 42 * k && d < bd){ bd = d; best = { kind: 'obj', o }; } }
-  if (!best) for (const gi of G.lv.items){ const [sx, sy] = toScreen(gi.x, 0.3, gi.z); const d = Math.hypot(sx - mx, sy - my); if (d < 22 * k && d < bd){ bd = d; best = { kind: 'item', o: gi }; } }
+  if (!best) for (const gi of G.lv.items){ if (!canTake(gi.it)) continue; const [sx, sy] = toScreen(gi.x, 0.3, gi.z); const d = Math.hypot(sx - mx, sy - my); if (d < 22 * k && d < bd){ bd = d; best = { kind: 'item', o: gi }; } }
   if (G.hoverItem) best = { kind: 'item', o: G.hoverItem };
   G.hover = best;
   document.body.style.cursor = best ? 'pointer' : '';
@@ -4754,7 +4795,7 @@ function newChar(cls, name, hc){
   p.eq.weapon = mkItem(C.start.weapon, 1, 'normal');
   if (C.start.off) p.eq.off = mkItem(C.start.off, 1, 'normal');
   for (const k in p.eq) p.eq[k].req = 1;
-  p.v4 = 1;
+  p.v4 = 1; p.v5 = 1;
   syncSkills(); SKILL_IDS.filter(id => SKILLS[id].cls === cls && UNLOCK[id] <= 1).forEach(autoSlot);
   return p;
 }
@@ -4846,6 +4887,7 @@ function startGame(p){
   if (!p){ const c = CHARS[SEL.sel]; if (!c) return; p = JSON.parse(JSON.stringify(c)); }
   PL = p; PL.belt = (PL.belt || []).filter(Boolean);
   PL.hot = PL.hot || {}; PL.prog = PL.prog || []; PL.wps = PL.wps || [];
+  if (!PL.v5){ PL.v5 = 1; if (!PL.lSkill || PL.lSkill === 'attack'){ const pid = SKILL_IDS.find(id => SKILLS[id].cls === PL.cls && SKILLS[id].primary); if (pid) PL.lSkill = pid; } }   // 기본기(마나 생성) 도입
   if (!PL.v3){ // 디아블로 3 방식으로 전환
     PL.v3 = 1; const old = PL.hot; PL.hot = { 1: old.Q || null, 2: old.W || null, 3: old.E || null, 4: old.R || null };
     PL.runes = PL.runes || {}; PL.passives = SKILL_IDS.filter(id => SKILLS[id].cls === PL.cls && SKILLS[id].kind === 'passive' && PL.sk && PL.sk[id]).slice(0, PASSIVE_LV.filter(l => PL.lvl >= l).length);
@@ -4908,7 +4950,9 @@ function updLabels(){
     const show = d < (G.alt ? 32 : 12) && gi.t > 0.35;
     if (!show){ if (gi.lab) gi.lab.style.display = 'none'; continue; }
     if (!gi.lab){ const e = document.createElement('div'); e.className = 'glabel'; e.textContent = itemLabel(it); e.style.color = itemColor(it); if (it.rar === 'unique') e.style.borderColor = '#7a5a2a';
-      e.addEventListener('mousedown', ev => { ev.stopPropagation(); if (ev.button !== 0 || HERO.dead) return; SND.init(); HERO.interact = null; HERO.pickup = gi; moveHeroTo(gi.x, gi.z); });
+      e.addEventListener('mousedown', ev => { ev.stopPropagation(); if (ev.button !== 0 || HERO.dead || G.paused) return; SND.init(); HERO.interact = null;
+        if (!canTake(gi.it)){ invFullMsg(); HERO.pickup = null; G.mouse.x = ev.clientX; G.mouse.y = ev.clientY; mouseWorld(); moveHeroTo(G.mouse.wx, G.mouse.wz); return; }
+        HERO.pickup = gi; moveHeroTo(gi.x, gi.z); });
       e.addEventListener('mouseenter', ev => { G.hoverItem = gi; if (!it.gold) showTip(itemTip(it), ev.clientX, ev.clientY); }); e.addEventListener('mouseleave', () => { G.hoverItem = null; hideTip(); });
       L.appendChild(e); gi.lab = e; }
     let [sx, sy, sz] = toScreen(gi.x, 0.45, gi.z); if (sz > 1){ gi.lab.style.display = 'none'; continue; }
