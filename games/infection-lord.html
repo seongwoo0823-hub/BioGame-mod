@@ -1452,13 +1452,13 @@ function loadAtlases(onProg){
     img.src = ADIR + ATL_FILES[k];
   })));
 }
-if (HERO8){ delete ATL_FILES.mon_c1; delete ATL_FILES.boss_c1; ATL_FILES.mon8_c1 = 'mon8_c1.webp'; ATL_FILES.boss8_c1 = 'boss8_c1.webp'; }
+if (HERO8){ delete ATL_FILES.mon_c1; delete ATL_FILES.boss_c1; Object.assign(ATL_FILES, { mon8_c1: 'mon8_c1.webp', boss8_c1: 'boss8_c1.webp', props8: 'props8.webp', npc8: 'npc8.webp', hero_merc: 'hero_merc.webp', sum8: 'sum8.webp', deco8_c1: 'deco8_c1.webp' }); }
 const M8 = (HERO8 && IM.mon8) || null;   // 몬스터·보스 방향별 도트 시트 정보
-function gridOf(key){ if (key.startsWith('mon8_c') || key.startsWith('boss8_c')) return [1, 1, 1]; return key.startsWith('hero_') ? ATL_GRID.hero : key.startsWith('mon_c') ? ATL_GRID.monc : key.startsWith('boss_c') ? ATL_GRID.bossc : ATL_GRID[key]; }
+function gridOf(key){ if (key.startsWith('mon8_c') || key.startsWith('boss8_c') || key === 'props8' || key === 'sum8' || key.startsWith('deco8_c')) return [1, 1, 1]; if (key === 'npc8') return [16, 40, 88]; return key.startsWith('hero_') ? ATL_GRID.hero : key.startsWith('mon_c') ? ATL_GRID.monc : key.startsWith('boss_c') ? ATL_GRID.bossc : ATL_GRID[key]; }
 // 장별 몬스터·보스 동작 아틀라스: 필요할 때 불러오고, 최근 두 장만 GPU에 남긴다
 const CH_LOAD = {}, CH_LRU = [];
 function texOf(img){ const t = new THREE.Texture(img); t.needsUpdate = true; t.minFilter = THREE.LinearFilter; t.magFilter = THREE.LinearFilter; t.generateMipmaps = false; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return t; }
-const CH_KEYS = M8 ? ['mon8_c', 'boss8_c'] : ['mon_c', 'boss_c'];
+const CH_KEYS = M8 ? ['mon8_c', 'boss8_c', 'deco8_c'] : ['mon_c', 'boss_c'];
 function chapterAtlas(ch){
   if (!(ch >= 1 && ch <= 5)) return Promise.resolve();
   const i = CH_LRU.indexOf(ch); if (i >= 0) CH_LRU.splice(i, 1); CH_LRU.push(ch);
@@ -1517,6 +1517,7 @@ function updSprites(){
     if (!S.g.parent || (S.owner && S.owner !== G.lv) || !S.g.visible) continue;
     if (relayout) S.layout();
     if (S.arow != null) S.setFrame(Math.floor(G.time * 9 + S.aph) % 8, S.arow);
+    else if (S.p8){ const e = S.p8, f = S.p8hold != null ? S.p8hold : e.n > 1 && e.n !== 2 ? Math.floor(G.time * 8 + S.aph) % e.n : 0; S.setPx(e.x + f * e.c, e.y, e.c); }
     S.g.getWorldPosition(_wp);
     S.hold.rotation.y = Math.atan2(cp.x - _wp.x, cp.z - _wp.z) - (S.g.parent ? S.g.parent.rotation.y : 0);
     if (!S.noLight) lightAt(_wp.x, _wp.z, S.mat.uniforms.lit.value);
@@ -1539,6 +1540,11 @@ function equipHero(H, eq){ H.wpnBase = eq && eq.weapon ? BASES[eq.weapon.b] : nu
 function animHero(H, dt, moving, spd){
   const S = H.spr; if (!S) return;
   H.t += dt;
+  if (H.npc8 != null){ // 마을 NPC: 가까이 오면 영웅을 바라보며 손짓
+    const near = HERO && G.lv && Math.hypot(HERO.x - H.root.position.x, HERO.z - H.root.position.z) < 7;
+    if (near) H.face = Math.atan2(HERO.x - H.root.position.x, HERO.z - H.root.position.z);
+    else { camera.getWorldDirection(_cd); H.face = lerpAng(H.face || 0, Math.atan2(-_cd.x, -_cd.z) + 0.6, Math.min(1, dt * 2)); }
+    const [rd, fl] = DIR5[heroDir8(H.face)]; S.setFrame((near ? 8 : 0) + Math.floor(H.t * 7) % 8, H.npc8 * 5 + rd); S.setFlip(fl); return; }
   if (H.npc){ S.setFrame(Math.floor(H.t * 7) % 8, H.npcRow); S.setFlip(!!H.flip); return; }
   if (HERO8) return animHero8(H, dt, moving, spd);
   if (H.dead > 0){ H.dead = Math.min(1, H.dead + dt * 1.3); S.setFrame(Math.min(9, Math.floor(H.dead * 10)), SPR_STATES.death); return; }
@@ -1580,6 +1586,7 @@ function animHero8(H, dt, moving, spd){
 function heroAct(H, act, spd){ H.act = act; H.actT = 0; H.actSpd = spd || 3; }
 const NPC_ROW = { elder: 0, shop: 1, alch: 2, heal: 3, vault: 4, merc: 5, seer: 6, archon: 7 };
 function buildNPC(kind){
+  if (HERO8 && ATL.npc8 && IM.npc8){ const i = Math.max(0, IM.npc8.order.indexOf(kind)), S = makeSprite('npc8', 3.15, IM.npc8.foot / IM.npc8.c, { shadow: 0.55 }); return { root: S.g, spr: S, npc: true, npc8: i, t: Math.random() * 4, flip: false, act: null, face: 0 }; }
   const row = NPC_ROW[kind] != null ? NPC_ROW[kind] : 0, meta = (IM.npc || [])[row] || { foot: 0.9 };
   const S = makeSprite('npc', 2.7, meta.foot, { shadow: 0.55 });
   return { root: S.g, spr: S, npc: true, npcRow: row, t: Math.random() * 4, flip: false, act: null };
@@ -1784,6 +1791,7 @@ function disposeLevel(lv){
   lv.root.traverse(o => { if (o.isInstancedMesh) o.dispose && o.dispose(); });
   lv.root.traverse(o => { if (o.userData && o.userData.spr) disposeSprite(o.userData.spr); });
   if (lv.floorMap){ lv.floorMap.dispose(); }
+  (lv.deco8 || []).forEach(d => { d.m.geometry.dispose(); d.mat.dispose(); });
   (lv.labels || []).forEach(l => l.el && l.el.remove());
   lv.objs.forEach(o => o.lab && o.lab.remove());
   lv.items.forEach(it => it.lab && it.lab.remove());
@@ -1890,11 +1898,66 @@ function randNear(lv, i, j, rMin, rMax){
   return [i, j];
 }
 // 테마별 장식 (인스턴싱)
+/* ---- 도트 장식: 장별 시트를 한 번의 그리기로 (인스턴스 빌보드 + 바닥 데칼) ---- */
+const DECO_VS = 'attribute vec3 iPos; attribute vec4 iRect; attribute vec4 iOpt; attribute vec3 iAnim;\nuniform vec3 camR; uniform float sprY; uniform float time; uniform vec2 texSize; varying vec2 vUv; varying float vGlow;\n#include <fog_pars_vertex>\n' +
+  'void main(){ float size = iOpt.x, foot = iOpt.y, isFlat = iOpt.w; vec3 wp;\n' +
+  ' if (isFlat > 0.5){ float c = cos(iOpt.z), s = sin(iOpt.z); vec2 q = vec2(position.x, position.y - 0.5) * size; wp = iPos + vec3(q.x * c - q.y * s, 0.035, q.x * s + q.y * c); }\n' +
+  ' else wp = iPos + camR * position.x * size + vec3(0.0, 1.0, 0.0) * (position.y - (1.0 - foot)) * size * sprY;\n' +
+  ' float fr = mod(floor(time * iAnim.x + iAnim.y), iRect.w); vec2 px = vec2(iRect.x + fr * iRect.z + uv.x * iRect.z, iRect.y + (1.0 - uv.y) * iRect.z);\n' +
+  ' vUv = vec2(px.x / texSize.x, 1.0 - px.y / texSize.y); vGlow = iAnim.z; vec4 mvPosition = viewMatrix * vec4(wp, 1.0); gl_Position = projectionMatrix * mvPosition;\n#include <fog_vertex>\n}';
+const DECO_FS = 'uniform sampler2D map; uniform vec3 lit; varying vec2 vUv; varying float vGlow;\n#include <fog_pars_fragment>\nvoid main(){ vec4 c = texture2D(map, vUv); if (c.a < 0.5) discard; if (vGlow < -0.5 && mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) < 1.0) discard; gl_FragColor = vec4(c.rgb * mix(lit, vec3(1.2), max(vGlow, 0.0)) * (vGlow < -0.5 ? 0.8 : 1.0), 1.0);\n#include <fog_fragment>\n}';
+function decoMesh(lv, key, items){
+  const g = new THREE.InstancedBufferGeometry(); const base = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
+  g.index = base.index; g.attributes.position = base.attributes.position; g.attributes.uv = base.attributes.uv;
+  const n = items.length, P = new Float32Array(n * 3), Rc = new Float32Array(n * 4), O = new Float32Array(n * 4), An = new Float32Array(n * 3);
+  items.forEach((o, i) => { P.set([o.x, 0, o.z], i * 3); Rc.set([o.e.x, o.e.y, o.e.c, o.e.n || 1], i * 4); O.set([o.size, o.e.foot || 0.5, o.rot || 0, o.flat ? 1 : 0], i * 4); An.set([o.fps || 0, Math.random() * 8, o.glow ? 1 : o.flat ? -1 : 0], i * 3); });
+  g.setAttribute('iPos', new THREE.InstancedBufferAttribute(P, 3)); g.setAttribute('iRect', new THREE.InstancedBufferAttribute(Rc, 4)); g.setAttribute('iOpt', new THREE.InstancedBufferAttribute(O, 4)); g.setAttribute('iAnim', new THREE.InstancedBufferAttribute(An, 3));
+  g.instanceCount = n;
+  const mat = new THREE.ShaderMaterial({ uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { map: { value: null }, texSize: { value: new THREE.Vector2(1, 1) }, time: { value: 0 }, camR: { value: new V3(1, 0, 0) }, sprY: { value: 1 }, lit: { value: new THREE.Color(1, 1, 1) } }]), vertexShader: DECO_VS, fragmentShader: DECO_FS, fog: true, side: THREE.DoubleSide });
+  const m = new THREE.Mesh(g, mat); m.frustumCulled = false; m.visible = false; lv.root.add(m);
+  (lv.deco8 = lv.deco8 || []).push({ m, mat, key });
+}
+const _dr = new V3(), _lc = new THREE.Color();
+function updDeco8(lv){
+  if (!lv || !lv.deco8) return;
+  camera.updateMatrixWorld(); _dr.setFromMatrixColumn(camera.matrixWorld, 0); _dr.y = 0; _dr.normalize();
+  if (HERO) lightAt(HERO.x, HERO.z, _lc);
+  for (const d of lv.deco8){
+    const u = d.mat.uniforms;
+    if (!u.map.value){ const t = ATL[d.key], img = ATL_IMG[d.key]; if (!t || !img) continue; u.map.value = t; u.texSize.value.set(img.width, img.height); d.m.visible = true; }
+    u.time.value = G.time; u.camR.value.copy(_dr); u.sprY.value = SPR_Y; u.lit.value.copy(_lc).multiplyScalar(0.92);
+  }
+}
+function decorate8(lv, rng, th, A, Bl, Cl){
+  const D8 = IM.deco8[lv.ci + 1], key = 'deco8_c' + (lv.ci + 1), DEN = 24, items = [], pick = a => a[Math.floor(rng() * a.length)];
+  A.forEach(o => { const e = pick(D8.edge); items.push({ x: o.x, z: o.z, e, size: e.c / DEN * (0.5 + o.s * 0.25) }); });
+  Bl.forEach(o => { const e = pick(D8.decal); items.push({ x: o.x, z: o.z, e, size: e.c / DEN * (0.4 + o.s * 0.25), flat: true, rot: o.ry }); });
+  const gc = Cl.length > 30 ? Cl.filter((_, i) => i % 2 === 0) : Cl;
+  gc.forEach((o, i) => { items.push({ x: o.x, z: o.z, e: D8.glow, size: D8.glow.c / DEN * (0.6 + o.s * 0.2), fps: 5, glow: true }); if (i % 2 === 0) lv.lights.push({ x: o.x, z: o.z, y: 1.2, col: th.torch, f: Math.random() * 9 }); });
+  if (lv.M.rooms && lv.M.rooms.length){
+    lv.M.rooms.forEach(r => {
+      if (rng() < 0.35) return;
+      for (const [dx, dy] of [[1, 1], [r.w - 2, r.h - 2]]){
+        const i = r.x + dx, j = r.y + dy; if (!isFloor(lv, i, j)) continue;
+        items.push({ x: cx2w(i), z: cx2w(j), e: D8.brazier, size: D8.brazier.c / DEN * 0.8, fps: 9, glow: true });
+        lv.lights.push({ x: cx2w(i), z: cx2w(j), y: 2, col: th.torch, f: Math.random() * 9 });
+      }
+      if (r.w >= 9 && r.h >= 9 && rng() < 0.6){
+        for (const [dx, dy] of [[2, 2], [r.w - 3, 2], [2, r.h - 3], [r.w - 3, r.h - 3]]){
+          const i = r.x + dx, j = r.y + dy; lv.g[j * lv.w + i] = 0;
+          items.push({ x: cx2w(i), z: cx2w(j), e: D8.pillar, size: D8.pillar.c / DEN });
+        }
+      }
+    });
+  }
+  if (items.length) decoMesh(lv, key, items);
+}
 function decorate(lv, rng, th){
   const edge = nearWallCells(lv), root = lv.root;
   const A = [], Bl = [], Cl = [], L = [];
   edge.forEach(([i, j]) => { const r = rng(); if (r < 0.22) A.push({ x: cx2w(i) + (rng() - 0.5) * 1.2, z: cx2w(j) + (rng() - 0.5) * 1.2, s: 0.6 + rng() * 0.8, ry: rng() * TAU, rx: (rng() - 0.5) * 0.5, rz: (rng() - 0.5) * 0.5 }); else if (r < 0.26) Cl.push({ x: cx2w(i) + (rng() - 0.5), z: cx2w(j) + (rng() - 0.5), s: 0.7 + rng() * 0.5, ry: rng() * TAU }); });
   for (let k = 0; k < lv.w * lv.h * 0.035; k++){ const c = randFloorCell(lv, rng, 0, null, 5); if (c) Bl.push({ x: cx2w(c[0]) + (rng() - 0.5) * 1.6, z: cx2w(c[1]) + (rng() - 0.5) * 1.6, s: 0.5 + rng() * 0.7, ry: rng() * TAU }); }
+  if (HERO8 && IM.deco8 && IM.deco8[lv.ci + 1]) return decorate8(lv, rng, th, A, Bl, Cl);
   const p = th.prop, c1 = th.wall, c2 = th.floor;
   let gA, mA, gB, mB, gC, mC;
   switch (p){
@@ -1934,6 +1997,8 @@ function decorate(lv, rng, th){
 /* ---- 오브젝트 ---- */
 function addObj(lv, o){ o.x = o.x != null ? o.x : 0; lv.objs.push(o); if (o.mesh){ o.mesh.position.set(o.x, 0, o.z); lv.root.add(o.mesh); } return o; }
 function propSprite(name, size, opts){
+  const p8 = HERO8 && (IM.prop8 || {})[name];
+  if (p8 && ATL.props8){ const S = makeSprite('props8', size, p8.foot, opts); S.p8 = p8; S.p8f = 0; S.aph = Math.random() * 8; S.setPx(p8.x, p8.y, p8.c); return S; }
   const m = (IM.prop || {})[name] || { i: 0, foot: 0.9 }, ar = (IM.propAnim || {})[name];
   if (ar != null && ATL.propa){ const S = makeSprite('propa', size, m.foot, opts); S.arow = ar; S.aph = Math.random() * 8; S.setFrame(0, ar); return S; }
   const S = makeSprite('props', size, m.foot, opts); S.setFrame(m.i % 8, Math.floor(m.i / 8)); return S;
@@ -2001,18 +2066,18 @@ function buildTownObjects(lv, M){
   addObj(lv, { type: 'fire', x: cx2w(sp.fire[0]), z: cx2w(sp.fire[1]), r: 1.4, mesh: fs.g, solid: true });
   lv.lights.push({ x: cx2w(sp.fire[0]), z: cx2w(sp.fire[1]), y: 1.4, col: '#ff9a4a', f: 0, big: true, fireFx: true });
   // 바닥 모자이크 (마을 광장)
-  for (const [nm, i, j] of [['tile03_golden_immune_mosaic', sp.wp[0], sp.wp[1] - 1], ['tile04_blue_dna_crystal_floor', sp.stash[0], sp.stash[1] - 1]]){ const t = propSprite(nm, 3.6, { noShadow: true }); t.g.position.set(cx2w(i), -0.9, cx2w(j)); t.mat.uniforms.opacity.value = 0.9; lv.root.add(t.g); }
+  for (const [nm, i, j] of [['tile03_golden_immune_mosaic', sp.wp[0], sp.wp[1] - 1], ['tile04_blue_dna_crystal_floor', sp.stash[0], sp.stash[1] - 1]]){ if (HERO8 && (IM.prop8 || {})[nm]){ const t = propSprite(nm, 3.6, { noShadow: true, flat: true }); t.g.position.set(cx2w(i), 0.03, cx2w(j)); lv.root.add(t.g); continue; } const t = propSprite(nm, 3.6, { noShadow: true }); t.g.position.set(cx2w(i), -0.9, cx2w(j)); t.mat.uniforms.opacity.value = 0.9; lv.root.add(t.g); }
   // 천막·상자
   const tm = [smat('#4a3a2e'), smat('#3a2e4a'), smat('#4a2a22')];
   for (const [i, j, k] of [[sp.elder[0] - 3, sp.elder[1] - 3, 0], [sp.shop[0] + 3, sp.shop[1] - 3, 1], [sp.heal[0] + 3, sp.heal[1] + 2, 2]]){
-    const g = new THREE.Group(); const c = cone(2.2, 2.8, tm[k], 0, 1.4, 0, g, 6); c.rotation.y = Math.random(); cyl(0.06, 0.06, 3.4, smat('#3a2a1a'), 0, 1.7, 0, g, 5);
+    let g; if (HERO8 && ATL.props8){ const t = propSprite('tent' + k, 5.0, { shadow: 1.8 }); g = t.g; t.owner = lv; } else { g = new THREE.Group(); const c = cone(2.2, 2.8, tm[k], 0, 1.4, 0, g, 6); c.rotation.y = Math.random(); cyl(0.06, 0.06, 3.4, smat('#3a2a1a'), 0, 1.7, 0, g, 5); }
     g.position.set(cx2w(i), 0, cx2w(j)); lv.root.add(g);
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) lv.g[(j + dy) * lv.w + i + dx] = 0;
   }
   const busy = Object.values(sp).map(v => [v[0], v[1], 3]);
   for (let k = 0; k < 8; k++){ const c = randFloorCell(lv, Math.random, 0, busy.concat([[sp.fire[0], sp.fire[1], 5]])); if (!c) continue; const S = propSprite(['destructible01_specimen_vat', 'destructible02_chitin_cocoon', 'chest03_ancient_dna_reliquary'][k % 3], 1.9); S.g.position.set(cx2w(c[0]), 0, cx2w(c[1])); S.owner = lv; lv.root.add(S.g); lv.g[c[1] * lv.w + c[0]] = 0; }
   // 횃불 기둥
-  for (let k = 0; k < 6; k++){ const a = k / 6 * TAU + 0.3; const i = Math.round(sp.fire[0] + Math.cos(a) * 12), j = Math.round(sp.fire[1] + Math.sin(a) * 11); if (!isFloor(lv, i, j)) continue; const g = new THREE.Group(); cyl(0.1, 0.12, 2.4, smat('#3a2a1a'), 0, 1.2, 0, g, 5); const fl = cone(0.2, 0.5, smat('#000', { em: '#ffa040', ei: 2.4 }), 0, 2.6, 0, g, 6); g.position.set(cx2w(i), 0, cx2w(j)); lv.root.add(g); lv.lights.push({ x: cx2w(i), z: cx2w(j), y: 2.6, col: '#ffa050', f: Math.random() * 9, fire: fl }); }
+  for (let k = 0; k < 6; k++){ const a = k / 6 * TAU + 0.3; const i = Math.round(sp.fire[0] + Math.cos(a) * 12), j = Math.round(sp.fire[1] + Math.sin(a) * 11); if (!isFloor(lv, i, j)) continue; let g, fl = null; if (HERO8 && ATL.props8){ const t = propSprite('torch', 3.0, { noShadow: true }); t.noLight = true; t.owner = lv; g = t.g; } else { g = new THREE.Group(); cyl(0.1, 0.12, 2.4, smat('#3a2a1a'), 0, 1.2, 0, g, 5); fl = cone(0.2, 0.5, smat('#000', { em: '#ffa040', ei: 2.4 }), 0, 2.6, 0, g, 6); } g.position.set(cx2w(i), 0, cx2w(j)); lv.root.add(g); lv.lights.push({ x: cx2w(i), z: cx2w(j), y: 2.6, col: '#ffa050', f: Math.random() * 9, fire: fl }); }
   // NPC (장마다 안내자 3명 + 상주 5명)
   C.npcs.concat(EXTRA_NPCS).forEach(n => {
     const s = sp[n.id]; if (!s) return; const H = buildNPC(n.id); H.root.position.set(cx2w(s[0]), 0, cx2w(s[1])); H.spr.owner = lv;
@@ -2021,7 +2086,7 @@ function buildTownObjects(lv, M){
     addObj(lv, { type: 'npc', x: cx2w(s[0]), z: cx2w(s[1]), r: 1.6, H, npc: n, label: n.nm, home: [cx2w(s[0]), cx2w(s[1])], solid: true });
   });
   // 창고 (호라드릭 상자)
-  const st = iconSprite('icon03_horadric_stash_chest', 2.4);
+  const st = HERO8 && ATL.props8 ? propSprite('stash', 2.6) : iconSprite('icon03_horadric_stash_chest', 2.4);
   addObj(lv, { type: 'stash', x: cx2w(sp.stash[0]), z: cx2w(sp.stash[1]), r: 1.6, mesh: st.g, label: '공유 창고', solid: true });
   addWaypoint(lv, sp.wp[0], sp.wp[1], lv.ci + '-t');
   addExit(lv, sp.exit[0], sp.exit[1], { ci: lv.ci, zi: 0, arrive: 'start' }, '➜ ' + C.zones[0].name, '#ff6a4a');
@@ -2940,13 +3005,17 @@ function minionModel(kind){
   let an = null;
   const famAnim = (fi, size) => { if (!ATL.fama) return famSpr(fi * 4, size); const m = (IM.fam || [])[fi * 4] || { foot: 0.9 }; an = { akey: 'fama', arow: fi * 2 }; return makeSprite('fama', size, m.foot, { shadow: 0.45 }); };
   const monAnim = (id, size) => { const e8 = M8 && M8.list[id]; if (e8 && ATL[e8.k]){ an = { akey: e8.k, m8: e8, m8ok: true, scaleMul: size / 3.3 }; const sp = makeSprite(e8.k, e8.c / M8.D * size / 3.3, e8.foot / e8.c, { shadow: 0.5 }); return sp; } const d = MON[id], ak = 'mon_c' + (Math.floor(d.spr / 11) + 1); if (!ATL[ak]) return monSpr(id, size); an = { akey: ak, arow: (d.spr % 11) * 2 }; const m = (IM.mon || [])[d.spr] || { foot: 0.9 }; return makeSprite(ak, size, m.foot, { shadow: 0.5 }); };
-  if (kind === 'lacto') S = famAnim(0, 2.1);
+  const sumAnim = (id) => { const e8 = M8 && M8.list[id]; if (!e8 || !ATL.sum8) return null; an = { akey: 'sum8', m8: e8, m8ok: true, scaleMul: 1 }; return makeSprite('sum8', e8.c / M8.D, e8.foot / e8.c, { shadow: 0.5 }); };
+  const SUMK = { lacto: 'sum_lacto', phage: 'sum_phage', golem: 'sum_golem', nk: 'sum_nk' };
+  if (SUMK[kind] && (S = sumAnim(SUMK[kind]))){ }
+  else if (kind === 'lacto') S = famAnim(0, 2.1);
   else if (kind === 'phage') S = famAnim(1, 2.1);
   else if (kind === 'golem'){ S = monAnim('m02', 3.3); S.mat.uniforms.glow.value = 0.15; }
   else if (kind === 'nk'){ S = monAnim('m51', 3.9); S.mat.uniforms.flash.value.set(0.4, 1, 0.5, 0.18); }
+  else if (kind === 'merc' && HERO8 && ATL.hero_merc){ S = makeSprite('hero_merc', 3.15, 80 / 88, { shadow: 0.55 }); H = { root: S.g, spr: S, cls: 'merc', t: 0, act: null, actT: 0, actSpd: 3, dead: 0, flip: false, face: 0 }; }
   else if (kind === 'merc'){ H = buildNPC('merc'); H.npc = false; S = H.spr; H.npcStatic = true; }
   else { H = buildHero(PL.cls); S = H.spr; S.mat.uniforms.opacity.value = 0.62; S.mat.uniforms.flash.value.set(0.3, 0.6, 1, 0.35); }
-  if (kind === 'merc'){ H = { root: S.g, spr: S, npc: true, npcRow: NPC_ROW.merc, t: 0, flip: false }; }
+  if (kind === 'merc' && !(HERO8 && ATL.hero_merc)){ H = { root: S.g, spr: S, npc: true, npcRow: NPC_ROW.merc, t: 0, flip: false }; }
   const R = { g: S.g, inner: S.hold, H, spr: S };
   if (an) Object.assign(R, an, { anim: true, parts: {}, flyH: 0, fs: S.size, hitT: 0, rate: 1, walkHz: 1.6 });
   return R;
@@ -3545,7 +3614,7 @@ function doInteract(o){
 }
 function openContainer(o){
   if (o.used) return; o.used = true; o.label = null; if (o.lab){ o.lab.remove(); o.lab = null; }
-  if (o.type === 'chest'){ const Sp = o.mesh.userData.spr; if (Sp){ Sp.mat.uniforms.dark.value = 0.35; } FX.beam(o.x, o.z, '#ffd870', 4, 0.7, 0.6); FX.burst(o.x, 1, o.z, '#ffd870', 24, 4, 0.4, 0.5); SND.play('pickup', 0.7, o); }
+  if (o.type === 'chest'){ const Sp = o.mesh.userData.spr; if (Sp){ if (Sp.p8) Sp.p8hold = 1; else Sp.mat.uniforms.dark.value = 0.35; } FX.beam(o.x, o.z, '#ffd870', 4, 0.7, 0.6); FX.burst(o.x, 1, o.z, '#ffd870', 24, 4, 0.4, 0.5); SND.play('pickup', 0.7, o); }
   else { o.mesh.visible = false; FX.blood(o.x, 0.6, o.z, G.lv.C.theme.torch, 30); FX.burst(o.x, 0.5, o.z, G.lv.C.theme.torch, 20, 4, 0.4, 0.5); SND.play('squish', 0.8, o); splat(o.x, o.z, shade(G.lv.C.theme.torch, -0.5), 1.4); o.solid = false; }
   const n = o.type === 'chest' ? randi(1, 3) : randi(0, 2), lvl = G.lv.mlvl;
   for (let k = 0; k < n; k++){ const r = Math.random(); if (r < 0.4) dropAt({ gold: Math.round(rand(lvl * 3, lvl * 8 + 10) * (1 + S.gf / 100)) }, o.x, o.z); else if (r < 0.65) dropAt(mkPotion((Math.random() < 0.6 ? 'hp' : 'mp') + potTier(lvl)), o.x, o.z); else dropAt(genItem(lvl, o.type === 'chest' ? 1 : 0), o.x, o.z); }
@@ -4545,7 +4614,7 @@ function frame(){
   if (G.mode === 'play' && G.lv && HERO) guard(playFrame, rdt);
   else if (SEL.root && (G.mode === 'select' || G.mode === 'create')) selFrame(rdt);
   updParticles(PADD, rdt); updParticles(PNRM, rdt);
-  updSprites();
+  updSprites(); if (G.lv && G.mode === 'play') updDeco8(G.lv);
   POST.render();
 }
 function playFrame(rdt){
