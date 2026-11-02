@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>헬릭스 몬스터 도감</title>
+<style>
+:root{--bg:#12151b;--panel:#1a1f28;--line:#2a3240;--ink:#e6eef0;--dim:#8a96a6;--acc:#c070ff;--acc2:#3cffae}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+header{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+h1{font-size:18px;margin:0;color:var(--acc)}
+header small{color:var(--dim)} header a{color:var(--acc2);margin-left:auto}
+main{max-width:1200px;margin:0 auto;padding:12px 16px 40px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0}
+h2{font-size:15px;margin:0 0 10px}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+button,select{background:#232a36;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:inherit;cursor:pointer}
+button.on{border-color:var(--acc);color:var(--acc)}
+label{color:var(--dim);display:flex;gap:6px;align-items:center}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.mob{background:#0e1116;border:1px solid transparent;border-radius:8px;padding:6px;cursor:pointer;text-align:center}
+.mob.on{border-color:var(--acc)}
+.mob canvas{width:100%;height:auto}
+.mob b{display:block;font-size:13px} .mob i{font-style:normal;color:var(--dim);font-size:12px}
+#desc{color:var(--dim);margin:6px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;max-width:720px}
+.cell{background:#0e1116;border-radius:8px;position:relative}
+.cell canvas{width:100%;height:auto}
+.cell span{position:absolute;left:6px;top:4px;color:var(--dim);font-size:12px}
+.mid{display:flex;align-items:center;justify-content:center;color:var(--dim);text-align:center;white-space:pre}
+#arena{width:100%;height:min(62vh,540px);background:#0b0e12;border-radius:8px;touch-action:none}
+.keys{color:var(--dim);font-size:13px;margin-top:6px}
+.fx{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.fx div{background:#0e1116;border-radius:8px;padding:6px;text-align:center;color:var(--dim);font-size:12px}
+.fx canvas{width:100%;height:auto;margin-bottom:4px}
+.pad{display:none;gap:8px;margin-top:8px}
+@media (pointer:coarse){.pad{display:flex}}
+.light .cell,.light #arena,.light .mob,.light .fx div{background:#6b7a6e}
+</style>
+</head>
+<body>
+<header><h1>헬릭스 · 몬스터 도감</h1><small>8종 · 8방향 · 동작 5~6종</small><a href="hero-viewer.html">주인공 보기 →</a></header>
+<main>
+<section>
+  <h2>전투 시험장</h2>
+  <canvas id="arena" width="560" height="340"></canvas>
+  <div class="keys">이동: WASD/방향키 또는 화면 누르기 · 베기: J(연속) · 회전베기: K · 몬스터 다시 부르기: R</div>
+  <div class="pad"><button id="pJ">베기</button><button id="pK">회전베기</button><button id="pR">다시 부르기</button></div>
+</section>
+<section>
+  <h2>몬스터</h2>
+  <div class="roster" id="roster"></div>
+</section>
+<section>
+  <h2 id="mname">동작 · 8방향</h2>
+  <div id="desc"></div>
+  <div class="row" id="anims"></div>
+  <div class="row" style="margin-top:8px">
+    <label>속도 <input type="range" id="spd" min="0.25" max="2" step="0.25" value="1"></label>
+    <button id="pause">일시정지</button><button id="bg">배경 밝기</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</section>
+<section>
+  <h2>몬스터 효과</h2>
+  <div class="fx" id="fx"></div>
+</section>
+</main>
+<script>
+const MB = 'assets/mobs/', HB = 'assets/hero/';
+const DIRK = ['남', '남동', '동', '북동', '북', '북서', '서', '남서'];
+const FPS = {idle: 8, move: 10, attack: 12, roar: 10, hit: 12, death: 10};
+const SPEED = {phage: 70, amoeba: 38, bacillus: 60, brute: 40, researcher: 48, mosquito: 85, worm: 55, shroom: 30};
+const RANGE = {phage: 40, amoeba: 38, bacillus: 60, brute: 55, researcher: 42, mosquito: 50, worm: 55, shroom: 170};
+const BURST = {phage: 'fx_burst_p', amoeba: 'fx_burst_y', bacillus: 'fx_burst_r', brute: 'fx_burst_p', researcher: 'fx_burst_p', mosquito: 'fx_burst_r', worm: 'fx_burst_r', shroom: 'fx_burst_y'};
+const HFPS = {idle: 8, run: 14, atk1: 18, atk2: 18, atk3: 16, spin: 20, hit: 12};
+let MOBS, MFX, HERO, HFX, IMG = {}, FXI = {}, HIMG = {}, cur = null, curA = 'idle', speed = 1, paused = false, clock = 0;
+const load = s => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = s; });
+const anim = (id, a) => MOBS[id].anims.find(x => x.id === a);
+
+async function init() {
+  [MOBS, MFX, HERO, HFX] = await Promise.all([MB + 'mobs.json', MB + 'fx.json', HB + 'hero.json', HB + 'fx.json'].map(async u => (await fetch(u)).json()));
+  const jobs = [];
+  for (const id in MOBS) for (const a of MOBS[id].anims) jobs.push(load(MB + a.file).then(i => IMG[id + '_' + a.id] = i));
+  for (const f of MFX) jobs.push(load(MB + f.file).then(i => FXI[f.id] = i));
+  for (const a of HERO.anims) if (HFPS[a.id]) jobs.push(load(HB + a.file).then(i => HIMG[a.id] = i));
+  for (const f of HFX) if (f.id === 'fx_spark') jobs.push(load(HB + f.file).then(i => FXI[f.id] = i));
+  await Promise.all(jobs);
+  MFX.push(HFX.find(f => f.id === 'fx_spark'));
+  const ro = document.getElementById('roster');
+  for (const id in MOBS) {
+    const m = MOBS[id]; const d = document.createElement('div'); d.className = 'mob'; d.dataset.id = id;
+    const c = document.createElement('canvas'); c.width = c.height = m.cell; d.appendChild(c);
+    d.insertAdjacentHTML('beforeend', `<b>${m.name}</b><i>${m.role}</i>`);
+    d.onclick = () => pick(id); ro.appendChild(d);
+  }
+  const fx = document.getElementById('fx');
+  MFX.forEach(f => { const d = document.createElement('div'); const c = document.createElement('canvas'); c.width = f.w; c.height = f.h; c.dataset.id = f.id; d.appendChild(c); d.append(`${f.name} (${f.frames})`); fx.appendChild(d); });
+  document.getElementById('spd').oninput = e => speed = +e.target.value;
+  document.getElementById('pause').onclick = e => { paused = !paused; e.target.classList.toggle('on', paused); };
+  document.getElementById('bg').onclick = () => document.body.classList.toggle('light');
+  pick(Object.keys(MOBS)[0]); setupArena(); requestAnimationFrame(loop);
+}
+let cells = [];
+function pick(id) {
+  cur = id; curA = 'idle'; const m = MOBS[id];
+  document.querySelectorAll('.mob').forEach(e => e.classList.toggle('on', e.dataset.id === id));
+  document.getElementById('mname').textContent = `${m.name} · 동작 · 8방향`;
+  document.getElementById('desc').textContent = m.desc;
+  const box = document.getElementById('anims'); box.innerHTML = '';
+  m.anims.forEach(a => { const b = document.createElement('button'); b.textContent = `${a.name} (${a.frames})`; b.classList.toggle('on', a.id === curA);
+    b.onclick = () => { curA = a.id; clock = 0; [...box.children].forEach(c => c.classList.toggle('on', c === b)); }; box.appendChild(b); });
+  const g = document.getElementById('grid'); g.innerHTML = ''; cells = [];
+  [5, 4, 3, 6, -1, 2, 7, 0, 1].forEach(d => {
+    if (d < 0) { const mm = document.createElement('div'); mm.className = 'cell mid'; mm.id = 'midname'; g.appendChild(mm); return; }
+    const c = document.createElement('div'); c.className = 'cell'; const cv = document.createElement('canvas'); cv.width = cv.height = m.cell;
+    c.appendChild(cv); c.insertAdjacentHTML('beforeend', `<span>${DIRK[d]}</span>`); g.appendChild(c); cells.push({cv, d});
+  });
+}
+function fr(id, a, t, hold) {
+  const A = anim(id, a); const f = Math.floor(t * FPS[a]);
+  if (A.loop) return f % A.frames;
+  return hold ? Math.min(A.frames - 1, f) : Math.min(A.frames - 1, f % (A.frames + 5));
+}
+function drawMob(ctx, id, a, f, d, x, y) { const m = MOBS[id], C = m.cell; ctx.drawImage(IMG[id + '_' + a], f * C, d * C, C, C, x - C / 2, y - m.foot, C, C); }
+function shadow(ctx, x, y, r) { ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.4, 0, 0, Math.PI * 2); ctx.fill(); }
+const SH = {phage: 16, amoeba: 20, bacillus: 14, brute: 30, researcher: 14, mosquito: 9, worm: 14, shroom: 15};
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (!paused) clock += dt * speed;
+  const m = MOBS[cur]; const mn = document.getElementById('midname');
+  if (mn) mn.textContent = `${anim(cur, curA).name}\n${fr(cur, curA, clock) + 1} / ${anim(cur, curA).frames}`;
+  for (const {cv, d} of cells) { const c = cv.getContext('2d'); c.clearRect(0, 0, cv.width, cv.height); shadow(c, m.cell / 2, m.foot, SH[cur]); drawMob(c, cur, curA, fr(cur, curA, clock), d, m.cell / 2, m.foot); }
+  document.querySelectorAll('.mob canvas').forEach(cv => { const id = cv.parentNode.dataset.id; const c = cv.getContext('2d'); c.clearRect(0, 0, cv.width, cv.height); shadow(c, cv.width / 2, MOBS[id].foot, SH[id]); drawMob(c, id, 'idle', fr(id, 'idle', clock), 1, cv.width / 2, MOBS[id].foot); });
+  document.querySelectorAll('#fx canvas').forEach(c => { const f = MFX.find(x => x.id === c.dataset.id); const x = c.getContext('2d'); x.clearRect(0, 0, c.width, c.height);
+    const k = Math.floor(clock * 12) % (f.frames + 4); if (k < f.frames) x.drawImage(FXI[f.id], k * f.w, 0, f.w, f.h, 0, 0, f.w, f.h); });
+  stepArena(dt); drawArena();
+  requestAnimationFrame(loop);
+}
+
+// ---------------- 전투 시험장 ----------------
+const W = 560, H = 340;
+const P = {x: 280, y: 220, d: 0, a: 'idle', t: 0, lock: 0, combo: -1, comboT: 0, hurt: 0};
+let foes = [], fxs = [], shots = [];
+const keys = new Set();
+const dirOf = (dx, dy) => ((Math.round((Math.PI / 2 - Math.atan2(dy, dx)) / (Math.PI / 4)) % 8) + 8) % 8;
+const dv = d => { const a = Math.PI / 2 - d * Math.PI / 4; return [Math.cos(a), Math.sin(a)]; };
+function spawnAll() {
+  foes = []; const ids = Object.keys(MOBS);
+  ids.forEach((id, i) => { const a = i / ids.length * Math.PI * 2; foes.push({id, x: 280 + Math.cos(a) * 230, y: 180 + Math.sin(a) * 120, d: 0, a: 'idle', t: Math.random(), hp: id === 'brute' ? 5 : 2, cd: 1 + Math.random() * 2, lock: 0, hitDone: false}); });
+}
+function setupArena() {
+  spawnAll();
+  addEventListener('keydown', e => { const k = e.key.toLowerCase(); keys.add(k); if (e.repeat) return; if (k === 'j') attack(); if (k === 'k') spin(); if (k === 'r') spawnAll(); if (k.startsWith('arrow')) e.preventDefault(); });
+  addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+  document.getElementById('pJ').onpointerdown = e => { e.preventDefault(); attack(); };
+  document.getElementById('pK').onpointerdown = e => { e.preventDefault(); spin(); };
+  document.getElementById('pR').onpointerdown = e => { e.preventDefault(); spawnAll(); };
+  const cv = document.getElementById('arena'); let held = false;
+  const aim = e => { const r = cv.getBoundingClientRect(); P.goal = [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
+  cv.addEventListener('pointerdown', e => { held = true; aim(e); }); cv.addEventListener('pointermove', e => held && aim(e));
+  addEventListener('pointerup', () => { held = false; P.goal = null; });
+}
+const HL = a => HERO.anims.find(x => x.id === a).frames / HFPS[a];
+function attack() {
+  if (P.lock > 0.12) return;
+  P.combo = P.comboT > 0 ? (P.combo + 1) % 3 : 0; P.comboT = 0.7;
+  P.a = ['atk1', 'atk2', 'atk3'][P.combo]; P.t = 0; P.lock = HL(P.a); P.hitAt = HL(P.a) * 0.45; P.hitR = P.combo === 2 ? 70 : 60; P.arc = true;
+}
+function spin() { if (P.lock > 0.12) return; P.a = 'spin'; P.t = 0; P.lock = HL('spin'); P.hitAt = HL('spin') * 0.4; P.hitR = 75; P.arc = false; }
+function hurtFoe(f, dmg) {
+  if (f.a === 'death') return;
+  f.hp -= dmg; fxs.push({id: 'fx_spark', x: f.x, y: f.y - 20, t: 0});
+  const [vx, vy] = [f.x - P.x, f.y - P.y]; const l = Math.hypot(vx, vy) || 1; f.x += vx / l * 10; f.y += vy / l * 6;
+  if (f.hp <= 0) { f.a = 'death'; f.t = 0; fxs.push({id: BURST[f.id], x: f.x, y: f.y, t: -0.5}); }
+  else { f.a = 'hit'; f.t = 0; f.lock = 0.33; }
+}
+function stepArena(dt) {
+  P.t += dt; P.lock -= dt; P.comboT -= dt; P.hurt -= dt;
+  if (P.hitAt !== undefined && P.t >= P.hitAt) {
+    const [fx_, fy_] = dv(P.d);
+    for (const f of foes) { const dx = f.x - P.x, dy = (f.y - P.y) / 0.75, dd = Math.hypot(dx, dy); if (dd < P.hitR && (!P.arc || (dx * fx_ + dy * fy_) / (dd || 1) > -0.2)) hurtFoe(f, P.combo === 2 || P.a === 'spin' ? 2 : 1); }
+    P.hitAt = undefined;
+  }
+  let mx = (keys.has('d') || keys.has('arrowright')) - (keys.has('a') || keys.has('arrowleft'));
+  let my = (keys.has('s') || keys.has('arrowdown')) - (keys.has('w') || keys.has('arrowup'));
+  if (P.goal && !mx && !my) { const dx = P.goal[0] - P.x, dy = P.goal[1] - P.y; if (Math.hypot(dx, dy) > 6) { mx = dx; my = dy; } }
+  if (P.lock <= 0) {
+    if (mx || my) { P.d = dirOf(mx, my); const l = Math.hypot(mx, my); P.x += mx / l * 130 * dt; P.y += my / l * 100 * dt; if (P.a !== 'run') { P.a = 'run'; P.t = 0; } }
+    else if (P.a !== 'idle') { P.a = 'idle'; P.t = 0; }
+  }
+  P.x = Math.max(20, Math.min(W - 20, P.x)); P.y = Math.max(60, Math.min(H - 10, P.y));
+  for (const f of foes) {
+    f.t += dt; f.lock -= dt; f.cd -= dt;
+    if (f.a === 'death') continue;
+    const dx = P.x - f.x, dy = P.y - f.y, dd = Math.hypot(dx, dy / 0.75);
+    if (f.lock > 0) {
+      if (f.a === 'attack' && !f.hitDone && f.t > f.len * 0.55) {
+        f.hitDone = true;
+        if (f.id === 'shroom') shots.push({x: f.x, y: f.y - 30, vx: dx / dd * 130, vy: dy / dd * 100, t: 0});
+        else if (f.id === 'phage') fxs.push({id: 'fx_inject', x: f.x + dv(f.d)[0] * 30, y: f.y + dv(f.d)[1] * 22, t: 0});
+        else if (f.id === 'brute') fxs.push({id: 'fx_slam', x: f.x + dv(f.d)[0] * 40, y: f.y + dv(f.d)[1] * 30, t: 0});
+        else if (f.id === 'shroom') {}
+        if (f.id !== 'shroom' && dd < RANGE[f.id] + 25) { P.hurt = 0.3; }
+      }
+      if (f.a === 'attack' && ['bacillus', 'mosquito', 'worm', 'amoeba'].includes(f.id) && f.t > f.len * 0.35 && f.t < f.len * 0.6) { const [vx, vy] = dv(f.d); f.x += vx * 110 * dt; f.y += vy * 80 * dt; }
+      continue;
+    }
+    f.d = dirOf(dx, dy);
+    if (dd < RANGE[f.id] && f.cd <= 0) {
+      const A = f.id === 'brute' && Math.random() < 0.3 ? 'roar' : 'attack';
+      f.a = A; f.t = 0; f.len = anim(f.id, A).frames / FPS[A]; f.lock = f.len; f.cd = 1.8 + Math.random() * 1.5; f.hitDone = A !== 'attack';
+      if (A === 'attack' && f.id === 'shroom') fxs.push({id: 'fx_puff', x: f.x, y: f.y - 40, t: -f.len * 0.45});
+    } else if (dd > RANGE[f.id] * 0.8) {
+      f.x += dx / dd * SPEED[f.id] * dt; f.y += dy / dd * SPEED[f.id] * 0.75 * dt; if (f.a !== 'move') { f.a = 'move'; f.t = 0; }
+    } else if (f.a !== 'idle') { f.a = 'idle'; f.t = 0; }
+  }
+  // 몬스터끼리 겹치지 않게
+  for (const a of foes) for (const b of foes) if (a !== b && a.a !== 'death' && b.a !== 'death') { const dx = a.x - b.x, dy = a.y - b.y, d = Math.hypot(dx, dy); if (d < 30 && d > 0) { a.x += dx / d * (30 - d) * 0.5; a.y += dy / d * (30 - d) * 0.5; } }
+  shots = shots.filter(s => { s.t += dt; s.x += s.vx * dt; s.y += s.vy * dt; if (Math.hypot(s.x - P.x, s.y - 30 - P.y + 30) < 18) { P.hurt = 0.3; fxs.push({id: 'fx_puff', x: s.x, y: s.y, t: 0}); return false; } return s.t < 2.5; });
+  fxs = fxs.filter(f => (f.t += dt) < 1.4);
+  foes = foes.filter(f => !(f.a === 'death' && f.t > 2.5));
+}
+function drawFx(ctx, f) {
+  const m = MFX.find(x => x.id === f.id); const k = Math.floor(f.t * 14); if (k < 0 || k >= m.frames) return;
+  const gnd = ['fx_inject', 'fx_slam'].includes(f.id) || f.id.startsWith('fx_burst');
+  ctx.drawImage(FXI[f.id], k * m.w, 0, m.w, m.h, Math.round(f.x - m.w / 2), Math.round(f.y - (gnd ? m.h * 0.65 : m.h / 2)), m.w, m.h);
+}
+function drawArena() {
+  const ctx = document.getElementById('arena').getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(192,112,255,.07)';
+  for (let i = -20; i < 40; i++) { ctx.beginPath(); ctx.moveTo(i * 40, 0); ctx.lineTo(i * 40 + 680, 340); ctx.stroke(); ctx.beginPath(); ctx.moveTo(i * 40, 0); ctx.lineTo(i * 40 - 680, 340); ctx.stroke(); }
+  fxs.filter(f => f.id !== 'fx_spark' && f.id !== 'fx_puff').forEach(f => drawFx(ctx, f));
+  const list = [...foes.map(f => ({y: f.y, f})), {y: P.y, hero: true}].sort((a, b) => a.y - b.y);
+  for (const o of list) {
+    if (o.hero) {
+      shadow(ctx, P.x, P.y, 14);
+      const A = HERO.anims.find(x => x.id === P.a); const k = A.loop ? Math.floor(P.t * HFPS[P.a]) % A.frames : Math.min(A.frames - 1, Math.floor(P.t * HFPS[P.a]));
+      if (P.hurt > 0 && Math.floor(P.hurt * 30) % 2) ctx.globalAlpha = 0.5;
+      ctx.drawImage(HIMG[P.a], k * HERO.cell, P.d * HERO.cell, HERO.cell, HERO.cell, Math.round(P.x - HERO.cell / 2), Math.round(P.y - HERO.foot), HERO.cell, HERO.cell);
+      ctx.globalAlpha = 1;
+    } else {
+      const f = o.f; if (f.id !== 'mosquito' || f.a !== 'death') shadow(ctx, f.x, f.y, SH[f.id]); else shadow(ctx, f.x, f.y, SH[f.id] * Math.max(0.3, 1 - f.t));
+      drawMob(ctx, f.id, f.a, fr(f.id, f.a, f.t, true), f.d, Math.round(f.x), Math.round(f.y));
+    }
+  }
+  shots.forEach(s => { const m = MFX.find(x => x.id === 'fx_spore'); ctx.drawImage(FXI.fx_spore, (Math.floor(s.t * 12) % 4) * m.w, 0, m.w, m.h, Math.round(s.x - m.w / 2), Math.round(s.y - m.h / 2), m.w, m.h); });
+  fxs.filter(f => f.id === 'fx_spark' || f.id === 'fx_puff').forEach(f => drawFx(ctx, f));
+  if (!foes.length) { ctx.fillStyle = '#c8d0dc'; ctx.font = '16px system-ui'; ctx.textAlign = 'center'; ctx.fillText('모두 물리쳤습니다! R로 다시 부르기', W / 2, 40); }
+}
+init();
+</script>
+</body>
+</html>
