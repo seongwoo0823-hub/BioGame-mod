@@ -1,0 +1,30 @@
+{
+ "mentor": {
+  "name": "하나 박사",
+  "cell": 112,
+  "foot": 84,
+  "frames": 8,
+  "file": "npc_mentor.webp"
+ },
+ "merchant": {
+  "name": "상인 바이알",
+  "cell": 112,
+  "foot": 84,
+  "frames": 8,
+  "file": "npc_merchant.webp"
+ },
+ "drone": {
+  "name": "기록 드론 아키",
+  "cell": 80,
+  "foot": 62,
+  "frames": 8,
+  "file": "npc_drone.webp"
+ },
+ "cat": {
+  "name": "실험실 고양이 세포",
+  "cell": 64,
+  "foot": 43,
+  "frames": 8,
+  "file": "npc_cat.webp"
+ }
+}
