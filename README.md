@@ -22,7 +22,7 @@ index.html        메인 화면 (게임 선택, 이 기기에 저장된 기록 �
 games/            게임 11종 (각각 하나의 HTML 파일)
 assets/           메인 화면 썸네일
 games/il-assets/  감염의 군주 스프라이트·아이콘 아틀라스 (WebP)
-games/helix/      제작 중인 쿼터뷰 액션 로그라이트 '헬릭스' 에셋 (hero-viewer.html: 주인공 스프라이트 미리보기)
+games/helix/      제작 중인 쿼터뷰 액션 로그라이트 '헬릭스' 에셋 (hero-viewer.html: 주인공 미리보기, mob-viewer.html: 몬스터 도감·전투 시험장)
 vendor/           three.js r128 (3D 게임용, MIT 라이선스)
 icons/            앱 아이콘
 manifest.webmanifest, sw.js   앱 설치(PWA) · 오프라인 실행

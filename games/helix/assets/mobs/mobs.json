@@ -1,0 +1,441 @@
+{
+ "phage": {
+  "name": "파지 거미",
+  "desc": "정이십면체 머리에 꼬리 섬유 여섯 개로 걷는 박테리오파지. 몸을 일으켰다가 꼬리를 내리꽂아 유전자를 주입한다.",
+  "role": "근접 돌격",
+  "cell": 144,
+  "foot": 112,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "phage_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "phage_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "phage_attack.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "phage_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "phage_death.webp"
+   }
+  ]
+ },
+ "amoeba": {
+  "name": "아메바 포식자",
+  "desc": "위족을 뻗어 기어 오는 젤리 같은 원생생물. 몸을 크게 부풀려 덮쳐서 삼킨다.",
+  "role": "느린 탱커",
+  "cell": 160,
+  "foot": 118,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "amoeba_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "amoeba_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "amoeba_attack.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "amoeba_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "amoeba_death.webp"
+   }
+  ]
+ },
+ "bacillus": {
+  "name": "대장균 돌격병",
+  "desc": "섬모로 덮인 막대 모양 세균. 편모를 채찍질하며 떠다니다가 일직선으로 들이받는다.",
+  "role": "돌진",
+  "cell": 144,
+  "foot": 108,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "bacillus_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "bacillus_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "bacillus_attack.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "bacillus_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "bacillus_death.webp"
+   }
+  ]
+ },
+ "brute": {
+  "name": "암세포 거수",
+  "desc": "끝없이 분열한 세포가 뭉친 거대한 덩어리. 종양 몽둥이 팔로 땅을 내려친다.",
+  "role": "정예 · 대형",
+  "cell": 192,
+  "foot": 158,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "brute_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "brute_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 10,
+    "loop": false,
+    "name": "내려치기",
+    "file": "brute_attack.webp"
+   },
+   {
+    "id": "roar",
+    "frames": 8,
+    "loop": false,
+    "name": "포효",
+    "file": "brute_roar.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "brute_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 10,
+    "loop": false,
+    "name": "죽음",
+    "file": "brute_death.webp"
+   }
+  ]
+ },
+ "researcher": {
+  "name": "감염된 연구원",
+  "desc": "곰팡이에 잠식된 방호복 연구원. 뼈 발톱으로 변한 오른팔을 휘두른다.",
+  "role": "근접",
+  "cell": 160,
+  "foot": 124,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "researcher_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "researcher_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "researcher_attack.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "researcher_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "researcher_death.webp"
+   }
+  ]
+ },
+ "mosquito": {
+  "name": "모기 매개체",
+  "desc": "피로 부푼 배를 단 거대 모기. 공중을 맴돌다 침을 내리꽂는다.",
+  "role": "비행 · 급습",
+  "cell": 144,
+  "foot": 126,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 6,
+    "loop": true,
+    "name": "대기",
+    "file": "mosquito_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 6,
+    "loop": true,
+    "name": "비행",
+    "file": "mosquito_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "mosquito_attack.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "mosquito_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "mosquito_death.webp"
+   }
+  ]
+ },
+ "worm": {
+  "name": "촌충",
+  "desc": "바닥을 기다 몸을 세우는 마디 벌레. 갈고리 입으로 앞으로 덮쳐 문다.",
+  "role": "근접 · 돌출",
+  "cell": 160,
+  "foot": 118,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "worm_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "worm_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "worm_attack.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "worm_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "worm_death.webp"
+   }
+  ]
+ },
+ "shroom": {
+  "name": "포자 버섯",
+  "desc": "뿌리 다리로 뒤뚱거리는 버섯. 갓을 부풀렸다 터뜨려 포자 구름을 뿜는다.",
+  "role": "원거리 포탑",
+  "cell": 144,
+  "foot": 116,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "shroom_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "shroom_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "shroom_attack.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "shroom_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "shroom_death.webp"
+   }
+  ]
+ }
+}
