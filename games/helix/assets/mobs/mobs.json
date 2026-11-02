@@ -3,8 +3,14 @@
   "name": "파지 거미",
   "desc": "정이십면체 머리에 꼬리 섬유 여섯 개로 걷는 박테리오파지. 몸을 일으켰다가 꼬리를 내리꽂아 유전자를 주입한다.",
   "role": "근접 돌격",
-  "cell": 144,
-  "foot": 112,
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   1
+  ],
+  "tint": "#c070ff",
+  "cell": 128,
+  "foot": 86,
   "dirs": [
    "S",
    "SE",
@@ -35,14 +41,30 @@
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "phage_attack.webp"
+    "file": "phage_attack.webp",
+    "root": [
+     0.0,
+     -1.7,
+     -4.2,
+     4.8,
+     23.0,
+     23.0,
+     13.9,
+     0.0
+    ]
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "phage_hit.webp"
+    "file": "phage_hit.webp",
+    "root": [
+     -9.2,
+     -6.4,
+     -3.7,
+     -0.9
+    ]
    },
    {
     "id": "death",
@@ -57,8 +79,14 @@
   "name": "아메바 포식자",
   "desc": "위족을 뻗어 기어 오는 젤리 같은 원생생물. 몸을 크게 부풀려 덮쳐서 삼킨다.",
   "role": "느린 탱커",
-  "cell": 160,
-  "foot": 118,
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   1
+  ],
+  "tint": "#46e0a8",
+  "cell": 128,
+  "foot": 47,
   "dirs": [
    "S",
    "SE",
@@ -89,7 +117,17 @@
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "amoeba_attack.webp"
+    "file": "amoeba_attack.webp",
+    "root": [
+     0.0,
+     -5.3,
+     -13.2,
+     5.1,
+     57.7,
+     52.6,
+     36.4,
+     0.0
+    ]
    },
    {
     "id": "hit",
@@ -111,8 +149,15 @@
   "name": "대장균 돌격병",
   "desc": "섬모로 덮인 막대 모양 세균. 편모를 채찍질하며 떠다니다가 일직선으로 들이받는다.",
   "role": "돌진",
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   1,
+   4
+  ],
+  "tint": "#ff70c0",
   "cell": 144,
-  "foot": 108,
+  "foot": 61,
   "dirs": [
    "S",
    "SE",
@@ -143,14 +188,30 @@
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "bacillus_attack.webp"
+    "file": "bacillus_attack.webp",
+    "root": [
+     0.0,
+     -8.8,
+     -22.1,
+     8.9,
+     72.4,
+     58.1,
+     34.4,
+     0.0
+    ]
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "bacillus_hit.webp"
+    "file": "bacillus_hit.webp",
+    "root": [
+     -20.2,
+     -14.2,
+     -8.1,
+     -2.0
+    ]
    },
    {
     "id": "death",
@@ -165,8 +226,14 @@
   "name": "암세포 거수",
   "desc": "끝없이 분열한 세포가 뭉친 거대한 덩어리. 종양 몽둥이 팔로 땅을 내려친다.",
   "role": "정예 · 대형",
-  "cell": 192,
-  "foot": 158,
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   3
+  ],
+  "tint": "#c04aff",
+  "cell": 176,
+  "foot": 97,
   "dirs": [
    "S",
    "SE",
@@ -226,8 +293,14 @@
   "name": "감염된 연구원",
   "desc": "곰팡이에 잠식된 방호복 연구원. 뼈 발톱으로 변한 오른팔을 휘두른다.",
   "role": "근접",
-  "cell": 160,
-  "foot": 124,
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   3
+  ],
+  "tint": "#c05aff",
+  "cell": 176,
+  "foot": 90,
   "dirs": [
    "S",
    "SE",
@@ -258,14 +331,30 @@
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "researcher_attack.webp"
+    "file": "researcher_attack.webp",
+    "root": [
+     0.0,
+     0.0,
+     0.0,
+     11.2,
+     11.2,
+     11.2,
+     6.8,
+     0.0
+    ]
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "researcher_hit.webp"
+    "file": "researcher_hit.webp",
+    "root": [
+     -4.8,
+     -3.4,
+     -1.9,
+     -0.5
+    ]
    },
    {
     "id": "death",
@@ -280,8 +369,14 @@
   "name": "모기 매개체",
   "desc": "피로 부푼 배를 단 거대 모기. 공중을 맴돌다 침을 내리꽂는다.",
   "role": "비행 · 급습",
-  "cell": 144,
-  "foot": 126,
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   2
+  ],
+  "tint": "#ff4a4a",
+  "cell": 112,
+  "foot": 76,
   "dirs": [
    "S",
    "SE",
@@ -312,14 +407,30 @@
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "mosquito_attack.webp"
+    "file": "mosquito_attack.webp",
+    "root": [
+     0.0,
+     -7.1,
+     -17.8,
+     7.2,
+     58.5,
+     58.5,
+     35.5,
+     0.0
+    ]
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "mosquito_hit.webp"
+    "file": "mosquito_hit.webp",
+    "root": [
+     -16.2,
+     -11.4,
+     -6.5,
+     -1.6
+    ]
    },
    {
     "id": "death",
@@ -334,8 +445,14 @@
   "name": "촌충",
   "desc": "바닥을 기다 몸을 세우는 마디 벌레. 갈고리 입으로 앞으로 덮쳐 문다.",
   "role": "근접 · 돌출",
-  "cell": 160,
-  "foot": 118,
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   2
+  ],
+  "tint": "#ff7aa0",
+  "cell": 144,
+  "foot": 72,
   "dirs": [
    "S",
    "SE",
@@ -388,8 +505,14 @@
   "name": "포자 버섯",
   "desc": "뿌리 다리로 뒤뚱거리는 버섯. 갓을 부풀렸다 터뜨려 포자 구름을 뿜는다.",
   "role": "원거리 포탑",
-  "cell": 144,
-  "foot": 116,
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   1
+  ],
+  "tint": "#a8ff3a",
+  "cell": 112,
+  "foot": 80,
   "dirs": [
    "S",
    "SE",
@@ -435,6 +558,1441 @@
     "loop": false,
     "name": "죽음",
     "file": "shroom_death.webp"
+   }
+  ]
+ },
+ "prion": {
+  "name": "프리온 결정",
+  "desc": "잘못 접힌 단백질이 결정으로 굳은 덩어리. 주위를 도는 조각 하나를 떼어 쏜다.",
+  "role": "원거리 · 결정탄",
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   4
+  ],
+  "tint": "#ff5a90",
+  "cell": 160,
+  "foot": 77,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "prion_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "prion_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "prion_attack.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "prion_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "prion_death.webp"
+   }
+  ]
+ },
+ "planaria": {
+  "name": "플라나리아",
+  "desc": "바닥을 미끄러지는 납작한 편형동물. 몸을 세웠다가 덮쳐 배 쪽 인두관을 찔러 넣는다.",
+  "role": "근접 · 분열",
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   2,
+   4
+  ],
+  "tint": "#c8a070",
+  "cell": 128,
+  "foot": 44,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "planaria_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "planaria_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "planaria_attack.webp",
+    "root": [
+     0.0,
+     -4.9,
+     -12.3,
+     7.3,
+     47.1,
+     41.8,
+     29.1,
+     0.0
+    ]
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "planaria_hit.webp",
+    "root": [
+     -13.5,
+     -9.4,
+     -5.4,
+     -1.4
+    ]
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "planaria_death.webp"
+   }
+  ]
+ },
+ "jelly": {
+  "name": "상자해파리",
+  "desc": "네모난 갓을 오므렸다 펴며 떠다니는 자포동물. 독침 촉수를 앞으로 휘두른다.",
+  "role": "공중 · 촉수",
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   3,
+   4
+  ],
+  "tint": "#5ae0ff",
+  "cell": 112,
+  "foot": 59,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "jelly_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "jelly_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "jelly_attack.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "jelly_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "jelly_death.webp"
+   }
+  ]
+ },
+ "tick": {
+  "name": "진드기",
+  "desc": "피로 부푼 배를 단 여덟 다리 진드기. 몸을 일으켰다가 앞으로 뛰어올라 문다.",
+  "role": "근접 · 도약",
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   2
+  ],
+  "tint": "#a0a8c0",
+  "cell": 96,
+  "foot": 49,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "tick_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "tick_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "tick_attack.webp",
+    "root": [
+     0.0,
+     -3.8,
+     -9.6,
+     12.2,
+     56.0,
+     56.0,
+     28.9,
+     0.0
+    ]
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "tick_hit.webp",
+    "root": [
+     -10.5,
+     -7.3,
+     -4.2,
+     -1.1
+    ]
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "tick_death.webp"
+   }
+  ]
+ },
+ "corona": {
+  "name": "코로나 바이러스",
+  "desc": "돌기 단백질에 덮인 공 모양 바이러스. 굴러오다가 부풀어 올라 들이받는다.",
+  "role": "돌진 · 굴러옴",
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   4
+  ],
+  "tint": "#ff6a4a",
+  "cell": 128,
+  "foot": 72,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "corona_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "corona_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "corona_attack.webp",
+    "root": [
+     0.0,
+     -2.0,
+     -5.5,
+     -3.4,
+     59.5,
+     69.0,
+     55.3,
+     0.0
+    ]
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "corona_hit.webp",
+    "root": [
+     -13.8,
+     -9.7,
+     -5.5,
+     -1.4
+    ]
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "corona_death.webp"
+   }
+  ]
+ },
+ "leech": {
+  "name": "거머리",
+  "desc": "몸을 둥글게 접었다 펴며 기어 오는 거머리. 고개를 들었다가 이빨 빨판으로 달라붙는다.",
+  "role": "근접 · 흡혈",
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   2
+  ],
+  "tint": "#ff4a46",
+  "cell": 144,
+  "foot": 48,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "leech_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "leech_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "leech_attack.webp",
+    "root": [
+     0.0,
+     -3.8,
+     -10.4,
+     -8.6,
+     51.6,
+     52.0,
+     41.7,
+     0.0
+    ]
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "leech_hit.webp",
+    "root": [
+     -9.8,
+     -6.8,
+     -3.9,
+     -1.0
+    ]
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "leech_death.webp"
+   }
+  ]
+ },
+ "clone": {
+  "name": "실패한 클론 병사",
+  "desc": "배양에 실패한 복제 병사. 오른팔의 생체 대포에 산을 모았다가 쏜다.",
+  "role": "원거리 · 산성탄",
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   3
+  ],
+  "tint": "#7aff3a",
+  "cell": 144,
+  "foot": 87,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "clone_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "clone_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "clone_attack.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "clone_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "clone_death.webp"
+   }
+  ]
+ },
+ "rat": {
+  "name": "키메라 실험쥐",
+  "desc": "등에 종양이 돋은 실험쥐. 재빠르게 달려와 덮쳐 문다.",
+  "role": "빠른 근접",
+  "tier": "normal",
+  "chapter": null,
+  "chapters": [
+   1,
+   3
+  ],
+  "tint": "#e08aa0",
+  "cell": 128,
+  "foot": 60,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "rat_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "rat_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "rat_attack.webp",
+    "root": [
+     0.0,
+     -4.5,
+     -11.4,
+     11.0,
+     56.2,
+     56.2,
+     34.1,
+     0.0
+    ]
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "rat_hit.webp",
+    "root": [
+     -12.5,
+     -8.8,
+     -5.0,
+     -1.2
+    ]
+   },
+   {
+    "id": "death",
+    "frames": 8,
+    "loop": false,
+    "name": "죽음",
+    "file": "rat_death.webp"
+   }
+  ]
+ },
+ "phage_q": {
+  "name": "파지 여왕",
+  "desc": "황금 껍질에 왕관 가시를 두른 거대 파지. 머리를 빛내며 새끼 파지를 퍼뜨린다.",
+  "role": "1장 중간 보스",
+  "tier": "mid",
+  "chapter": 1,
+  "chapters": [],
+  "tint": "#ffb040",
+  "cell": 224,
+  "foot": 168,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "phage_q_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "phage_q_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "phage_q_attack.webp",
+    "root": [
+     0.0,
+     -3.1,
+     -7.7,
+     8.8,
+     42.0,
+     42.0,
+     25.5,
+     0.0
+    ]
+   },
+   {
+    "id": "special",
+    "frames": 10,
+    "loop": false,
+    "name": "특수기",
+    "file": "phage_q_special.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "phage_q_hit.webp",
+    "root": [
+     -16.8,
+     -11.8,
+     -6.7,
+     -1.7
+    ]
+   },
+   {
+    "id": "death",
+    "frames": 10,
+    "loop": false,
+    "name": "죽음",
+    "file": "phage_q_death.webp"
+   }
+  ]
+ },
+ "shroom_k": {
+  "name": "균사 거목",
+  "desc": "균사 뿌리를 사방으로 뻗은 거대한 보라 버섯. 납작 웅크렸다가 사방으로 포자를 터뜨린다.",
+  "role": "1장 중간 보스",
+  "tier": "mid",
+  "chapter": 1,
+  "chapters": [],
+  "tint": "#7ae0ff",
+  "cell": 208,
+  "foot": 158,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "shroom_k_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "shroom_k_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "shroom_k_attack.webp"
+   },
+   {
+    "id": "special",
+    "frames": 10,
+    "loop": false,
+    "name": "특수기",
+    "file": "shroom_k_special.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "shroom_k_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 10,
+    "loop": false,
+    "name": "죽음",
+    "file": "shroom_k_death.webp"
+   }
+  ]
+ },
+ "leech_l": {
+  "name": "흡혈 군주",
+  "desc": "등에 피주머니와 가시가 솟은 거대 거머리. 피를 빨아 몸을 부풀린다.",
+  "role": "2장 중간 보스",
+  "tier": "mid",
+  "chapter": 2,
+  "chapters": [],
+  "tint": "#ff3a3a",
+  "cell": 208,
+  "foot": 70,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "leech_l_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "leech_l_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "leech_l_attack.webp",
+    "root": [
+     0.0,
+     -4.7,
+     -12.8,
+     -10.6,
+     63.5,
+     64.0,
+     51.3,
+     0.0
+    ]
+   },
+   {
+    "id": "special",
+    "frames": 10,
+    "loop": false,
+    "name": "특수기",
+    "file": "leech_l_special.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "leech_l_hit.webp",
+    "root": [
+     -12.0,
+     -8.4,
+     -4.8,
+     -1.2
+    ]
+   },
+   {
+    "id": "death",
+    "frames": 10,
+    "loop": false,
+    "name": "죽음",
+    "file": "leech_l_death.webp"
+   }
+  ]
+ },
+ "tick_m": {
+  "name": "진드기 어미",
+  "desc": "등에 빛나는 알과 새끼를 업은 거대 진드기. 알주머니를 부풀려 새끼를 퍼뜨린다.",
+  "role": "2장 중간 보스",
+  "tier": "mid",
+  "chapter": 2,
+  "chapters": [],
+  "tint": "#ffd820",
+  "cell": 160,
+  "foot": 90,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "tick_m_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "tick_m_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "tick_m_attack.webp",
+    "root": [
+     0.0,
+     -4.9,
+     -12.2,
+     15.6,
+     71.7,
+     71.7,
+     36.9,
+     0.0
+    ]
+   },
+   {
+    "id": "special",
+    "frames": 10,
+    "loop": false,
+    "name": "특수기",
+    "file": "tick_m_special.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "tick_m_hit.webp",
+    "root": [
+     -13.4,
+     -9.4,
+     -5.4,
+     -1.3
+    ]
+   },
+   {
+    "id": "death",
+    "frames": 10,
+    "loop": false,
+    "name": "죽음",
+    "file": "tick_m_death.webp"
+   }
+  ]
+ },
+ "brute_x": {
+  "name": "거대 암종",
+  "desc": "양팔이 모두 종양 몽둥이가 된 암세포 거수의 변종. 뼈 왕관을 쓰고 포효하며 주변을 흔든다.",
+  "role": "3장 중간 보스",
+  "tier": "mid",
+  "chapter": 3,
+  "chapters": [],
+  "tint": "#8a3aff",
+  "cell": 208,
+  "foot": 124,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "brute_x_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "brute_x_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "brute_x_attack.webp"
+   },
+   {
+    "id": "special",
+    "frames": 10,
+    "loop": false,
+    "name": "특수기",
+    "file": "brute_x_special.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "brute_x_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 10,
+    "loop": false,
+    "name": "죽음",
+    "file": "brute_x_death.webp"
+   }
+  ]
+ },
+ "clone_c": {
+  "name": "클론 지휘관",
+  "desc": "진압 갑옷을 입은 클론 지휘관. 큰 생체 대포를 쏘고, 손을 들어 부하를 강화한다.",
+  "role": "3장 중간 보스",
+  "tier": "mid",
+  "chapter": 3,
+  "chapters": [],
+  "tint": "#7aff3a",
+  "cell": 208,
+  "foot": 125,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "clone_c_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "clone_c_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "clone_c_attack.webp"
+   },
+   {
+    "id": "special",
+    "frames": 10,
+    "loop": false,
+    "name": "특수기",
+    "file": "clone_c_special.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "clone_c_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 10,
+    "loop": false,
+    "name": "죽음",
+    "file": "clone_c_death.webp"
+   }
+  ]
+ },
+ "prion_g": {
+  "name": "프리온 거상",
+  "desc": "바닥에 결정 기둥을 세운 거대한 프리온. 조각을 활짝 펼쳐 회전하며 사방으로 쏜다.",
+  "role": "4장 중간 보스",
+  "tier": "mid",
+  "chapter": 4,
+  "chapters": [],
+  "tint": "#ff3a6a",
+  "cell": 192,
+  "foot": 95,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "prion_g_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "prion_g_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "prion_g_attack.webp"
+   },
+   {
+    "id": "special",
+    "frames": 10,
+    "loop": false,
+    "name": "특수기",
+    "file": "prion_g_special.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "prion_g_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 10,
+    "loop": false,
+    "name": "죽음",
+    "file": "prion_g_death.webp"
+   }
+  ]
+ },
+ "corona_n": {
+  "name": "코로나 핵",
+  "desc": "금빛 돌기와 빛 고리를 두른 거대 바이러스. 돌기를 길게 뻗고 회전하며 퍼뜨린다.",
+  "role": "4장 중간 보스",
+  "tier": "mid",
+  "chapter": 4,
+  "chapters": [],
+  "tint": "#ffc040",
+  "cell": 192,
+  "foot": 119,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "corona_n_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "corona_n_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 8,
+    "loop": false,
+    "name": "공격",
+    "file": "corona_n_attack.webp",
+    "root": [
+     0.0,
+     -2.8,
+     -7.6,
+     -4.7,
+     82.0,
+     95.0,
+     76.2,
+     0.0
+    ]
+   },
+   {
+    "id": "special",
+    "frames": 10,
+    "loop": false,
+    "name": "특수기",
+    "file": "corona_n_special.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "corona_n_hit.webp",
+    "root": [
+     -19.0,
+     -13.3,
+     -7.6,
+     -1.9
+    ]
+   },
+   {
+    "id": "death",
+    "frames": 10,
+    "loop": false,
+    "name": "죽음",
+    "file": "corona_n_death.webp"
+   }
+  ]
+ },
+ "queen": {
+  "name": "원형질 여왕",
+  "desc": "배양실을 집어삼킨 거대한 원형질 덩어리. 위족으로 내려치고, 산성액을 토하고, 옆구리에서 새끼를 출아한다.",
+  "role": "1장 보스 · 배양실",
+  "tier": "boss",
+  "chapter": 1,
+  "chapters": [],
+  "tint": "#c8ff20",
+  "cell": 272,
+  "foot": 176,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "queen_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "queen_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 10,
+    "loop": false,
+    "name": "위족 내려치기",
+    "file": "queen_attack.webp"
+   },
+   {
+    "id": "attack2",
+    "frames": 10,
+    "loop": false,
+    "name": "산성 토하기",
+    "file": "queen_attack2.webp"
+   },
+   {
+    "id": "special",
+    "frames": 12,
+    "loop": false,
+    "name": "출아",
+    "file": "queen_special.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "queen_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 14,
+    "loop": false,
+    "name": "죽음",
+    "file": "queen_death.webp"
+   }
+  ]
+ },
+ "wormking": {
+  "name": "기생충 왕",
+  "desc": "갑각을 두른 거대 촌충. 큰 턱으로 덮쳐 물고, 몸을 휘둘러 쓸고, 땅속으로 파고들었다 솟아오른다.",
+  "role": "2장 보스 · 하수 저장고",
+  "tier": "boss",
+  "chapter": 2,
+  "chapters": [],
+  "tint": "#ff7aa0",
+  "cell": 256,
+  "foot": 167,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "wormking_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "wormking_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 10,
+    "loop": false,
+    "name": "덮쳐 물기",
+    "file": "wormking_attack.webp"
+   },
+   {
+    "id": "attack2",
+    "frames": 10,
+    "loop": false,
+    "name": "몸통 휩쓸기",
+    "file": "wormking_attack2.webp"
+   },
+   {
+    "id": "special",
+    "frames": 12,
+    "loop": false,
+    "name": "잠행",
+    "file": "wormking_special.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "wormking_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 14,
+    "loop": false,
+    "name": "죽음",
+    "file": "wormking_death.webp"
+   }
+  ]
+ },
+ "doctor": {
+  "name": "감염 박사",
+  "desc": "곰팡이에 잠식된 연구 책임자. 거대한 주사기로 찌르고, 촉수 팔로 휩쓸고, 스스로 혈청을 주사해 광폭해진다.",
+  "role": "3장 보스 · 격리 병동",
+  "tier": "boss",
+  "chapter": 3,
+  "chapters": [],
+  "tint": "#c060ff",
+  "cell": 288,
+  "foot": 206,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "doctor_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "doctor_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 10,
+    "loop": false,
+    "name": "주사기 찌르기",
+    "file": "doctor_attack.webp"
+   },
+   {
+    "id": "attack2",
+    "frames": 10,
+    "loop": false,
+    "name": "촉수 휩쓸기",
+    "file": "doctor_attack2.webp"
+   },
+   {
+    "id": "special",
+    "frames": 12,
+    "loop": false,
+    "name": "혈청 주입",
+    "file": "doctor_special.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "doctor_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 14,
+    "loop": false,
+    "name": "죽음",
+    "file": "doctor_death.webp"
+   }
+  ]
+ },
+ "helix": {
+  "name": "나선의 지배자",
+  "desc": "유전체 금고의 핵심이 깨어난 이중나선 뱀. 빛줄기를 쏘고, 몸을 감았다 내리꽂고, 두 가닥으로 풀려 분열체를 부른다.",
+  "role": "4장 최종 보스 · 유전체 금고",
+  "tier": "boss",
+  "chapter": 4,
+  "chapters": [],
+  "tint": "#3cffae",
+  "cell": 272,
+  "foot": 118,
+  "dirs": [
+   "S",
+   "SE",
+   "E",
+   "NE",
+   "N",
+   "NW",
+   "W",
+   "SW"
+  ],
+  "anims": [
+   {
+    "id": "idle",
+    "frames": 8,
+    "loop": true,
+    "name": "대기",
+    "file": "helix_idle.webp"
+   },
+   {
+    "id": "move",
+    "frames": 8,
+    "loop": true,
+    "name": "이동",
+    "file": "helix_move.webp"
+   },
+   {
+    "id": "attack",
+    "frames": 10,
+    "loop": false,
+    "name": "나선 광선",
+    "file": "helix_attack.webp"
+   },
+   {
+    "id": "attack2",
+    "frames": 10,
+    "loop": false,
+    "name": "내리꽂기",
+    "file": "helix_attack2.webp"
+   },
+   {
+    "id": "special",
+    "frames": 12,
+    "loop": false,
+    "name": "이중나선 분열",
+    "file": "helix_special.webp"
+   },
+   {
+    "id": "hit",
+    "frames": 4,
+    "loop": false,
+    "name": "피격",
+    "file": "helix_hit.webp"
+   },
+   {
+    "id": "death",
+    "frames": 14,
+    "loop": false,
+    "name": "죽음",
+    "file": "helix_death.webp"
    }
   ]
  }

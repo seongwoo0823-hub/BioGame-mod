@@ -306,6 +306,8 @@ function stepArena(dt) {
     f.x = Math.max(20, Math.min(W - 20, f.x)); f.y = Math.max(70, Math.min(H - 10, f.y));
   }
   for (const a of foes) for (const b of foes) if (a !== b && a.a !== 'death' && b.a !== 'death') { const dx = a.x - b.x, dy = a.y - b.y, d = Math.hypot(dx, dy), r = 26 + (MOBS[a.id].tier !== 'normal' ? 30 : 0); if (d < r && d > 0) { a.x += dx / d * (r - d) * 0.3; a.y += dy / d * (r - d) * 0.3; } }
+  // 주인공이 큰 몸집 안으로 파고들지 않게 밀어냄
+  if (P.a !== 'leap') for (const f of foes) if (f.a !== 'death') { const r = 10 + SH(f.id) * 0.9, dx = P.x - f.x, dy = (P.y - f.y) / 0.6, d = Math.hypot(dx, dy); if (d < r && d > 0) { P.x += dx / d * (r - d); P.y += dy / d * (r - d) * 0.6; } }
   shots = shots.filter(s => { s.t += dt; s.x += s.vx * dt; s.y += s.vy * dt; if (Math.hypot(s.x - P.x, s.y - (P.y - 30)) < 18) { hurtHero(s.dmg); fxs.push({id: 'fx_puff', x: s.x, y: s.y, t: 0.2}); return false; } return s.t < 3 && s.x > -20 && s.x < W + 20 && s.y > -20 && s.y < H + 20; });
   beams = beams.filter(b => { b.t += dt; if (b.t > 0.15 && b.t < 0.6) { const px = P.x - b.x, py = P.y - 30 - b.y, ca = Math.cos(b.a), sa = Math.sin(b.a), along = px * ca + py * sa, perp = Math.abs(-px * sa + py * ca); if (along > 0 && perp < 16) hurtHero(4); } return b.t < 0.7; });
   fxs = fxs.filter(f => (f.t += dt) < 1.6);

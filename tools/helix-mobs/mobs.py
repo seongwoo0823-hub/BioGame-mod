@@ -68,6 +68,10 @@ def phage(anim, t, v=None):
                           (1, dict(up=0, tilt=0, sheath=1, spread=0, fwd=0, glow=0.5))]))
     elif anim == 'hit':
         k = [1, 0.7, 0.4, 0.1][min(3, int(t * 3 + 0.5))]; q.update(tilt=-0.35 * k, fwd=-2 * k, up=-1 * k)
+    elif anim == 'special':   # 일어서서 머리를 빛내며 새끼 파지를 퍼뜨림
+        q.update(keys(t, [(0, dict(up=0, tilt=0, spread=0, glow=0.5)), (0.4, dict(up=6, tilt=-0.55, spread=0.6, glow=1.6)),
+                          (0.7, dict(up=5, tilt=-0.5, spread=0.7, glow=1.8)), (1, dict(up=0, tilt=0, spread=0, glow=0.5))]))
+        q['bob'] = 0.6 * math.sin(TAU * t * 4) * (0.3 < t < 0.8)
     elif anim == 'death':
         a = ss(t / 0.6); q.update(up=-6 * a, spread=1.4 * a, tilt=0.3 * a, fall=0.9 * ss((t - 0.2) / 0.6), glow=0.5 * (1 - a))
     H = 11.0 + q['bob'] + q['up']
