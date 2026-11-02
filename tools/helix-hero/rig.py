@@ -204,6 +204,9 @@ def render(model, yaw, W=128, H=128, foot_y=104, tint=None, dissolve=0.0, seed=0
     oc = np.where(below[..., None], (oc * 0.6).astype(np.int32), oc)
     res[outm, :3] = oc[outm].astype(np.uint8); res[outm, 3] = 255
     res[gl, :3] = gcol[gl].astype(np.uint8); res[gl, 3] = 255
+    # np.roll 이 가장자리를 넘어 반대편에 그린 외곽선 지우기
+    for sl in ((0, slice(None)), (H - 1, slice(None)), (slice(None), 0), (slice(None), W - 1)):
+        e = res[sl]; e[~al[sl]] = 0
     # 잔상 (스미어): 몸 뒤/앞 깊이 비교 후 칠함
     for sm in model.smear:
         draw_smear(res, zb, al, sm, yaw, W, H, foot_y, ox, oy)

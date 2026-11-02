@@ -8,7 +8,13 @@ from multiprocessing import Pool
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from hero import build, weapon_tips
 from rig import render
-from anim import ANIMS, NFR, LOOP, SMEAR, FX, TINT, pose
+from anim import ANIMS, NFR, LOOP, SMEAR, FX, TINT, pose as pose_air
+import rig as _rig
+
+def pose(name, t):
+    """공중 높이(air)는 그림에서 빼고 따로 기록 → 게임이 그림자는 바닥에, 몸은 위로 띄워 그림"""
+    q = pose_air(name, t); q['air'] = 0.0; return q
+def lift_px(name, t): return round(pose_air(name, t)['air'] * _rig.SCALE * math.cos(_rig.PITCH), 1)
 
 C = 160; FOOT = 118
 DIRS = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW']
@@ -40,20 +46,30 @@ def job(args):
         dis = fx['dis'][f] if fx else 0.0
         im = render(M, yaw, C, C, FOOT, tint=tint, dissolve=dis, seed=f * 7 + d)
         row.alpha_composite(Image.fromarray(im), (f * C, 0))
-    return name, d, row
+    return name, d, row, [lift_px(name, ftime(name, f)) for f in range(n)]
 
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
     only = sys.argv[2:] or [a[0] for a in ANIMS]
     jobs = [(a, d) for a in only for d in range(8)]
     t0 = time.time(); sheets = {}
+    lifts = {}
     with Pool(4) as p:
-        for name, d, row in p.imap_unordered(job, jobs):
+        for name, d, row, lf in p.imap_unordered(job, jobs):
+            lifts[name] = lf
             sh = sheets.setdefault(name, Image.new('RGBA', (C * NFR[name], C * 8), (0, 0, 0, 0)))
             sh.paste(row, (0, d * C))
     for name, sh in sheets.items():
         fn = os.path.join(OUT, f'hero_{name}.webp'); sh.save(fn, 'WEBP', lossless=True, method=6)
         print(name, sh.size, os.path.getsize(fn) // 1024, 'KB')
-    meta = dict(cell=C, foot=FOOT, dirs=DIRS, anims=[dict(id=a, frames=n, loop=lp, name=nm, file=f'hero_{a}.webp') for a, n, lp, nm in ANIMS])
+    mp = os.path.join(OUT, 'hero.json'); old = json.load(open(mp)) if os.path.exists(mp) else {}
+    oldl = {a['id']: a.get('lift') for a in old.get('anims', [])}
+    an = []
+    for a, n, lp, nm in ANIMS:
+        e = dict(id=a, frames=n, loop=lp, name=nm, file=f'hero_{a}.webp')
+        lf = lifts.get(a, oldl.get(a))
+        if lf and any(x > 0.5 for x in lf): e['lift'] = lf
+        an.append(e)
+    meta = dict(cell=C, foot=FOOT, dirs=DIRS, anims=an)
     json.dump(meta, open(os.path.join(OUT, 'hero.json'), 'w'), ensure_ascii=False, indent=1)
     print('done', round(time.time() - t0, 1), 's')

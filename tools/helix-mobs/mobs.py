@@ -52,8 +52,9 @@ PH_HEAD = M_(['#1e1430', '#3a2860', '#6a4ea0', '#a888e0', '#e8dcff'])
 PH_METAL = M_(['#141824', '#2c3446', '#545f7a', '#9aa6c0'])
 PH_RING = M_(['#2a1838', '#523070', '#8a54b0', '#c69ae6'])
 PH_CORE = M_(['#8a1050', '#e0307a', '#ff8ab8', '#ffe6f2'], True, '#ff4a98')
-def phage(anim, t):
-    M = Model()
+def phage(anim, t, v=None):
+    v = v or {}; M = Model()
+    PH_HEAD_, PH_CORE_ = v.get('head', PH_HEAD), v.get('core', PH_CORE)
     q = dict(bob=0.0, tilt=0.0, sheath=1.0, spread=0.0, fwd=0.0, gait=0.0, gamp=0.0, up=0.0, fall=0.0, glow=0.5)
     if anim == 'idle':
         q.update(bob=0.5 * math.sin(TAU * t), tilt=0.05 * math.sin(TAU * t + 1), glow=0.4 + 0.3 * math.sin(TAU * t))
@@ -100,7 +101,7 @@ def phage(anim, t):
     hc = top + Rb @ V(0, 6.6, 0.4)
     Rh = Rb @ rot_y(0.3) @ rot_x(0.35)
     (ps, ns), faces = icosa(hc, 7.0, Rh)
-    M.add((ps, ns), PH_HEAD, pid=50)
+    M.add((ps, ns), PH_HEAD_, pid=50)
     for fc, n, tri in faces:
         if n[2] > 0.25 or n[1] > 0.85:
             for a, b in ((0, 1), (1, 2), (2, 0)):
@@ -108,8 +109,11 @@ def phage(anim, t):
     g = q['glow']
     for fc, n, tri in faces:
         if n[2] > 0.55:
-            M.add(oriented_ellipsoid(fc + n * 0.25, frame_from(n), (1.3 + 0.6 * g, 0.2, 1.3 + 0.6 * g)), PH_CORE, pid=52)
-    M.tips['mouth'] = bp
+            M.add(oriented_ellipsoid(fc + n * 0.25, frame_from(n), (1.3 + 0.6 * g, 0.2, 1.3 + 0.6 * g)), PH_CORE_, pid=52)
+    if v.get('crown'):   # 여왕: 머리 위 왕관 가시
+        for fc, n, tri in faces:
+            if n[1] > 0.3: limb(M, fc, fc + n * 4.2, 0.9, 0.15, v.get('crownmat', PH_RING), pid=53)
+    M.tips['mouth'] = bp; M.root = V(0, 0, q['fwd'])
     if q['fall'] > 0:
         piv = V(0, 0, 0)
         M.parts = [(np.c_[p[:, 0], np.maximum(p[:, 1] - q['fall'] * 4, p[:, 1] * (1 - 0.4 * q['fall'])), p[:, 2]], n, m, i) for p, n, m, i in M.parts]
@@ -135,7 +139,7 @@ def amoeba(anim, t):
     elif anim == 'death':
         a = ss(t / 0.7); q.update(sy=1 - 0.8 * a, sx=1 + 0.7 * a, flat=a, wob=t * 0.5)
     sx, sy = q['sx'], q['sy']; z0 = q['shift'] + q['lunge']
-    c = V(0, 5.2 * sy, z0)
+    c = V(0, 5.2 * sy, z0); M.root = V(0, 0, q['lunge'])
     M.add(ellipsoid(c, (7.0 * sx, 5.2 * sy, 7.4 * sx)), AM_BODY, pid=1)
     # 일렁이는 혹들
     for k in range(7):
@@ -184,7 +188,7 @@ def bacillus(anim, t):
     elif anim == 'death':
         a = ss(t / 0.6); q.update(h=6 - 3.4 * a, roll=1.4 * a, flat=a, amp=1 - a)
     R = rot_x(q['pitch']) @ rot_z(q['roll'])
-    c = V(0, q['h'], q['fwd'])
+    c = V(0, q['h'], q['fwd']); M.root = V(0, 0, q['fwd'])
     L = 7.0 * q['sq']; r = 3.3 / math.sqrt(q['sq'])
     a, b = c + R @ V(0, 0, -L), c + R @ V(0, 0, L)
     limb(M, a, b, r, r, BA_BODY, pid=1)
@@ -226,8 +230,9 @@ BR_LUMP = M_(['#4a1430', '#86264e', '#c04c6c', '#ec8a90', '#ffd0c0'])
 BR_VEIN = M_(['#5a1690', '#9a3ae0', '#d08aff', '#f6e0ff'], True, '#b45aff')
 BR_BONE = M_(['#5a5040', '#9a8a6a', '#d6c8a2', '#fff6dc'])
 BR_EYE = M_(['#7a5a00', '#ffc800', '#fff2a0', '#ffffff'], True, '#ffd000')
-def brute(anim, t):
-    M = Model()
+def brute(anim, t, v=None):
+    v = v or {}; M = Model()
+    BR_FLESH_, BR_LUMP_ = v.get('flesh', BR_FLESH), v.get('lump', BR_LUMP)
     q = dict(drop=0.0, lean=0.45, twist=0.0, lth=0.1, lkn=0.3, rth=-0.1, rkn=0.3, rh=V(-9, 9, 6), lh=V(9, 8, 5), hp=0.0, fall=0.0, breathe=0.0, jaw=0.0)
     if anim == 'idle':
         b = math.sin(TAU * t); q.update(drop=0.6 + 0.6 * b, breathe=b, rh=V(-9.5, 7.5 + 0.8 * b, 6), lh=V(9, 7 + 0.6 * b, 5))
@@ -261,19 +266,19 @@ def brute(anim, t):
         th, kn = q[nm + 'th'], q[nm + 'kn']
         kd = nz(V(side * 0.25, -math.cos(th), math.sin(th))); K = hip + kd * 8.5
         sd = nz(V(side * 0.15, -math.cos(th - kn), math.sin(th - kn))); A = K + sd * 8.0
-        limb(M, hip, K, 4.2, 3.6, BR_FLESH, pid=1); limb(M, K, A, 3.6, 3.0, BR_FLESH, pid=2)
-        M.add(ellipsoid(A + V(0, -1.0, 1.5), (3.6, 2.2, 4.6)), BR_FLESH, pid=3)
+        limb(M, hip, K, 4.2, 3.6, BR_FLESH_, pid=1); limb(M, K, A, 3.6, 3.0, BR_FLESH_, pid=2)
+        M.add(ellipsoid(A + V(0, -1.0, 1.5), (3.6, 2.2, 4.6)), BR_FLESH_, pid=3)
         for k in range(3): limb(M, A + V(side * (k - 1) * 1.6, -1.6, 4.5), A + V(side * (k - 1) * 1.9, -2.6, 6.8), 0.9, 0.4, BR_BONE, pid=4)
         feet[nm] = A
     R = rot_y(q['twist']) @ rot_x(q['lean'])
     def up(v): return pel + R @ np.array(v, float)
     # 몸통: 혹이 붙은 거대한 덩어리
-    M.add(ellipsoid(up([0, 4, 0]), (7.5, 6.0, 6.0)), BR_FLESH, pid=10)
+    M.add(ellipsoid(up([0, 4, 0]), (7.5, 6.0, 6.0)), BR_FLESH_, pid=10)
     br = 1 + 0.04 * q['breathe']
-    M.add(oriented_ellipsoid(up([0, 13, -1]), R, (11.5 * br, 9.0 * br, 8.5 * br)), BR_FLESH, pid=11)
+    M.add(oriented_ellipsoid(up([0, 13, -1]), R, (11.5 * br, 9.0 * br, 8.5 * br)), BR_FLESH_, pid=11)
     lumps = [(6, 19, -4, 4.2), (-7, 18, -5, 4.8), (0, 21, -6, 5.0), (9, 12, -3, 3.4), (-10, 13, -2, 3.8), (3, 9, -8, 3.6), (-4, 15, -9, 3.2), (8, 18, 1, 3.0)]
     for x, y, z, r in lumps:
-        M.add(ellipsoid(up([x, y, z]), r * br), BR_LUMP, pid=12)
+        M.add(ellipsoid(up([x, y, z]), r * br), BR_LUMP_, pid=12)
     # 빛나는 혈관
     for k in range(6):
         a = k * 1.05
@@ -282,16 +287,19 @@ def brute(anim, t):
     # 등 뼈 가시
     for k in range(4):
         b0 = up([(-1) ** k * 2, 19 - k * 3, -8]); limb(M, b0, b0 + R @ V((-1) ** k * 1.2, 3.5, -3), 1.2, 0.3, BR_BONE, pid=14)
+    if v.get('crown'):
+        for k in range(7):
+            a = -1.2 + k * 0.4; b0 = up([math.sin(a) * 6, 23, math.cos(a) * 3 - 3]); limb(M, b0, b0 + R @ V(math.sin(a) * 2, 6 - abs(a) * 2, -1.5), 1.3, 0.3, BR_BONE, pid=15)
     # 머리: 어깨에 파묻힌 작은 머리 + 눈 여러 개 + 턱
     Rh = R @ rot_x(q['hp'] - 0.25)
     hd = up([0, 19.5, 6.5])
-    M.add(oriented_ellipsoid(hd, Rh, (4.4, 3.8, 4.2)), BR_LUMP, pid=20)
+    M.add(oriented_ellipsoid(hd, Rh, (4.4, 3.8, 4.2)), BR_LUMP_, pid=20)
     for x, y in ((-1.8, 1.0), (1.8, 1.2), (0, 2.2), (-3.0, -0.2), (3.0, 0.0)):
         e = hd + Rh @ V(x, y, 3.7 - abs(x) * 0.25)
         M.add(ellipsoid(e, 0.75 if y < 2 else 0.95), BR_EYE, pid=21)
         M.decal(e + Rh @ V(0, 0, 0.8), '#2a0a00', 1, 1.0)
     jaw = q['jaw']
-    M.add(oriented_ellipsoid(hd + Rh @ V(0, -2.6 - 1.6 * jaw, 2.4), Rh @ rot_x(0.5 * jaw), (3.6, 1.4, 2.8)), BR_FLESH, pid=22)
+    M.add(oriented_ellipsoid(hd + Rh @ V(0, -2.6 - 1.6 * jaw, 2.4), Rh @ rot_x(0.5 * jaw), (3.6, 1.4, 2.8)), BR_FLESH_, pid=22)
     if jaw > 0.1:
         M.add(oriented_ellipsoid(hd + Rh @ V(0, -1.9 - 0.7 * jaw, 3.6), Rh, (2.6, 0.9 * jaw + 0.2, 0.6)), M_(['#1a0408', '#3a0a14', '#5a1420', '#7a2030']), pid=23)
         for k in range(5): M.add(capsule(hd + Rh @ V(-2 + k, -1.2, 3.8), hd + Rh @ V(-2 + k, -1.9, 3.9), 0.3, 0.12), BR_BONE, pid=24)
@@ -299,22 +307,22 @@ def brute(anim, t):
     for side, nm in ((1, 'l'), (-1, 'r')):
         S = up([side * 10.5, 17, 0.5])
         E, Hd = ik(S, up(q[nm + 'h']), side, R, L1=9.5, L2=9.0, pole=[side * 0.6, -0.2, -0.8])
-        big = nm == 'r'
-        limb(M, S, E, 3.6 if big else 3.0, 3.2 if big else 2.6, BR_FLESH, pid=30)
-        M.add(ellipsoid(S, 4.4 if big else 3.6), BR_LUMP, pid=31)
+        big = nm == 'r' or v.get('twin')
+        limb(M, S, E, 3.6 if big else 3.0, 3.2 if big else 2.6, BR_FLESH_, pid=30)
+        M.add(ellipsoid(S, 4.4 if big else 3.6), BR_LUMP_, pid=31)
         fa = nz(Hd - E)
         if big:
             pts = [E + fa * k * 2.6 for k in range(5)]
-            for k, p in enumerate(pts): M.add(ellipsoid(p + V(0, 0.3 * math.sin(k * 2), 0), 3.0 + k * 0.9), BR_LUMP if k % 2 else BR_FLESH, pid=32)
+            for k, p in enumerate(pts): M.add(ellipsoid(p + V(0, 0.3 * math.sin(k * 2), 0), 3.0 + k * 0.9), BR_LUMP_ if k % 2 else BR_FLESH_, pid=32)
             fist = Hd + fa * 2.0
-            M.add(ellipsoid(fist, (6.2, 5.6, 6.2)), BR_FLESH, pid=33)
+            M.add(ellipsoid(fist, (6.2, 5.6, 6.2)), BR_FLESH_, pid=33)
             for k in range(7):
                 a = k * 0.9; d = nz(V(math.sin(a), math.cos(a * 1.3), math.cos(a)))
-                M.add(ellipsoid(fist + d * 5.0, 2.3), BR_LUMP, pid=34)
+                M.add(ellipsoid(fist + d * 5.0, 2.3), BR_LUMP_, pid=34)
                 if k % 2 == 0: limb(M, fist + d * 5.2, fist + d * 8.2, 1.0, 0.25, BR_BONE, pid=35)
             M.tips['fist'] = fist; M.tips['elbow'] = E
         else:
-            limb(M, E, Hd, 2.6, 2.4, BR_FLESH, pid=36)
+            limb(M, E, Hd, 2.6, 2.4, BR_FLESH_, pid=36)
             for k in range(3): limb(M, Hd + fa * 1.5 + V((k - 1) * 1.2, 0, 0), Hd + fa * 4.0 + V((k - 1) * 1.6, -1, 0), 0.8, 0.3, BR_BONE, pid=37)
     if q['fall'] > 0:
         Rf = rot_x(q['fall']); piv = V(0, 0, 4)
@@ -357,7 +365,7 @@ def researcher(anim, t):
         q.update(lkn=0.2 + 1.5 * a, rkn=0.2 + 1.4 * a, lth=0.8 * a * (1 - b), rth=0.6 * a * (1 - b), drop=6 * a, lean=0.3 + 0.5 * a, hp=0.25 + 0.3 * a,
                  rh=(-7, 2 + 4 * b, 6), lh=(7, 2, 6))
         q['fall'] = -1.35 * b   # 앞으로 엎어짐
-    J = hskel(q)
+    J = hskel(q); M.root = V(0, 0, q.get('fwd', 0.0))
     R = J['R']
     for s in 'lr':
         limb(M, J[s + 'hip'], J[s + 'kn'], 2.9, 2.5, HZ_SUIT, pid=1)
@@ -445,7 +453,7 @@ def mosquito(anim, t):
     elif anim == 'death':
         a = ss(t / 0.6); q.update(h=19 - 16 * a, pitch=0.15 + 1.2 * a, fall=a, flap=0.7 * (1 - a), legs=-a)
     R = rot_x(q['pitch']) @ rot_z(0.6 * q['fall'])
-    c = V(0, q['h'], q['fwd'])
+    c = V(0, q['h'], q['fwd']); M.root = V(0, 0, q['fwd'])
     def P(v): return c + R @ np.array(v, float)
     # 가슴(흉부) + 배(피로 부푼 붉은 배) + 머리
     M.add(oriented_ellipsoid(P([0, 0, 0]), R, (2.6, 2.6, 3.2)), MQ_BODY, pid=1)
@@ -550,8 +558,9 @@ SH_GILL = M_(['#3a2a20', '#5e4634', '#86684c', '#ae8e6a'])
 SH_SAC = M_(['#3a6a10', '#7ac81e', '#c8ff6a', '#f4ffd0'], True, '#a8ff3a')
 SH_ROOT = M_(['#2a2018', '#4a3a2a', '#6e5a42', '#94805e'])
 SH_EYE = M_(['#4a5a00', '#b8e010', '#eaff7a', '#ffffff'], True, '#c8ff20')
-def shroom(anim, t):
-    M = Model()
+def shroom(anim, t, v=None):
+    v = v or {}; M = Model()
+    SH_CAP_, SH_SAC_ = v.get('cap', SH_CAP), v.get('sac', SH_SAC)
     q = dict(sq=1.0, hop=0.0, lean=0.0, puff=0.0, droop=0.0, step=0.0, mouth=0.3, spore=0.0)
     if anim == 'idle': q.update(sq=1 + 0.05 * math.sin(TAU * t), mouth=0.3 + 0.1 * math.sin(TAU * t))
     elif anim == 'move':
@@ -561,6 +570,10 @@ def shroom(anim, t):
                           (0.55, dict(sq=1.18, puff=1.0, mouth=1.0, lean=0.18)), (0.75, dict(sq=1.05, puff=0.6, mouth=0.7, lean=0.1)),
                           (1, dict(sq=1, puff=0, mouth=0.3, lean=0))]))
         q['spore'] = ss((t - 0.45) / 0.15) * (1 - ss((t - 0.7) / 0.3))
+    elif anim == 'special':   # 납작 웅크렸다가 사방으로 포자 폭발
+        q.update(keys(t, [(0, dict(sq=1, puff=0, mouth=0.3)), (0.4, dict(sq=0.6, puff=-0.4, mouth=0.1)),
+                          (0.58, dict(sq=1.3, puff=1.5, mouth=1.0)), (0.8, dict(sq=1.1, puff=0.9, mouth=0.6)), (1, dict(sq=1, puff=0, mouth=0.3))]))
+        q['spore'] = 1.6 * ss((t - 0.5) / 0.12) * (1 - ss((t - 0.75) / 0.25))
     elif anim == 'hit':
         k = [1, 0.7, 0.4, 0.1][min(3, int(t * 3 + 0.5))]; q.update(sq=1 - 0.25 * k, lean=-0.25 * k)
     elif anim == 'death':
@@ -595,32 +608,40 @@ def shroom(anim, t):
         M.add(capsule(cc + Rc @ V(math.sin(a) * 2.5, -1.0, math.cos(a) * 2.5), cc + Rc @ V(math.sin(a) * rx * 0.9, -0.9 - 1.2 * dr, math.cos(a) * rx * 0.9), 0.3, 0.25, caps=False), SH_ROOT, pid=6)
     pc, pn = ellipsoid(V(0, 0, 0), (rx, ry, rx))
     keep = pc[:, 1] > -0.6
-    M.add(((pc[keep] @ Rc.T) + cc, pn[keep] @ Rc.T), SH_CAP, pid=7)
+    M.add(((pc[keep] @ Rc.T) + cc, pn[keep] @ Rc.T), SH_CAP_, pid=7)
     for k, (a, e) in enumerate(((0.3, 0.55), (1.6, 0.4), (2.7, 0.62), (3.9, 0.45), (5.0, 0.6), (5.8, 0.3), (1.0, 0.85), (3.3, 0.85))):
         d = V(math.sin(a) * math.cos(e), math.sin(e), math.cos(a) * math.cos(e))
         sp = cc + Rc @ (d * V(rx, ry, rx))
         if k % 3 == 0:
-            M.add(ellipsoid(sp, 1.15 + 0.5 * pf), SH_SAC, pid=8 + k)
+            M.add(ellipsoid(sp, 1.15 + 0.5 * pf), SH_SAC_, pid=8 + k)
         else:
             for dx, dz in ((0, 0), (0.7, 0), (0, 0.7), (-0.7, 0), (0, -0.7)): M.decal(sp + Rc @ V(dx, 0.3, dz), '#fff0dc', 1, 1.6)
     # 공격: 갓 위로 포자 구름
     if q['spore'] > 0.05:
         rnd = np.random.RandomState(4)
-        for k in range(14):
+        for k in range(14 + 10 * (q['spore'] > 1.05)):
             a = rnd.uniform(0, TAU); r = rnd.uniform(1, 9) * q['spore']
-            M.add(ellipsoid(cc + V(math.sin(a) * r, ry + 1 + rnd.uniform(0, 7) * q['spore'], math.cos(a) * r), 0.5 + 1.0 * q['spore'] * rnd.uniform(0.4, 1)), SH_SAC, pid=30 + k)
+            M.add(ellipsoid(cc + V(math.sin(a) * r, ry + 1 + rnd.uniform(0, 7) * q['spore'], math.cos(a) * r), 0.5 + 1.0 * q['spore'] * rnd.uniform(0.4, 1)), SH_SAC_, pid=30 + k)
+    if v.get('horns'):   # 거목: 갓 테두리의 뿔 균사
+        for k in range(10):
+            a = k * TAU / 10
+            p0 = cc + Rc @ V(math.sin(a) * rx * 0.95, -0.4, math.cos(a) * rx * 0.95)
+            limb(M, p0, p0 + Rc @ V(math.sin(a) * 2.5, -3.5, math.cos(a) * 2.5), 0.7, 0.2, SH_ROOT, pid=60)
+        for k in range(5):
+            a = k * TAU / 5 + 0.3; r0 = base + V(math.sin(a) * 3, 0.5, math.cos(a) * 3)
+            chain(M, [r0, r0 + V(math.sin(a) * 5, 2, math.cos(a) * 5), V(math.sin(a) * 11, 0.3, math.cos(a) * 11)], [1.4, 1.0, 0.5], SH_ROOT, pid=61)
     M.tips['cap'] = cc + V(0, ry, 0)
     return M
 
 # ======================================================================== 목록
 STD = [('idle', 8, True, '대기'), ('move', 8, True, '이동'), ('attack', 8, False, '공격'), ('hit', 4, False, '피격'), ('death', 8, False, '죽음')]
 MOBS = {
-    'phage':   dict(name='파지 거미', desc='정이십면체 머리에 꼬리 섬유 여섯 개로 걷는 박테리오파지. 몸을 일으켰다가 꼬리를 내리꽂아 유전자를 주입한다.', fn=phage, scale=1.15, cell=144, foot=112, tint='#c070ff', role='근접 돌격'),
-    'amoeba':  dict(name='아메바 포식자', desc='위족을 뻗어 기어 오는 젤리 같은 원생생물. 몸을 크게 부풀려 덮쳐서 삼킨다.', fn=amoeba, scale=1.45, cell=160, foot=118, tint='#46e0a8', role='느린 탱커'),
-    'bacillus': dict(name='대장균 돌격병', desc='섬모로 덮인 막대 모양 세균. 편모를 채찍질하며 떠다니다가 일직선으로 들이받는다.', fn=bacillus, scale=1.35, cell=144, foot=108, tint='#ff70c0', role='돌진'),
+    'phage':   dict(name='파지 거미', desc='정이십면체 머리에 꼬리 섬유 여섯 개로 걷는 박테리오파지. 몸을 일으켰다가 꼬리를 내리꽂아 유전자를 주입한다.', fn=phage, scale=1.15, rootmul=2.0, cell=144, foot=112, tint='#c070ff', role='근접 돌격'),
+    'amoeba':  dict(name='아메바 포식자', desc='위족을 뻗어 기어 오는 젤리 같은 원생생물. 몸을 크게 부풀려 덮쳐서 삼킨다.', fn=amoeba, scale=1.45, rootmul=2.5, cell=160, foot=118, tint='#46e0a8', role='느린 탱커'),
+    'bacillus': dict(name='대장균 돌격병', desc='섬모로 덮인 막대 모양 세균. 편모를 채찍질하며 떠다니다가 일직선으로 들이받는다.', fn=bacillus, scale=1.35, rootmul=3.0, cell=144, foot=108, tint='#ff70c0', role='돌진'),
     'brute':   dict(name='암세포 거수', desc='끝없이 분열한 세포가 뭉친 거대한 덩어리. 종양 몽둥이 팔로 땅을 내려친다.', fn=brute, cell=192, foot=158, tint='#c04aff', role='정예 · 대형', extra=[('roar', 8, False, '포효')]),
-    'researcher': dict(name='감염된 연구원', desc='곰팡이에 잠식된 방호복 연구원. 뼈 발톱으로 변한 오른팔을 휘두른다.', fn=researcher, cell=160, foot=124, tint='#c05aff', role='근접'),
-    'mosquito': dict(name='모기 매개체', desc='피로 부푼 배를 단 거대 모기. 공중을 맴돌다 침을 내리꽂는다.', fn=mosquito, scale=1.3, cell=144, foot=126, tint='#ff4a4a', role='비행 · 급습'),
+    'researcher': dict(name='감염된 연구원', desc='곰팡이에 잠식된 방호복 연구원. 뼈 발톱으로 변한 오른팔을 휘두른다.', fn=researcher, rootmul=1.6, cell=160, foot=124, tint='#c05aff', role='근접'),
+    'mosquito': dict(name='모기 매개체', desc='피로 부푼 배를 단 거대 모기. 공중을 맴돌다 침을 내리꽂는다.', fn=mosquito, scale=1.3, rootmul=2.5, cell=144, foot=126, tint='#ff4a4a', role='비행 · 급습'),
     'worm':    dict(name='촌충', desc='바닥을 기다 몸을 세우는 마디 벌레. 갈고리 입으로 앞으로 덮쳐 문다.', fn=worm, scale=1.3, cell=160, foot=118, tint='#ff7aa0', role='근접 · 돌출'),
     'shroom':  dict(name='포자 버섯', desc='뿌리 다리로 뒤뚱거리는 버섯. 갓을 부풀렸다 터뜨려 포자 구름을 뿜는다.', fn=shroom, scale=1.45, cell=144, foot=116, tint='#a8ff3a', role='원거리 포탑'),
 }
@@ -631,10 +652,20 @@ for k, m in MOBS.items():
 SMEAR = {('brute', 'attack'): ('elbow', 'fist', 0.42, 0.62), ('researcher', 'attack'): ('wrist', 'claw', 0.38, 0.62)}
 
 def make(mid, aid, t):
-    """동작 시각 t의 모델 (몬스터별 크기 배율 적용)"""
-    m = MOBS[mid]; M = m['fn'](aid, t); k = m.get('scale', 1.0)
+    """동작 시각 t의 모델: 크기 배율, 강화형 설정, 제자리 이동량(root) 분리"""
+    m = MOBS[mid]; k = m.get('scale', 1.0)
+    a = m.get('alias', {}).get(aid, aid)
+    M = m['fn'](a, t, m['v']) if m.get('v') is not None else m['fn'](a, t)
+    root = getattr(M, 'root', None)
+    if root is not None and m.get('rootmul', 0) > 0:
+        off = V(root[0], 0, root[2])
+        M.parts = [(p - off, n, mm, i) for p, n, mm, i in M.parts]
+        M.decals = [(d - off, c, s_, b) for d, c, s_, b in M.decals]
+        M.tips = {kk: vv - off for kk, vv in M.tips.items()}
+        M.rootpx = float(root[2]) * k * 2.0 * m['rootmul']
+    else: M.rootpx = 0.0
     if k != 1.0:
         M.parts = [(p * k, n, mm, i) for p, n, mm, i in M.parts]
-        M.decals = [(d * k, c, s, b) for d, c, s, b in M.decals]
-        M.tips = {kk: v * k for kk, v in M.tips.items()}
+        M.decals = [(d * k, c, s_, b) for d, c, s_, b in M.decals]
+        M.tips = {kk: vv * k for kk, vv in M.tips.items()}
     return M

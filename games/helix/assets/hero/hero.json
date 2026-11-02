@@ -73,14 +73,38 @@
    "frames": 10,
    "loop": false,
    "name": "도약 강타",
-   "file": "hero_leap.webp"
+   "file": "hero_leap.webp",
+   "lift": [
+    0.0,
+    0.0,
+    28.4,
+    49.3,
+    63.0,
+    25.8,
+    6.6,
+    0.0,
+    0.0,
+    0.0
+   ]
   },
   {
    "id": "cast",
    "frames": 10,
    "loop": false,
    "name": "유전자 의식",
-   "file": "hero_cast.webp"
+   "file": "hero_cast.webp",
+   "lift": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.1,
+    1.1,
+    1.9,
+    1.7,
+    1.3,
+    0.0
+   ]
   },
   {
    "id": "throw",
