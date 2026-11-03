@@ -119,22 +119,44 @@ function moveVec() {
   const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; }
   return [x, y];
 }
-// 터치: 왼쪽 반은 가상 조이스틱, 버튼은 화면 요소
+// 터치: 왼쪽 절반 어디를 눌러도 그 자리에 조이스틱이 생김, 오른쪽은 큰 공격 버튼 둘레에 기술 버튼
 function setupTouch() {
-  const zone = document.getElementById('stick'), knob = document.getElementById('knob');
-  let cx = 0, cy = 0;
-  const upd = (e, t) => { const r = zone.getBoundingClientRect(); let dx = t.clientX - cx, dy = t.clientY - cy; const R = r.width * 0.42, l = Math.hypot(dx, dy); if (l > R) { dx *= R / l; dy *= R / l; } knob.style.transform = `translate(${dx}px,${dy}px)`; INPUT.touch.mx = dx / R; INPUT.touch.my = dy / R; };
-  zone.addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; const r = zone.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2; INPUT.touch.active = true; INPUT.touch.id = t.identifier; INPUT.lastDevice = 'touch'; upd(e, t); }, {passive: false});
-  zone.addEventListener('touchmove', e => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === INPUT.touch.id) upd(e, t); }, {passive: false});
-  const end = e => { for (const t of e.changedTouches) if (t.identifier === INPUT.touch.id) { INPUT.touch.active = false; INPUT.touch.mx = INPUT.touch.my = 0; knob.style.transform = ''; } };
+  const zone = document.getElementById('stickzone'), stick = document.getElementById('stick'), knob = document.getElementById('knob');
+  let cx = 0, cy = 0, R = 60;
+  const home = () => { const r = zone.getBoundingClientRect(); stick.style.left = (r.width * 0.3) + 'px'; stick.style.top = (r.height * 0.72) + 'px'; };
+  const upd = t => { let dx = t.clientX - cx, dy = t.clientY - cy; const l = Math.hypot(dx, dy); if (l > R) { dx *= R / l; dy *= R / l; } knob.style.transform = `translate(${dx}px,${dy}px)`; const m = Math.hypot(dx, dy) / R; INPUT.touch.mx = m < 0.18 ? 0 : dx / R; INPUT.touch.my = m < 0.18 ? 0 : dy / R; };
+  zone.addEventListener('touchstart', e => {
+    e.preventDefault(); if (INPUT.touch.active) return; const t = e.changedTouches[0], r = zone.getBoundingClientRect();
+    cx = t.clientX; cy = t.clientY; R = stick.offsetWidth * 0.42; stick.style.left = (cx - r.left) + 'px'; stick.style.top = (cy - r.top) + 'px'; stick.classList.add('on');
+    INPUT.touch.active = true; INPUT.touch.id = t.identifier; INPUT.lastDevice = 'touch'; upd(t);
+  }, {passive: false});
+  zone.addEventListener('touchmove', e => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === INPUT.touch.id) upd(t); }, {passive: false});
+  const end = e => { for (const t of e.changedTouches) if (t.identifier === INPUT.touch.id) { INPUT.touch.active = false; INPUT.touch.mx = INPUT.touch.my = 0; knob.style.transform = ''; stick.classList.remove('on'); home(); } };
   zone.addEventListener('touchend', end); zone.addEventListener('touchcancel', end);
   INPUT.touchHeld = new Set();
-  document.querySelectorAll('[data-act]').forEach(b => {
+  document.querySelectorAll('#touch [data-act]').forEach(b => {
     const a = b.dataset.act;
     b.addEventListener('touchstart', e => { e.preventDefault(); INPUT.lastDevice = 'touch'; press(a); INPUT.touchHeld.add(a); b.classList.add('on'); }, {passive: false});
     const off = e => { e.preventDefault(); INPUT.touchHeld.delete(a); b.classList.remove('on'); };
     b.addEventListener('touchend', off); b.addEventListener('touchcancel', off);
   });
+  // 버튼 배치: 화면 크기에 맞춰 겹치지 않게 부채꼴로
+  const layout = () => {
+    const W = innerWidth, H = innerHeight, u = Math.min(W * 0.55, H) / 100;
+    const big = Math.round(clamp(u * 26, 70, 118)), sm = Math.round(big * 0.66), tiny = Math.round(big * 0.56), pad = Math.round(clamp(u * 5, 12, 28));
+    const ax = W - pad - big / 2, ay = H - pad - big / 2, rad = big / 2 + sm / 2 + Math.round(u * 3) + 6;
+    const put = (act, ang, r, size) => { const el = document.querySelector(`#touch [data-act=${act}]`); if (!el) return; const x = ax + Math.cos(ang) * r, y = ay - Math.sin(ang) * r; Object.assign(el.style, {width: size + 'px', height: size + 'px', left: Math.round(x - size / 2) + 'px', top: Math.round(y - size / 2) + 'px'}); };
+    const D = Math.PI / 180;
+    put('attack', 0, 0, big);
+    put('dash', 180 * D, rad, sm);         // 왼쪽: 돌진 (엄지가 가장 쉽게 닿는 곳)
+    put('special', 135 * D, rad, sm);      // 왼쪽 위
+    put('cast', 90 * D, rad, sm);          // 위
+    put('leap', 157 * D, rad + sm * 0.95, tiny);
+    put('ult', 113 * D, rad + sm * 0.95, tiny);
+    put('interact', 135 * D, rad + sm * 1.95, sm);
+    stick.style.setProperty('--sk', Math.round(clamp(u * 34, 110, 170)) + 'px'); if (!INPUT.touch.active) home();
+  };
+  layout(); addEventListener('resize', layout); addEventListener('orientationchange', () => setTimeout(layout, 200));
   addEventListener('touchstart', () => { if (INPUT.lastDevice !== 'touch') { INPUT.lastDevice = 'touch'; document.body.classList.add('touch'); } }, {passive: true});
 }
 
