@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>면역 특공대 주인공 뷰어</title>
+<style>
+:root{--bg:#160a1c;--fg:#f4e6f6;--mut:#b49ac0;--card:#24122c;--acc:#ff6aa8}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,sans-serif;padding:16px}
+h1{font-size:18px;margin:0 0 4px}p{color:var(--mut);margin:0 0 12px}
+#g{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.c{background:var(--card);border-radius:8px;padding:8px;text-align:center}
+canvas{image-rendering:pixelated;width:144px;height:144px;background:#3a1a34;border-radius:4px}
+.n{font-weight:600}#tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}#tabs button{background:var(--card);color:var(--fg);border:1px solid #4a2a54;border-radius:6px;padding:6px 12px;font:inherit;cursor:pointer}#tabs button.on{border-color:var(--acc);color:var(--acc)}.s{color:var(--mut);font-size:12px}
+</style></head><body>
+<h1>면역 특공대 주인공 4종 · 도트 스프라이트</h1>
+<div id="tabs"></div>
+<p>게임과 같은 규칙으로 몸 + 얼굴 + 총 팔을 합성해 60fps로 재생합니다. (tools/immune-hero/build.py로 다시 만들 수 있음)</p>
+<div id="g"></div>
+<script src="heroes.js"></script>
+<script>
+const ALL=window.IS_HEROES;let M=null,img=null;
+const KO={idle:'대기',idle_u:'대기·위 조준',tired:'지침 (체력 30% 미만)',bored:'몸풀기 (오래 대기)',run:'달리기',run_u:'달리며 위 조준',crouch:'엎드림',crawl:'엎드려 이동',rise:'점프 상승',rise_u:'상승·위',rise_d:'상승·아래',apex:'점프 정점',apex_u:'정점·위',apex_d:'정점·아래',fall:'낙하',fall_u:'낙하·위',fall_d:'낙하·아래',land:'착지',skid:'급정지·방향 전환',hurt:'피격',die:'쓰러짐',win:'승리',grab:'붙잡힘·몸부림',melee:'갈고리 할퀴기',throw:'수류탄 투척',throwN:'NET 그물 투척',engulf:'대탐식 (대식세포 필살기)',dash:'섬광 대시 (NK 필살기)',flip:'2단 점프 공중제비'};
+const MEL={neut:'갈고리 할퀴기',macro:'몸통 박치기',tc:'TCR 펀치',nk:'회전 발차기'};let CUR='neut';
+const NAMES={neut:'호중구',macro:'대식세포',tc:'킬러 T세포',nk:'NK세포'};
+const FACE={engulf:'chomp',dash:'fierce',tired:'tired',hurt:'hurt',grab:'strain',win:'joy',melee:'fierce',throw:'fierce',throwN:'fierce',bored:'blink',land:'surprise',run:'fierce',run_u:'fierce_u',idle_u:'look_u',rise_u:'look_u',apex_u:'look_u',fall_u:'look_u',rise_d:'look_d',apex_d:'look_d',fall_d:'look_d'};
+const AIM={idle_u:-90,run_u:-90,rise_u:-90,apex_u:-90,fall_u:-90,rise_d:90,apex_d:90,fall_d:90};
+let cs=[],t=0;
+function load(id){M=ALL[id];CUR=id;img=new Image();img.src=id+'.png';cs=[];document.getElementById('g').innerHTML='';document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.id===id));
+img.onload=()=>{for(const k in M.A){const d=document.createElement('div');d.className='c';const c=document.createElement('canvas');c.width=48;c.height=48;d.append(c);
+ const A=M.A[k];d.insertAdjacentHTML('beforeend',`<div class="n">${k==='melee'?MEL[CUR]:KO[k]||k}</div><div class="s">${k} · ${A.f.length}프레임 · ${A.t}틱</div>`);document.getElementById('g').append(d);cs.push([c,k]);}
+ };}
+for(const id in ALL){const b=document.createElement('button');b.textContent=NAMES[id]||id;b.dataset.id=id;b.onclick=()=>load(id);document.getElementById('tabs').append(b);}
+load('neut');
+(function loop(){t++;if(!img||!img.complete){requestAnimationFrame(loop);return;}for(const [c,k] of cs){const x=c.getContext('2d');x.clearRect(0,0,48,48);const A=M.A[k];const i=A.loop?Math.floor(t/A.t)%A.f.length:Math.min(A.f.length-1,Math.floor((t%(A.t*A.f.length+40))/A.t));const f=A.f[i];
+  const X=24,Y=44;x.drawImage(img,f[0],f[1],M.cell[0],M.cell[1],X-M.o[0],Y-M.o[1],M.cell[0],M.cell[1]);
+  if(f[6]){let fn=FACE[k]||(t%220<6?'blink':'normal');const s=M.F[fn]||M.F.normal;x.drawImage(img,s[0],s[1],9,7,X+f[4]+M.FO[0],Y+f[5]+M.FO[1],9,7);}
+  if(f[7]){let a=(AIM[k]||0)+(A.at||0)*57.3;a=Math.max(-105,Math.min(105,Math.round(a/15)*15));const rc=(k==='run'&&t%20<6)?2:0;const m=M.ARM['g'+rc+'_'+a];x.drawImage(img,m[0],m[1],M.arm,M.arm,X+f[2]-M.arm/2,Y+f[3]-M.arm/2,M.arm,M.arm);}}
+  requestAnimationFrame(loop);})();
+</script></body></html>

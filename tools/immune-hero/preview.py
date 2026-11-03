@@ -4,8 +4,9 @@ import numpy as np
 from PIL import Image
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 D = os.path.join(ROOT, 'games', 'is-assets')
-sheet = np.array(Image.open(os.path.join(D, 'neut.png')).convert('RGBA'))
-meta = json.loads(open(os.path.join(D, 'neut.js')).read().split('=', 1)[1].rstrip().rstrip(';'))
+CID = os.environ.get('HERO', 'neut')
+sheet = np.array(Image.open(os.path.join(D, CID + '.png')).convert('RGBA'))
+meta = json.loads(open(os.path.join(D, 'heroes.js')).read().split('=', 1)[1].strip().rstrip(';'))[CID]
 CW, CHh = meta['cell']; OX, OY = meta['o']; AR = meta['arm']
 
 
@@ -23,6 +24,7 @@ def crop(x, y, w, h): return sheet[y:y + h, x:x + w]
 
 
 def compose(anim, i, face='normal', aim=0, recoil=0, W=64, H=64, ox=32, oy=56):
+    face = face if face in meta['F'] else 'normal'
     A = meta['A'][anim]; f = A['f'][i % len(A['f'])]
     can = np.zeros((H, W, 4), np.uint8)
     blit(can, crop(f[0], f[1], CW, CHh), ox - OX, oy - OY)
