@@ -83,8 +83,8 @@ function traitOffers(lin, minRar) {
 }
 function traitCard(o, i, extra = '') {
   const T = TRAIT[o.id], L = LINEAGE[T.lin], R = RARITY[o.rar], cur = T.slot !== 'passive' ? G.run.slots[T.slot] : null;
-  return `<button class="opt card" data-i="${i}" style="--c:${L.col}">${img(`${T.lin}_${T.slot}`)}<div><div class="cn">${esc(T.name)} <span style="color:${R.col}">${R.name}</span></div>
-    <div class="cs">${L.short} · ${SLOT_NAME[T.slot]}</div><div class="cd">${esc(T.d(T.v[o.rar]))}</div>${cur ? `<div class="cr">교체: ${esc(TRAIT[cur.id].name)}</div>` : ''}${extra}</div></button>`;
+  return `<button class="opt card" data-i="${i}" style="--c:${L.col}"><div class="ch">${img(`${T.lin}_${T.slot}`)}<div><div class="cn">${esc(T.name)}<span class="rar" style="color:${R.col}">${R.name}</span></div>
+    <div class="cs">${L.short} 계통 · ${SLOT_NAME[T.slot]}</div></div></div><div class="cd">${esc(T.d(T.v[o.rar]))}</div>${cur ? `<div class="cr">교체: ${esc(TRAIT[cur.id].name)}</div>` : ''}${extra}</button>`;
 }
 function openTraitChoice(lin, minRar, done) {
   const offers = traitOffers(lin, minRar); const L = LINEAGE[lin];
@@ -232,7 +232,7 @@ function showLoading(on) { $('#loading').style.display = on ? 'flex' : 'none'; }
 function titleScreen() {
   G.state = 'title'; AUDIO.music('title', 0);
   const has = SAVE.runs > 0 || SAVE.dna > 0;
-  const p = openPanel(`<div class="title"><div class="logo">HELIX<span>헬릭스 · 나선의 계승자</span></div>
+  const p = openPanel(`<div class="title"><div class="logo">HELIX<span>헬릭스 · 나선의 계승자</span></div><p class="foot" style="margin:-.6em 0 0;color:#8796a0">이중나선의 낫을 든 생명과학자, 오염된 연구소 지하로.</p>
     <div class="list"><button class="opt row" data-i="start">${img('orb_symbio')}<span>${has ? '이어하기' : '새로 시작하기'}</span><b></b></button>
     <button class="opt row" data-i="help">${img('blade')}<span>조작법</span><b></b></button>
     <button class="opt row" data-i="set">${img('luck')}<span>설정</span><b></b></button>
@@ -261,6 +261,7 @@ async function boot() {
   try { await loadCore(p => bar.style.width = Math.round(p * 100) + '%'); }
   catch (e) { $('#loading').innerHTML = '<p>게임 파일을 불러오지 못했습니다. 새로고침해 주세요.</p>'; console.error(e); return; }
   showLoading(false);
+  document.querySelectorAll('[data-icon]').forEach(i => i.src = iconURL(i.dataset.icon));
   titleScreen();
 }
 boot();

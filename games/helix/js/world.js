@@ -94,6 +94,12 @@ function prerender(room) {
     x.drawImage(sh, t * tW, 0, tW, tH, i * TS, ty(j), tW, tH);
   }
   for (let j = 0; j < room.gh; j++) for (let i = 0; i < room.gw; i++) if (room.at(i, j) === 2) { x.fillStyle = '#020304'; x.fillRect(i * TS, ty(j), tW, tH); if (room.at(i, j - 1) === 1) { const g = x.createLinearGradient(0, ty(j), 0, ty(j) + tH); g.addColorStop(0, 'rgba(60,70,80,0.35)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(i * TS, ty(j), tW, tH); } }
+  // 반복 무늬가 덜 보이도록 넓은 명암 얼룩
+  for (let k = 0; k < (W * H) / 7000; k++) {
+    const px = Math.random() * W, py = Math.random() * H, r = rand(60, 180), dark = Math.random() < 0.6;
+    const g = x.createRadialGradient(px, py, 0, px, py, r); g.addColorStop(0, dark ? 'rgba(0,0,0,0.13)' : 'rgba(255,255,240,0.05)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g; x.fillRect(px - r, py - r, r * 2, r * 2);
+  }
   // 바닥 장식
   for (const d of room.decals) x.drawImage(sh, d.k * tW, tH, tW, tH, Math.round(d.x - 24), Math.round(d.z * K + OY - 15), tW, tH);
   // 가장자리: 북쪽 벽, 남쪽 절벽, 양옆 벽 두께, 벽 아래 그늘

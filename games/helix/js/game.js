@@ -1,6 +1,6 @@
 // 헬릭스 게임 본체: 주인공, 적, 투사체, 장판, 피해 계산, 변이 효과, 방 진행, 그리기
 'use strict';
-const G = {state: 'boot', room: null, foes: [], projs: [], zones: [], pickups: [], allies: [], tele: [], beams: [], fx: [], hitstop: 0, time: 0, paused: false, run: null, slow: 1, fade: 0, fadeTo: 0, fadeCb: null, banner: null};
+const G = {pending: [], slowT: 0, focus: null, state: 'boot', room: null, foes: [], projs: [], zones: [], pickups: [], allies: [], tele: [], beams: [], fx: [], hitstop: 0, time: 0, paused: false, run: null, slow: 1, fade: 0, fadeTo: 0, fadeCb: null, banner: null};
 let SAVE = null;
 const SETTINGS = window.SETTINGS = {shake: 1};
 const HA = {};   // 주인공 동작 정보 (hero.json)
@@ -147,7 +147,14 @@ function updPlayer(P, dt) {
   for (const a of P.afterimg) a.t += dt;
   P.afterimg = P.afterimg.filter(a => a.t < 0.25);
 }
-function faceAim(P) { P.ang = aimAngle(P); P.d = dir8(P.ang); }
+function faceAim(P) {
+  let a = aimAngle(P);
+  // 조준 보정: 조준 방향 가까이에 있는 적 쪽으로 살짝 당김
+  let best = null, bs = 0.62;
+  for (const f of G.foes) { if (f.st === 'dead' || f.hidden || f.st === 'spawn') continue; const d = dist(P, f) - f.r; if (d > 170) continue; let da = angTo(P, f) - a; da = Math.atan2(Math.sin(da), Math.cos(da)); const sc = Math.abs(da) + d / 600; if (Math.abs(da) < 0.62 && sc < bs) { bs = sc; best = da; } }
+  if (best !== null) a += best * 0.75;
+  P.ang = a; P.d = dir8(a);
+}
 function startAttack(P, a, dashStrike) {
   faceAim(P); setAct(P, a, 1 / atkSpd()); P.dashStrike = dashStrike;
   AUDIO.play(a === 'atk3' ? 'swing3' : a === 'atk2' ? 'swing2' : 'swing1', 0.9);
@@ -289,6 +296,10 @@ function killFoe(f) {
   burst(f.x, f.z, 20, [col, '#ffffff', '#202020'], f.tier === 'normal' ? 14 : 40, 240, 0.7, 3);
   G.fx.push({k: 'burst', x: f.x, z: f.z, col, t: 0});
   if (f.tier !== 'normal') { shake(10); G.hitstop = 0.15; }
+  if (f.tier === 'boss') for (const o of G.foes) if (o !== f && o.st !== 'dead') { o.st = 'dead'; o.t = 0; o.tele = null; o.hp = 0; }
+  if (f.elite) { dropPickup('atp', f.x, f.z, 12); dropPickup('heal', f.x + 20, f.z, 0.08); }
+  // 방의 마지막 적: 잠깐 느리게
+  if (G.state === 'run' && G.waveN >= G.waves && !(G.pending || []).length && G.foes.every(g => g.st === 'dead')) { G.slow = 0.3; G.slowT = f.tier === 'boss' ? 1.2 : 0.55; AUDIO.play('ultBoom', 0.45, 1.4); }
   SAVE.kills[f.id] = (SAVE.kills[f.id] || 0) + 1;
   if (G.run) G.run.kills++;
   if (f.acid > 0 && has('e_bom')) {
@@ -312,7 +323,7 @@ function hurtHero(dmg, src) {
   burst(P.x, P.z, 40, ['#ff4a5a', '#ffffff'], 8, 160, 0.4, 2);
   if (P.hp <= 0) {
     if (P.revives > 0) { P.revives--; P.hp = Math.round(P.maxhp * 0.4); P.inv = 2; G.flashScreen = 0.6; AUDIO.play('heal'); floatText(P.x, P.z, 100, '재생!', '#3cffae', true); G.fx.push({k: 'pillar', x: P.x, z: P.z, t: 0}); return true; }
-    P.hp = 0; setAct(P, 'death'); AUDIO.play('die', 1, 0.7); AUDIO.music(AUDIO.name, 0); G.slow = 0.35; setTimeout(() => G.slow = 1, 900);
+    P.hp = 0; setAct(P, 'death'); AUDIO.play('die', 1, 0.7); AUDIO.music(AUDIO.name, 0); G.slow = 0.35; G.slowT = 0.9;
     return true;
   }
   if (['idle', 'run'].includes(P.act) && src) { setAct(P, 'hit'); const a = Math.atan2(P.z - src.z, P.x - src.x); P.vx = Math.cos(a) * 220; P.vz = Math.sin(a) * 220; }
@@ -458,6 +469,22 @@ function onFoeStrike(f) {
     AUDIO.play('shoot', 0.5); f.tele = null;
   } else if (f.kind === 'roar') { AUDIO.play('roar', 0.6); f.buff = 5; shake(3); }
   else if (f.kind === 'special') { doMidSpecial(f); }
+}
+function makeElite(f) {
+  f.elite = true; f.hp = f.maxhp = Math.round(f.maxhp * 2.4); f.dmgMul *= 1.3; f.r *= 1.1;
+  floatText(f.x, f.z, 90, '변이체', '#ffc040', true);
+}
+// 몸끼리 부딪힘: 일반 적은 밀려나고, 큰 적은 주인공을 밀어냄 (돌진·도약 중엔 통과)
+function bodyBlock(P) {
+  if (G.state !== 'run' || P.act === 'dash' || P.act === 'leap' || P.act === 'death') return;
+  for (const f of G.foes) {
+    if (f.st === 'dead' || f.st === 'spawn' || f.hidden || (FOE[f.id].fly && f.tier === 'normal')) continue;
+    const dx = P.x - f.x, dz = P.z - f.z, d = Math.hypot(dx, dz), rr = f.r * 0.75 + P.r;
+    if (d >= rr || d < 0.01) continue;
+    const o = rr - d;
+    if (f.tier === 'normal' && FOE[f.id].weight < 3) G.room.move(f, -dx / d * o, -dz / d * o, f.r * 0.7);
+    else G.room.move(P, dx / d * o, dz / d * o, P.r);
+  }
 }
 function foeShot(f, a, spd, kind = 'spore', dmg) {
   const M = JS.mobs[f.id];

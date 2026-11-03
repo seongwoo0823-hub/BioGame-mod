@@ -1,6 +1,6 @@
 // 헬릭스 엔진: 화면, 에셋 로딩, 입력(키보드·마우스·터치·게임패드), 카메라, 입자, 공용 그리기
 'use strict';
-const VW = 960, VH = 540, K = 0.625, TS = 48;   // K: 바닥 눌림 비율(월드 z → 화면 y), TS: 타일 크기(월드)
+let VW = 960, VH = 540; const K = 0.625, TS = 48;   // K: 바닥 눌림 비율(월드 z → 화면 y), TS: 타일 크기(월드)
 const cv = document.getElementById('game'), ctx = cv.getContext('2d', {alpha: false});
 ctx.imageSmoothingEnabled = false;
 const TAU = Math.PI * 2;
@@ -17,25 +17,46 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 
 // ---------------- 화면 맞춤 (정수 배율 우선, 남는 공간은 검은 띠)
 let SCALE = 1;
+// 화면 맞춤: 가능하면 정수 배율로 키워 도트를 또렷하게, 남는 공간은 시야를 넓혀 채움
 function resize() {
   const w = innerWidth, h = innerHeight;
-  const s = Math.min(w / VW, h / VH);
-  SCALE = s >= 1 ? (s >= 2 && Math.abs(s - Math.round(s)) < 0.15 ? Math.round(s) : s) : s;
+  let s = Math.min(w / 960, h / 540);
+  if (s >= 1) s = Math.max(1, Math.floor(s + 0.02));
+  SCALE = s;
+  VW = Math.min(1600, Math.round(w / s)); VH = Math.min(900, Math.round(h / s));
   cv.width = VW; cv.height = VH;
-  cv.style.width = Math.floor(VW * SCALE) + 'px'; cv.style.height = Math.floor(VH * SCALE) + 'px';
+  cv.style.width = Math.round(VW * s) + 'px'; cv.style.height = Math.round(VH * s) + 'px';
   ctx.imageSmoothingEnabled = false;
   const ui = document.getElementById('ui'); ui.style.width = cv.style.width; ui.style.height = cv.style.height;
-  ui.style.setProperty('--s', Math.min(SCALE, 2.2));
+  ui.style.setProperty('--s', clamp(Math.min(w / 1280, h / 720) * 1.05, 0.72, 1.8));
+  window.VIG = null;
 }
 addEventListener('resize', resize);
 
 // ---------------- 에셋
 const IMG = {}, JS = {};
 let loadDone = 0, loadTotal = 0;
+// 그림 불러오기: 동시에 6개까지, 실패하면 최대 4번 다시 시도
+const PEND = {}, LQ = []; let LACT = 0;
 function loadImg(key, url) {
   if (IMG[key]) return Promise.resolve(IMG[key]);
+  if (PEND[key]) return PEND[key];
   loadTotal++;
-  return new Promise(ok => { const i = new Image(); i.onload = () => { IMG[key] = i; loadDone++; ok(i); }; i.onerror = () => { console.warn('불러오기 실패', url); loadDone++; ok(null); }; i.src = url; });
+  return PEND[key] = new Promise(ok => { LQ.push({key, url, ok, tries: 0}); pumpLoad(); });
+}
+function pumpLoad() {
+  while (LACT < 6 && LQ.length) {
+    const j = LQ.shift(); LACT++;
+    const im = new Image();
+    im.onload = () => { LACT--; IMG[j.key] = im; loadDone++; delete PEND[j.key]; j.ok(im); pumpLoad(); };
+    im.onerror = () => {
+      LACT--;
+      if (++j.tries < 4) setTimeout(() => { LQ.push(j); pumpLoad(); }, 350 * j.tries);
+      else { console.warn('불러오기 실패', j.url); loadDone++; delete PEND[j.key]; j.ok(null); }
+      pumpLoad();
+    };
+    im.src = j.url;
+  }
 }
 async function loadJSON(key, url) { if (JS[key]) return JS[key]; const r = await fetch(url); JS[key] = await r.json(); return JS[key]; }
 
