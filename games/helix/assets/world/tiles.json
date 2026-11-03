@@ -1,0 +1,235 @@
+{
+ "hub": {
+  "file": "tiles_hub.webp",
+  "tw": 48,
+  "th": 30,
+  "tiles": [
+   "grass0",
+   "grass1",
+   "grass2",
+   "grass3",
+   "grass4",
+   "grass5",
+   "path0",
+   "path1",
+   "path2",
+   "path3",
+   "path4",
+   "path5",
+   "deck0",
+   "deck1",
+   "deck2"
+  ],
+  "floors": {
+   "base": [
+    "path0",
+    "path1",
+    "path2",
+    "path3",
+    "path4",
+    "path5"
+   ],
+   "alt": [
+    "grass0",
+    "grass1",
+    "grass2",
+    "grass3",
+    "grass4",
+    "grass5"
+   ],
+   "deck": [
+    "deck0",
+    "deck1",
+    "deck2"
+   ]
+  },
+  "decals": 4,
+  "water": 0,
+  "walls": 3,
+  "wallY": 90,
+  "wallH": 64,
+  "topY": 154,
+  "topH": 14,
+  "cliffY": 168,
+  "cliffH": 28,
+  "void": "#0a0e0c"
+ },
+ "lab": {
+  "file": "tiles_lab.webp",
+  "tw": 48,
+  "th": 30,
+  "tiles": [
+   "lab0",
+   "lab1",
+   "lab2",
+   "lab3",
+   "lab4",
+   "lab5",
+   "lab6",
+   "lab7",
+   "warn0",
+   "warn1"
+  ],
+  "floors": {
+   "base": [
+    "lab0",
+    "lab1",
+    "lab2",
+    "lab4",
+    "lab5",
+    "lab7"
+   ],
+   "alt": [
+    "lab3",
+    "lab6"
+   ]
+  },
+  "decals": 4,
+  "water": 0,
+  "walls": 3,
+  "wallY": 90,
+  "wallH": 64,
+  "topY": 154,
+  "topH": 14,
+  "cliffY": 168,
+  "cliffH": 28,
+  "void": "#0c1016"
+ },
+ "sewer": {
+  "file": "tiles_sewer.webp",
+  "tw": 48,
+  "th": 30,
+  "tiles": [
+   "cob0",
+   "cob1",
+   "cob2",
+   "cob3",
+   "cob4",
+   "cob5",
+   "cob6",
+   "cob7",
+   "grate0",
+   "grate1",
+   "grate2",
+   "grate3"
+  ],
+  "floors": {
+   "base": [
+    "cob0",
+    "cob1",
+    "cob2",
+    "cob3",
+    "cob4",
+    "cob5",
+    "cob6",
+    "cob7"
+   ],
+   "alt": [
+    "grate0",
+    "grate1",
+    "grate2",
+    "grate3"
+   ]
+  },
+  "decals": 4,
+  "water": 4,
+  "walls": 3,
+  "wallY": 90,
+  "wallH": 64,
+  "topY": 154,
+  "topH": 14,
+  "cliffY": 168,
+  "cliffH": 28,
+  "void": "#060a0a"
+ },
+ "ward": {
+  "file": "tiles_ward.webp",
+  "tw": 48,
+  "th": 30,
+  "tiles": [
+   "vin0",
+   "vin1",
+   "vin2",
+   "vin3",
+   "vin4",
+   "vin5",
+   "vin6",
+   "vin7",
+   "fung0",
+   "fung1",
+   "fung2"
+  ],
+  "floors": {
+   "base": [
+    "vin0",
+    "vin1",
+    "vin2",
+    "vin3",
+    "vin4",
+    "vin5",
+    "vin6",
+    "vin7"
+   ],
+   "alt": [
+    "fung0",
+    "fung1",
+    "fung2"
+   ]
+  },
+  "decals": 4,
+  "water": 0,
+  "walls": 3,
+  "wallY": 90,
+  "wallH": 64,
+  "topY": 154,
+  "topH": 14,
+  "cliffY": 168,
+  "cliffH": 28,
+  "void": "#081010"
+ },
+ "vault": {
+  "file": "tiles_vault.webp",
+  "tw": 48,
+  "th": 30,
+  "tiles": [
+   "met0",
+   "met1",
+   "met2",
+   "met3",
+   "met4",
+   "met5",
+   "met6",
+   "met7",
+   "hex0",
+   "hex1",
+   "hex2"
+  ],
+  "floors": {
+   "base": [
+    "met0",
+    "met1",
+    "met2",
+    "met3",
+    "met4",
+    "met5",
+    "met6",
+    "met7"
+   ],
+   "alt": [
+    "hex0",
+    "hex1",
+    "hex2"
+   ]
+  },
+  "decals": 4,
+  "water": 0,
+  "walls": 3,
+  "wallY": 90,
+  "wallH": 64,
+  "topY": 154,
+  "topH": 14,
+  "cliffY": 168,
+  "cliffH": 28,
+  "void": "#05030a"
+ }
+}

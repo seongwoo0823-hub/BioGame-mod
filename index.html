@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BIO ARCADE · 생명과학 게임 아케이드</title>
-<meta name="description" content="리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터, 핀볼, 3D 난투와 플랫포머까지 — 1인칭 슈팅, 핵앤슬래시 RPG까지 — 생명과학으로 만든 게임 11종을 한곳에서 즐기세요.">
+<meta name="description" content="리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터, 핀볼, 3D 난투와 플랫포머까지 — 1인칭 슈팅, 핵앤슬래시 RPG, 로그라이트까지 — 생명과학으로 만든 게임 12종을 한곳에서 즐기세요.">
 <meta name="theme-color" content="#0b0f1e">
 <link rel="manifest" href="manifest.webmanifest?v=2">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-v2-32.png">
@@ -262,7 +262,7 @@ header.hero{
   box-shadow:0 6px 18px -4px var(--c);
 }
 
-.c1{--c:#38bdf8}.c2{--c:#f472b6}.c3{--c:#facc15}.c4{--c:#fb7185}.c5{--c:#c084fc}.c6{--c:#fb923c}.c7{--c:#4ade80}.c8{--c:#e879f9}.c9{--c:#fda4af}.c10{--c:#5eead4}.c11{--c:#f59e0b}
+.c1{--c:#38bdf8}.c2{--c:#f472b6}.c3{--c:#facc15}.c4{--c:#fb7185}.c5{--c:#c084fc}.c6{--c:#fb923c}.c7{--c:#4ade80}.c8{--c:#e879f9}.c9{--c:#fda4af}.c10{--c:#5eead4}.c11{--c:#f59e0b}.c12{--c:#3cffae}
 
 /* ---------- Tips Glass Cards ---------- */
 .tips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:28px}
@@ -438,7 +438,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
   <header class="hero">
     <div class="hero-main">
       <h1 class="logo">BIO ARCADE</h1>
-      <span class="tag">생명과학 게임 11종</span>
+      <span class="tag">생명과학 게임 12종</span>
       <p class="lead">세포·유전·면역·생태 테마 아케이드 컬렉션 · PC &amp; 모바일 즉시 플레이</p>
     </div>
     <div class="hero-stats">
@@ -607,6 +607,19 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
         <div class="foot"><span class="rec" data-rec="infection-lord">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
       </div>
     </a>
+    <a class="card c12" href="games/helix.html" data-id="helix" data-cat="action" data-kw="헬릭스 나선의 계승자 로그라이트 쿼터뷰 액션 하데스 방 탈출 변이 보스 낫 생명과학자">
+      <div class="shot">
+        <img src="assets/helix.jpg" alt="헬릭스 플레이 화면" width="640" height="360">
+        <span class="genre">ROGUELITE</span>
+      </div>
+      <div class="body">
+        <div class="title"><h2>헬릭스</h2><small>HELIX · 쿼터뷰 액션 로그라이트</small></div>
+        <p class="desc">이중나선의 낫을 든 생명과학자 이안이 되어 쉼터에서 출발, 배양실부터 유전체 금고까지 방을 하나씩 돌파하세요. 유전자 변이를 조합하고, 쓰러지면 쉼터에서 강해져 다시 내려갑니다.</p>
+        <ul class="feat"><li>4장 · 보스 4 · 중간 보스 8</li><li>몬스터 16종 · 변이 24종 · 4계통</li><li>영구 강화 · 기념품 · 생물 도감</li></ul>
+        <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · 클릭 베기 · 우클릭 회전 · <kbd>Space</kbd> 돌진 · <kbd>Q</kbd> 시약 · <kbd>R</kbd> 도약 · <kbd>F</kbd> 의식</div>
+        <div class="foot"><span class="rec" data-rec="helix">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
+      </div>
+    </a>
   </main>
 
   <section class="tips" aria-label="플레이 안내">
@@ -672,7 +685,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
         <button class="g-btn pri" id="btnSaveStudent" type="button">💾 내 기록 등록·실시간 전송</button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <select id="rankGameFilter" class="g-inp" style="font-size:12.5px;padding:6px 10px">
-            <option value="total">🏅 11종 게임 종합 점수 순위</option>
+            <option value="total">🏅 12종 게임 종합 점수 순위</option>
             <option value="bio-beat">🎵 BIO BEAT (리듬)</option>
             <option value="immune-strike">🔫 면역 특공대 (액션)</option>
             <option value="bio-kart">🏎️ 바이오 카트 레이서</option>
@@ -684,6 +697,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
             <option value="only-up">🧗 ONLY UP (소화 대탈출)</option>
             <option value="bio-strike">🔫 바이오 스트라이크 (FPS)</option>
             <option value="infection-lord">👑 감염의 군주 (RPG)</option>
+            <option value="helix">🧬 헬릭스 (로그라이트)</option>
           </select>
           <button class="g-btn" id="btnRefreshRank" type="button">🔄 새로고침</button>
         </div>
@@ -849,6 +863,10 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
       const s=get('infectionLord');if(!s||!s.lvl)return '';
       const D=['일반','악몽','지옥'];
       return `최고 <b>Lv ${s.lvl}</b> ${s.cls||''} · 보스 <b>${s.bosses||0}</b> · ${D[s.diff||0]}`;
+    },
+    'helix'(){
+      const s=get('helix-save-v1');if(!s||!s.runs)return '';
+      return `출정 <b>${s.runs}</b>회 · 최고 <b>${s.best||0}</b>장 보스${s.wins?` · 정화 <b>${s.wins}</b>회`:''}`;
     },
     'vessel-canyon'(){
       const s=get('vesselCanyonStats');if(!s||!(s.w||s.l))return '';
@@ -1029,7 +1047,8 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
     {id:'cell-brawl',name:'셀 브롤'},
     {id:'only-up',name:'ONLY UP'},
     {id:'bio-strike',name:'바이오 스트라이크'},
-    {id:'infection-lord',name:'감염의 군주'}
+    {id:'infection-lord',name:'감염의 군주'},
+    {id:'helix',name:'헬릭스'}
   ];
 
   function collectLocalGameMetrics(){
@@ -1134,6 +1153,13 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
         const D=['일반','악몽','지옥'];
         const pts=s.lvl*40+(s.bosses||0)*120+(s.diff||0)*600;
         games['infection-lord']={pts,label:`Lv ${s.lvl} · 보스 ${s.bosses||0} · ${D[s.diff||0]}`};
+      }
+    }
+    {
+      const s=get('helix-save-v1');
+      if(s&&s.runs){
+        const pts=(s.best||0)*400+(s.wins||0)*1500+Math.min(500,(s.totalDna||0)*2);
+        games['helix']={pts,label:`최고 ${s.best||0}장 · 정화 ${s.wins||0}회`};
       }
     }
     for(const k of Object.keys(games)){
@@ -1281,7 +1307,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
         <td><b>${r.stId&&r.stId!=='미입력'?escapeHtml(r.stId)+' ':''}${escapeHtml(r.name)}</b>${isMe?' <span class="env-pill" style="color:#7dd3fc">나</span>':''}</td>
         <td><span class="env-pill">${escapeHtml(r.env||'Web')}</span></td>
         <td><b style="color:#fde047;font-size:13.5px">${scVal.toLocaleString('en-US')}점</b></td>
-        <td>${r.playedCount||Object.keys(r.games||{}).length} / 11종</td>
+        <td>${r.playedCount||Object.keys(r.games||{}).length} / 12종</td>
         <td style="white-space:normal;min-width:230px">${detailTxt}</td>
         <td style="color:var(--dim)">${tStr}</td>
         ${adminTd}

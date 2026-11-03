@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#04060a">
+<title>헬릭스 · 나선의 계승자</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#04060a;--ink:#e9f5f0;--dim:#8796a0;--mute:#56636b;--acc:#3cffae;--acc2:#36ccff;--gold:#ffc861;--red:#ff5a6e;
+  --glass:rgba(9,13,17,.82);--line:rgba(120,200,180,.16);--line2:rgba(60,255,174,.5);--s:1;
+  --font:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;font-family:var(--font);user-select:none;-webkit-user-select:none;touch-action:none;font-variant-numeric:tabular-nums}
+#wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#game{image-rendering:pixelated;image-rendering:crisp-edges;display:block;background:#000}
+#ui{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;font-size:calc(14px * var(--s));overflow:hidden}
+#ui > *{pointer-events:auto}
+#hud{pointer-events:none!important;position:absolute;inset:0;display:none}
+kbd{font-family:var(--font);font-size:.78em;font-weight:700;background:#e9f5f0;color:#05100c;border-radius:.3em;padding:.05em .45em;margin-right:.45em}
+
+/* ---------- 화면 정보 ---------- */
+.hcard{position:absolute;left:1.1em;top:1.1em;display:flex;gap:.8em;align-items:center;padding:.55em .9em .55em .55em;background:linear-gradient(180deg,rgba(10,16,18,.86),rgba(6,9,12,.8));border:1px solid var(--line);border-radius:.9em;box-shadow:0 .6em 1.6em rgba(0,0,0,.35)}
+.hport{width:3.9em;height:3.9em;border-radius:.65em;background:#0c1416 url() center/cover;image-rendering:pixelated;border:1px solid rgba(60,255,174,.35);overflow:hidden}
+.hport img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;image-rendering:pixelated}
+.hmain{display:flex;flex-direction:column;gap:.35em;width:13em}
+.hname{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:.95em}
+.hname small{color:var(--dim);font-weight:500;font-size:.85em}
+.bar{position:relative;height:.85em;background:#1a2326;border-radius:.45em;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+.bar b{position:absolute;inset:0 auto 0 0;width:100%;border-radius:.45em;transition:width .12s ease-out}
+#hpl{background:#ff8a96;transition:width .6s ease-in .2s}
+#hpf{background:linear-gradient(90deg,#26d892,#7affc8)}
+#hud.low #hpf{background:linear-gradient(90deg,#ff3a52,#ff8a8a);animation:pulse 1s infinite}
+.bar span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.68em;font-weight:700;color:#04140e;mix-blend-mode:normal;text-shadow:0 0 2px rgba(255,255,255,.3)}
+.hrow{display:flex;align-items:center;gap:.7em;font-size:.72em;color:var(--dim)}
+.pips{display:flex;gap:.25em}.pips i{width:.9em;height:.42em;border-radius:.2em;background:#243034}.pips i.on{background:var(--acc)}
+#hammo i{width:.55em;height:.55em;border-radius:50%}#hammo i.on{background:var(--acc2)}
+.mini{flex:1;height:.36em;background:#1a2326;border-radius:.2em;overflow:hidden}.mini b{display:block;height:100%;background:#bff6e3;transition:width .1s}
+#hultw b{background:linear-gradient(90deg,#1e8a6a,#3cffae)}#hultw.ready b{background:linear-gradient(90deg,#3cffae,#e9fff6,#3cffae);background-size:200%;animation:shine 1s linear infinite}
+.hres{position:absolute;right:1.1em;top:1.1em;display:flex;flex-direction:column;align-items:flex-end;gap:.35em}
+.chips{display:flex;gap:.5em}
+.chip{display:flex;align-items:center;gap:.4em;padding:.3em .75em .3em .4em;background:var(--glass);border:1px solid var(--line);border-radius:2em;font-weight:700}
+.chip img{width:1.5em;height:1.5em;image-rendering:pixelated}
+#hloc{font-size:.78em;color:var(--dim);padding-right:.3em}
+#htraits{position:absolute;left:1.1em;bottom:1em;display:flex;gap:.35em;flex-wrap:wrap;max-width:45%}
+.tr{width:2.35em;height:2.35em;border-radius:.55em;background:var(--glass);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;position:relative}
+.tr img{width:1.9em;height:1.9em;image-rendering:pixelated}
+.tr::after{content:"";position:absolute;left:.35em;right:.35em;bottom:-.2em;height:.22em;border-radius:.2em;background:#c8d0dc}
+.tr.r1::after{background:#5ab0ff}.tr.r2::after{background:#d070ff}.tr.r3::after{background:var(--gold)}
+#hboss{position:absolute;left:50%;bottom:1.4em;transform:translateX(-50%);width:min(34em,60%);display:none;text-align:center}
+#hbossn{font-weight:900;letter-spacing:.06em;font-size:1.05em;margin-bottom:.35em;text-shadow:0 2px 0 #000}
+#hboss .bar{height:.75em;background:#2a1418}#hbossf{background:linear-gradient(90deg,#c8324a,#ff7a8a)}
+#hboss.rage #hbossf{background:linear-gradient(90deg,#ff2a3a,#ffb040)}#hboss.rage #hbossn{color:#ffb0a0}
+#hbanner{position:absolute;left:0;right:0;top:22%;text-align:center;opacity:0;transition:none}
+#hbt{font-size:2.3em;font-weight:900;letter-spacing:.08em;text-shadow:0 .08em 0 #000,0 0 .6em rgba(60,255,174,.35)}
+#hbs{margin-top:.3em;color:#a6c4ba;font-size:.95em}
+#hbanner::before,#hbanner::after{content:"";display:block;width:min(24em,60%);height:1px;margin:.6em auto;background:linear-gradient(90deg,transparent,rgba(60,255,174,.6),transparent)}
+#hhint{position:absolute;left:50%;top:5.4em;transform:translateX(-50%);color:#bff6e3;font-size:.85em;animation:fade 2s ease-in-out infinite;text-shadow:0 1px 0 #000}
+#hprompt{position:absolute;display:none;align-items:center;transform:translate(-50%,-50%);padding:.35em .8em;background:rgba(6,10,12,.9);border:1px solid var(--line2);border-radius:2em;font-size:.85em;font-weight:500;white-space:nowrap}
+@keyframes pulse{50%{filter:brightness(1.4)}}@keyframes shine{to{background-position:-200% 0}}@keyframes fade{50%{opacity:.45}}
+
+/* ---------- 메뉴 ---------- */
+.panel{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;padding:1.2em;overflow:auto;background:radial-gradient(ellipse at center,rgba(6,14,14,.72),rgba(2,4,6,.9));backdrop-filter:blur(3px)}
+.panel.show{display:flex;animation:pin .18s ease-out}
+.panel.show > :first-child{margin-top:auto}.panel.show > :last-child{margin-bottom:auto}
+@keyframes pin{from{opacity:0;transform:scale(.985)}}
+.panel h2{margin:0 0 .25em;font-size:1.75em;font-weight:900;letter-spacing:.04em;text-align:center}
+.panel h3{margin:.9em 0 .4em;color:var(--dim);font-size:.9em;font-weight:700;letter-spacing:.06em}
+.panel .sub{margin:0 0 1.2em;color:#a2b6b0;text-align:center;max-width:42em;line-height:1.55}
+.list{display:flex;flex-direction:column;gap:.45em;width:min(34em,94%)}
+.opt{font:inherit;color:var(--ink);background:rgba(14,20,23,.92);border:1px solid rgba(255,255,255,.07);border-radius:.7em;cursor:pointer;text-align:left;transition:border-color .12s,background .12s,transform .12s}
+.opt:disabled{opacity:.42;cursor:default}
+.opt.focus,.opt:hover:not(:disabled){border-color:var(--line2);background:rgba(20,36,33,.95);transform:translateY(-1px)}
+.opt.on{border-color:var(--gold)}
+.row{display:flex;align-items:center;gap:.85em;padding:.6em .9em}
+.row span{flex:1;line-height:1.4}.row small{color:var(--dim)}.row > b{white-space:nowrap;font-size:.92em}
+label.row{color:var(--ink)} label.row input{flex:1;accent-color:var(--acc)}
+.ic{width:2.3em;height:2.3em;image-rendering:pixelated;flex:none}
+.cards{display:flex;gap:.9em;flex-wrap:wrap;justify-content:center;width:min(62em,98%)}
+.card{display:flex;flex-direction:column;gap:.55em;padding:1.1em 1.1em 1em;width:18.5em;min-height:13em;border-top:3px solid var(--c);background:linear-gradient(180deg,color-mix(in srgb,var(--c) 10%,#0e1417),#0c1114)}
+.card .ch{display:flex;gap:.75em;align-items:center}
+.card .ic{width:3.2em;height:3.2em}
+.cn{font-weight:900;font-size:1.12em}.cs{color:var(--dim);font-size:.82em;margin-top:.15em}.cd{line-height:1.55;color:#d5e4df}.cr{color:#ff9a8a;font-size:.85em;margin-top:auto}
+.rar{font-size:.72em;font-weight:900;padding:.1em .5em;border-radius:1em;margin-left:.35em;vertical-align:.15em;border:1px solid currentColor}
+.panel.wide .list{width:min(40em,94%)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6em;width:min(36em,94%);margin-bottom:1.2em}
+.stats div{background:rgba(14,20,23,.92);border:1px solid rgba(255,255,255,.07);border-radius:.7em;padding:.7em;text-align:center}.stats small{display:block;color:var(--dim);font-size:.8em}.stats b{font-size:1.15em}
+.codexgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:.4em;width:min(52em,98%);max-height:44vh;overflow:auto;padding:.2em}
+.codex{display:flex;flex-direction:column;align-items:center;padding:.35em}
+.codex canvas{width:100%;height:auto;image-rendering:pixelated}.codex small{font-size:.76em;text-align:center}
+.codex.unk canvas{filter:brightness(0) opacity(.4)}
+.cdesc{width:min(52em,98%);min-height:3.4em;margin:.7em 0;color:#c8d6d2;line-height:1.55;background:rgba(10,15,17,.92);border:1px solid rgba(255,255,255,.06);border-radius:.7em;padding:.7em .9em}
+.help{width:min(40em,94%);line-height:1.6;color:#c8d6d2}.help p{margin:.35em 0}.help b{color:var(--acc)}
+.titlep{background:linear-gradient(90deg,rgba(2,4,6,.92) 0%,rgba(2,4,6,.65) 46%,rgba(2,4,6,0) 70%);align-items:flex-start;padding-left:max(1.2em,7vw)}
+.title{display:flex;flex-direction:column;align-items:flex-start;gap:1.6em;width:min(26em,92%)}
+.logo{font-size:4.4em;font-weight:900;letter-spacing:.2em;line-height:1;background:linear-gradient(180deg,#f2fffa,#8affd2);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 .25em rgba(60,255,174,.45))}
+.logo span{display:block;font-size:.21em;letter-spacing:.42em;color:#9ad8c0;-webkit-text-fill-color:#9ad8c0;margin-top:.7em;font-weight:700}
+.title .list{width:100%}
+.foot{color:var(--mute);font-size:.8em}
+.story{display:flex;flex-direction:column;align-items:center;gap:2em;max-width:38em;margin:auto}.story p{font-size:1.3em;line-height:1.75;text-align:center;color:#d8ece5}
+.panel.titlep .story{align-items:flex-start}.panel.titlep .story p{text-align:left}
+#dialog{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);width:min(52em,94%);display:none;gap:1em;background:linear-gradient(180deg,rgba(10,16,18,.95),rgba(6,9,12,.95));border:1px solid var(--line);border-radius:1em;padding:.9em 1.1em;cursor:pointer;box-shadow:0 1em 2em rgba(0,0,0,.4)}
+#dialog.show{display:flex;animation:pin .15s ease-out}
+.dport{width:6.4em;height:6.4em;flex:none;background:radial-gradient(circle at 50% 70%,#15302a,#0b1213);border-radius:.7em;overflow:hidden;border:1px solid var(--line)}
+.dport canvas{width:100%;height:100%;image-rendering:pixelated}
+.dbody{flex:1}.dbody b{color:var(--acc);font-size:1.02em}.dbody p{margin:.45em 0;line-height:1.7;min-height:3.4em;font-size:1.04em}.dbody small{color:var(--mute);font-size:.78em}
+#loading{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1em;background:#04060a}
+#loading b{font-weight:900;letter-spacing:.3em;font-size:1.6em;color:#bff6e3}
+.lb{width:16em;height:.35em;background:#14201c;border-radius:1em;overflow:hidden}#lbar{height:100%;width:0;background:var(--acc);transition:width .2s}
+/* ---------- 터치 ---------- */
+#touch{display:none;position:absolute;inset:0;pointer-events:none}
+body.touch #touch{display:block}
+#stick{position:absolute;left:3%;bottom:6%;width:26%;max-width:190px;aspect-ratio:1;border-radius:50%;background:rgba(60,255,174,.06);border:2px solid rgba(60,255,174,.22);pointer-events:auto;touch-action:none}
+#knob{position:absolute;left:30%;top:30%;width:40%;height:40%;border-radius:50%;background:rgba(60,255,174,.32)}
+.btns{position:absolute;right:2%;bottom:4%;width:36%;max-width:290px;aspect-ratio:1.15;pointer-events:none}
+.tb{position:absolute;border-radius:50%;background:rgba(8,16,15,.55);border:2px solid rgba(60,255,174,.36);color:#e9f5f0;font:700 12px var(--font);display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none}
+.tb.on{background:rgba(60,255,174,.32)}
+.tb[data-act=attack]{width:34%;aspect-ratio:1;right:4%;bottom:6%}
+.tb[data-act=special]{width:24%;aspect-ratio:1;right:40%;bottom:2%}
+.tb[data-act=dash]{width:24%;aspect-ratio:1;right:2%;bottom:46%}
+.tb[data-act=cast]{width:20%;aspect-ratio:1;right:28%;bottom:32%}
+.tb[data-act=leap]{width:18%;aspect-ratio:1;right:56%;bottom:28%}
+.tb[data-act=ult]{width:18%;aspect-ratio:1;right:22%;bottom:66%}
+.tb[data-act=interact]{width:18%;aspect-ratio:1;right:50%;bottom:58%}
+.tb[data-act=pause]{width:40px;height:40px;position:absolute;left:50%;transform:translateX(-50%);top:6px;font-size:14px}
+body.touch #htraits{display:none}
+@media (max-width:760px){.card{width:100%;min-height:0}.codexgrid{grid-template-columns:repeat(5,1fr)}.stats{grid-template-columns:repeat(2,1fr)}.hmain{width:10em}.logo{font-size:3.2em}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="960" height="540"></canvas>
+  <div id="ui">
+    <div id="hud">
+      <div class="hcard"><div class="hport"><img id="hport" src="helix/assets/hero/portrait.webp" alt=""></div>
+        <div class="hmain"><div class="hname">이안 <small>생명과학자</small></div>
+          <div class="bar"><b id="hpl"></b><b id="hpf"></b><span id="hpt"></span></div>
+          <div class="hrow"><div class="pips" id="hdash"></div><div class="pips" id="hammo"></div></div>
+          <div class="hrow"><span>도약</span><div class="mini"><b id="hleap"></b></div><span>의식</span><div class="mini" id="hultw"><b id="hult"></b></div></div>
+        </div></div>
+      <div class="hres"><div class="chips"><div class="chip" id="hatpw"><img src="" data-icon="atp" alt=""><span id="hatp">0</span></div><div class="chip"><img src="" data-icon="dna" alt=""><span id="hdna">0</span></div></div><div id="hloc"></div></div>
+      <div id="htraits"></div>
+      <div id="hboss"><div id="hbossn"></div><div class="bar"><b id="hbossf"></b></div></div>
+      <div id="hbanner"><div id="hbt"></div><div id="hbs"></div></div>
+      <div id="hhint"></div>
+      <div id="hprompt"></div>
+    </div>
+    <div id="touch">
+      <div id="stick"><div id="knob"></div></div>
+      <div class="btns">
+        <div class="tb" data-act="attack">베기</div><div class="tb" data-act="special">회전</div><div class="tb" data-act="dash">돌진</div>
+        <div class="tb" data-act="cast">시약</div><div class="tb" data-act="leap">도약</div><div class="tb" data-act="ult">의식</div><div class="tb" data-act="interact">사용</div>
+      </div>
+      <div class="tb" data-act="pause">Ⅱ</div>
+    </div>
+    <div id="dialog"></div>
+    <div id="panel" class="panel"></div>
+    <div id="loading"><b>HELIX</b><div class="lb"><div id="lbar"></div></div><small style="color:#56636b">유전체 불러오는 중…</small></div>
+  </div>
+</div>
+<script src="helix/js/audio.js"></script>
+<script src="helix/js/data.js"></script>
+<script src="helix/js/engine.js"></script>
+<script src="helix/js/world.js"></script>
+<script src="helix/js/game.js"></script>
+<script src="helix/js/run.js"></script>
+<script src="helix/js/ui.js"></script>
+</body>
+</html>

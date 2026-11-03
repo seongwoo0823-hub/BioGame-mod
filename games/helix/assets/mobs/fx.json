@@ -1,0 +1,58 @@
+[
+ {
+  "id": "fx_spore",
+  "name": "포자탄",
+  "frames": 4,
+  "w": 28,
+  "h": 28,
+  "file": "fx_spore.webp"
+ },
+ {
+  "id": "fx_puff",
+  "name": "포자 구름",
+  "frames": 8,
+  "w": 96,
+  "h": 96,
+  "file": "fx_puff.webp"
+ },
+ {
+  "id": "fx_inject",
+  "name": "유전자 주입 자국",
+  "frames": 8,
+  "w": 112,
+  "h": 56,
+  "file": "fx_inject.webp"
+ },
+ {
+  "id": "fx_slam",
+  "name": "암세포 내려치기 충격",
+  "frames": 10,
+  "w": 208,
+  "h": 104,
+  "file": "fx_slam.webp"
+ },
+ {
+  "id": "fx_burst_p",
+  "name": "죽음 파열(보라)",
+  "frames": 8,
+  "w": 112,
+  "h": 96,
+  "file": "fx_burst_p.webp"
+ },
+ {
+  "id": "fx_burst_y",
+  "name": "죽음 파열(연두)",
+  "frames": 8,
+  "w": 112,
+  "h": 96,
+  "file": "fx_burst_y.webp"
+ },
+ {
+  "id": "fx_burst_r",
+  "name": "죽음 파열(빨강)",
+  "frames": 8,
+  "w": 112,
+  "h": 96,
+  "file": "fx_burst_r.webp"
+ }
+]

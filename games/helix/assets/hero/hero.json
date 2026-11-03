@@ -1,0 +1,145 @@
+{
+ "cell": 160,
+ "foot": 118,
+ "dirs": [
+  "S",
+  "SE",
+  "E",
+  "NE",
+  "N",
+  "NW",
+  "W",
+  "SW"
+ ],
+ "anims": [
+  {
+   "id": "idle",
+   "frames": 8,
+   "loop": true,
+   "name": "대기",
+   "file": "hero_idle.webp"
+  },
+  {
+   "id": "run",
+   "frames": 8,
+   "loop": true,
+   "name": "달리기",
+   "file": "hero_run.webp"
+  },
+  {
+   "id": "dash",
+   "frames": 6,
+   "loop": false,
+   "name": "돌진",
+   "file": "hero_dash.webp"
+  },
+  {
+   "id": "blink",
+   "frames": 8,
+   "loop": false,
+   "name": "세포분열 회피",
+   "file": "hero_blink.webp"
+  },
+  {
+   "id": "atk1",
+   "frames": 6,
+   "loop": false,
+   "name": "가로베기",
+   "file": "hero_atk1.webp"
+  },
+  {
+   "id": "atk2",
+   "frames": 6,
+   "loop": false,
+   "name": "올려베기",
+   "file": "hero_atk2.webp"
+  },
+  {
+   "id": "atk3",
+   "frames": 8,
+   "loop": false,
+   "name": "내려찍기",
+   "file": "hero_atk3.webp"
+  },
+  {
+   "id": "spin",
+   "frames": 8,
+   "loop": false,
+   "name": "회전베기",
+   "file": "hero_spin.webp"
+  },
+  {
+   "id": "leap",
+   "frames": 10,
+   "loop": false,
+   "name": "도약 강타",
+   "file": "hero_leap.webp",
+   "lift": [
+    0.0,
+    0.0,
+    28.4,
+    49.3,
+    63.0,
+    25.8,
+    6.6,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "id": "cast",
+   "frames": 10,
+   "loop": false,
+   "name": "유전자 의식",
+   "file": "hero_cast.webp",
+   "lift": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.1,
+    1.1,
+    1.9,
+    1.7,
+    1.3,
+    0.0
+   ]
+  },
+  {
+   "id": "throw",
+   "frames": 7,
+   "loop": false,
+   "name": "시약 투척",
+   "file": "hero_throw.webp"
+  },
+  {
+   "id": "shoot",
+   "frames": 6,
+   "loop": false,
+   "name": "유전자총 사격",
+   "file": "hero_shoot.webp"
+  },
+  {
+   "id": "hit",
+   "frames": 4,
+   "loop": false,
+   "name": "피격",
+   "file": "hero_hit.webp"
+  },
+  {
+   "id": "death",
+   "frames": 10,
+   "loop": false,
+   "name": "쓰러짐",
+   "file": "hero_death.webp"
+  },
+  {
+   "id": "spawn",
+   "frames": 10,
+   "loop": false,
+   "name": "재구성(부활)",
+   "file": "hero_spawn.webp"
+  }
+ ]
+}
