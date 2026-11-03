@@ -1213,7 +1213,7 @@ function bossDeath(e){e.dd=(e.dd||0)+1;const k=e.dd;if(k===1){slowmo=60;flashC={
 const FS={M:window.IS_FOES||null,img:null,ok:false,tc:{}};
 if(FS.M){FS.img=new Image();FS.img.onload=()=>{FS.ok=true;};FS.img.src='is-assets/foes.png';}
 function fsTint(c){if(FS.tc[c])return FS.tc[c];const cv=document.createElement('canvas');cv.width=FS.img.width;cv.height=FS.img.height;const x=cv.getContext('2d');x.drawImage(FS.img,0,0);x.globalCompositeOperation='source-in';x.fillStyle=c;x.fillRect(0,0,cv.width,cv.height);return FS.tc[c]=cv;}
-function FD(e,an,i){const m=FS.ok&&FS.M[e.type];if(!m){OEL(0,-e.h/2,e.w/2,e.h/2,e.def.col);R(2,-e.h/2-2,2,2,'#fff');return;}
+function FD(e,an,i){const m=FS.ok&&FS.M[e.type];if(!m){const d=e.def||ED[e.type]||{w:12,h:12,col:'#888'};OEL(0,-(e.h||d.h)/2,(e.w||d.w)/2,(e.h||d.h)/2,d.col);R(2,-e.h/2-2,2,2,'#fff');return;}
  const fr=m.A[an]||m.A.mv;const n=fr.length;const f=fr[(((i|0)%n)+n)%n];const src=FL?fsTint('#ffffff'):TINT?fsTint(TINT):FS.img;
  G.drawImage(src,f[0],f[1],m.w,m.h,-m.o[0],-m.o[1],m.w,m.h);}
 const fmv=(e,s)=>Math.floor(e.t/(s||6));
@@ -1438,6 +1438,71 @@ ED.oncos={n:'암세포 온코스',hp:1900,w:100,h:110,sc:50000,col:'#c04aa0',bos
   const ex=-14,ey=-62;C(ex,ey,13,dk);C(ex,ey,12,'#f8e8f0');LN(ex-10,ey+2,ex-5,ey,'#e04060');LN(ex+9,ey-4,ex+5,ey-2,'#e04060');const a=Math.atan2(pl.y-12-(e.y+ey),pl.x-(e.x+ex));C(ex+Math.cos(a)*5,ey+Math.sin(a)*5,6,rage?'#ff2040':'#a01a6a');C(ex+Math.cos(a)*6,ey+Math.sin(a)*6,3,'#100');R(ex-7,ey-8,3,2,'#fff');if(e.bwarn&&frame%4<2)C(ex,ey,13,'rgba(255,255,255,.4)');
   const m=e.mouth;EL(-32,-24,11,2+m*7,'#1a0410');for(let i=-8;i<=8;i+=4){R(-32+i,-24-(2+m*7)+1,2,2+m,'#f0e0e8');R(-32+i,-24+(2+m*7)-3,2,2+m,'#f0e0e8');}
   if(e.shield){G.globalAlpha=.22+Math.sin(t*.2)*.08;C(-4,-58,64,'#c080ff');G.globalAlpha=.9;NGO(-4,-58,64,6,t*.01,'#e0c0ff');NGO(-4,-58,60,6,-t*.012,'#a060e0');G.globalAlpha=1;}}};
+// ================= 기존 적 30종 의인화 · 기존 보스 6종 기계화 (그림만 교체, 행동은 그대로) =================
+(function(){const D=(k,f)=>{if(ED[k])ED[k].dr=f;};const ST=(e,a,i)=>FD(e,a,i);
+ const prog=(e,k,an)=>FD(e,an||'at',fat(e,k,an));
+ D('ecoli',e=>drDash(e,22));
+ D('staph',e=>{if(e.mini)FD(e,'mini',fmv(e,4));else if(e.sq>0)prog(e,1-e.sq/6);else FD(e,'mv',e.og?fmv(e,6):1);});
+ D('strep',e=>{for(let i=6;i>=0;i--){const h=e.hist[Math.min(e.hist.length-1,i*5)]||[e.x,e.y];G.save();G.translate(h[0]-e.x,h[1]-e.y);if(e.face<0)G.scale(-1,1);FD(e,'mv',fmv(e,5)+i);G.restore();}});
+ D('salmo',e=>{if(e.st===1)prog(e,e.stt/30);else FD(e,'mv',fmv(e,5));});
+ D('clos',e=>{if(e.open>.08)prog(e,e.open);else FD(e,'mv',fmv(e,8));});
+ D('tb',e=>{if(e.st===1)FD(e,'at',e.t%4<2?0:1);else if(e.st===2)FD(e,'at',2+fmv(e,3)%2);else FD(e,'mv',fmv(e,7));});
+ D('helico',e=>{FD(e,e.st===1?'at':'mv',e.st===1?2+fmv(e,2)%2:fmv(e,4));});
+ D('botul',e=>{if(e.st===1)prog(e,Math.min(1,e.stt/30));else FD(e,'mv',fmv(e,6));});
+ D('bacil',e=>{if(e.st===2)FD(e,'roll',fmv(e,2));else if(e.st===1)FD(e,'at',e.stt>8?1:0);else FD(e,'mv',fmv(e,6));});
+ D('pseudo',e=>{const gl=Math.sin(e.t*.15)*.5+.5;G.globalAlpha=.22*gl;C(0,-10,13,'#d8e040');G.globalAlpha=1;const c=e.t%120;if(c>=44&&c<76)prog(e,(c-44)/32);else FD(e,'mv',fmv(e,6));});
+ D('flu',e=>{FD(e,e.st===1?'at':'mv',e.st===1?2+fmv(e,2)%2:fmv(e,4));});
+ D('phage',e=>{if(e.st===1)FD(e,'at',Math.min(2,Math.floor(e.stt/7)));else if(e.st===2)FD(e,'at',3);else FD(e,'mv',Math.abs(e.vx)>.1?fmv(e,6):0);});
+ D('hiv',e=>{const a=G.globalAlpha;if(e.cloak)G.globalAlpha=a*(.12+(Math.random()<.1?.3:0));const c=e.t%200;if(!e.cloak&&c>=120&&c<175)prog(e,(c-120)/55);else FD(e,'mv',fmv(e,4));G.globalAlpha=a;});
+ D('corona',e=>{const c=e.t%120;if(c>=80&&c<116)prog(e,(c-80)/36);else FD(e,'mv',fmv(e,5));});
+ D('rhino',e=>FD(e,'mv',fmv(e,3)));
+ D('ebola',e=>{if(e.st===1){const s=e.stt;FD(e,'at',s<10?0:s<20?1:s<25?2:s<30?3:s<42?4:5);}else FD(e,'mv',fmv(e,6));});
+ D('infcell',e=>{FD(e,'mv',fmv(e,9));const p=e.t/520;if(p>.75&&e.t%8<4){G.globalAlpha=.4;C(0,-14,13,'#ff8a20');G.globalAlpha=1;}});
+ D('herpes',e=>{EL(0,-1,10,3,'#2a1a26');EL(0,-2,8,2,'#5a3a50');C(0,-2,2+Math.sin(e.t*.1),'#ff3048');if(e.rise<=0)return;G.save();G.beginPath();G.rect(-30,-70,60,68);G.clip();G.translate(0,(1-e.rise)*26);
+  const s=e.stt;if(e.st===1&&(s%20>=4&&s%20<16)&&s>=24&&s<76)prog(e,(s%20-4)/12);else FD(e,'mv',fmv(e,6));G.restore();});
+ D('adeno',e=>{if(e.og&&e.sq>0)prog(e,1-e.sq/5);else FD(e,'roll',Math.floor(Math.abs(e.rot||0)/(Math.PI/2)));});
+ D('rabies',e=>{if(e.st===1){FL=FL||e.t%6<3;FD(e,'at',e.stt>15?1:0);}else if(e.st===2)FD(e,'at',2+fmv(e,2)%2);else FD(e,'mv',fmv(e,5));});
+ D('tumor',e=>{if(e.div>0)prog(e,e.div/30);else if(e.small)FD(e,'mini',fmv(e,5));else FD(e,'mv',fmv(e,6));});
+ D('treg',e=>{if(e.st===1)prog(e,Math.min(1,e.stt/30));else FD(e,'mv',Math.abs(e.vx)>.1?fmv(e,6):0);});
+ D('mdsc',e=>{FD(e,e.heal?'at':'mv',e.heal?fat(e,1-e.heal.t/24):fmv(e,5));});
+ D('tam',e=>{if(e.st===1)prog(e,Math.min(1,e.stt/16));else FD(e,'mv',Math.abs(e.vx)>.1?fmv(e,6):0);});
+ D('vessel',e=>{if(e.st===1){const p=e.stt%10<5;LN(-8,0,8,0,p?'#ff8a20':'#5a2a18');LN(-4,-1,-7,1,'#5a2a18');LN(3,-1,6,1,'#5a2a18');C(0,-1,2+e.stt/15,'#2a0a10');return;}if(e.up_<=0)return;
+  const m=FS.M&&FS.M.vessel;const hh=m?m.o[1]:40;G.save();G.beginPath();G.rect(-40,-90,80,89);G.clip();G.translate(0,(1-e.up_)*hh);FD(e,e.st===2&&e.stt%60<24?'at':'mv',e.st===2&&e.stt%60<24?fat(e,(e.stt%60)/24):fmv(e,7));G.restore();});
+ D('meta',e=>{if(e.st===1)FD(e,'at',3);else FD(e,'mv',fmv(e,4));});
+ D('pdl1',e=>{if(e.st===1)prog(e,Math.min(1,e.stt/45));else FD(e,'mv',Math.abs(e.vx)>.1?fmv(e,6):0);});
+ D('hypox',e=>{FD(e,'mv',fmv(e,5));if(e.t%30<8)RING(0,-10,10,'#ff8a20');});
+ D('stem',e=>{if(e.birth>0)prog(e,(30-e.birth)/30);else FD(e,'mv',fmv(e,7));});
+ D('exo',e=>{const c=e.t%80;if(c>=30&&c<46)prog(e,(c-30)/16);else FD(e,'mv',fmv(e,3));});
+ D('node',e=>FD(e,'mv',fmv(e,5)));
+ // 히트박스 높이를 새 그림 키에 맞춤 (높이가 스스로 바뀌는 적 제외)
+ if(FS.M)for(const k in ED){const d=ED[k],m=FS.M[k];if(!m||d.boss||d.mid||k==='vessel'||k==='strep'||k==='node')continue;d.h=Math.max(d.h,Math.round(m.o[1]*.8));}
+ // ---------- 기존 보스: 기계 병기 ----------
+ const MLN=(x0,y0,x1,y1,w)=>{LN(x0,y0,x1,y1,'#1e2028',w+2);LN(x0,y0,x1,y1,'#5c6070',w);LN(x0,y0-1,x1,y1-1,'#9a9eae',1);};
+ D('mid1',e=>{const sh=e.st===2&&e.stt<40?(e.t%2?1:-1):0;G.save();G.translate(sh,0);FD(e,e.st===2&&e.stt<40?'at':'mv',e.st===2&&e.stt<40?e.t%2:(Math.abs(e.vx)>.1?fmv(e,4):0));G.restore();
+  const a=Math.atan2(pl.y-14-(e.y-38),(pl.x-e.x)*e.face);const bx=sh,by=-37;MLN(bx,by,bx+Math.cos(a)*17,by+Math.sin(a)*17,3);C(bx,by,4,'#34363f');C(bx-1,by-1,2,'#9a9eae');
+  if(e.hp<e.mhp*.4&&e.t%6===0)part(e.x+rnd(-20,20),e.y-30,0,-1,30,'#4a4a40',3,-.02,'smoke');});
+ D('mid2',e=>{if(e.st===1)FD(e,'a1',fat(e,Math.min(1,e.stt/20),'a1'));else if(e.st===2)FD(e,'a2',fat(e,Math.min(1,(e.stt-10)/30),'a2'));else if(e.st===3&&e.stt<22)FD(e,'a3',e.stt>10?1:0);else FD(e,'mv',Math.abs(e.vx)>.1?fmv(e,7):0);});
+ D('mid3',e=>{const mv=Math.abs(e.vx)>.1;FD(e,e.st===2?'a1':'mv',e.st===2?(e.stt%12<6?1:0):(mv?fmv(e,6):0));
+  let aa;if(e.st===3){const k=e.stt;aa=k<30?-2.2*(k/30):k<40?-2.2+(k-30)/10*3.4:1.2;}else aa=.6+Math.sin(e.t*.1)*.2;const sx=8,sy=-36;const mx=sx+Math.cos(aa)*13,my=sy+Math.sin(aa)*13,ex=sx+Math.cos(aa)*26,ey=sy+Math.sin(aa)*26;
+  MLN(sx,sy,mx,my,5);MLN(mx,my,ex,ey,4);C(mx,my,3,'#d8a820');C(sx,sy,4,'#34363f');C(ex,ey,6,'#1e2028');C(ex,ey,5,'#5c6070');for(let i=-1;i<=1;i++)MLN(ex,ey,ex+Math.cos(aa+i*.5)*9,ey+Math.sin(aa+i*.5)*9,1);
+  if(e.st===3&&e.stt>=30&&e.stt<40){G.globalAlpha=.6;for(let i=0;i<6;i++){const q=-2.2+i*.6;R(sx+Math.cos(q)*32,sy+Math.sin(q)*32,3,3,'#ffd060');}G.globalAlpha=1;}
+  MLN(-8,-36,-18,-20+Math.sin(e.t*.1)*3,3);C(-18,-20,3,'#5c6070');});
+ D('biofilm',e=>{const t=e.t,ph2=e.hp<e.mhp*.5,L_=e.lean;
+  if(e.sw>0){const reach=(e.x-44)-(L.bossX+4);const len=reach*e.sw;for(let i=0;i<len;i+=4)C(-44-i,-6+Math.sin(i*.2+t*.3)*2,6,'#1e2028');for(let i=0;i<len;i+=4){const yy=-6+Math.sin(i*.2+t*.3)*2;C(-44-i,yy,5,(i/4)%2?'#5c6070':'#46495a');R(-44-i,yy-4,2,1,'#9a9eae');}const hx=-44-len;C(hx,-6,7,'#d8a820');C(hx-2,-7,3,'#ff3030');}
+  G.save();G.translate(L_,0);FD(e,ph2?'ph2':'mv',fmv(e,8));G.restore();
+  const eyes=[[-14,-50,6],[6,-58,5],[18,-42,4]];for(const q of eyes){const ex=q[0]+L_,ey=q[1];C(ex,ey,q[2]+2,'#1e2028');C(ex,ey,q[2]+1,'#5c6070');C(ex,ey,q[2],'#2a0a0a');const a=Math.atan2(pl.y-14-(e.y+ey),pl.x-(e.x+ex));C(ex+Math.cos(a)*q[2]*.4,ey+Math.sin(a)*q[2]*.4,Math.max(1,q[2]*.5),ph2?'#ff3030':'#c0e040');R(ex+Math.cos(a)*q[2]*.4-1,ey+Math.sin(a)*q[2]*.4-1,1,1,'#fff');}
+  const m=e.mouth;EL(-30+L_,-30,9,2+m*7,'#0e0e12');for(let i=-6;i<=6;i+=3){R(-30+i+L_,-30-(2+m*7)+1,2,2+m,'#a0a4b4');R(-30+i+L_,-30+(2+m*7)-2-m,2,2+m,'#a0a4b4');}});
+ D('virking',e=>{const cy=-24,ph2=e.hp<e.mhp*.5;
+  for(let k=0;k<6;k++){const sp=(k-2.5)*7,sw=Math.sin(e.t*.1+k)*3;const kx=sp*1.2+sw,ky=cy+40-(e.landed?4:0);MLN(sp*.4,cy+30,kx,ky,2);MLN(kx,ky,kx+sp*.5,ky+(e.landed?4:10),1);C(kx,ky,2,'#d8a820');C(kx+sp*.5,ky+(e.landed?4:10),2,'#34363f');}
+  R(-6,cy+18,12,14,'#1e2028');for(let i=0;i<4;i++)R(-5,cy+19+i*3,10,1,i%2?'#d8a820':'#5c6070');R(-9,cy+31,18,3,'#34363f');
+  for(let k=0;k<12;k++){const a=k/12*Math.PI*2+e.rot;MLN(Math.cos(a)*22,cy+Math.sin(a)*22,Math.cos(a)*29,cy+Math.sin(a)*29,1);C(Math.cos(a)*30,cy+Math.sin(a)*30,2,ph2?'#ff3030':'#ff8a90');}
+  FD(e,'core',Math.floor(e.rot/(Math.PI/3)*6));C(0,cy,6,'#1e2028');C(0,cy,4,'#e8e0e0');const a=Math.atan2(pl.y-12-(e.y+cy),pl.x-e.x);C(Math.cos(a)*2,cy+Math.sin(a)*2,2,e.bwarn&&frame%4<2?'#ff0':'#ff2030');});
+ D('oncos',e=>{const t=e.t,rage=e.ph===3;FD(e,rage?'rage':'mv',fmv(e,8));
+  if(e.bud>0){OC(-48-e.bud*6,-14,Math.max(1,9*e.bud),rage?'#8a2a48':'#6a3a5a','#1e2028');C(-48-e.bud*6,-14,Math.max(1,3*e.bud),'#ff8a20');}
+  const ex=-14,ey=-62;C(ex,ey,13,'#5c6070');C(ex,ey,11,'#1a0a10');C(ex,ey,9,'#3a1018');const a=Math.atan2(pl.y-12-(e.y+ey),pl.x-(e.x+ex));C(ex+Math.cos(a)*4,ey+Math.sin(a)*4,5,rage?'#ff2030':'#ff8a20');C(ex+Math.cos(a)*5,ey+Math.sin(a)*5,2,'#fff4d0');for(let i=0;i<8;i++){const q=i/8*6.28+t*.02;R(ex+Math.cos(q)*12,ey+Math.sin(q)*12,1,1,'#d8a820');}if(e.bwarn&&frame%4<2)C(ex,ey,13,'rgba(255,255,255,.4)');
+  const m=e.mouth;EL(-32,-24,12,2+m*7,'#0e0e12');for(let i=-8;i<=8;i+=4){R(-32+i,-24-(2+m*7)+1,2,2+m,'#a0a4b4');R(-32+i,-24+(2+m*7)-3,2,2+m,'#a0a4b4');}
+  if(e.shield){G.globalAlpha=.22+Math.sin(t*.2)*.08;C(-4,-58,64,'#c080ff');G.globalAlpha=.9;NGO(-4,-58,64,6,t*.01,'#e0c0ff');NGO(-4,-58,60,6,-t*.012,'#a060e0');G.globalAlpha=1;}});
+})();
 function drawBossExtra(){const e=boss;if(!e)return;
  if(e.type==='virking'&&e.plates){for(let i=0;i<4;i++){const a=e.plate+i*Math.PI/2;const px=e.x+Math.cos(a)*38,py=e.y-24+Math.sin(a)*38;NG(px,py,8,4,a,'#102030');NG(px,py,7,4,a,'#a0e0ff');R(px-1,py-1,2,2,'#fff');}}
  if(e.bwarn||e.beam){let ox,oy;if(e.type==='virking'){ox=e.x;oy=e.y-24;}else{ox=e.x-14;oy=e.y-62;}const ex=ox+Math.cos(e.ba)*520,ey=oy+Math.sin(e.ba)*520;
@@ -1661,7 +1726,7 @@ function drawTitle(){if(!L||L.si!==0){buildStage(0);}CX=Math.round(titleCam%3000
  G.save();G.translate(-CX,0);drawBlocks();drawDeco();G.restore();
  G.globalAlpha=.55;R(0,0,W,H,'#0a0210');G.globalAlpha=1;
  const t=frame;for(let i=0;i<4;i++){const x=((t*1.3+i*70)%(W+200))-60;drawHero(i,x,222,fake(i,{vx:1,runT:t*.3+i,shotT:(t+i*7)%24<5?5:0}));}
- for(let i=0;i<3;i++){const x=((t*1.3-80+i*30)%(W+200))-60-40;G.save();G.translate(Math.round(x-30),222);ED.ecoli.dr({t:t+i*9,st:0});G.restore();}
+ for(let i=0;i<3;i++){const x=((t*1.3-80+i*30)%(W+200))-60-40;G.save();G.translate(Math.round(x-30),222);ED.ecoli.dr({type:'ecoli',def:ED.ecoli,t:t+i*9,st:0,face:1});G.restore();}
  const by=60+Math.sin(t*.04)*3;for(let i=0;i<14;i++){const a=i/14*Math.PI*2+t*.01;C(240+Math.cos(a)*120,by+Math.sin(a)*34,2,'rgba(255,120,180,.35)');}
  if(HS.length)T('HI-SCORE '+String(HS[0].s).padStart(8,'0')+'  '+HS[0].n,240,12,6,'#ffe060','center','p');T('면역 특공대',240,by-6,34,'#ffe9f6','center','k',2);T('IMMUNE STRIKE',240,by+26,11,'#ff6aa8','center','p',2);
  T('세균 · 바이러스 · 그리고 최후의 암세포 — 몸속 전쟁이 시작된다',240,by+46,8,'#e0d0ff','center','k');

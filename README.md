@@ -22,7 +22,7 @@
 index.html        메인 화면 (게임 선택, 이 기기에 저장된 기록 표시)
 games/            게임 12종 (각각 하나의 HTML 파일)
 assets/           메인 화면 썸네일
-games/is-assets/  면역 특공대 주인공 4종 도트 스프라이트 (<id>.png·heroes.js, hero-viewer.html: 캐릭터별 애니메이션 미리보기) · 새 적 30종·관문 보스 3종 (foes.png·foes.js, foe-viewer.html: 한 방/여러 발/보스로 나눈 적 도감)
+games/is-assets/  면역 특공대 주인공 4종 도트 스프라이트 (<id>.png·heroes.js, hero-viewer.html: 캐릭터별 애니메이션 미리보기) · 적 60종(의인화 병원균 병사)·보스 9종(기계 병기) (foes.png·foes.js, foe-viewer.html: 한 방/여러 발/보스로 나눈 적 도감)
 games/il-assets/  감염의 군주 스프라이트·아이콘 아틀라스 (WebP)
 games/helix/      헬릭스 게임 코드(js/)와 에셋(assets/) (hero-viewer.html: 주인공 미리보기, mob-viewer.html: 몬스터 32종 도감·챕터 시험장)
 vendor/           three.js r128 (3D 게임용, MIT 라이선스)
