@@ -140,6 +140,48 @@
    "loop": false,
    "name": "재구성(부활)",
    "file": "hero_spawn.webp"
+  },
+  {
+   "id": "gidle",
+   "frames": 8,
+   "loop": true,
+   "name": "총 대기",
+   "file": "hero_gidle.webp"
+  },
+  {
+   "id": "grun",
+   "frames": 8,
+   "loop": true,
+   "name": "총 들고 달리기",
+   "file": "hero_grun.webp"
+  },
+  {
+   "id": "gblast",
+   "frames": 8,
+   "loop": false,
+   "name": "산탄 폭발",
+   "file": "hero_gblast.webp"
+  },
+  {
+   "id": "didle",
+   "frames": 8,
+   "loop": true,
+   "name": "드론 대기",
+   "file": "hero_didle.webp"
+  },
+  {
+   "id": "drun",
+   "frames": 8,
+   "loop": true,
+   "name": "드론 조종 달리기",
+   "file": "hero_drun.webp"
+  },
+  {
+   "id": "command",
+   "frames": 8,
+   "loop": false,
+   "name": "드론 명령",
+   "file": "hero_command.webp"
   }
  ]
 }

@@ -35,7 +35,35 @@ const TRAITS = [
   {id: 's_hp', lin: 'symbio', slot: 'passive', name: '공생체', v: [20, 30, 40, 55], d: v => `최대 체력 +${v}.`},
   {id: 's_pho', lin: 'symbio', slot: 'passive', name: '광합성', v: [8, 12, 16, 22], d: v => `방을 정리할 때마다 체력 ${v} 회복.`},
 ];
+// 무기별 변이 (베기·회전 자리는 무기마다 다름)
+for (const t of TRAITS) if (t.slot === 'attack' || t.slot === 'special') t.wpn = 'scythe';
+TRAITS.push(
+  {id: 'g_e_atk', wpn: 'gun', lin: 'enzyme', slot: 'attack', name: '부식탄', v: [20, 30, 40, 55], d: v => `사격 피해 +${v}%, 맞은 적에게 부식 1중첩.`},
+  {id: 'g_i_atk', wpn: 'gun', lin: 'immune', slot: 'attack', name: '관통 항체탄', v: [1, 1, 2, 3], d: v => `탄이 적 ${v}명을 더 꿰뚫고, 치명타 확률 +12%.`},
+  {id: 'g_n_atk', wpn: 'gun', lin: 'neuro', slot: 'attack', name: '전격탄', v: [6, 9, 12, 16], d: v => `네 번째 탄마다 근처 적 2명에게 연쇄 전격 (${v} 피해).`},
+  {id: 'g_s_atk', wpn: 'gun', lin: 'symbio', slot: 'attack', name: '흡수탄', v: [1, 1, 2, 3], d: v => `탄으로 적을 쓰러뜨리면 체력 ${v} 회복.`},
+  {id: 'g_e_spc', wpn: 'gun', lin: 'enzyme', slot: 'special', name: '산성 산탄', v: [30, 45, 60, 80], d: v => `산탄 피해 +${v}%, 앞쪽에 산성 웅덩이를 남깁니다.`},
+  {id: 'g_i_spc', wpn: 'gun', lin: 'immune', slot: 'special', name: '충격 산탄', v: [0.6, 0.8, 1.0, 1.3], d: v => `산탄 피해 +25%, 맞은 적이 ${v}초 동안 기절합니다.`},
+  {id: 'g_n_spc', wpn: 'gun', lin: 'neuro', slot: 'special', name: '플라스마 산탄', v: [3, 4, 5, 6], d: v => `산탄을 쏠 때 앞쪽 적 ${v}명에게 번개 (22 피해).`},
+  {id: 'g_s_spc', wpn: 'gun', lin: 'symbio', slot: 'special', name: '포자 산탄', v: [12, 18, 24, 32], d: v => `산탄이 포자 3개를 남기고, 1초 뒤 터져 ${v} 피해.`},
+  {id: 'd_e_atk', wpn: 'drone', lin: 'enzyme', slot: 'attack', name: '분해 광선', v: [25, 35, 50, 65], d: v => `드론 광선 피해 +${v}%, 부식 1중첩.`},
+  {id: 'd_i_atk', wpn: 'drone', lin: 'immune', slot: 'attack', name: '정밀 조준', v: [15, 20, 25, 32], d: v => `드론 광선 치명타 확률 +${v}% (치명타 피해 2.5배).`},
+  {id: 'd_n_atk', wpn: 'drone', lin: 'neuro', slot: 'attack', name: '테슬라 코일', v: [5, 7, 9, 12], d: v => `드론 광선이 다른 적 1명에게 튑니다 (${v} 피해).`},
+  {id: 'd_s_atk', wpn: 'drone', lin: 'symbio', slot: 'attack', name: '수리 광선', v: [1, 1, 2, 2], d: v => `드론 광선이 8번 맞힐 때마다 체력 ${v} 회복.`},
+  {id: 'd_e_spc', wpn: 'drone', lin: 'enzyme', slot: 'special', name: '산성 회전날', v: [30, 45, 60, 80], d: v => `드론 돌격 피해 +${v}%, 그 자리에 산성 웅덩이.`},
+  {id: 'd_i_spc', wpn: 'drone', lin: 'immune', slot: 'special', name: '방어 위성', v: [6, 5, 4, 3], d: v => `드론이 돌아오면 공격 1회를 막는 보호막 (재사용 ${v}초).`},
+  {id: 'd_n_spc', wpn: 'drone', lin: 'neuro', slot: 'special', name: '과부하 폭발', v: [15, 22, 30, 40], d: v => `드론 돌격이 끝날 때 번개 폭발 (${v} 피해).`},
+  {id: 'd_s_spc', wpn: 'drone', lin: 'symbio', slot: 'special', name: '쌍둥이 드론', v: [4, 6, 8, 10], d: v => `드론 돌격 때 작은 드론이 ${v}초 동안 함께 싸웁니다.`},
+);
 const TRAIT = Object.fromEntries(TRAITS.map(t => [t.id, t]));
+// 무기
+const WEAPON = {
+  scythe: {name: '이중나선 낫', short: '낫', col: '#3cffae', attack: '베기', special: '회전베기', desc: '넓게 휘두르는 3연속 베기와 주변을 모두 베는 회전. 가까이서 강력합니다.', spr: ['h_atk1', 3, 1]},
+  gun: {name: '유전자총 G-7', short: '총', col: '#36ccff', attack: '사격', special: '산탄 폭발', desc: '누르고 있으면 계속 쏘는 연사, 가까운 적을 밀어내는 산탄. 거리를 두고 싸웁니다.', spr: ['h_shoot', 1, 1]},
+  drone: {name: '공생 드론 베스파', short: '드론', col: '#ffe040', attack: '광선', special: '드론 돌격', desc: '드론이 스스로 가까운 적을 쏘고, 명령하면 돌진해 회전날로 벱니다. 움직이며 싸우기 쉽습니다.', spr: ['drone', 0, 1]},
+};
+const WPN = () => (G.run && G.run.wpn) || SAVE.weapon || 'scythe';
+const slotName = (slot, wpn) => (slot === 'attack' || slot === 'special') ? WEAPON[wpn || WPN()][slot] : SLOT_NAME[slot];
 
 const META = [
   {id: 'vit', name: '강화 체력', icon: 'maxhp', max: 5, cost: [10, 18, 28, 40, 60], d: l => `시작 최대 체력 +${l * 10}`},

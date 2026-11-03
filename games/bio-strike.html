@@ -566,7 +566,7 @@ const SET = store.load();
 
 /* ===================== 효과음 (WebAudio 합성) ===================== */
 const SFX = (() => {
-  let ctx = null, master = null, nbuf = null, comp = null;
+  let ctx = null, master = null, nbuf = null, comp = null, verb = null, SEND = 0;
   function init(){
     if (ctx){ if (ctx.state === 'suspended') ctx.resume(); return; }
     try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return; }
@@ -574,11 +574,40 @@ const SFX = (() => {
     master = ctx.createGain(); master.gain.value = SET.vol; master.connect(comp);
     nbuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = nbuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    // 총성 잔향: 실내·실외 반사음을 흉내 낸 스테레오 잔향 (노이즈 감쇠 + 초기 반사)
+    try {
+      const len = Math.floor(ctx.sampleRate * 1.8), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let c = 0; c < 2; c++){ const a = ir.getChannelData(c);
+        for (let i = 0; i < len; i++){ const t = i / ctx.sampleRate; a[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2) * (t < 0.012 ? t / 0.012 : 1); }
+        for (const [t, g] of [[0.023, 0.6], [0.041, 0.45], [0.067, 0.35], [0.11, 0.25]]){ const k = Math.floor((t + c * 0.004) * ctx.sampleRate); a[k] += g; } }
+      verb = ctx.createConvolver(); verb.buffer = ir;
+      const vf = ctx.createBiquadFilter(); vf.type = 'lowpass'; vf.frequency.value = 3200;
+      const vg = ctx.createGain(); vg.gain.value = 0.55; verb.connect(vf); vf.connect(vg); vg.connect(master);
+    } catch(e){ verb = null; }
   }
   function setVol(v){ if (master) master.gain.value = v; }
   function out(g, pan){
     if (pan && ctx.createStereoPanner){ const p = ctx.createStereoPanner(); p.pan.value = clamp(pan, -1, 1); g.connect(p); p.connect(master); }
     else g.connect(master);
+    if (SEND > 0 && verb){ const s = ctx.createGain(); s.gain.value = SEND; g.connect(s); s.connect(verb); }
+  }
+  // 총성 구성: 초음속 균열음(crack) + 폭발 본체(blast) + 저음 충격(thump) + 기계음(mech) + 잔향(tail)
+  function gun(v, p, o){
+    SEND = o.verb || 0.35;
+    noise(o.crack || 0.025, 6500, 0.8, (o.cv || 0.6) * v, 'highpass', 0, p);
+    noise(o.blast, o.bf || 1800, 0.55, (o.bv || 0.8) * v, 'lowpass', 0, p, o.bf2 || 220);
+    noise(o.blast * 0.6, o.mid || 900, 1.4, 0.35 * v, 'bandpass', 0.002, p, (o.mid || 900) * 0.5);
+    tone(o.th || 120, o.th2 || 38, o.thd || 0.12, 'sine', (o.tv || 0.7) * v, 0, p);
+    tone((o.th || 120) * 1.5, (o.th2 || 38) * 1.4, (o.thd || 0.12) * 0.6, 'triangle', 0.18 * v, 0, p);
+    SEND = 0;
+    noise(o.tail || 0.6, o.tf || 700, 0.5, (o.tlv || 0.12) * v, 'lowpass', 0.03, p, 90);
+    if (o.mech) mech(v, p, o.mech, o.md || 0.06);
+  }
+  function mech(v, p, kind, d){
+    if (kind === 'bolt'){ noise(0.02, 3800, 6, 0.16 * v, 'bandpass', d, p); noise(0.025, 2600, 7, 0.14 * v, 'bandpass', d + 0.035, p); }
+    else if (kind === 'pump'){ noise(0.06, 1500, 3, 0.28 * v, 'bandpass', d, p, 900); tone(240, 180, 0.05, 'square', 0.06 * v, d, p); noise(0.05, 2200, 4, 0.3 * v, 'bandpass', d + 0.16, p, 1600); tone(320, 260, 0.04, 'square', 0.06 * v, d + 0.16, p); }
+    else if (kind === 'sbolt'){ noise(0.05, 2400, 5, 0.22 * v, 'bandpass', d, p, 1400); noise(0.04, 3200, 6, 0.2 * v, 'bandpass', d + 0.13, p); noise(0.05, 1800, 5, 0.22 * v, 'bandpass', d + 0.26, p); }
+    else if (kind === 'shell'){ for (let i = 0; i < 3; i++) tone(4200 + Math.random() * 900, 3800, 0.04, 'triangle', 0.035 * v * (1 - i * 0.3), d + 0.2 + i * 0.07, p); }
   }
   function noise(dur, f, q, vol, type, delay, pan, f2){
     const t = ctx.currentTime + (delay || 0);
@@ -596,18 +625,18 @@ const SFX = (() => {
     o.connect(g); out(g, pan); o.start(t); o.stop(t + dur + 0.02);
   }
   const P = {
-    rifle(v, p){ noise(0.16, 2400, 0.7, 0.55 * v, 'lowpass', 0, p, 300); tone(170, 55, 0.09, 'square', 0.22 * v, 0, p); noise(0.05, 5000, 1, 0.25 * v, 'highpass', 0, p); },
-    smg(v, p){ noise(0.1, 3200, 0.8, 0.42 * v, 'lowpass', 0, p, 500); tone(240, 90, 0.06, 'square', 0.16 * v, 0, p); tone(900, 1400, 0.05, 'sine', 0.06 * v, 0, p); },
-    shotgun(v, p){ noise(0.38, 1500, 0.6, 0.85 * v, 'lowpass', 0, p, 120); tone(110, 40, 0.2, 'square', 0.3 * v, 0, p); noise(0.08, 300, 1, 0.3 * v, 'bandpass', 0.42, p); },
-    sniper(v, p){ noise(0.5, 3000, 0.5, 0.8 * v, 'lowpass', 0, p, 150); tone(90, 30, 0.35, 'sawtooth', 0.28 * v, 0, p); tone(2400, 1200, 0.2, 'sine', 0.05 * v, 0.05, p); },
-    launcher(v, p){ tone(200, 60, 0.25, 'sine', 0.5 * v, 0, p); noise(0.3, 700, 1, 0.4 * v, 'bandpass', 0, p, 200); tone(600, 900, 0.15, 'triangle', 0.08 * v, 0, p); },
-    boom(v, p){ noise(1.1, 1200, 0.5, 1.0 * v, 'lowpass', 0, p, 60); tone(90, 25, 0.8, 'sine', 0.7 * v, 0, p); noise(0.25, 3000, 0.7, 0.3 * v, 'highpass', 0, p); },
-    hit(v){ tone(1600, 1300, 0.05, 'square', 0.07 * v); },
+    rifle(v, p){ gun(v, p, { blast: 0.13, bf: 2600, bf2: 260, mid: 1100, th: 140, th2: 45, thd: 0.1, tv: 0.6, crack: 0.02, cv: 0.55, verb: 0.32, tail: 0.5, mech: 'bolt', md: 0.03 }); if (Math.random() < 0.3) mech(v * 0.7, p, 'shell', 0); },
+    smg(v, p){ gun(v * 0.82, p, { blast: 0.08, bf: 3400, bf2: 420, mid: 1500, th: 190, th2: 70, thd: 0.06, tv: 0.45, crack: 0.015, cv: 0.4, verb: 0.24, tail: 0.32, tlv: 0.08, mech: 'bolt', md: 0.02 }); },
+    shotgun(v, p){ gun(v * 1.1, p, { blast: 0.32, bf: 1600, bf2: 120, mid: 650, th: 95, th2: 30, thd: 0.24, tv: 1.0, crack: 0.035, cv: 0.65, verb: 0.5, tail: 0.95, tlv: 0.2, tf: 500, mech: 'pump', md: 0.38 }); },
+    sniper(v, p){ gun(v * 1.15, p, { blast: 0.36, bf: 3000, bf2: 140, mid: 800, th: 80, th2: 26, thd: 0.3, tv: 1.0, crack: 0.04, cv: 0.9, verb: 0.65, tail: 1.4, tlv: 0.22, tf: 600, mech: 'sbolt', md: 0.5 }); },
+    launcher(v, p){ gun(v * 0.8, p, { blast: 0.22, bf: 900, bf2: 160, mid: 500, th: 70, th2: 35, thd: 0.22, tv: 0.9, crack: 0.01, cv: 0.2, verb: 0.4, tail: 0.6, tlv: 0.1 }); noise(0.55, 900, 1.2, 0.18 * v, 'bandpass', 0.05, p, 3000); tone(300, 140, 0.4, 'sawtooth', 0.04 * v, 0.06, p); },
+    boom(v, p){ SEND = 0.6; noise(1.3, 1400, 0.5, 1.0 * v, 'lowpass', 0, p, 50); tone(70, 22, 0.9, 'sine', 0.85 * v, 0, p); noise(0.04, 5000, 0.7, 0.5 * v, 'highpass', 0, p); SEND = 0; for (let i = 0; i < 6; i++) noise(0.08, 1500 + Math.random() * 2500, 3, 0.08 * v, 'bandpass', 0.25 + Math.random() * 0.6, p); },
+    hit(v){ noise(0.06, 900, 2, 0.22 * v, 'bandpass', 0, 0, 300); tone(1600, 1300, 0.04, 'square', 0.05 * v); },
     head(v){ tone(2200, 2400, 0.12, 'sine', 0.2 * v); tone(3300, 3300, 0.1, 'sine', 0.08 * v, 0.02); },
     kill(v){ tone(880, 880, 0.08, 'triangle', 0.2 * v); tone(1320, 1320, 0.14, 'triangle', 0.2 * v, 0.07); },
     hurt(v){ tone(160, 80, 0.18, 'sawtooth', 0.22 * v); noise(0.12, 600, 1, 0.2 * v); },
-    reload(v){ tone(500, 300, 0.05, 'square', 0.1 * v); tone(800, 600, 0.04, 'square', 0.1 * v, 0.35); noise(0.05, 3000, 2, 0.15 * v, 'bandpass', 0.6); tone(1100, 700, 0.05, 'square', 0.12 * v, 0.9); },
-    empty(v){ tone(1400, 1200, 0.03, 'square', 0.08 * v); },
+    reload(v){ noise(0.04, 2200, 5, 0.2 * v, 'bandpass', 0.05); noise(0.1, 700, 2, 0.12 * v, 'bandpass', 0.12, 0, 300); noise(0.05, 1600, 4, 0.22 * v, 'bandpass', 0.6, 0, 2600); tone(900, 700, 0.025, 'square', 0.06 * v, 0.62); noise(0.03, 3600, 6, 0.24 * v, 'bandpass', 0.9); noise(0.035, 2600, 6, 0.22 * v, 'bandpass', 0.96); },
+    empty(v){ noise(0.015, 4200, 8, 0.25 * v, 'bandpass'); tone(2100, 1800, 0.02, 'square', 0.04 * v); },
     swap(v){ noise(0.08, 2500, 2, 0.15 * v); tone(700, 500, 0.04, 'square', 0.06 * v, 0.08); },
     jump(v){ noise(0.08, 400, 1, 0.12 * v); },
     land(v){ noise(0.1, 200, 1, 0.22 * v, 'lowpass'); },
@@ -1864,6 +1893,7 @@ class Nav {
 const V3 = THREE.Vector3;
 const G = { time: 0, mode: 'menu', state: 'menu', W: null, nav: null, monsters: [], eprojs: [], pprojs: [], pickups: [], player: null,
   arena: null, story: null, surv: null, shake: 0, hadLock: false, chatOpen: false, menuProps: [], frozen: false, vm: null, cam: null };
+const SCOPE = {};
 let renderer, scene, cam, vmScene, vmCam, sun, hemi, clock, rainObj = null, flashLight;
 function initRenderer(){
   renderer = new THREE.WebGLRenderer({ canvas: $('#gl'), antialias: true, powerPreference: 'high-performance' });
@@ -1872,6 +1902,17 @@ function initRenderer(){
   scene = new THREE.Scene();
   cam = new THREE.PerspectiveCamera(SET.fov, innerWidth / innerHeight, 0.05, 1000); cam.rotation.order = 'YXZ'; G.cam = cam;
   vmScene = new THREE.Scene(); vmCam = new THREE.PerspectiveCamera(56, innerWidth / innerHeight, 0.01, 10);
+  // 조준경: 렌즈 안에 따로 확대한 화면을 비춤 (저격총은 전체 화면 조준경)
+  SCOPE.rt = new THREE.WebGLRenderTarget(512, 512); SCOPE.cam = new THREE.PerspectiveCamera(20, 1, 0.05, 1000); SCOPE.cam.rotation.order = 'YXZ';
+  { const og = new THREE.Group(), dark = new THREE.MeshStandardMaterial({ color: '#1c2028', roughness: 0.55, metalness: 0.3, side: THREE.DoubleSide });
+    const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.084, 0.084, 0.08, 40, 1, true), dark); tube.rotation.x = Math.PI / 2; og.add(tube);
+    const rim = new THREE.Mesh(new THREE.RingGeometry(0.076, 0.094, 40), new THREE.MeshBasicMaterial({ color: '#0d1014' })); rim.position.z = 0.041; og.add(rim);
+    const lens = new THREE.Mesh(new THREE.CircleGeometry(0.077, 48), new THREE.MeshBasicMaterial({ map: SCOPE.rt.texture })); lens.position.z = 0.034; og.add(lens);
+    const red = new THREE.MeshBasicMaterial({ color: '#ff3b52' }), blk = new THREE.MeshBasicMaterial({ color: '#05080a' });
+    const dot = new THREE.Mesh(new THREE.CircleGeometry(0.0022, 16), red); dot.position.z = 0.0355; og.add(dot);
+    for (const [w, h, x, y] of [[0.0014, 0.028, 0, 0.022], [0.0014, 0.028, 0, -0.022], [0.028, 0.0014, 0.022, 0], [0.028, 0.0014, -0.022, 0]]){ const l = new THREE.Mesh(new THREE.PlaneGeometry(w, h), blk); l.position.set(x, y, 0.0352); og.add(l); }
+    const glare = new THREE.Mesh(new THREE.RingGeometry(0.06, 0.077, 40, 1, 0.6, 1.2), new THREE.MeshBasicMaterial({ color: '#bfefff', transparent: true, opacity: 0.18 })); glare.position.z = 0.0358; og.add(glare);
+    og.visible = false; vmScene.add(og); SCOPE.group = og; }
   vmScene.add(new THREE.HemisphereLight('#ffffff', '#7a7488', 0.85));
   const vdl = new THREE.DirectionalLight('#ffffff', 0.75); vdl.position.set(0.6, 1.5, 0.8); vmScene.add(vdl);
   hemi = new THREE.HemisphereLight('#ffffff', '#666666', 0.7); scene.add(hemi);
@@ -2206,6 +2247,12 @@ function updateViewmodel(dt){
   if (h.gun.userData.pump) h.gun.userData.pump.position.z = -0.48 + (p.fireT > W.rate - 0.45 && p.fireT < W.rate - 0.15 ? 0.1 : 0);
   if (h.gun.userData.bubbles) h.gun.userData.bubbles.forEach((b, i) => { const k = (G.time * 0.6 + i / 4) % 1; b.position.set(Math.sin(i * 2.1) * 0.02, 0.1 + k * 0.06, -0.2 + i * 0.05); });
   if (h.gun.userData.chamber) h.gun.userData.chamber.scale.setScalar(1 + Math.sin(G.time * 4) * 0.04);
+  // 조준경 표시 (저격총 제외)
+  if (SCOPE.group){
+    const show = !W.scope && ads > 0.02 && p.alive && p.meleeT <= 0;
+    SCOPE.group.visible = show;
+    if (show){ const e = ads * ads * (3 - 2 * ads); SCOPE.group.position.set(0, lerp(-0.2, 0, e), -0.3); SCOPE.group.scale.setScalar(0.55 + 0.45 * e); h.holder.position.y -= 0.05 * e; }
+  }
   // 총구 섬광 위치
   const mz = h.gun.userData.muzzle; mz.updateWorldMatrix(true, false); FX.muzzleSprite.position.setFromMatrixPosition(mz.matrixWorld);
   // 근접(가위)
@@ -2472,8 +2519,12 @@ function spawnMonster(type, x, z, o){
   const D = DIFFS[SET.diff] || DIFFS[1];
   const hpMul = (o.hpMul || 1) * D.hp;
   const cy = def.fly ? 0 : (R.cy || def.r);
+  if (!o.y && G.W && G.W.boxes){   // 건물·상자 안이나 위가 아닌 맨땅으로 옮김
+    const inBox = (px, pz) => G.W.boxes.some(b => b.miny < 1.5 && px + def.r > b.minx && px - def.r < b.maxx && pz + def.r > b.minz && pz - def.r < b.maxz);
+    for (let k = 0; k < 24 && inBox(x, z); k++){ const a = k * 2.4, rr = 1 + k * 0.6; x += Math.cos(a) * rr; z += Math.sin(a) * rr; }
+  }
   const m = { type, def, R, alive: true, hp: def.hp * hpMul, maxHp: def.hp * hpMul, r: def.r, cy,
-    foot: new V3(x, o.y || (def.fly ? 1.0 : 0), z), vel: new V3(), ground: !def.fly, h: def.fly ? def.r * 1.4 : cy * 2, e: null,
+    foot: new V3(x, o.y || (def.fly ? 0.4 : 0), z), vel: new V3(), ground: !def.fly, h: def.fly ? def.r * 1.4 : cy * 2, e: null,
     yaw: Math.atan2(-x, -z), t: rand(0, 10), cd: rand(0.8, 1.8), spawnT: 0.6, flash: 0, side: Math.random() < 0.5 ? -1 : 1, losT: 0, los: false,
     chargeT: 0, chargeCd: rand(2, 4), leapCd: rand(1, 3), jumpCd: 0, dmgMul: D.dmg * (o.dmgMul || 1), baseScale: R.g.scale.x, col: '#b6ff8a', lunge: 0 };
   m.e = { pos: m.foot, vel: m.vel, r: Math.min(def.r * 0.8, 1.2), h: m.h, ground: m.ground };
@@ -2554,12 +2605,21 @@ function updateMonsters(dt){
     if (!airborne || !m.leaping){ const k = Math.min(1, dt * (d.fly ? 3 : 6)); m.vel.x = lerp(m.vel.x, mx * spd, k); m.vel.z = lerp(m.vel.z, mz * spd, k); }
     if (d.fly){
       const ty = Math.max(tgt.y + d.hover - 1.1, 0.6 + m.r) + Math.sin(m.t * 2) * 0.3;
-      m.vel.y = (ty - (m.foot.y + m.r)) * 2.5;
+      m.vel.y = clamp((ty - (m.foot.y + m.r)) * 2.5, -4, 3.2);
     } else {
-      m.vel.y -= 24 * dt;
-      m.jumpCd -= dt;
-      if (m.e.ground && P.alive && P.pos.y - m.foot.y > 0.9 && dist < 4.5 && m.jumpCd <= 0){ m.jumpCd = 1.6; m.vel.y = Math.sqrt(2 * 24 * (P.pos.y - m.foot.y + 0.8)); m.vel.x = mx * 5; m.vel.z = mz * 5; }
-      if (m.e.ground) m.leaping = 0;
+      // 높은 곳의 주인공: 벽에 붙어 기어오름 (공중으로 뛰어오르지 않음)
+      const higher = P.alive && P.pos.y - m.foot.y > 0.7;
+      if (higher && m.e.hitWall && dist < 14){ m.climbT = 0.25; }
+      if (m.climbT > 0){
+        m.climbT -= dt; m.climbing = true;
+        m.vel.y = 3.6;   // 일정한 속도로 기어오름
+        m.vel.x = mx * spd * 0.55; m.vel.z = mz * spd * 0.55;
+        if (Math.random() < dt * 6) SFX.play('step', 0.5, m.foot);
+      } else {
+        if (m.climbing && !m.e.hitWall){ m.climbing = false; m.vel.y = Math.max(m.vel.y, 2.4); m.vel.x = mx * spd; m.vel.z = mz * spd; }
+        m.vel.y -= 24 * dt;
+      }
+      if (m.e.ground){ m.leaping = 0; m.climbing = false; }
     }
     m.e.ground = m.ground; PHYS.move(W, m.e, dt, 0.5); m.ground = m.e.ground;
     if (d.fly) m.ground = false;
@@ -2567,6 +2627,7 @@ function updateMonsters(dt){
     const fy = m.los || dist < 6 ? Math.atan2(dx, dz) : Math.atan2(m.vel.x, m.vel.z);
     m.yaw += angDiff(m.yaw, fy) * Math.min(1, dt * 6);
     const g = m.R.g; g.position.set(m.foot.x, m.foot.y + (d.fly ? m.r : m.cy), m.foot.z); g.rotation.y = m.yaw;
+    m.climbK = lerp(m.climbK || 0, m.climbing ? 1 : 0, Math.min(1, dt * 10)); g.rotation.x = -m.climbK * 1.1;
     if (m.lunge > 0){ m.lunge -= dt; const k = Math.sin((1 - m.lunge / 0.25) * Math.PI) * 0.4; g.position.x += Math.sin(m.yaw) * k; g.position.z += Math.cos(m.yaw) * k; }
     animMonster(m, dt);
     if (m.flash > 0){ m.flash -= dt; const k = m.flash > 0 ? 1 : 0; for (const mt of m.R.mats){ if (k){ mt.emissive.set('#ffffff'); mt.emissiveIntensity = 0.75; } else { mt.emissive.copy(mt.userData.e0); mt.emissiveIntensity = mt.userData.ei0; } } }
@@ -3454,7 +3515,7 @@ function updateHud(dt){
   // 조준선 (퍼짐에 따라 벌어짐)
   const sp = lerp(W.spread, W.ads, p.adsK) + p.bloom + (Math.hypot(p.vel.x, p.vel.z) > 1.5 ? 0.012 : 0) + (p.ground ? 0 : 0.03);
   const gap = 4 + sp * 600 * (SET.fov / cam.fov) * 0.5;
-  const xh = $('#xhair'); xh.style.opacity = (W.scope && p.adsK > 0.5) || !p.alive ? 0 : 1;
+  const xh = $('#xhair'); xh.style.opacity = p.adsK > 0.5 || !p.alive ? 0 : 1;
   xh.children[0].style.top = (-gap - 10) + 'px'; xh.children[1].style.top = gap + 'px'; xh.children[2].style.left = (-gap - 10) + 'px'; xh.children[3].style.left = gap + 'px';
   if (hitmT > 0){ hitmT -= dt; $('#hitm').style.opacity = Math.max(0, hitmT / 0.18); }
   vignT = Math.max(0, vignT - dt * 1.2);
@@ -4074,6 +4135,12 @@ function frame(){
   }
   updateDialog(dt);
   updateWorldFx(dt); FX.update(dt); updateNums(dt);
+  if (SCOPE.group && SCOPE.group.visible && G.player){
+    const W = WEAPONS[G.player.cur];
+    SCOPE.cam.position.copy(cam.position); SCOPE.cam.rotation.copy(cam.rotation);
+    SCOPE.cam.fov = Math.max(6, SET.fov / (W.zoom * 2.6)); SCOPE.cam.updateProjectionMatrix();
+    renderer.setRenderTarget(SCOPE.rt); renderer.clear(); renderer.render(scene, SCOPE.cam); renderer.setRenderTarget(null);
+  }
   renderer.clear();
   renderer.render(scene, cam);
   if (G.mode !== 'menu' && G.player && G.player.alive && !G.vmHidden && G.state !== 'result'){ renderer.clearDepth(); renderer.render(vmScene, vmCam); }

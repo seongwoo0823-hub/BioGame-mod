@@ -63,6 +63,19 @@ const AUDIO = (() => {
     deny: () => norm(mix([tone(0.12, 220, 200, 'sq', 0.002, 0.11), 0.4], [tone(0.15, 165, 150, 'sq', 0.002, 0.14), 0.4, 0.09])),
     hurt: () => norm(mix([tone(0.22, 220, 80, 'saw', 0.001, 0.2), 0.5], [tone(0.16, 120, 50, 'sine', 0.001, 0.15), 0.9], [shape(lp(noiseFill(mk(0.12).length), 2000), (t, u) => 1 - u), 0.5])),
     heart: () => norm(mix([tone(0.1, 70, 50, 'sine', 0.005, 0.09), 1], [tone(0.1, 60, 45, 'sine', 0.005, 0.09), 0.8, 0.16])),
+    // 무기 · 적 고유 공격
+    gun: () => norm(mix([shape(hp(noiseFill(mk(0.03).length), 4000), (t, u) => (1 - u) ** 2), 0.7], [shape(lp(noiseFill(mk(0.12).length), 2200), (t, u) => (1 - u) ** 3), 0.9], [tone(0.09, 420, 120, 'sq', 0.001, 0.08), 0.25], [tone(0.07, 160, 60, 'sine', 0.001, 0.07), 0.6])),
+    blast: () => norm(mix([shape(lp(noiseFill(mk(0.45).length), 1600), (t, u) => (1 - u) ** 2.5), 1], [tone(0.25, 110, 35, 'sine', 0.001, 0.24), 0.9], [shape(hp(noiseFill(mk(0.04).length), 5000), (t, u) => 1 - u), 0.6], [shape(bp(noiseFill(mk(0.08).length), 2400, 3), (t, u) => 1 - u), 0.25, 0.32], [shape(bp(noiseFill(mk(0.06).length), 1600, 3), (t, u) => 1 - u), 0.25, 0.4])),
+    laser: () => norm(mix([tone(0.1, 2400, 900, 'sq', 0.001, 0.09), 0.35], [tone(0.1, 1200, 600, 'sine', 0.001, 0.09), 0.6], [shape(hp(noiseFill(mk(0.05).length), 3000), (t, u) => 1 - u), 0.25])),
+    jump: () => norm(mix([tone(0.15, 220, 520, 'sine', 0.002, 0.14), 0.6], [shape(bp(noiseFill(mk(0.1).length), 900, 1), (t, u) => 1 - u), 0.4])),
+    land: () => norm(mix([tone(0.14, 140, 50, 'sine', 0.001, 0.13), 0.9], [shape(lp(noiseFill(mk(0.12).length), 900), (t, u) => (1 - u) ** 2), 0.7])),
+    crystal: () => norm(mix([tone(0.4, 2600, 2500, 'sine', 0.001, 0.38), 0.5], [tone(0.3, 3900, 3700, 'sine', 0.001, 0.28), 0.3], [tone(0.2, 1700, 1500, 'tri', 0.001, 0.18), 0.4], [shape(hp(noiseFill(mk(0.05).length), 5000), (t, u) => 1 - u), 0.3])),
+    buzz: () => { const o = mk(0.4); let ph = 0; for (let i = 0; i < o.length; i++) { const t = i / SR; ph += 2 * Math.PI * (440 + 60 * Math.sin(t * 50)) / SR; o[i] = ((ph / Math.PI) % 2 - 1) * Math.sin(Math.PI * i / o.length); } return norm(lp(o, 2400)); },
+    whip: () => norm(mix([shape(lpSweep(noiseFill(mk(0.18).length), 600, 5000), (t, u) => Math.sin(Math.PI * u) ** 3), 1], [shape(bp(noiseFill(mk(0.05).length), 3000, 2), (t, u) => 1 - u), 0.5, 0.14])),
+    dig: () => norm(mix([shape(lp(noiseFill(mk(0.45).length), 500), (t, u) => Math.sin(Math.PI * u) * (0.6 + 0.4 * Math.sin(t * 60))), 1], [tone(0.4, 90, 50, 'sine', 0.05, 0.35), 0.4])),
+    boom: () => norm(mix([tone(0.7, 80, 25, 'sine', 0.001, 0.68), 1], [shape(lp(noiseFill(mk(0.7).length), 1200), (t, u) => (1 - u) ** 2), 1], [shape(hp(noiseFill(mk(0.05).length), 4000), (t, u) => 1 - u), 0.5])),
+    bite: () => norm(mix([shape(bp(noiseFill(mk(0.08).length), 1400, 2), (t, u) => (1 - u) ** 2), 0.8], [tone(0.08, 300, 140, 'sq', 0.001, 0.07), 0.3], [shape(bp(noiseFill(mk(0.05).length), 900, 2), (t, u) => 1 - u), 0.6, 0.06])),
+    spit: () => norm(mix([shape(bp(noiseFill(mk(0.22).length), 1300, 4), (t, u) => Math.sin(Math.PI * u) ** 2), 0.9], [tone(0.18, 500, 180, 'sine', 0.01, 0.17), 0.4])),
     shoot: () => norm(mix([tone(0.14, 700, 250, 'sine', 0.001, 0.13), 0.7], [shape(lp(noiseFill(mk(0.08).length), 2500), (t, u) => 1 - u), 0.4])),
     beamCharge: () => norm(mix([tone(0.8, 150, 600, 'saw', 0.1, 0.7), 0.4], [tone(0.8, 300, 1200, 'sine', 0.1, 0.7), 0.4])),
     beam: () => { const x = mix([tone(0.6, 110, 100, 'saw', 0.01, 0.58), 0.6], [tone(0.6, 220, 200, 'sq', 0.01, 0.58), 0.3], [hp(noiseFill(mk(0.6).length), 2000), 0.25]); return norm(shape(x, (t, u) => 0.7 + 0.3 * Math.sin(t * 90))); },
@@ -77,7 +90,7 @@ const AUDIO = (() => {
     boot: () => norm(mix([tone(0.15, 400, 800, 'sine', 0.005, 0.14), 0.3], [tone(0.15, 800, 1600, 'sine', 0.005, 0.14), 0.25, 0.08])),
     portal: () => norm(mix([shape(lpSweep(noiseFill(mk(1.2).length), 200, 3000), (t, u) => Math.sin(Math.PI * u)), 0.6], [tone(1.2, 220, 880, 'tri', 0.3, 0.8), 0.3], [tone(1.2, 330, 1320, 'sine', 0.3, 0.8), 0.25])),
   };
-  const GAIN = {step: 0.35, blip: 0.5, hover: 0.4, sizzle: 0.35, swing1: 0.55, swing2: 0.55, swing3: 0.65, spin: 0.6, hit: 0.75, squish: 0.6, die: 0.7, dash: 0.55, heart: 0.8, warn: 0.45, roar: 0.9, beam: 0.6};
+  const GAIN = {gun: 0.5, blast: 0.85, laser: 0.35, buzz: 0.4, dig: 0.5, boom: 0.85, step: 0.35, blip: 0.5, hover: 0.4, sizzle: 0.35, swing1: 0.55, swing2: 0.55, swing3: 0.65, spin: 0.6, hit: 0.75, squish: 0.6, die: 0.7, dash: 0.55, heart: 0.8, warn: 0.45, roar: 0.9, beam: 0.6};
 
   // ---------------- 배경음: 장소별 곡
   const NOTE = n => 440 * Math.pow(2, (n - 69) / 12);

@@ -83,6 +83,7 @@ label.row{color:var(--ink)} label.row input{flex:1;accent-color:var(--acc)}
 .card{display:flex;flex-direction:column;gap:.55em;padding:1.1em 1.1em 1em;width:18.5em;min-height:13em;border-top:3px solid var(--c);background:linear-gradient(180deg,color-mix(in srgb,var(--c) 10%,#0e1417),#0c1114)}
 .card .ch{display:flex;gap:.75em;align-items:center}
 .card .ic{width:3.2em;height:3.2em}
+.wimg{width:4.6em;height:4.6em;image-rendering:pixelated;object-fit:contain;flex:none;margin:-.6em -.4em -.6em -.6em}.wcard.on{box-shadow:0 0 0 2px var(--c) inset}
 .cn{font-weight:900;font-size:1.12em}.cs{color:var(--dim);font-size:.82em;margin-top:.15em}.cd{line-height:1.55;color:#d5e4df}.cr{color:#ff9a8a;font-size:.85em;margin-top:auto}
 .rar{font-size:.72em;font-weight:900;padding:.1em .5em;border-radius:1em;margin-left:.35em;vertical-align:.15em;border:1px solid currentColor}
 .panel.wide .list{width:min(40em,94%)}
@@ -113,19 +114,19 @@ label.row{color:var(--ink)} label.row input{flex:1;accent-color:var(--acc)}
 /* ---------- 터치 ---------- */
 #touch{display:none;position:absolute;inset:0;pointer-events:none}
 body.touch #touch{display:block}
-#stick{position:absolute;left:3%;bottom:6%;width:26%;max-width:190px;aspect-ratio:1;border-radius:50%;background:rgba(60,255,174,.06);border:2px solid rgba(60,255,174,.22);pointer-events:auto;touch-action:none}
-#knob{position:absolute;left:30%;top:30%;width:40%;height:40%;border-radius:50%;background:rgba(60,255,174,.32)}
-.btns{position:absolute;right:2%;bottom:4%;width:36%;max-width:290px;aspect-ratio:1.15;pointer-events:none}
-.tb{position:absolute;border-radius:50%;background:rgba(8,16,15,.55);border:2px solid rgba(60,255,174,.36);color:#e9f5f0;font:700 12px var(--font);display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none}
-.tb.on{background:rgba(60,255,174,.32)}
-.tb[data-act=attack]{width:34%;aspect-ratio:1;right:4%;bottom:6%}
-.tb[data-act=special]{width:24%;aspect-ratio:1;right:40%;bottom:2%}
-.tb[data-act=dash]{width:24%;aspect-ratio:1;right:2%;bottom:46%}
-.tb[data-act=cast]{width:20%;aspect-ratio:1;right:28%;bottom:32%}
-.tb[data-act=leap]{width:18%;aspect-ratio:1;right:56%;bottom:28%}
-.tb[data-act=ult]{width:18%;aspect-ratio:1;right:22%;bottom:66%}
-.tb[data-act=interact]{width:18%;aspect-ratio:1;right:50%;bottom:58%}
-.tb[data-act=pause]{width:40px;height:40px;position:absolute;left:50%;transform:translateX(-50%);top:6px;font-size:14px}
+#stickzone{position:absolute;left:0;top:12%;bottom:0;width:48%;pointer-events:auto;touch-action:none}
+#stick{position:absolute;width:var(--sk,140px);height:var(--sk,140px);margin:calc(var(--sk,140px)/-2) 0 0 calc(var(--sk,140px)/-2);border-radius:50%;background:rgba(60,255,174,.07);border:2px solid rgba(60,255,174,.25);pointer-events:none;opacity:.55;transition:opacity .15s}
+#stick.on{opacity:1}
+#knob{position:absolute;left:30%;top:30%;width:40%;height:40%;border-radius:50%;background:rgba(60,255,174,.4);box-shadow:0 0 12px rgba(60,255,174,.4)}
+.tb{position:absolute;border-radius:50%;background:rgba(8,16,15,.6);border:2px solid rgba(60,255,174,.4);color:#e9f5f0;font:700 12px var(--font);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:auto;touch-action:none;box-sizing:border-box;overflow:hidden;line-height:1.1}
+.tb::before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(rgba(0,0,0,.62) calc(var(--cd,0)*1turn),transparent 0);pointer-events:none}
+.tb.on{background:rgba(60,255,174,.32);transform:scale(.94)}
+.tb small{font-size:10px;opacity:.75;font-weight:600}
+.tb[data-act=attack]{border-width:3px;font-size:15px;background:rgba(10,30,26,.66)}
+.tb[data-act=ult]{border-color:#ffe040;color:#ffe040;display:none}.tb[data-act=ult].ready{display:flex;animation:pulse 1s infinite}
+.tb[data-act=interact]{border-color:#ffc040;color:#ffe0a0;display:none}.tb[data-act=interact].show{display:flex}
+@keyframes pulse{50%{box-shadow:0 0 18px #ffe040}}
+.tb[data-act=pause]{width:40px;height:40px;left:50%;transform:translateX(-50%);top:6px;font-size:14px}
 body.touch #htraits{display:none}
 @media (max-width:760px){.card{width:100%;min-height:0}.codexgrid{grid-template-columns:repeat(5,1fr)}.stats{grid-template-columns:repeat(2,1fr)}.hmain{width:10em}.logo{font-size:3.2em}}
 </style>
@@ -149,11 +150,9 @@ body.touch #htraits{display:none}
       <div id="hprompt"></div>
     </div>
     <div id="touch">
-      <div id="stick"><div id="knob"></div></div>
-      <div class="btns">
-        <div class="tb" data-act="attack">베기</div><div class="tb" data-act="special">회전</div><div class="tb" data-act="dash">돌진</div>
-        <div class="tb" data-act="cast">시약</div><div class="tb" data-act="leap">도약</div><div class="tb" data-act="ult">의식</div><div class="tb" data-act="interact">사용</div>
-      </div>
+      <div id="stickzone"><div id="stick"><div id="knob"></div></div></div>
+      <div class="tb" data-act="attack"><span>베기</span><small>누르고 있기</small></div><div class="tb" data-act="special"><span>회전</span></div><div class="tb" data-act="dash"><span>돌진</span></div>
+      <div class="tb" data-act="cast"><span>시약</span><small></small></div><div class="tb" data-act="leap"><span>도약</span></div><div class="tb" data-act="ult"><span>의식</span></div><div class="tb" data-act="interact"><span>사용</span></div>
       <div class="tb" data-act="pause">Ⅱ</div>
     </div>
     <div id="dialog"></div>
@@ -166,6 +165,8 @@ body.touch #htraits{display:none}
 <script src="helix/js/engine.js"></script>
 <script src="helix/js/world.js"></script>
 <script src="helix/js/game.js"></script>
+<script src="helix/js/weapons.js"></script>
+<script src="helix/js/foes2.js"></script>
 <script src="helix/js/run.js"></script>
 <script src="helix/js/ui.js"></script>
 </body>

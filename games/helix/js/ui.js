@@ -77,14 +77,14 @@ function rollRarity(minRar = 0) {
 }
 function traitOffers(lin, minRar) {
   const run = G.run, ownP = new Set(run.passives.map(p => p.id));
-  let pool = TRAITS.filter(t => t.lin === lin && !ownP.has(t.id) && !(run.slots[t.slot] && run.slots[t.slot].id === t.id));
-  if (pool.length < 3) pool = pool.concat(shuffle(TRAITS.filter(t => t.lin !== lin && !ownP.has(t.id))).slice(0, 3 - pool.length));
+  let pool = TRAITS.filter(t => (!t.wpn || t.wpn === WPN()) && t.lin === lin && !ownP.has(t.id) && !(run.slots[t.slot] && run.slots[t.slot].id === t.id));
+  if (pool.length < 3) pool = pool.concat(shuffle(TRAITS.filter(t => (!t.wpn || t.wpn === WPN()) && t.lin !== lin && !ownP.has(t.id))).slice(0, 3 - pool.length));
   return shuffle(pool).slice(0, 3).map(t => ({id: t.id, rar: rollRarity(minRar)}));
 }
 function traitCard(o, i, extra = '') {
   const T = TRAIT[o.id], L = LINEAGE[T.lin], R = RARITY[o.rar], cur = T.slot !== 'passive' ? G.run.slots[T.slot] : null;
   return `<button class="opt card" data-i="${i}" style="--c:${L.col}"><div class="ch">${img(`${T.lin}_${T.slot}`)}<div><div class="cn">${esc(T.name)}<span class="rar" style="color:${R.col}">${R.name}</span></div>
-    <div class="cs">${L.short} 계통 · ${SLOT_NAME[T.slot]}</div></div></div><div class="cd">${esc(T.d(T.v[o.rar]))}</div>${cur ? `<div class="cr">교체: ${esc(TRAIT[cur.id].name)}</div>` : ''}${extra}</button>`;
+    <div class="cs">${L.short} 계통 · ${slotName(T.slot, T.wpn)}</div></div></div><div class="cd">${esc(T.d(T.v[o.rar]))}</div>${cur ? `<div class="cr">교체: ${esc(TRAIT[cur.id].name)}</div>` : ''}${extra}</button>`;
 }
 function openTraitChoice(lin, minRar, done) {
   const offers = traitOffers(lin, minRar); const L = LINEAGE[lin];
@@ -213,9 +213,16 @@ function openHelp(back) {
 }
 function confirmStart() {
   const ch = SAVE.charm ? CHARMS.find(c => c.id === SAVE.charm).name : '없음';
-  const p = openPanel(`<h2 style="color:#3cffae">출정</h2><p class="sub">연구소 지하로 내려갑니다. 기념품: <b>${ch}</b> · 최대 체력 <b>${G.player.maxhp}</b></p><div class="list">
-    <button class="opt row" data-i="go">${img('key')}<span>내려가기</span><b></b></button><button class="opt row" data-i="no">${img('rest')}<span>조금 더 준비하기</span><b></b></button></div>`, '', closePanel);
-  bindOpts(p, i => { closePanel(); if (i === 'go') { AUDIO.play('portal'); startRun(); } });
+  const cur = SAVE.weapon || 'scythe';
+  const cards = Object.entries(WEAPON).map(([id, W]) => `<button class="opt card wcard${id === cur ? ' on' : ''}" data-i="w:${id}" style="--c:${W.col}"><div class="ch"><img class="wimg" src="${weaponThumb(id)}" alt=""><div><div class="cn">${W.name}</div>
+    <div class="cs">${W.attack} · ${W.special}</div></div></div><div class="cd">${W.desc}</div>${id === cur ? '<div class="cr" style="color:var(--c)">선택됨</div>' : ''}</button>`).join('');
+  const p = openPanel(`<h2 style="color:#3cffae">출정</h2><p class="sub">무기를 고르고 연구소 지하로 내려갑니다. 기념품: <b>${ch}</b> · 최대 체력 <b>${G.player.maxhp}</b></p>
+    <div class="cards">${cards}</div><div class="list" style="margin-top:.8em">
+    <button class="opt row" data-i="go">${img('key')}<span>${WEAPON[cur].name} 들고 내려가기</span><b></b></button><button class="opt row" data-i="no">${img('rest')}<span>조금 더 준비하기</span><b></b></button></div>`, 'wide', closePanel);
+  bindOpts(p, i => {
+    if (i.startsWith('w:')) { const w = i.slice(2); if (w !== SAVE.weapon) { SAVE.weapon = w; writeSave(); weaponSetup(); AUDIO.play('confirm'); } closePanel(); confirmStart(); return; }
+    closePanel(); if (i === 'go') { AUDIO.play('portal'); startRun(); }
+  });
 }
 function showResults(win) {
   const run = G.run; const sec = Math.round((performance.now() - run.t0) / 1000);

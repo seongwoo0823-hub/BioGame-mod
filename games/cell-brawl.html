@@ -259,6 +259,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
     </div>
     <div class="go-col">
       <button class="mode-card" id="modeBtn"><div class="mode-ico" id="modeIco">💎</div><div><div class="mode-name stroke" id="modeName"></div><div class="mode-sub" id="modeSub"></div></div><span class="mode-swap">변경</span></button>
+      <button class="mode-card" id="aiBtn" type="button" style="min-width:0;padding:6px 12px"><div class="mode-ico">🤖</div><div><div class="mode-name stroke" id="aiName">AI 난이도</div><div class="mode-sub" id="aiSub"></div></div><span class="mode-swap">변경</span></button>
       <div style="display:flex;gap:8px">
         <button class="play-btn" id="playBtn" style="flex:1">플레이</button>
         <button class="play-btn" id="onlineOpenBtn" type="button" style="background:linear-gradient(#5fb8ff,#2f8cff 55%,#1b64c2);color:#fff;font-size:clamp(18px,2.4vw,24px);padding:8px 14px">🌐 온라인</button>
@@ -286,7 +287,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
   <div id="banner" class="banner stroke"></div>
   <div id="hint" class="hint"></div>
   <div id="deadNote" class="dead-note stroke hidden"></div>
-  <div id="btnGadget" class="abtn gadget" role="button" aria-label="가젯"><span id="gadgetIco">✚</span><i id="gadgetCount">2</i><em>Q</em></div>
+  <div id="btnGadget" class="abtn gadget" role="button" aria-label="가젯"><span id="gadgetIco">✚</span><i id="gadgetCount">✓</i><em>Q</em></div>
   <div id="btnSuper" class="abtn super" role="button" aria-label="궁극기"><span id="superIco">★</span><em>E / 우클릭</em></div>
   <div id="btnAttack" class="abtn attack" role="button" aria-label="공격"><span>◎</span><em>클릭</em></div>
 </div>
@@ -368,7 +369,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
     <li><b>이동</b> — PC: W A S D / 방향키 · 모바일: 화면 왼쪽을 누르고 끌기</li>
     <li><b>일반 공격</b> — PC: 마우스로 조준 후 클릭(누르고 있으면 연사) · 모바일: 빨간 버튼을 탭하면 자동 조준, 끌면 직접 조준</li>
     <li><b>궁극기</b> — 적을 맞혀 노란 게이지를 채운 뒤 PC: E 또는 우클릭 · 모바일: 노란 버튼</li>
-    <li><b>가젯</b> — 경기당 2번. PC: Q · 모바일: 초록 버튼</li>
+    <li><b>가젯</b> — 횟수 제한 없이 14초마다 다시 쓸 수 있어요. PC: Q · 모바일: 초록 버튼</li>
     <li>탄약은 3칸이고 시간이 지나면 다시 채워져요. 3초 동안 싸우지 않으면 체력이 회복돼요.</li>
   </ul>
   <h4>모드</h4>
@@ -414,7 +415,7 @@ const netGuest = () => typeof NET !== 'undefined' && NET.active && NET.role === 
 /* ================= characters (Balanced & Distinct Kits) ================= */
 const KITS = {
   /* ---------- 면역 세포 ---------- */
-  macro:{ side:'immune', name:'대식세포', nick:'마크로', icon:'🫧', kind:'선천성 면역 · 식세포', role:'탱커', color:0xb57bff, hp:5800, speed:5.55, sfx:'goo',
+  macro:{ side:'immune', name:'대식세포', nick:'마크로', icon:'🫧', kind:'선천성 면역 · 식세포', role:'탱커', color:0xb57bff, hp:5600, speed:5.55, sfx:'goo',
     trait:'단단한 최전방 포식자. 위족 세포질 탄환으로 적을 밀어내고, 식세포 돌진으로 적을 삼켜 대량 회복해요.',
     attack:{ type:'spread', name:'위족 세포질 탄막', desc:'부채꼴로 끈적한 세포질 5덩이를 흩뿌려 맞은 적을 밀어내요.', count:5, spreadDeg:33, range:7.4, dmg:350, speed:19.5, reload:1.4, cd:0.42, proj:'goo', projColor:0xc792ff, knock:1.8, width:0.48, trail:true },
     superCost:3000, super:{ type:'dash', name:'식세포 포식 돌진', desc:'거대한 위족을 벌려 돌진하고 주변 적을 삼켜 큰 피해와 함께 체력을 대량 회복해요.', range:9.2, dmg:1450, heal:900, radius:2.8, icon:'🍽️' },
@@ -422,7 +423,7 @@ const KITS = {
     fact:'혈액 속 단핵구가 조직으로 들어가 분화한 세포예요. 병원체를 위족으로 감싸 삼키는 식세포 작용을 하고, 리소좀의 분해 효소로 소화해요. 삼킨 병원체의 조각(항원)을 MHC II에 실어 보조 T세포에게 보여 주는 항원 제시 세포이기도 해요.' },
   neutro:{ side:'immune', name:'호중구', nick:'뉴트로', icon:'⚡', kind:'선천성 면역 · 식세포', role:'돌격', color:0xffb3c7, hp:4300, speed:6.15, sfx:'pew',
     trait:'가장 빠른 선발대. 날쌘 살균 과립 3연사로 몰아치고 DNA 그물(NETs)로 적을 꽁꽁 묶어요.',
-    attack:{ type:'burst', name:'살균 과립 3연사', desc:'빠르고 예리한 과립 탄환 3발을 연속 발사해요.', count:3, interval:0.075, range:9.6, dmg:380, speed:29, reload:1.1, cd:0.4, proj:'granule', projColor:0xff5c94, width:0.42, trail:true },
+    attack:{ type:'burst', name:'살균 과립 3연사', desc:'빠르고 예리한 과립 탄환 3발을 연속 발사해요.', count:3, interval:0.075, range:9.6, dmg:340, speed:29, reload:1.1, cd:0.4, proj:'granule', projColor:0xff5c94, width:0.42, trail:true },
     superCost:2750, super:{ type:'net', name:'NETs DNA 포획망', desc:'DNA 그물을 던져 맞은 적을 1.35초 속박하고 3초 동안 느리게 만들어요.', range:11, radius:3.5, dmg:900, slow:3, root:1.35, flight:0.68, icon:'🕸️' },
     gadget:{ type:'speed', name:'과립 방출 질주', desc:'3.2초 동안 이동 속도가 폭발적으로 빨라져요.', dur:3.2, icon:'💨' },
     fact:'백혈구 중 가장 많은 세포(약 50~70%)로, 감염 부위에 가장 먼저 도착하는 선발대예요. 핵이 2~5개의 엽으로 나뉜 다형핵 백혈구이고, DNA와 항균 단백질로 된 그물(NETs)을 뿜어 세균을 가두기도 해요. 수명이 짧아서 죽은 호중구는 고름의 주성분이 돼요.' },
@@ -434,13 +435,13 @@ const KITS = {
     fact:'골수에서 만들어지고 성숙해요. 항원을 만나면 보조 T세포의 도움을 받아 형질세포로 분화해 Y자 모양의 항체를 대량으로 분비해요(체액성 면역). 항체가 병원체에 붙으면 식세포가 잡아먹기 쉬워지는데, 이를 옵소닌화라고 해요.' },
   tcell:{ side:'immune', name:'세포독성 T세포', nick:'킬러T', icon:'💥', kind:'적응 면역 · 세포성', role:'투척', color:0x6fe08a, hp:3800, speed:5.15, sfx:'throw',
     trait:'벽 너머로 퍼포린 캡슐을 곡사 투척하는 폭격수. 숨어 있는 적도 그랜자임 궤도 폭격으로 초토화해요.',
-    attack:{ type:'lob', name:'퍼포린 천공 폭탄', desc:'벽을 넘어 날아가 착탄 지점 주변에 충격파 피해를 줘요.', range:11, radius:2.6, dmg:1120, flight:0.6, reload:1.55, cd:0.45, proj:'perforin', projColor:0x2ee6c8 },
+    attack:{ type:'lob', name:'퍼포린 천공 폭탄', desc:'벽을 넘어 날아가 착탄 지점 주변에 충격파 피해를 줘요.', range:11, radius:2.6, dmg:1240, flight:0.6, reload:1.55, cd:0.45, proj:'perforin', projColor:0x2ee6c8 },
     superCost:3150, super:{ type:'bigLob', name:'그랜자임 세포자멸 폭격', desc:'넓은 범위에 초대형 그랜자임 핵폭탄을 떨어뜨려 막대한 피해를 줘요.', range:12, radius:4.4, dmg:1950, flight:0.88, icon:'☄️' },
     gadget:{ type:'shield', name:'세포막 강화', desc:'3.5초 동안 받는 피해가 50% 줄어들어요.', dur:3.5, icon:'🛡️' },
     fact:'가슴샘(흉선)에서 성숙하는 T 림프구로, 표면에 CD8 단백질이 있어요. MHC I에 제시된 항원을 알아보고 바이러스에 감염된 세포나 암세포를 직접 공격해요(세포성 면역). 퍼포린으로 세포막에 구멍을 낸 뒤 그랜자임을 들여보내 세포자멸사를 일으켜요.' },
-  nk:{ side:'immune', name:'NK 세포', nick:'엔케이', icon:'🥷', kind:'선천성 면역 · 자연살해', role:'암살자', color:0x37c7b5, hp:4500, speed:6.4, sfx:'slash',
+  nk:{ side:'immune', name:'NK 세포', nick:'엔케이', icon:'🥷', kind:'선천성 면역 · 자연살해', role:'암살자', color:0x37c7b5, hp:4300, speed:6.4, sfx:'slash',
     trait:'그림자 속 자연살해자. 은신 습격으로 단숨에 파고들어 쌍단검 참격으로 암살해요.',
-    attack:{ type:'melee', name:'퍼포린 쌍단검 참격', desc:'눈앞의 넓은 부채꼴을 즉시 베어내요. 재장전이 매우 빨라요.', range:3.85, arcDeg:125, dmg:1020, reload:0.82, cd:0.28, projColor:0x5ef2e0 },
+    attack:{ type:'melee', name:'퍼포린 쌍단검 참격', desc:'눈앞의 넓은 부채꼴을 즉시 베어내요. 재장전이 매우 빨라요.', range:3.85, arcDeg:125, dmg:930, reload:0.82, cd:0.28, projColor:0x5ef2e0 },
     superCost:2800, super:{ type:'stealth', name:'은밀한 자연살해 습격', desc:'4초간 투명해지고 이동 속도가 크게 증가해요. 은신 중 첫 공격은 1.65배 치명타 피해!', dur:4, bonus:1.65, icon:'🌫️' },
     gadget:{ type:'blink', name:'순간 도약', desc:'바라보는 방향으로 순식간에 5.5칸 잔상 도약해요.', dist:5.5, icon:'✨' },
     fact:'항원을 미리 배우지 않아도 바로 공격하는 선천성 면역의 림프구예요. 정상 세포가 가진 MHC I이 줄어든 감염 세포나 암세포를 알아보고, T세포처럼 퍼포린과 그랜자임으로 세포자멸사를 일으켜요. 그래서 "자연살해" 세포라고 불러요.' },
@@ -452,7 +453,7 @@ const KITS = {
     fact:'표면에 CD4 단백질이 있는 T 림프구예요. 대식세포가 제시한 항원을 알아보면 인터류킨 같은 사이토카인을 분비해 B 림프구의 항체 생산과 세포독성 T세포의 활동을 돕는 면역 반응의 지휘관이에요.' },
   mast:{ side:'immune', name:'비만세포', nick:'마스트', icon:'🎈', kind:'선천성 면역 · 염증 유발', role:'컨트롤', color:0xff8cc6, hp:4200, speed:5.15, sfx:'drip',
     trait:'염증의 방아쇠. 히스타민 용액으로 지역을 장악하고, 아나필락시스 대폭발로 적들을 날려 버려요.',
-    attack:{ type:'lob', name:'히스타민 산성 웅덩이', desc:'착탄 즉시 피해를 주고 2.8초 동안 끓어오르는 히스타민 장판을 생성해요.', range:10.2, radius:2.3, dmg:640, flight:0.6, reload:1.55, cd:0.45, proj:'drop', projColor:0xff4fa3, pool:{ dur:2.8, dps:600, r:2.6 } },
+    attack:{ type:'lob', name:'히스타민 산성 웅덩이', desc:'착탄 즉시 피해를 주고 2.8초 동안 끓어오르는 히스타민 장판을 생성해요.', range:10.2, radius:2.3, dmg:640, flight:0.6, reload:1.55, cd:0.45, proj:'drop', projColor:0xff4fa3, pool:{ dur:2.8, dps:650, r:2.6 } },
     superCost:2900, super:{ type:'wave', name:'히스타민 대폭발', desc:'주변에 거대한 충격파 돔을 터뜨려 큰 피해를 주고 적들을 멀리 날려 버려요.', radius:5.5, range:5.5, dmg:1420, knock:9.5, icon:'💢' },
     gadget:{ type:'speed', name:'혈관 확장 가속', desc:'3.2초 동안 이동 속도가 빨라져요.', dur:3.2, icon:'💨' },
     fact:'피부와 점막 근처 조직에 사는 세포로, 알갱이(과립) 속에 히스타민을 잔뜩 저장해요. 히스타민이 나오면 모세혈관이 넓어지고 투과성이 커져 붓고 빨개지는 염증 반응이 일어나요. 알레르기 반응의 주인공이기도 해요.' },
@@ -464,7 +465,7 @@ const KITS = {
     superCost:2900, super:{ type:'summon', name:'RNA 자기 복제 군단', desc:'적에게 돌진해 자폭하는 복제 바이러스 3마리를 즉시 증식시켜요.', count:3, hp:1050, dmg:860, life:12, icon:'🧬' },
     gadget:{ type:'speed', name:'항원 변이 질주', desc:'2.8초 동안 이동 속도가 빨라져요.', dur:2.8, icon:'🔀' },
     fact:'세포 구조가 없고 단백질 껍질 속에 RNA를 가진 바이러스예요. 스스로 물질대사를 못 해서 숙주 세포 안에서만 증식해요. 표면의 헤마글루티닌(H)과 뉴라미니데이스(N) 단백질 종류에 따라 H1N1처럼 이름을 붙이고, 변이가 잦아 해마다 백신을 새로 만들어요.' },
-  bacteria:{ side:'pathogen', name:'병원성 대장균', nick:'콜라이', icon:'🧫', kind:'세균 (원핵생물)', role:'돌격', color:0xffa630, hp:5200, speed:5.7, sfx:'hiss',
+  bacteria:{ side:'pathogen', name:'병원성 대장균', nick:'콜라이', icon:'🧫', kind:'세균 (원핵생물)', role:'돌격', color:0xffa630, hp:5000, speed:5.7, sfx:'hiss',
     trait:'맹독 화염방사 돌격병. 관통하는 독소 불길을 뿜어 여러 적을 녹이고 편모 회전으로 돌진해요.',
     attack:{ type:'flame', name:'장독소 화염 분사', desc:'전방에 관통하는 고열 독소 입자를 연속 분사해 여러 적을 동시에 태워요.', count:9, interval:0.038, spreadDeg:28, range:6.8, dmg:165, speed:14.5, reload:1.15, cd:0.4, proj:'flame', projColor:0xffa630, width:0.6 },
     superCost:2800, super:{ type:'dash', name:'편모 회전 돌진', desc:'편모 모터를 풀가동해 돌진하며 부딪힌 적들에게 큰 피해를 주고 체력을 회복해요.', range:9.2, dmg:1380, heal:1100, radius:2.6, icon:'🌀' },
@@ -472,19 +473,19 @@ const KITS = {
     fact:'핵막이 없는 원핵생물이에요. 펩티도글리칸 세포벽을 가지고 편모로 헤엄치며, 조건이 좋으면 약 20분마다 이분법으로 분열해요. 일부 병원성 대장균은 독소를 만들어 식중독을 일으켜요. 항생제로 치료하지만 함부로 쓰면 내성 세균이 생겨요.' },
   fungus:{ side:'pathogen', name:'칸디다 진균', nick:'칸디', icon:'🍄', kind:'균류 (진핵생물)', role:'투척', color:0xc8d94a, hp:4100, speed:5.15, sfx:'puff',
     trait:'출아법으로 분열하는 연쇄 포자 폭탄. 착탄 후 4개의 자포자로 갈라지며 넓은 지역을 초토화해요.',
-    attack:{ type:'lob', name:'출아 연쇄 포자탄', desc:'착탄 지점에 폭발한 뒤 4개의 출아 포자로 갈라져 2차 연쇄 폭발을 일으켜요.', range:10.5, radius:2.1, dmg:760, flight:0.62, reload:1.45, cd:0.45, proj:'spore', projColor:0xd8f05a, split:{ n:4, r:1.95, dmg:400, radius:1.5 } },
+    attack:{ type:'lob', name:'출아 연쇄 포자탄', desc:'착탄 지점에 폭발한 뒤 4개의 출아 포자로 갈라져 2차 연쇄 폭발을 일으켜요.', range:10.5, radius:2.1, dmg:800, flight:0.62, reload:1.45, cd:0.45, proj:'spore', projColor:0xd8f05a, split:{ n:4, r:1.95, dmg:400, radius:1.5 } },
     superCost:3050, super:{ type:'cloud', name:'맹독 포자 구름', desc:'착탄 즉시 충격 피해를 주고 5초간 적을 둔화시키며 지속 피해를 주는 포자 구름을 생성해요.', range:11, radius:3.8, dmg:380, dps:560, dur:5, flight:0.75, icon:'☁️' },
     gadget:{ type:'shield', name:'키틴 세포벽 갑옷', desc:'3.2초 동안 받는 피해가 50% 줄어요.', dur:3.2, icon:'🛡️' },
     fact:'핵이 있는 진핵생물인 균류(효모)예요. 세포벽이 키틴으로 되어 있고, 몸에서 작은 싹이 돋아 떨어지는 출아법으로 늘어나요. 평소엔 몸에 조금 살지만 면역력이 떨어지면 칸디다증을 일으켜요. 항진균제로 치료해요.' },
   plasmo:{ side:'pathogen', name:'말라리아 원충', nick:'플라스모', icon:'🦟', kind:'원생생물 (진핵생물)', role:'저격', color:0xd14bd1, hp:3250, speed:5.2, sfx:'needle',
     trait:'초장거리 포자소체 바늘 저격수. 단 한 발의 위력이 가장 강력하며 적혈구 파열로 광역 폭격해요.',
-    attack:{ type:'single', name:'포자소체 관통 바늘', desc:'가장 사거리가 길고 탄속이 빠른 초고위력 저격 바늘을 발사해요.', range:16, dmg:1360, speed:37, reload:1.72, cd:0.48, proj:'needle', projColor:0xff8bff, width:0.45, trail:true },
+    attack:{ type:'single', name:'포자소체 관통 바늘', desc:'가장 사거리가 길고 탄속이 빠른 초고위력 저격 바늘을 발사해요.', range:16, dmg:1280, speed:37, reload:1.72, cd:0.48, proj:'needle', projColor:0xff8bff, width:0.45, trail:true },
     superCost:3200, super:{ type:'bigLob', name:'적혈구 연쇄 파열', desc:'넓은 범위의 적혈구를 한꺼번에 폭발시켜 치명적인 광역 피해를 입혀요.', range:12, radius:4.2, dmg:1850, flight:0.9, icon:'🩸' },
     gadget:{ type:'reveal', name:'학질모기 정찰', desc:'4.5초 동안 숨은 적을 모두 드러내요.', dur:4.5, icon:'🦟' },
     fact:'얼룩날개모기(학질모기)가 옮기는 원생생물이에요. 사람 몸에 들어오면 간세포에서 늘어난 뒤 적혈구에 침입해 증식하고, 적혈구를 터뜨려요. 그래서 높은 열이 주기적으로 반복되는 말라리아에 걸려요.' },
   hiv:{ side:'pathogen', name:'HIV', nick:'아이브', icon:'🔮', kind:'바이러스 (레트로바이러스)', role:'흡혈', color:0x8f7fd6, hp:3950, speed:5.4, sfx:'wobble',
     trait:'생명력을 빨아들이는 추적 암살자. 유도 비리온으로 체력을 흡수하고 면역 결핍 저주로 적을 무력화해요.',
-    attack:{ type:'homing', name:'역전사 유도 비리온', desc:'적을 자동 추적하는 암흑 구슬을 쏴 입힌 피해의 60%만큼 자신의 체력을 흡수해요.', range:11.2, dmg:740, speed:14.5, reload:1.2, cd:0.4, proj:'hivorb', projColor:0xa48cff, width:0.48, lifesteal:0.6, turn:4.8, trail:true },
+    attack:{ type:'homing', name:'역전사 유도 비리온', desc:'적을 자동 추적하는 암흑 구슬을 쏴 입힌 피해의 60%만큼 자신의 체력을 흡수해요.', range:11.2, dmg:770, speed:14.5, reload:1.2, cd:0.4, proj:'hivorb', projColor:0xa48cff, width:0.48, lifesteal:0.45, turn:4.8, trail:true },
     superCost:2750, super:{ type:'curse', name:'후천성 면역 결핍', desc:'범위 내 적에게 큰 피해를 주고 5초간 약화(공격력 -40%, 모든 치유 차단) 저주를 걸어요.', range:11, radius:4.1, dmg:860, weak:5, flight:0.75, icon:'💜' },
     gadget:{ type:'stealth', name:'은밀한 잠복기', desc:'2.8초 동안 투명해져 적의 시야에서 사라져요.', dur:2.8, icon:'🌑' },
     fact:'유전 물질인 RNA를 DNA로 바꾸는 역전사 효소를 가진 레트로바이러스예요. 면역의 지휘관인 보조 T세포(CD4)를 감염시켜 파괴하기 때문에, 시간이 지나면 면역력이 무너지는 후천성 면역 결핍증(AIDS)을 일으켜요.' },
@@ -496,7 +497,7 @@ const KITS = {
     fact:'세포벽에 미콜산이라는 두꺼운 밀랍층이 있어 소독약과 면역 공격을 잘 버티는 세균이에요. 기침으로 퍼지며 주로 폐를 감염시켜요. 몸은 대식세포를 모아 결핵균을 둘러싸는 육아종이라는 덩어리를 만들어 가두려고 해요. 오랫동안 항생제를 먹어야 치료돼요.' },
   staph:{ side:'pathogen', name:'황색포도상구균', nick:'스태프', icon:'🍇', kind:'세균 (원핵생물)', role:'난사', color:0xf2c230, hp:3750, speed:5.5, sfx:'boing',
     trait:'황금 포도송이 도탄 스페셜리스트. 벽에 튕길 때마다 강화되는 포도알로 엄폐물 뒤의 적을 타격해요.',
-    attack:{ type:'bounce', name:'황금 도탄 포도알', desc:'포도알 2개를 발사해요. 벽에 튕길 때마다 탄속과 피해량이 15%씩 증가해요(최대 2회 도탄).', count:2, spreadDeg:11, range:13.5, dmg:610, speed:21, reload:1.12, cd:0.42, proj:'grape', projColor:0xffd23f, width:0.45, bounces:2, trail:true },
+    attack:{ type:'bounce', name:'황금 도탄 포도알', desc:'포도알 2개를 발사해요. 벽에 튕길 때마다 탄속과 피해량이 15%씩 증가해요(최대 2회 도탄).', count:2, spreadDeg:11, range:13.5, dmg:560, speed:21, reload:1.12, cd:0.42, proj:'grape', projColor:0xffd23f, width:0.45, bounces:2, trail:true },
     superCost:2950, super:{ type:'cluster', name:'포도송이 집속 폭탄', desc:'착탄 지점에 폭발한 뒤 사방으로 황금 포도알 7개가 튀어나가 연쇄 폭발해요.', range:11, radius:1.9, dmg:650, n:7, spread:3.2, flight:0.82, icon:'🍇' },
     gadget:{ type:'speed', name:'응집 질주', desc:'3.2초 동안 이동 속도가 빨라져요.', dur:3.2, icon:'💨' },
     fact:'공 모양의 세균(구균)이 포도송이처럼 뭉쳐 있어서 붙은 이름이에요. 피부와 코에 흔히 살고, 상처에 들어가면 고름이 생기는 감염이나 식중독을 일으켜요. 항생제가 잘 듣지 않는 내성균(MRSA)이 문제가 되고 있어요.' }
@@ -1083,6 +1084,17 @@ const BLOCK_SHOT = new Set(['#','X','W','OUT']);
 let G = null, world = null, state = 'lobby', paused = false;
 let selKit = store.get('kit','macro'); if (!KITS[selKit]) selKit = 'macro';
 let rosterSide = KITS[selKit].side;
+/* 공격 속도 조절: 연사 간격·재장전을 조금 느리게 */
+for (const k in KITS){ const a = KITS[k].attack; a.cd = +(a.cd*1.3).toFixed(3); a.reload = +(a.reload*1.2).toFixed(3); if (a.interval) a.interval = +(a.interval*1.15).toFixed(3); }
+/* AI 난이도: 조준 오차, 반응, 예측 사격, 피해 배율 */
+const AI_LEVELS = {
+  easy:  { name:'쉬움', err:0.34, delay:0.5, lead:0.3, dmg:0.78, think:1.8, gadget:0.5 },
+  normal:{ name:'보통', err:0.17, delay:0.18, lead:0.65, dmg:0.92, think:1.2, gadget:1 },
+  hard:  { name:'어려움', err:0.07, delay:0, lead:0.95, dmg:1.06, think:0.8, gadget:1.6 },
+};
+let aiLevel = store.get('aiLevel','normal'); if (!AI_LEVELS[aiLevel]) aiLevel = 'normal';
+const AIL = () => AI_LEVELS[aiLevel];
+const GADGET_RECHARGE = 14;   // 가젯(회복 등)은 횟수 제한 없이 이 시간마다 다시 사용 가능
 let mode = store.get('mode','gem'); if (!MODES[mode]) mode = 'gem';
 const labelsEl = $('#labels');
 const V = new THREE.Vector3();
@@ -1226,7 +1238,7 @@ class Unit{
     this.pos = new THREE.Vector3(x,0,z); this.spawn = [x,z]; this.prev = [x,z]; this.vel = { x:0, z:0 }; this.kb = { x:0, z:0 };
     this.radius = 0.75; this.moveDir = { x:0, z:0 };
     this.facing = (G.mode==='gem' && team===0) ? Math.PI : 0; if (G.mode==='sd') this.facing = Math.atan2(-x,-z); this.visFacing = this.facing;
-    this.ammo = 3; this.reloadT = 0; this.cdT = 0; this.superCharge = 0; this.gadgets = 2; this.gadgetCd = 0;
+    this.ammo = 3; this.reloadT = 0; this.cdT = 0; this.superCharge = 0; this.gadgets = 1; this.gadgetCd = 0;
     this.lastHurt = -99; this.lastAttack = -99; this.alive = true; this.respawnT = 0;
     this.gems = 0; this.cubes = 0; this.dashT = 0; this.dashDir = {x:0,z:0};
     this.slowT = 0; this.speedT = 0; this.shieldT = 0; this.markT = 0; this.weakT = 0; this.rootT = 0; this.stealthT = 0; this.stealthBonus = 0;
@@ -1252,7 +1264,7 @@ class Unit{
     this.elAmmo = isPlayer ? [...el.querySelectorAll('.ammo i')] : null;
     this._hpShown = -1; this._badge = ''; this._fx = '';
   }
-  dmgMul(){ return (1 + 0.1*this.cubes) * (this.weakT>0 ? 0.6 : 1); }
+  dmgMul(){ return (1 + 0.1*this.cubes) * (this.weakT>0 ? 0.6 : 1) * (this.isBot ? AIL().dmg : 1); }
 }
 const dist = (a,b) => Math.hypot(a.pos.x-b.pos.x, a.pos.z-b.pos.z);
 const friendTeam = (a,b) => a===b;
@@ -1409,7 +1421,7 @@ function useSuper(u, dir, aimDist){
 }
 function useGadget(u){
   if (!u.alive || u.gadgets<=0 || u.gadgetCd>0) return false;
-  const g = u.kit.gadget; u.gadgets--; u.gadgetCd = 5;
+  const g = u.kit.gadget; u.gadgets = 0; u.gadgetCd = GADGET_RECHARGE;
   sfxAt(GADGET_SFX[g.type], u.pos.x, u.pos.z);
   switch(g.type){
     case 'heal': for (const o of G.units) if (o.alive && o.team===u.team && dist(o,u)<=g.radius) heal(o, g.amount); ringFx(u.pos.x,u.pos.z,g.radius,0x5dff9a,0.6); break;
@@ -1966,7 +1978,7 @@ function updateGame(dt){
       for (const u of G.units){
         if (!u.alive || u.isPlayer || u.isIdleSlot) continue;
         if (u.isNetHuman && typeof NET !== 'undefined' && NET.active) NET.applyRemoteUnit(u, dt);
-        else botThink(u, dt);
+        else { u.isBot = !(typeof NET !== 'undefined' && NET.active); botThink(u, dt); }
       }
       for (const u of G.units) if (!u.isIdleSlot) updateUnit(u, dt);
       separate();
@@ -2009,6 +2021,7 @@ function playerInput(dt){
 function updateUnit(u, dt){
   if (!u.alive){ if (G.mode==='gem'){ u.respawnT -= dt; if (u.respawnT<=0) respawn(u); } return; }
   for (const k of ['cdT','slowT','speedT','shieldT','gadgetCd','flashT','markT','weakT','rootT','stealthT']) u[k] -= dt;
+  if (u.gadgets<=0 && u.gadgetCd<=0 && !netGuest()) u.gadgets = 1;
   const a = u.kit.attack;
   if (u.ammo<3){ u.reloadT += dt/a.reload; if (u.reloadT>=1){ u.ammo++; u.reloadT = 0; } } else u.reloadT = 0;
   if (G.time-u.lastHurt>3 && G.time-u.lastAttack>3 && u.hp<u.maxHp && u.weakT<=0) u.hp = Math.min(u.maxHp, u.hp + u.maxHp*0.13*dt);
@@ -2374,7 +2387,7 @@ function botThink(u, dt){
   u.thinkT -= dt; u.aiFireT -= dt; u.strafeT -= dt;
   if (u.strafeT<=0){ u.strafe *= -1; u.strafeT = rand(0.6,1.7); }
   if (u.thinkT<=0){
-    u.thinkT = rand(0.12,0.22);
+    u.thinkT = rand(0.12,0.22)*AIL().think;
     let best = null, bd = 1e9; const aggro = a.range+6;
     for (const e of G.units){ if (!e.alive || e.team===u.team || !isVisibleTo(e,u.team)) continue; const d = dist(u,e); if (d<aggro && d<bd){ bd = d; best = e; } }
     u.target = best; u.boxGoal = null; u.goal = computeGoal(u);
@@ -2400,15 +2413,16 @@ function botThink(u, dt){
     const inRange = a.type==='melee' ? d <= a.range+0.4 : d <= a.range*0.97;
     if (canShoot && inRange && u.ammo>=1 && u.cdT<=0 && u.aiFireT<=0){
       const lead = a.speed ? d/a.speed : (a.flight||0);
-      const tx = t.pos.x + t.vel.x*lead*0.75, tz = t.pos.z + t.vel.z*lead*0.75;
+      const tx = t.pos.x + t.vel.x*lead*AIL().lead, tz = t.pos.z + t.vel.z*lead*AIL().lead;
       const td = Math.hypot(tx-u.pos.x, tz-u.pos.z)||1;
-      const ang = Math.atan2(tx-u.pos.x, tz-u.pos.z) + rand(-0.14,0.14);
-      if (fire(u, { x:Math.sin(ang), z:Math.cos(ang) }, td + rand(-0.8,0.8))) u.aiFireT = (a.type==='melee'?rand(0.1,0.3):rand(0.2,0.6)) + (u.ammo<1 ? 0.4 : 0);
+      const ang = Math.atan2(tx-u.pos.x, tz-u.pos.z) + rand(-AIL().err,AIL().err);
+      if (fire(u, { x:Math.sin(ang), z:Math.cos(ang) }, td + rand(-0.8,0.8))) u.aiFireT = (a.type==='melee'?rand(0.15,0.35):rand(0.25,0.65)) + AIL().delay + (u.ammo<1 ? 0.4 : 0);
     }
     if (u.superCharge>=1 && superOk(u, u.kit.super, d, hasLos)) useSuper(u, { x:dx/d, z:dz/d }, d);
     if (u.gadgets>0 && u.gadgetCd<=0){
       const gt = u.kit.gadget.type;
-      if ((gt==='heal'||gt==='shield') && u.hp<u.maxHp*0.5 && Math.random()<0.03) useGadget(u);
+      const gk = AIL().gadget;
+      if ((gt==='heal'||gt==='shield') && u.hp<u.maxHp*0.5 && Math.random()<0.03*gk) useGadget(u);
       else if (gt==='speed' && (lowHp || d>a.range) && Math.random()<0.02) useGadget(u);
       else if (gt==='reveal' && Math.random()<0.004) useGadget(u);
       else if (gt==='blink' && d>3.5 && d<8 && Math.random()<0.03){ u.facing = Math.atan2(dx,dz); useGadget(u); }
@@ -2450,7 +2464,7 @@ function updateHud(){
     $('#sAlive').textContent = G.units.filter(u=>u.alive).length; $('#sCubes').textContent = p.cubes;
   }
   const sb = $('#btnSuper'); sb.style.setProperty('--p', p.superCharge.toFixed(3)); sb.classList.toggle('ready', p.superCharge>=1);
-  $('#gadgetCount').textContent = p.gadgets; $('#btnGadget').classList.toggle('off', p.gadgets<=0 || p.gadgetCd>0);
+  $('#gadgetCount').textContent = p.gadgets>0 && p.gadgetCd<=0 ? '✓' : Math.max(1, Math.ceil(p.gadgetCd)); $('#btnGadget').classList.toggle('off', p.gadgets<=0 || p.gadgetCd>0);
   const st = statusIcons(p);
   if (st!==lastStatus){ lastStatus = st; $('#meStatus').innerHTML = st; }
   const dn = $('#deadNote');
@@ -2548,6 +2562,9 @@ document.querySelectorAll('.side-tabs button').forEach(b => b.addEventListener('
   rosterSide = b.dataset.side; const list = rosterSide==='immune' ? IMMUNE : PATHO;
   selKit = list[0]; store.set('kit',selKit); SND.play('tab'); renderLobby();
 }));
+function renderAi(){ const L = AIL(); $('#aiName').textContent = 'AI 난이도 · '+L.name; $('#aiSub').textContent = aiLevel==='easy' ? '느리게 반응하고 자주 빗나가요' : aiLevel==='hard' ? '정확하게 예측 사격하고 빠르게 반응해요' : '적당히 조준하고 반응해요'; }
+$('#aiBtn').addEventListener('click', () => { aiLevel = aiLevel==='easy' ? 'normal' : aiLevel==='normal' ? 'hard' : 'easy'; store.set('aiLevel', aiLevel); SND.play('ui'); renderAi(); });
+renderAi();
 $('#modeBtn').addEventListener('click', () => { if (typeof NET !== 'undefined' && NET.active && NET.role === 'guest'){ $('#onlineModal').classList.remove('hidden'); return; } mode = mode==='gem' ? 'sd' : 'gem'; store.set('mode',mode); SND.play('ui'); renderLobby(); });
 $('#playBtn').addEventListener('click', startMatch);
 $('#btnDex').addEventListener('click', () => {

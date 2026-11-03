@@ -65,6 +65,7 @@ function canAct(P) { return !['death', 'spawn'].includes(P.act) && !G.paused; }
 
 function updPlayer(P, dt) {
   const R = G.room;
+  updHeroStatus(P, dt);
   P.at += dt; P.inv = Math.max(0, P.inv - dt); P.flash = Math.max(0, P.flash - dt * 4); P.hurtT -= dt;
   P.dashCd -= dt; if (P.dashCd <= 0 && P.dashN < P.dashMax) { P.dashN++; P.dashCd = P.dashN < P.dashMax ? 0.5 : 0; }
   P.leapCd = Math.max(0, P.leapCd - dt); P.shieldCd = Math.max(0, P.shieldCd - dt); P.healCd = Math.max(0, P.healCd - dt);
@@ -82,14 +83,15 @@ function updPlayer(P, dt) {
   if (P.buf && canAct(P)) {
     const b = P.buf;
     // 돌진은 거의 언제나 동작을 끊고 나갈 수 있음
-    const dashOK = b === 'dash' && P.dashN > 0 && (!busy || P.act.startsWith('atk') || P.act === 'spin' || P.act === 'cast' || P.act === 'hit' || (P.act === 'dash' && P.at > P.alen * 0.55));
+    const dashOK = b === 'dash' && P.dashN > 0 && (!busy || P.act.startsWith('atk') || ['spin', 'cast', 'hit', 'gfire', 'gblast', 'cmd'].includes(P.act) || (P.act === 'dash' && P.at > P.alen * 0.55));
     if (dashOK) { startDash(P, mx, mz); P.buf = null; }
     else if (b !== 'dash' && (!busy || cancelable)) {
-      if (b === 'attack') {
+      if (b === 'attack' && WPN() !== 'scythe') { weaponAttack(P); P.buf = null; }
+      else if (b === 'attack') {
         const dashStrike = P.act === 'dash' || (P.lastDash && G.time - P.lastDash < 0.18);
         const next = dashStrike ? 'atk1' : P.comboT > 0 && P.act.startsWith('atk') ? (P.act === 'atk1' ? 'atk2' : P.act === 'atk2' ? 'atk3' : 'atk1') : P.comboT > 0 && P.lastAtk ? (P.lastAtk === 'atk1' ? 'atk2' : P.lastAtk === 'atk2' ? 'atk3' : 'atk1') : 'atk1';
         startAttack(P, next, dashStrike); P.buf = null;
-      } else if (b === 'special') { startSpecial(P); P.buf = null; }
+      } else if (b === 'special') { if (!weaponSpecial(P)) startSpecial(P); P.buf = null; }
       else if (b === 'cast' && P.ammo > 0) { startCast(P); P.buf = null; }
       else if (b === 'leap' && P.leapCd <= 0 && inCombat) { startLeap(P); P.buf = null; }
       else if (b === 'ult' && P.ult >= 100 && inCombat) { startUlt(P); P.buf = null; }
@@ -98,13 +100,15 @@ function updPlayer(P, dt) {
   }
   // 동작별 처리
   const A = ACT[P.act];
-  let speed = 285 * speedMul();
+  let speed = 285 * speedMul() * (P.slowT > 0 ? 0.6 : 1);
   if (P.act === 'dash') {
     const k = P.dashDist / P.alen; P.vx = Math.cos(P.dashAng) * k; P.vz = Math.sin(P.dashAng) * k;
     R.move(P, P.vx * dt, P.vz * dt, P.r);
     if (G.time - (P.lastImg || 0) > 0.03) { P.afterimg.push({x: P.x, z: P.z, d: P.d, f: Math.min(5, Math.floor(P.at / P.alen * 6)), t: 0}); P.lastImg = G.time; }
     if (has('e_dsh') && G.time - (P.lastTrail || 0) > 0.06) { addZone(P.x, P.z, 34, 2.2, 'acid', traitV('e_dsh'), 'hero'); P.lastTrail = G.time; }
     if (P.at >= P.alen) { setAct(P, 'idle'); P.vx *= 0.3; P.vz *= 0.3; }
+  } else if (P.act === 'gfire' || P.act === 'gblast' || P.act === 'cmd') {
+    weaponActTick(P, dt, mx, mz, speed);
   } else if (P.act.startsWith('atk') || P.act === 'spin' || P.act === 'cast' || P.act === 'ult' || P.act === 'leap' || P.act === 'hit') {
     const u = P.at / P.alen;
     if (P.act.startsWith('atk')) {
@@ -266,7 +270,7 @@ function damage(f, base, o = {}) {
   if (f.tier !== 'normal') mul += traitV('i_mem') / 100;
   if (P.hp / P.maxhp <= 0.35) mul += traitV('i_fev') / 100;
   if (f.mark > 0) mul += traitV('i_cst') / 100;
-  let crit = false;
+  let crit = !!o.crit;
   if (o.type === 'attack' && Math.random() * 100 < traitV('i_atk')) { crit = true; mul *= 2.5; }
   const dmg = Math.max(1, Math.round(base * mul));
   f.hp -= dmg; f.flash = 1; f.lastHit = G.time;
@@ -283,9 +287,9 @@ function damage(f, base, o = {}) {
   if (o.type === 'attack' && has('e_atk')) addAcid(f, 1);
   if (o.type === 'special' && has('e_spc')) addAcid(f, 2);
   if (f.hp <= 0) killFoe(f);
-  else if (f.tier === 'normal' && o.type !== 'dot' && o.type !== 'proc' && f.st !== 'atk') { f.st = 'hit'; f.t = 0; f.tele = null; }
+  else if (f.tier === 'normal' && o.type !== 'dot' && o.type !== 'proc' && f.st !== 'atk' && f.st !== 'under' && ((o.type !== 'gun' && o.type !== 'drone') || Math.random() < 0.22)) { f.st = 'hit'; f.t = 0; f.tele = null; f.lift = 0; f.sq = 1; }
   else if (f.tier === 'normal' && (o.type === 'proc') && f.st === 'move') { f.st = 'hit'; f.t = 0; }
-  if (o.type !== 'dot' && o.type !== 'proc') AUDIO.play('squish', 0.5, 0.9 + Math.random() * 0.3);
+  if (o.type !== 'dot' && o.type !== 'proc' && (o.type !== 'drone' || Math.random() < 0.4)) AUDIO.play('squish', o.type === 'gun' || o.type === 'drone' ? 0.3 : 0.5, 0.9 + Math.random() * 0.3);
   return dmg;
 }
 function addAcid(f, n) { f.acid = Math.min(5, (f.acid || 0) + n); f.acidT = 3; }
@@ -356,9 +360,10 @@ function dummyHit(d, base) {
 function spawnFoe(id, x, z, opt = {}) {
   const S = FOE[id], M = JS.mobs[id]; if (!S || !M) { console.warn('적 정보 없음', id); return null; }
   const run = G.run, ch = run ? run.ch : 1, room = run ? run.room : 1;
-  const scale = S.ai === 'boss' ? 1 : (1 + (ch - 1) * 0.42 + room * 0.04) * (M.tier === 'mid' ? 1 : 1);
+  const depth = run ? (ch - 1) * 9 + room : 0;   // 내려온 층 수
+  const scale = S.ai === 'boss' ? 1 + (ch - 1) * 0.04 : 1 + (ch - 1) * 0.38 + depth * 0.022;
   const f = {id, x, z, r: S.r, hp: Math.round(S.hp * scale), maxhp: Math.round(S.hp * scale), tier: M.tier, st: 'spawn', t: 0, d: 0, kx: 0, kz: 0, cd: rand(0.4, 1.4), flash: 0,
-    cell: M.cell, foot: M.foot, an: {}, dmgMul: S.ai === 'boss' ? 1 : 1 + (ch - 1) * 0.3, buff: 0, summoned: !!opt.summoned, phase: 1, tele: null};
+    cell: M.cell, foot: M.foot, an: {}, dmgMul: S.ai === 'boss' ? 1 : 1 + (ch - 1) * 0.25 + depth * 0.012, tempo: 1 + Math.min(0.2, depth * 0.0055), lift: 0, sq: 1, buff: 0, summoned: !!opt.summoned, phase: 1, tele: null};
   for (const a of M.anims) f.an[a.id] = a;
   G.foes.push(f); AUDIO.play('spawn', 0.35);
   G.fx.push({k: 'spawnring', x, z, t: 0, col: M.tint});
@@ -382,12 +387,13 @@ function teleHit(T, x, z, rr = 0) {
   const dx = x - T.x, dz = z - T.z;
   if (T.shape === 'circle') return Math.hypot(dx, dz) < T.r + rr;
   if (T.shape === 'cone') { const d = Math.hypot(dx, dz); if (d > T.r + rr) return false; let da = Math.atan2(dz, dx) - T.ang; da = Math.atan2(Math.sin(da), Math.cos(da)); return Math.abs(da) < T.arc / 2 || d < rr + 10; }
+  if (T.shape === 'ring') { const d = Math.hypot(dx, dz); return d < T.r + rr && d > (T.r0 || 0) - rr; }
   if (T.shape === 'line') { const ca = Math.cos(T.ang), sa = Math.sin(T.ang); const along = dx * ca + dz * sa, perp = Math.abs(-dx * sa + dz * ca); return along > -rr && along < T.len + rr && perp < T.w / 2 + rr; }
   return false;
 }
 function startFoeAttack(f, anim, windT, atkT, tele, kind) {
-  f.st = 'wind'; f.t = 0; f.atkAnim = anim; f.windT = windT; f.atkT = atkT; f.tele = tele; f.kind = kind; f.didHit = false;
-  if (tele) { tele.t = 0; tele.life = windT; }
+  f.st = 'wind'; f.t = 0; f.atkAnim = anim; f.windT = windT / (f.tempo || 1); f.atkT = atkT; f.tele = tele; f.kind = kind; f.didHit = false;
+  if (tele) { tele.t = 0; tele.life = f.windT; }
   if (f.tier !== 'normal' || Math.random() < 0.4) AUDIO.play('warn', f.tier === 'normal' ? 0.25 : 0.5);
 }
 function updFoe(f, dt) {
@@ -403,17 +409,21 @@ function updFoe(f, dt) {
   if (Math.abs(f.kx) + Math.abs(f.kz) > 1) { R.move(f, f.kx * dt, f.kz * dt, f.r * 0.7); f.kx *= Math.exp(-dt * 9); f.kz *= Math.exp(-dt * 9); }
   if (f.st === 'dead') return;
   if (f.st === 'spawn') { f.inv = true; if (f.t > 0.7) { f.inv = false; f.st = 'idle'; f.t = 0; } return; }
+  if (f.stun > 0) { f.stun -= dt; f.tele = null; if (f.st !== 'hit') { f.st = 'hit'; f.t = 0; } if (Math.random() < dt * 8) burst(f.x, f.z, (f.foot || 50) * 0.8, '#fff6b0', 1, 40, 0.4, 2, -40); return; }
   if (f.st === 'hit') { if (f.t > 0.3) { f.st = 'chase'; f.t = 0; } return; }
+  if (f.st === 'under' && S.ai !== 'boss') { foeUnder(f, dt); return; }
   const dx = P.x - f.x, dz = P.z - f.z, d = Math.hypot(dx, dz), ang = Math.atan2(dz, dx);
-  const spd = S.spd * (f.slow > 0 ? 0.55 : 1) * (f.buff > 0 ? 1.3 : 1);
+  const spd = S.spd * (f.slow > 0 ? 0.55 : 1) * (f.buff > 0 ? 1.3 : 1) * (f.tempo || 1);
   if (S.ai === 'boss') return updBoss(f, dt, d, ang, spd);
   if (f.st === 'wind') {
     if (S.ai !== 'charge') f.d = dir8(f.tele && f.tele.shape !== 'circle' ? f.tele.ang : ang);
     if (f.tele && f.tele.track) { f.tele.ang = ang; f.d = dir8(ang); }
+    if (ATK[f.kind] && ATK[f.kind].wind) ATK[f.kind].wind(f, dt);
     if (f.t >= f.windT) { f.st = 'atk'; f.t = 0; onFoeStrike(f); }
     return;
   }
   if (f.st === 'atk') {
+    if (ATK[f.kind] && ATK[f.kind].upd) { if (ATK[f.kind].upd(f, dt) !== false) return; }
     if (f.kind === 'charge') {
       const v = S.dist / f.atkT; R.move(f, Math.cos(f.chargeAng) * v * dt, Math.sin(f.chargeAng) * v * dt, f.r * 0.7);
       if (!f.didHit && dist(f, P) < f.r + P.r + 4) { f.didHit = true; if (hurtHero(fdmg(f), f) && S.drain) { f.hp = Math.min(f.maxhp, f.hp + 6); } }
@@ -442,6 +452,7 @@ function beginFoeAttack(f, ang, d) {
   if (S.sp && f.tier === 'mid' && Math.random() < 0.3 && f.an.special) return midSpecial(f);
   if (S.roar && Math.random() < 0.2 && f.an.roar) { startFoeAttack(f, 'roar', 0.4, 0.6, null, 'roar'); f.buffSelf = true; return; }
   f.d = dir8(ang);
+  if (BEGIN[f.id] && BEGIN[f.id](f, ang, d) !== false) return;
   if (S.ai === 'melee') {
     let T;
     if (S.shape === 'circle') T = {shape: 'circle', x: f.x + Math.cos(ang) * S.area * 0.45, z: f.z + Math.sin(ang) * S.area * 0.45, r: S.area * 0.75};
@@ -457,6 +468,7 @@ function beginFoeAttack(f, ang, d) {
 }
 function onFoeStrike(f) {
   const S = FOE[f.id], P = G.player, T = f.tele;
+  if (ATK[f.kind] && ATK[f.kind].strike) { ATK[f.kind].strike(f); return; }
   if (f.kind === 'melee') {
     if (T && teleHit(T, P.x, P.z, P.r)) hurtHero(fdmg(f), f);
     if (f.tier !== 'normal') { G.fx.push({k: T.shape === 'circle' ? 'slam' : 'ring', x: T.x, z: T.z, r0: 10, r1: T.r, t: 0, life: 0.3, col: '#ff5a6a'}); shake(5); AUDIO.play('slam', 0.7); }
@@ -520,10 +532,12 @@ function updBoss(f, dt, d, ang, spd) {
   if (f.st === 'wind') {
     if (f.tele && f.tele.track) { f.tele.ang = ang; f.tele.x = f.x; f.tele.z = f.z; f.d = dir8(ang); }
     if (f.kind === 'beam' && f.t < 0.05) AUDIO.play('beamCharge', 0.8);
-    if (f.t >= f.windT) { f.st = 'atk'; f.t = 0; bossStrike(f, ph2); }
+    if (ATK[f.kind] && ATK[f.kind].wind) ATK[f.kind].wind(f, dt);
+    if (f.t >= f.windT) { f.st = 'atk'; f.t = 0; if (ATK[f.kind] && ATK[f.kind].strike) ATK[f.kind].strike(f); else bossStrike(f, ph2); }
     return;
   }
   if (f.st === 'atk') {
+    if (ATK[f.kind] && ATK[f.kind].upd) { if (ATK[f.kind].upd(f, dt) !== false) return; }
     if (f.kind === 'lunge' || f.kind === 'dive' || f.kind === 'stab') {
       const v = f.lungeD / f.atkT; R.move(f, Math.cos(f.chargeAng) * v * dt, Math.sin(f.chargeAng) * v * dt, f.r * 0.6);
       if (!f.didHit && dist(f, P) < f.r + P.r) { f.didHit = true; hurtHero(fdmg(f), f); }
@@ -549,6 +563,7 @@ function bossChoose(f, d, ang, ph2) {
   const P = G.player, S = FOE[f.id], w = S.wind * (ph2 ? 0.8 : 1);
   const r = Math.random();
   f.d = dir8(ang);
+  if (Math.random() < (ph2 ? 0.3 : 0.22) && BOSS_EXTRA[f.id]) { BOSS_EXTRA[f.id](f, d, ang, ph2); return; }
   if (f.id === 'queen') {
     if (r < 0.45) startFoeAttack(f, 'attack', w, 0.4, {shape: 'circle', x: P.x, z: P.z, r: 115}, 'slam');
     else if (r < 0.8) startFoeAttack(f, 'attack2', w * 0.9, 0.5, {shape: 'cone', x: f.x, z: f.z, r: 260, ang, arc: ph2 ? Math.PI * 0.9 : Math.PI * 0.55, thin: true}, 'spit');
@@ -595,6 +610,7 @@ function updProjs(dt) {
   const P = G.player, R = G.room;
   for (let i = G.projs.length - 1; i >= 0; i--) {
     const p = G.projs[i]; p.t += dt;
+    if (p.k === 'lob') { if (updLob(p, dt)) G.projs.splice(i, 1); continue; }
     if (p.k === 'flask') {
       const u = Math.min(1, p.t / p.life); p.x = lerp(p.sx, p.tx, u); p.z = lerp(p.sz, p.tz, u); p.h = 40 + Math.sin(u * Math.PI) * 90 - u * 30;
       if (u >= 1) { G.projs.splice(i, 1); splashAt(p.x, p.z); }
@@ -603,7 +619,11 @@ function updProjs(dt) {
     p.x += p.vx * dt; p.z += p.vz * dt;
     let dead = p.t > p.life || !R.floorAt(p.x, p.z);
     if (p.owner === 'foe' && !dead && Math.hypot(p.x - P.x, p.z - P.z) < p.r + P.r) { if (hurtHero(p.dmg, p) || P.inv <= 0) dead = true; else dead = P.act !== 'dash'; }
-    if (p.owner === 'hero' && !dead) for (const f of G.foes) if (f.st !== 'dead' && !f.hidden && Math.hypot(p.x - f.x, p.z - f.z) < p.r + f.r) { damage(f, p.dmg, {type: 'proc', knock: 40, ang: Math.atan2(p.vz, p.vx)}); dead = true; break; }
+    if (p.owner === 'hero' && !dead) for (const f of G.foes) if (f.st !== 'dead' && !f.hidden && f.st !== 'spawn' && !(p.hitSet && p.hitSet.has(f)) && Math.hypot(p.x - f.x, p.z - f.z) < p.r + f.r) {
+      if (p.onHit) p.onHit(f, p); else damage(f, p.dmg, {type: 'proc', knock: 40, ang: Math.atan2(p.vz, p.vx)});
+      if (p.pierce > 0) { p.pierce--; (p.hitSet = p.hitSet || new Set()).add(f); } else { dead = true; break; }
+    }
+    if (p.owner === 'hero' && !dead && p.k === 'hbolt') breakProps(p.x, p.z, 8);
     if (dead) {
       if (p.k === 'acid' && R.floorAt(p.x, p.z)) addZone(p.x, p.z, 40, 2.5, 'foeAcid', 4, 'foe');
       burst(p.x, p.z, p.h, [p.col || '#a8ff3a', '#ffffff'], 4, 80, 0.3, 2);
@@ -616,12 +636,13 @@ function updProjs(dt) {
     if (z.tick >= 0.4) {
       z.tick = 0;
       if (z.owner === 'hero') for (const f of foesIn(z.x, z.z, z.r)) { damage(f, z.dmg, {type: 'dot'}); if (z.kind === 'shock') { f.slow = 0.6; if (Math.random() < 0.3) lightning({x: z.x, z: z.z}, f); } if (z.kind === 'acid' && has('e_atk')) addAcid(f, 0); }
-      if (z.owner === 'foe' && Math.hypot(P.x - z.x, P.z - z.z) < z.r + P.r * 0.5) hurtHero(z.dmg, z);
+      if (z.owner === 'foe' && Math.hypot(P.x - z.x, P.z - z.z) < z.r + P.r * 0.5) { if (z.kind === 'slime') P.slowT = 0.5; if (z.dmg > 0) hurtHero(z.dmg, z); }
     }
   }
   for (let i = G.allies.length - 1; i >= 0; i--) {
     const a = G.allies[i]; a.t += dt;
     if (a.k === 'pod' && a.t >= a.life) { for (const f of foesIn(a.x, a.z, 80)) damage(f, a.dmg, {type: 'proc'}); G.fx.push({k: 'ring', x: a.x, z: a.z, r0: 10, r1: 80, t: 0, life: 0.3, col: '#3cffae'}); AUDIO.play('burst', 0.4); G.allies.splice(i, 1); continue; }
+    if (a.k === 'minidrone') { updMiniDrones(a, dt); if (a.t >= a.life) G.allies.splice(i, 1); continue; }
     if (a.k === 'turret') {
       a.cd -= dt;
       if (a.cd <= 0) { const f = nearestFoe(a, 360); if (f) { const an = angTo(a, f); G.projs.push({k: 'bolt', owner: 'hero', x: a.x, z: a.z, h: 24, vx: Math.cos(an) * 420, vz: Math.sin(an) * 420, t: 0, life: 1.2, r: 8, dmg: 10, col: '#3cffae'}); a.cd = 0.55; AUDIO.play('shoot', 0.25, 1.6); } }

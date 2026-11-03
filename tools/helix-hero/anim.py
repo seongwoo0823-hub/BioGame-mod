@@ -9,6 +9,8 @@ ANIMS = [
     ('atk1', 6, False, '가로베기'), ('atk2', 6, False, '올려베기'), ('atk3', 8, False, '내려찍기'), ('spin', 8, False, '회전베기'),
     ('leap', 10, False, '도약 강타'), ('cast', 10, False, '유전자 의식'), ('throw', 7, False, '시약 투척'), ('shoot', 6, False, '유전자총 사격'),
     ('hit', 4, False, '피격'), ('death', 10, False, '쓰러짐'), ('spawn', 10, False, '재구성(부활)'),
+    ('gidle', 8, True, '총 대기'), ('grun', 8, True, '총 들고 달리기'), ('gblast', 8, False, '산탄 폭발'),
+    ('didle', 8, True, '드론 대기'), ('drun', 8, True, '드론 조종 달리기'), ('command', 8, False, '드론 명령'),
 ]
 NFR = {a[0]: a[1] for a in ANIMS}
 LOOP = {a[0] for a in ANIMS if a[2]}
@@ -37,7 +39,34 @@ ST = dict(rh=BASE['rh'], lh=BASE['lh'], w=BASE['w'], wb=BASE['wb'], twist=0.0, l
           lth=0.06, lkn=0.14, rth=-0.06, rkn=0.14, hp=0.0, cape=0.12, wauto=0.0, air=0.0)
 def S(**kw): d = dict(ST); d.update(kw); return d
 
+GUN_RH = (-2.5, 10.2, 9.2); GUN_LH = (-0.5, 9.6, 8.0)
 def pose(name, t):
+    if name in ('gidle', 'grun'):   # 유전자총을 겨눈 채 대기·달리기 (낫은 등에)
+        q = pose('idle' if name == 'gidle' else 'run', t); b = math.sin(TAU * t)
+        bob = 0.25 * b if name == 'gidle' else 0.6 * math.sin(2 * TAU * t)
+        q['rh'] = (GUN_RH[0], GUN_RH[1] - 1.2 + bob, GUN_RH[2] - 1.0); q['lh'] = (GUN_LH[0], GUN_LH[1] - 1.2 + bob, GUN_LH[2] - 0.9)
+        q['stow'] = 1.0; q['gun'] = 1.0; q['twist'] = -0.15
+        if name == 'grun': q['lean'] = 0.22
+        return q
+    if name == 'gblast':   # 두 손으로 버티며 크게 쏘는 산탄 — 반동으로 상체가 젖혀짐
+        f = int(round(t * 7)); rec = [0, 0.3, 1.0, 0.8, 0.55, 0.3, 0.12, 0][f]
+        q = dict(BASE); q.update(S(rh=(GUN_RH[0], GUN_RH[1] + 1.6 * rec, GUN_RH[2] - 3.0 * rec), lh=(GUN_LH[0], GUN_LH[1] + 1.4 * rec, GUN_LH[2] - 2.6 * rec),
+                 lean=0.15 - 0.4 * rec, drop=1.4 + 0.6 * rec, twist=-0.15, fwd=-1.6 * rec, lth=0.45, lkn=0.5, rth=-0.4, rkn=0.45, hp=-0.12 * rec, cape=0.2 + 0.6 * rec))
+        q['stow'] = 1.0; q['gun'] = 1.0; q['flash'] = [0, 0, 1.6, 0.9, 0.3, 0, 0, 0][f]
+        return q
+    if name in ('didle', 'drun'):   # 낫을 등에 메고 왼손에 드론 연결 빛
+        q = pose('idle' if name == 'didle' else 'run', t)
+        q['stow'] = 1.0; q['rh'] = (-7.2, 2.4, 1.4) if name == 'didle' else (-7.0, 4.2, -0.6 + 2.0 * math.sin(TAU * t))
+        q['lh'] = (5.6, 6.4 + 0.3 * math.sin(TAU * t), 4.6) if name == 'didle' else (5.8, 6.8, 3.6)
+        return q
+    if name == 'command':   # 손을 앞으로 뻗어 드론에게 명령
+        K = [(0, S(lh=(5.6, 6.4, 4.6), rh=(-7.2, 2.4, 1.4))),
+             (0.3, S(lh=(4.5, 12.0, 2.0), rh=(-7.0, 3.0, 0.5), twist=0.35, drop=0.8, lean=-0.1, glow=0.3)),
+             (0.55, S(lh=(2.0, 11.0, 12.5), rh=(-7.6, 3.6, -1.5), twist=-0.35, drop=1.6, lean=0.3, fwd=1.6, lth=0.45, lkn=0.45, rth=-0.35, glow=1.0, cape=0.6)),
+             (0.8, S(lh=(2.4, 10.6, 12.0), rh=(-7.6, 3.6, -1.5), twist=-0.3, drop=1.4, lean=0.25, fwd=1.6, lth=0.4, lkn=0.4, rth=-0.3, glow=0.5, cape=0.4)),
+             (1.0, S(lh=(5.6, 6.4, 4.6), rh=(-7.2, 2.4, 1.4)))]
+        q = dict(BASE); q.update(keys(t, K)); q['stow'] = 1.0
+        return q
     q = dict(BASE)
     if name == 'idle':
         b = math.sin(TAU * t); c = math.cos(TAU * t)
