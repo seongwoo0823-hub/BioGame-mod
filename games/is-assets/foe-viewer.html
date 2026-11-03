@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>면역 특공대 적 도감</title>
+<style>
+:root{--bg:#160a1c;--fg:#f4e6f6;--mut:#b49ac0;--card:#24122c;--one:#7ad8ff;--tough:#ff8a6a;--boss:#ffd060}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,sans-serif;padding:16px}
+h1{font-size:18px;margin:0 0 4px}h2{font-size:16px;margin:22px 0 8px}h3{font-size:14px;margin:12px 0 6px}p{color:var(--mut);margin:0 0 10px}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
+.c{background:var(--card);border-radius:8px;padding:6px;text-align:center;border-top:3px solid var(--k)}
+.c canvas{image-rendering:pixelated;width:116px;height:96px;background:#3a1a34;border-radius:4px}
+.c.big canvas{width:240px;height:200px}.g.b{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.n{font-weight:600;font-size:13px}.s{color:var(--mut);font-size:11px}
+.old{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.old span{background:var(--card);border-left:3px solid var(--k);border-radius:4px;padding:2px 8px;font-size:12px}
+.tag{display:inline-block;border-radius:4px;padding:0 6px;font-size:12px;font-weight:600;color:#160a1c;background:var(--k)}
+</style></head><body>
+<h1>면역 특공대 적 도감 (60종 + 보스 9종)</h1>
+<p><span class="tag" style="--k:var(--one)">한 방</span> 어떤 공격이든 한 번 맞으면 쓰러지는 졸개 · <span class="tag" style="--k:var(--tough)">여러 발</span> 체력바가 붙어 있고 여러 번 맞혀야 쓰러지는 정예 · 움직이는 그림은 이번에 새로 만든 적, 이름표는 기존 적입니다.</p>
+<div id="root"></div>
+<script src="foes.js"></script>
+<script>
+const D=[
+ {st:'STAGE 1 · 혈관 (세균)',one:{nw:[['listeria','리스테리아','액틴 로켓 꼬리로 돌진'],['vibrio','비브리오 콜레라','공중을 헤엄치다 내리꽂음'],['neisseria','임균 (쌍구균)','통통 튀며 접근'],['spiro','스피로헤타','몸을 감았다가 튀어 오름'],['myco','마이코플라스마','셋이 떼로 날며 끈적탄']],old:['대장균','포도상구균 (분열)','살모넬라','헬리코박터','바실러스']},
+  tough:{nw:[['mrsa','MRSA 내성 포도알균','판갑이 열릴 때만 제대로 맞음, 가시 5발'],['anthrax','탄저균 포자탑','포자 박격포'],['klebs','클레브시엘라','점액 캡슐로 굴러서 돌진'],['tetanus','파상풍균','머리로 내려찍어 충격파'],['legion','레지오넬라','물방울 3갈래 사격 (공중)']],old:['연쇄상구균','클로스트리디움 포자','결핵균','보툴리누스균','녹농균']},
+  boss:[['gb1','관문 보스 · 탄저 포자 모함','포자 융단 폭격 / 저공 돌진 / 유도탄']],oldb:['중간 보스 · 거대 결핵균 전차','최종 보스 · 바이오필름 타이탄']},
+ {st:'STAGE 2 · 림프절 (바이러스)',one:{nw:[['noro','노로바이러스','셋이 떼로 깡충깡충'],['measles','홍역 바이러스','머리 위에서 반점 폭탄'],['hpv','HPV','기어 와서 덮침'],['zika','지카 모기','급강하'],['polio','폴리오바이러스','굴러서 빠르게 돌진']],old:['인플루엔자','리노바이러스 (떼)','HIV','헤르페스 (숨어 있을 땐 무적)','아데노바이러스']},
+  tough:{nw:[['hbv','B형 간염 바이러스','위성 항원이 유도탄으로'],['smallpox','천연두 바이러스','고름 산성탄 3발'],['dengue','뎅기 바이러스','돌진, 쓰러지면 노로 둘로 분열'],['mers','MERS 코로나바이러스','8방향 가시 (공중)'],['tmv','담배모자이크 바이러스','회전하며 2연사 (공중)']],old:['박테리오파지','코로나바이러스','에볼라','감염 세포','광견병 바이러스']},
+  boss:[['gb2','관문 보스 · 거대 T4 파지 랜더','점프 착지 충격파 / 머리 사격 + 바닥 바늘']],oldb:['중간 보스 · 바이러스 생산 공장','최종 보스 · 변이 바이러스 킹']},
+ {st:'STAGE 3 · 종양 미세환경',one:{nw:[['ctc','순환 종양 세포','수평으로 돌진 (공중)'],['platelet','납치된 혈소판','닿으면 끈적이며 느려짐'],['lactate','젖산 방울','머리 위에서 터져 산성 웅덩이'],['mirna','종양 miRNA','꿈틀대다 돌진'],['zombie','좀비 세포','비틀비틀 다가와 할큄']],old:['전이 세포','저산소 거품','엑소좀 드론','타락한 조절 T세포','골수유래 억제세포']},
+  tough:{nw:[['caf','암 관련 섬유아세포','콜라겐 섬유 3발'],['p53','돌연변이 p53 세포','색이 변하며 공격이 무작위'],['mdr','다제내성 펌프 세포','맞은 만큼 모아서 되쏨'],['mimic','MHC 위장 세포','반투명하게 다가와 억제탄'],['giant','거대 다핵 세포','양쪽 충격파 짓밟기']],old:['종양 세포','종양 관련 대식세포','혈관신생 덩굴','PD-L1 방패세포','종양 줄기세포']},
+  boss:[['gb3','관문 보스 · 키메라 융합 종양','세 머리 연속 사격 / 바닥 촉수']],oldb:['중간 보스 · 거대 TAM 브루트','최종 보스 · 암세포 온코스']}];
+const M=window.IS_FOES,img=new Image();img.src='foes.png';const cs=[];
+function card(par,[id,n,d],k,big){const m=M[id];const c=document.createElement('div');c.className='c'+(big?' big':'');c.style.setProperty('--k',k);
+ const cv=document.createElement('canvas');const W=big?84:38,H=big?70:32;cv.width=W;cv.height=H;c.append(cv);
+ c.insertAdjacentHTML('beforeend',`<div class="n">${n}</div><div class="s">${d}</div>`);par.append(c);cs.push([cv,m,W,H]);}
+const root=document.getElementById('root');
+for(const s of D){root.insertAdjacentHTML('beforeend',`<h2>${s.st}</h2>`);
+ for(const [key,lab,k] of [['one','한 방 졸개 10종','var(--one)'],['tough','여러 발 정예 10종','var(--tough)']]){
+  root.insertAdjacentHTML('beforeend',`<h3><span class="tag" style="--k:${k}">${lab}</span></h3>`);const g=document.createElement('div');g.className='g';root.append(g);
+  for(const it of s[key].nw)card(g,it,k);const o=document.createElement('div');o.className='old';o.style.setProperty('--k',k);o.innerHTML=s[key].old.map(x=>`<span>${x}</span>`).join('');root.append(o);}
+ root.insertAdjacentHTML('beforeend',`<h3><span class="tag" style="--k:var(--boss)">보스 3종</span></h3>`);const g=document.createElement('div');g.className='g b';root.append(g);
+ for(const it of s.boss)card(g,it,'var(--boss)',true);const o=document.createElement('div');o.className='old';o.style.setProperty('--k','var(--boss)');o.innerHTML=s.oldb.map(x=>`<span>${x}</span>`).join('');root.append(o);}
+let t=0;img.onload=()=>{(function loop(){t++;for(const [cv,m,W,H] of cs){const x=cv.getContext('2d');x.clearRect(0,0,W,H);const keys=Object.keys(m.A);const seq=[];for(const k of keys)for(const f of m.A[k])seq.push(f);const tot=m.A.mv.length*3+seq.length-m.A.mv.length;let i=Math.floor(t/7)%tot;let f=i<m.A.mv.length*3?m.A.mv[i%m.A.mv.length]:seq[m.A.mv.length+i-m.A.mv.length*3];
+ x.drawImage(img,f[0],f[1],m.w,m.h,Math.round(W/2-m.o[0]),H-4-m.o[1],m.w,m.h);}requestAnimationFrame(loop);})();};
+</script></body></html>
