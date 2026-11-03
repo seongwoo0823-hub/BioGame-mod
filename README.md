@@ -22,6 +22,7 @@
 index.html        메인 화면 (게임 선택, 이 기기에 저장된 기록 표시)
 games/            게임 12종 (각각 하나의 HTML 파일)
 assets/           메인 화면 썸네일
+games/is-assets/  면역 특공대 호중구 도트 스프라이트 (neut.png·neut.js, neut-viewer.html: 애니메이션 26종 미리보기)
 games/il-assets/  감염의 군주 스프라이트·아이콘 아틀라스 (WebP)
 games/helix/      헬릭스 게임 코드(js/)와 에셋(assets/) (hero-viewer.html: 주인공 미리보기, mob-viewer.html: 몬스터 32종 도감·챕터 시험장)
 vendor/           three.js r128 (3D 게임용, MIT 라이선스)
