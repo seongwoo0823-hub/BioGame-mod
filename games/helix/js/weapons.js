@@ -10,7 +10,7 @@ const IDLE_ANIM = {scythe: 'idle', gun: 'gidle', drone: 'didle'}, RUN_ANIM = {sc
 function weaponAttack(P) {
   const w = WPN();
   if (w === 'gun') { faceAim(P); setAct(P, 'gfire', 1 / atkSpd()); gunFire(P); return true; }
-  if (w === 'drone') { const D = G.drone; if (D && D.fireCd <= 0) droneFire(D, true); return true; }
+  if (w === 'drone') { const D = G.drone; if (D && D.fireCd <= 0) { if (window.ILOG) ILOG.game('드론 광선'); droneFire(D, true); } return true; }
   return false;
 }
 function weaponSpecial(P) {

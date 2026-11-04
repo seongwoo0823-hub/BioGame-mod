@@ -666,7 +666,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
   </div>
 </div>
 
-<!-- ========== 2. 구글 스프레드시트 실시간 랭킹 & 관리자 모드(1211) 모달 ========== -->
+<!-- ========== 2. 구글 스프레드시트 실시간 랭킹 & 관리자 모드 모달 ========== -->
 <div class="modal-backdrop" id="rankModal" hidden role="dialog" aria-modal="true" aria-labelledby="rankModalTitle">
   <div class="glass-modal">
     <div class="m-head">
@@ -703,12 +703,13 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
         </div>
       </div>
 
-      <!-- 🔐 관리자 전용 패널 (비밀번호 1211 인증 시 표시) -->
+      <!-- 🔐 관리자 전용 패널 (서버에서 비밀번호 확인 후 표시) -->
       <div id="adminPanel" class="guide-box" style="background:rgba(244,63,94,0.1);border-color:rgba(251,113,133,0.4)" hidden>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px">
           <h4 style="margin:0;color:#fda4af">🛠️ 관리자 모드 활성화됨 (목록별 기록 수정·삭제 및 구글 시트 URL 관리)</h4>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="g-btn" id="btnExportCsv" type="button">📥 엑셀(CSV) 다운로드</button>
+            <button class="g-btn" id="btnInputLog" type="button">📼 입력 기록 보기 (이 기기)</button>
             <button class="g-btn" id="btnClearAllCloud" type="button" style="color:#fda4af;border-color:rgba(251,113,133,0.45)">🗑️ 전체 기록 초기화</button>
             <button class="g-btn" id="btnExitAdmin" type="button">🔒 관리자 종료</button>
           </div>
@@ -769,10 +770,11 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
   // ★ 구글 스프레드시트(Apps Script) 웹 앱 기본 URL 설정란
   // 배포하신 Google Apps Script 웹 앱 URL(https://script.google.com/macros/s/.../exec)을
   // 아래 DEFAULT_GAS_URL 따옴표 안에 넣어 두시면 모든 학생 기기에서 별도 설정 없이 즉시 연동됩니다!
-  // (또는 사이트의 🔐 관리자 모드[비번 1211]에서도 URL을 등록하고 배포 링크를 복사할 수 있습니다.)
+  // (또는 사이트의 🔐 관리자 모드에서도 URL을 등록하고 배포 링크를 복사할 수 있습니다.)
+  // 관리자 비밀번호는 이 파일에 두지 않습니다. Apps Script의 '스크립트 속성' ADMIN_PASS에만 저장하고 서버가 확인합니다.
   // =========================================================================
   const DEFAULT_GAS_URL = '';
-  const ADMIN_PASS = '1211';
+  let adminPw = '';   // 관리자가 입력한 비밀번호 (이 기기 메모리에만, 저장하지 않음 · 서버가 확인)
 
   const get=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}};
   const set=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
@@ -1035,7 +1037,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
     m.addEventListener('click',e=>{if(e.target===m)m.hidden=true;});
   });
 
-  // ================= 2. 구글 스프레드시트 실시간 랭킹 & 관리자 모드(1211) =================
+  // ================= 2. 구글 스프레드시트 실시간 랭킹 & 관리자 모드 =================
   const GAME_META=[
     {id:'bio-beat',name:'BIO BEAT'},
     {id:'immune-strike',name:'면역 특공대'},
@@ -1252,14 +1254,37 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
     }
     const pw=prompt('관리자 비밀번호를 입력하세요:');
     if(pw===null)return;
-    if(pw.trim()===ADMIN_PASS){
-      isAdmin=true;
-      playUiTone('launch');
-      if(rankModal&&rankModal.hidden)openRankModal();
-      syncAdminUI();
-    }else{
-      alert('비밀번호가 일치하지 않습니다.');
-    }
+    verifyAdmin(pw.trim()).then(r=>{
+      if(r==='ok'){
+        isAdmin=true;adminPw=pw.trim();
+        playUiTone('launch');
+        if(rankModal&&rankModal.hidden)openRankModal();
+        syncAdminUI();
+      }else if(r==='nourl'){
+        // 시트 주소가 없을 때: 주소 등록만 할 수 있는 설정 모드 (지울 기록이 서버에 없음)
+        isAdmin=true;adminPw=pw.trim();
+        if(rankModal&&rankModal.hidden)openRankModal();
+        syncAdminUI();
+        alert('아직 구글 시트 주소가 없어 설정 모드로 엽니다. 주소를 저장한 뒤에는 서버(Apps Script)가 비밀번호를 확인합니다.');
+      }else if(r==='old'){
+        alert('구글 시트 스크립트가 예전 버전이라 비밀번호를 확인할 수 없습니다. tools/apps-script/Code.gs로 스크립트를 바꿔 배포해 주세요.');
+      }else{
+        alert('비밀번호가 일치하지 않거나 서버에 연결할 수 없습니다.');
+      }
+    });
+  }
+  // 비밀번호 확인은 구글 Apps Script(서버)에서: 'ok' | 'bad' | 'nourl' | 'old'
+  async function verifyAdmin(pw){
+    const url=getGasUrl();
+    if(!url)return 'nourl';
+    if(!pw)return 'bad';
+    try{
+      const res=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'auth',adminPass:pw})});
+      const data=await res.json();
+      if(data&&data.auth===true)return 'ok';
+      if(data&&data.auth===false)return 'bad';
+      return 'old';
+    }catch(e){return 'bad';}
   }
 
   function escapeHtml(s){
@@ -1340,7 +1365,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
     const url=getGasUrl();
     if(!url){
       if(rankSyncBadge)rankSyncBadge.textContent='⚪ 시트 URL 미설정 (관리자 모드에서 등록)';
-      if(cloudStatusShort)cloudStatusShort.textContent='ℹ️ 관리자 모드(비번 1211)에서 구글 스프레드시트 웹 앱 URL을 입력하면 실시간 랭킹이 연동됩니다.';
+      if(cloudStatusShort)cloudStatusShort.textContent='ℹ️ 관리자 모드에서 구글 스프레드시트 웹 앱 URL을 입력하면 실시간 랭킹이 연동됩니다.';
       return;
     }
     if(rankSyncBadge)rankSyncBadge.textContent='🔄 실시간 랭킹 불러오는 중...';
@@ -1391,13 +1416,24 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
   document.getElementById('myProfileChip')?.addEventListener('click',openRankModal);
   document.getElementById('openAdminBtn')?.addEventListener('click',requestAdminAuth);
   modalAdminToggleBtn?.addEventListener('click',()=>{
-    if(isAdmin){isAdmin=false;syncAdminUI();}
+    if(isAdmin){isAdmin=false;adminPw='';syncAdminUI();}
     else requestAdminAuth();
   });
   document.getElementById('btnExitAdmin')?.addEventListener('click',()=>{
-    isAdmin=false;syncAdminUI();playUiTone('tap');
+    isAdmin=false;adminPw='';syncAdminUI();playUiTone('tap');
   });
 
+  document.getElementById('btnInputLog')?.addEventListener('click',()=>{ if(window.ILOG)ILOG.openViewer({all:true}); });
+  // 입력 기록 요약 (판 수 · 단계별 끊김 횟수)만 구글 시트로 보냄. 입력 내용 자체는 기기 안에만 있음
+  async function syncInputLogSummary(){
+    if(!window.ILOG||!getGasUrl())return;
+    const since=get('ilogSentAt')||'';
+    const rows=await ILOG.summaryRows(since);
+    if(!rows.length)return;
+    const ok=await postToGas({action:'logsum',uid:profile.uid,stId:profile.stId||'',name:profile.name||'',device:ILOG.device,rows});
+    if(ok)set('ilogSentAt',new Date().toISOString());
+  }
+  setTimeout(syncInputLogSummary,2500);
   document.getElementById('btnRefreshRank')?.addEventListener('click',()=>{
     playUiTone('tap');
     fetchFromGas();
@@ -1457,7 +1493,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
       boardMap.delete(uid);
       persistBoard();
       renderRankingTable();
-      await postToGas({action:'delete',adminPass:ADMIN_PASS,uid});
+      await postToGas({action:'delete',adminPass:adminPw,uid});
       setTimeout(fetchFromGas,500);
     }
   });
@@ -1477,7 +1513,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
     if(adminEditBox)adminEditBox.hidden=true;
     renderRankingTable();
     playUiTone('launch');
-    await postToGas(Object.assign({action:'update',adminPass:ADMIN_PASS},rec));
+    await postToGas(Object.assign({action:'update',adminPass:adminPw},rec));
     setTimeout(fetchFromGas,500);
   });
 
@@ -1491,7 +1527,7 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
     boardMap.clear();
     persistBoard();
     renderRankingTable();
-    await postToGas({action:'clear',adminPass:ADMIN_PASS});
+    await postToGas({action:'clear',adminPass:adminPw});
     setTimeout(fetchFromGas,500);
   });
 
@@ -1520,5 +1556,6 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
   });
 })();
 </script>
+<script src="ilog.js"></script>
 </body>
 </html>

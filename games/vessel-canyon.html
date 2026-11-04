@@ -602,7 +602,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
 function mkC(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
 const BAYER2=[[0,2],[3,1]];
 class PG{
-  constructor(w,h){this.w=w;this.h=h;this.c=mkC(w,h);this.g=this.c.getContext('2d');this.g.imageSmoothingEnabled=false;}
+  constructor(w,h){this.w=w;this.h=h;this.c=mkC(w,h);this.g=this.c.getContext('2d',{willReadFrequently:true});this.g.imageSmoothingEnabled=false;}
   p(x,y,col){x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=this.w||y>=this.h)return;this.g.fillStyle=col;this.g.fillRect(x,y,1,1);}
   rect(x,y,w,h,col){this.g.fillStyle=col;this.g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
   disc(cx,cy,r,col){const R=Math.ceil(r),rr=r*r+r*.55;for(let y=-R;y<=R;y++)for(let x=-R;x<=R;x++)if(x*x+y*y<=rr)this.p(cx+x,cy+y,col);}
@@ -6234,4 +6234,5 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){if(STATE==
 if(window.BIO_P2P&&window.BIO_P2P.onBackgroundTick){window.BIO_P2P.onBackgroundTick(dt=>{if(STATE==='game'&&G&&!G.paused&&NET.active&&NET.role==='host'){try{step(dt);}catch(_){}}});}
 if(!window.__HEADLESS)boot();
 </script>
+<script src="../ilog.js"></script>
 </body></html>

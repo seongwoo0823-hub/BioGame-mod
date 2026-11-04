@@ -90,7 +90,8 @@ function openTraitChoice(lin, minRar, done) {
   const offers = traitOffers(lin, minRar); const L = LINEAGE[lin];
   AUDIO.play('trait', 0.7);
   const p = openPanel(`<h2 style="color:${L.col}">${L.name}</h2><p class="sub">${L.desc} 하나를 골라 받아들이세요.</p><div class="cards">${offers.map((o, i) => traitCard(o, i)).join('')}</div>`, 'wide');
-  bindOpts(p, i => { applyTrait(offers[+i]); closePanel(); AUDIO.play('confirm'); done && done(); });
+  bindOpts(p, i => {
+    if (i === 'log') { if (window.ILOG) ILOG.openViewer(); return; } applyTrait(offers[+i]); closePanel(); AUDIO.play('confirm'); done && done(); });
 }
 function applyTrait(o) {
   const run = G.run, T = TRAIT[o.id];
@@ -162,7 +163,8 @@ function openRecords() {
   const cells = ids.map(id => { const m = JS.mobs[id], k = SAVE.kills[id] || 0; return `<button class="opt codex ${k ? '' : 'unk'}" data-i="${id}"><canvas width="${m.cell}" height="${m.cell}" data-mob="${id}"></canvas><small>${k ? esc(m.name) : '???'}</small></button>`; }).join('');
   const p = openPanel(`<h2 style="color:#5ab0ff">기록 드론 아키</h2><p class="sub">출정 ${SAVE.runs}회 · 정화 ${SAVE.wins}회 · 최고 기록 ${SAVE.best ? SAVE.best + '장 보스 처치' : '없음'} · 모은 DNA ${SAVE.totalDna}</p><h3>생물 도감</h3><div class="codexgrid">${cells}</div><div id="cdesc" class="cdesc">생물을 고르면 설명이 나옵니다. 처치한 적만 기록됩니다.</div><div class="list"><button class="opt row" data-i="x">${img('key')}<span>닫기</span><b></b></button></div>`, 'wide', closePanel);
   PANEL.cols = 7;
-  p.querySelectorAll('canvas[data-mob]').forEach(c => { const id = c.dataset.mob, m = JS.mobs[id], x = c.getContext('2d'); const im = IMG['m_' + id + '_idle']; if (im) x.drawImage(im, 0, m.cell, m.cell, m.cell, 0, 0, m.cell, m.cell); else { loadImg('m_' + id + '_idle', 'helix/assets/mobs/' + m.anims[0].file).then(i => i && x.drawImage(i, 0, m.cell, m.cell, m.cell, 0, 0, m.cell, m.cell)); } });
+  p.querySelectorAll('canvas[data-mob]').forEach(c => { const id = c.dataset.mob, m = JS.mobs[id], x = c.getContext('2d'), a = m.anims[0], draw = im => im && x.drawImage(im, (a.x || 0), (a.y || 0) + m.cell, m.cell, m.cell, 0, 0, m.cell, m.cell);
+    const key = atlasKey(id, a.file); if (IMG[key]) draw(IMG[key]); else loadImg(key, 'helix/assets/mobs/' + a.file).then(draw); });
   bindOpts(p, id => { if (id === 'x') { closePanel(); return; } const m = JS.mobs[id], k = SAVE.kills[id] || 0; $('#cdesc').innerHTML = k ? `<b>${esc(m.name)}</b> · ${tierName[m.tier]} · ${esc(m.role)} · 처치 ${k}회<br>${esc(m.desc)}` : '아직 만나지 못했거나 처치하지 못한 생물입니다.'; AUDIO.play('click'); });
 }
 
@@ -173,6 +175,7 @@ function openPause() {
     <button class="opt row" data-i="go">${img('key')}<span>계속하기</span><b></b></button>
     <button class="opt row" data-i="set">${img('luck')}<span>설정</span><b></b></button>
     <button class="opt row" data-i="help">${img('blade')}<span>조작법</span><b></b></button>
+    <button class="opt row" data-i="log">${img('upgrade')}<span>입력 기록 보기</span><b></b></button>
     ${G.state === 'run' ? `<button class="opt row" data-i="quit">${img('boss')}<span>출정 포기 (쉼터로)</span><b></b></button>` : ''}
     <button class="opt row" data-i="hub">${img('dna')}<span>게임 목록으로</span><b></b></button></div>`, '', closePanel);
   bindOpts(p, i => {

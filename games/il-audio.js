@@ -163,6 +163,7 @@ const S = {
   A_4: r => loopify(amb(r, 8.2, 100, d => { mixInto(d, buzz(r, 8, 60, 0.4), 0.25, 0); for (let k = 0; k < 6; k++) mixInto(d, zap(r, 0.12, 300, 0.6), 0.25, 0.5 + k * 1.3); })), // 신경: 전기 웅웅 + 딱딱
   A_5: r => loopify(amb(r, 8.2, 90, d => { for (let k = 0; k < 12; k++) mixInto(d, goo(r, 0.25, 200 + r() * 200, 2), 0.35, r() * 7.6); }))  // 기원: 원시 수프 보글
 };
+S.D_kick = r => impact(r, { body: 55, drop: 3, bodyD: 0.16, crack: 0.25, crackF: 900, dur: 0.4 }); S.D_tom = r => impact(r, { body: 110, drop: 1, bodyD: 0.14, crack: 0.3, dur: 0.35 }); S.D_hat = r => hiss(r, 0.06, 8000, 1);
 function pickR(r, a){ return a[Math.floor(r() * a.length)]; }
 // 몸 구조별 괴물 목소리: aggro(발견) · atk(공격 준비) · hurt · die
 const PLAN_V = {
@@ -187,16 +188,37 @@ function polish(d, name){ const loop = name.startsWith('A_') || name.startsWith(
   for (let i = 0; i < d.length; i++){ dc += (d[i] - dc) * 0.0015; let x = lp2(lp(d[i] - dc, cut, 0.6), cut * 1.2, 0.6); if (!loop && i < 66) x *= i / 66; d[i] = x; } return d; }
 const LIMIT = { ui: 3, step: 2, stepStone: 2, stepGoo: 2, stepDirt: 2, stepCrystal: 2, gold: 2, hit: 5, hitSlash: 5, hitBlunt: 4, hitFlesh: 4, hitGoo: 4, hitChitin: 4, hitMetal: 3, hitCrack: 4, fireBoom: 3, explode: 3 };
 
+function synth(name){
+  const gen = S[name]; if (!gen) return null;
+  const nv = name.startsWith('A_') || name.startsWith('L_') ? 1 : 3, out = [];
+  for (let v = 0; v < nv; v++) out.push(polish(gen(rng(v * 977 + name.length * 131 + name.charCodeAt(0))), name));
+  return out;
+}
+// ---- 작업 스레드로 실행된 경우: 소리 합성만 하고 결과를 돌려보냄 (게임 화면이 멈추지 않게)
+if (typeof window === 'undefined' && typeof self !== 'undefined' && typeof importScripts === 'function'){
+  self.onmessage = e => { const name = e.data; let d = null; try { d = synth(name); } catch(err){} self.postMessage({name, d}, d ? d.map(x => x.buffer) : []); };
+  return;
+}
+const SCRIPT_SRC = document.currentScript && document.currentScript.src;
 function makeSND(OPT, clamp, pick){
   let ctx = null, master, sfxG, musG, ambG, rev, revG, listener = null, wet = 0.2;
   const cache = new Map(), active = new Map();
-  function getBufs(name){
+  // 소리 버퍼: 처음 쓰는 소리는 작업 스레드에 합성을 맡기고, 도착하면 바로 이어서 재생
+  let worker = null; const waiting = new Map(), asked = new Set();
+  try { if (SCRIPT_SRC && window.Worker) { worker = new Worker(SCRIPT_SRC); worker.onmessage = e => got(e.data.name, e.data.d); worker.onerror = () => { worker = null; asked.clear(); waiting.clear(); }; } } catch(e){ worker = null; }
+  function toBufs(d){ return d.map(x => { const ab = ctx.createBuffer(1, x.length, SR); ab.getChannelData(0).set(x); return ab; }); }
+  function got(name, d){
+    asked.delete(name); if (!d || !ctx) return;
+    cache.set(name, toBufs(d));
+    const w = waiting.get(name); waiting.delete(name);
+    if (w) for (const f of w) if (performance.now() - f.t < 260) f.run();
+  }
+  function ask(name){ if (asked.has(name) || cache.has(name)) return; asked.add(name); worker.postMessage(name); }
+  function getBufs(name, later){
     let b = cache.get(name); if (b) return b;
-    const gen = S[name]; if (!gen) return null;
-    b = [];
-    const nv = name.startsWith('A_') || name.startsWith('L_') ? 1 : 3;
-    for (let v = 0; v < nv; v++){ const d = polish(gen(rng(v * 977 + name.length * 131 + name.charCodeAt(0))), name); const ab = ctx.createBuffer(1, d.length, SR); ab.getChannelData(0).set(d); b.push(ab); }
-    cache.set(name, b); return b;
+    if (!S[name]) return null;
+    if (worker){ ask(name); if (later) (waiting.get(name) || waiting.set(name, []).get(name)).push({t: performance.now(), run: later}); return null; }
+    const d = synth(name); if (!d) return null; b = toBufs(d); cache.set(name, b); return b;   // 작업 스레드를 못 쓰는 브라우저
   }
   function init(){
     if (ctx){ if (ctx.state === 'suspended') ctx.resume(); return; }
@@ -214,7 +236,8 @@ function makeSND(OPT, clamp, pick){
     const first = ['ui', 'uiOpen', 'uiClose', 'A_town', 'L_fire', 'stepStone', 'swing', 'swingBlade', 'hitSlash', 'hitFlesh', 'hitGoo', 'hit', 'pickup', 'gold', 'fire', 'magic', 'heroHurt'];
     const warm = first.concat(Object.keys(S).filter(n => !first.includes(n)));
     let k = 0; const idle = window.requestIdleCallback || (f => setTimeout(f, 40));
-    const tick = () => { if (k < warm.length){ if (!cache.has(warm[k])) getBufs(warm[k]); k++; setTimeout(() => idle(tick), 25); } }; setTimeout(tick, 80);
+    if (worker) warm.forEach(n => ask(n));   // 작업 스레드가 차례로 합성
+    else { const tick = () => { if (k < warm.length){ if (!cache.has(warm[k])) getBufs(warm[k]); k++; setTimeout(() => idle(tick), 25); } }; setTimeout(tick, 80); }
   }
   function setVol(){ if (sfxG){ sfxG.gain.value = OPT.vol; ambG.gain.value = OPT.vol * 0.55; musG.gain.value = OPT.mus * 0.6; } }
   function play(name, vol, pos, opt){
@@ -223,7 +246,7 @@ function makeSND(OPT, clamp, pick){
     const n = active.get(name) || 0; if (n >= (LIMIT[name] || 6)) return;
     let v = (vol == null ? 1 : vol) * (GAIN[name] || 0.72), pan = 0, cut = 20000;
     if (pos && listener){ const dx = pos.x - listener.x, dz = pos.z - listener.z, d = Math.hypot(dx, dz); v *= clamp(1.25 - d / 32, 0, 1); if (v < 0.025) return; pan = clamp((dx - dz) / 26, -0.85, 0.85); cut = clamp(16000 - d * 520, 1200, 16000); }
-    const bufs = getBufs(name); if (!bufs) return;
+    const bufs = getBufs(name, () => play(name, vol, pos, opt)); if (!bufs) return;
     const t = ctx.currentTime + (opt.delay || 0) + 0.002;
     const src = ctx.createBufferSource(); src.buffer = bufs[(Math.random() * bufs.length) | 0];
     src.playbackRate.value = (opt.rate || 1) * (name.startsWith('ui') ? 1 : 0.94 + Math.random() * 0.12);
@@ -242,7 +265,7 @@ function makeSND(OPT, clamp, pick){
   function setAmb(key){
     if (!ctx || amb.key === key) return;
     if (amb.src){ const g = amb.g, s = amb.src; g.gain.setTargetAtTime(0, ctx.currentTime, 0.6); setTimeout(() => { try { s.stop(); } catch(e){} }, 3000); }
-    amb = { key, src: null, g: null }; const bufs = getBufs('A_' + key); if (!bufs) return;
+    amb = { key, src: null, g: null }; const bufs = getBufs('A_' + key, () => { if (amb.key === key && !amb.src){ amb.key = null; setAmb(key); } }); if (!bufs) return;
     const s = ctx.createBufferSource(); s.buffer = bufs[0]; s.loop = true; const g = ctx.createGain(); g.gain.value = 0; s.connect(g); g.connect(ambG); s.start(); g.gain.setTargetAtTime(0.9, ctx.currentTime, 1.2);
     amb.src = s; amb.g = g;
     wet = key === 'town' ? 0.1 : key === 3 || key === '3' ? 0.18 : 0.3;     // 동굴일수록 울림 크게
@@ -269,7 +292,6 @@ function makeSND(OPT, clamp, pick){
   function pluck(freq, when, vol, out){ const s = ctx.createBufferSource(); s.buffer = ksBuf(freq, 2.4); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 2600; const g = ctx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(out || mus.g); s.start(when); }
   function note(freq, when, dur, type, vol, cut, out){ const o = ctx.createOscillator(); o.type = type; o.frequency.value = freq; const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cut || 1200; const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, when); g.gain.linearRampToValueAtTime(vol, when + Math.min(0.08, dur * 0.2)); g.gain.exponentialRampToValueAtTime(0.0001, when + dur); o.connect(f); f.connect(g); g.connect(out || mus.g); o.start(when); o.stop(when + dur + 0.05); }
   function drum(when, kind, vol){ const bufs = getBufs(kind === 'kick' ? 'D_kick' : kind === 'tom' ? 'D_tom' : 'D_hat'); if (!bufs) return; const s = ctx.createBufferSource(); s.buffer = bufs[(Math.random() * bufs.length) | 0]; const g = ctx.createGain(); g.gain.value = vol; s.connect(g); g.connect(mus.g); s.start(when); }
-  S.D_kick = r => impact(r, { body: 55, drop: 3, bodyD: 0.16, crack: 0.25, crackF: 900, dur: 0.4 }); S.D_tom = r => impact(r, { body: 110, drop: 1, bodyD: 0.14, crack: 0.3, dur: 0.35 }); S.D_hat = r => hiss(r, 0.06, 8000, 1);
   const TOWN = [[57, 60, 64, 69], [53, 57, 60, 65], [48, 52, 55, 60], [55, 59, 62, 67], [57, 60, 64, 69], [50, 53, 57, 62], [52, 56, 59, 64], [52, 56, 59, 64]];
   // 장별 조 · 선율 (단조 계열)
   const FIELD = { 1: [45, [0, 3, 7, 10, 12, 7]], 2: [43, [0, 1, 5, 7, 8, 5]], 3: [47, [0, 3, 5, 7, 10, 12]], 4: [41, [0, 2, 3, 7, 9, 14]], 5: [40, [0, 3, 7, 8, 12, 15]] };

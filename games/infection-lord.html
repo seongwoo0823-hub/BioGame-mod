@@ -3589,6 +3589,7 @@ function finishHero(dt, moving){
   if (H.cape){ }
 }
 function moveHeroTo(x, z){
+  if (window.ILOG && (!moveHeroTo.t || G.time - moveHeroTo.t > 0.5 || Math.hypot(x - moveHeroTo.x, z - moveHeroTo.z) > 1.5)) { moveHeroTo.t = G.time; moveHeroTo.x = x; moveHeroTo.z = z; ILOG.game('이동', Math.round(x) + ',' + Math.round(z)); }
   HERO.repath = false;
   const p = findPath(G.lv, HERO.x, HERO.z, x, z);
   HERO.path = p && p.length ? p : null;
@@ -4720,11 +4721,13 @@ addEventListener('touchcancel', () => { G.mouse.l = G.mouse.r = false; G.lHold =
 // 화면을 벗어나거나 앱 전환 시 눌림 상태가 남아 계속 공격·이동하는 문제 방지
 document.addEventListener('visibilitychange', () => { try { if (SND.ctx){ if (document.hidden) SND.ctx.suspend(); else SND.ctx.resume(); } } catch(e){}
   if (document.hidden){ G.mouse.l = G.mouse.r = false; G.lHold = null; G.mAtk = G.mR = false; G.joy.x = G.joy.y = 0; G.joy.id = null; } });
+// 숫자 키는 Shift와 함께 눌러도 같은 값이 되도록 물리 키(e.code)로 비교
+const DIGIT_OF = e => { const m = /^(?:Digit|Numpad)([1-4])$/.exec(e.code || ''); return m ? m[1] : null; };
 addEventListener('keydown', e => {
   SND.init();
   if (G.mode !== 'play'){ if (e.key === 'Enter' && G.mode === 'create') $('#bCreate').click(); return; }
   if (e.target.tagName === 'INPUT') return;
-  const k = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+  const k = DIGIT_OF(e) || (e.key.length === 1 ? e.key.toUpperCase() : e.key);
   if (e.key === 'Alt'){ G.alt = true; e.preventDefault(); return; }
   if (e.key === 'Shift') G.mouse.shift = true;
   if (e.key === 'Escape'){ if (!$('#skillPick').classList.contains('hidden')){ $('#skillPick').classList.add('hidden'); return; } if (G.dialog){ closeDialog(); return; } if (G.panels.size){ closeAllPanels(); return; } if (G.automap){ toggleAutomap(); return; } toggleMenu(); return; }
@@ -4736,7 +4739,7 @@ addEventListener('keydown', e => {
   if (k === 'B'){ castTownPortal(); return; }
   if (e.key === ' '){ e.preventDefault(); closeAllPanels(); return; }
 });
-addEventListener('keyup', e => { if (e.key === 'Alt') G.alt = false; if (e.key === 'Shift') G.mouse.shift = false; if (G.kHold === e.key) G.kHold = null; });
+addEventListener('keyup', e => { if (e.key === 'Alt') G.alt = false; if (e.key === 'Shift') G.mouse.shift = false; if (G.kHold && G.kHold === DIGIT_OF(e)) G.kHold = null; });
 addEventListener('blur', () => { G.alt = false; G.mouse.l = G.mouse.r = false; G.lHold = null; G.kHold = null; });
 function nearestInFront(range){
   let best = null, bd = range; for (const m of G.lv.mons){ if (!m.alive) continue; const d = Math.hypot(m.x - HERO.x, m.z - HERO.z) - m.r; if (d > bd) continue; let da = Math.abs(Math.atan2(m.x - HERO.x, m.z - HERO.z) - Math.atan2(G.mouse.wx - HERO.x, G.mouse.wz - HERO.z)); if (da > Math.PI) da = TAU - da; if (da < 0.9){ bd = d; best = m; } } return best;
@@ -4753,6 +4756,7 @@ function updInput(dt){
     const tm = needsTarget(sk) ? (tgtM || nearestInFront(S.reach + 0.6)) : tgtM;
     const tx = tm && !['trap', 'wall', 'meteor', 'storm', 'teleport', 'curse', 'summon'].includes(sk.kind) ? tm.x : G.mouse.wx, tz = tm && !['trap', 'wall', 'meteor', 'storm', 'teleport', 'curse', 'summon'].includes(sk.kind) ? tm.z : G.mouse.wz;
     const r = useSkill(id, tx, tz, tm);
+    if (r === true && window.ILOG) ILOG.game('스킬 ' + id, tm ? '대상 있음' : '커서 쪽');
     if (r === 'walk' && tm){ if ((G.walkT = (G.walkT || 0) - dt) <= 0){ G.walkT = 0.2; moveHeroTo(tm.x, tm.z); } }
     return r === true;
   };
@@ -5097,5 +5101,6 @@ function boot(){
 }
 try { boot(); } catch(e){ console.error(e); $('#loading').textContent = '불러오기 실패: ' + e.message; }
 </script>
+<script src="../ilog.js"></script>
 </body>
 </html>

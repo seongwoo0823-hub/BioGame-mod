@@ -1552,7 +1552,11 @@ function resize(){
 function blitLo(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=false;ctx.drawImage(lo,0,0,lo.width*PS,lo.height*PS);}
 
 /* ================= state ================= */
-const DATA={};
+// 곡 데이터는 처음 필요할 때 만듦 (시작 화면에서 25곡을 한꺼번에 작곡하지 않음)
+const DATA_RAW={};
+function genOne(id){const s=SONGS.find(x=>x.id===id);if(!s)return;try{const d=genSong(s);d.charts=[0,1,2].map(k=>genChart(d,k));DATA_RAW[id]=d;}catch(e){console.error('gen fail',id,e);DATA_RAW[id]=null;}
+  const i=SONGS.indexOf(s),b=typeof ITEMS!=='undefined'&&ITEMS[i];if(b&&DATA_RAW[id]){const lv=b.querySelectorAll('.lv span');for(let k=0;k<3;k++)lv[k].textContent=DATA_RAW[id].charts[k].level;}}
+const DATA=new Proxy(DATA_RAW,{get(t,id){if(typeof id==='string'&&!(id in t)&&SONGS.some(x=>x.id===id))genOne(id);return t[id];}});
 const SEL={i:0,d:1};
 let screen='title',ready=false,PLAY=null;
 function showScreen(name){
@@ -1569,22 +1573,14 @@ function makeIcon(song){
   try{return c.toDataURL();}catch(e){return '';}
 }
 function boot(){
-  let i=0;
-  const step=()=>{
-    if(i<SONGS.length){
-      const s=SONGS[i];
-      try{const d=genSong(s);d.charts=[0,1,2].map(k=>genChart(d,k));DATA[s.id]=d;}catch(e){console.error('gen fail',s.id,e);}
-      try{ICONS[s.id]=makeIcon(s);}catch(e){ICONS[s.id]='';}
-      i++;
-      $('#loadI').style.width=(i/SONGS.length*100)+'%';
-      $('#loadT').textContent=`곡을 작곡하는 중… ${i} / ${SONGS.length}`;
-      setTimeout(step,0);
-    }else{
-      ready=true;$('#loadT').textContent=`${SONGS.length}곡 준비 완료`;$('#pressT').style.visibility='visible';
-      buildList();updateSelect();
-    }
-  };
-  step();
+  // 아이콘만 먼저 만들고 바로 시작. 곡은 고를 때 만들고, 남는 시간에 하나씩 미리 만들어 둠
+  for(const s of SONGS){try{ICONS[s.id]=makeIcon(s);}catch(e){ICONS[s.id]='';}}
+  ready=true;$('#loadI').style.width='100%';$('#loadT').textContent=`${SONGS.length}곡 준비 완료`;$('#pressT').style.visibility='visible';
+  buildList();updateSelect();
+  let i=0;const idle=window.requestIdleCallback||(f=>setTimeout(()=>f({timeRemaining:()=>8}),120));
+  const bg=dl=>{while(i<SONGS.length&&(SONGS[i].id in DATA_RAW))i++;if(i>=SONGS.length)return;
+    if(!document.hidden&&screen!=='play')genOne(SONGS[i].id);idle(bg);};
+  idle(bg);
 }
 
 /* ================= select UI ================= */
@@ -2561,7 +2557,10 @@ const ONLINE=(()=>{
   return {interceptStart,interceptRetry,ctxTimeAt,onFinish,onQuit,decorateResult,drawBoard,togglePauseMenu};
 })();
 resize();updateOpts();boot();requestAnimationFrame(frame);
+// 입력 기록(../ilog.js)이 읽을 게임 상태
+window.ILOG_WATCH=()=>({화면:screen,곡:SONGS[SEL.i]&&SONGS[SEL.i].id,난이도:SEL.d,진행:PLAY&&!PLAY.ended?Math.floor(PLAY.T||0):undefined});
 })();
 </script>
+<script src="../ilog.js"></script>
 </body>
 </html>
