@@ -32,15 +32,16 @@ function chapterMobs(ch) {
   if (ch === 1) ['phage', 'amoeba'].forEach(x => s.add(x)); if (ch === 2) s.add('tick'); if (ch === 3) s.add('clone'); if (ch === 4) s.add('prion');
   return [...s];
 }
-let PRELOADING = null;
-function preloadAll() {
-  if (PRELOADING) return PRELOADING;
-  return PRELOADING = (async () => { for (let c = 1; c <= 4; c++) await loadMobs(chapterMobs(c)); })();
-}
-const mobReady = id => JS.mobs[id].anims.every(a => IMG['m_' + id + '_' + a.id]);
+// 적 그림: 적마다 동작을 한두 장으로 묶은 그림(mobs.json의 atlas)을 받고, 그 장에 나오는 적만 받음
+const CH_LOADING = {};
+function preloadChapter(c) { if (c < 1 || c > 4) return Promise.resolve(); return CH_LOADING[c] || (CH_LOADING[c] = loadMobs(chapterMobs(c))); }
+function preloadAll() { return (async () => { for (let c = 1; c <= 4; c++) await preloadChapter(c); })(); }
+const atlasKey = (id, file) => 'ma_' + file;
+const mobImg = (id, a) => IMG[atlasKey(id, a.file)];
+const mobReady = id => JS.mobs[id].atlas.every(f => IMG[atlasKey(id, f)]);
 function loadMobs(ids) {
   const jobs = [];
-  for (const id of ids) for (const a of JS.mobs[id].anims) jobs.push(loadImg('m_' + id + '_' + a.id, 'helix/assets/mobs/' + a.file));
+  for (const id of ids) for (const f of JS.mobs[id].atlas) jobs.push(loadImg(atlasKey(id, f), 'helix/assets/mobs/' + f));
   return Promise.all(jobs);
 }
 
@@ -55,8 +56,8 @@ function enterHub(fromDeath = false) {
   AUDIO.music('hub', 0); AUDIO.play('spawn', 0.6);
   G.banner = {t: 0, text: '쉼터', sub: fromDeath ? '재생 장치가 당신을 되살렸습니다' : '연구소 지하의 마지막 안전지대'};
   fadeIn();
-  // 모든 구역 그림을 차례로 미리 불러오기 (1장부터)
-  preloadAll();
+  // 1장 적 그림만 미리 받아 둠 (다음 장은 출정 중에 받음)
+  preloadChapter(1);
 }
 function interactables() {
   const R = G.room, L = [];
@@ -95,6 +96,7 @@ async function goRoom(reward, first = false) {
     let need = chapterMobs(run.ch).filter(id => !mobReady(id));
     if (need.length) { showLoading(true); await loadMobs(need); need = need.filter(id => !mobReady(id)); if (need.length) await loadMobs(need); showLoading(false); }
     buildRoom(reward); fadeIn();
+    if (run.room >= 3) preloadChapter(run.ch + 1);   // 다음 장 그림은 미리 조용히 받기
   });
 }
 function buildRoom(reward) {
@@ -267,7 +269,7 @@ function drawHeroAfter(P) {
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
 }
 function drawFoe(f) {
-  const {a, i} = foeFrame(f); const img = IMG['m_' + f.id + '_' + a.id] || IMG['m_' + f.id + '_idle']; const C = f.cell;
+  let {a, i} = foeFrame(f); let img = mobImg(f.id, a); if (!img) { a = f.an.idle; img = mobImg(f.id, a); } const C = f.cell, ax = a ? a.x || 0 : 0, ay = a ? a.y || 0 : 0;
   if (!img) {   // 그림이 아직 없으면 임시 모양 + 다시 불러오기
     const col = JS.mobs[f.id].tint; ctx.fillStyle = col + 'cc'; ctx.beginPath(); ctx.ellipse(SX(f.x), SY(f.z, f.r), f.r, f.r * 0.9, 0, 0, TAU); ctx.fill();
     if (!f.reload || G.time - f.reload > 2) { f.reload = G.time; loadMobs([f.id]); }
@@ -278,8 +280,8 @@ function drawFoe(f) {
   if (f.st === 'dead') { const L = f.tier === 'boss' ? 1.6 : 0.9; if (f.t > L) alpha = Math.max(0, 1 - (f.t - L) / 0.5); }
   if (f.hidden) return;
   const fl = f.flash > 0 ? f.flash * 0.85 : f.buff > 0 ? 0.12 : 0, lift = f.lift || 0, sq = f.sq || 1;
-  if (sq !== 1) { ctx.save(); ctx.translate(SX(f.x), SY(f.z, lift)); ctx.scale(1 / Math.sqrt(sq), sq); drawFrame(img, i * C, f.d * C, C, C, -C / 2, -f.foot, fl, alpha); ctx.restore(); }
-  else drawFrame(img, i * C, f.d * C, C, C, SX(f.x) - C / 2, SY(f.z, lift) - f.foot, fl, alpha);
+  if (sq !== 1) { ctx.save(); ctx.translate(SX(f.x), SY(f.z, lift)); ctx.scale(1 / Math.sqrt(sq), sq); drawFrame(img, ax + i * C, ay + f.d * C, C, C, -C / 2, -f.foot, fl, alpha); ctx.restore(); }
+  else drawFrame(img, ax + i * C, ay + f.d * C, C, C, SX(f.x) - C / 2, SY(f.z, lift) - f.foot, fl, alpha);
   if (f.stun > 0) { const x = SX(f.x), y = SY(f.z, f.foot * 0.85 + 8); for (let k = 0; k < 3; k++) { const a = G.time * 6 + k * 2.1; ctx.fillStyle = '#fff6b0'; ctx.fillRect(Math.round(x + Math.cos(a) * 12) - 1, Math.round(y + Math.sin(a) * 4) - 1, 3, 3); } }
   if (f.acid > 0 && Math.random() < 0.15) burst(f.x + rand(-f.r, f.r), f.z, rand(10, f.foot * 0.6), '#ff8a2a', 1, 30, 0.4, 2, -60);
   if (f.elite && f.st !== 'dead') { ctx.strokeStyle = `rgba(255,192,64,${0.5 + 0.3 * Math.sin(G.time * 6)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(SX(f.x), SY(f.z), f.r * 1.3, f.r * 0.55, 0, 0, TAU); ctx.stroke(); }
@@ -583,7 +585,11 @@ function frame(now) {
     if (!G.paused) {
       G.flashScreen = Math.max(0, (G.flashScreen || 0) - dt * 2); G.hurtVig = Math.max(0, (G.hurtVig || 0) - dt * 2);
       if (G.slowT > 0) { G.slowT -= rdt; if (G.slowT <= 0) G.slow = 1; }
-      if (G.hitstop > 0) { G.hitstop -= dt; updParts(dt * 0.2); }
+      if (G.hitstop > 0) {
+        G.hitstop -= dt; updParts(dt * 0.2);
+        // 멈춤 중에 누른 입력은 지우지 않고 예약해 두었다가 멈춤이 끝나면 바로 실행
+        const P = G.player; if (P) for (const a of ['dash', 'attack', 'special', 'cast', 'leap', 'ult']) if (pressed.has(a)) { if (!P.buf || a === 'dash' || P.buf !== 'dash') { P.buf = a; P.bufT = 0.3; } if (typeof ILOG !== 'undefined') ILOG.game('예약:' + a, '멈춤 중'); }
+      }
       else {
         const sdt = dt * G.slow; G.time += sdt;
         updPlayer(G.player, sdt); updDrone(sdt);

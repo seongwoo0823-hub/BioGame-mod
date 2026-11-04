@@ -369,7 +369,7 @@ function setMusic(m){MUS.want=m;}
    도트 그래픽 (모두 코드로 그리는 저해상도 스프라이트, 2배 확대)
    ========================================================= */
 const SPR={};
-function mkc(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.imageSmoothingEnabled=false;return [c,g];}
+function mkc(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d',{willReadFrequently:true});g.imageSmoothingEnabled=false;return [c,g];}
 const P=(g,x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),w,h);};
 function circ(g,cx,cy,r,c){g.fillStyle=c;for(let y=-Math.ceil(r);y<=Math.ceil(r);y++){const d=Math.floor(Math.sqrt(Math.max(0,r*r-y*y))+.3);if(r*r-y*y<0)continue;g.fillRect(Math.round(cx-d),Math.round(cy+y),2*d+1,1);}}
 function ell(g,cx,cy,rx,ry,c){g.fillStyle=c;for(let y=-ry;y<=ry;y++){const d=Math.floor(rx*Math.sqrt(Math.max(0,1-(y*y)/(ry*ry)))+.3);g.fillRect(Math.round(cx-d),Math.round(cy+y),2*d+1,1);}}
@@ -4840,5 +4840,6 @@ document.fonts&&document.fonts.ready.then(()=>{});
 requestAnimationFrame(frame);
 window.__CB={get G(){return G;},get S(){return S;},get PL(){return PL;},get RM(){return RM;},WR};
 </script>
+<script src="../ilog.js"></script>
 </body>
 </html>

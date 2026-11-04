@@ -525,11 +525,18 @@ const tbCache=new Map();
 function textBits(str,size,weight=700,family){
   const k=str+"|"+size+"|"+weight+"|"+(family||""); if(tbCache.has(k)) return tbCache.get(k);
   const f=`${weight} ${size}px ${family||'"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif'}`;
-  const c=mk(4,4),g=c.getContext("2d"); g.font=f; const w=Math.ceil(g.measureText(str).width)+2,h=size+5;
+  const c=mk(4,4),g=c.getContext("2d",{willReadFrequently:true}); g.font=f; const w=Math.ceil(g.measureText(str).width)+2,h=size+5;
   c.width=Math.max(1,w); c.height=h; g.font=f; g.fillStyle="#fff"; g.textBaseline="top"; g.fillText(str,1,1);
   const d=g.getImageData(0,0,c.width,h).data,bits=new Uint8Array(c.width*h); for(let i=0;i<bits.length;i++) if(d[i*4+3]>118) bits[i]=1;
   const r={w:c.width,h,bits}; tbCache.set(k,r); if(tbCache.size>300) tbCache.delete(tbCache.keys().next().value); return r; }
-function drawBits(c,tb,x,y,col,outline,shadow){ x=Math.round(x);y=Math.round(y); const on=(i,j)=>i>=0&&j>=0&&i<tb.w&&j<tb.h&&tb.bits[j*tb.w+i];
+// 글자 그림은 한 번 그려 두고 다시 쓸 때는 통째로 붙임 (1픽셀 사각형 수천 번 → 1번)
+const bitsImg=new WeakMap();
+function drawBits(c,tb,x,y,col,outline,shadow){
+  let m=bitsImg.get(tb); if(!m){ m=new Map(); bitsImg.set(tb,m); }
+  const k=String(col)+"|"+(outline||"")+"|"+(shadow||""); let im=m.get(k);
+  if(!im){ im=mk(tb.w+3,tb.h+4); drawBitsRaw(im.getContext("2d"),tb,1,1,col,outline,shadow); m.set(k,im); if(m.size>12) m.delete(m.keys().next().value); }
+  c.drawImage(im,Math.round(x)-1,Math.round(y)-1); }
+function drawBitsRaw(c,tb,x,y,col,outline,shadow){ x=Math.round(x);y=Math.round(y); const on=(i,j)=>i>=0&&j>=0&&i<tb.w&&j<tb.h&&tb.bits[j*tb.w+i];
   if(shadow){ c.fillStyle=shadow; for(let j=0;j<tb.h;j++) for(let i=0;i<tb.w;i++) if(on(i,j)) c.fillRect(x+i+1,y+j+2,1,1); }
   if(outline){ c.fillStyle=outline; for(let j=-1;j<=tb.h;j++) for(let i=-1;i<=tb.w;i++) if(!on(i,j)&&(on(i-1,j)||on(i+1,j)||on(i,j-1)||on(i,j+1))) c.fillRect(x+i,y+j,1,1); }
   for(let j=0;j<tb.h;j++) for(let i=0;i<tb.w;i++) if(on(i,j)){ c.fillStyle=typeof col==="function"?col(j/tb.h):col; c.fillRect(x+i,y+j,1,1); } }
@@ -1294,9 +1301,13 @@ const _updPanel=updatePanel; updatePanel=function(){ _updPanel();
   setT("cChip",`CREDIT ${G.credits}`); setT("bCoin",wallet.coins>0?`🪙 코인 (${wallet.coins}/${WALLET_MAX})`:`⏳ ${nextCoinIn()}`); };
 const hsCache={t:0,list:[]};
 function hsList(){ if(Date.now()-hsCache.t>2000){ hsCache.list=loadHS(); hsCache.t=Date.now(); } return hsCache.list; }
+// 대기 화면 체크무늬 띠: 높이별로 한 번만 그려 둠
+const checkerC=new Map();
+function checkerImg(h,par){ const k=h+"|"+par; let c=checkerC.get(k); if(c) return c; c=mk(260,h); const g=c.getContext("2d"); g.fillStyle=C.k;
+  for(let y=0;y<h;y++) for(let x=0;x<260;x++) if(((x+20+y+par)&1)===0) g.fillRect(x,y,1,1); checkerC.set(k,c); return c; }
 function drawArcade(){
   const t=G.now, PX='"Pixelify Sans",monospace', gradO=v=>v<0.35?C.or6:v<0.6?C.or5:v<0.8?C.or4:C.or3;
-  const band=(y0,y1)=>{ for(let y=y0;y<y1;y++) for(let x=20;x<280;x++) if(((x+y)&1)===0) R(lx,x,y,1,1,C.k); R(lx,20,y0,260,1,C.or4); R(lx,20,y1-1,260,1,C.or4); };
+  const band=(y0,y1)=>{ lx.drawImage(checkerImg(y1-y0,y0&1),20,y0); R(lx,20,y0,260,1,C.or4); R(lx,20,y1-1,260,1,C.or4); };
   const ct=(s,size,y,col,fam)=>{ const tb=textBits(s,size,700,fam); drawBits(lx,tb,150-tb.w/2,y,col,C.k); return tb; };
   if(G.mode==="attract"){
     if(Math.floor(t/6000)%2===0){ band(40,126); ct("CELL CADET",22,46,gradO,PX); ct("세포 탐사대 · 생명과학 핀볼",11,73,C.vi5);
@@ -1325,5 +1336,6 @@ resize(); G.balls=[newBall()];
 if(document.fonts) document.fonts.ready.then(()=>{ tbCache.clear(); drawLogo(); });
 requestAnimationFrame(frame);
 </script>
+<script src="../ilog.js"></script>
 </body>
 </html>

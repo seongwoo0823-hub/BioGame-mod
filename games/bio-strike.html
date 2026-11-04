@@ -1394,7 +1394,7 @@ class World {
   }
   box(x, y, z, w, h, d, m, o){
     o = o || {};
-    const ms = mesh(boxGeo(w, h, d, o.tile), m, x, y + h / 2, z, this.group);
+    const ms = mesh(boxGeo(w, h, d, o.tile), m, x, y + h / 2, z, this.group); ms.userData.wbox = true;
     if (o.col !== false) ms.userData.box = this.col(x, y, z, w, h, d);
     if (o.cast === false) ms.castShadow = false;
     return ms;
@@ -1417,6 +1417,45 @@ class World {
     this.col(x, 0, z, 2.0, 0.16, 2.0);
   }
   add(o){ this.group.add(o); return o; }
+  // 움직이지 않는 맵 상자를 재질별로 하나의 메시로 합침 (그리기 호출 수 감소, 충돌 판정은 그대로)
+  mergeStatic(){
+    const keep = new Set(); for (const p of this.props){ keep.add(p.obj); (p.parts || []).forEach(o => keep.add(o)); }
+    this.group.updateMatrixWorld(true);
+    const groups = new Map(), victims = [];
+    for (const o of this.group.children){
+      if (!o.isMesh || !o.userData.wbox || keep.has(o) || o.material.transparent || o.children.some(c => !c.userData.ol)) continue;
+      const k = o.material.uuid + '|' + (o.castShadow ? 1 : 0);
+      if (!groups.has(k)) groups.set(k, {mat: o.material, cast: o.castShadow, list: []});
+      groups.get(k).list.push(o);
+      const ol = o.children.find(c => c.userData.ol);
+      if (ol){ const kk = 'OL|' + ol.material.uuid; if (!groups.has(kk)) groups.set(kk, {mat: ol.material, cast: false, ol: true, list: []}); groups.get(kk).list.push(ol); }
+      victims.push(o);
+    }
+    for (const g of groups.values()){
+      if (g.list.length < 2 && !g.ol) { victims.splice(victims.indexOf(g.list[0]), 1); continue; }
+      const geo = mergeGeos(g.list.map(o => { const c = o.geometry.clone(); c.applyMatrix4(o.matrixWorld); return c; }));
+      const m = new THREE.Mesh(geo, g.mat); m.castShadow = g.cast; m.receiveShadow = !g.ol; m.userData.merged = true; if (g.ol) m.userData.ol = false;
+      this.group.add(m);
+    }
+    for (const o of victims){ this.group.remove(o); o.geometry.dispose(); }
+  }
+}
+// 같은 속성(위치·법선·uv)을 가진 상자 기하를 하나로 이어 붙임
+function mergeGeos(list){
+  let nv = 0, ni = 0; for (const g of list){ nv += g.attributes.position.count; ni += g.index ? g.index.count : g.attributes.position.count; }
+  const pos = new Float32Array(nv * 3), nor = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), idx = new (nv > 65535 ? Uint32Array : Uint16Array)(ni);
+  let ov = 0, oi = 0;
+  for (const g of list){
+    const n = g.attributes.position.count;
+    pos.set(g.attributes.position.array, ov * 3); nor.set(g.attributes.normal.array, ov * 3); if (g.attributes.uv) uv.set(g.attributes.uv.array, ov * 2);
+    if (g.index){ const a = g.index.array; for (let i = 0; i < a.length; i++) idx[oi + i] = a[i] + ov; oi += a.length; }
+    else { for (let i = 0; i < n; i++) idx[oi + i] = ov + i; oi += n; }
+    ov += n; g.dispose();
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); out.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  out.setIndex(new THREE.BufferAttribute(idx, 1)); out.computeBoundingSphere(); out.computeBoundingBox();
+  return out;
 }
 
 function makeSky(top, mid, bot, sun){
@@ -1949,6 +1988,7 @@ function loadWorld(id, seed){
   if (rainObj){ scene.remove(rainObj); rainObj = null; }
   const W = new World(id);
   MAPBUILD[id](W, mulberry32(seed || 777));
+  W.mergeStatic();
   scene.add(W.group); scene.add(W.sky);
   scene.fog = new THREE.Fog(W.fog[0], W.fog[1], W.fog[2]); scene.background = new THREE.Color(W.fog[0]);
   hemi.color.set(W.hemi[0]); hemi.groundColor.set(W.hemi[1]); hemi.intensity = W.hemi[2];
@@ -4167,5 +4207,6 @@ function init(){
 }
 init();
 </script>
+<script src="../ilog.js"></script>
 </body>
 </html>

@@ -794,7 +794,7 @@ function bevel(g,a){a=a==null?1:a;const W=CW*SS,H=CH*SS;F(g,4,2,W-8,1,`rgba(255,
   F(g,4,H-3,W-8,1,`rgba(0,0,0,${.22*a})`);F(g,W-3,4,1,H-8,`rgba(0,0,0,${.16*a})`);F(g,3,3,1,1,`rgba(255,255,255,${.5*a})`);}
 function fillIn(g,c){P(g,1,2,CW-2,CH-4,c);P(g,2,1,CW-4,CH-2,c);}
 const SPR=new Map();
-const url=(key,fn,w,h)=>{let u=SPR.get(key);if(u)return u;const [c,g]=mkc((w||CW)*SS,(h||CH)*SS);g.scale(SS,SS);fn(g);u=c.toDataURL();SPR.set(key,u);return u;};
+const url=(key,fn,w,h)=>{let u=SPR.get(key);if(u)return u;const [c,g]=mkc((w||CW)*SS,(h||CH)*SS,true);g.scale(SS,SS);fn(g);u=c.toDataURL();SPR.set(key,u);return u;};
 // 종이 질감 (세밀 픽셀 노이즈)
 function grain(g,dark,light,x0,y0,x1,y1){x0=x0||3;y0=y0||3;x1=x1||CW*SS-3;y1=y1||CH*SS-3;for(let j=y0;j<y1;j++)for(let i=x0;i<x1;i++){const r=hsh(i,j);if(r<.045)F(g,i,j,1,1,dark);else if(r>.988)F(g,i,j,1,1,light);}}
 const plus=(g,x,y,c,s)=>{s=s||1;F(g,x-s,y,2*s+1,1,c);F(g,x,y-s,1,2*s+1,c);};
@@ -2425,5 +2425,6 @@ applyFxOpt();fit();$("#deckImg").src=backURL();showTitle();requestAnimationFrame
   const step=d=>{let k=0;while(q.length&&(k++<1||d.timeRemaining()>6))q.shift()();if(q.length)ric(step);};ric(step);}
 if(document.fonts&&document.fonts.load){document.fonts.load("16px 'Press Start 2P'");document.fonts.load("16px 'Do Hyeon'");}
 </script>
+<script src="../ilog.js"></script>
 </body>
 </html>

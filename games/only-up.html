@@ -108,6 +108,7 @@ button:focus-visible{outline:3px solid var(--accent-2);outline-offset:3px}
 /* touch */
 #touch{position:fixed;inset:0;pointer-events:none;z-index:4}
 #touch[hidden]{display:none}
+#touch *,#touch button{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #joy{position:absolute;left:calc(26px + env(safe-area-inset-left,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));width:120px;height:120px;border-radius:50%;
   border:2px solid rgba(255,255,255,.5);background:rgba(0,0,0,.18);pointer-events:auto}
 #joy i{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:rgba(255,255,255,.55)}
@@ -995,10 +996,11 @@ function update(dt){
   let ix=0,iz=0;if(keys.KeyA)ix-=1;if(keys.KeyD)ix+=1;if(keys.KeyW)iz+=1;if(keys.KeyS)iz-=1;ix+=touchMove.x;iz+=touchMove.y;
   if(keys.ArrowLeft)yaw+=dt*2.2;if(keys.ArrowRight)yaw-=dt*2.2;if(keys.ArrowUp)pitch=Math.max(-0.35,pitch-dt*1.5);if(keys.ArrowDown)pitch=Math.min(1.25,pitch+dt*1.5);
   const il=Math.hypot(ix,iz);if(il>1){ix/=il;iz/=il;}
+  if(window.ILOG){const q=Math.round(ix*5)+','+Math.round(iz*5);if(q!==update.lq){update.lq=q;ILOG.game(il>0.05?'이동':'멈춤','옆 '+ix.toFixed(1)+' · 앞 '+iz.toFixed(1));}}
   const fx=-Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=-Math.sin(yaw);const mx=fx*iz+rx*ix,mz=fz*iz+rz*ix;
   const acc=onGround?(slippery?2.2:42):9;const k=Math.min(1,acc*dt);vel.x+=(mx*SPEED-vel.x)*k;vel.z+=(mz*SPEED-vel.z)*k;
   coyote=onGround?0.12:coyote-dt;jumpBuf-=dt;
-  if(jumpBuf>0&&coyote>0){vel.y=JV;jumpBuf=0;coyote=0;onGround=false;jumps++;AU.jump();}
+  if(jumpBuf>0&&coyote>0){vel.y=JV;jumpBuf=0;coyote=0;onGround=false;jumps++;AU.jump();if(window.ILOG)ILOG.game('점프');}
   // physics
   const wasG=onGround;const n=Math.max(1,Math.ceil(Math.max(Math.abs(vel.x),Math.abs(vel.y),Math.abs(vel.z))*dt/0.18));let landV=0;
   for(let i=0;i<n;i++){const lv=physStep(dt/n);if(lv>landV)landV=lv;}
@@ -1095,5 +1097,6 @@ $('btn-again').onclick=()=>startGame(false);
   cv.addEventListener('pointerup',e=>{if(e.pointerId===lid)lid=null;});})();
 boot().catch(err=>{console.error(err);setLoad(0,'불러오는 중 문제가 생겼어요: '+err.message);});
 </script>
+<script src="../ilog.js"></script>
 </body>
 </html>

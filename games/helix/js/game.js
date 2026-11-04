@@ -44,7 +44,9 @@ const ACT = {
   spin: {len: 0.44, hit: 0.3, hit2: 0.66, anim: 'spin'}, cast: {len: 0.36, hit: 0.45, anim: 'throw'}, dash: {len: 0.2, anim: 'dash'},
   leap: {len: 0.78, hit: 0.7, anim: 'leap'}, ult: {len: 0.9, hit: 0.62, anim: 'cast'}, hit: {len: 0.22, anim: 'hit'}, death: {len: 1.4, anim: 'death'}, spawn: {len: 0.9, anim: 'spawn'},
 };
-function setAct(P, a, lenMul = 1) { P.act = a; P.at = 0; P.alen = (ACT[a] ? ACT[a].len : 0.3) * lenMul; P.hitDone = false; P.hit2 = false; }
+const ILOG_ACTS = {atk1: '베기 1', atk2: '베기 2', atk3: '내려찍기', spin: '회전베기', cast: '시약 투척', dash: '돌진', leap: '도약', ult: '의식', gfire: '사격', gblast: '산탄 폭발', cmd: '드론 돌격'};
+function setAct(P, a, lenMul = 1) { if (ILOG_ACTS[a] && window.ILOG && P === G.player) ILOG.game(ILOG_ACTS[a], '방향 ' + Math.round(P.ang * 57.3) + '°');
+  P.act = a; P.at = 0; P.alen = (ACT[a] ? ACT[a].len : 0.3) * lenMul; P.hitDone = false; P.hit2 = false; }
 function aimAngle(P) {
   if (INPUT.lastDevice === 'kb') {
     const mx = INPUT.mouse.x + camX(), my = INPUT.mouse.y + camY();

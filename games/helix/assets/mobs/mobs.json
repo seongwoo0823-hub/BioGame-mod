@@ -27,21 +27,29 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "phage_idle.webp"
+    "file": "phage.webp",
+    "x": 0,
+    "y": 0,
+    "src": "phage_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "phage_move.webp"
+    "file": "phage.webp",
+    "x": 1024,
+    "y": 0,
+    "src": "phage_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "phage_attack.webp",
+    "file": "phage.webp",
     "root": [
      0.0,
      -1.7,
@@ -51,28 +59,43 @@
      23.0,
      13.9,
      0.0
-    ]
+    ],
+    "x": 2048,
+    "y": 0,
+    "src": "phage_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "phage_hit.webp",
+    "file": "phage.webp",
     "root": [
      -9.2,
      -6.4,
      -3.7,
      -0.9
-    ]
+    ],
+    "x": 0,
+    "y": 1024,
+    "src": "phage_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "phage_death.webp"
+    "file": "phage.webp",
+    "x": 3072,
+    "y": 0,
+    "src": "phage_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "phage.webp"
   ]
  },
  "amoeba": {
@@ -103,21 +126,29 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "amoeba_idle.webp"
+    "file": "amoeba.webp",
+    "x": 0,
+    "y": 0,
+    "src": "amoeba_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "amoeba_move.webp"
+    "file": "amoeba.webp",
+    "x": 1024,
+    "y": 0,
+    "src": "amoeba_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "amoeba_attack.webp",
+    "file": "amoeba.webp",
     "root": [
      0.0,
      -5.3,
@@ -127,22 +158,37 @@
      52.6,
      36.4,
      0.0
-    ]
+    ],
+    "x": 2048,
+    "y": 0,
+    "src": "amoeba_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "amoeba_hit.webp"
+    "file": "amoeba.webp",
+    "x": 0,
+    "y": 1024,
+    "src": "amoeba_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "amoeba_death.webp"
+    "file": "amoeba.webp",
+    "x": 3072,
+    "y": 0,
+    "src": "amoeba_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "amoeba.webp"
   ]
  },
  "bacillus": {
@@ -174,21 +220,29 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "bacillus_idle.webp"
+    "file": "bacillus.webp",
+    "x": 0,
+    "y": 0,
+    "src": "bacillus_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "bacillus_move.webp"
+    "file": "bacillus.webp",
+    "x": 1152,
+    "y": 0,
+    "src": "bacillus_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "bacillus_attack.webp",
+    "file": "bacillus.webp",
     "root": [
      0.0,
      -8.8,
@@ -198,28 +252,43 @@
      58.1,
      34.4,
      0.0
-    ]
+    ],
+    "x": 2304,
+    "y": 0,
+    "src": "bacillus_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "bacillus_hit.webp",
+    "file": "bacillus.webp",
     "root": [
      -20.2,
      -14.2,
      -8.1,
      -2.0
-    ]
+    ],
+    "x": 1152,
+    "y": 1152,
+    "src": "bacillus_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "bacillus_death.webp"
+    "file": "bacillus.webp",
+    "x": 0,
+    "y": 1152,
+    "src": "bacillus_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "bacillus.webp"
   ]
  },
  "brute": {
@@ -250,43 +319,71 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "brute_idle.webp"
+    "file": "brute.webp",
+    "x": 0,
+    "y": 1408,
+    "src": "brute_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "brute_move.webp"
+    "file": "brute.webp",
+    "x": 1408,
+    "y": 1408,
+    "src": "brute_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 10,
     "loop": false,
     "name": "내려치기",
-    "file": "brute_attack.webp"
+    "file": "brute.webp",
+    "x": 0,
+    "y": 0,
+    "src": "brute_attack.webp",
+    "page": 0
    },
    {
     "id": "roar",
     "frames": 8,
     "loop": false,
     "name": "포효",
-    "file": "brute_roar.webp"
+    "file": "brute.webp",
+    "x": 2816,
+    "y": 1408,
+    "src": "brute_roar.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "brute_hit.webp"
+    "file": "brute_2.webp",
+    "x": 0,
+    "y": 0,
+    "src": "brute_hit.webp",
+    "page": 1
    },
    {
     "id": "death",
     "frames": 10,
     "loop": false,
     "name": "죽음",
-    "file": "brute_death.webp"
+    "file": "brute.webp",
+    "x": 1760,
+    "y": 0,
+    "src": "brute_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "brute.webp",
+   "brute_2.webp"
   ]
  },
  "researcher": {
@@ -317,21 +414,29 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "researcher_idle.webp"
+    "file": "researcher.webp",
+    "x": 0,
+    "y": 0,
+    "src": "researcher_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "researcher_move.webp"
+    "file": "researcher.webp",
+    "x": 1408,
+    "y": 0,
+    "src": "researcher_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "researcher_attack.webp",
+    "file": "researcher.webp",
     "root": [
      0.0,
      0.0,
@@ -341,28 +446,43 @@
      11.2,
      6.8,
      0.0
-    ]
+    ],
+    "x": 2816,
+    "y": 0,
+    "src": "researcher_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "researcher_hit.webp",
+    "file": "researcher.webp",
     "root": [
      -4.8,
      -3.4,
      -1.9,
      -0.5
-    ]
+    ],
+    "x": 1408,
+    "y": 1408,
+    "src": "researcher_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "researcher_death.webp"
+    "file": "researcher.webp",
+    "x": 0,
+    "y": 1408,
+    "src": "researcher_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "researcher.webp"
   ]
  },
  "mosquito": {
@@ -393,21 +513,29 @@
     "frames": 6,
     "loop": true,
     "name": "대기",
-    "file": "mosquito_idle.webp"
+    "file": "mosquito.webp",
+    "x": 1792,
+    "y": 0,
+    "src": "mosquito_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 6,
     "loop": true,
     "name": "비행",
-    "file": "mosquito_move.webp"
+    "file": "mosquito.webp",
+    "x": 2464,
+    "y": 0,
+    "src": "mosquito_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "mosquito_attack.webp",
+    "file": "mosquito.webp",
     "root": [
      0.0,
      -7.1,
@@ -417,28 +545,43 @@
      58.5,
      35.5,
      0.0
-    ]
+    ],
+    "x": 0,
+    "y": 0,
+    "src": "mosquito_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "mosquito_hit.webp",
+    "file": "mosquito.webp",
     "root": [
      -16.2,
      -11.4,
      -6.5,
      -1.6
-    ]
+    ],
+    "x": 3136,
+    "y": 0,
+    "src": "mosquito_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "mosquito_death.webp"
+    "file": "mosquito.webp",
+    "x": 896,
+    "y": 0,
+    "src": "mosquito_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "mosquito.webp"
   ]
  },
  "worm": {
@@ -469,36 +612,59 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "worm_idle.webp"
+    "file": "worm.webp",
+    "x": 0,
+    "y": 0,
+    "src": "worm_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "worm_move.webp"
+    "file": "worm.webp",
+    "x": 1152,
+    "y": 0,
+    "src": "worm_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "worm_attack.webp"
+    "file": "worm.webp",
+    "x": 2304,
+    "y": 0,
+    "src": "worm_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "worm_hit.webp"
+    "file": "worm.webp",
+    "x": 1152,
+    "y": 1152,
+    "src": "worm_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "worm_death.webp"
+    "file": "worm.webp",
+    "x": 0,
+    "y": 1152,
+    "src": "worm_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "worm.webp"
   ]
  },
  "shroom": {
@@ -529,36 +695,59 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "shroom_idle.webp"
+    "file": "shroom.webp",
+    "x": 0,
+    "y": 0,
+    "src": "shroom_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "shroom_move.webp"
+    "file": "shroom.webp",
+    "x": 896,
+    "y": 0,
+    "src": "shroom_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "shroom_attack.webp"
+    "file": "shroom.webp",
+    "x": 1792,
+    "y": 0,
+    "src": "shroom_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "shroom_hit.webp"
+    "file": "shroom.webp",
+    "x": 3584,
+    "y": 0,
+    "src": "shroom_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "shroom_death.webp"
+    "file": "shroom.webp",
+    "x": 2688,
+    "y": 0,
+    "src": "shroom_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "shroom.webp"
   ]
  },
  "prion": {
@@ -589,36 +778,59 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "prion_idle.webp"
+    "file": "prion.webp",
+    "x": 0,
+    "y": 0,
+    "src": "prion_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "prion_move.webp"
+    "file": "prion.webp",
+    "x": 1280,
+    "y": 0,
+    "src": "prion_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "prion_attack.webp"
+    "file": "prion.webp",
+    "x": 2560,
+    "y": 0,
+    "src": "prion_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "prion_hit.webp"
+    "file": "prion.webp",
+    "x": 1280,
+    "y": 1280,
+    "src": "prion_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "prion_death.webp"
+    "file": "prion.webp",
+    "x": 0,
+    "y": 1280,
+    "src": "prion_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "prion.webp"
   ]
  },
  "planaria": {
@@ -650,21 +862,29 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "planaria_idle.webp"
+    "file": "planaria.webp",
+    "x": 0,
+    "y": 0,
+    "src": "planaria_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "planaria_move.webp"
+    "file": "planaria.webp",
+    "x": 1024,
+    "y": 0,
+    "src": "planaria_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "planaria_attack.webp",
+    "file": "planaria.webp",
     "root": [
      0.0,
      -4.9,
@@ -674,28 +894,43 @@
      41.8,
      29.1,
      0.0
-    ]
+    ],
+    "x": 2048,
+    "y": 0,
+    "src": "planaria_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "planaria_hit.webp",
+    "file": "planaria.webp",
     "root": [
      -13.5,
      -9.4,
      -5.4,
      -1.4
-    ]
+    ],
+    "x": 0,
+    "y": 1024,
+    "src": "planaria_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "planaria_death.webp"
+    "file": "planaria.webp",
+    "x": 3072,
+    "y": 0,
+    "src": "planaria_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "planaria.webp"
   ]
  },
  "jelly": {
@@ -727,36 +962,59 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "jelly_idle.webp"
+    "file": "jelly.webp",
+    "x": 0,
+    "y": 0,
+    "src": "jelly_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "jelly_move.webp"
+    "file": "jelly.webp",
+    "x": 896,
+    "y": 0,
+    "src": "jelly_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "jelly_attack.webp"
+    "file": "jelly.webp",
+    "x": 1792,
+    "y": 0,
+    "src": "jelly_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "jelly_hit.webp"
+    "file": "jelly.webp",
+    "x": 3584,
+    "y": 0,
+    "src": "jelly_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "jelly_death.webp"
+    "file": "jelly.webp",
+    "x": 2688,
+    "y": 0,
+    "src": "jelly_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "jelly.webp"
   ]
  },
  "tick": {
@@ -787,21 +1045,29 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "tick_idle.webp"
+    "file": "tick.webp",
+    "x": 0,
+    "y": 0,
+    "src": "tick_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "tick_move.webp"
+    "file": "tick.webp",
+    "x": 768,
+    "y": 0,
+    "src": "tick_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "tick_attack.webp",
+    "file": "tick.webp",
     "root": [
      0.0,
      -3.8,
@@ -811,28 +1077,43 @@
      56.0,
      28.9,
      0.0
-    ]
+    ],
+    "x": 1536,
+    "y": 0,
+    "src": "tick_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "tick_hit.webp",
+    "file": "tick.webp",
     "root": [
      -10.5,
      -7.3,
      -4.2,
      -1.1
-    ]
+    ],
+    "x": 3072,
+    "y": 0,
+    "src": "tick_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "tick_death.webp"
+    "file": "tick.webp",
+    "x": 2304,
+    "y": 0,
+    "src": "tick_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "tick.webp"
   ]
  },
  "corona": {
@@ -863,21 +1144,29 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "corona_idle.webp"
+    "file": "corona.webp",
+    "x": 0,
+    "y": 0,
+    "src": "corona_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "corona_move.webp"
+    "file": "corona.webp",
+    "x": 1024,
+    "y": 0,
+    "src": "corona_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "corona_attack.webp",
+    "file": "corona.webp",
     "root": [
      0.0,
      -2.0,
@@ -887,28 +1176,43 @@
      69.0,
      55.3,
      0.0
-    ]
+    ],
+    "x": 2048,
+    "y": 0,
+    "src": "corona_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "corona_hit.webp",
+    "file": "corona.webp",
     "root": [
      -13.8,
      -9.7,
      -5.5,
      -1.4
-    ]
+    ],
+    "x": 0,
+    "y": 1024,
+    "src": "corona_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "corona_death.webp"
+    "file": "corona.webp",
+    "x": 3072,
+    "y": 0,
+    "src": "corona_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "corona.webp"
   ]
  },
  "leech": {
@@ -939,21 +1243,29 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "leech_idle.webp"
+    "file": "leech.webp",
+    "x": 0,
+    "y": 0,
+    "src": "leech_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "leech_move.webp"
+    "file": "leech.webp",
+    "x": 1152,
+    "y": 0,
+    "src": "leech_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "leech_attack.webp",
+    "file": "leech.webp",
     "root": [
      0.0,
      -3.8,
@@ -963,28 +1275,43 @@
      52.0,
      41.7,
      0.0
-    ]
+    ],
+    "x": 2304,
+    "y": 0,
+    "src": "leech_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "leech_hit.webp",
+    "file": "leech.webp",
     "root": [
      -9.8,
      -6.8,
      -3.9,
      -1.0
-    ]
+    ],
+    "x": 1152,
+    "y": 1152,
+    "src": "leech_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "leech_death.webp"
+    "file": "leech.webp",
+    "x": 0,
+    "y": 1152,
+    "src": "leech_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "leech.webp"
   ]
  },
  "clone": {
@@ -1015,36 +1342,59 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "clone_idle.webp"
+    "file": "clone.webp",
+    "x": 0,
+    "y": 0,
+    "src": "clone_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "clone_move.webp"
+    "file": "clone.webp",
+    "x": 1152,
+    "y": 0,
+    "src": "clone_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "clone_attack.webp"
+    "file": "clone.webp",
+    "x": 2304,
+    "y": 0,
+    "src": "clone_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "clone_hit.webp"
+    "file": "clone.webp",
+    "x": 1152,
+    "y": 1152,
+    "src": "clone_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "clone_death.webp"
+    "file": "clone.webp",
+    "x": 0,
+    "y": 1152,
+    "src": "clone_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "clone.webp"
   ]
  },
  "rat": {
@@ -1076,21 +1426,29 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "rat_idle.webp"
+    "file": "rat.webp",
+    "x": 0,
+    "y": 0,
+    "src": "rat_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "rat_move.webp"
+    "file": "rat.webp",
+    "x": 1024,
+    "y": 0,
+    "src": "rat_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "rat_attack.webp",
+    "file": "rat.webp",
     "root": [
      0.0,
      -4.5,
@@ -1100,28 +1458,43 @@
      56.2,
      34.1,
      0.0
-    ]
+    ],
+    "x": 2048,
+    "y": 0,
+    "src": "rat_attack.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "rat_hit.webp",
+    "file": "rat.webp",
     "root": [
      -12.5,
      -8.8,
      -5.0,
      -1.2
-    ]
+    ],
+    "x": 0,
+    "y": 1024,
+    "src": "rat_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 8,
     "loop": false,
     "name": "죽음",
-    "file": "rat_death.webp"
+    "file": "rat.webp",
+    "x": 3072,
+    "y": 0,
+    "src": "rat_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "rat.webp"
   ]
  },
  "phage_q": {
@@ -1150,21 +1523,29 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "phage_q_idle.webp"
+    "file": "phage_q.webp",
+    "x": 2240,
+    "y": 1792,
+    "src": "phage_q_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "phage_q_move.webp"
+    "file": "phage_q_2.webp",
+    "x": 0,
+    "y": 0,
+    "src": "phage_q_move.webp",
+    "page": 1
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "phage_q_attack.webp",
+    "file": "phage_q_2.webp",
     "root": [
      0.0,
      -3.1,
@@ -1174,35 +1555,55 @@
      42.0,
      25.5,
      0.0
-    ]
+    ],
+    "x": 1792,
+    "y": 0,
+    "src": "phage_q_attack.webp",
+    "page": 1
    },
    {
     "id": "special",
     "frames": 10,
     "loop": false,
     "name": "특수기",
-    "file": "phage_q_special.webp"
+    "file": "phage_q.webp",
+    "x": 0,
+    "y": 0,
+    "src": "phage_q_special.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "phage_q_hit.webp",
+    "file": "phage_q_2.webp",
     "root": [
      -16.8,
      -11.8,
      -6.7,
      -1.7
-    ]
+    ],
+    "x": 0,
+    "y": 1792,
+    "src": "phage_q_hit.webp",
+    "page": 1
    },
    {
     "id": "death",
     "frames": 10,
     "loop": false,
     "name": "죽음",
-    "file": "phage_q_death.webp"
+    "file": "phage_q.webp",
+    "x": 0,
+    "y": 1792,
+    "src": "phage_q_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "phage_q.webp",
+   "phage_q_2.webp"
   ]
  },
  "shroom_k": {
@@ -1231,43 +1632,71 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "shroom_k_idle.webp"
+    "file": "shroom_k.webp",
+    "x": 0,
+    "y": 1664,
+    "src": "shroom_k_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "shroom_k_move.webp"
+    "file": "shroom_k.webp",
+    "x": 1664,
+    "y": 1664,
+    "src": "shroom_k_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "shroom_k_attack.webp"
+    "file": "shroom_k_2.webp",
+    "x": 0,
+    "y": 0,
+    "src": "shroom_k_attack.webp",
+    "page": 1
    },
    {
     "id": "special",
     "frames": 10,
     "loop": false,
     "name": "특수기",
-    "file": "shroom_k_special.webp"
+    "file": "shroom_k.webp",
+    "x": 0,
+    "y": 0,
+    "src": "shroom_k_special.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "shroom_k_hit.webp"
+    "file": "shroom_k_2.webp",
+    "x": 1664,
+    "y": 0,
+    "src": "shroom_k_hit.webp",
+    "page": 1
    },
    {
     "id": "death",
     "frames": 10,
     "loop": false,
     "name": "죽음",
-    "file": "shroom_k_death.webp"
+    "file": "shroom_k.webp",
+    "x": 2080,
+    "y": 0,
+    "src": "shroom_k_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "shroom_k.webp",
+   "shroom_k_2.webp"
   ]
  },
  "leech_l": {
@@ -1296,21 +1725,29 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "leech_l_idle.webp"
+    "file": "leech_l.webp",
+    "x": 0,
+    "y": 1664,
+    "src": "leech_l_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "leech_l_move.webp"
+    "file": "leech_l.webp",
+    "x": 1664,
+    "y": 1664,
+    "src": "leech_l_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "leech_l_attack.webp",
+    "file": "leech_l_2.webp",
     "root": [
      0.0,
      -4.7,
@@ -1320,35 +1757,55 @@
      64.0,
      51.3,
      0.0
-    ]
+    ],
+    "x": 0,
+    "y": 0,
+    "src": "leech_l_attack.webp",
+    "page": 1
    },
    {
     "id": "special",
     "frames": 10,
     "loop": false,
     "name": "특수기",
-    "file": "leech_l_special.webp"
+    "file": "leech_l.webp",
+    "x": 0,
+    "y": 0,
+    "src": "leech_l_special.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "leech_l_hit.webp",
+    "file": "leech_l_2.webp",
     "root": [
      -12.0,
      -8.4,
      -4.8,
      -1.2
-    ]
+    ],
+    "x": 1664,
+    "y": 0,
+    "src": "leech_l_hit.webp",
+    "page": 1
    },
    {
     "id": "death",
     "frames": 10,
     "loop": false,
     "name": "죽음",
-    "file": "leech_l_death.webp"
+    "file": "leech_l.webp",
+    "x": 2080,
+    "y": 0,
+    "src": "leech_l_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "leech_l.webp",
+   "leech_l_2.webp"
   ]
  },
  "tick_m": {
@@ -1377,21 +1834,29 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "tick_m_idle.webp"
+    "file": "tick_m.webp",
+    "x": 0,
+    "y": 1280,
+    "src": "tick_m_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "tick_m_move.webp"
+    "file": "tick_m.webp",
+    "x": 1280,
+    "y": 1280,
+    "src": "tick_m_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "tick_m_attack.webp",
+    "file": "tick_m.webp",
     "root": [
      0.0,
      -4.9,
@@ -1401,35 +1866,54 @@
      71.7,
      36.9,
      0.0
-    ]
+    ],
+    "x": 2560,
+    "y": 1280,
+    "src": "tick_m_attack.webp",
+    "page": 0
    },
    {
     "id": "special",
     "frames": 10,
     "loop": false,
     "name": "특수기",
-    "file": "tick_m_special.webp"
+    "file": "tick_m.webp",
+    "x": 0,
+    "y": 0,
+    "src": "tick_m_special.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "tick_m_hit.webp",
+    "file": "tick_m.webp",
     "root": [
      -13.4,
      -9.4,
      -5.4,
      -1.3
-    ]
+    ],
+    "x": 0,
+    "y": 2560,
+    "src": "tick_m_hit.webp",
+    "page": 0
    },
    {
     "id": "death",
     "frames": 10,
     "loop": false,
     "name": "죽음",
-    "file": "tick_m_death.webp"
+    "file": "tick_m.webp",
+    "x": 1600,
+    "y": 0,
+    "src": "tick_m_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "tick_m.webp"
   ]
  },
  "brute_x": {
@@ -1458,43 +1942,71 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "brute_x_idle.webp"
+    "file": "brute_x.webp",
+    "x": 0,
+    "y": 1664,
+    "src": "brute_x_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "brute_x_move.webp"
+    "file": "brute_x.webp",
+    "x": 1664,
+    "y": 1664,
+    "src": "brute_x_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "brute_x_attack.webp"
+    "file": "brute_x_2.webp",
+    "x": 0,
+    "y": 0,
+    "src": "brute_x_attack.webp",
+    "page": 1
    },
    {
     "id": "special",
     "frames": 10,
     "loop": false,
     "name": "특수기",
-    "file": "brute_x_special.webp"
+    "file": "brute_x.webp",
+    "x": 0,
+    "y": 0,
+    "src": "brute_x_special.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "brute_x_hit.webp"
+    "file": "brute_x_2.webp",
+    "x": 1664,
+    "y": 0,
+    "src": "brute_x_hit.webp",
+    "page": 1
    },
    {
     "id": "death",
     "frames": 10,
     "loop": false,
     "name": "죽음",
-    "file": "brute_x_death.webp"
+    "file": "brute_x.webp",
+    "x": 2080,
+    "y": 0,
+    "src": "brute_x_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "brute_x.webp",
+   "brute_x_2.webp"
   ]
  },
  "clone_c": {
@@ -1523,43 +2035,71 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "clone_c_idle.webp"
+    "file": "clone_c.webp",
+    "x": 0,
+    "y": 1664,
+    "src": "clone_c_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "clone_c_move.webp"
+    "file": "clone_c.webp",
+    "x": 1664,
+    "y": 1664,
+    "src": "clone_c_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "clone_c_attack.webp"
+    "file": "clone_c_2.webp",
+    "x": 0,
+    "y": 0,
+    "src": "clone_c_attack.webp",
+    "page": 1
    },
    {
     "id": "special",
     "frames": 10,
     "loop": false,
     "name": "특수기",
-    "file": "clone_c_special.webp"
+    "file": "clone_c.webp",
+    "x": 0,
+    "y": 0,
+    "src": "clone_c_special.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "clone_c_hit.webp"
+    "file": "clone_c_2.webp",
+    "x": 1664,
+    "y": 0,
+    "src": "clone_c_hit.webp",
+    "page": 1
    },
    {
     "id": "death",
     "frames": 10,
     "loop": false,
     "name": "죽음",
-    "file": "clone_c_death.webp"
+    "file": "clone_c.webp",
+    "x": 2080,
+    "y": 0,
+    "src": "clone_c_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "clone_c.webp",
+   "clone_c_2.webp"
   ]
  },
  "prion_g": {
@@ -1588,43 +2128,71 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "prion_g_idle.webp"
+    "file": "prion_g.webp",
+    "x": 0,
+    "y": 1536,
+    "src": "prion_g_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "prion_g_move.webp"
+    "file": "prion_g.webp",
+    "x": 1536,
+    "y": 1536,
+    "src": "prion_g_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "prion_g_attack.webp"
+    "file": "prion_g_2.webp",
+    "x": 0,
+    "y": 0,
+    "src": "prion_g_attack.webp",
+    "page": 1
    },
    {
     "id": "special",
     "frames": 10,
     "loop": false,
     "name": "특수기",
-    "file": "prion_g_special.webp"
+    "file": "prion_g.webp",
+    "x": 0,
+    "y": 0,
+    "src": "prion_g_special.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "prion_g_hit.webp"
+    "file": "prion_g_2.webp",
+    "x": 1536,
+    "y": 0,
+    "src": "prion_g_hit.webp",
+    "page": 1
    },
    {
     "id": "death",
     "frames": 10,
     "loop": false,
     "name": "죽음",
-    "file": "prion_g_death.webp"
+    "file": "prion_g.webp",
+    "x": 1920,
+    "y": 0,
+    "src": "prion_g_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "prion_g.webp",
+   "prion_g_2.webp"
   ]
  },
  "corona_n": {
@@ -1653,21 +2221,29 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "corona_n_idle.webp"
+    "file": "corona_n.webp",
+    "x": 0,
+    "y": 1536,
+    "src": "corona_n_idle.webp",
+    "page": 0
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "corona_n_move.webp"
+    "file": "corona_n.webp",
+    "x": 1536,
+    "y": 1536,
+    "src": "corona_n_move.webp",
+    "page": 0
    },
    {
     "id": "attack",
     "frames": 8,
     "loop": false,
     "name": "공격",
-    "file": "corona_n_attack.webp",
+    "file": "corona_n_2.webp",
     "root": [
      0.0,
      -2.8,
@@ -1677,35 +2253,55 @@
      95.0,
      76.2,
      0.0
-    ]
+    ],
+    "x": 0,
+    "y": 0,
+    "src": "corona_n_attack.webp",
+    "page": 1
    },
    {
     "id": "special",
     "frames": 10,
     "loop": false,
     "name": "특수기",
-    "file": "corona_n_special.webp"
+    "file": "corona_n.webp",
+    "x": 0,
+    "y": 0,
+    "src": "corona_n_special.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "corona_n_hit.webp",
+    "file": "corona_n_2.webp",
     "root": [
      -19.0,
      -13.3,
      -7.6,
      -1.9
-    ]
+    ],
+    "x": 1536,
+    "y": 0,
+    "src": "corona_n_hit.webp",
+    "page": 1
    },
    {
     "id": "death",
     "frames": 10,
     "loop": false,
     "name": "죽음",
-    "file": "corona_n_death.webp"
+    "file": "corona_n.webp",
+    "x": 1920,
+    "y": 0,
+    "src": "corona_n_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "corona_n.webp",
+   "corona_n_2.webp"
   ]
  },
  "queen": {
@@ -1734,50 +2330,86 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "queen_idle.webp"
+    "file": "queen_5.webp",
+    "x": 0,
+    "y": 0,
+    "src": "queen_idle.webp",
+    "page": 4
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "queen_move.webp"
+    "file": "queen_5.webp",
+    "x": 2176,
+    "y": 0,
+    "src": "queen_move.webp",
+    "page": 4
    },
    {
     "id": "attack",
     "frames": 10,
     "loop": false,
     "name": "위족 내려치기",
-    "file": "queen_attack.webp"
+    "file": "queen_3.webp",
+    "x": 0,
+    "y": 0,
+    "src": "queen_attack.webp",
+    "page": 2
    },
    {
     "id": "attack2",
     "frames": 10,
     "loop": false,
     "name": "산성 토하기",
-    "file": "queen_attack2.webp"
+    "file": "queen_4.webp",
+    "x": 0,
+    "y": 0,
+    "src": "queen_attack2.webp",
+    "page": 3
    },
    {
     "id": "special",
     "frames": 12,
     "loop": false,
     "name": "출아",
-    "file": "queen_special.webp"
+    "file": "queen_2.webp",
+    "x": 0,
+    "y": 0,
+    "src": "queen_special.webp",
+    "page": 1
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "queen_hit.webp"
+    "file": "queen_6.webp",
+    "x": 0,
+    "y": 0,
+    "src": "queen_hit.webp",
+    "page": 5
    },
    {
     "id": "death",
     "frames": 14,
     "loop": false,
     "name": "죽음",
-    "file": "queen_death.webp"
+    "file": "queen.webp",
+    "x": 0,
+    "y": 0,
+    "src": "queen_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "queen.webp",
+   "queen_2.webp",
+   "queen_3.webp",
+   "queen_4.webp",
+   "queen_5.webp",
+   "queen_6.webp"
   ]
  },
  "wormking": {
@@ -1806,50 +2438,83 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "wormking_idle.webp"
+    "file": "wormking_3.webp",
+    "x": 0,
+    "y": 0,
+    "src": "wormking_idle.webp",
+    "page": 2
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "wormking_move.webp"
+    "file": "wormking_3.webp",
+    "x": 2048,
+    "y": 0,
+    "src": "wormking_move.webp",
+    "page": 2
    },
    {
     "id": "attack",
     "frames": 10,
     "loop": false,
     "name": "덮쳐 물기",
-    "file": "wormking_attack.webp"
+    "file": "wormking_2.webp",
+    "x": 0,
+    "y": 0,
+    "src": "wormking_attack.webp",
+    "page": 1
    },
    {
     "id": "attack2",
     "frames": 10,
     "loop": false,
     "name": "몸통 휩쓸기",
-    "file": "wormking_attack2.webp"
+    "file": "wormking_2.webp",
+    "x": 0,
+    "y": 2048,
+    "src": "wormking_attack2.webp",
+    "page": 1
    },
    {
     "id": "special",
     "frames": 12,
     "loop": false,
     "name": "잠행",
-    "file": "wormking_special.webp"
+    "file": "wormking.webp",
+    "x": 0,
+    "y": 2048,
+    "src": "wormking_special.webp",
+    "page": 0
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "wormking_hit.webp"
+    "file": "wormking_3.webp",
+    "x": 0,
+    "y": 2048,
+    "src": "wormking_hit.webp",
+    "page": 2
    },
    {
     "id": "death",
     "frames": 14,
     "loop": false,
     "name": "죽음",
-    "file": "wormking_death.webp"
+    "file": "wormking.webp",
+    "x": 0,
+    "y": 0,
+    "src": "wormking_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "wormking.webp",
+   "wormking_2.webp",
+   "wormking_3.webp"
   ]
  },
  "doctor": {
@@ -1878,50 +2543,86 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "doctor_idle.webp"
+    "file": "doctor_5.webp",
+    "x": 0,
+    "y": 0,
+    "src": "doctor_idle.webp",
+    "page": 4
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "doctor_move.webp"
+    "file": "doctor_6.webp",
+    "x": 0,
+    "y": 0,
+    "src": "doctor_move.webp",
+    "page": 5
    },
    {
     "id": "attack",
     "frames": 10,
     "loop": false,
     "name": "주사기 찌르기",
-    "file": "doctor_attack.webp"
+    "file": "doctor_3.webp",
+    "x": 0,
+    "y": 0,
+    "src": "doctor_attack.webp",
+    "page": 2
    },
    {
     "id": "attack2",
     "frames": 10,
     "loop": false,
     "name": "촉수 휩쓸기",
-    "file": "doctor_attack2.webp"
+    "file": "doctor_4.webp",
+    "x": 0,
+    "y": 0,
+    "src": "doctor_attack2.webp",
+    "page": 3
    },
    {
     "id": "special",
     "frames": 12,
     "loop": false,
     "name": "혈청 주입",
-    "file": "doctor_special.webp"
+    "file": "doctor_2.webp",
+    "x": 0,
+    "y": 0,
+    "src": "doctor_special.webp",
+    "page": 1
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "doctor_hit.webp"
+    "file": "doctor_6.webp",
+    "x": 2304,
+    "y": 0,
+    "src": "doctor_hit.webp",
+    "page": 5
    },
    {
     "id": "death",
     "frames": 14,
     "loop": false,
     "name": "죽음",
-    "file": "doctor_death.webp"
+    "file": "doctor.webp",
+    "x": 0,
+    "y": 0,
+    "src": "doctor_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "doctor.webp",
+   "doctor_2.webp",
+   "doctor_3.webp",
+   "doctor_4.webp",
+   "doctor_5.webp",
+   "doctor_6.webp"
   ]
  },
  "helix": {
@@ -1950,50 +2651,86 @@
     "frames": 8,
     "loop": true,
     "name": "대기",
-    "file": "helix_idle.webp"
+    "file": "helix_5.webp",
+    "x": 0,
+    "y": 0,
+    "src": "helix_idle.webp",
+    "page": 4
    },
    {
     "id": "move",
     "frames": 8,
     "loop": true,
     "name": "이동",
-    "file": "helix_move.webp"
+    "file": "helix_5.webp",
+    "x": 2176,
+    "y": 0,
+    "src": "helix_move.webp",
+    "page": 4
    },
    {
     "id": "attack",
     "frames": 10,
     "loop": false,
     "name": "나선 광선",
-    "file": "helix_attack.webp"
+    "file": "helix_3.webp",
+    "x": 0,
+    "y": 0,
+    "src": "helix_attack.webp",
+    "page": 2
    },
    {
     "id": "attack2",
     "frames": 10,
     "loop": false,
     "name": "내리꽂기",
-    "file": "helix_attack2.webp"
+    "file": "helix_4.webp",
+    "x": 0,
+    "y": 0,
+    "src": "helix_attack2.webp",
+    "page": 3
    },
    {
     "id": "special",
     "frames": 12,
     "loop": false,
     "name": "이중나선 분열",
-    "file": "helix_special.webp"
+    "file": "helix_2.webp",
+    "x": 0,
+    "y": 0,
+    "src": "helix_special.webp",
+    "page": 1
    },
    {
     "id": "hit",
     "frames": 4,
     "loop": false,
     "name": "피격",
-    "file": "helix_hit.webp"
+    "file": "helix_6.webp",
+    "x": 0,
+    "y": 0,
+    "src": "helix_hit.webp",
+    "page": 5
    },
    {
     "id": "death",
     "frames": 14,
     "loop": false,
     "name": "죽음",
-    "file": "helix_death.webp"
+    "file": "helix.webp",
+    "x": 0,
+    "y": 0,
+    "src": "helix_death.webp",
+    "page": 0
    }
+  ],
+  "atlas": [
+   "helix.webp",
+   "helix_2.webp",
+   "helix_3.webp",
+   "helix_4.webp",
+   "helix_5.webp",
+   "helix_6.webp"
   ]
  }
 }
