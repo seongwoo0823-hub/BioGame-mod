@@ -1,0 +1,56 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@900&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>html,body{margin:0;background:#000}#w{position:relative;width:1280px;height:720px;overflow:hidden}
+canvas{position:absolute;inset:0}
+.t{position:absolute;left:58px;bottom:70px;font-family:'Noto Sans KR';font-weight:900;font-size:112px;line-height:1;letter-spacing:4px;
+ background:linear-gradient(180deg,#fffbe8 0%,#ffe070 45%,#ff9a30 100%);-webkit-background-clip:text;color:transparent;
+ filter:drop-shadow(0 6px 0 #5a1a08) drop-shadow(0 0 22px rgba(255,170,40,.55))}
+.e{position:absolute;left:66px;bottom:38px;font-family:'Press Start 2P';font-size:26px;color:#3cffcf;letter-spacing:6px;text-shadow:0 4px 0 #063a2e,0 0 14px rgba(60,255,207,.6)}
+.s{position:absolute;left:62px;bottom:200px;font-family:'Noto Sans KR';font-weight:900;font-size:30px;color:#fff;background:#ff4a7a;padding:6px 16px;border-radius:10px;box-shadow:0 5px 0 #8a1a3a;transform:rotate(-3deg)}
+.hud{position:absolute;right:46px;top:38px;font-family:'Press Start 2P';color:#3cffcf;font-size:40px;text-shadow:0 5px 0 #04342a,0 0 18px rgba(60,255,207,.7)}
+.hud small{display:block;font-size:13px;color:#ffd040;margin-top:12px;text-align:right;letter-spacing:2px}
+</style></head><body><div id="w"><canvas id="c" width="1280" height="720"></canvas>
+<div class="s">숨은 생명 그림을 찾아라!</div><div class="t">세포 개척단</div><div class="e">CELL FRONTIER</div><div class="hud">73.5%<small>TARGET 70%</small></div></div>
+<script>
+const L=(s)=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src='../../games/cell-frontier/'+s;});
+(async()=>{
+const [cov,pic,pic2,sp,meta]=await Promise.all([L('c0.png'),L('p00.png'),L('p03.png'),L('sprites.png'),fetch('../../games/cell-frontier/sprites.json').then(r=>r.json())]);
+await document.fonts.ready;
+const c=document.getElementById('c'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
+// 배경: 깊은 우주 + 도트 별
+const bg=g.createRadialGradient(820,330,40,820,330,900);bg.addColorStop(0,'#1a2a5a');bg.addColorStop(.5,'#0c1430');bg.addColorStop(1,'#04060e');g.fillStyle=bg;g.fillRect(0,0,1280,720);
+let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+for(let k=0;k<260;k++){g.fillStyle=['#3a4a8a','#6a7ac0','#c0d0ff','#ffe0a0'][k%4];const s=rnd()<.1?4:2;g.fillRect(Math.floor(rnd()*640)*2,Math.floor(rnd()*360)*2,s,s);}
+// 게임판 (320×240): 덮개 위에 계단 모양으로 차지한 땅 → 그림
+const B=document.createElement('canvas');B.width=320;B.height=240;const b=B.getContext('2d');b.imageSmoothingEnabled=false;
+b.drawImage(cov,0,0);
+const poly=[[0,240],[0,150],[40,150],[40,96],[96,96],[96,40],[170,40],[170,0],[320,0],[320,240]];
+b.save();b.beginPath();poly.forEach(([x,y],i)=>i?b.lineTo(x,y):b.moveTo(x,y));b.closePath();b.clip();b.drawImage(pic,0,0);
+b.restore();
+// 경계선
+b.strokeStyle='#ffb0d8';b.lineWidth=2;b.beginPath();poly.slice(1,8).forEach(([x,y],i)=>i?b.lineTo(x,y):b.moveTo(x,y));b.stroke();
+b.strokeStyle='#ff8ab8';b.lineWidth=2;b.strokeRect(1,1,318,238);
+// 그리는 중인 선 (점선) + 탐침
+const tr=[[40,124],[14,124],[14,64],[62,64],[62,30]];
+for(let k=0;k<tr.length-1;k++){const [x0,y0]=tr[k],[x1,y1]=tr[k+1],n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0))/2;for(let i=0;i<n;i++){const x=x0+(x1-x0)*i/n,y=y0+(y1-y0)*i/n;b.fillStyle=(i+k)%4<2?'#ffe060':'#ffffff';b.fillRect(Math.round(x),Math.round(y),2,2);}}
+// 판을 크게, 살짝 기울여 배치
+g.save();g.translate(812,380);g.rotate(-0.06);const S=2.55;
+g.shadowColor='rgba(60,255,207,.55)';g.shadowBlur=40;g.fillStyle='#000';g.fillRect(-160*S-10,-120*S-10,320*S+20,240*S+20);g.shadowBlur=0;
+g.fillStyle='#ff8ab8';g.fillRect(-160*S-8,-120*S-8,320*S+16,240*S+16);g.fillStyle='#120a18';g.fillRect(-160*S-4,-120*S-4,320*S+8,240*S+8);
+g.drawImage(B,-160*S,-120*S,320*S,240*S);
+const spr=(id,f,x,y,s,flip)=>{const m=meta[id];g.save();g.translate(x,y);if(flip)g.scale(-1,1);g.drawImage(sp,m.x+f*m.w,m.y,m.w,m.h,-m.w*s/2,-m.h*s/2,m.w*s,m.h*s);g.restore();};
+// 탐침 빛
+const px=(62-160)*S,py=(30-120)*S;const gl=g.createRadialGradient(px,py,0,px,py,60);gl.addColorStop(0,'rgba(255,200,80,.9)');gl.addColorStop(1,'rgba(255,120,40,0)');g.fillStyle=gl;g.fillRect(px-60,py-60,120,120);
+spr('probe_draw',2,px,py,4.2);
+// 판 안 적들
+spr('r_bacillus',1,(120-160)*S,(150-120)*S,4);spr('s_ribosome',0,(96-160)*S,(40-120)*S,4.2);spr('i_shield',0,(30-160)*S,(30-120)*S,3.6);
+g.restore();
+// 판 밖으로 튀어나온 보스들
+g.shadowColor='rgba(0,0,0,.6)';g.shadowBlur=18;g.shadowOffsetY=10;
+spr('b_phage',2,330,230,6.2);spr('b_jelly',1,1180,170,5.2);spr('b_hornet',3,1150,600,5.4,true);spr('b_cancer',2,760,640,4.6);
+g.shadowBlur=0;g.shadowOffsetY=0;
+// 반짝임
+for(const [x,y,s] of [[930,250,5],[1010,420,4],[780,470,6],[1080,320,3],[700,300,4]]) spr('sparkle',2,x,y,s);
+document.title='done';
+})();
+</script></body></html>
