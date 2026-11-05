@@ -5,7 +5,7 @@
 
 | 게임 | 장르 | 파일 |
 | --- | --- | --- |
-| BIO BEAT | 4키 리듬게임 (생명과학 노래 7곡 · 레벨 1~20 · 롱노트 콤보 · 음원 분석 채보, OX 퀴즈) | `games/bio-beat.html` |
+| BIO BEAT | 4키 리듬게임 (생명과학 노래 11곡 · 레벨 1~20 · 롱노트 콤보 · 음원 분석 채보, OX 퀴즈) | `games/bio-beat.html` |
 | 면역 특공대 IMMUNE STRIKE | 횡스크롤 런앤건 액션 | `games/immune-strike.html` |
 | 바이오 카트 레이서 | 3D 카트 레이싱 (15트랙) | `games/bio-kart.html` |
 | 혈관 협곡 : 세포 대전 | 3D 5대5 대전 (칼바람 모드) | `games/vessel-canyon.html` |
