@@ -1,117 +1,44 @@
-# 세포 개척단: 첨부 그림(ref/)에서 숨은 그림 16장과 스프라이트를 잘라 만듭니다.
-#   python3 from_ref.py [출력 폴더]
-#   ref/pictures.webp  액자 16개 (세포 → 식물 세포 → … → 눈 순서)
-#   ref/sprites.webp   보스 8 · 작은 적 9(탐침 포함) · 아이템 5 · 폭발 4
-# 스프라이트 시트는 화면 1픽셀을 3픽셀로 그린 고해상도(SC=3)이고, sprites.json의 "s"에 배율이 들어갑니다.
+# 세포 개척단: art/ 폴더의 새 원화(Glif로 생성)에서 숨은 그림 16장과 스프라이트를 만듭니다.
+#   python3 from_art.py [출력 폴더]
+#   art/pictures.jpg  숨은 그림 16장 (4×4, 세포 → 식물 세포 → … → 눈 순서)
+#   art/enemies.jpg   보스 8종 (4×2, 자홍색 배경)
+#   art/small.jpg     탐침·작은 적 8 · 아이템 캡슐 5 · 반짝임·폭발·연기 (6×3, 자홍색 배경)
+# 숨은 그림은 960×720(게임판 3배 해상도) JPEG, 스프라이트 시트도 3배 해상도(SC=3, sprites.json의 "s")입니다.
 # 도화선·탄 같은 작은 효과와 덮개·세계 지도는 build.py(도트 직접 그리기)가 만든 것을 그대로 씁니다.
 import sys, os, json, math
 import numpy as np
 from PIL import Image, ImageFilter
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(HERE, '../bio-tower'))
+from from_art_common import grid_items   # 자홍색 배경 빼고 격자 칸마다 잘라 내기 (바이오 타워와 같은 코드)
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, '../../games/cell-frontier')
 SC = 3
 TAU = 2 * math.pi
-
-# ---------------------------------------------------------------- 숨은 그림 16장 (320×240)
-src = Image.open(os.path.join(HERE, 'ref/pictures.webp')).convert('RGB')
-ROWS = [(8, 182), (197, 374), (387, 566)]
-COLS = [[(13, 192), (213, 393), (419, 604), (630, 811), (831, 1012)],
-        [(13, 193), (210, 391), (415, 608), (633, 814), (831, 1012)],
-        [(12, 190), (206, 380), (386, 505), (508, 650), (657, 816), (835, 1012)]]
-FRAME = 14   # 액자 두께
+ART = lambda f: os.path.join(HERE, 'art', f)
 
 
-def smooth_rows(v, k):
-    p = np.pad(v, ((k // 2, k // 2), (0, 0)), mode='edge')
-    cs = np.cumsum(np.vstack([np.zeros((1, v.shape[1])), p]), axis=0)
-    return (cs[k:] - cs[:-k]) / k
-
-
-def fit_board(c):
-    """정사각형·세로 그림을 4:3 판에 맞춤: 위아래는 20%까지 잘라내고, 남는 양옆은 가장자리 색으로 이어 칠함"""
-    w, h = c.size
-    s = max(240 / h, min(320 / w, 240 / h * 1.2))
-    c = c.resize((round(w * s), round(h * s)), Image.LANCZOS); w, h = c.size
-    if h > 240: c = c.crop((0, (h - 240) // 2, w, (h - 240) // 2 + 240))
-    w = c.size[0]
-    if w >= 320: return c.crop(((w - 320) // 2, 0, (w - 320) // 2 + 320, 240))
-    a = np.asarray(c); pl = (320 - w) // 2; pr = 320 - w - pl
-    full = np.pad(a, ((0, 0), (pl, pr), (0, 0)), mode='edge').astype(np.float32)
-    L = smooth_rows(a[:, :6].mean(axis=1).astype(np.float32), 81)
-    R = smooth_rows(a[:, -6:].mean(axis=1).astype(np.float32), 81)
-    bg = full.copy()
-    for x in range(pl): bg[:, x] = L * (0.75 + 0.25 * x / max(1, pl))
-    for x in range(pr): bg[:, pl + w + x] = R * (1 - 0.25 * x / max(1, pr))
-    rng = np.random.default_rng(w)
-    for _ in range((pl + pr) // 3):   # 반짝이는 먼지
-        x = int(rng.integers(0, pl + pr)); x = x if x < pl else x + w; y = int(rng.integers(2, 238))
-        bg[y, x] = np.minimum(255, bg[y, x] + 90)
-    m = np.zeros((240, 320), np.float32); m[:, pl:pl + w] = 1
-    for k in range(10):
-        m[:, pl + k] = np.minimum(m[:, pl + k], k / 10); m[:, pl + w - 1 - k] = np.minimum(m[:, pl + w - 1 - k], k / 10)
-    out = bg * (1 - m[..., None]) + full * m[..., None]
-    return Image.fromarray(out.astype(np.uint8))
-
-
+# ---------------------------------------------------------------- 숨은 그림 16장 (960×720)
 def build_pictures():
-    i = 0
-    for (y0, y1), row in zip(ROWS, COLS):
-        for x0, x1 in row:
-            c = src.crop((x0 + FRAME, y0 + FRAME, x1 - FRAME, y1 - FRAME))
-            im = fit_board(c).filter(ImageFilter.UnsharpMask(1.2, 60, 2))
-            # 256색 팔레트로 줄이기: 도트 느낌이 살고 파일도 1/3 크기
-            im.quantize(256, method=Image.MEDIANCUT, dither=Image.FLOYDSTEINBERG).save(os.path.join(OUT, f'p{i:02d}.png'), optimize=True)
-            i += 1
+    src = Image.open(ART('pictures.jpg')).convert('RGB'); W, H = src.size; cw, ch = W / 4, H / 4
+    for i in range(16):
+        x, y = (i % 4) * cw, (i // 4) * ch
+        c = src.crop((round(x + 5), round(y + 5), round(x + cw - 5), round(y + ch - 5)))   # 칸 사이 검은 줄 빼기
+        c.resize((960, 720), Image.LANCZOS).save(os.path.join(OUT, f'p{i:02d}.jpg'), quality=88)
 
 
-# ---------------------------------------------------------------- 스프라이트 잘라내기
-ssrc = np.asarray(Image.open(os.path.join(HERE, 'ref/sprites.webp')).convert('RGB')).astype(np.float32)
-BG = np.array([16, 4, 14], np.float32)
-BOX = {   # (x0, y0, x1, y1) 포함 범위
-    'phage': (29, 7, 217, 198), 'amoeba': (248, 21, 419, 183), 'jelly': (461, 10, 707, 242), 'paramecium': (727, 22, 1001, 177),
-    'hornet': (14, 197, 233, 371), 'spider': (263, 215, 509, 372), 'cancer': (549, 197, 743, 365), 'plasmodium': (783, 203, 985, 366),
-    'probe': (12, 390, 147, 446), 'bacillus': (173, 376, 256, 460), 'krill': (284, 382, 369, 455), 'mosquito': (402, 389, 461, 445),
-    'coccus': (490, 378, 569, 458), 'ribosome': (597, 380, 674, 457), 'starfish': (701, 380, 781, 455), 'ant': (811, 389, 892, 448),
-    'wbc': (919, 380, 992, 454),
-    'speed': (37, 469, 105, 561), 'shield': (134, 469, 202, 562), 'freeze': (231, 469, 300, 561), 'clock': (331, 470, 395, 560),
-    'life': (426, 470, 493, 561),
-    'x0': (578, 483, 642, 546), 'x1': (671, 470, 764, 561), 'x2': (782, 463, 882, 565), 'x3': (894, 458, 1006, 567),
-}
+# ---------------------------------------------------------------- 스프라이트 원본
+_SRC = {}
 
 
-def _labels():
-    """배경이 아닌 곳을 덩어리별로 번호 매김 (상자가 겹쳐도 이웃 그림이 섞이지 않게)"""
-    from collections import deque
-    m = np.abs(ssrc - BG).max(axis=2) > 44
-    d = m.copy()
-    for dy in range(-6, 7, 2):
-        for dx in range(-6, 7, 2): d |= np.roll(np.roll(m, dy, 0), dx, 1)
-    H, W = d.shape; lab = np.zeros((H, W), np.int32); n = 0
-    for y, x in zip(*np.nonzero(d)):
-        if lab[y, x]: continue
-        n += 1; q = deque([(y, x)]); lab[y, x] = n
-        while q:
-            a, b = q.popleft()
-            for c, e in ((a + 1, b), (a - 1, b), (a, b + 1), (a, b - 1)):
-                if 0 <= c < H and 0 <= e < W and d[c, e] and not lab[c, e]: lab[c, e] = n; q.append((c, e))
-    return lab
-
-
-LAB = _labels()
-
-
-def cut(k, pad=4, soft=False):
-    x0, y0, x1, y1 = BOX[k]
-    sl = (slice(max(0, y0 - pad), y1 + pad + 1), slice(max(0, x0 - pad), x1 + pad + 1))
-    a = ssrc[sl]; lb = LAB[sl]
-    ids, cnt = np.unique(lb[lb > 0], return_counts=True)
-    keep = lb == ids[cnt.argmax()]
-    d = np.abs(a - BG).max(axis=2)
-    al = np.clip((d - 22) / (40 if soft else 26), 0, 1) * keep
-    # 배경 빛번짐 제거: 알파로 나눠 원래 색을 되살림
-    rgb = np.clip((a - BG * (1 - al[..., None])) / np.maximum(al[..., None], 1e-3), 0, 255)
-    return Image.fromarray(np.dstack([rgb, al * 255]).astype(np.uint8), 'RGBA')
+def cut(k, soft=False):
+    if not _SRC:
+        for name, im in zip(['phage', 'amoeba', 'jelly', 'paramecium', 'hornet', 'spider', 'cancer', 'plasmodium'], grid_items(ART('enemies.jpg'), 4, 2)):
+            _SRC[name] = im
+        names = ['probe', 'bacillus', 'krill', 'mosquito', 'coccus', 'ribosome', 'starfish', 'ant', 'wbc', 'speed', 'shield', 'freeze',
+                 'clock', 'life', 'x0', 'x1', 'x2', 'x3']
+        for name, im in zip(names, grid_items(ART('small.jpg'), 6, 3, keep_all=True)): _SRC[name] = im
+    return _SRC[k]
 
 
 def fit(im, W, H, scale=1.0, rot=0.0, sx=1.0, sy=1.0, dx=0.0, dy=0.0, hard=True, outline=True):

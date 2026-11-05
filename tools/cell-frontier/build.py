@@ -1,5 +1,5 @@
 # 세포 개척단 에셋 만들기: python3 build.py [출력 폴더]
-#   pics/p00~p15.png  숨은 그림 16장, covers c0~c3, sprites.png + sprites.json, map.png
+#   p00~p15.jpg 숨은 그림 16장(from_art.py), covers c0~c3, sprites.png + sprites.json, map.png
 import sys, os, json, math
 import numpy as np
 from PIL import Image
@@ -17,7 +17,7 @@ def save(p, name):
 
 
 # ---------------------------------------------------------------- 그림 · 덮개
-for i, f in enumerate(PICS): save(f(), f'p{i:02d}.png')
+# (숨은 그림 p00~p15.jpg는 from_art.py가 만듦 · pictures.py의 옛 도트 그림은 쓰지 않음)
 for w in range(4): save(S.cover(w), f'c{w}.png')
 
 # ---------------------------------------------------------------- 스프라이트 묶음
@@ -99,7 +99,7 @@ for (a, b_) in [((120, 72), (190, 70)), ((240, 100), (240, 140)), ((190, 178), (
 save(m, 'map.png')
 print('assets ->', OUT, 'sprites', sheet.size)
 
-# 숨은 그림 16장과 스프라이트는 첨부 그림(ref/)에서 잘라 만든 것으로 덮어씀
-import from_ref
-from_ref.build_pictures(); from_ref.build_sprites()
-print('pictures/sprites from ref/')
+# 숨은 그림 16장과 스프라이트는 art/의 원화(Glif로 새로 그린 그림)에서 만든 것으로 덮어씀
+import from_art
+from_art.build_pictures(); from_art.build_sprites()
+print('pictures/sprites from art/')
