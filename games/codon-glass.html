@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>코돈 글래스 · Codon Glass — 생명과학 유전암호 번역 퍼즐</title>
+  <meta name="theme-color" content="#dce7f7">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <!-- Tailwind는 인터넷 없이도 보이도록 미리 만든 CSS로 넣음 (tools/codon-glass/build-css.sh) -->
+  <link rel="stylesheet" href="codon-glass/tw.css">
+  <script>if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ios-bg-1: #dce7f7;
+      --ios-bg-2: #e6f2ec;
+      --ios-bg-3: #efeaf9;
+      --glass-surface: rgba(255, 255, 255, 0.68);
+      --glass-surface-strong: rgba(255, 255, 255, 0.82);
+      --glass-surface-subtle: rgba(255, 255, 255, 0.48);
+      --glass-border: rgba(255, 255, 255, 0.78);
+      --glass-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.10), 0 2px 6px -1px rgba(15, 23, 42, 0.05);
+      --ios-blue: #007aff;
+      --ios-green: #34c759;
+      --ios-indigo: #5856d6;
+      --ios-orange: #ff9500;
+      --ios-red: #ff3b30;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Noto Sans KR', sans-serif;
+      color: #0f172a;
+      background:
+        radial-gradient(circle at 12% 15%, rgba(52, 199, 89, 0.20), transparent 38%),
+        radial-gradient(circle at 88% 18%, rgba(0, 122, 255, 0.20), transparent 40%),
+        radial-gradient(circle at 50% 88%, rgba(88, 86, 214, 0.16), transparent 45%),
+        linear-gradient(145deg, #e4edf8 0%, #eaf4ef 50%, #edeaf6 100%);
+      overflow-x: hidden;
+    }
+
+    /* iOS Frosted Glass Surfaces */
+    .ios-glass {
+      background: var(--glass-surface);
+      backdrop-filter: blur(24px) saturate(190%);
+      -webkit-backdrop-filter: blur(24px) saturate(190%);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+    }
+
+    .ios-glass-strong {
+      background: var(--glass-surface-strong);
+      backdrop-filter: blur(28px) saturate(200%);
+      -webkit-backdrop-filter: blur(28px) saturate(200%);
+      border: 1px solid rgba(255, 255, 255, 0.88);
+      box-shadow: 0 16px 40px -10px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .ios-glass-pill {
+      background: rgba(255, 255, 255, 0.58);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    /* iOS Segmented Control */
+    .ios-segmented {
+      background: rgba(118, 118, 128, 0.14);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 3px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+    }
+
+    .ios-seg-btn {
+      border-radius: 9px;
+      padding: 5px 11px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      transition: all 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .ios-seg-btn.active {
+      background: rgba(255, 255, 255, 0.95);
+      color: #0f172a;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.10), 0 1px 2px rgba(15, 23, 42, 0.06);
+    }
+
+    .ios-seg-btn:not(.active):hover {
+      color: #0f172a;
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    /* Bottom Dock Buttons */
+    .ios-dock-btn {
+      background: rgba(255, 255, 255, 0.66);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.82);
+      border-radius: 14px;
+      color: #1e293b;
+      font-weight: 600;
+      transition: all 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    }
+
+    .ios-dock-btn:hover {
+      background: rgba(255, 255, 255, 0.86);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    }
+
+    .ios-dock-btn:active {
+      transform: translateY(0) scale(0.985);
+    }
+
+    /* Board Wrapper */
+    .board-wrapper {
+      position: relative;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.56);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 1.5px solid rgba(255, 255, 255, 0.86);
+      box-shadow:
+        0 20px 45px -12px rgba(15, 23, 42, 0.14),
+        0 4px 12px -2px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      touch-action: none;
+    }
+
+    .chain-scroll::-webkit-scrollbar {
+      height: 4px;
+    }
+    .chain-scroll::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.28);
+      border-radius: 9999px;
+    }
+
+    @keyframes pulseRing {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.35); }
+      50% { box-shadow: 0 0 0 5px rgba(0, 122, 255, 0); }
+    }
+    .target-active {
+      animation: pulseRing 2s infinite;
+    }
+
+    /* 시작 화면 */
+    #titleScreen { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; overflow: hidden;
+      background: radial-gradient(circle at 15% 20%, rgba(52,199,89,.28), transparent 40%), radial-gradient(circle at 85% 15%, rgba(0,122,255,.28), transparent 42%), radial-gradient(circle at 50% 95%, rgba(88,86,214,.24), transparent 48%), linear-gradient(145deg,#e4edf8,#eaf4ef 50%,#edeaf6); }
+    #titleArt { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .title-card { position: relative; z-index: 1; width: min(92vw, 460px); padding: 26px 24px 22px; border-radius: 30px; text-align: center; }
+    .title-logo { font-family: Inter, 'Noto Sans KR', sans-serif; font-weight: 900; letter-spacing: -0.04em; font-size: clamp(40px, 9vw, 58px); line-height: 1;
+      background: linear-gradient(135deg, #007aff 0%, #5856d6 45%, #34c759 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .title-btn { width: 100%; border-radius: 16px; padding: 12px 14px; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .title-btn.primary { background: linear-gradient(135deg, #007aff, #5856d6); color: #fff; box-shadow: 0 10px 24px -8px rgba(0,122,255,.55); }
+    .title-btn.green { background: linear-gradient(135deg, #34c759, #0d9488); color: #fff; box-shadow: 0 10px 24px -8px rgba(52,199,89,.55); }
+    .mode-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .mode-pick button { border-radius: 14px; padding: 9px 4px; font-size: 12px; font-weight: 800; color: #334155; }
+    .mode-pick button.on { background: #fff; color: #0f172a; box-shadow: 0 0 0 2px #007aff inset, 0 4px 12px rgba(0,122,255,.18); }
+    .net-slot { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 14px; font-size: 13px; font-weight: 700; }
+    .net-dot { width: 26px; height: 26px; border-radius: 9999px; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; flex: none; }
+    .svg-icon {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2;
+      stroke: currentColor;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between py-2.5 px-2.5 sm:px-5 md:px-7">
+
+  <!-- Top iOS Frosted Header -->
+  <header class="max-w-6xl w-full mx-auto space-y-2">
+    <!-- App Navigation & Segmented Mode Bar -->
+    <div class="ios-glass rounded-2xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#007aff] to-[#5856d6] text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+          <!-- DNA Helix Pictogram -->
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 15c6.667-6 13.333 0 20-6" />
+            <path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993" />
+            <path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993" />
+            <path d="m17 6-2.5-2.5" />
+            <path d="m14 8-1-1" />
+            <path d="m7 18 2.5 2.5" />
+            <path d="m3.5 14.5.5.5" />
+            <path d="m20 9 .5.5" />
+            <path d="m6.5 12.5 1 1" />
+            <path d="m16.5 10.5 1 1" />
+            <path d="m10 16 1.5 1.5" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-slate-900 leading-none">Codon Glass</h1>
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-900/5 text-slate-600 border border-white/60">mRNA Translation</span>
+          </div>
+          <p id="modeSubtitle" class="text-[11px] font-medium text-slate-500 mt-0.5">사각형을 드래그해 염기 3개(5'→3')로 표적 아미노산을 번역하세요</p>
+        </div>
+      </div>
+
+      <!-- iOS Segmented Mode Switcher + Guide Button -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="ios-segmented flex items-center gap-0.5">
+          <button id="modeBtnTarget" type="button" class="ios-seg-btn active">
+            <svg class="svg-icon w-3.5 h-3.5 text-[#007aff]" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9" />
+              <circle cx="12" cy="12" r="5" />
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+            </svg>
+            <span>표적 코돈 모드</span>
+          </button>
+          <button id="modeBtnRibosome" type="button" class="ios-seg-btn">
+            <svg class="svg-icon w-3.5 h-3.5 text-[#5856d6]" viewBox="0 0 24 24">
+              <path d="M12 3a6 6 0 0 0-6 6v3a6 6 0 0 0 12 0V9a6 6 0 0 0-6-6Z" />
+              <path d="M5 15h14" />
+              <path d="M8 19h8" />
+            </svg>
+            <span>리보솜 번역 모드</span>
+          </button>
+          <button id="modeBtnSum10" type="button" class="ios-seg-btn">
+            <svg class="svg-icon w-3.5 h-3.5 text-[#34c759]" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="5" />
+              <path d="M8 9v6" />
+              <circle cx="14.5" cy="12" r="2.5" />
+            </svg>
+            <span>에너지 합 10 모드</span>
+          </button>
+        </div>
+
+        <button id="openCodonModalBtn" type="button" class="ios-dock-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-1.5">
+          <svg class="svg-icon w-3.5 h-3.5 text-[#007aff]" viewBox="0 0 24 24">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+            <path d="M8 7h6" />
+            <path d="M8 11h8" />
+          </svg>
+          <span>유전암호표·규칙</span>
+        </button>
+        <button id="openOnlineBtn" type="button" class="ios-dock-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-1.5">
+          <svg class="svg-icon w-3.5 h-3.5 text-[#34c759]" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.4"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15 15.2c2.8-.6 6 1.2 6 4.8"/></svg>
+          <span>온라인 대전</span>
+        </button>
+        <button id="openSettingsBtn" type="button" aria-label="설정" class="ios-dock-btn px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-1.5">
+          <svg class="svg-icon w-3.5 h-3.5 text-slate-600" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>설정</span>
+        </button>
+        <a id="hubBtn" href="../index.html" class="ios-dock-btn px-2.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 flex items-center gap-1.5 no-underline">
+          <svg class="svg-icon w-3.5 h-3.5 text-slate-600" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          <span>게임 목록</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- HUD Stat Widgets (SCORE / TIME LEFT / BEST) + Mission & Polypeptide Chain -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-2">
+      <!-- 3 Glass Stat Widgets (Left 4 cols) -->
+      <div class="lg:col-span-4 grid grid-cols-3 gap-2">
+        <!-- SCORE -->
+        <div class="ios-glass rounded-2xl px-3 py-2 flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">SCORE</span>
+            <svg class="svg-icon w-3.5 h-3.5 text-[#34c759]" viewBox="0 0 24 24">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </div>
+          <div class="flex items-baseline gap-0.5 my-0.5">
+            <span id="scoreValue" class="text-xl sm:text-2xl font-black text-slate-900 tabular-nums">0</span>
+            <span class="text-xs font-semibold text-slate-400">/170</span>
+          </div>
+          <span id="proteinCountBadge" class="text-[10px] font-semibold text-slate-500 truncate">합성 아미노산: 0개</span>
+        </div>
+
+        <!-- TIME LEFT -->
+        <div class="ios-glass rounded-2xl px-3 py-2 flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">TIME</span>
+            <svg class="svg-icon w-3.5 h-3.5 text-[#007aff]" viewBox="0 0 24 24">
+              <circle cx="12" cy="13" r="8" />
+              <path d="M12 9v4l2.5 1.5" />
+              <path d="M9 2h6" />
+            </svg>
+          </div>
+          <div id="timerDisplay" class="text-xl sm:text-2xl font-black text-slate-900 tabular-nums leading-tight my-0.5">
+            2:00.0
+          </div>
+          <div class="w-full h-1.5 bg-slate-900/10 rounded-full overflow-hidden">
+            <div id="timerBar" class="h-full bg-gradient-to-r from-[#007aff] to-[#34c759] transition-all duration-100 rounded-full" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- BEST -->
+        <div class="ios-glass rounded-2xl px-3 py-2 flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">BEST</span>
+            <svg class="svg-icon w-3.5 h-3.5 text-[#ff9500]" viewBox="0 0 24 24">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+              <path d="M4 22h16" />
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+            </svg>
+          </div>
+          <span id="bestValue" class="text-xl sm:text-2xl font-black text-slate-900 tabular-nums my-0.5">0</span>
+          <button id="colorStyleBtn" type="button" class="text-[10px] font-bold text-[#007aff] hover:underline text-left truncate">
+            염기별 컬러 ON
+          </button>
+        </div>
+      </div>
+
+      <!-- Target Codons & Polypeptide Chain Glass Bar (Right 8 cols) -->
+      <div class="lg:col-span-8 ios-glass rounded-2xl px-3.5 py-2 flex flex-col justify-between gap-1.5">
+        <div class="flex flex-wrap items-center justify-between gap-1">
+          <div class="flex items-center gap-1.5">
+            <svg class="svg-icon w-3.5 h-3.5 text-[#007aff]" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="6" />
+              <circle cx="12" cy="12" r="2" />
+            </svg>
+            <span id="missionTitleLabel" class="text-xs font-bold text-slate-800">
+              현재 합성 목표 아미노산 (5'→3' 순서로 염기 3개 선택)
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="comboStatusText" class="text-[11px] font-bold text-[#5856d6] bg-indigo-500/10 px-2 py-0.5 rounded-full">연속 번역 0콤보</span>
+            <span id="liveDragPreview" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/80 border border-white text-slate-600 shadow-2xs">
+              드래그하여 염기 선택
+            </span>
+          </div>
+        </div>
+
+        <!-- 4 Compact Glass Mission Pills -->
+        <div id="missionCardsContainer" class="grid grid-cols-2 sm:grid-cols-4 gap-1.5"></div>
+
+        <!-- Synthesized Polypeptide Chain Strip -->
+        <div class="flex items-center gap-2 pt-1 border-t border-slate-900/5">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0 flex items-center gap-1">
+            <svg class="svg-icon w-3 h-3 text-slate-400" viewBox="0 0 24 24">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+            폴리펩타이드
+          </span>
+          <div id="polypeptideChain" class="chain-scroll flex items-center gap-1 overflow-x-auto py-0.5 min-h-[22px] text-xs flex-1">
+            <span class="text-slate-400 text-[11px]">합성된 아미노산 사슬이 여기에 연결됩니다</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="onlineBoard" class="hidden ios-glass rounded-2xl px-3 py-1.5 flex flex-wrap items-center gap-2 text-xs">
+      <span class="font-extrabold text-[#34c759] flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#34c759] animate-pulse"></span>온라인 대전</span>
+      <span id="onlineCodeTag" class="font-mono font-bold text-slate-500"></span>
+      <div id="onlineScores" class="flex flex-wrap gap-1.5 flex-1"></div>
+    </div>
+  </header>
+
+  <!-- Main 17x10 Frosted Glass Board -->
+  <main class="max-w-6xl w-full mx-auto flex-1 flex flex-col items-center justify-center my-1.5">
+    <div id="boardContainer" class="board-wrapper w-full aspect-[17/10] max-h-[60vh] relative overflow-hidden">
+      <canvas id="gameCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+      <!-- iOS Frosted Pause Overlay -->
+      <div id="pauseOverlay" class="hidden absolute inset-0 bg-white/65 backdrop-blur-xl flex flex-col items-center justify-center text-slate-900 z-20 p-4 text-center">
+        <div class="w-14 h-14 rounded-2xl ios-glass-strong flex items-center justify-center mb-3 text-[#007aff]">
+          <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="4" width="4" height="16" rx="1" />
+            <rect x="14" y="4" width="4" height="16" rx="1" />
+          </svg>
+        </div>
+        <h2 class="text-2xl font-black tracking-tight mb-1">일시정지됨</h2>
+        <p class="text-xs sm:text-sm text-slate-600 max-w-md mb-5">
+          드래그 영역 안의 염기들은 왼쪽 위에서 오른쪽 아래(5' → 3') 순서로 읽혀 코돈을 형성합니다.
+        </p>
+        <button id="resumeGameBtn" type="button" class="px-6 py-2.5 rounded-full bg-[#007aff] hover:bg-[#0066d6] text-white font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center gap-2 transition">
+          <svg class="svg-icon w-4 h-4" viewBox="0 0 24 24">
+            <polygon points="6 3 20 12 6 21 6 3" fill="currentColor" />
+          </svg>
+          <span>게임 계속하기</span>
+        </button>
+      </div>
+
+      <!-- iOS Frosted Game Over Overlay -->
+      <div id="gameOverOverlay" class="hidden absolute inset-0 bg-white/75 backdrop-blur-2xl flex flex-col items-center justify-center text-slate-900 z-30 p-4 text-center">
+        <div class="w-14 h-14 rounded-2xl ios-glass-strong flex items-center justify-center mb-2 text-[#5856d6]">
+          <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black tracking-tight mb-1">번역 세션 완료</h2>
+        <p id="finalScoreSummary" class="text-sm sm:text-base font-bold text-[#007aff] mb-3">최종 점수: 0점 · 합성한 아미노산: 0개</p>
+        <div id="finalProteinList" class="max-w-lg w-full ios-glass rounded-2xl p-3.5 mb-4 text-xs text-left max-h-36 overflow-y-auto"></div>
+        <button id="playAgainBtn" type="button" class="px-6 py-2.5 rounded-full bg-[#007aff] hover:bg-[#0066d6] text-white font-bold text-sm shadow-lg shadow-blue-500/25 flex items-center gap-2 transition">
+          <svg class="svg-icon w-4 h-4" viewBox="0 0 24 24">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          <span>새 보드로 다시 시작</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom iOS Glass Control Dock -->
+  <footer class="max-w-6xl w-full mx-auto">
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+      <!-- Hint -->
+      <button id="hintBtn" type="button" class="ios-dock-btn py-2.5 px-3 flex items-center justify-center gap-2 text-xs sm:text-sm">
+        <svg class="svg-icon text-[#ff9500]" viewBox="0 0 24 24">
+          <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+          <path d="M9 18h6" />
+          <path d="M10 22h4" />
+        </svg>
+        <span>Hint (힌트)</span>
+      </button>
+
+      <!-- Pause -->
+      <button id="pauseBtn" type="button" class="ios-dock-btn py-2.5 px-3 flex items-center justify-center gap-2 text-xs sm:text-sm">
+        <svg class="svg-icon text-[#007aff]" viewBox="0 0 24 24">
+          <rect x="6" y="4" width="4" height="16" rx="1" />
+          <rect x="14" y="4" width="4" height="16" rx="1" />
+        </svg>
+        <span id="pauseBtnLabel">Pause (일시정지)</span>
+      </button>
+
+      <!-- New Board -->
+      <button id="newBoardBtn" type="button" class="ios-dock-btn py-2.5 px-3 flex items-center justify-center gap-2 text-xs sm:text-sm">
+        <svg class="svg-icon text-[#34c759]" viewBox="0 0 24 24">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+          <path d="M3 3v5h5" />
+        </svg>
+        <span>New board (새 보드)</span>
+      </button>
+
+      <!-- Pale / Soft Glass Tone -->
+      <label for="paleColorsToggle" class="ios-dock-btn py-2.5 px-3 flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer">
+        <input id="paleColorsToggle" type="checkbox" class="w-4 h-4 accent-[#007aff] rounded cursor-pointer" />
+        <svg class="svg-icon text-[#5856d6]" viewBox="0 0 24 24">
+          <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+          <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+          <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+          <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+        </svg>
+        <span>Soft tone (파스텔)</span>
+      </label>
+
+      <!-- Sound Toggle -->
+      <button id="soundToggleBtn" type="button" class="ios-dock-btn py-2.5 px-3 flex items-center justify-center gap-2 text-xs sm:text-sm col-span-2 sm:col-span-1">
+        <span id="soundIcon" class="inline-flex items-center text-[#007aff]">
+          <svg class="svg-icon" viewBox="0 0 24 24">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+          </svg>
+        </span>
+        <span id="soundLabel">Sound ON</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- iOS Frosted Codon Table & Rules Modal -->
+  <div id="codonModal" class="hidden fixed inset-0 bg-slate-900/35 backdrop-blur-md z-50 flex items-center justify-center p-3">
+    <div class="ios-glass-strong rounded-3xl max-w-3xl w-full max-h-[88vh] flex flex-col overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-900/10">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-[#007aff]/10 text-[#007aff] flex items-center justify-center">
+            <svg class="svg-icon w-4 h-4" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="3" />
+              <path d="M3 9h18" />
+              <path d="M9 21V9" />
+            </svg>
+          </div>
+          <h3 class="font-extrabold text-base sm:text-lg text-slate-900">
+            생명과학 표준 유전암호표 (64 Codons) 및 규칙
+          </h3>
+        </div>
+        <button id="closeCodonModalBtn" type="button" aria-label="Close modal" class="w-8 h-8 rounded-full bg-slate-900/5 hover:bg-slate-900/10 text-slate-600 flex items-center justify-center transition">
+          <svg class="svg-icon w-4 h-4" viewBox="0 0 24 24">
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-700">
+        <div class="ios-glass-pill rounded-2xl p-4 space-y-2">
+          <div class="font-extrabold text-slate-900 text-sm flex items-center gap-1.5">
+            <svg class="svg-icon w-4 h-4 text-[#007aff]" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
+            <span>코돈 글래스 퍼즐 플레이 방법</span>
+          </div>
+          <p class="leading-relaxed text-slate-600">
+            사각형 영역을 드래그해 <strong>염기 노드 3개(코돈, 5'→3' 방향: 왼쪽 위에서 오른쪽 아래 순서)</strong>를 묶어 아미노산을 번역하는 생명과학 퍼즐입니다. 빈칸이 생기면 멀리 떨어진 염기 노드들도 하나의 사각형으로 묶어 연결할 수 있습니다.
+          </p>
+          <ul class="space-y-1.5 text-xs text-slate-600 pt-1">
+            <li class="flex items-start gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#007aff] mt-1.5 shrink-0"></span>
+              <span><strong>표적 코돈 모드</strong>: 상단에 제시된 3가지 목표 아미노산 코돈 또는 특수 코돈(개시 <code>AUG</code> / 종결 <code>UAA, UAG, UGA</code>)과 일치하는 염기 3개를 드래그하면 번역됩니다.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#5856d6] mt-1.5 shrink-0"></span>
+              <span><strong>리보솜 번역 모드</strong>: 실제 리보솜 번역처럼 반드시 <strong>개시 코돈(AUG)</strong>으로 번역을 시작한 뒤, 임의의 아미노산 코돈(염기 3개)들을 신장시키고 <strong>종결 코돈(UAA/UAG/UGA)</strong>으로 단백질을 완성합니다.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#34c759] mt-1.5 shrink-0"></span>
+              <span><strong>에너지 합 10 모드</strong>: 각 노드에 적힌 숫자의 합이 <strong>정확히 10</strong>이면 제거됩니다. 노드 <strong>3개</strong>로 합 10을 만들면 3염기 코돈이 동시 번역되어 보너스 점수와 시간을 얻습니다.</span>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="font-extrabold text-slate-900 mb-2.5 flex items-center gap-1.5">
+            <svg class="svg-icon w-4 h-4 text-[#5856d6]" viewBox="0 0 24 24">
+              <path d="M12 2v20" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+            <span>20종 아미노산 및 개시·종결 코돈 빠른 참조표</span>
+          </div>
+          <div id="codonTableGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+        </div>
+      </div>
+
+      <div class="px-5 py-3 border-t border-slate-900/10 flex justify-end bg-white/40">
+        <button id="closeCodonModalBottomBtn" type="button" class="px-5 py-2 rounded-full bg-[#007aff] text-white font-bold text-xs sm:text-sm hover:bg-[#0066d6] shadow-md shadow-blue-500/20 transition">
+          확인하고 게임으로 돌아가기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 시작 화면 -->
+  <div id="titleScreen">
+    <canvas id="titleArt"></canvas>
+    <div class="title-card ios-glass-strong">
+      <div class="text-[11px] font-bold tracking-[0.3em] text-slate-500 mb-2">mRNA TRANSLATION PUZZLE</div>
+      <div class="title-logo">Codon Glass</div>
+      <div class="text-lg font-black text-slate-800 mt-1">코돈 글래스</div>
+      <p class="text-xs text-slate-500 mt-2 mb-4 leading-relaxed">염기 구슬을 사각형으로 묶어 5'→3' 코돈을 만들고<br>아미노산을 번역해 단백질을 합성하세요</p>
+      <div class="mode-pick ios-segmented mb-3" id="titleModes">
+        <button type="button" data-mode="target" class="on">🎯 표적 코돈</button>
+        <button type="button" data-mode="ribosome">🧬 리보솜 번역</button>
+        <button type="button" data-mode="sum10">🔟 에너지 합 10</button>
+      </div>
+      <div class="space-y-2">
+        <button type="button" id="titleSolo" class="title-btn primary">혼자 하기</button>
+        <button type="button" id="titleOnline" class="title-btn green">온라인 대전 (최대 4명)</button>
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" id="titleRules" class="title-btn ios-dock-btn !text-xs">규칙</button>
+          <button type="button" id="titleSettings" class="title-btn ios-dock-btn !text-xs">설정</button>
+          <a href="../index.html" class="title-btn ios-dock-btn !text-xs no-underline">게임 목록</a>
+        </div>
+      </div>
+      <div id="titleBest" class="text-[11px] font-semibold text-slate-500 mt-3"></div>
+    </div>
+  </div>
+
+  <!-- 설정 -->
+  <div id="settingsModal" class="hidden fixed inset-0 bg-slate-900/35 backdrop-blur-md z-[70] flex items-center justify-center p-3">
+    <div class="ios-glass-strong rounded-3xl w-full max-w-sm p-5 space-y-3">
+      <div class="flex items-center justify-between"><h3 class="font-extrabold text-lg">설정</h3><button type="button" data-close-settings class="w-8 h-8 rounded-full bg-slate-900/5 text-slate-600">✕</button></div>
+      <label class="flex items-center justify-between text-sm font-semibold">효과음 <input type="checkbox" id="setSound" class="w-5 h-5 accent-[#007aff]"></label>
+      <label class="flex items-center justify-between text-sm font-semibold">효과음 크기 <input type="range" id="setVol" min="0" max="1" step="0.05" class="w-36 accent-[#007aff]"></label>
+      <label class="flex items-center justify-between text-sm font-semibold">파스텔 색 (부드러운 색) <input type="checkbox" id="setPale" class="w-5 h-5 accent-[#007aff]"></label>
+      <label class="flex items-center justify-between text-sm font-semibold">염기마다 다른 색 <input type="checkbox" id="setDistinct" class="w-5 h-5 accent-[#007aff]"></label>
+      <label class="flex items-center justify-between text-sm font-semibold">온라인 이름 <input type="text" id="setNick" maxlength="8" class="w-36 rounded-xl px-2 py-1 bg-white/80 border border-white text-sm"></label>
+      <div class="flex gap-2 pt-1">
+        <button type="button" id="setTitleBtn" class="flex-1 ios-dock-btn py-2 text-sm font-bold">처음 화면으로</button>
+        <a href="../index.html" class="flex-1 ios-dock-btn py-2 text-sm font-bold text-center no-underline">게임 목록</a>
+      </div>
+      <button type="button" id="setLogBtn" class="w-full ios-dock-btn py-2 text-xs font-bold text-slate-500">입력 기록 보기</button>
+    </div>
+  </div>
+
+  <!-- 온라인 대기실 -->
+  <div id="onlineModal" class="hidden fixed inset-0 bg-slate-900/35 backdrop-blur-md z-[70] flex items-center justify-center p-3">
+    <div class="ios-glass-strong rounded-3xl w-full max-w-md p-5 space-y-3">
+      <div class="flex items-center justify-between"><h3 class="font-extrabold text-lg">온라인 대전 <span class="text-xs font-semibold text-slate-500">같은 판에서 누가 더 많이 번역하나!</span></h3><button type="button" id="netClose" class="w-8 h-8 rounded-full bg-slate-900/5 text-slate-600">✕</button></div>
+      <div class="flex items-center gap-2 text-sm font-semibold">이름 <input type="text" id="netNick" maxlength="8" class="flex-1 rounded-xl px-2 py-1.5 bg-white/80 border border-white"></div>
+      <div id="netJoinRow" class="flex flex-wrap items-center gap-2">
+        <button type="button" id="netHost" class="px-4 py-2 rounded-xl bg-[#007aff] text-white font-bold text-sm">방 만들기</button>
+        <span class="text-xs text-slate-500">또는</span>
+        <input type="text" id="netCode" maxlength="6" placeholder="방 코드" class="w-24 rounded-xl px-2 py-1.5 bg-white/80 border border-white font-mono uppercase">
+        <button type="button" id="netJoin" class="px-4 py-2 rounded-xl bg-[#34c759] text-white font-bold text-sm">참가</button>
+      </div>
+      <div id="netCodeRow" class="hidden flex items-center gap-2 text-sm font-semibold">방 코드 <span id="netCodeShow" class="font-mono text-xl font-black text-[#007aff] tracking-widest"></span><button type="button" id="netCopy" class="ios-dock-btn px-2 py-1 text-xs">링크 복사</button></div>
+      <div id="netPlayers" class="grid grid-cols-2 gap-2"></div>
+      <div id="netModeRow" class="hidden"><div class="text-xs font-bold text-slate-500 mb-1">모드 (방장이 정해요)</div><div class="mode-pick ios-segmented" id="netModes">
+        <button type="button" data-mode="target" class="on">🎯 표적 코돈</button><button type="button" data-mode="ribosome">🧬 리보솜</button><button type="button" data-mode="sum10">🔟 합 10</button></div></div>
+      <button type="button" id="netStart" class="hidden w-full py-2.5 rounded-xl bg-gradient-to-r from-[#007aff] to-[#5856d6] text-white font-black">경기 시작 (2분)</button>
+      <p id="netLog" class="text-xs text-slate-500 min-h-[1.2em]">방을 만들거나 친구에게 받은 코드로 참가하세요. 모두 같은 판에서 동시에 코돈을 찾아요.</p>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. Genetic Code (64 Codons -> 20 Amino Acids + Stop)
+    // =========================================================================
+    const AMINO_ACIDS = [
+      { code: 'Met', name: '메싸이오닌 (개시)', role: 'START', color: '#34c759', codons: ['AUG'] },
+      { code: 'Stop', name: '종결 코돈', role: 'STOP', color: '#ff3b30', codons: ['UAA', 'UAG', 'UGA'] },
+      { code: 'Phe', name: '페닐알라닌', role: 'AA', color: '#007aff', codons: ['UUU', 'UUC'] },
+      { code: 'Leu', name: '류신', role: 'AA', color: '#5856d6', codons: ['UUA', 'UUG', 'CUU', 'CUC', 'CUA', 'CUG'] },
+      { code: 'Ile', name: '아이소류신', role: 'AA', color: '#0099cc', codons: ['AUU', 'AUC', 'AUA'] },
+      { code: 'Val', name: '발린', role: 'AA', color: '#0d9488', codons: ['GUU', 'GUC', 'GUA', 'GUG'] },
+      { code: 'Ser', name: '세린', role: 'AA', color: '#ec4899', codons: ['UCU', 'UCC', 'UCA', 'UCG', 'AGU', 'AGC'] },
+      { code: 'Pro', name: '프롤린', role: 'AA', color: '#f97316', codons: ['CCU', 'CCC', 'CCA', 'CCG'] },
+      { code: 'Thr', name: '트레오닌', role: 'AA', color: '#6366f1', codons: ['ACU', 'ACC', 'ACA', 'ACG'] },
+      { code: 'Ala', name: '알라닌', role: 'AA', color: '#10b981', codons: ['GCU', 'GCC', 'GCA', 'GCG'] },
+      { code: 'Tyr', name: '타이로신', role: 'AA', color: '#8b5cf6', codons: ['UAU', 'UAC'] },
+      { code: 'His', name: '히스티딘', role: 'AA', color: '#2563eb', codons: ['CAU', 'CAC'] },
+      { code: 'Gln', name: '글루타민', role: 'AA', color: '#0284c7', codons: ['CAA', 'CAG'] },
+      { code: 'Asn', name: '아스파라진', role: 'AA', color: '#d946ef', codons: ['AAU', 'AAC'] },
+      { code: 'Lys', name: '라이신', role: 'AA', color: '#f43f5e', codons: ['AAA', 'AAG'] },
+      { code: 'Asp', name: '아스파트산', role: 'AA', color: '#f59e0b', codons: ['GAU', 'GAC'] },
+      { code: 'Glu', name: '글루탐산', role: 'AA', color: '#d97706', codons: ['GAA', 'GAG'] },
+      { code: 'Cys', name: '시스테인', role: 'AA', color: '#14b8a6', codons: ['UGU', 'UGC'] },
+      { code: 'Trp', name: '트립토판', role: 'AA', color: '#7c3aed', codons: ['UGG'] },
+      { code: 'Arg', name: '아르지닌', role: 'AA', color: '#3b82f6', codons: ['CGU', 'CGC', 'CGA', 'CGG', 'AGA', 'AGG'] },
+      { code: 'Gly', name: '글라이신', role: 'AA', color: '#22c55e', codons: ['GGU', 'GGC', 'GGA', 'GGG'] }
+    ];
+
+    const CODON_MAP = {};
+    AMINO_ACIDS.forEach(aa => {
+      aa.codons.forEach(c => {
+        CODON_MAP[c] = aa;
+      });
+    });
+
+    const BASES = ['A', 'U', 'G', 'C'];
+    // iOS system-inspired translucent orb palette
+    const BASE_STYLES = {
+      A: { top: '#ff6961', bottom: '#ff3b30', paleTop: '#fca5a5', paleBottom: '#f87171', ring: 'rgba(255, 59, 48, 0.35)', name: '아데닌(A)' },
+      U: { top: '#ffb340', bottom: '#ff9500', paleTop: '#fdba74', paleBottom: '#fb923c', ring: 'rgba(255, 149, 0, 0.35)', name: '유라실(U)' },
+      G: { top: '#4cd964', bottom: '#28cd41', paleTop: '#86efac', paleBottom: '#4ade80', ring: 'rgba(52, 199, 89, 0.35)', name: '구아닌(G)' },
+      C: { top: '#409cff', bottom: '#007aff', paleTop: '#93c5fd', paleBottom: '#60a5fa', ring: 'rgba(0, 122, 255, 0.35)', name: '사이토신(C)' }
+    };
+
+    const SVG_SOUND_ON = `
+      <svg class="svg-icon" viewBox="0 0 24 24">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+      </svg>`;
+
+    const SVG_SOUND_OFF = `
+      <svg class="svg-icon text-slate-400" viewBox="0 0 24 24">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+        <line x1="23" y1="9" x2="17" y2="15" />
+        <line x1="17" y1="9" x2="23" y2="15" />
+      </svg>`;
+
+    // =========================================================================
+    // 2. Game State
+    // =========================================================================
+    const COLS = 17;
+    const ROWS = 10;
+    const TOTAL_CELLS = COLS * ROWS; // 170
+    const INITIAL_TIME = 120.0;
+
+    let gameMode = 'target'; // 'target' | 'ribosome' | 'sum10'
+    let board = [];
+    let score = 0;
+    let bestScore = 0;
+    let synthesizedCount = 0;
+    let combo = 0;
+    let timeLeft = INITIAL_TIME;
+    let isPaused = false;
+    let isGameOver = false;
+    let paleColors = false;
+    let distinctBaseColors = true;
+    let soundEnabled = true;
+
+    let activeTargets = [];
+    let ribosomePhase = 'INIT';
+    let bonusTargetAA = null;
+
+    let currentChain = [];
+    let completedProteins = [];
+
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let dragCurrent = { x: 0, y: 0 };
+    let selectedIndices = [];
+
+    let hintBox = null;
+    let popAnimations = [];
+    let floatingTexts = [];
+    let audioCtx = null;
+    let onTitle = true;   // 시작 화면이 떠 있는 동안은 시간이 흐르지 않음
+
+    // =========================================================================
+    // 3. Storage & Synthesized Audio
+    // =========================================================================
+    // 저장 (모드마다 최고 점수 따로) · 메인 화면 기록 표시에 쓰임
+    const SKEY = 'codonGlass';
+    const SAVE = (() => {
+      let d = null; try { d = JSON.parse(localStorage.getItem(SKEY)); } catch (e) {}
+      d = Object.assign({best: {target: 0, ribosome: 0, sum10: 0}, plays: 0, proteins: 0, online: 0, onlineWins: 0, opt: {sound: true, vol: 0.8, pale: false, distinct: true, nick: ''}}, d || {});
+      try { const old = parseInt(localStorage.getItem('codon_apple_best'), 10); if (old > d.best.target) d.best.target = old; } catch (e) {}
+      return d;
+    })();
+    const persist = () => { try { localStorage.setItem(SKEY, JSON.stringify(SAVE)); } catch (e) {} };
+    function loadBestScore() {
+      bestScore = SAVE.best[gameMode] || 0;
+      document.getElementById('bestValue').textContent = String(bestScore);
+    }
+
+    function saveBestScore() {
+      if (score > (SAVE.best[gameMode] || 0)) {
+        SAVE.best[gameMode] = score; persist();
+      }
+      bestScore = SAVE.best[gameMode] || 0;
+      document.getElementById('bestValue').textContent = String(bestScore);
+    }
+
+    function playTone(type) {
+      if (!soundEnabled || SAVE.opt.vol <= 0) return;
+      try {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) audioCtx = new AudioContextClass();
+        }
+        if (!audioCtx) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (!audioCtx.out) { audioCtx.out = audioCtx.createGain(); audioCtx.out.connect(audioCtx.destination); }
+        audioCtx.out.gain.value = SAVE.opt.vol;
+
+        const now = audioCtx.currentTime;
+        if (type === 'select') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(580, now);
+          gain.gain.setValueAtTime(0.025, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+          osc.connect(gain);
+          gain.connect(audioCtx.out);
+          osc.start(now);
+          osc.stop(now + 0.045);
+        } else if (type === 'clear') {
+          const notes = [523.25, 659.25, 783.99];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.055);
+            gain.gain.setValueAtTime(0.10, now + idx * 0.055);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.055 + 0.18);
+            osc.connect(gain);
+            gain.connect(audioCtx.out);
+            osc.start(now + idx * 0.055);
+            osc.stop(now + idx * 0.055 + 0.18);
+          });
+        } else if (type === 'special') {
+          const notes = [523.25, 659.25, 783.99, 1046.5];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+            gain.gain.setValueAtTime(0.12, now + idx * 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.22);
+            osc.connect(gain);
+            gain.connect(audioCtx.out);
+            osc.start(now + idx * 0.06);
+            osc.stop(now + idx * 0.06 + 0.22);
+          });
+        } else if (type === 'fail') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(210, now);
+          osc.frequency.linearRampToValueAtTime(150, now + 0.12);
+          gain.gain.setValueAtTime(0.05, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+          osc.connect(gain);
+          gain.connect(audioCtx.out);
+          osc.start(now);
+          osc.stop(now + 0.13);
+        }
+      } catch (e) {
+        // ignore audio errors
+      }
+    }
+
+    // =========================================================================
+    // 4. Board Initialization & Mission Cards
+    // =========================================================================
+    function pickRandomTargets() {
+      const normalAAs = AMINO_ACIDS.filter(a => a.role === 'AA');
+      const shuffled = [...normalAAs].sort(() => Math.random() - 0.5);
+      activeTargets = shuffled.slice(0, 3);
+      bonusTargetAA = shuffled[0];
+      renderMissionCards();
+    }
+
+    function generateBoard() {
+      board = [];
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const base = BASES[Math.floor(Math.random() * BASES.length)];
+          const num = Math.floor(Math.random() * 9) + 1;
+          board.push({
+            id: r * COLS + c,
+            row: r,
+            col: c,
+            base,
+            num,
+            cleared: false
+          });
+        }
+      }
+      for (let k = 0; k < 5; k++) {
+        const rr = Math.floor(Math.random() * ROWS);
+        const cc = Math.floor(Math.random() * (COLS - 3));
+        board[rr * COLS + cc].base = 'A';
+        board[rr * COLS + cc + 1].base = 'U';
+        board[rr * COLS + cc + 2].base = 'G';
+      }
+    }
+
+    // 판에 만들 수 있는 코돈이 하나도 없으면 남은 구슬의 염기를 다시 섞음 (리보솜 모드 시작 전엔 AUG 보장)
+    function ensurePlayable(silent) {
+      if (isGameOver) return false;
+      const left = board.filter(c => !c.cleared);
+      if (left.length < 3) return false;
+      if (findValidMove()) return false;
+      for (let tries = 0; tries < 12; tries++) {
+        const bases = left.map(c => c.base);
+        for (let i = bases.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bases[i], bases[j]] = [bases[j], bases[i]]; }
+        left.forEach((c, i) => { c.base = bases[i]; c.num = Math.floor(Math.random() * 9) + 1; });
+        if (tries >= 4 && left.length >= 3) { // 섞어도 안 되면 붙어 있는 세 칸에 목표 코돈을 심음
+          const want = gameMode === 'ribosome' && ribosomePhase === 'INIT' ? 'AUG' : gameMode === 'target' ? activeTargets[0].codons[0] : null;
+          if (want) { left[0].base = want[0]; left[1].base = want[1]; left[2].base = want[2]; }
+          if (gameMode === 'sum10') { left[0].num = 3; left[1].num = 3; left[2].num = 4; }
+        }
+        if (findValidMove()) break;
+      }
+      if (!silent) {
+        const m = getBoardMetrics();
+        floatingTexts.push({x: m.width / 2, y: m.height / 2, text: '염기 재배열!', subtext: '만들 수 있는 코돈이 없어 남은 구슬을 섞었어요', color: '#5856d6', alpha: 1.3, vy: -0.6});
+        playTone('special');
+      }
+      if (typeof NET !== 'undefined' && NET.role === 'host') NET.sendBoard();
+      return true;
+    }
+
+    function startNewGame() {
+      score = 0;
+      synthesizedCount = 0;
+      combo = 0;
+      timeLeft = INITIAL_TIME;
+      isPaused = false;
+      isGameOver = false;
+      ribosomePhase = 'INIT';
+      currentChain = [];
+      completedProteins = [];
+      hintBox = null;
+      selectedIndices = [];
+      isDragging = false;
+
+      document.getElementById('pauseOverlay').classList.add('hidden');
+      document.getElementById('gameOverOverlay').classList.add('hidden');
+      document.getElementById('pauseBtnLabel').textContent = 'Pause (일시정지)';
+
+      generateBoard();
+      pickRandomTargets();
+      loadBestScore();
+      ensurePlayable(true);
+      updateHUD();
+      renderPolypeptideChain();
+      if (!onTitle && !(typeof NET !== 'undefined' && NET.inMatch)) { SAVE.plays++; persist(); if (window.ILOG) ILOG.runStart(gameMode + ' 시작'); }
+    }
+
+    function renderMissionCards() {
+      const container = document.getElementById('missionCardsContainer');
+      const titleEl = document.getElementById('missionTitleLabel');
+
+      if (gameMode === 'target') {
+        titleEl.innerHTML = '현재 합성 목표 아미노산 <span class="font-normal text-slate-500">(염기 3개를 드래그해 아래 코돈 중 하나를 완성하세요)</span>';
+        const cardsHTML = activeTargets.map((aa, idx) => `
+          <div class="ios-glass-pill rounded-xl px-2.5 py-1.5 flex flex-col justify-between" style="border-left: 3.5px solid ${aa.color}">
+            <div class="flex items-center justify-between">
+              <span class="font-extrabold text-xs" style="color: ${aa.color}">목표 ${idx + 1} · ${aa.code}</span>
+              <span class="text-[10px] font-semibold text-slate-500">${aa.name}</span>
+            </div>
+            <div class="text-[11px] font-mono font-bold text-slate-800 mt-0.5 truncate" title="${aa.codons.join(', ')}">
+              ${aa.codons.slice(0, 4).join(', ')}${aa.codons.length > 4 ? ' 외' : ''}
+            </div>
+          </div>
+        `).join('');
+
+        const specialCard = `
+          <div class="ios-glass-pill rounded-xl px-2.5 py-1.5 flex flex-col justify-between" style="border-left: 3.5px solid #ff9500">
+            <div class="flex items-center justify-between">
+              <span class="font-extrabold text-xs text-[#e67e00]">특수 코돈</span>
+              <span class="text-[10px] font-semibold text-slate-500">상시 번역</span>
+            </div>
+            <div class="text-[11px] font-mono font-bold text-slate-800 mt-0.5 truncate">
+              AUG · UAA/UAG/UGA
+            </div>
+          </div>
+        `;
+        container.innerHTML = cardsHTML + specialCard;
+      } else if (gameMode === 'ribosome') {
+        titleEl.innerHTML = '리보솜 번역 단계 <span class="font-normal text-slate-500">(개시 코돈 AUG → 아미노산 신장 → 종결 코돈 UAA/UAG/UGA)</span>';
+        const isInit = ribosomePhase === 'INIT';
+        container.innerHTML = `
+          <div class="ios-glass-pill rounded-xl px-2.5 py-1.5 ${isInit ? 'target-active border-[#34c759]' : 'opacity-55'}" style="border-left: 3.5px solid #34c759">
+            <div class="text-xs font-extrabold text-[#15803d]">1단계 · 개시</div>
+            <div class="text-[11px] font-mono font-bold text-slate-800">AUG (메싸이오닌)</div>
+          </div>
+          <div class="ios-glass-pill rounded-xl px-2.5 py-1.5 ${!isInit ? 'target-active border-[#007aff]' : 'opacity-55'}" style="border-left: 3.5px solid #007aff">
+            <div class="text-xs font-extrabold text-[#007aff]">2단계 · 신장</div>
+            <div class="text-[11px] font-mono font-bold text-slate-800">모든 61종 코돈 가능</div>
+          </div>
+          <div class="ios-glass-pill rounded-xl px-2.5 py-1.5 ${!isInit ? '' : 'opacity-55'}" style="border-left: 3.5px solid #ff3b30">
+            <div class="text-xs font-extrabold text-[#ff3b30]">3단계 · 종결</div>
+            <div class="text-[11px] font-mono font-bold text-slate-800">UAA, UAG, UGA</div>
+          </div>
+          <div class="ios-glass-pill rounded-xl px-2.5 py-1.5" style="border-left: 3.5px solid #ff9500">
+            <div class="text-xs font-extrabold text-[#d97706]">보너스 목표 (+2초)</div>
+            <div class="text-[11px] font-mono font-bold text-slate-800 truncate">${bonusTargetAA ? bonusTargetAA.code + ': ' + bonusTargetAA.codons.slice(0, 3).join(', ') : 'AUG'}</div>
+          </div>
+        `;
+      } else {
+        titleEl.innerHTML = '에너지 합 10 모드 <span class="font-normal text-slate-500">(숫자 합이 10이면 제거 · 노드 3개로 10 완성 시 코돈 번역 보너스)</span>';
+        container.innerHTML = `
+          <div class="ios-glass-pill rounded-xl px-2.5 py-1.5" style="border-left: 3.5px solid #34c759">
+            <div class="text-xs font-extrabold text-[#15803d]">규칙 1 · 숫자 합 10</div>
+            <div class="text-[11px] text-slate-600">개수 무관 합 10 제거</div>
+          </div>
+          <div class="ios-glass-pill rounded-xl px-2.5 py-1.5" style="border-left: 3.5px solid #007aff">
+            <div class="text-xs font-extrabold text-[#007aff]">규칙 2 · 3염기 보너스</div>
+            <div class="text-[11px] text-slate-600">3개로 합 10이면 번역</div>
+          </div>
+          <div class="ios-glass-pill rounded-xl px-2.5 py-1.5" style="border-left: 3.5px solid #ff9500">
+            <div class="text-xs font-extrabold text-[#d97706]">규칙 3 · 특수 코돈</div>
+            <div class="text-[11px] text-slate-600">AUG·종결코돈 즉시 제거</div>
+          </div>
+          <div class="ios-glass-pill rounded-xl px-2.5 py-1.5" style="border-left: 3.5px solid #5856d6">
+            <div class="text-xs font-extrabold text-[#5856d6]">추가 시간 혜택</div>
+            <div class="text-[11px] text-slate-600">코돈 번역 시 +1.5초</div>
+          </div>
+        `;
+      }
+    }
+
+    // =========================================================================
+    // 5. Validation & Matching Rules
+    // =========================================================================
+    function evaluateSelection(indices) {
+      if (!indices || indices.length === 0) {
+        return { valid: false, previewText: '드래그하여 염기 선택', reason: 'empty' };
+      }
+
+      const items = indices.map(i => board[i]);
+      const basesStr = items.map(it => it.base).join('');
+      const sumNums = items.reduce((acc, it) => acc + it.num, 0);
+
+      if (gameMode === 'sum10') {
+        const aa = items.length === 3 ? CODON_MAP[basesStr] : null;
+        if (sumNums === 10) {
+          if (items.length === 3 && aa) {
+            return {
+              valid: true,
+              isBonus: true,
+              aa,
+              codon: basesStr,
+              previewText: `합 10 + 5'-${basesStr}-3' (${aa.code} 코돈 보너스)`
+            };
+          }
+          return {
+            valid: true,
+            isBonus: false,
+            aa: null,
+            codon: basesStr,
+            previewText: `에너지 합 = 10 (${items.length}개 노드 제거)`
+          };
+        }
+        if (items.length === 3 && aa && (aa.role === 'START' || aa.role === 'STOP')) {
+          return {
+            valid: true,
+            isBonus: true,
+            aa,
+            codon: basesStr,
+            previewText: `5'-${basesStr}-3' → ${aa.name} 특수 번역`
+          };
+        }
+        return {
+          valid: false,
+          previewText: `현재 숫자 합: ${sumNums} / 10 (염기: ${basesStr.slice(0, 6)}${basesStr.length > 6 ? '...' : ''})`
+        };
+      }
+
+      if (items.length !== 3) {
+        return {
+          valid: false,
+          previewText: `선택된 염기 ${items.length}개 (${basesStr.slice(0, 6)}${basesStr.length > 6 ? '...' : ''}) — 코돈은 염기 3개`
+        };
+      }
+
+      const aa = CODON_MAP[basesStr];
+      if (!aa) {
+        return { valid: false, previewText: `5'-${basesStr}-3'` };
+      }
+
+      if (gameMode === 'target') {
+        const isTarget = activeTargets.some(t => t.code === aa.code);
+        const isSpecial = aa.role === 'START' || aa.role === 'STOP';
+        if (isTarget || isSpecial) {
+          return {
+            valid: true,
+            isBonus: isTarget,
+            aa,
+            codon: basesStr,
+            previewText: `5'-${basesStr}-3' → ${aa.name} (${aa.code}) 매칭 성공`
+          };
+        }
+        return {
+          valid: false,
+          previewText: `5'-${basesStr}-3' (${aa.code}·${aa.name}) — 목표 코돈 아님`
+        };
+      }
+
+      if (gameMode === 'ribosome') {
+        if (ribosomePhase === 'INIT') {
+          if (basesStr === 'AUG') {
+            return {
+              valid: true,
+              isBonus: true,
+              aa,
+              codon: basesStr,
+              previewText: `5'-AUG-3' → 개시 코돈(Met) 번역 시작`
+            };
+          }
+          return {
+            valid: false,
+            previewText: `5'-${basesStr}-3' (${aa.code}) — 먼저 개시 코돈(AUG)을 선택하세요`
+          };
+        } else {
+          const isBonus = bonusTargetAA && bonusTargetAA.code === aa.code;
+          return {
+            valid: true,
+            isBonus,
+            aa,
+            codon: basesStr,
+            previewText: aa.role === 'STOP'
+              ? `5'-${basesStr}-3' → 종결 코돈 · 단백질 완성`
+              : `5'-${basesStr}-3' → ${aa.name} (${aa.code}) 사슬 신장`
+          };
+        }
+      }
+
+      return { valid: false, previewText: '' };
+    }
+
+    // =========================================================================
+    // 6. Hint Finder
+    // =========================================================================
+    function findValidMove() {
+      const candidateRects = [];
+      for (let h = 1; h <= 5; h++) {
+        for (let w = 1; w <= 6; w++) {
+          if (h * w < 2) continue;
+          for (let r1 = 0; r1 <= ROWS - h; r1++) {
+            for (let c1 = 0; c1 <= COLS - w; c1++) {
+              candidateRects.push({ r1, c1, r2: r1 + h - 1, c2: c1 + w - 1, area: h * w });
+            }
+          }
+        }
+      }
+      candidateRects.sort((a, b) => a.area - b.area);
+
+      for (const rect of candidateRects) {
+        const indices = [];
+        for (let r = rect.r1; r <= rect.r2; r++) {
+          for (let c = rect.c1; c <= rect.c2; c++) {
+            const idx = r * COLS + c;
+            if (!board[idx].cleared) indices.push(idx);
+          }
+        }
+        if (indices.length === 0) continue;
+        const res = evaluateSelection(indices);
+        if (res.valid) {
+          return { ...rect, label: res.previewText };
+        }
+      }
+      return null;
+    }
+
+    // =========================================================================
+    // 7. Clearing & Scoring Execution
+    // =========================================================================
+    function executeClear(indices, evalResult, net) {
+      const rectCenter = { x: 0, y: 0 };
+      const metrics = getBoardMetrics();
+
+      indices.forEach(idx => {
+        const cell = board[idx];
+        cell.cleared = true;
+        const pos = getCellCenter(cell.row, cell.col, metrics);
+        rectCenter.x += pos.x;
+        rectCenter.y += pos.y;
+
+        const bStyle = BASE_STYLES[cell.base];
+        const orbColor = distinctBaseColors ? bStyle.bottom : '#007aff';
+
+        popAnimations.push({
+          x: pos.x,
+          y: pos.y,
+          base: cell.base,
+          color: orbColor,
+          radius: metrics.orbRadius,
+          alpha: 1.0,
+          vx: (Math.random() - 0.5) * 3.0,
+          vy: -2.0 - Math.random() * 1.8
+        });
+      });
+
+      rectCenter.x /= indices.length;
+      rectCenter.y /= indices.length;
+
+      score += indices.length;
+      combo += 1;
+      hintBox = null;
+
+      let floatTitle = `+${indices.length}`;
+      let floatSub = '';
+      let floatColor = '#007aff';
+
+      if (evalResult.aa) {
+        synthesizedCount += 1;
+        const aa = evalResult.aa;
+        floatTitle = `${evalResult.codon} → ${aa.code}`;
+        floatSub = aa.name;
+        floatColor = aa.color;
+
+        if (aa.role === 'STOP') {
+          playTone('special');
+          if (currentChain.length > 0) {
+            completedProteins.push([...currentChain]); SAVE.proteins++; persist();
+            if (!net) { timeLeft = Math.min(INITIAL_TIME, timeLeft + 3.0); floatSub = `단백질 완성 (+3.0초 보너스)`; }
+            else floatSub = '단백질 완성!';
+          }
+          currentChain = [];
+          if (gameMode === 'ribosome') {
+            ribosomePhase = 'INIT';
+          }
+        } else {
+          currentChain.push({ code: aa.code, name: aa.name, codon: evalResult.codon, color: aa.color });
+          if (aa.role === 'START' && gameMode === 'ribosome') {
+            ribosomePhase = 'ELONGATE';
+            playTone('special');
+          } else {
+            playTone('clear');
+          }
+        }
+
+        if (net) { /* 온라인: 목표·보너스는 방장이 보낸 값으로 */ }
+        else if (gameMode === 'target') {
+          const targetIdx = activeTargets.findIndex(t => t.code === aa.code);
+          if (targetIdx !== -1) {
+            timeLeft = Math.min(INITIAL_TIME, timeLeft + 1.8);
+            const normalAAs = AMINO_ACIDS.filter(a => a.role === 'AA' && !activeTargets.some(t => t.code === a.code));
+            if (normalAAs.length > 0) {
+              activeTargets[targetIdx] = normalAAs[Math.floor(Math.random() * normalAAs.length)];
+            }
+          }
+        } else if (gameMode === 'ribosome' && evalResult.isBonus) {
+          timeLeft = Math.min(INITIAL_TIME, timeLeft + 2.0);
+          const normalAAs = AMINO_ACIDS.filter(a => a.role === 'AA');
+          bonusTargetAA = normalAAs[Math.floor(Math.random() * normalAAs.length)];
+        } else if (gameMode === 'sum10' && evalResult.isBonus) {
+          timeLeft = Math.min(INITIAL_TIME, timeLeft + 1.5);
+        }
+
+        renderMissionCards();
+        renderPolypeptideChain();
+      } else {
+        playTone('clear');
+      }
+
+      floatingTexts.push({
+        x: rectCenter.x,
+        y: rectCenter.y,
+        text: floatTitle,
+        subtext: floatSub,
+        color: floatColor,
+        alpha: 1.0,
+        vy: -1.1
+      });
+
+      if (!net) saveBestScore();
+      updateHUD();
+      if (window.ILOG) ILOG.result('번역', evalResult.aa ? evalResult.codon + '→' + evalResult.aa.code : '합 10');
+      if (!net) setTimeout(() => ensurePlayable(false), 60);
+    }
+
+    function renderPolypeptideChain() {
+      const container = document.getElementById('polypeptideChain');
+      if (currentChain.length === 0) {
+        const doneCount = completedProteins.length;
+        container.innerHTML = doneCount > 0
+          ? `<span class="text-[#007aff] text-[11px] font-bold">완성된 단백질 ${doneCount}개 · 새로운 사슬을 합성하세요</span>`
+          : `<span class="text-slate-400 text-[11px]">합성된 아미노산 사슬이 여기에 연결됩니다</span>`;
+        return;
+      }
+
+      container.innerHTML = currentChain.map((item, idx) => `
+        <div class="inline-flex items-center shrink-0">
+          ${idx > 0 ? '<span class="text-slate-300 font-bold mx-0.5">—</span>' : ''}
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold text-white shadow-2xs" style="background-color: ${item.color}" title="${item.name} (${item.codon})">
+            ${item.code}<span class="text-[9px] opacity-85 ml-0.5">${item.codon}</span>
+          </span>
+        </div>
+      `).join('');
+      container.scrollLeft = container.scrollWidth;
+    }
+
+    function updateHUD() {
+      document.getElementById('scoreValue').textContent = String(score);
+      document.getElementById('proteinCountBadge').textContent = `합성 아미노산: ${synthesizedCount}개 (단백질 ${completedProteins.length}개)`;
+      document.getElementById('comboStatusText').textContent = `연속 번역 ${combo}콤보`;
+    }
+
+    // =========================================================================
+    // 8. Canvas Rendering (Clean iOS Glass Nucleotide Nodes)
+    // =========================================================================
+    // 옛 브라우저(사파리 15 이하)에는 roundRect가 없어서 직접 그림
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+        r = Math.min(typeof r === 'number' ? r : 0, w / 2, h / 2);
+        this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r);
+        this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath(); return this;
+      };
+    }
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.max(300, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(180, Math.floor(rect.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function getBoardMetrics() {
+      const rect = canvas.getBoundingClientRect();
+      const padX = Math.max(10, rect.width * 0.016);
+      const padY = Math.max(10, rect.height * 0.022);
+      const gridW = rect.width - padX * 2;
+      const gridH = rect.height - padY * 2;
+      const cellW = gridW / COLS;
+      const cellH = gridH / ROWS;
+      const orbRadius = Math.min(cellW, cellH) * 0.41;
+      return { padX, padY, gridW, gridH, cellW, cellH, orbRadius, width: rect.width, height: rect.height };
+    }
+
+    function getCellCenter(row, col, m) {
+      return {
+        x: m.padX + (col + 0.5) * m.cellW,
+        y: m.padY + (row + 0.5) * m.cellH
+      };
+    }
+
+    function drawGlassNode(x, y, r, base, num, isSelected, isHinted) {
+      const style = BASE_STYLES[base];
+      let cTop = style.top;
+      let cBottom = style.bottom;
+
+      if (distinctBaseColors) {
+        cTop = paleColors ? style.paleTop : style.top;
+        cBottom = paleColors ? style.paleBottom : style.bottom;
+      } else {
+        cTop = paleColors ? '#93c5fd' : '#38bdf8';
+        cBottom = paleColors ? '#60a5fa' : '#007aff';
+      }
+
+      ctx.save();
+      if (isSelected) {
+        ctx.translate(x, y);
+        ctx.scale(1.12, 1.12);
+        ctx.translate(-x, -y);
+      }
+
+      // Hint halo
+      if (isHinted) {
+        ctx.beginPath();
+        ctx.arc(x, y, r + 4.5, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ff9500';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      }
+
+      // Selected outer glass ring
+      if (isSelected) {
+        ctx.beginPath();
+        ctx.arc(x, y, r + 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.fill();
+        ctx.strokeStyle = '#007aff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      // Soft drop shadow
+      ctx.shadowColor = 'rgba(15, 23, 42, 0.14)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 2;
+
+      // Main iOS Glass Sphere gradient
+      const grad = ctx.createLinearGradient(x - r * 0.5, y - r, x + r * 0.5, y + r);
+      grad.addColorStop(0, cTop);
+      grad.addColorStop(1, cBottom);
+
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Reset shadow for inner specular details
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Specular glass border rim
+      ctx.lineWidth = 1.25;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)';
+      ctx.stroke();
+
+      // Top-left frosted specular arc highlight
+      const shineGrad = ctx.createLinearGradient(x, y - r, x, y);
+      shineGrad.addColorStop(0, 'rgba(255, 255, 255, 0.52)');
+      shineGrad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+      ctx.beginPath();
+      ctx.arc(x, y - r * 0.12, r * 0.78, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.fillStyle = shineGrad;
+      ctx.fill();
+
+      // Crisp Typography
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      if (gameMode === 'sum10') {
+        ctx.font = `800 ${Math.round(r * 0.92)}px -apple-system, Inter, sans-serif`;
+        ctx.fillText(String(num), x - r * 0.18, y + 1);
+        ctx.font = `700 ${Math.round(r * 0.60)}px -apple-system, Inter, sans-serif`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+        ctx.fillText(base, x + r * 0.42, y - r * 0.22);
+      } else {
+        ctx.font = `800 ${Math.round(r * 1.04)}px -apple-system, Inter, sans-serif`;
+        ctx.fillText(base, x, y + 1);
+      }
+
+      ctx.restore();
+    }
+
+    function renderFrame() {
+      const m = getBoardMetrics();
+      ctx.clearRect(0, 0, m.width, m.height);
+
+      // 1. Subtle Frosted Grid Cells
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const x = m.padX + c * m.cellW;
+          const y = m.padY + r * m.cellH;
+          ctx.fillStyle = (r + c) % 2 === 0
+            ? 'rgba(255, 255, 255, 0.38)'
+            : 'rgba(241, 245, 249, 0.38)';
+          ctx.fillRect(x + 1, y + 1, m.cellW - 2, m.cellH - 2);
+        }
+      }
+
+      // 2. Hint Marquee if active
+      const now = performance.now();
+      if (hintBox && now < hintBox.until) {
+        const hx = m.padX + hintBox.c1 * m.cellW;
+        const hy = m.padY + hintBox.r1 * m.cellH;
+        const hw = (hintBox.c2 - hintBox.c1 + 1) * m.cellW;
+        const hh = (hintBox.r2 - hintBox.r1 + 1) * m.cellH;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 149, 0, 0.14)';
+        ctx.beginPath();
+        ctx.roundRect(hx, hy, hw, hh, 10);
+        ctx.fill();
+        ctx.strokeStyle = '#ff9500';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([6, 4]);
+        ctx.stroke();
+        ctx.restore();
+      } else if (hintBox && now >= hintBox.until) {
+        hintBox = null;
+      }
+
+      // 3. Active Nucleotide Glass Nodes
+      const selectedSet = new Set(selectedIndices);
+      for (let i = 0; i < board.length; i++) {
+        const cell = board[i];
+        if (cell.cleared) continue;
+        const center = getCellCenter(cell.row, cell.col, m);
+        const isHinted = hintBox &&
+          cell.row >= hintBox.r1 && cell.row <= hintBox.r2 &&
+          cell.col >= hintBox.c1 && cell.col <= hintBox.c2;
+        drawGlassNode(center.x, center.y, m.orbRadius, cell.base, cell.num, selectedSet.has(i), isHinted);
+      }
+
+      // 4. Selection Order Badges (1, 2, 3...)
+      if (selectedIndices.length > 0) {
+        selectedIndices.forEach((idx, orderIdx) => {
+          const cell = board[idx];
+          const center = getCellCenter(cell.row, cell.col, m);
+          const bx = center.x + m.orbRadius * 0.66;
+          const by = center.y - m.orbRadius * 0.66;
+          const br = Math.max(7, m.orbRadius * 0.35);
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(bx, by, br, 0, Math.PI * 2);
+          ctx.fillStyle = '#0f172a';
+          ctx.fill();
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `800 ${Math.max(8, Math.round(m.orbRadius * 0.44))}px -apple-system, Inter, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(String(orderIdx + 1), bx, by);
+          ctx.restore();
+        });
+      }
+
+      // 5. Active iOS Glass Selection Marquee & Floating Pill
+      if (isDragging) {
+        const rx = Math.min(dragStart.x, dragCurrent.x);
+        const ry = Math.min(dragStart.y, dragCurrent.y);
+        const rw = Math.abs(dragCurrent.x - dragStart.x);
+        const rh = Math.abs(dragCurrent.y - dragStart.y);
+
+        const evalRes = evaluateSelection(selectedIndices);
+        ctx.save();
+        ctx.fillStyle = evalRes.valid
+          ? 'rgba(52, 199, 89, 0.18)'
+          : 'rgba(0, 122, 255, 0.12)';
+        ctx.strokeStyle = evalRes.valid ? '#34c759' : '#007aff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(rx, ry, Math.max(2, rw), Math.max(2, rh), 8);
+        ctx.fill();
+        ctx.stroke();
+
+        if (selectedIndices.length > 0) {
+          const seqText = selectedIndices.map(i => board[i].base).join(' · ');
+          const badgeLabel = evalRes.valid && evalRes.aa
+            ? `5'  ${seqText}  3'  →  ${evalRes.aa.code} (${evalRes.aa.name})`
+            : `5'  ${seqText}  3'  (${selectedIndices.length}개)`;
+          ctx.font = '700 12px -apple-system, Inter, Noto Sans KR, sans-serif';
+          const textW = ctx.measureText(badgeLabel).width + 22;
+          const bx = Math.max(8, Math.min(m.width - textW - 8, rx + rw / 2 - textW / 2));
+          const by = Math.max(6, ry - 30);
+
+          ctx.fillStyle = evalRes.valid
+            ? 'rgba(22, 163, 74, 0.92)'
+            : 'rgba(15, 23, 42, 0.86)';
+          ctx.beginPath();
+          ctx.roundRect(bx, by, textW, 24, 12);
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(badgeLabel, bx + textW / 2, by + 12);
+        }
+        ctx.restore();
+      }
+
+      // 6. Pop Particle Animations
+      for (let i = popAnimations.length - 1; i >= 0; i--) {
+        const p = popAnimations[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.20;
+        p.alpha -= 0.04;
+        if (p.alpha <= 0) {
+          popAnimations.splice(i, 1);
+          continue;
+        }
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = `800 ${Math.round(p.radius)}px -apple-system, Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(p.base, p.x, p.y);
+        ctx.restore();
+      }
+
+      // 7. Floating Translated Amino Acid Labels
+      for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        const ft = floatingTexts[i];
+        ft.y += ft.vy;
+        ft.alpha -= 0.022;
+        if (ft.alpha <= 0) {
+          floatingTexts.splice(i, 1);
+          continue;
+        }
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, ft.alpha);
+        ctx.font = '800 15px -apple-system, Inter, Noto Sans KR, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = ft.color;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.lineWidth = 4;
+        ctx.strokeText(ft.text, ft.x, ft.y);
+        ctx.fillText(ft.text, ft.x, ft.y);
+        if (ft.subtext) {
+          ctx.font = '700 11px -apple-system, Inter, Noto Sans KR, sans-serif';
+          ctx.strokeText(ft.subtext, ft.x, ft.y + 15);
+          ctx.fillText(ft.subtext, ft.x, ft.y + 15);
+        }
+        ctx.restore();
+      }
+    }
+
+    // =========================================================================
+    // 9. Pointer / Touch Drag Handling
+    // =========================================================================
+    function getCanvasCoords(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+      const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    function updateSelectedIndicesFromBox() {
+      const m = getBoardMetrics();
+      const rx1 = Math.min(dragStart.x, dragCurrent.x);
+      const ry1 = Math.min(dragStart.y, dragCurrent.y);
+      const rx2 = Math.max(dragStart.x, dragCurrent.x);
+      const ry2 = Math.max(dragStart.y, dragCurrent.y);
+
+      const nextSelected = [];
+      for (let i = 0; i < board.length; i++) {
+        const cell = board[i];
+        if (cell.cleared) continue;
+        const center = getCellCenter(cell.row, cell.col, m);
+        if (
+          center.x >= rx1 - m.orbRadius * 0.25 &&
+          center.x <= rx2 + m.orbRadius * 0.25 &&
+          center.y >= ry1 - m.orbRadius * 0.25 &&
+          center.y <= ry2 + m.orbRadius * 0.25
+        ) {
+          nextSelected.push(i);
+        }
+      }
+
+      if (nextSelected.length !== selectedIndices.length) {
+        playTone('select');
+      }
+      selectedIndices = nextSelected;
+
+      const evalRes = evaluateSelection(selectedIndices);
+      const previewEl = document.getElementById('liveDragPreview');
+      previewEl.textContent = evalRes.previewText;
+      if (evalRes.valid) {
+        previewEl.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#34c759] text-white shadow-xs';
+      } else {
+        previewEl.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/80 border border-white text-slate-600 shadow-2xs';
+      }
+    }
+
+    function handlePointerDown(evt) {
+      if (isPaused || isGameOver) return;
+      isDragging = true;
+      const pt = getCanvasCoords(evt);
+      dragStart = pt;
+      dragCurrent = pt;
+      updateSelectedIndicesFromBox();
+    }
+
+    function handlePointerMove(evt) {
+      if (!isDragging || isPaused || isGameOver) return;
+      if (evt.cancelable) evt.preventDefault();
+      dragCurrent = getCanvasCoords(evt);
+      updateSelectedIndicesFromBox();
+    }
+
+    function handlePointerUp() {
+      if (!isDragging) return;
+      isDragging = false;
+
+      if (selectedIndices.length > 0) {
+        const evalRes = evaluateSelection(selectedIndices);
+        if (window.ILOG) ILOG.game('선택', selectedIndices.map(i => board[i].base).join('') + (evalRes.valid ? ' (번역)' : ''));
+        if (evalRes.valid && typeof NET !== 'undefined' && NET.inMatch) {
+          NET.take(selectedIndices.slice(), evalRes);   // 방장이 확인한 뒤 지워짐 (같은 구슬을 동시에 잡으면 먼저 온 사람)
+        } else if (evalRes.valid) {
+          executeClear(selectedIndices, evalRes);
+        } else if (selectedIndices.length >= 2) {
+          combo = 0;
+          updateHUD();
+          playTone('fail');
+        }
+      }
+
+      selectedIndices = [];
+      const previewEl = document.getElementById('liveDragPreview');
+      previewEl.textContent = '드래그하여 염기 선택';
+      previewEl.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/80 border border-white text-slate-600 shadow-2xs';
+    }
+
+    // =========================================================================
+    // 10. Main Loop & Timer
+    // =========================================================================
+    let lastTick = performance.now();
+
+    function gameLoop(now) {
+      const dt = Math.min(0.1, (now - lastTick) / 1000);
+      lastTick = now;
+
+      const netGuest = typeof NET !== 'undefined' && NET.inMatch && NET.role === 'guest';
+      if (!isPaused && !isGameOver && !onTitle) {
+        if (!netGuest) timeLeft = Math.max(0, timeLeft - dt);
+        const mins = Math.floor(timeLeft / 60);
+        const secs = (timeLeft % 60).toFixed(1).padStart(4, '0');
+        document.getElementById('timerDisplay').textContent = `${mins}:${secs}`;
+
+        const pct = (timeLeft / INITIAL_TIME) * 100;
+        const bar = document.getElementById('timerBar');
+        bar.style.width = `${pct}%`;
+        bar.className = timeLeft < 25
+          ? 'h-full bg-[#ff3b30] transition-all duration-100 rounded-full'
+          : 'h-full bg-gradient-to-r from-[#007aff] to-[#34c759] transition-all duration-100 rounded-full';
+
+        if (typeof NET !== 'undefined' && NET.inMatch) NET.tick(dt);
+        else if (timeLeft <= 0 || score >= TOTAL_CELLS || board.every(c => c.cleared)) {
+          triggerGameOver();
+        }
+      }
+
+      renderFrame();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function triggerGameOver() {
+      if (isGameOver) return;
+      isGameOver = true;
+      isDragging = false;
+      selectedIndices = [];
+      saveBestScore();
+      if (window.ILOG) ILOG.runEnd('끝 ' + score + '점');
+
+      const overlay = document.getElementById('gameOverOverlay');
+      overlay.classList.remove('hidden');
+
+      document.getElementById('finalScoreSummary').textContent =
+        `최종 점수: ${score} / 170점 · 합성 아미노산: ${synthesizedCount}개 · 최고 기록: ${bestScore}점`;
+
+      const listEl = document.getElementById('finalProteinList');
+      const allChains = [...completedProteins];
+      if (currentChain.length > 0) allChains.push(currentChain);
+
+      if (allChains.length === 0) {
+        listEl.innerHTML = `<p class="text-center text-slate-500">이번 세션에서 합성된 폴리펩타이드 사슬이 없습니다. 다시 도전해 보세요.</p>`;
+      } else {
+        listEl.innerHTML = `<div class="font-bold text-slate-800 mb-1.5">이번 세션에서 번역한 폴리펩타이드 사슬 내역</div>` +
+          allChains.map((ch, idx) => `
+            <div class="py-1 border-b border-slate-900/5 last:border-none">
+              <span class="font-bold text-[#007aff]">사슬 #${idx + 1}:</span>
+              <span class="text-slate-700 ml-1">${ch.map(c => `${c.code}(${c.codon})`).join(' — ')}</span>
+            </div>
+          `).join('');
+      }
+    }
+
+    // =========================================================================
+    // 11. UI Event Listeners & Codon Reference Table
+    // =========================================================================
+    function populateCodonReferenceModal() {
+      const grid = document.getElementById('codonTableGrid');
+      grid.innerHTML = AMINO_ACIDS.map(aa => `
+        <div class="ios-glass-pill rounded-xl p-2.5" style="border-left: 3.5px solid ${aa.color}">
+          <div class="flex items-center justify-between">
+            <span class="font-extrabold text-xs" style="color: ${aa.color}">${aa.code}</span>
+            <span class="text-[11px] font-semibold text-slate-500">${aa.name}</span>
+          </div>
+          <div class="text-[11px] font-mono font-bold text-slate-800 mt-1 break-words">
+            ${aa.codons.join(', ')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function setGameMode(mode) {
+      gameMode = mode;
+      const btnTarget = document.getElementById('modeBtnTarget');
+      const btnRibo = document.getElementById('modeBtnRibosome');
+      const btnSum10 = document.getElementById('modeBtnSum10');
+      const sub = document.getElementById('modeSubtitle');
+
+      btnTarget.className = mode === 'target' ? 'ios-seg-btn active' : 'ios-seg-btn';
+      btnRibo.className = mode === 'ribosome' ? 'ios-seg-btn active' : 'ios-seg-btn';
+      btnSum10.className = mode === 'sum10' ? 'ios-seg-btn active' : 'ios-seg-btn';
+
+      if (mode === 'target') {
+        sub.textContent = '사각형을 드래그해 염기 3개(5\'→3\')로 상단의 표적 아미노산을 번역하세요';
+      } else if (mode === 'ribosome') {
+        sub.textContent = '개시 코돈(AUG)으로 시작해 아미노산 사슬을 신장시키고 종결 코돈(UAA/UAG/UGA)으로 단백질을 완성하세요';
+      } else {
+        sub.textContent = '드래그 영역의 숫자 합이 10이면 제거 · 노드 3개로 합 10 완성 시 코돈 번역 보너스';
+      }
+
+      startNewGame();
+    }
+
+    // =========================================================================
+    // 12. 시작 화면 · 설정
+    // =========================================================================
+    const $id = id => document.getElementById(id);
+    function applyOpts() {
+      soundEnabled = SAVE.opt.sound; paleColors = SAVE.opt.pale; distinctBaseColors = SAVE.opt.distinct;
+      $id('paleColorsToggle').checked = paleColors;
+      $id('colorStyleBtn').textContent = distinctBaseColors ? '염기별 컬러 ON' : '단일 글래스 컬러 ON';
+      $id('soundIcon').innerHTML = soundEnabled ? SVG_SOUND_ON : SVG_SOUND_OFF;
+      $id('soundLabel').textContent = soundEnabled ? 'Sound ON' : 'Muted';
+    }
+    function nick() { return (SAVE.opt.nick || '').trim() || ('연구원' + (10 + Math.floor(Math.random() * 89))); }
+    function showTitle() {
+      if (typeof NET !== 'undefined') NET.leave();
+      onTitle = true; isPaused = false;
+      $id('titleScreen').style.display = 'flex';
+      $id('titleBest').textContent = `최고 점수 · 표적 ${SAVE.best.target} · 리보솜 ${SAVE.best.ribosome} · 합 10 ${SAVE.best.sum10}`;
+      $id('titleModes').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.mode === gameMode));
+      startTitleArt();
+    }
+    function hideTitle() { onTitle = false; $id('titleScreen').style.display = 'none'; stopTitleArt(); }
+    function openSettings() {
+      $id('setSound').checked = SAVE.opt.sound; $id('setVol').value = SAVE.opt.vol; $id('setPale').checked = SAVE.opt.pale;
+      $id('setDistinct').checked = SAVE.opt.distinct; $id('setNick').value = SAVE.opt.nick || '';
+      $id('settingsModal').classList.remove('hidden');
+    }
+
+    // 시작 화면 그림: 유리 구슬 mRNA 가닥이 리보솜을 지나 아미노산 사슬이 되는 모습
+    let titleRaf = 0;
+    function startTitleArt() {
+      cancelAnimationFrame(titleRaf);
+      const cv = $id('titleArt'), g = cv.getContext('2d');
+      const draw = (t) => {
+        const dpr = Math.min(2, window.devicePixelRatio || 1), W = cv.clientWidth, H = cv.clientHeight;
+        if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+        g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+        drawTitleArt(g, W, H, t / 1000);
+        titleRaf = requestAnimationFrame(draw);
+      };
+      titleRaf = requestAnimationFrame(draw);
+    }
+    function stopTitleArt() { cancelAnimationFrame(titleRaf); }
+    function orb(g, x, y, r, base, alpha = 1) {
+      const st = BASE_STYLES[base]; g.save(); g.globalAlpha = alpha;
+      g.shadowColor = 'rgba(15,23,42,.18)'; g.shadowBlur = r * 0.5; g.shadowOffsetY = r * 0.15;
+      const gr = g.createLinearGradient(x - r * .5, y - r, x + r * .5, y + r); gr.addColorStop(0, st.top); gr.addColorStop(1, st.bottom);
+      g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fillStyle = gr; g.fill(); g.shadowColor = 'transparent';
+      g.lineWidth = Math.max(1, r * .08); g.strokeStyle = 'rgba(255,255,255,.75)'; g.stroke();
+      const sh = g.createLinearGradient(x, y - r, x, y); sh.addColorStop(0, 'rgba(255,255,255,.6)'); sh.addColorStop(1, 'rgba(255,255,255,0)');
+      g.beginPath(); g.arc(x, y - r * .12, r * .78, Math.PI * 1.1, Math.PI * 1.9); g.fillStyle = sh; g.fill();
+      if (base) { g.fillStyle = '#fff'; g.font = `800 ${Math.round(r * 1.02)}px Inter, -apple-system, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(base, x, y + r * .04); }
+      g.restore();
+    }
+    function drawTitleArt(g, W, H, t) {
+      // 흐릿한 배경 구슬 (보케)
+      for (let i = 0; i < 18; i++) {
+        const x = ((i * 137.5) % 100) / 100 * W, y = ((i * 71.3 + t * 6 * (i % 3 + 1)) % (H + 120)) - 60, r = 18 + (i % 5) * 9;
+        const st = BASE_STYLES['AUGC'[i % 4]]; g.globalAlpha = .16; g.fillStyle = st.top; g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fill(); g.globalAlpha = 1;
+      }
+      const R = Math.max(14, Math.min(W, H) * 0.032), yM = H * 0.86;
+      // mRNA 가닥 (왼쪽 → 오른쪽으로 흘러감)
+      const seq = 'AUGGCUUCAGGUAAAGAGUGGCCAUAA';
+      const step = R * 2.25, off = (t * R * 1.6) % (step * 3);
+      g.strokeStyle = 'rgba(88,86,214,.35)'; g.lineWidth = R * .35; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(-20, yM + Math.sin(t) * 2); g.lineTo(W + 20, yM); g.stroke();
+      for (let i = -3; i < seq.length + 3; i++) {
+        const x = -step * 3 + i * step + off; if (x < -R || x > W + R) continue;
+        orb(g, x, yM + Math.sin(i * .8 + t * 2) * R * .18, R, seq[((i % seq.length) + seq.length) % seq.length]);
+      }
+      // 리보솜 (두 덩어리 유리)
+      const rx = W > 860 ? W * 0.17 : W * 0.5, ry = yM - R * .2;   // 넓은 화면: 제목 카드 왼쪽에 리보솜
+      const glass = (cx, cy, rw, rh, c1, c2) => { g.save(); const gr = g.createLinearGradient(cx - rw, cy - rh, cx + rw, cy + rh); gr.addColorStop(0, c1); gr.addColorStop(1, c2);
+        g.fillStyle = gr; g.globalAlpha = .82; g.beginPath(); g.ellipse(cx, cy, rw, rh, 0, 0, 6.2832); g.fill(); g.globalAlpha = 1; g.lineWidth = 2; g.strokeStyle = 'rgba(255,255,255,.85)'; g.stroke();
+        g.fillStyle = 'rgba(255,255,255,.45)'; g.beginPath(); g.ellipse(cx - rw * .25, cy - rh * .45, rw * .45, rh * .18, -0.2, 0, 6.2832); g.fill(); g.restore(); };
+      glass(rx, ry - R * 2.6, R * 4.4, R * 2.6, 'rgba(168,160,255,.95)', 'rgba(88,86,214,.95)');
+      glass(rx, ry + R * .9, R * 3.4, R * 1.5, 'rgba(140,200,255,.95)', 'rgba(0,122,255,.9)');
+      g.fillStyle = 'rgba(255,255,255,.95)'; g.font = `800 ${Math.round(R * .78)}px Inter, 'Noto Sans KR', sans-serif`; g.textAlign = 'center'; g.fillText('리보솜', rx, ry - R * 2.4);
+      // 아미노산 사슬 (리보솜 위로 자라남)
+      const AA = ['Met', 'Ala', 'Ser', 'Gly', 'Lys', 'Glu', 'Trp', 'Pro'];
+      const cols = AA.map(c => (AMINO_ACIDS.find(a => a.code === c) || {color: '#5856d6'}).color);
+      let px = rx, py = ry - R * 5.4;
+      for (let i = 0; i < AA.length; i++) {
+        const a = -Math.PI / 2 + Math.sin(i * 1.1 + t * .8) * .9 - i * .12, d = R * 1.9;
+        const nx = px + Math.cos(a) * d, ny = py + Math.sin(a) * d * .9;
+        g.strokeStyle = 'rgba(15,23,42,.18)'; g.lineWidth = R * .22; g.beginPath(); g.moveTo(px, py); g.lineTo(nx, ny); g.stroke();
+        g.save(); g.shadowColor = 'rgba(15,23,42,.18)'; g.shadowBlur = 8; g.fillStyle = cols[i]; g.beginPath(); g.arc(px, py, R * .78, 0, 6.2832); g.fill(); g.restore();
+        g.lineWidth = 1.5; g.strokeStyle = 'rgba(255,255,255,.8)'; g.beginPath(); g.arc(px, py, R * .78, 0, 6.2832); g.stroke();
+        g.fillStyle = '#fff'; g.font = `800 ${Math.round(R * .52)}px Inter, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(AA[i], px, py + 1);
+        px = nx; py = ny; if (py < -R * 2) break;
+      }
+      // tRNA (안티코돈을 들고 내려오는 유리 막대)
+      const tx = rx + R * 2.2, ty = ry - R * 4.2 + Math.sin(t * 1.5) * R * .4;
+      g.save(); g.globalAlpha = .85; g.fillStyle = 'rgba(255,149,0,.85)'; g.beginPath(); g.roundRect(tx - R * .5, ty, R, R * 2.6, R * .5); g.fill(); g.restore();
+      g.fillStyle = '#fff'; g.font = `800 ${Math.round(R * .5)}px Inter, sans-serif`; g.fillText('tRNA', tx, ty + R * 1.3);
+    }
+
+    // =========================================================================
+    // 13. 온라인 대전 (PeerJS · 방장이 판을 관리, 같은 판에서 먼저 잡은 사람이 번역)
+    // =========================================================================
+    const NET = (() => {
+      const PREFIX = 'codonglass-v1-', BC_PREFIX = 'codonglass-bc-v1-', VER = 1, MAXP = 4, MATCH_TIME = 120;
+      const COLORS = ['#007aff', '#34c759', '#ff9500', '#af52de'];
+      const myId = 'cg' + Math.random().toString(36).slice(2, 10);
+      let peer = null, hostConn = null, bc = null, code = '', lastMsg = 0, tickAcc = 0;
+      const conns = new Map();
+      const st = {role: null, inMatch: false, players: [], mode: 'target', pstate: {}};
+      const log = m => { $id('netLog').textContent = m; };
+      const peerOpts = () => ({debug: 0, config: {iceServers: [{urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302']}, {urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp'}]}});
+      let peerLoad = null;
+      const loadPeer = () => window.Peer ? Promise.resolve() : peerLoad || (peerLoad = new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = '../vendor/peerjs.min.js'; sc.onload = ok; sc.onerror = () => { peerLoad = null; no(new Error('load')); }; document.head.appendChild(sc); }));
+      const openPeer = id => loadPeer().then(() => new Promise((ok, no) => { let p; try { p = id ? new Peer(id, peerOpts()) : new Peer(peerOpts()); } catch (e) { no(e); return; }
+        const to = setTimeout(() => { try { p.destroy(); } catch (e) {} no(new Error('server')); }, 12000);
+        p.on('open', () => { clearTimeout(to); ok(p); }); p.on('error', e => { clearTimeout(to); no(e); }); }));
+      const genCode = () => { const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r = ''; for (let i = 0; i < 4; i++) r += c[Math.floor(Math.random() * c.length)]; return r; };
+      const openBc = c => { try { bc = new BroadcastChannel(BC_PREFIX + c); bc.onmessage = e => { const m = e.data; if (!m) return; if (st.role === 'host' && m.from && m.from !== myId) onHost(m, null); else if (st.role === 'guest' && !m.from && (!m.to || m.to === myId)) onGuest(m); }; } catch (e) { bc = null; } };
+      const send = (c, m) => { if (c && c.open) try { c.send(m); } catch (e) {} };
+      const broadcast = m => { for (const c of conns.values()) send(c, m); if (bc) try { bc.postMessage(m); } catch (e) {} if (st.role === 'host') onGuest(m, true); };
+      const sendTo = (pid, m) => { if (pid === myId) { onGuest(m, true); return; } const c = conns.get(pid); if (c) send(c, m); else if (bc) try { bc.postMessage(Object.assign({to: pid}, m)); } catch (e) {} };
+      const toHost = m => { m.from = myId; if (st.role === 'host') { onHost(m, null); return; } if (hostConn) send(hostConn, m); else if (bc) try { bc.postMessage(m); } catch (e) {} };
+      const packBoard = () => board.map(c => c.cleared ? '.' : c.base + c.num).join(',');
+      const unpackBoard = s2 => { s2.split(',').forEach((v, i) => { const c = board[i]; if (!c) return; if (v === '.') c.cleared = true; else { c.cleared = false; c.base = v[0]; c.num = +v.slice(1); } }); };
+      const pub = () => st.players.map(p => ({id: p.id, name: p.name, color: p.color, score: p.score || 0, syn: p.syn || 0, prot: p.prot || 0, gone: !!p.gone}));
+
+      function renderLobby() {
+        const L = $id('netPlayers'); L.innerHTML = '';
+        for (let i = 0; i < MAXP; i++) {
+          const p = st.players[i], d = document.createElement('div'); d.className = 'net-slot ' + (p ? 'ios-glass-pill' : 'border border-dashed border-slate-300 text-slate-400');
+          d.innerHTML = p ? `<span class="net-dot" style="background:${p.color}">${i + 1}P</span><span class="flex-1 truncate">${esc(p.name)}</span><span class="text-[10px] text-slate-500">${p.id === myId ? '나' : i === 0 ? '방장' : ''}</span>` : '빈자리';
+          L.appendChild(d);
+        }
+        const host = st.role === 'host';
+        $id('netModeRow').classList.toggle('hidden', !st.role); $id('netStart').classList.toggle('hidden', !host);
+        $id('netStart').disabled = st.players.length < 2; $id('netStart').style.opacity = st.players.length < 2 ? .5 : 1;
+        $id('netStart').textContent = st.players.length < 2 ? '친구를 기다리는 중… (2명부터)' : '경기 시작 (2분)';
+        $id('netModes').querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.mode === st.mode); b.disabled = !host; });
+      }
+      function renderScores() {
+        const el = $id('onlineScores'); if (!el) return;
+        const sorted = st.players.slice().sort((a, b) => (b.score || 0) - (a.score || 0));
+        el.innerHTML = sorted.map(p => `<span class="ios-glass-pill rounded-full px-2.5 py-0.5 font-bold ${p.gone ? 'opacity-40 line-through' : ''}" style="border-left:4px solid ${p.color}">${esc(p.name)}${p.id === myId ? ' (나)' : ''} <b class="tabular-nums" style="color:${p.color}">${p.score || 0}</b></span>`).join('');
+      }
+      const esc = x => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+
+      // ---- 방장
+      async function host() {
+        SAVE.opt.nick = ($id('netNick').value.trim() || nick()).slice(0, 8); persist();
+        st.role = 'host'; st.players = [{id: myId, name: SAVE.opt.nick, color: COLORS[0], score: 0}]; log('방을 만드는 중…');
+        for (let k = 0; k < 4 && !peer; k++) { code = genCode(); try { peer = await openPeer(PREFIX + code); } catch (e) { if (!(e && e.type === 'unavailable-id')) break; } }
+        if (!code) code = genCode();
+        openBc(code);
+        if (peer) peer.on('connection', c => { c.on('data', m => onHost(m, c)); c.on('close', () => { if (c.pid) gone(c.pid); }); });
+        $id('netJoinRow').classList.add('hidden'); $id('netCodeRow').classList.remove('hidden'); $id('netCodeShow').textContent = code;
+        log(peer ? '친구에게 방 코드를 알려 주세요. 2~4명이 모이면 시작할 수 있어요.' : '온라인 서버에 연결하지 못했어요. 이 기기의 다른 탭에서만 참가할 수 있어요.');
+        renderLobby();
+      }
+      function onHost(m, c) {
+        if (!m || !m.t) return; const pid = m.from;
+        if (m.t === 'hello') {
+          const deny = why => { const r = {t: 'deny', why}; c ? send(c, r) : sendTo(pid, r); };
+          if (m.v !== VER) return deny('게임 버전이 달라요. 새로고침해 주세요.');
+          if (st.inMatch) return deny('이미 경기 중이에요. 끝난 뒤 다시 참가하세요.');
+          let p = st.players.find(x => x.id === pid);
+          if (!p) { if (st.players.length >= MAXP) return deny('방이 가득 찼어요 (최대 4명).'); p = {id: pid, name: String(m.name || '친구').slice(0, 8), color: COLORS[st.players.length], score: 0}; st.players.push(p); playTone('special'); }
+          if (c) { c.pid = pid; conns.set(pid, c); }
+          sendTo(pid, {t: 'welcome', code}); broadcast({t: 'lobby', players: pub(), mode: st.mode}); renderLobby();
+        } else if (m.t === 'take') hostTake(pid, m.idx);
+        else if (m.t === 'bye') gone(pid);
+      }
+      function gone(pid) {
+        const p = st.players.find(x => x.id === pid); if (!p) return; conns.delete(pid);
+        if (st.inMatch) { p.gone = true; broadcast({t: 'scores', players: pub()}); }
+        else { st.players = st.players.filter(x => x !== p); st.players.forEach((x, i) => x.color = COLORS[i]); broadcast({t: 'lobby', players: pub(), mode: st.mode}); renderLobby(); }
+      }
+      function start() {
+        if (st.role !== 'host' || st.players.length < 2) return;
+        st.inMatch = true; gameMode = st.mode; setGameModeUI(st.mode);
+        startNewGame(); timeLeft = MATCH_TIME; st.players.forEach(p => { p.score = 0; p.syn = 0; p.prot = 0; p.gone = false; st.pstate[p.id] = {phase: 'INIT', bonus: bonusTargetAA ? bonusTargetAA.code : null}; });
+        broadcast({t: 'start', mode: st.mode, board: packBoard(), targets: activeTargets.map(a => a.code), bonus: bonusTargetAA ? bonusTargetAA.code : null, players: pub(), time: MATCH_TIME});
+      }
+      // 방장: 누가 고른 칸을 확인하고 지움
+      function hostTake(pid, idx) {
+        const p = st.players.find(x => x.id === pid), ps = st.pstate[pid]; if (!p || !ps || !st.inMatch || isGameOver) return;
+        if (!Array.isArray(idx) || !idx.length || idx.some(i => !board[i] || board[i].cleared)) { sendTo(pid, {t: 'deny-take'}); return; }
+        // 그 사람의 리보솜 단계로 판정
+        const saveP = ribosomePhase, saveB = bonusTargetAA;
+        ribosomePhase = ps.phase; bonusTargetAA = AMINO_ACIDS.find(a => a.code === ps.bonus) || null;
+        const res = evaluateSelection(idx);
+        ribosomePhase = saveP; bonusTargetAA = saveB;
+        if (!res.valid) { sendTo(pid, {t: 'deny-take'}); return; }
+        idx.forEach(i => { board[i].cleared = true; });
+        p.score = (p.score || 0) + idx.length;
+        let newBonus = ps.bonus;
+        if (res.aa) {
+          p.syn = (p.syn || 0) + 1;
+          if (res.aa.role === 'STOP') { if (ps.phase === 'ELONGATE' || st.mode !== 'ribosome') p.prot = (p.prot || 0) + 1; ps.phase = 'INIT'; }
+          else if (res.aa.role === 'START') ps.phase = 'ELONGATE';
+          if (st.mode === 'target') { const ti = activeTargets.findIndex(t => t.code === res.aa.code); if (ti >= 0) { const pool = AMINO_ACIDS.filter(a => a.role === 'AA' && !activeTargets.some(t => t.code === a.code)); activeTargets[ti] = pool[Math.floor(Math.random() * pool.length)]; } }
+          if (st.mode === 'ribosome' && res.isBonus) { const pool = AMINO_ACIDS.filter(a => a.role === 'AA'); newBonus = ps.bonus = pool[Math.floor(Math.random() * pool.length)].code; }
+        }
+        broadcast({t: 'clr', by: pid, idx, aa: res.aa ? res.aa.code : null, codon: res.codon, bonusFlag: !!res.isBonus, targets: activeTargets.map(a => a.code), bonus: newBonus, players: pub()});
+        setTimeout(() => { if (st.inMatch && !isGameOver) ensurePlayable(false); }, 80);
+        if (board.every(c => c.cleared)) finish();
+      }
+      function tick(dt) {
+        if (st.role !== 'host') return;
+        tickAcc += dt; if (tickAcc >= 0.5) { tickAcc = 0; broadcast({t: 'time', time: timeLeft}); }
+        if (timeLeft <= 0 && !isGameOver) finish();
+      }
+      function finish() { if (st.role !== 'host' || !st.inMatch) return; broadcast({t: 'end', players: pub()}); }
+      function sendBoard() { if (st.role === 'host' && st.inMatch) broadcast({t: 'board', board: packBoard()}); }
+
+      // ---- 참가자 (방장 자신도 이 함수로 화면을 맞춤)
+      async function join() {
+        const c = $id('netCode').value.trim().toUpperCase(); if (!/^[A-Z0-9]{3,6}$/.test(c)) { log('방 코드를 확인하세요.'); return; }
+        SAVE.opt.nick = ($id('netNick').value.trim() || nick()).slice(0, 8); persist();
+        code = c; st.role = 'guest'; log('방에 연결하는 중…'); openBc(code);
+        toHost({t: 'hello', v: VER, name: SAVE.opt.nick});
+        try {
+          peer = await openPeer();
+          hostConn = peer.connect(PREFIX + code, {reliable: true});
+          hostConn.on('open', () => toHost({t: 'hello', v: VER, name: SAVE.opt.nick}));
+          hostConn.on('data', m => onGuest(m));
+          hostConn.on('close', () => { if (st.role === 'guest') { alert('방장과의 연결이 끊어졌어요.'); leave(); showTitle(); } });
+          peer.on('error', e => { if (e && e.type === 'peer-unavailable' && !lastMsg) log(`방 [${code}]을(를) 찾을 수 없어요.`); });
+        } catch (e) { if (!lastMsg) log('온라인 서버에 연결하지 못했어요. 인터넷 연결을 확인하세요.'); }
+        setTimeout(() => { if (st.role === 'guest' && !lastMsg) log(`방 [${code}]에 연결하지 못했어요. 코드를 확인하거나 다른 네트워크로 시도해 보세요.`); }, 13000);
+      }
+      function onGuest(m, self) {
+        if (!m || !m.t) return; if (!self) lastMsg = performance.now();
+        if (m.t === 'deny') { log('❌ ' + m.why); if (st.role === 'guest') { st.role = null; if (st.inMatch) { st.inMatch = false; showTitle(); alert(m.why); } } return; }
+        if (m.t === 'welcome' && st.role === 'guest') { log('참가했어요! 방장이 시작하길 기다려요.'); $id('netJoinRow').classList.add('hidden'); $id('netCodeRow').classList.remove('hidden'); $id('netCodeShow').textContent = code; playTone('special'); }
+        if (m.t === 'lobby' && st.role === 'guest') { st.players = m.players; st.mode = m.mode; renderLobby(); }
+        if (m.t === 'start') {
+          st.inMatch = true; st.players = m.players; st.mode = m.mode;
+          if (st.role === 'guest') { gameMode = m.mode; setGameModeUI(m.mode); startNewGame(); unpackBoard(m.board); activeTargets = m.targets.map(c2 => AMINO_ACIDS.find(a => a.code === c2)); }
+          bonusTargetAA = AMINO_ACIDS.find(a => a.code === m.bonus) || null; timeLeft = m.time; renderMissionCards();
+          $id('onlineModal').classList.add('hidden'); hideTitle(); $id('onlineBoard').classList.remove('hidden'); $id('onlineCodeTag').textContent = '방 ' + code;
+          $id('gameOverOverlay').classList.add('hidden'); renderScores(); SAVE.online++; persist();
+          if (window.ILOG) ILOG.runStart('온라인 ' + m.mode);
+        }
+        if (m.t === 'clr') {
+          const mine = m.by === myId, p = m.players.find(x => x.id === m.by);
+          st.players = m.players; renderScores();
+          activeTargets = m.targets.map(c2 => AMINO_ACIDS.find(a => a.code === c2));
+          if (mine) {
+            const aa = m.aa ? AMINO_ACIDS.find(a => a.code === m.aa) : null;
+            if (st.role === 'guest') m.idx.forEach(i => { board[i].cleared = false; });   // executeClear가 지우며 효과를 냄
+            else m.idx.forEach(i => { board[i].cleared = false; });
+            executeClear(m.idx, {valid: true, aa, codon: m.codon, isBonus: m.bonusFlag}, true);
+            bonusTargetAA = AMINO_ACIDS.find(a => a.code === m.bonus) || bonusTargetAA;
+            score = (p && p.score) || score; updateHUD();
+          } else {
+            // 다른 사람이 가져간 구슬: 반투명하게 터지며 사라짐
+            const met = getBoardMetrics(); let cx = 0, cy = 0;
+            m.idx.forEach(i => { const c2 = board[i]; c2.cleared = true; const pos = getCellCenter(c2.row, c2.col, met); cx += pos.x; cy += pos.y;
+              popAnimations.push({x: pos.x, y: pos.y, base: c2.base, color: (p && p.color) || '#94a3b8', radius: met.orbRadius * .9, alpha: .7, vx: (Math.random() - .5) * 2, vy: -1.5}); });
+            floatingTexts.push({x: cx / m.idx.length, y: cy / m.idx.length, text: (p ? p.name : '') + (m.aa ? ' · ' + m.aa : ''), subtext: m.codon || '', color: (p && p.color) || '#64748b', alpha: .9, vy: -1});
+            // 내가 잡고 있던 구슬을 남이 가져가면 선택에서 뺌
+            if (isDragging) selectedIndices = selectedIndices.filter(i => !board[i].cleared);
+          }
+          renderMissionCards();
+        }
+        if (m.t === 'deny-take') { playTone('fail'); combo = 0; updateHUD(); const pe = $id('liveDragPreview'); pe.textContent = '다른 사람이 먼저 가져갔어요!'; }
+        if (m.t === 'board' && st.role === 'guest') { unpackBoard(m.board); const met = getBoardMetrics(); floatingTexts.push({x: met.width / 2, y: met.height / 2, text: '염기 재배열!', subtext: '', color: '#5856d6', alpha: 1.2, vy: -.6}); }
+        if (m.t === 'time' && st.role === 'guest') timeLeft = m.time;
+        if (m.t === 'scores') { st.players = m.players; renderScores(); }
+        if (m.t === 'end') {
+          st.players = m.players; renderScores(); st.inMatch = false;
+          triggerGameOver();
+          const rank = m.players.slice().sort((a, b) => b.score - a.score), place = x => m.players.filter(y => y.score > x.score).length + 1, meP = m.players.find(x => x.id === myId), win = meP && place(meP) === 1;
+          if (win) { SAVE.onlineWins++; persist(); }
+          const tie = meP && m.players.filter(y => y.score === meP.score).length > 1;
+          $id('finalScoreSummary').textContent = win ? (tie ? `🤝 공동 1등! · ${score}점` : `🏆 1등! 축하해요! · ${score}점`) : `${meP ? place(meP) : '-'}등${tie ? ' (공동)' : ''} · ${score}점`;
+          $id('finalProteinList').innerHTML = '<div class="font-bold text-slate-800 mb-1.5">온라인 대전 순위</div>' + rank.map((x, i) => `<div class="py-1 border-b border-slate-900/5 flex justify-between"><span><b style="color:${x.color}">${place(x)}. ${esc(x.name)}</b>${x.id === myId ? ' (나)' : ''}${x.gone ? ' · 나감' : ''}</span><span class="tabular-nums font-bold">${x.score}점 · 아미노산 ${x.syn} · 단백질 ${x.prot}</span></div>`).join('');
+          $id('playAgainBtn').querySelector('span').textContent = st.role === 'host' ? '같은 친구들과 한 판 더' : '방장이 다시 시작하길 기다려요';
+          playTone('special');
+        }
+      }
+      function take(idx, evalRes) { toHost({t: 'take', idx}); }
+      function leave() {
+        if (st.role === 'guest') toHost({t: 'bye'});
+        if (st.role === 'host') broadcast({t: 'deny', why: '방장이 방을 닫았어요.'});
+        try { if (peer) peer.destroy(); } catch (e) {} try { if (bc) bc.close(); } catch (e) {}
+        peer = null; hostConn = null; bc = null; conns.clear(); st.role = null; st.inMatch = false; st.players = []; code = ''; lastMsg = 0;
+        $id('onlineBoard').classList.add('hidden'); $id('netJoinRow').classList.remove('hidden'); $id('netCodeRow').classList.add('hidden');
+        $id('playAgainBtn').querySelector('span').textContent = '새 보드로 다시 시작';
+      }
+      setInterval(() => { if (st.role === 'guest') toHost({t: 'ping'}); }, 4000);
+      addEventListener('pagehide', leave);
+      return {
+        get role() { return st.role; }, get inMatch() { return st.inMatch; }, get code() { return code; },
+        host, join, leave, start, take, tick, sendBoard, renderLobby,
+        setMode(m) { if (st.role !== 'host') return; st.mode = m; broadcast({t: 'lobby', players: pub(), mode: st.mode}); renderLobby(); },
+        open() { $id('netNick').value = SAVE.opt.nick || nick(); const q = new URLSearchParams(location.search).get('room'); if (q && !st.role) $id('netCode').value = q.toUpperCase(); renderLobby(); $id('onlineModal').classList.remove('hidden'); },
+      };
+    })();
+    // 모드 버튼 모양만 바꿈 (startNewGame은 따로)
+    function setGameModeUI(mode) {
+      $id('modeBtnTarget').className = mode === 'target' ? 'ios-seg-btn active' : 'ios-seg-btn';
+      $id('modeBtnRibosome').className = mode === 'ribosome' ? 'ios-seg-btn active' : 'ios-seg-btn';
+      $id('modeBtnSum10').className = mode === 'sum10' ? 'ios-seg-btn active' : 'ios-seg-btn';
+    }
+    window.ILOG_WATCH = () => onTitle ? {화면: '시작'} : {모드: gameMode, 점수: score, 시간: Math.ceil(timeLeft), 콤보: combo, 온라인: NET.inMatch ? NET.role : ''};
+
+
+    window.addEventListener('load', () => {
+      applyOpts();
+      loadBestScore();
+      populateCodonReferenceModal();
+      resizeCanvas();
+      startNewGame();
+      showTitle();
+      // 시작 화면
+      $id('titleModes').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { gameMode = b.dataset.mode; $id('titleModes').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); playTone('select'); }));
+      $id('titleSolo').addEventListener('click', () => { playTone('clear'); hideTitle(); setGameMode(gameMode); });
+      $id('titleOnline').addEventListener('click', () => { playTone('select'); NET.open(); });
+      $id('titleRules').addEventListener('click', () => { $id('codonModal').classList.remove('hidden'); });
+      $id('titleSettings').addEventListener('click', openSettings);
+      // 설정
+      $id('openSettingsBtn').addEventListener('click', openSettings);
+      document.querySelectorAll('[data-close-settings]').forEach(b => b.addEventListener('click', () => $id('settingsModal').classList.add('hidden')));
+      $id('settingsModal').addEventListener('click', e => { if (e.target.id === 'settingsModal') e.target.classList.add('hidden'); });
+      $id('setSound').addEventListener('change', e => { SAVE.opt.sound = e.target.checked; persist(); applyOpts(); playTone('select'); });
+      $id('setVol').addEventListener('input', e => { SAVE.opt.vol = +e.target.value; persist(); playTone('select'); });
+      $id('setPale').addEventListener('change', e => { SAVE.opt.pale = e.target.checked; persist(); applyOpts(); });
+      $id('setDistinct').addEventListener('change', e => { SAVE.opt.distinct = e.target.checked; persist(); applyOpts(); });
+      $id('setNick').addEventListener('change', e => { SAVE.opt.nick = e.target.value.trim().slice(0, 8); persist(); });
+      $id('setTitleBtn').addEventListener('click', () => { $id('settingsModal').classList.add('hidden'); if (NET.inMatch && !confirm('온라인 경기에서 나갈까요?')) return; showTitle(); });
+      $id('setLogBtn').addEventListener('click', () => { if (window.ILOG) ILOG.openViewer(); });
+      // 온라인
+      $id('openOnlineBtn').addEventListener('click', () => NET.open());
+      $id('netClose').addEventListener('click', () => { $id('onlineModal').classList.add('hidden'); if (!NET.inMatch) NET.leave(); });
+      $id('netHost').addEventListener('click', () => NET.host());
+      $id('netJoin').addEventListener('click', () => NET.join());
+      $id('netStart').addEventListener('click', () => NET.start());
+      $id('netModes').querySelectorAll('button').forEach(b => b.addEventListener('click', () => NET.setMode(b.dataset.mode)));
+      $id('netCopy').addEventListener('click', () => { const u = new URL(location.href); u.searchParams.set('room', NET.code); try { navigator.clipboard.writeText(u.toString()); } catch (e) {} $id('netLog').textContent = '참가 링크를 복사했어요!'; });
+      if (new URLSearchParams(location.search).get('room')) NET.open();
+      // 다른 탭으로 가면 자동 일시정지 (혼자 할 때)
+      document.addEventListener('visibilitychange', () => { if (document.hidden && !isPaused && !isGameOver && !onTitle && !NET.inMatch) togglePause(); });
+
+      window.addEventListener('resize', () => {
+        resizeCanvas();
+        renderFrame();
+      });
+
+      canvas.addEventListener('mousedown', handlePointerDown);
+      window.addEventListener('mousemove', handlePointerMove);
+      window.addEventListener('mouseup', handlePointerUp);
+
+      canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
+      window.addEventListener('touchmove', handlePointerMove, { passive: false });
+      window.addEventListener('touchend', handlePointerUp);
+
+      const offlineOnly = f => () => { if (NET.inMatch) { $id('liveDragPreview').textContent = '온라인 경기 중에는 바꿀 수 없어요'; playTone('fail'); return; } f(); };
+      document.getElementById('modeBtnTarget').addEventListener('click', offlineOnly(() => setGameMode('target')));
+      document.getElementById('modeBtnRibosome').addEventListener('click', offlineOnly(() => setGameMode('ribosome')));
+      document.getElementById('modeBtnSum10').addEventListener('click', offlineOnly(() => setGameMode('sum10')));
+
+      document.getElementById('hintBtn').addEventListener('click', () => {
+        if (isPaused || isGameOver) return;
+        const found = findValidMove();
+        if (found) {
+          hintBox = { ...found, until: performance.now() + 3500 };
+          const previewEl = document.getElementById('liveDragPreview');
+          previewEl.textContent = `힌트: ${found.label}`;
+          previewEl.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#ff9500] text-white shadow-xs';
+          playTone('select');
+        } else {
+          pickRandomTargets();
+          const previewEl = document.getElementById('liveDragPreview');
+          previewEl.textContent = '새로운 목표 아미노산이 갱신되었습니다';
+        }
+      });
+
+      function togglePause() {
+        if (isGameOver || onTitle) return;
+        if (NET.inMatch) { $id('liveDragPreview').textContent = '온라인 경기는 멈출 수 없어요'; playTone('fail'); return; }
+        isPaused = !isPaused;
+        const overlay = document.getElementById('pauseOverlay');
+        const label = document.getElementById('pauseBtnLabel');
+        if (isPaused) {
+          overlay.classList.remove('hidden');
+          label.textContent = 'Resume (계속하기)';
+        } else {
+          overlay.classList.add('hidden');
+          label.textContent = 'Pause (일시정지)';
+        }
+      }
+
+      document.getElementById('pauseBtn').addEventListener('click', togglePause);
+      document.getElementById('resumeGameBtn').addEventListener('click', togglePause);
+      document.getElementById('newBoardBtn').addEventListener('click', offlineOnly(startNewGame));
+      document.getElementById('playAgainBtn').addEventListener('click', () => {
+        if (NET.role === 'host') NET.start();
+        else if (NET.role === 'guest') return;
+        else startNewGame();
+      });
+
+      document.getElementById('paleColorsToggle').addEventListener('change', (e) => {
+        SAVE.opt.pale = e.target.checked; persist(); applyOpts();
+      });
+
+      document.getElementById('colorStyleBtn').addEventListener('click', () => {
+        distinctBaseColors = !distinctBaseColors; SAVE.opt.distinct = distinctBaseColors; persist();
+        document.getElementById('colorStyleBtn').textContent = distinctBaseColors
+          ? '염기별 컬러 ON'
+          : '단일 글래스 컬러 ON';
+      });
+
+      document.getElementById('soundToggleBtn').addEventListener('click', () => {
+        soundEnabled = !soundEnabled; SAVE.opt.sound = soundEnabled; persist();
+        document.getElementById('soundIcon').innerHTML = soundEnabled ? SVG_SOUND_ON : SVG_SOUND_OFF;
+        document.getElementById('soundLabel').textContent = soundEnabled ? 'Sound ON' : 'Muted';
+      });
+
+      const modal = document.getElementById('codonModal');
+      document.getElementById('openCodonModalBtn').addEventListener('click', () => {
+        modal.classList.remove('hidden');
+      });
+      document.getElementById('closeCodonModalBtn').addEventListener('click', () => {
+        modal.classList.add('hidden');
+      });
+      document.getElementById('closeCodonModalBottomBtn').addEventListener('click', () => {
+        modal.classList.add('hidden');
+      });
+
+      requestAnimationFrame((t) => {
+        lastTick = t;
+        gameLoop(t);
+      });
+    });
+  </script>
+<script src="../ilog.js"></script>
+</body>
+</html>
