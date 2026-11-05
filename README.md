@@ -18,7 +18,7 @@
 | 감염의 군주 LORD OF INFECTION | 쿼터뷰 핵앤슬래시 RPG (직업 4 · 5장 · 무작위 지도 · 무작위 옵션 장비) | `games/infection-lord.html` |
 | 헬릭스 HELIX | 쿼터뷰 액션 로그라이트 (쉼터 · 4장 · 유전자 변이 24종 · 보스 4 · 중간 보스 8) | `games/helix.html` |
 | 세포 개척단 CELL FRONTIER | 땅따먹기 아케이드 (나라 4 · 지역 16 · 숨은 그림 16장 · 보스 8) | `games/cell-frontier.html` |
-| 바이오 타워 BIO TOWER | 물리 탑 쌓기 대결 (조각 26종 · 온라인 최대 4명 · CPU · 한 기기) | `games/bio-tower.html` |
+| 바이오 타워 BIO TOWER | 물리 탑 쌓기 대결 (조각 48종 · 멈추면 고정 · 온라인 최대 4명 · CPU · 한 기기) | `games/bio-tower.html` |
 | 코돈 글래스 CODON GLASS | mRNA 번역 퍼즐 (모드 3 · 온라인 최대 4명 같은 판 경쟁) | `games/codon-glass.html` |
 
 ```
@@ -26,7 +26,7 @@ index.html        메인 화면 (게임 선택, 이 기기에 저장된 기록 �
 games/            게임 15종 (각각 하나의 HTML 파일)
 assets/           메인 화면 썸네일
 games/il-assets/  감염의 군주 스프라이트·아이콘 아틀라스 (WebP)
-games/bio-tower/  바이오 타워 조각·섬·배경 그림과 충돌 형태(pieces.json). tools/bio-tower/build.py로 다시 만듦
+games/bio-tower/  바이오 타워 조각·섬·배경 그림과 충돌 형태(pieces.json). tools/bio-tower/ref/ 원화에서 tools/bio-tower/from_ref.py로 다시 만듦
 games/cell-frontier/  세포 개척단 그림(숨은 그림 16장·덮개·지도·스프라이트). tools/cell-frontier/build.py로 다시 만듦 (숨은 그림·적·아이템은 tools/cell-frontier/ref/ 원화에서 from_ref.py가 잘라 냄)
 games/codon-glass/ 코돈 글래스 Tailwind CSS(tw.css). tools/codon-glass/build-css.sh로 다시 만듦 (썸네일 원본: tools/codon-glass/concept.html)
 games/helix/      헬릭스 게임 코드(js/)와 에셋(assets/) (hero-viewer.html: 주인공 미리보기, mob-viewer.html: 몬스터 32종 도감·챕터 시험장)

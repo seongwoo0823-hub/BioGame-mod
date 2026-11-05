@@ -69,7 +69,7 @@ body.touch #tbtns.on{display:flex}
 </head>
 <body>
 <div id="loading">LOADING…</div>
-<canvas id="cv" width="480" height="270"></canvas>
+<canvas id="cv" width="960" height="540"></canvas>
 <div id="hud"><div id="plist"></div><div id="hright"><div id="hgt">0.0m</div><div id="next">다음 <canvas id="ncv" width="100" height="64"></canvas></div></div></div>
 <button class="btn sm" id="pauseB">Ⅱ</button>
 <div id="banner"></div>
@@ -102,14 +102,14 @@ body.touch #tbtns.on{display:flex}
 </div></section>
 <!-- 놀이 방법 -->
 <section class="scr" id="sHow"><div class="box"><h3>놀이 방법</h3>
-  <p>차례대로 생물·세포·장기 조각을 떠 있는 섬 위에 쌓아요. <b>내가 놓은 조각 때문에 무언가 섬 아래로 떨어지면 내가 져요!</b> 나머지 사람은 모두 1승을 얻어요.</p>
+  <p>차례대로 동물·세포·생물 조각을 떠 있는 섬 위에 쌓아요. 놓은 조각이 <b>멈추면 그 자리에 단단히 고정</b>되고, 그다음 사람 차례가 시작돼요. <b>내가 놓은 조각이 섬 아래로 떨어지면 내가 져요!</b> 나머지 사람은 모두 1승을 얻어요.</p>
   <div class="keys">
     <span><kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd></span><span>조각 옮기기 (마우스를 움직여도 돼요)</span>
     <span><kbd>↑</kbd> / <kbd>W</kbd> / <kbd>R</kbd> / 우클릭</span><span>45° 돌리기</span>
     <span><kbd>↓</kbd> / <kbd>SPACE</kbd> / 클릭</span><span>놓기</span>
     <span>📱 휴대폰</span><span>화면을 좌우로 끌어 옮기고, 오른쪽 버튼으로 돌리기·놓기</span>
   </div>
-  <p>⏱ 차례마다 20초 안에 놓아야 해요. 둥근 바이러스와 알은 잘 굴러가니 조심! 조각을 놓으면 그 생물에 대한 짧은 설명이 나와요.</p>
+  <p>⏱ 차례마다 20초 안에 놓아야 해요. 둥근 알과 적혈구는 잘 굴러가니 조심! 고정된 조각은 흔들리지 않으니 빈틈을 잘 노려요. 조각을 놓으면 그 생물에 대한 짧은 설명이 나와요.</p>
   <div class="row"><button class="btn pri" data-close>알겠어요</button></div></div></section>
 <!-- 결과 -->
 <section class="scr" id="sRes"><div class="box" id="resBox"></div></section>
@@ -120,15 +120,16 @@ body.touch #tbtns.on{display:flex}
 <script src="../vendor/matter.min.js"></script>
 <script>
 'use strict';
-const {Engine, Bodies, Body, Composite, Vector} = Matter;
+const {Engine, Bodies, Body, Composite, Vector, Sleeping} = Matter;
 const $ = s => document.querySelector(s);
 let W = 480, H = 270;   // 세로 화면이면 폭을 좁혀 크게 보이고 H를 늘려 위아래로 더 보여 줌
 const BASE = () => -(H - Math.max(100, H * (H > W ? 0.36 : 0.3)));   // 섬이 화면 아래쪽에 오도록 하는 카메라 기준
+const RES = 2;   // 그림은 화면 1픽셀을 2픽셀로 그려 더 또렷하게 (좌표는 그대로 W×H)
 const cv = $('#cv'), ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
-const IMG = {}; let PM = null;   // 조각 정보 (pieces.json)
+const IMG = {}; let PM = null, WJ = null;   // 조각 정보 (pieces.json) · 섬/배경 정보 (world.json)
 const KINDS = [];
 const COLORS = ['#ff5a5a', '#5ac85a', '#a070ff', '#ffc020'];
-const FACE_NAMES = ['적혈구', '엽록체', '뉴런', '막대균'];
+const FACE_NAMES = ['적혈구', '엽록체', '뉴런', '짚신벌레'];
 const store = {get(k, d) { try { const v = localStorage.getItem('bioTower.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('bioTower.' + k, JSON.stringify(v)); } catch (e) {} }};
 const STATS = Object.assign({games: 0, wins: 0, best: 0, rounds: 0}, store.get('stats', {}));
 const saveStats = () => { store.set('stats', STATS); try { localStorage.setItem('bioTower', JSON.stringify(STATS)); } catch (e) {} };
@@ -183,7 +184,7 @@ function newWorld() {
 }
 function makeBody(k, x, y, ang) {
   const m = PM[k]; let body;
-  const opt = {friction: 0.9, frictionStatic: 1.1, restitution: 0.02, density: 0.0016 * m.dens, sleepThreshold: 50, slop: 0.04};
+  const opt = {friction: 0.9, frictionStatic: 1.2, frictionAir: 0.015, restitution: 0, density: 0.0016 * m.dens, sleepThreshold: 40, slop: 0.03};
   if (m.r) { body = Bodies.circle(0, 0, m.r, opt); body.k_off = {x: 0, y: 0}; }
   else {
     const parts = [];
@@ -191,8 +192,9 @@ function makeBody(k, x, y, ang) {
       const vs = poly.map(([px, py]) => ({x: px, y: py}));
       const area = Math.abs(vs.reduce((a, v, i) => { const n = vs[(i + 1) % vs.length]; return a + v.x * n.y - n.x * v.y; }, 0)) / 2;
       if (area < 3) continue;
-      const cx = vs.reduce((a, v) => a + v.x, 0) / vs.length, cy = vs.reduce((a, v) => a + v.y, 0) / vs.length;
-      const b = Bodies.fromVertices(cx, cy, [vs], opt); if (b) parts.push(b);
+      // fromVertices는 넓이 중심(centre)을 기준으로 놓으므로 같은 점을 줘야 그림과 충돌 모양이 딱 맞음
+      const c0 = Matter.Vertices.centre(vs);
+      const b = Bodies.fromVertices(c0.x, c0.y, [vs], opt); if (b) parts.push(b);
     }
     body = parts.length === 1 ? parts[0] : Body.create(Object.assign({parts}, opt));
     body.k_off = {x: -body.position.x, y: -body.position.y};   // 그림 중심 기준 무게 중심 위치 보정
@@ -200,15 +202,15 @@ function makeBody(k, x, y, ang) {
   Body.setAngle(body, 0);
   const c = rotV({x: -body.k_off.x, y: -body.k_off.y}, ang);
   Body.setPosition(body, {x: x + c.x, y: y + c.y}); Body.setAngle(body, ang);
-  body.k = k; body.id_ = nextId++;
+  body.k = k; body.id_ = nextId++; body.frozen = false;
   Composite.add(engine.world, body); bodies.push(body);
   return body;
 }
 const rotV = (v, a) => ({x: v.x * Math.cos(a) - v.y * Math.sin(a), y: v.x * Math.sin(a) + v.y * Math.cos(a)});
 const centerOf = b => { const o = rotV(b.k_off, b.angle); return {x: b.position.x + o.x, y: b.position.y + o.y}; };
-function towerTop() { let t = 0; for (const b of bodies) if (!b.falling) t = Math.min(t, b.bounds.min.y); return t; }
+function towerTop() { let t = 0; for (const b of bodies) if (b.frozen) t = Math.min(t, b.bounds.min.y); return t; }   // 고정된 조각만 탑 높이로 셈
 function pieceBox(k, rot) {   // 돌린 조각의 위아래 크기
-  const m = PM[k], c = Math.abs(Math.cos(rot)), s = Math.abs(Math.sin(rot)), w = m.w - 4, h = m.h - 4;
+  const m = PM[k], c = Math.abs(Math.cos(rot)), s = Math.abs(Math.sin(rot)), w = m.w - 2, h = m.h - 2;
   return {w: w * c + h * s, h: w * s + h * c};
 }
 
@@ -222,10 +224,10 @@ const curP = () => G.players[G.turn];
 const isMyTurn = () => { const p = curP(); if (!p || G.phase !== 'aim') return false; return (G.role !== 'guest' && (p.type === 'me' || p.type === 'local')) || (p.id === NET.myId && p.type !== 'cpu'); };
 
 function startRound() {
-  newWorld(); G.round++; G.turn = (G.round - 1) % G.players.length; G.phase = 'aim'; G.loser = -1; G.height = 0; G.fallen = false;
+  newWorld(); G.acc = 0; G.dropBody = null; G.round++; G.turn = (G.round - 1) % G.players.length; G.phase = 'aim'; G.loser = -1; G.height = 0; G.fallen = false;
   G.camT = G.cam = BASE(); G.events = []; G.nextK = randK(); nextPiece();
   showScr(null); $('#hud').classList.add('on'); $('#pauseB').style.display = 'block'; $('#tbtns').classList.add('on');
-  banner(`${G.round}라운드`, '무너뜨리면 지는 거예요!'); AU.music(true); AU.play('turn');
+  banner(`${G.round}라운드`, '떨어뜨리면 지는 거예요!'); AU.music(true); AU.play('turn');
   if (window.ILOG) ILOG.runStart(`라운드 ${G.round} 시작 · ${G.players.length}명`);
   renderPlayers();
 }
@@ -240,20 +242,22 @@ function nextPiece() {
 function dropPiece() {
   if (G.phase !== 'aim' || !G.piece) return;
   const P = G.piece; P.x = clampX(P.x, P.k, P.rot);
-  makeBody(P.k, P.x, P.y, P.rot);
+  G.dropBody = makeBody(P.k, P.x, P.y, P.rot);
   G.phase = 'drop'; G.dropT = 0; G.settleT = 0; G.piece = null; G.events.push('drop'); AU.play('drop');
   G.lastFact = `<b>${PM[P.k].name}</b> · ${PM[P.k].fact}`; tip(G.lastFact);
   if (window.ILOG) ILOG.game('놓기', `${PM[P.k].name} x ${Math.round(P.x)} 각도 ${Math.round(P.rot * 57.3)}°`);
 }
 const clampX = (x, k, rot) => { const b = pieceBox(k, rot), L = Math.min(200, W / 2 - 6); return Math.max(-L + b.w / 2, Math.min(L - b.w / 2, x)); };
 
+// 놀이 규칙: 놓은 조각이 멈추면 그 자리에 완전히 고정(움직이지 않는 물체)되고, 그다음에 다음 차례가 시작돼요.
+// 그래서 탑은 절대 무너지지 않고, 지금 놓은 조각이 섬 아래로 떨어질 때만 그 사람이 져요.
+const STEP = 1 / 60;
+function freeze(b) { Sleeping.set(b, false); Body.setVelocity(b, {x: 0, y: 0}); Body.setAngularVelocity(b, 0); Body.setStatic(b, true); b.frozen = true; }
 function stepHost(dt) {   // 방장(또는 혼자): 물리와 차례 진행
   if (!engine) return;
-  Engine.update(engine, 1000 / 60);
-  // 닿는 소리 (빠르게 부딪힐 때)
-  for (const b of bodies) { const sp = b.speed; if (b.prevSp > 1.6 && sp < b.prevSp * 0.5 && !b.falling) { G.events.push('land'); AU.play('land', b.prevSp / 4); } b.prevSp = sp; }
-  // 떨어짐
-  for (const b of bodies) if (!b.falling && (b.position.y > FALL_Y || Math.abs(b.position.x) > 330)) { b.falling = true; if (G.phase === 'drop' || G.phase === 'aim') onFall(b); }
+  // 화면 주사율과 상관없이 1/60초 단위로 똑같이 계산 (120Hz 화면에서 2배 빨라지던 문제 수정)
+  G.acc = Math.min((G.acc || 0) + dt, STEP * 6);
+  while (G.acc >= STEP) { G.acc -= STEP; physicsTick(); }
   if (G.phase === 'aim') {
     const p = curP(); G.timer -= dt;
     if (p && p.type === 'cpu') cpuThink(dt);
@@ -261,21 +265,45 @@ function stepHost(dt) {   // 방장(또는 혼자): 물리와 차례 진행
     if (G.timer <= 0) dropPiece();
   } else if (G.phase === 'drop') {
     G.dropT += dt;
-    const calm = bodies.every(b => b.falling || b.isSleeping || (b.speed < 0.15 && Math.abs(b.angularVelocity) < 0.01));
+    const b = G.dropBody;
+    if (!b || b.falling) return;
+    const calm = b.isSleeping || (b.speed < 0.12 && Math.abs(b.angularVelocity) < 0.008);
     G.settleT = calm ? G.settleT + dt : 0;
-    if ((G.settleT > 0.7 && G.dropT > 0.8) || G.dropT > 9) {
+    // 0.6초 동안 가만히 있으면 고정 · 8초가 지나도 아주 천천히 움직이면(가장자리에서 흔들흔들) 그대로 고정
+    if ((G.settleT > 0.6 && G.dropT > 0.7) || (G.dropT > 8 && b.speed < 1)) {
+      freeze(b); G.dropBody = null; G.events.push('lock'); AU.play('rot');
       G.height = Math.max(G.height, -towerTop());
       G.turn = nextAlive(G.turn); nextPiece(); AU.play('turn'); G.events.push('turn');
     }
   } else if (G.phase === 'over') { G.overT -= dt; if (G.overT <= 0 && !G.shownRes) { G.shownRes = true; showResult(); } }
 }
+function physicsTick() {
+  Engine.update(engine, STEP * 1000);
+  for (const b of bodies) {
+    if (b.frozen || b.falling) continue;
+    // Matter.js 조각 물체의 약점 보정
+    //  ① 떨어지는 속도 제한: 얇은 다리가 바닥에 깊이 박혔다가 튕겨 나가는 것 방지
+    //  ② 회전 속도 제한·감쇠: 부딪힌 순간 팽이처럼 도는 것 방지
+    //  ③ 바닥에 닿은 채 천천히 미끄러지는(기어가는) 것 방지: 거의 멈췄을 때 옆 속도를 줄임
+    const v = b.velocity; let vx = v.x, vy = Math.min(v.y, 3.2);
+    if (Math.abs(vy) < 0.35 && Math.hypot(vx, vy) < 1.4) vx *= 0.82;
+    if (vx !== v.x || vy !== v.y) Body.setVelocity(b, {x: vx, y: vy});
+    const av = Math.max(-0.12, Math.min(0.12, b.angularVelocity * 0.95)); if (av !== b.angularVelocity) Body.setAngularVelocity(b, av);
+    // 닿는 소리 (빠르게 부딪힐 때)
+    const sp = b.speed; if (b.prevSp > 1.6 && sp < b.prevSp * 0.5) { G.events.push('land'); AU.play('land', b.prevSp / 4); } b.prevSp = sp;
+    // 떨어짐: 섬 아래로 내려가거나 옆으로 멀리 나감
+    if (b.position.y > FALL_Y || Math.abs(b.position.x) > 330) { b.falling = true; if (G.phase === 'drop' || G.phase === 'aim') onFall(b); }
+  }
+  // 화면 밖으로 한참 떨어진 조각은 계산에서 빼기
+  for (const b of bodies) if (b.falling && b.position.y > 900 && !b.removed) { b.removed = true; Composite.remove(engine.world, b); }
+}
 const nextAlive = t => (t + 1) % G.players.length;
 function onFall(b) {
   if (G.phase === 'over') return;
   G.phase = 'over'; G.loser = G.turn; G.overT = 2.2; G.shownRes = false; G.events.push('fall');
-  AU.play('fall'); banner('와르르!', `${G.players[G.turn].name}이(가) 무너뜨렸어요`);
+  AU.play('fall'); banner('떨어졌다!', `${G.players[G.turn].name}이(가) 떨어뜨렸어요`);
   G.players.forEach((p, i) => { if (i !== G.loser) p.wins++; });
-  if (window.ILOG) ILOG.result('무너짐', `${G.players[G.turn].name} · ${PM[b.k].name} 떨어짐`);
+  if (window.ILOG) ILOG.result('떨어짐', `${G.players[G.turn].name} · ${PM[b.k].name} 떨어짐`);
 }
 function showResult() {
   const L = G.players[G.loser], mine = me(), iLost = L && mine && L.id === mine.id;
@@ -283,7 +311,7 @@ function showResult() {
   if (G.role !== 'guest') { STATS.rounds++; if (mine && !iLost && (mine.type === 'me')) STATS.wins++; STATS.best = Math.max(STATS.best, +(G.height / 50).toFixed(1)); saveStats(); }
   AU.play(iLost ? 'lose' : 'win'); AU.music(false);
   const rank = G.players.map((p, i) => ({p, i})).sort((a, b) => b.p.wins - a.p.wins);
-  $('#resBox').innerHTML = `<h3>${iLost ? '앗, 무너뜨렸어요!' : L ? `${esc(L.name)}이(가) 무너뜨렸어요!` : '라운드 끝'}</h3>
+  $('#resBox').innerHTML = `<h3>${iLost ? '앗, 떨어뜨렸어요!' : L ? `${esc(L.name)}이(가) 떨어뜨렸어요!` : '라운드 끝'}</h3>
     <p>탑 높이 <b>${(G.height / 50).toFixed(2)}m</b> · ${G.round}라운드</p>
     <ol class="res">${rank.map(({p, i}) => `<li>${faceTag(p.face)} <b>${esc(p.name)}</b> — ${p.wins}승 ${i === G.loser ? '😵' : '👍'}</li>`).join('')}</ol>
     <p style="font-size:13px;color:var(--dim)">${G.lastFact || ''}</p>
@@ -350,7 +378,7 @@ function cpuThink(dt) {
 
 // ================================================================ 입력
 const IN = {left: false, right: false, mouseX: null, dragX: null};
-const rotate = d => { const P = G.piece; if (!P || !isMyTurn()) return; P.rot = Math.round((P.rot + d * Math.PI / 4) / (Math.PI / 4)) * (Math.PI / 4); if (P.rot > Math.PI) P.rot -= 2 * Math.PI; if (P.rot <= -Math.PI) P.rot += 2 * Math.PI; AU.play('rot'); sendAim(true); };
+const rotate = d => { const P = G.piece; if (!P || !isMyTurn()) return; P.rot = Math.round((P.rot + d * Math.PI / 4) / (Math.PI / 4)) * (Math.PI / 4); if (P.rot > Math.PI) P.rot -= 2 * Math.PI; if (P.rot <= -Math.PI) P.rot += 2 * Math.PI; P.x = clampX(P.x, P.k, P.rot); AU.play('rot'); sendAim(true); };
 const drop = () => { if (!isMyTurn()) return; if (G.role === 'guest') { NET.toHost({t: 'in', x: G.piece.x, rot: G.piece.rot, drop: 1}); G.phase = 'wait'; AU.play('drop'); } else dropPiece(); };
 addEventListener('keydown', e => {
   if (G.mode !== 'play') return;
@@ -390,7 +418,7 @@ function showScr(id) { document.querySelectorAll('.scr').forEach(s => s.classLis
 let bannerT = 0;
 function banner(a, b) { const el = $('#banner'); el.innerHTML = esc(a) + (b ? `<small>${esc(b)}</small>` : ''); el.style.opacity = 1; bannerT = 1.8; }
 function tip(html) { const el = $('#tip'); el.innerHTML = html; el.style.display = 'block'; }
-function faceCanvas(f, s = 36) { const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'); g.drawImage(IMG.faces, f * 32, 0, 32, 32, 0, 0, 32, 32); return c; }
+function faceCanvas(f) { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(IMG.faces, f * 64, 0, 64, 64, 0, 0, 64, 64); return c; }
 function renderPlayers() {
   const L = $('#plist'); L.innerHTML = '';
   G.players.forEach((p, i) => {
@@ -401,28 +429,53 @@ function renderPlayers() {
     d.appendChild(t); L.appendChild(d);
   });
 }
-function drawNext() { const c = $('#ncv'), g = c.getContext('2d'); g.clearRect(0, 0, 100, 64); g.imageSmoothingEnabled = false; if (!G.nextK) return; const m = PM[G.nextK], s = Math.min(1, 96 / m.w, 60 / m.h); g.drawImage(IMG.pieces, m.x, m.y, m.w, m.h, 50 - m.w * s / 2, 32 - m.h * s / 2, m.w * s, m.h * s); }
+function drawNext() { const c = $('#ncv'), g = c.getContext('2d'); g.clearRect(0, 0, 100, 64); g.imageSmoothingEnabled = false; if (!G.nextK) return; const m = PM[G.nextK], s = Math.min(96 / m.w, 60 / m.h, 1.4); g.drawImage(IMG.pieces, m.sx, m.sy, m.sw, m.sh, 50 - m.w * s / 2, 32 - m.h * s / 2, m.w * s, m.h * s); }
 function drawPiece(k, x, y, ang, alpha) {   // 그림 중심 (x, y) 기준
-  const m = PM[k]; ctx.save(); ctx.globalAlpha = alpha == null ? 1 : alpha; ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(ang);
-  ctx.drawImage(IMG.pieces, m.x, m.y, m.w, m.h, -Math.round(m.ox), -Math.round(m.oy), m.w, m.h); ctx.restore();
+  const m = PM[k]; ctx.save(); ctx.globalAlpha = alpha == null ? 1 : alpha; ctx.translate(Math.round(x * RES) / RES, Math.round(y * RES) / RES); ctx.rotate(ang);
+  ctx.drawImage(IMG.pieces, m.sx, m.sy, m.sw, m.sh, -m.ox, -m.oy, m.w, m.h); ctx.restore();
 }
-let clouds = [];
+let clouds = [], skyCache = null;
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+// 높이에 따라 하늘색이 바뀜: 맑은 낮 → 노을 → 저녁 → 별이 뜬 밤 (첨부 원화의 하늘 띠)
+const SKY_PATH = [3, 1, 4, 6];
+function skyStops(k) {
+  const t = Math.min(0.999, Math.max(0, k)) * (SKY_PATH.length - 1), i = Math.floor(t), u = t - i;
+  const A = WJ.skies[SKY_PATH[i]], B = WJ.skies[SKY_PATH[i + 1]];
+  return A.map((c, j) => { const a = hex(c), b = hex(B[j]); return `rgb(${a.map((v, n) => Math.round(v + (b[n] - v) * u)).join(',')})`; });
+}
 function render(dt) {
-  // 높이에 따라 하늘 → 성층권 → 우주
-  const alt = Math.max(0, BASE() - G.cam) / 900, k = Math.min(1, alt);
-  const mix = (a, b, t) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(',')})`;
-  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, mix([90, 176, 240], [14, 20, 60], k)); g.addColorStop(1, mix([190, 232, 255], [60, 90, 170], k));
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  if (k > 0.3) { ctx.fillStyle = `rgba(255,255,255,${(k - 0.3) * 1.4})`; for (let i = 0; i < 60; i++) ctx.fillRect((i * 97) % W, (i * 53 + Math.floor(G.cam * 0.1)) % H, 1, 1); }
-  // 구름 (느린 시차)
-  if (!clouds.length) for (let i = 0; i < 7; i++) clouds.push({x: Math.random() * W, y: -Math.random() * 1500, s: i % 3, v: 4 + Math.random() * 8});
-  for (const c of clouds) { c.x += c.v * dt; if (c.x > W + 120) c.x = -130; const sy = c.y - G.cam * 0.5 - 60; if (sy > -60 && sy < H) ctx.drawImage(IMG.clouds, c.s * 120, 0, 120, 50, Math.round(c.x), Math.round(sy), 120, 50); }
-  // 언덕 (먼 땅)
-  const hy = H - 90 + (G.cam - BASE()) * -0.35 + 10; if (hy < H) { ctx.drawImage(IMG.hills, Math.round((W - 480) / 2), Math.round(hy)); if (hy + 90 < H) { ctx.fillStyle = '#2a6a28'; ctx.fillRect(0, Math.round(hy + 89), W, H); } }
+  if (!WJ) return;
+  const climb = Math.max(0, BASE() - G.cam), k = Math.min(1, climb / 1100);
+  const key = Math.round(k * 200) + ':' + H;
+  if (!skyCache || skyCache.key !== key) { const g = ctx.createLinearGradient(0, 0, 0, H); skyStops(k).forEach((c, i, a) => g.addColorStop(i / (a.length - 1), c)); skyCache = {key, g}; }
+  ctx.fillStyle = skyCache.g; ctx.fillRect(0, 0, W, H);
+  if (k > 0.55) { ctx.fillStyle = `rgba(255,255,255,${Math.min(1, (k - 0.55) * 2.2)})`; for (let i = 0; i < 70; i++) { const tw = (i * 37 + Math.floor(performance.now() / 300)) % 11 ? 1 : 0.5; ctx.fillRect((i * 97) % W, ((i * 53 + Math.floor(climb * 0.05)) % H), tw, tw); } }
+  // 먼 산 → 숲 → 가까운 언덕 (오를수록 아래로 내려감)
+  const hx = Math.round((W - 480) / 2);
+  [[2, 0.34, 0.1], [1, 0.46, 0.2], [0, 0.6, 0.32]].forEach(([i, top, f]) => {
+    const sy = Math.round(H * top - 30 + climb * f); if (sy >= H) return;
+    ctx.drawImage(IMG.hills, 0, i * 160, 480, 160, hx, sy, 480, 160);
+    if (sy + 160 < H) ctx.drawImage(IMG.hills, 0, i * 160 + 158, 480, 1, hx, sy + 159, 480, H - sy - 158);
+  });
+  // 구름 (느린 시차, 노을 무렵엔 분홍 구름)
+  if (!clouds.length) for (let i = 0; i < 9; i++) clouds.push({x: Math.random() * W, y: -Math.random() * 1700 + 60, s: i % 5, v: 3 + Math.random() * 7, z: 0.45 + Math.random() * 0.3});
+  const pink = k > 0.2 && k < 0.75;
+  for (const c of clouds) {
+    const [cx0, cw, ch] = WJ.clouds[c.s + (pink ? 5 : 0)], w = cw * c.z, h = ch * c.z;
+    c.x += c.v * dt; if (c.x > W + 20) c.x = -w - 20;
+    const sy = c.y - G.cam * 0.5 - 80; if (sy > -h && sy < H) ctx.drawImage(IMG.clouds, cx0, 0, cw, ch, Math.round(c.x), Math.round(sy), w, h);
+  }
+  // 떠 있는 작은 섬들 (배경 장식)
+  const t = performance.now() / 1000;
+  WJ.islets.forEach(([sx, sw], i) => {
+    const wy = [-60, -250, -470, -720][i], side = i % 2 ? 1 : -1, sc = [0.55, 0.5, 0.45, 0.5][i];
+    const x = W / 2 + side * (W * 0.38) - sw * sc / 2, y = wy * 0.7 - G.cam * 0.7 + Math.sin(t * 0.8 + i) * 3;
+    if (y > -60 && y < H) ctx.drawImage(IMG.islets, sx, 0, sw, WJ.isletH, Math.round(x), Math.round(y), sw * sc, WJ.isletH * sc);
+  });
   // 섬과 조각
   const ox = W / 2, oy = -G.cam;
   ctx.save(); ctx.translate(ox, oy);
-  ctx.drawImage(IMG.island, -100, -6);
+  ctx.drawImage(IMG.island, -WJ.islandW / 2, -WJ.ground, WJ.islandW, WJ.islandH);
   const list = G.role === 'guest' ? G.view : bodies.map(b => { const c = centerOf(b); return {k: b.k, x: c.x, y: c.y, a: b.angle}; });
   for (const b of list) drawPiece(b.k, b.x, b.y, b.a);
   // 매달린 조각 + 떨어질 자리 안내선
@@ -460,7 +513,8 @@ function frame(now) {
 function fit() {   // 가로는 480으로 고정, 세로 화면이면 보이는 높이를 늘림
   const ar = innerHeight / innerWidth;
   const nw = ar > 1 ? 330 : 480, nh = Math.max(270, Math.min(900, Math.round(nw * ar)));
-  if (nh !== H || nw !== W) { const b0 = BASE(); W = nw; H = nh; cv.width = W; cv.height = H; ctx.imageSmoothingEnabled = false; const d = BASE() - b0; G.cam += d; G.camT += d; }
+  if (nh !== H || nw !== W || cv.width !== W * RES) { const b0 = BASE(); W = nw; H = nh; cv.width = W * RES; cv.height = H * RES; const d = BASE() - b0; G.cam += d; G.camT += d; }
+  ctx.setTransform(RES, 0, 0, RES, 0, 0); ctx.imageSmoothingEnabled = false;   // 크기를 바꾸면 변환이 초기화되므로 매번 다시
   const S = Math.min(innerWidth / W, innerHeight / H);
   cv.style.width = W * S + 'px'; cv.style.height = H * S + 'px'; cv.style.left = (innerWidth - W * S) / 2 + 'px'; cv.style.top = (innerHeight - H * S) / 2 + 'px';
 }
@@ -624,7 +678,7 @@ const NET = (() => {
     if (m.t === 'start') { G.mode = 'play'; G.view = []; G.viewTop = 0; G.round = 0; G.phase = 'aim'; showScr(null); $('#hud').classList.add('on'); $('#pauseB').style.display = 'block'; $('#tbtns').classList.add('on'); AU.music(true); G.snapB = null; }
     if (m.t === 's') {
       G.snapA = G.snapB; G.snapB = {t: performance.now(), m};
-      if (m.ro !== G.round) { G.round = m.ro; banner(`${m.ro}라운드`, '무너뜨리면 지는 거예요!'); showScr(null); G.shownRes = false; G.cam = G.camT = BASE(); }
+      if (m.ro !== G.round) { G.round = m.ro; banner(`${m.ro}라운드`, '떨어뜨리면 지는 거예요!'); showScr(null); G.shownRes = false; G.cam = G.camT = BASE(); }
       const wasMine = isMyTurn(), prevTurn = G.turn;
       G.turn = m.tu; G.timer = m.tm; G.loser = m.lo; G.viewTop = m.top; G.height = m.hg;
       if (G.phase !== 'wait' || m.ph !== 'aim' || prevTurn !== m.tu) G.phase = m.ph;
@@ -632,7 +686,7 @@ const NET = (() => {
       if (m.h) { const mine = isMyTurn(); if (!mine || !G.hang || prevTurn !== m.tu || G.hang.k !== m.h[0]) G.hang = {k: m.h[0], x: m.h[1], y: m.h[2], rot: m.h[3]}; else G.hang.y = m.h[2]; G.piece = mine ? G.hang : null; } else { G.hang = null; G.piece = null; }
       if (isMyTurn() && !wasMine) { AU.play('turn'); tip('<b>내 차례!</b> 옮기고 돌린 뒤 놓으세요'); }
       if (m.fact && m.fact !== G.lastFact) { G.lastFact = m.fact; tip(m.fact); }
-      for (const e of m.ev) { if (e === 'drop') AU.play('drop'); if (e === 'land') AU.play('land', 1); if (e === 'fall') { AU.play('fall'); const L = G.players[m.lo]; banner('와르르!', L ? `${L.name}이(가) 무너뜨렸어요` : ''); } if (e === 'turn') AU.play('turn'); }
+      for (const e of m.ev) { if (e === 'drop') AU.play('drop'); if (e === 'land') AU.play('land', 1); if (e === 'fall') { AU.play('fall'); const L = G.players[m.lo]; banner('떨어졌다!', L ? `${L.name}이(가) 떨어뜨렸어요` : ''); } if (e === 'turn') AU.play('turn'); if (e === 'lock') AU.play('rot'); }
     }
     if (m.t === 'end') { G.players = m.players.map(p => Object.assign({}, p, {type: p.id === myId ? 'me' : p.type})); G.loser = m.loser; G.height = m.h; setTimeout(showResult, 400); }
   }
@@ -662,8 +716,8 @@ addEventListener('pagehide', () => NET.leave());
 // ================================================================ 시작
 (async () => {
   const L = (k, s) => new Promise(ok => { const i = new Image(); i.onload = () => { IMG[k] = i; ok(); }; i.onerror = ok; i.src = 'bio-tower/' + s; });
-  const [meta] = await Promise.all([fetch('bio-tower/pieces.json').then(r => r.json()), L('pieces', 'pieces.png'), L('island', 'island.png'), L('clouds', 'clouds.png'), L('hills', 'hills.png'), L('faces', 'faces.png')]);
-  PM = meta; KINDS.push(...Object.keys(PM));
+  const [meta, world] = await Promise.all([fetch('bio-tower/pieces.json').then(r => r.json()), fetch('bio-tower/world.json').then(r => r.json()), L('pieces', 'pieces.png'), L('island', 'island.png'), L('islets', 'islets.png'), L('clouds', 'clouds.png'), L('hills', 'hills.png'), L('faces', 'faces.png')]);
+  PM = meta.pieces; WJ = world; KINDS.push(...Object.keys(PM));
   $('#loading').style.display = 'none'; fit(); requestAnimationFrame(frame);
   if (new URLSearchParams(location.search).get('room')) openLobby('online');
 })();
