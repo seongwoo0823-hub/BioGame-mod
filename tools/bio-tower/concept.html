@@ -1,0 +1,45 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@900&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>html,body{margin:0;background:#000}#w{position:relative;width:1280px;height:720px;overflow:hidden}canvas{position:absolute;inset:0}
+.t{position:absolute;right:56px;bottom:86px;font-family:'Noto Sans KR';font-weight:900;font-size:118px;line-height:1;color:#fff;-webkit-text-stroke:9px #1a2238;paint-order:stroke;text-shadow:0 10px 0 #1a2238}
+.e{position:absolute;right:64px;bottom:44px;font-family:'Press Start 2P';font-size:26px;color:#ffd040;letter-spacing:6px;-webkit-text-stroke:5px #1a2238;paint-order:stroke}
+.s{position:absolute;right:70px;bottom:228px;font-family:'Noto Sans KR';font-weight:900;font-size:32px;color:#fff;background:#ff6a3a;border:5px solid #1a2238;padding:4px 18px;border-radius:14px;box-shadow:0 6px 0 #1a2238;transform:rotate(3deg)}
+.pl{position:absolute;left:28px;display:flex;align-items:center;gap:14px;background:#fffaf0;border:5px solid #1a2238;border-radius:16px;box-shadow:0 6px 0 #1a2238;padding:6px 26px 6px 8px;font-family:'Press Start 2P';font-size:26px;color:#1a2238}
+.pl canvas{position:static;width:64px;height:64px;image-rendering:pixelated}
+</style></head><body><div id="w"><canvas id="c" width="1280" height="720"></canvas>
+<div class="s">무너뜨리면 패배!</div><div class="t">바이오 타워</div><div class="e">BIO TOWER</div></div>
+<script>
+const L=s=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src='../../games/bio-tower/'+s;});
+(async()=>{
+const [pc,isl,cl,hl,fc,meta]=await Promise.all([L('pieces.png'),L('island.png'),L('clouds.png'),L('hills.png'),L('faces.png'),fetch('../../games/bio-tower/pieces.json').then(r=>r.json())]);
+await document.fonts.ready;
+const c=document.getElementById('c'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
+const sky=g.createLinearGradient(0,0,0,720);sky.addColorStop(0,'#4aa8f0');sky.addColorStop(1,'#bfe8ff');g.fillStyle=sky;g.fillRect(0,0,1280,720);
+// 해
+const sg=g.createRadialGradient(1120,110,10,1120,110,160);sg.addColorStop(0,'rgba(255,240,150,1)');sg.addColorStop(.35,'rgba(255,220,90,.9)');sg.addColorStop(1,'rgba(255,220,90,0)');g.fillStyle=sg;g.fillRect(940,-60,360,340);
+g.fillStyle='#ffe060';for(let k=0;k<12;k++){g.save();g.translate(1120,110);g.rotate(k*Math.PI/6);g.fillRect(70,-6,40,12);g.restore();}
+g.beginPath();g.arc(1120,110,58,0,7);g.fillStyle='#ffd040';g.fill();g.lineWidth=6;g.strokeStyle='#e8a020';g.stroke();
+g.drawImage(cl,0,0,120,50,820,140,240,100);g.drawImage(cl,120,0,90,40,520,40,270,120);g.drawImage(cl,240,0,70,30,40,40,210,90);
+g.drawImage(hl,0,0,480,90,0,540,1280,240);
+const S=3; // 도트 3배
+g.drawImage(isl,0,0,200,84,640-300,470,600,252);
+const P=(k,x,y,a=0,s=S)=>{const m=meta[k];g.save();g.translate(x,y);g.rotate(a);g.drawImage(pc,m.x,m.y,m.w,m.h,-m.ox*s,-m.oy*s,m.w*s,m.h*s);g.restore();};
+// 쌓인 탑 (아래부터)
+P('turtle',560,440,0);P('frog',760,440,0);
+P('whale',640,360,-0.03);
+P('brain',560,272,0.05);P('egg',770,280,0.1);
+P('heart',630,190,-0.08);P('starfish',740,196,0.3);
+P('mushroom',672,110,0.04);
+// 떨어지는 조각 + 움직임 선
+P('jelly',690,-6,0.2);
+g.fillStyle='rgba(255,255,255,.8)';for(const x of [640,690,740])g.fillRect(x,-90+ (x%3)*10,6,50);
+// 가장자리에 걸친 조각 (아슬아슬)
+P('dna',890,410,0.5);P('virus',420,452,0);
+// 플레이어 1P~4P
+const names=['1P','2P','3P','4P'];
+names.forEach((n,i)=>{const d=document.createElement('div');d.className='pl';d.style.top=(34+i*104)+'px';const cc=document.createElement('canvas');cc.width=cc.height=32;cc.getContext('2d').drawImage(fc,i*32,0,32,32,0,0,32,32);d.appendChild(cc);d.appendChild(document.createTextNode(n));document.getElementById('w').appendChild(d);});
+// 하트
+g.fillStyle='#ff6a9a';for(const [x,y,s] of [[960,300,1.2],[1010,250,0.8]]){g.save();g.translate(x,y);g.scale(s,s);g.beginPath();g.moveTo(0,10);g.bezierCurveTo(-26,-8,-12,-30,0,-14);g.bezierCurveTo(12,-30,26,-8,0,10);g.fill();g.lineWidth=4;g.strokeStyle='#1a2238';g.stroke();g.restore();}
+document.title='done';
+})();
+</script></body></html>
