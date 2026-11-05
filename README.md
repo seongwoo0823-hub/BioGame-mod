@@ -1,6 +1,6 @@
 # BIO ARCADE · 생명과학 게임 아케이드
 
-생명과학을 소재로 한 게임 12종을 한곳에 모은 정적 웹사이트입니다.
+생명과학을 소재로 한 게임 13종을 한곳에 모은 정적 웹사이트입니다.
 빌드 과정 없이 `index.html`을 열거나 GitHub Pages로 배포하면 바로 실행됩니다.
 
 | 게임 | 장르 | 파일 |
@@ -17,12 +17,14 @@
 | 바이오 스트라이크 BIO STRIKE | 3D 1인칭 슈팅 (스토리 5장 · 생존 · 온라인 8인) | `games/bio-strike.html` |
 | 감염의 군주 LORD OF INFECTION | 쿼터뷰 핵앤슬래시 RPG (직업 4 · 5장 · 무작위 지도 · 무작위 옵션 장비) | `games/infection-lord.html` |
 | 헬릭스 HELIX | 쿼터뷰 액션 로그라이트 (쉼터 · 4장 · 유전자 변이 24종 · 보스 4 · 중간 보스 8) | `games/helix.html` |
+| 세포 개척단 CELL FRONTIER | 땅따먹기 아케이드 (나라 4 · 지역 16 · 숨은 그림 16장 · 보스 8) | `games/cell-frontier.html` |
 
 ```
 index.html        메인 화면 (게임 선택, 이 기기에 저장된 기록 표시)
-games/            게임 12종 (각각 하나의 HTML 파일)
+games/            게임 13종 (각각 하나의 HTML 파일)
 assets/           메인 화면 썸네일
 games/il-assets/  감염의 군주 스프라이트·아이콘 아틀라스 (WebP)
+games/cell-frontier/  세포 개척단 그림(숨은 그림 16장·덮개·지도·스프라이트). tools/cell-frontier/build.py로 다시 만듦
 games/helix/      헬릭스 게임 코드(js/)와 에셋(assets/) (hero-viewer.html: 주인공 미리보기, mob-viewer.html: 몬스터 32종 도감·챕터 시험장)
 vendor/           three.js r128 (3D 게임용, MIT 라이선스)
 icons/            앱 아이콘
@@ -47,7 +49,7 @@ GitHub Pages처럼 `https`로 배포된 주소에서 열면 앱으로 설치할 
 - **안드로이드 · PC 크롬/엣지**: 메인 화면의 **앱으로 설치하기** 버튼, 또는 주소창의 설치 아이콘
 - **아이폰 · 아이패드**: Safari 공유 버튼 → **홈 화면에 추가**
 
-처음 접속할 때 게임 11종이 모두 기기에 저장되므로, 설치한 뒤에는 인터넷 없이도 실행됩니다.
+처음 접속할 때 게임 13종이 모두 기기에 저장되므로, 설치한 뒤에는 인터넷 없이도 실행됩니다.
 파일을 수정하면 다음 실행 때 자동으로 새 버전이 반영됩니다. 파일을 추가하거나 지웠다면 `sw.js`의 `CORE` 목록과 `VERSION`도 함께 바꿔 주세요.
 
 ## 랭킹 시트와 관리자 비밀번호
