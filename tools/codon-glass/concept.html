@@ -1,0 +1,45 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@800;900&family=Noto+Sans+KR:wght@700;900&display=swap" rel="stylesheet">
+<style>html,body{margin:0}#w{position:relative;width:1280px;height:720px;overflow:hidden;font-family:Inter,'Noto Sans KR',sans-serif}canvas{position:absolute;inset:0}
+.logo{position:absolute;left:64px;top:206px;font-weight:900;font-size:104px;letter-spacing:-.045em;line-height:.95;background:linear-gradient(135deg,#007aff,#5856d6 45%,#34c759);-webkit-background-clip:text;color:transparent}
+.ko{position:absolute;left:70px;top:430px;font-family:'Noto Sans KR';font-weight:900;font-size:46px;color:#0f172a}
+.sub{position:absolute;left:72px;top:502px;font-family:'Noto Sans KR';font-weight:700;font-size:22px;color:#475569}
+.tag{position:absolute;left:72px;top:150px;font-weight:800;font-size:16px;letter-spacing:.35em;color:#64748b}
+.pill{position:absolute;left:72px;top:556px;display:flex;gap:10px}.pill span{font-family:'Noto Sans KR';font-weight:900;font-size:18px;padding:8px 16px;border-radius:999px;color:#fff}
+</style></head><body><div id="w"><canvas id="c" width="1280" height="720"></canvas>
+<div class="tag">mRNA TRANSLATION PUZZLE</div><div class="logo">Codon<br>Glass</div><div class="ko">코돈 글래스</div><div class="sub">염기 구슬을 묶어 아미노산을 번역하세요</div>
+<div class="pill"><span style="background:#007aff">표적 코돈</span><span style="background:#5856d6">리보솜 번역</span><span style="background:#34c759">온라인 4인</span></div></div>
+<script>
+const ST={A:['#ff6961','#ff3b30'],U:['#ffb340','#ff9500'],G:['#4cd964','#28cd41'],C:['#409cff','#007aff']};
+(async()=>{await document.fonts.ready;
+const g=document.getElementById('c').getContext('2d');
+const bg=g.createLinearGradient(0,0,1280,720);bg.addColorStop(0,'#e4edf8');bg.addColorStop(.5,'#eaf4ef');bg.addColorStop(1,'#edeaf6');g.fillStyle=bg;g.fillRect(0,0,1280,720);
+for(const [x,y,r,c] of [[150,120,260,'rgba(52,199,89,.22)'],[1150,90,300,'rgba(0,122,255,.22)'],[700,760,360,'rgba(88,86,214,.18)']]){const rg=g.createRadialGradient(x,y,0,x,y,r);rg.addColorStop(0,c);rg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=rg;g.fillRect(0,0,1280,720);}
+const orb=(x,y,r,b,a=1)=>{const [t,bt]=ST[b];g.save();g.globalAlpha=a;g.shadowColor='rgba(15,23,42,.2)';g.shadowBlur=r*.6;g.shadowOffsetY=r*.18;
+ const gr=g.createLinearGradient(x-r*.5,y-r,x+r*.5,y+r);gr.addColorStop(0,t);gr.addColorStop(1,bt);g.beginPath();g.arc(x,y,r,0,6.283);g.fillStyle=gr;g.fill();g.shadowColor='transparent';
+ g.lineWidth=r*.08;g.strokeStyle='rgba(255,255,255,.8)';g.stroke();const sh=g.createLinearGradient(x,y-r,x,y);sh.addColorStop(0,'rgba(255,255,255,.6)');sh.addColorStop(1,'rgba(255,255,255,0)');
+ g.beginPath();g.arc(x,y-r*.12,r*.78,Math.PI*1.1,Math.PI*1.9);g.fillStyle=sh;g.fill();g.fillStyle='#fff';g.font=`800 ${Math.round(r*1.04)}px Inter`;g.textAlign='center';g.textBaseline='middle';g.fillText(b,x,y+r*.05);g.restore();};
+// 유리 판
+g.save();g.translate(640,60);g.rotate(-0.045);
+const BW=600,BH=500;g.shadowColor='rgba(15,23,42,.18)';g.shadowBlur=50;g.shadowOffsetY=20;g.fillStyle='rgba(255,255,255,.6)';g.beginPath();g.roundRect(0,0,BW,BH,32);g.fill();g.shadowColor='transparent';
+g.lineWidth=3;g.strokeStyle='rgba(255,255,255,.95)';g.stroke();
+const rows=7,cols=8,cw=BW/cols,ch=BH/rows,R=Math.min(cw,ch)*.38;
+let seed=11;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const grid=[];for(let r=0;r<rows;r++){grid.push([]);for(let c=0;c<cols;c++)grid[r].push('AUGC'[Math.floor(rnd()*4)]);}
+grid[3][2]='A';grid[3][3]='U';grid[3][4]='G';
+const gone=new Set(['1,5','1,6','2,6','5,1','0,0','6,7']);
+for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=(c+.5)*cw,y=(r+.5)*ch;g.fillStyle=(r+c)%2?'rgba(241,245,249,.45)':'rgba(255,255,255,.45)';g.fillRect(c*cw+3,r*ch+3,cw-6,ch-6);if(!gone.has(r+','+c))orb(x,y,R,grid[r][c]);}
+// 선택 사각형 + 번역 배지
+const sx=2*cw+6,sy=3*ch+6,sw=3*cw-12,shh=ch-12;g.fillStyle='rgba(52,199,89,.2)';g.strokeStyle='#34c759';g.lineWidth=5;g.beginPath();g.roundRect(sx,sy,sw,shh,16);g.fill();g.stroke();
+for(let k=0;k<3;k++){const x=(2+k+.5)*cw+R*.66,y=(3+.5)*ch-R*.66;g.fillStyle='#0f172a';g.beginPath();g.arc(x,y,15,0,6.283);g.fill();g.strokeStyle='#fff';g.lineWidth=3;g.stroke();g.fillStyle='#fff';g.font='900 17px Inter';g.textAlign='center';g.textBaseline='middle';g.fillText(k+1,x,y);}
+const lab="5'  A · U · G  3'  →  Met";g.font='800 26px Inter';const tw=g.measureText(lab).width+40;g.fillStyle='rgba(22,163,74,.95)';g.beginPath();g.roundRect(sx+sw/2-tw/2,sy-64,tw,46,23);g.fill();g.fillStyle='#fff';g.textAlign='center';g.fillText(lab,sx+sw/2,sy-41);
+g.restore();
+// 아미노산 사슬 (판 위로 이어짐)
+const AA=[['Met','#34c759'],['Ala','#10b981'],['Ser','#ec4899'],['Gly','#22c55e'],['Lys','#f43f5e'],['Trp','#7c3aed']];
+let px=720,py=640;for(let i=0;i<AA.length;i++){const nx=px+88,ny=640+(i%2?-18:18);g.strokeStyle='rgba(15,23,42,.25)';g.lineWidth=8;g.beginPath();g.moveTo(px,py);g.lineTo(nx,ny);g.stroke();
+ g.save();g.shadowColor='rgba(15,23,42,.25)';g.shadowBlur=10;g.fillStyle=AA[i][1];g.beginPath();g.arc(px,py,30,0,6.283);g.fill();g.restore();g.strokeStyle='#fff';g.lineWidth=3;g.beginPath();g.arc(px,py,30,0,6.283);g.stroke();
+ g.fillStyle='#fff';g.font='900 18px Inter';g.textAlign='center';g.textBaseline='middle';g.fillText(AA[i][0],px,py+1);px=nx;py=ny;}
+// 떠다니는 구슬
+orb(560,640,34,'C',.9);orb(1230,640,26,'U',.85);
+document.title='done';})();
+</script></body></html>
