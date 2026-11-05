@@ -259,7 +259,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
       </nav>
       <button class="netpill" id="netPill" data-net="open" hidden></button>
       <span class="qstat" id="qStat"></span>
-      <div class="mode">4K · 26 SONGS</div>
+      <div class="mode" id="modeTag">4K · SONGS</div>
     </div>
     <div class="grid">
       <section class="col colL pnl">
@@ -425,81 +425,8 @@ const saveSet=()=>LS.set('biobeat_set_v1',SET), saveRec=()=>LS.set('biobeat_rec_
 
 /* ================= songs ================= */
 const SONGS=[
-{id:'cell',ko:'세포막 그루브',en:'Cell Membrane Groove',artist:'Dr.Cyto',unit:'세포의 구조와 기능',genre:'SYNTHPOP',bpm:118,root:57,scale:'major',prog:[0,4,5,3],cbars:1,kit:'909',
- drums:{k:'x...x...x...x...',s:'....x.......x...',h:'x.x.x.x.x.x.x.x.',o:'......x.......x.'},bassPat:'r.o.r.o.r.o.r.o.',bassKind:'pluckbass',lead:'square2',leadOct:12,padStyle:'hold',padKind:'saw',arp:true,arpKind:'pluck',busy:.5,scene:'cell',
- desc:'세포막은 인지질 2중층으로 물질의 출입을 조절해요. 핵, 미토콘드리아, 소포체, 골지체가 함께 일하는 세포 속을 신스팝으로 여행해 보세요.'},
-{id:'dna',ko:'이중나선의 꿈',en:'Double Helix Dream',artist:'Helix.K',unit:'유전자와 DNA',genre:'TRANCE',bpm:138,root:57,scale:'minor',prog:[0,5,2,6],cbars:2,kit:'909',
- drums:{k:'x...x...x...x...',c:'....x.......x...',h:'xoxoxoxoxoxoxoxo',o:'..x...x...x...x.'},bassPat:'..r...r...r...r.',bassKind:'saw',lead:'supersaw',leadOct:12,padStyle:'hold',padKind:'supersaw',arp:true,arpKind:'pluck',busy:.45,pump:true,scene:'dna',
- desc:'DNA는 두 가닥의 폴리뉴클레오타이드가 꼬인 이중 나선 구조예요. A은 T와, G는 C와 상보적으로 수소 결합해요.'},
-{id:'photo',ko:'광합성 8비트',en:'Photon Harvest',artist:'8bit Chloro',unit:'광합성',genre:'CHIPTUNE',bpm:150,root:60,scale:'major',prog:[3,4,2,5],cbars:1,kit:'chip',
- drums:{k:'x.......x.x.....',s:'....x.......x...',h:'..x...x...x...x.'},bassPat:'r.o.r.o.r.o.r.5.',bassKind:'chip',lead:'chip',leadOct:12,padStyle:'hold',padKind:'chiptri',arp:true,arpKind:'chip',busy:.6,scene:'photo',
- desc:'엽록체는 빛에너지를 흡수해 물과 이산화 탄소로 포도당을 만들고 산소를 내보내요. 명반응과 탄소 고정 반응이 이어지는 광합성!'},
-{id:'mito',ko:'ATP 러시',en:'ATP Rush',artist:'Mito-Boy',unit:'세포 호흡과 에너지',genre:'DRUM & BASS',bpm:174,root:53,scale:'minor',prog:[0,6,5,4],cbars:2,kit:'acoustic',
- drums:{k:'x.........x.....',s:'....x..o.o..x...',h:'x.x.x.x.x.x.x.xx'},bassPat:'r.........r..r..',bassKind:'reese',lead:'saw',leadOct:12,padStyle:'hold',padKind:'strings',arp:false,busy:.35,scene:'mito',
- desc:'미토콘드리아는 포도당을 산소로 분해해 ATP를 만드는 세포의 발전소예요. 해당 과정, TCA 회로, 전자 전달계를 거치며 에너지가 쏟아져요.'},
-{id:'neuron',ko:'활동 전위',en:'Action Potential',artist:'Synapse',unit:'신경계와 흥분 전도',genre:'TECHNO',bpm:130,root:50,scale:'minor',prog:[0,0,5,6],cbars:2,kit:'909',
- drums:{k:'x...x...x...x...',c:'....x.......x...',h:'xoxoxoxoxoxoxoxo',o:'..x...x...x...x.',r:'...x..x....x..x.'},bassPat:'.rrr.rrr.rrr.rrr',bassKind:'saw',lead:'acid',leadOct:12,padStyle:'hold',padKind:'dark',arp:true,arpKind:'acid',busy:.55,scene:'neuron',
- desc:'뉴런은 Na⁺ 유입으로 탈분극, K⁺ 유출로 재분극되며 활동 전위를 만들어요. 말이집 신경은 랑비에 결절을 따라 도약 전도해 신호가 빨라요.'},
-{id:'immune',ko:'항체 어택',en:'Antibody Attack',artist:'WBC Squad',unit:'면역과 방어 작용',genre:'ROCK',bpm:160,root:52,scale:'minor',prog:[0,5,6,0],cbars:1,kit:'acoustic',
- drums:{k:'x.......x.x.....',s:'....x.......x...',h:'x.x.x.x.x.x.x.x.'},fillTom:true,bassPat:'r.r.r.r.r.r.r.r.',bassKind:'pluckbass',lead:'guitar',leadOct:12,padStyle:'stab',padPat:'x.x.x.x.x.x.xx.x',padKind:'guitar',power:true,introPad:'dark',arp:false,busy:.3,scene:'immune',
- desc:'백혈구의 식세포 작용과 B 림프구가 만든 항체의 항원-항체 반응이 병원체를 물리쳐요. 우리 몸의 방어 부대, 출동!'},
-{id:'mendel',ko:'멘델의 정원',en:"Mendel's Garden",artist:'Gregor & Peas',unit:'멘델의 유전 법칙',genre:'BOSSA NOVA',bpm:128,root:55,scale:'major',prog:[1,4,0,5],cbars:2,seventh:true,kit:'acoustic',
- drums:{k:'o..oo..oo..oo..o',r:'x..x..x...x.x...',h:'oooooooooooooooo'},bassPat:'r.....5.r.....5.',bassKind:'upright',lead:'flute',leadOct:12,padStyle:'stab',padPat:'x..x..x...x..x..',padKind:'epiano',introPad:'epiano',arp:false,busy:.35,scene:'mendel',
- desc:'멘델은 완두 교배 실험으로 우열의 원리, 분리의 법칙, 독립의 법칙을 밝혔어요. Rr × Rr의 자손은 표현형 3 : 1!'},
-{id:'hormone',ko:'호르몬 바이브',en:'Hormone Vibes',artist:'Endo Ras',unit:'호르몬과 내분비계',genre:'REGGAE',bpm:84,root:62,scale:'major',prog:[0,3,0,4],cbars:1,kit:'acoustic',
- drums:{k:'........x.......',r:'........x.......',h:'x.x.x.x.x.x.x.x.'},bassPat:'r.....r.5...3...',bassKind:'sub',lead:'melodica',leadOct:12,padStyle:'stab',padPat:'....x.......x...',padKind:'organ',introPad:'organ',swing:.15,swingGrid:16,arp:false,busy:.3,scene:'hormone',
- desc:'내분비샘에서 분비된 호르몬은 혈액을 따라 온몸을 돌다가 특정 수용체를 가진 표적 세포에만 작용해요.'},
-{id:'heart',ko:'하트비트 124',en:'Heartbeat 124',artist:'Atrium',unit:'순환계와 심장',genre:'HOUSE',bpm:124,root:57,scale:'minor',prog:[0,5,3,4],cbars:1,seventh:true,kit:'909',
- drums:{k:'x...x...x...x...',c:'....x.......x...',o:'..x...x...x...x.',h:'.x.x.x.x.x.x.x.x'},bassPat:'..r...r...r...r.',bassKind:'pluckbass',lead:'pluck',leadOct:12,padStyle:'stab',padPat:'x..x..x...x..x..',padKind:'piano',introPad:'strings',arp:false,pump:true,busy:.4,scene:'heart',
- desc:'심장은 규칙적으로 박동하며 체순환과 폐순환으로 온몸에 혈액을 보내요. 동맥, 모세 혈관, 정맥을 지나는 혈액의 여정!'},
-{id:'evo',ko:'종의 기원',en:'Origin of Species',artist:'Darwin Orchestra',unit:'생물의 진화',genre:'EPIC ORCHESTRA',bpm:100,root:50,scale:'minor',prog:[0,5,2,6],cbars:2,kit:'timp',
- drums:{k:'x.......x.......',s:'....o.......x...',t:'x.....x.x.x.....'},fillTom:true,bassPat:'r...............',bassKind:'cello',lead:'brass',leadOct:12,padStyle:'hold',padKind:'strings',arp:true,arpKind:'pluck',busy:.3,reverb:.4,scene:'evo',
- desc:'변이를 가진 개체 중 환경에 잘 적응한 개체가 살아남아 자손을 남기는 자연 선택. 생물은 오랜 시간 동안 이렇게 진화해 왔어요.'},
-{id:'eco',ko:'먹이 그물 펑크',en:'Food Web Funk',artist:'Trophic Band',unit:'생태계와 상호 작용',genre:'FUNK',bpm:108,root:52,scale:'dorian',prog:[0,0,3,3],cbars:1,seventh:true,kit:'acoustic',
- drums:{k:'x..x......x.x...',s:'....x..o.o..x..o',h:'xoxoxoxoxoxoxoxo',o:'..............x.'},bassPat:'r..r.o..r.r.o.5.',bassKind:'pluckbass',lead:'clav',leadOct:12,padStyle:'stab',padPat:'...x..x.......x.',padKind:'brass',introPad:'organ',arp:false,busy:.55,scene:'eco',
- desc:'생산자, 소비자, 분해자가 먹이 사슬과 먹이 그물로 연결되어 있어요. 에너지는 흐르고 물질은 순환하는 생태계의 그루브!'},
-{id:'mitosis',ko:'체세포 분열 드롭',en:'Mitosis Drop',artist:'Spindle',unit:'세포 분열',genre:'DUBSTEP',bpm:140,root:53,scale:'minor',prog:[0,5,6,4],cbars:2,kit:'808',
- drums:{k:'x.........x.....',s:'........x.......',c:'........x.......',h:'x.x.x.x.x.x.x.x.'},bassPat:'r.......r.....r.',bassKind:'wobble',lead:'saw',leadOct:12,padStyle:'hold',padKind:'dark',arp:false,busy:.4,scene:'mitosis',
- desc:'간기 → 전기 → 중기 → 후기 → 말기 → 세포질 분열. 복제된 염색체가 방추사를 따라 정확히 나뉘어 두 딸세포가 생겨요.'},
-{id:'enzyme',ko:'효소 촉매',en:'Enzyme Catalyst',artist:'Catalyst',unit:'효소와 물질대사',genre:'FUTURE BASS',bpm:150,root:61,scale:'major',prog:[3,4,2,5],cbars:1,kit:'808',
- drums:{k:'x......x..x.....',s:'........x.......',c:'........x.......',h:'..x...x...x...x.'},bassPat:'r.....r...r.....',bassKind:'sub',lead:'pluck',leadOct:12,padStyle:'stab',padPat:'x..x..x...x.x...',padKind:'supersaw',introPad:'supersaw',arp:true,arpKind:'pluck',pump:true,busy:.5,scene:'enzyme',
- desc:'효소는 활성화 에너지를 낮춰 반응을 빠르게 하는 생체 촉매예요. 활성 부위에 꼭 맞는 기질에만 작용하는 기질 특이성!'},
-{id:'protein',ko:'단백질 스윙',en:'Protein Swing',artist:'Ribo Swing Club',unit:'유전자 발현(전사와 번역)',genre:'ELECTRO SWING',bpm:126,root:57,scale:'harm',prog:[0,3,4,0],cbars:1,kit:'909',
- drums:{k:'x...x...x...x...',s:'....x.......x...',h:'x.x.x.x.x.x.x.x.'},bassPat:'r...3...5...o...',bassKind:'upright',lead:'brass',leadOct:12,padStyle:'stab',padPat:'..x...x...x...x.',padKind:'piano',introPad:'piano',swing:.32,swingGrid:8,arp:false,busy:.2,scene:'protein',
- desc:'DNA의 정보가 mRNA로 전사되고, 리보솜에서 tRNA가 운반한 아미노산이 이어져 단백질로 번역돼요. 코돈 3개가 아미노산 1개!'},
-{id:'lofi',ko:'항상성 로파이',en:'Homeostasis',artist:'Homeo',unit:'항상성과 몸의 조절',genre:'LO-FI HIP HOP',bpm:82,root:60,scale:'major',prog:[3,2,1,0],cbars:1,seventh:true,kit:'lofi',
- drums:{k:'x......x..x.....',s:'....x.......x...',h:'x.x.x.x.x.x.x.x.'},bassPat:'r.......5.r.....',bassKind:'sub',lead:'epiano',leadOct:12,padStyle:'hold',padKind:'epiano',swing:.22,swingGrid:8,arp:false,busy:.3,crackle:true,scene:'lofi',
- desc:'체온, 혈당량, 체액의 삼투압을 일정하게 유지하는 항상성. 간뇌 시상 하부와 음성 피드백이 몸의 균형을 지켜요.'},
-{id:'digest',ko:'소화 스카',en:'Digestive Ska',artist:'Amylase Rudeboys',unit:'소화계와 영양소 흡수',genre:'SKA',bpm:168,root:55,scale:'mixo',prog:[0,6,3,0],cbars:1,kit:'acoustic',
- drums:{k:'x.......x.......',s:'....x.......x...',h:'x.x.x.x.x.x.x.x.',o:'..............x.'},bassPat:'r.3.5.3.r.3.5.o.',bassKind:'upright',lead:'trumpet',leadOct:12,padStyle:'stab',padPat:'..x...x...x...x.',padKind:'clav',introPad:'organ',arp:false,scene:'digest',
- desc:'입, 위, 소장을 지나며 녹말은 아밀레이스, 단백질은 펩신과 트립신, 지방은 라이페이스가 분해해요. 소장의 융털이 영양소를 흡수해요.'},
-{id:'lung',ko:'숨의 파도',en:'Breath Wave',artist:'Alveoli',unit:'호흡계와 기체 교환',genre:'CHILLWAVE',bpm:96,root:58,scale:'lydian',prog:[0,1,5,4],cbars:2,kit:'lofi',
- drums:{k:'x.......x..x....',s:'....x.......x...',h:'..x...x...x...x.'},bassPat:'r.......r...5...',bassKind:'sub',lead:'dream',leadOct:12,padStyle:'hold',padKind:'strings',arp:true,arpKind:'mallet',reverb:.4,scene:'lung',
- desc:'가로막과 갈비뼈가 움직여 숨을 들이쉬고 내쉬어요. 폐포에서 산소는 혈액으로, 이산화 탄소는 폐포로 확산돼요.'},
-{id:'kidney',ko:'네프론 2스텝',en:'Nephron 2-Step',artist:'Glomerulus',unit:'배설계와 콩팥',genre:'UK GARAGE',bpm:132,root:54,scale:'minor',prog:[0,5,3,4],cbars:2,seventh:true,kit:'909',
- drums:{k:'x.........x..x..',s:'....x.......x...',h:'..x..x.x..x..x.x',r:'.......x.......x'},swing:.28,swingGrid:16,bassPat:'r..r......r.r...',bassKind:'reese',lead:'organ',leadOct:12,padStyle:'stab',padPat:'x...x..x...x....',padKind:'epiano',introPad:'strings',arp:false,scene:'kidney',
- desc:'콩팥의 네프론에서는 여과, 재흡수, 분비가 일어나요. 사구체에서 걸러진 포도당은 세뇨관에서 모두 다시 흡수돼요.'},
-{id:'muscle',ko:'근수축 하드스타일',en:'Sliding Filament',artist:'Myosin Heads',unit:'근육의 구조와 수축',genre:'HARDSTYLE',bpm:150,root:52,scale:'harm',prog:[0,5,3,4],cbars:2,kit:'hard',
- drums:{k:'x...x...x...x...',c:'....x.......x...',h:'..x...x...x...x.'},bassPat:'..r...r...r...r.',bassKind:'saw',lead:'hardlead',leadOct:12,padStyle:'hold',padKind:'supersaw',arp:false,scene:'muscle',
- desc:'마이오신 머리가 ATP를 써서 액틴 필라멘트를 당기면 근육 원섬유 마디가 짧아져요. 필라멘트 자체의 길이는 변하지 않아요.'},
-{id:'eye',ko:'수정체 시티팝',en:'Lens City Lights',artist:'Rod & Cone',unit:'감각 기관과 눈',genre:'CITY POP',bpm:112,root:58,scale:'major',prog:[3,2,1,4],cbars:1,seventh:true,kit:'acoustic',
- drums:{k:'x.....x.x.......',s:'....x.......x...',h:'x.x.x.x.x.x.x.x.',o:'..............x.'},bassPat:'r..r..o.r..5..o.',bassKind:'pluckbass',lead:'bell',leadOct:12,padStyle:'stab',padPat:'x.....x...x.....',padKind:'epiano',introPad:'strings',arp:false,scene:'eye',
- desc:'빛은 각막과 수정체에서 굴절되어 망막에 상을 맺어요. 원뿔 세포는 색을, 막대 세포는 명암을 구별하고 시각 신경이 정보를 뇌로 보내요.'},
-{id:'meiosis',ko:'교차 브레이크',en:'Crossing Over',artist:'Chiasma',unit:'감수 분열과 유전적 다양성',genre:'BREAKBEAT',bpm:135,root:55,scale:'minor',prog:[0,2,5,4],cbars:1,kit:'acoustic',
- drums:{k:'x.x.......xx....',s:'....x..o.x..x..o',h:'x.x.x.x.x.x.x.x.',o:'......x.........'},bassPat:'r.....r.r.......',bassKind:'saw',lead:'acid',leadOct:12,padStyle:'hold',padKind:'dark',arp:true,arpKind:'chip',scene:'meiosis',
- desc:'감수 1분열에서 상동 염색체가 짝을 지어 교차가 일어나고 분리돼요. 2분열을 거치면 염색체 수가 절반인 생식세포 4개가 생겨요.'},
-{id:'microbe',ko:'페트리 접시 재즈',en:'Petri Dish Jazz',artist:'Gram Stain Quartet',unit:'세균과 바이러스',genre:'SWING JAZZ',bpm:160,root:53,scale:'major',prog:[1,4,0,5],cbars:1,seventh:true,kit:'brush',
- drums:{k:'o.......o.......',s:'....o.......o..o',h:'....x.......x...',y:'x...x.x.x...x.x.'},swing:.33,swingGrid:8,bassPat:'r...3...5...7...',bassKind:'upright',lead:'sax',leadOct:12,padStyle:'stab',padPat:'...x......x.....',padKind:'piano',introPad:'piano',arp:false,scene:'microbe',
- desc:'세균은 핵막이 없는 원핵생물로 스스로 분열해 증식해요. 바이러스는 세포 구조가 없어 숙주 세포 안에서만 증식할 수 있어요.'},
-{id:'insulin',ko:'인슐린 R&B',en:'Sweet Key',artist:'Beta Cell',unit:'혈당량 조절',genre:'R&B',bpm:92,root:56,scale:'minor',prog:[0,3,6,5],cbars:1,seventh:true,kit:'808',
- drums:{k:'x......x.x......',s:'....x.......x...',h:'x.xxx.x.x.xxx.x.'},swing:.12,swingGrid:16,bassPat:'r.........5.r...',bassKind:'sub',lead:'vox',leadOct:12,padStyle:'hold',padKind:'epiano',arp:false,scene:'insulin',
- desc:'혈당량이 높아지면 이자의 β세포에서 인슐린이 분비돼 세포가 포도당을 흡수하고, 낮아지면 α세포의 글루카곤이 혈당을 올려요.'},
-{id:'cycle',ko:'물질 순환 트로피컬',en:'Carbon Cycle Tropics',artist:'Rhizobium',unit:'물질 순환과 에너지 흐름',genre:'TROPICAL HOUSE',bpm:112,root:57,scale:'major',prog:[5,3,0,4],cbars:1,kit:'909',
- drums:{k:'x...x...x...x...',c:'....x.......x...',h:'..x...x...x...x.',r:'x..x..x...x..x..'},bassPat:'r...r.5...r.o...',bassKind:'sub',lead:'mallet',leadOct:12,padStyle:'hold',padKind:'dream',arp:false,pump:true,scene:'cycle',
- desc:'탄소는 광합성과 호흡으로, 물은 증발과 강수로, 질소는 질소 고정 세균의 도움으로 생태계를 순환해요.'},
-{id:'tree',ko:'생명의 나무',en:'Tree of Life',artist:'Linnaeus Folk Club',unit:'생물의 분류와 다양성',genre:'CELTIC FOLK',bpm:120,root:62,scale:'dorian',prog:[0,6,0,4],cbars:1,kit:'acoustic',
- drums:{k:'x..x..x.x..x..x.',t:'..x.......x.....'},bassPat:'r...............',bassKind:'cello',lead:'whistle',leadOct:12,padStyle:'hold',padKind:'fiddle',arp:true,arpKind:'pluck',reverb:.35,scene:'tree',
- desc:'생물은 종, 속, 과, 목, 강, 문, 계, 역으로 분류해요. 계통수는 공통 조상에서 갈라져 나온 생물들의 진화적 관계를 보여 줘요.'},
+// 지금은 실제 음원(노래) 곡만 실음. 새 곡은 아래처럼 audio 파일 + AUDIO_CHARTS(분석 결과)로 추가
+// (옛 합성 곡 25곡은 삭제. 합성 엔진 genSong()은 audio가 없는 곡을 위해 남겨 둠)
 // ↓ 실제 음원(보컬) 곡: audio 파일을 그대로 재생하고, 채보는 tools/bio-beat/analyze_song.py가 음원을 분석해 만든 후보음(AUDIO_CHARTS)으로 생성
 {id:'cellworld',ko:'세포 속 세상',en:'Inside the Cell',artist:'fathomlesskeyboard2130',unit:'세포의 구조와 기능',genre:'VOCAL POP',bpm:105,audio:'bio-beat/cell-world.mp3',scene:'cell',root:57,scale:'major',reverb:0,
  desc:'세포막은 인지질 2중층으로 물질의 출입을 조절하고, 핵은 유전 정보를 담은 지휘관, 미토콘드리아는 ATP를 만드는 발전소, 소포체는 단백질을 나르는 통로, 골지체는 포장해 보내는 우체국이에요. 노래를 따라 부르며 세포 소기관을 익혀 보세요!'}
@@ -508,65 +435,13 @@ const DIFF=[{ko:'하',en:'EASY'},{ko:'중',en:'NORMAL'},{ko:'상',en:'HARD'}];
 
 /* melody DNA: rhythm cells (x=onset, -=hold, .=rest), phrase form, contour, melody scale */
 const MEL={
-cell:{c:['x.x.x-x.x...x-..','x-x.x.x-x...x---'],v:['x...x.x.x.......','x.x...x.x...x...'],form:'ABAC',con:'arch',msc:'major',lo:2,rng:7},
-dna:{c:['x--x--x-x--x--x-','x-x-x---x-x-x---'],v:['x-------x---x---','x---x---x-x-x---'],form:'AAAB',con:'up',msc:'minor',lo:0,rng:9,orn:'echo'},
-photo:{c:['xxxxx.x.xxxxx.x.','x.xxx.x.x-x-x---'],v:['x.x.xxx.x.x.x...','xx.xx.x.x...x...'],form:'ABAB',con:'zig',msc:'penta',lo:1,rng:7,orn:'grace'},
-mito:{c:['x-.x-.x-x-.x--x-','x---x-.xx---....'],v:['x.......x..x....','x..x..x.x.......'],form:'ABAC',con:'down',msc:'minor',lo:1,rng:8},
-neuron:{c:['x.xx.x.xx.x.xx.x','xx.x.xx.x.xx.x.x'],v:['x..x..x.........','x..x..x...x..x..'],form:'AAAB',con:'pedal',msc:'phrygian',lo:0,rng:7,jit:.6},
-immune:{c:['x-x-x-.xx-x-x---','x.x.x.x.x-x-x---'],v:['x.x.x.x.x...x...','x.x.x...x.x.x...'],form:'AABA',con:'stair',msc:'blues',lo:1,rng:7},
-mendel:{c:['x--x--x---x-x---','..x--x--x-x-x---'],v:['x---..x-x---....','..x-x---x--x....'],form:'ABAC',con:'wave',msc:'lydian',lo:2,rng:8},
-hormone:{c:['..x...x-..x.x---','x-..x-..x.x.x---'],v:['..x...x...x...x.','..x.x...x-......'],form:'ABAB',con:'call',msc:'penta',lo:1,rng:6},
-heart:{c:['x..x..x...x..x..','x..x..x.x-x-x---'],v:['x...x..x....x...','x..x....x..x....'],form:'AABA',con:'leap',msc:'dorian',lo:1,rng:8,orn:'oct'},
-evo:{c:['x-----x-x-x-x---','x-----x-x-------'],v:['x-------x-------','x---x---x-------'],form:'ABAC',con:'up',msc:'harm',lo:0,rng:9},
-eco:{c:['.xx.x..xx.x.x..x','x.xx..x..xx.x...'],v:['x..x..x..x......','.x.x.x..x.......'],form:'AAAB',con:'zig',msc:'mpenta',lo:1,rng:6,orn:'oct'},
-mitosis:{c:['x-----x-x---x---','x---x-x-x-------'],v:['x-------.....x-x','x-------x-------'],form:'ABAB',con:'valley',msc:'hijaz',lo:1,rng:8},
-enzyme:{c:['x.x-x.x-x.x.x---','xx.xx.x.x.x-x---'],v:['x...x...x.x.x...','x.x...x.x...x-..'],form:'ABAC',con:'arch',msc:'major',lo:3,rng:7,orn:'echo'},
-protein:{c:['x..xx..xx..xx---','x.x.x.x.x--.x---'],v:['x..x....x..x....','x...x...x-x-x...'],form:'AABA',con:'seq',msc:'harm',lo:1,rng:8},
-lofi:{c:['x--.x.x-...x-...','..x-x--...x-x---'],v:['x---....x-x-....','....x-x-x---....'],form:'ABAC',con:'down',msc:'penta',lo:2,rng:6},
-digest:{c:['x.x.x.x.x-x-x...','xx.xx.x.x.x.x---'],v:['x.x.....x.x.....','x.x.x...x.x.x-..'],form:'AABA',con:'stair',msc:'mixo',lo:1,rng:7},
-lung:{c:['x---x-x-x-----..','x-x-x---x-x-x-x-'],v:['x-------x---....','x---x-------....'],form:'ABAB',con:'wave',msc:'lydian',lo:2,rng:7},
-kidney:{c:['x.xx..x.xx..x...','.x.xx.x..x.x-x--'],v:['x..x.x....x.....','...x..x.x..x....'],form:'ABAB',con:'leap',msc:'dorian',lo:1,rng:7},
-muscle:{c:['x-x-x---x-x-xxx-','x---x---x-x-x-x-'],v:['x.......x.......','x...x...x.x.....'],form:'AAAB',con:'call',msc:'harm',lo:0,rng:8},
-eye:{c:['x.x-x.x-..x.x-x-','x.x.x--.x.x.x---'],v:['..x.x.x...x.x...','..x.x.x.x---....'],form:'ABAC',con:'arch',msc:'major',lo:2,rng:8},
-meiosis:{c:['x.x..x.xx..x.x..','xx..x.x.xx..x---'],v:['x...x..x..x.....','x..x..x...x...x.'],form:'ABAB',con:'zig',msc:'minor',lo:0,rng:7},
-microbe:{c:['x..x..x--x..x---','x.xx.xx.x--.x...'],v:['x..x..x.x.......','..x..x..x..x.x..'],form:'AABA',con:'seq',msc:'blues',lo:1,rng:8},
-insulin:{c:['x---x.x-x..x-...','..x-x-x-x---x...'],v:['x.x...x..x......','..x.x..x..x.....'],form:'ABAC',con:'valley',msc:'mpenta',lo:2,rng:6,orn:'grace'},
-cycle:{c:['x.x.x...x.x.x...','x.x.x.x.x...x---'],v:['x.......x.x.....','x...x.x.x.......'],form:'AABA',con:'arp',msc:'penta',lo:1,rng:7,orn:'echo'},
-tree:{c:['xxx.x.x.xxx.x---','x.xxx.x.x.xxx---'],v:['x.x.x.x.x.x.x...','xxx.x...xxx.x...'],form:'AABA',con:'wave',msc:'dorian',lo:1,rng:8,orn:'grace'}
+cell:{c:['x.x.x-x.x...x-..','x-x.x.x-x...x---'],v:['x...x.x.x.......','x.x...x.x...x...'],form:'ABAC',con:'arch',msc:'major',lo:2,rng:7}
 };
 SONGS.forEach(s=>{s.mel=MEL[s.id];});
-const CAT={cell:'세포·대사',cellworld:'세포·대사',photo:'세포·대사',mito:'세포·대사',enzyme:'세포·대사',
- dna:'유전',mendel:'유전',mitosis:'유전',protein:'유전',meiosis:'유전',
- neuron:'인체',immune:'인체',hormone:'인체',heart:'인체',lofi:'인체',digest:'인체',lung:'인체',kidney:'인체',muscle:'인체',eye:'인체',insulin:'인체',
- evo:'생태·진화',eco:'생태·진화',microbe:'생태·진화',cycle:'생태·진화',tree:'생태·진화'};
-const CATS=['전체','세포·대사','유전','인체','생태·진화'];
+const CAT={cellworld:'세포·대사'};
+const CATS=['전체',...['세포·대사','유전','인체','생태·진화'].filter(c=>SONGS.some(s=>CAT[s.id]===c))];   // 곡이 있는 분류만
 const QUIZ={
-cell:[['세포막은 인지질 2중층과 단백질로 이루어져 있다.',true,'인지질 2중층에 막단백질이 박혀 있는 유동 모자이크 구조예요.'],['미토콘드리아는 식물 세포에만 있다.',false,'미토콘드리아는 동물과 식물 세포 모두에 있어요. 엽록체가 식물 세포에만 있어요.']],
-dna:[['DNA에서 아데닌(A)은 구아닌(G)과 상보적으로 결합한다.',false,'A은 T와, G는 C와 결합해요.'],['DNA의 기본 단위는 뉴클레오타이드이다.',true,'인산, 당, 염기로 이루어진 뉴클레오타이드가 기본 단위예요.']],
-photo:[['광합성 결과 산소가 발생한다.',true,'명반응에서 물이 분해되며 산소가 나와요.'],['광합성은 미토콘드리아에서 일어난다.',false,'광합성은 엽록체에서 일어나요.']],
-mito:[['세포 호흡으로 방출된 에너지의 일부는 ATP에 저장된다.',true,'나머지는 열에너지로 방출돼요.'],['세포 호흡에는 이산화 탄소가 반드시 필요하다.',false,'산소가 필요하고 이산화 탄소는 생성물이에요.']],
-neuron:[['활동 전위가 발생할 때 Na⁺이 세포 안으로 들어온다.',true,'Na⁺ 통로가 열리며 탈분극이 일어나요.'],['민말이집 신경이 말이집 신경보다 흥분 전도가 빠르다.',false,'말이집 신경은 도약 전도를 해서 더 빨라요.']],
-immune:[['항체는 형질 세포가 생성한다.',true,'B 림프구가 분화한 형질 세포가 항체를 만들어요.'],['항생제는 바이러스를 없애는 데 효과적이다.',false,'항생제는 세균에 작용하고 바이러스에는 효과가 없어요.']],
-mendel:[['Rr × Rr 교배에서 자손의 표현형 비는 3 : 1이다.',true,'RR : Rr : rr = 1 : 2 : 1이라 우성 : 열성 = 3 : 1이에요.'],['우성 형질은 항상 열성 형질보다 개체 수가 많다.',false,'우성과 열성은 형질이 나타나는 방식이지 빈도와는 관계없어요.']],
-hormone:[['호르몬은 혈액을 통해 운반된다.',true,'내분비샘에서 혈액으로 분비돼 온몸으로 이동해요.'],['호르몬은 모든 세포에 똑같이 작용한다.',false,'수용체가 있는 표적 세포에만 작용해요.']],
-heart:[['폐순환은 우심실에서 시작된다.',true,'우심실 → 폐동맥 → 폐 → 폐정맥 → 좌심방 순서예요.'],['동맥에는 항상 산소가 많은 혈액이 흐른다.',false,'폐동맥에는 산소가 적은 혈액이 흘러요.']],
-evo:[['자연 선택은 환경에 유리한 변이를 가진 개체가 더 많이 살아남아 자손을 남기는 것이다.',true,'다윈 진화론의 핵심이에요.'],['살면서 얻은 형질이 자손에게 유전된다는 것이 다윈의 자연 선택설이다.',false,'그건 라마르크의 용불용설이에요.']],
-eco:[['생태계에서 에너지는 순환한다.',false,'물질은 순환하지만 에너지는 한 방향으로 흐르고 열로 빠져나가요.'],['생산자는 빛에너지를 화학 에너지로 바꾼다.',true,'광합성으로 유기물을 만들어요.']],
-mitosis:[['체세포 분열 결과 염색체 수가 같은 딸세포 2개가 생긴다.',true,'모세포와 유전적으로 같은 딸세포 2개가 생겨요.'],['중기에는 염색체가 양극으로 이동한다.',false,'중기에는 적도면에 늘어서고, 후기에 양극으로 이동해요.']],
-enzyme:[['효소는 반응의 활성화 에너지를 낮춘다.',true,'그래서 반응 속도가 빨라져요.'],['효소는 반응 후 소모되어 사라진다.',false,'효소는 반응 전후에 변하지 않아 다시 쓰여요.']],
-protein:[['전사는 DNA의 유전 정보가 mRNA로 옮겨지는 과정이다.',true,'번역은 mRNA 정보로 단백질을 만드는 과정이에요.'],['코돈 하나는 염기 2개로 이루어진다.',false,'코돈은 연속된 염기 3개예요.']],
-lofi:[['체온이 오르면 피부 혈관이 확장되어 열 방출이 늘어난다.',true,'땀 분비도 함께 늘어나요.'],['항상성은 주로 양성 피드백으로 유지된다.',false,'대부분 음성 피드백으로 조절돼요.']],
-digest:[['아밀레이스는 녹말을 분해한다.',true,'침과 이자액에 들어 있어요.'],['소화된 영양소는 대부분 위에서 흡수된다.',false,'대부분 소장의 융털에서 흡수돼요.']],
-lung:[['폐포의 산소는 확산에 의해 모세 혈관으로 이동한다.',true,'농도가 높은 곳에서 낮은 곳으로 이동해요.'],['숨을 들이쉴 때 가로막은 위로 올라간다.',false,'들숨 때 가로막은 내려가 흉강이 넓어져요.']],
-kidney:[['사구체의 혈액은 보먼주머니로 여과된다.',true,'단백질과 혈구는 커서 여과되지 않아요.'],['건강한 사람의 오줌에는 포도당이 많이 들어 있다.',false,'포도당은 세뇨관에서 모두 재흡수돼요.']],
-muscle:[['근육이 수축할 때 액틴 필라멘트의 길이가 짧아진다.',false,'필라멘트 길이는 그대로이고 겹치는 부분이 늘어 마디가 짧아져요.'],['근수축에는 ATP가 필요하다.',true,'마이오신 머리가 ATP 에너지로 액틴을 당겨요.']],
-eye:[['가까운 물체를 볼 때 수정체가 두꺼워진다.',true,'섬모체근이 수축하고 진대가 느슨해져요.'],['원뿔 세포는 어두운 곳에서 명암을 구별하는 데 주로 쓰인다.',false,'그건 막대 세포의 역할이고, 원뿔 세포는 색을 구별해요.']],
-meiosis:[['감수 분열 결과 염색체 수가 절반인 딸세포 4개가 생긴다.',true,'생식세포(n)를 만드는 분열이에요.'],['상동 염색체는 감수 2분열에서 분리된다.',false,'상동 염색체는 1분열에서, 염색 분체는 2분열에서 분리돼요.']],
-microbe:[['세균은 핵막이 없는 원핵생물이다.',true,'DNA가 세포질에 그대로 있어요.'],['바이러스는 스스로 물질대사를 할 수 있다.',false,'숙주 세포 안에서만 증식할 수 있어요.']],
-insulin:[['인슐린은 혈당량을 낮춘다.',true,'간에서 포도당을 글리코젠으로 저장하게 해요.'],['글루카곤은 이자의 β세포에서 분비된다.',false,'글루카곤은 α세포, 인슐린은 β세포에서 분비돼요.']],
-cycle:[['식물은 광합성으로 대기 중 이산화 탄소를 흡수한다.',true,'탄소 순환의 중요한 단계예요.'],['뿌리혹박테리아는 대기 중 질소를 고정한다.',true,'N₂를 암모늄 이온으로 바꿔 식물이 쓸 수 있게 해요.']],
-cellworld:[['골지체는 단백질을 포장해 세포 밖으로 내보내는 일을 돕는다.',true,'소포체에서 온 단백질을 막으로 감싸 목적지로 보내요.'],['세포막의 인지질은 머리와 꼬리 모두 물을 좋아한다.',false,'머리는 물을 좋아하고(친수성) 꼬리는 물을 싫어해요(소수성). 그래서 2중층을 이뤄요.']],
-tree:[['같은 종은 자연에서 교배해 생식 능력이 있는 자손을 낳을 수 있다.',true,'생물학적 종의 정의예요.'],['나비의 날개와 새의 날개는 상동 기관이다.',false,'기능은 같지만 발생 기원이 달라 상사 기관이에요.']]
+cellworld:[['골지체는 단백질을 포장해 세포 밖으로 내보내는 일을 돕는다.',true,'소포체에서 온 단백질을 막으로 감싸 목적지로 보내요.'],['세포막의 인지질은 머리와 꼬리 모두 물을 좋아한다.',false,'머리는 물을 좋아하고(친수성) 꼬리는 물을 싫어해요(소수성). 그래서 2중층을 이뤄요.']]
 };
 
 /* ================= music theory & generation ================= */
@@ -1608,6 +1483,7 @@ function boot(){
   // 아이콘만 먼저 만들고 바로 시작. 곡은 고를 때 만들고, 남는 시간에 하나씩 미리 만들어 둠
   for(const s of SONGS){try{ICONS[s.id]=makeIcon(s);}catch(e){ICONS[s.id]='';}}
   ready=true;$('#loadI').style.width='100%';$('#loadT').textContent=`${SONGS.length}곡 준비 완료`;$('#pressT').style.visibility='visible';
+  $('#modeTag').textContent=`4K · ${SONGS.length} SONG${SONGS.length>1?'S':''}`;
   buildList();updateSelect();
   let i=0;const idle=window.requestIdleCallback||(f=>setTimeout(()=>f({timeRemaining:()=>8}),120));
   const bg=dl=>{while(i<SONGS.length&&(SONGS[i].id in DATA_RAW))i++;if(i>=SONGS.length)return;
@@ -2007,7 +1883,7 @@ function drawPlay(){
 function drawMenu(){
   const t=performance.now()/1000;
   let song,beat;
-  if(screen==='title'){song=SONGS[0];beat=t*118/60;}
+  if(screen==='title'){song=SONGS[0];beat=t*song.bpm/60;}
   else{song=SONGS[SEL.i];beat=(PB.preview&&actx&&PB.song===song)?(actx.currentTime-PB.t0)*song.bpm/60:t*song.bpm/60;}
   const pu=Math.pow(1-(((beat%1)+1)%1),3);
   renderScene(lctx,song,lo.width,lo.height,t,beat,.7,pu,screen!=='select');
