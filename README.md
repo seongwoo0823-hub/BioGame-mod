@@ -5,7 +5,7 @@
 
 | 게임 | 장르 | 파일 |
 | --- | --- | --- |
-| BIO BEAT | 4키 리듬게임 (생명과학 노래 7곡 · 음원 분석 채보, OX 퀴즈) | `games/bio-beat.html` |
+| BIO BEAT | 4키 리듬게임 (생명과학 노래 7곡 · 레벨 1~20 · 롱노트 콤보 · 음원 분석 채보, OX 퀴즈) | `games/bio-beat.html` |
 | 면역 특공대 IMMUNE STRIKE | 횡스크롤 런앤건 액션 | `games/immune-strike.html` |
 | 바이오 카트 레이서 | 3D 카트 레이싱 (15트랙) | `games/bio-kart.html` |
 | 혈관 협곡 : 세포 대전 | 3D 5대5 대전 (칼바람 모드) | `games/vessel-canyon.html` |
@@ -28,6 +28,7 @@ assets/           메인 화면 썸네일
 games/il-assets/  감염의 군주 스프라이트·아이콘 아틀라스 (WebP)
 games/bio-tower/  바이오 타워 조각·섬·배경 그림과 충돌 형태(pieces.json). tools/bio-tower/art/ 원화(Glif로 새로 그린 그림)에서 tools/bio-tower/from_art.py로 다시 만듦
 games/cell-frontier/  세포 개척단 그림(숨은 그림 16장·덮개·지도·스프라이트). tools/cell-frontier/build.py로 다시 만듦 (숨은 그림·적·아이템은 tools/cell-frontier/art/ 원화(Glif로 새로 그린 그림)에서 from_art.py가 만듦)
+games/bio-beat/    바이오 비트 노래 음원(mp3)과 채보(json). tools/bio-beat/make_chart.py가 음원을 분석해 하·중·상 채보를 만들고 embed_charts.py가 게임에 넣음
 games/codon-glass/ 코돈 글래스 Tailwind CSS(tw.css). tools/codon-glass/build-css.sh로 다시 만듦 (썸네일 원본: tools/codon-glass/concept.html)
 games/helix/      헬릭스 게임 코드(js/)와 에셋(assets/) (hero-viewer.html: 주인공 미리보기, mob-viewer.html: 몬스터 32종 도감·챕터 시험장)
 vendor/           three.js r128 (3D 게임용), Matter.js 0.19 (바이오 타워 물리), PeerJS — 모두 MIT 라이선스
