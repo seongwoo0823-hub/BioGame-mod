@@ -1,8 +1,8 @@
-# 바이오 타워 에셋: 첨부 원화(ref/)에서 조각·섬·배경을 잘라 만듭니다.
-#   python3 from_ref.py [출력 폴더]
-#   ref/animals.webp  동물 30종 (6×5)
-#   ref/bio.png       세포·생물 18종 (6×3)
-#   ref/world.webp    떠 있는 섬 5개 · 산 배경 3장 · 구름 10개 · 하늘 색 띠 7개
+# 바이오 타워 에셋: art/ 폴더의 새 원화(Glif로 생성, 자홍색 배경)에서 조각·섬·배경을 잘라 만듭니다.
+#   python3 from_art.py [출력 폴더]
+#   art/animals.jpg  동물 30종 (6×5)        art/bio.jpg      세포·생물 18종 (6×3)
+#   art/sky-island.jpg 떠 있는 큰 섬          art/islets.jpg   작은 섬 4개
+#   art/clouds.jpg   흰 구름 5 · 노을 구름 5   art/landscape.jpg 배경 풍경
 # 그림은 화면 1픽셀을 2픽셀로 담은 고해상도(RES=2)이고, 충돌 모양은 1배 크기로 계산합니다.
 import sys, os, json
 import numpy as np
@@ -11,9 +11,10 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from pieces import collision
+from from_art_common import key_magenta, components, grid_items
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, '../../games/bio-tower')
 RES = 2
-REF = lambda f: os.path.join(HERE, 'ref', f)
+ART = lambda f: os.path.join(HERE, 'art', f)
 
 # id, 이름, 긴 변(화면 픽셀), 밀도, 설명
 ANIMALS = [
@@ -70,32 +71,6 @@ BIO = [
 ]
 
 
-def labels(a, bg, th, dil):
-    m = np.abs(a - np.array(bg, np.float32)).max(axis=2) > th
-    d = m.copy()
-    for dy in range(-dil, dil + 1, 2):
-        for dx in range(-dil, dil + 1, 2): d |= np.roll(np.roll(m, dy, 0), dx, 1)
-    H, W = d.shape; lab = np.zeros((H, W), np.int32); n = 0; boxes = {}
-    for y, x in zip(*np.nonzero(d)):
-        if lab[y, x]: continue
-        n += 1; q = deque([(y, x)]); lab[y, x] = n; ys = []; xs = []
-        while q:
-            a_, b_ = q.popleft(); ys.append(a_); xs.append(b_)
-            for c, e in ((a_ + 1, b_), (a_ - 1, b_), (a_, b_ + 1), (a_, b_ - 1)):
-                if 0 <= c < H and 0 <= e < W and d[c, e] and not lab[c, e]: lab[c, e] = n; q.append((c, e))
-        boxes[n] = (min(xs), min(ys), max(xs), max(ys), len(ys))
-    return lab, boxes
-
-
-def rgba_cut(a, lab, n, box, bg, th0, soft, pad=3):
-    x0, y0, x1, y1 = box[:4]
-    sl = (slice(max(0, y0 - pad), y1 + pad + 1), slice(max(0, x0 - pad), x1 + pad + 1))
-    s = a[sl]; d = np.abs(s - np.array(bg, np.float32)).max(axis=2)
-    al = np.clip((d - th0) / soft, 0, 1) * (lab[sl] == n)
-    rgb = np.clip((s - np.array(bg, np.float32) * (1 - al[..., None])) / np.maximum(al[..., None], 1e-3), 0, 255)
-    return Image.fromarray(np.dstack([rgb, al * 255]).astype(np.uint8), 'RGBA')
-
-
 def shrink(im, w, h, hard=True):
     """미리 곱한 색으로 줄이고, 알파를 또렷하게 잘라 도트 그림처럼"""
     a = np.asarray(im).astype(np.float32); al = a[..., 3:] / 255
@@ -111,22 +86,6 @@ def outline(im, col=(26, 22, 34)):
     for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)): o |= np.roll(np.roll(m, dy, 0), dx, 1)
     o &= ~m; d[o] = col + (255,)
     return Image.fromarray(d, 'RGBA')
-
-
-def grid_cut(path, rows_def, row_edges):
-    a = np.asarray(Image.open(path).convert('RGB')).astype(np.float32)
-    bg = np.median(a[:3].reshape(-1, 3), axis=0)
-    lab, boxes = labels(a, bg, 40, 4)
-    big = [(n, b) for n, b in boxes.items() if b[4] > 300]
-    rows = [[] for _ in rows_def]
-    for n, b in big:
-        cy = (b[1] + b[3]) / 2; r = sum(cy > e for e in row_edges); rows[r].append((b[0], n, b))
-    out = []
-    for r, defs in enumerate(rows_def):
-        got = sorted(rows[r])
-        assert len(got) == len(defs), (path, r, len(got))
-        for (x, n, b), d in zip(got, defs): out.append((d, rgba_cut(a, lab, n, b, bg, 24, 22)))
-    return out
 
 
 def _shift(m, dy, dx):
@@ -155,7 +114,8 @@ def solid_parts(m, cx, cy):
 
 
 def build_pieces():
-    items = grid_cut(REF('animals.webp'), ANIMALS, [125, 250, 362, 469]) + grid_cut(REF('bio.png'), BIO, [86, 185])
+    defs = [d for row in ANIMALS for d in row] + [d for row in BIO for d in row]
+    items = list(zip(defs, grid_items(ART('animals.jpg'), 6, 5) + grid_items(ART('bio.jpg'), 6, 3)))
     ims = []; meta = {}
     for (pid, name, L, dens, fact), im in items:
         bb = im.getbbox(); im = im.crop(bb); w, h = im.size; s = L / max(w, h)
@@ -188,51 +148,40 @@ def build_pieces():
 
 
 def build_world():
-    a = np.asarray(Image.open(REF('world.webp')).convert('RGB')).astype(np.float32)
-    bg = (14, 17, 30)
-    lab, boxes = labels(a, bg, 48, 2)
-    def at(x0, y0):   # 왼쪽 위 모서리가 (x0, y0) 근처인 덩어리
-        return min((n for n, b in boxes.items() if b[4] > 200), key=lambda n: abs(boxes[n][0] - x0) + abs(boxes[n][1] - y0))
-    # 큰 섬: 윗면(잔디) 가운데 줄이 땅 높이가 되도록, 폭 206 화면 픽셀
-    n = at(15, 18); isl = rgba_cut(a, lab, n, boxes[n], bg, 6, 10)
-    bb = isl.getbbox(); isl = isl.crop(bb); w, h = isl.size; s = 206 / w
-    W1, H1 = round(w * s), round(h * s)
+    # 큰 섬: 잔디 윗면이 가장 넓은 줄(원본 y≈420)이 땅 높이, 잔디 폭(≈1665px)이 화면 200px
+    rgb, al = key_magenta(ART('sky-island.jpg')); lab, boxes = components(al, dil=3)
+    big = sorted(boxes, key=lambda n: -boxes[n][4])
+    sel = [n for n in big if boxes[n][4] > boxes[big[0]][4] * 0.003]   # 물보라 점들도 포함
+    m = np.isin(lab, sel) & (al > 0)
+    ys, xs = np.nonzero(m); x0, x1, y0, y1 = xs.min(), xs.max(), ys.min(), ys.max()
+    isl = Image.fromarray(np.dstack([rgb, al * m * 255]).astype(np.uint8)[y0:y1 + 1, x0:x1 + 1], 'RGBA')
+    s = 200 / 1665; W1, H1 = round(isl.size[0] * s), round(isl.size[1] * s)
     shrink(isl, W1 * RES, H1 * RES, hard=False).save(os.path.join(OUT, 'island.png'), optimize=True)
-    ground = round((45 - (boxes[n][1] - 3 + bb[1])) * s)   # 원본에서 잔디 윗면 가운데는 y≈45
-    # 작은 섬 4개 (배경 장식)
-    small = []
-    for (x, y) in [(263, 34), (458, 46), (578, 50), (680, 54)]:
-        n = at(x, y); im = rgba_cut(a, lab, n, boxes[n], bg, 6, 10); small.append(im.crop(im.getbbox()))
-    hs = 64; row = [shrink(im, max(1, round(im.size[0] * hs / im.size[1])), hs, hard=False) for im in small]
-    sheet = Image.new('RGBA', (sum(r.size[0] + 1 for r in row), hs), (0, 0, 0, 0)); x = 0; islets = []
+    ground = round((420 - y0) * s, 1); gx = round(((190 + 1855) / 2 - x0) * s, 1)   # 땅 높이, 잔디 가운데 x
+    # 작은 섬 4개
+    row = []
+    for im in grid_items(ART('islets.jpg'), 4, 1, keep_all=True):
+        row.append(shrink(im, max(1, round(im.size[0] * 96 / im.size[1])), 96, hard=False))
+    sheet = Image.new('RGBA', (sum(r.size[0] + 1 for r in row), 96), (0, 0, 0, 0)); x = 0; islets = []
     for r in row: sheet.paste(r, (x, 0)); islets.append([x, r.size[0]]); x += r.size[0] + 1
     sheet.save(os.path.join(OUT, 'islets.png'), optimize=True)
-    # 산 배경 3장 (위쪽 하늘 부분은 투명하게 빼서 하늘색 위에 겹침)
-    pans = []
-    for x0, x1 in [(17, 332), (341, 682), (691, 1006)]:
-        p = a[238:339, x0 + 2:x1 - 2].copy(); top = p[3:8].reshape(-1, 3).mean(axis=0)
-        d = np.abs(p - top).max(axis=2); al = np.clip((d - 14) / 18, 0, 1)
-        # 맨 위에서 아래로 처음 산이 나오면 그 아래는 모두 불투명
-        for cx in range(p.shape[1]):
-            ys = np.where(al[:, cx] > 0.5)[0]
-            if len(ys): al[ys[0]:, cx] = np.maximum(al[ys[0]:, cx], 1)
-        pans.append(Image.fromarray(np.dstack([p, al * 255]).astype(np.uint8), 'RGBA').resize((480, 160), Image.NEAREST))
-    hills = Image.new('RGBA', (480, 160 * 3), (0, 0, 0, 0))
-    for i, p in enumerate(pans): hills.paste(p, (0, i * 160))
-    hills.save(os.path.join(OUT, 'hills.png'), optimize=True)
-    # 구름 10개 (흰 구름 5 · 노을 구름 5)
+    # 구름 10개 (흰 5 · 노을 5)
     cl = []
-    for (x, y) in [(16, 367), (161, 371), (206, 373), (385, 370), (432, 390), (16, 471), (161, 476), (206, 477), (385, 477), (432, 495)]:
-        n = at(x, y); im = rgba_cut(a, lab, n, boxes[n], bg, 30, 30); cl.append(im.crop(im.getbbox()))
+    for im in grid_items(ART('clouds.jpg'), 5, 2):
+        k = min(1, 180 / im.size[0]); cl.append(shrink(im, round(im.size[0] * k), round(im.size[1] * k), hard=False))
     sheet = Image.new('RGBA', (sum(c.size[0] + 1 for c in cl), max(c.size[1] for c in cl)), (0, 0, 0, 0)); x = 0; clouds = []
     for c in cl: sheet.paste(c, (x, 0)); clouds.append([x, c.size[0], c.size[1]]); x += c.size[0] + 1
     sheet.save(os.path.join(OUT, 'clouds.png'), optimize=True)
-    # 하늘 색 띠 7개 → 위에서 아래로 6가지 색
-    skies = []
-    for cx in [605, 667, 731, 792, 853, 915, 978]:
-        col = a[358:556, cx - 8:cx + 8].mean(axis=1)
-        skies.append(['#%02x%02x%02x' % tuple(int(v) for v in col[int(i)]) for i in np.linspace(2, len(col) - 3, 6)])
-    return dict(ground=ground, islandW=W1, islandH=H1, islets=islets, isletH=hs, clouds=clouds, skies=skies)
+    # 배경 풍경 (2배 해상도 960×540)
+    land = Image.open(ART('landscape.jpg')).convert('RGB').resize((960, 540), Image.LANCZOS)
+    land.save(os.path.join(OUT, 'landscape.jpg'), quality=88)
+    top = np.asarray(land)[:4].reshape(-1, 3).mean(axis=0); day = '#%02x%02x%02x' % tuple(int(v) for v in top)
+    # 하늘: 높이 오를수록 낮 → 노을 → 저녁 → 밤 (위에서 아래로 6색)
+    skies = [['#1660d8', '#1e6ee0', '#2a7ae6', day, day, day],
+             ['#4a5cc8', '#8a6ad0', '#d07ab8', '#f49a90', '#ffc080', '#ffd890'],
+             ['#141e5a', '#253a8a', '#4a5aa8', '#8a6aa8', '#d08a98', '#f0a890'],
+             ['#05061a', '#0a0e2e', '#121a48', '#1a2a64', '#24387a', '#34488a']]
+    return dict(ground=ground, gx=gx, islandW=W1, islandH=H1, islets=islets, isletH=96, clouds=clouds, skies=skies)
 
 
 if __name__ == '__main__':
@@ -240,4 +189,4 @@ if __name__ == '__main__':
     n, size = build_pieces()
     world = build_world()
     json.dump(world, open(os.path.join(OUT, 'world.json'), 'w'))
-    print('pieces', n, size, 'world', {k: v for k, v in world.items() if k in ('ground', 'islandW', 'islandH')})
+    print('pieces', n, size, 'world', {k: v for k, v in world.items() if k in ('ground', 'gx', 'islandW', 'islandH')})

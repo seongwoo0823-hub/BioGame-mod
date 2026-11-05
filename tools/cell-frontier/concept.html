@@ -14,7 +14,7 @@ canvas{position:absolute;inset:0}
 <script>
 const L=(s)=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src='../../games/cell-frontier/'+s;});
 (async()=>{
-const [cov,pic,pic2,sp,meta]=await Promise.all([L('c0.png'),L('p00.png'),L('p03.png'),L('sprites.png'),fetch('../../games/cell-frontier/sprites.json').then(r=>r.json())]);
+const [cov,pic,pic2,sp,meta]=await Promise.all([L('c0.png'),L('p00.jpg'),L('p03.jpg'),L('sprites.png'),fetch('../../games/cell-frontier/sprites.json').then(r=>r.json())]);
 await document.fonts.ready;
 const c=document.getElementById('c'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 // 배경: 깊은 우주 + 도트 별
@@ -22,10 +22,10 @@ const bg=g.createRadialGradient(820,330,40,820,330,900);bg.addColorStop(0,'#1a2a
 let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
 for(let k=0;k<260;k++){g.fillStyle=['#3a4a8a','#6a7ac0','#c0d0ff','#ffe0a0'][k%4];const s=rnd()<.1?4:2;g.fillRect(Math.floor(rnd()*640)*2,Math.floor(rnd()*360)*2,s,s);}
 // 게임판 (320×240): 덮개 위에 계단 모양으로 차지한 땅 → 그림
-const B=document.createElement('canvas');B.width=320;B.height=240;const b=B.getContext('2d');b.imageSmoothingEnabled=false;
-b.drawImage(cov,0,0);
+const B=document.createElement('canvas');B.width=960;B.height=720;const b=B.getContext('2d');b.scale(3,3);b.imageSmoothingEnabled=false;
+b.drawImage(cov,0,0,320,240);
 const poly=[[0,240],[0,150],[40,150],[40,96],[96,96],[96,40],[170,40],[170,0],[320,0],[320,240]];
-b.save();b.beginPath();poly.forEach(([x,y],i)=>i?b.lineTo(x,y):b.moveTo(x,y));b.closePath();b.clip();b.drawImage(pic,0,0);
+b.save();b.beginPath();poly.forEach(([x,y],i)=>i?b.lineTo(x,y):b.moveTo(x,y));b.closePath();b.clip();b.drawImage(pic,0,0,320,240);
 b.restore();
 // 경계선
 b.strokeStyle='#ffb0d8';b.lineWidth=2;b.beginPath();poly.slice(1,8).forEach(([x,y],i)=>i?b.lineTo(x,y):b.moveTo(x,y));b.stroke();

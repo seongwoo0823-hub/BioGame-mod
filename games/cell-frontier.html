@@ -99,7 +99,7 @@ body.touch #touch{display:block}
 
 <!-- 제목 -->
 <section id="title" class="scr on">
-  <canvas id="tcv" width="320" height="240"></canvas>
+  <canvas id="tcv" width="960" height="720"></canvas>
   <div class="logo"><h1>세포 개척단</h1><div class="en">CELL FRONTIER</div><p>선을 그어 땅을 넓히고, 숨어 있는 생명의 그림을 모두 찾아내세요!</p></div>
   <div class="menu">
     <button class="btn pri" id="bStart">탐사 시작</button>
@@ -215,8 +215,8 @@ function loadImg(k, src) { return new Promise(ok => { const i = new Image(); i.o
 const pixData = {};
 function dataOf(k) {   // 그림 픽셀 (같은 출처라 읽을 수 있음)
   if (pixData[k]) return pixData[k];
-  const c = document.createElement('canvas'); c.width = 320; c.height = 240; const g = c.getContext('2d', {willReadFrequently: true}); g.drawImage(IMG[k], 0, 0);
-  return pixData[k] = g.getImageData(0, 0, 320, 240).data;
+  const c = document.createElement('canvas'); c.width = BW * BR; c.height = BH * BR; const g = c.getContext('2d', {willReadFrequently: true}); g.imageSmoothingEnabled = false; g.drawImage(IMG[k], 0, 0, c.width, c.height);
+  return pixData[k] = g.getImageData(0, 0, c.width, c.height).data;
 }
 
 // ================================================================ 소리 (직접 합성)
@@ -343,7 +343,7 @@ function openRegions(w) {
     const el = document.createElement('button'); el.className = 'reg' + (open ? '' : ' lock');
     const cv = document.createElement('canvas'); cv.width = 320; cv.height = 240;
     const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
-    g.drawImage(c ? IMG['p' + D.pic] : IMG['c' + w], 0, 0);
+    g.drawImage(c ? IMG['p' + D.pic] : IMG['c' + w], 0, 0, 320, 240);
     if (!c) { g.fillStyle = 'rgba(255,255,255,.85)'; g.font = 'bold 72px "Press Start 2P",monospace'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(open ? '?' : '🔒', 160, 124); }
     el.appendChild(cv);
     const info = document.createElement('div');
@@ -364,7 +364,8 @@ function toastMsg(big, small, scr) {
 const GW = 160, GH = 120, CS = 2, BW = 320, BH = 240;
 const RES = 3;   // 판은 320×240 칸 좌표로 그리고, 스프라이트는 3배 해상도 그대로 찍음
 const cv = $('#cv'), ctx = cv.getContext('2d'); ctx.setTransform(RES, 0, 0, RES, 0, 0); ctx.imageSmoothingEnabled = false;
-const boardC = document.createElement('canvas'); boardC.width = BW; boardC.height = BH; const bctx = boardC.getContext('2d');
+const BR = 3;   // 그림판(드러난 그림·덮개)은 3배 해상도로 담아 또렷하게
+const boardC = document.createElement('canvas'); boardC.width = BW * BR; boardC.height = BH * BR; const bctx = boardC.getContext('2d');
 const edgeC = document.createElement('canvas'); edgeC.width = BW; edgeC.height = BH; const ectx = edgeC.getContext('2d');
 const flashC = document.createElement('canvas'); flashC.width = BW; flashC.height = BH; const fctx = flashC.getContext('2d');
 let boardImg = null, picD = null, covD = null;
@@ -375,8 +376,8 @@ const TOTAL = (GW - 2) * (GH - 2);
 let G = null;   // 현재 판
 
 function setCellImg(i, claimed) {
-  const x = (i % GW) * CS, y = ((i / GW) | 0) * CS, src = claimed ? picD : covD, d = boardImg.data;
-  for (let dy = 0; dy < CS; dy++) for (let dx = 0; dx < CS; dx++) { const p = ((y + dy) * BW + x + dx) * 4; d[p] = src[p]; d[p + 1] = src[p + 1]; d[p + 2] = src[p + 2]; d[p + 3] = 255; }
+  const S = CS * BR, x = (i % GW) * S, y = ((i / GW) | 0) * S, src = claimed ? picD : covD, d = boardImg.data, RW = BW * BR;
+  for (let dy = 0; dy < S; dy++) { let p = ((y + dy) * RW + x) * 4; for (let dx = 0; dx < S; dx++, p += 4) { d[p] = src[p]; d[p + 1] = src[p + 1]; d[p + 2] = src[p + 2]; d[p + 3] = 255; } }
 }
 function rebuildEdges() {
   edge.fill(0); ectx.clearRect(0, 0, BW, BH);
@@ -399,7 +400,7 @@ function startStage(w, r) {
   grid.fill(0);
   for (let x = 0; x < GW; x++) { grid[I(x, 0)] = 1; grid[I(x, GH - 1)] = 1; }
   for (let y = 0; y < GH; y++) { grid[I(0, y)] = 1; grid[I(GW - 1, y)] = 1; }
-  boardImg = bctx.createImageData(BW, BH);
+  boardImg = bctx.createImageData(BW * BR, BH * BR);
   for (let i = 0; i < GW * GH; i++) setCellImg(i, grid[i] === 1);
   bctx.putImageData(boardImg, 0, 0); fctx.clearRect(0, 0, BW, BH);
   G = {def, claimed: 0, score: 0, lives: 3, time: def.time, state: 'ready', t: 0, readyT: 1.6,
@@ -793,7 +794,7 @@ function showResult() {
   SAVE.best = Math.max(SAVE.best, total); SAVE.total = totalScore(); persist();
   const [name, fact] = PICS[d.pic];
   const unlockMsg = firstClear && d.r === 1 && d.w < 3 ? `<p style="color:var(--gold)">🔓 새 나라 <b>${WORLDS[d.w + 1].name}</b>이(가) 열렸어요!</p>` : '';
-  $('#resCard').innerHTML = `<div class="res"><canvas id="resCv" width="320" height="240"></canvas><div>
+  $('#resCard').innerHTML = `<div class="res"><canvas id="resCv" width="960" height="720"></canvas><div>
     <h3 style="color:${WORLDS[d.w].col}">${name}</h3><div class="stars">${[0, 1, 2].map(i => `<span class="${i < stars ? 'on' : ''}">★</span>`).join('')}</div>
     <div class="stat"><span>달성률</span><b>${p.toFixed(1)}% / ${d.target}%</b></div>
     <div class="stat"><span>땅 차지 점수</span><b>${G.score.toLocaleString()}</b></div>
@@ -804,16 +805,16 @@ function showResult() {
     ${unlockMsg}</div></div>
     <div class="fact" style="margin-top:.9em">🔬 ${fact}</div>
     <div class="row">${d.r < 3 ? '<button class="btn pri" data-a="next">다음 지역 ▶</button>' : d.w < 3 && worldOpen(d.w + 1) ? '<button class="btn pri" data-a="nextw">다음 나라 ▶</button>' : ''}<button class="btn" data-a="again">다시 하기</button><button class="btn" data-a="regs">지역 선택</button></div>`;
-  const rc = $('#resCv').getContext('2d'); rc.imageSmoothingEnabled = false; rc.drawImage(IMG['p' + d.pic], 0, 0);
+  const rc = $('#resCv').getContext('2d'); rc.imageSmoothingEnabled = false; rc.drawImage(IMG['p' + d.pic], 0, 0, 960, 720);
   bindRes(); ov('ovRes', true); AU.music(d.w + 1);
 }
 function gameOver() {
   const d = G.def;
   $('#resCard').innerHTML = `<h3 style="color:var(--hot)">탐사 실패</h3><p>${d.target}% 중 <b>${pct().toFixed(1)}%</b>를 개척했어요. 조금만 더 하면 그림이 다 보여요!</p>
-    <canvas id="resCv" width="320" height="240" style="width:100%;max-width:420px;image-rendering:pixelated;border-radius:8px;display:block;margin:.6em auto"></canvas>
+    <canvas id="resCv" width="960" height="720" style="width:100%;max-width:420px;image-rendering:pixelated;border-radius:8px;display:block;margin:.6em auto"></canvas>
     <p style="font-size:13px;color:var(--dim)">팁: 작게 여러 번 감싸면 안전하고, 크게 감싸면 점수가 3배예요. 순찰병이 다가오면 빈 땅 쪽으로 잠깐 피하세요.</p>
     <div class="row"><button class="btn pri" data-a="again">다시 도전</button><button class="btn" data-a="regs">지역 선택</button></div>`;
-  const rc = $('#resCv').getContext('2d'); rc.drawImage(boardC, 0, 0);
+  const rc = $('#resCv').getContext('2d'); rc.drawImage(boardC, 0, 0, 960, 720);
   AU.play('over'); AU.music(-1); bindRes(); ov('ovRes', true);
   if (window.ILOG) ILOG.runEnd(`실패 ${pct().toFixed(1)}%`);
 }
@@ -864,7 +865,7 @@ function render() {
   const P = G.p, t = G.t;
   ctx.save();
   if (G.shake > 0 && SAVE.opt.shake !== false) ctx.translate(Math.round((Math.random() - 0.5) * G.shake), Math.round((Math.random() - 0.5) * G.shake));
-  ctx.drawImage(boardC, 0, 0);
+  ctx.drawImage(boardC, 0, 0, BW, BH);
   if (G.flash > 0) { ctx.globalAlpha = G.flash * 0.8; ctx.drawImage(flashC, 0, 0); ctx.globalAlpha = 1; }
   ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t * 5); ctx.drawImage(edgeC, 0, 0); ctx.globalAlpha = 1;
   // 그은 선
@@ -929,12 +930,12 @@ addEventListener('resize', layout); addEventListener('orientationchange', () => 
 let titleT = 0, titlePic = 0;
 function renderTitle(dt) {
   if (!IMG.p0) return;
-  titleT += dt; const tc = $('#tcv'), g = tc.getContext('2d'); g.imageSmoothingEnabled = false;
+  titleT += dt; const tc = $('#tcv'), g = tc.getContext('2d'); g.setTransform(3, 0, 0, 3, 0, 0); g.imageSmoothingEnabled = false;
   const k = Math.floor(titleT / 4) % 16; if (k !== titlePic) titlePic = k;
-  g.drawImage(IMG['c' + (k >> 2)], 0, 0);
+  g.drawImage(IMG['c' + (k >> 2)], 0, 0, 320, 240);
   const u = (titleT % 4) / 4, R = u * 260;
   g.save(); g.beginPath(); for (let a = 0; a < 6.283; a += 0.4) { const r = R * (0.85 + 0.15 * Math.sin(a * 5 + titleT)); g.lineTo(160 + Math.cos(a) * r, 120 + Math.sin(a) * r * 0.8); } g.closePath(); g.clip();
-  g.drawImage(IMG['p' + k], 0, 0); g.restore();
+  g.drawImage(IMG['p' + k], 0, 0, 320, 240); g.restore();
 }
 
 // ================================================================ 메인 루프
@@ -950,7 +951,7 @@ function frame(now) {
 // ================================================================ 시작
 (async () => {
   const jobs = [loadImg('map', 'cell-frontier/map.png'), loadImg('sprites', 'cell-frontier/sprites.png')];
-  for (let i = 0; i < 16; i++) jobs.push(loadImg('p' + i, `cell-frontier/p${String(i).padStart(2, '0')}.png`));
+  for (let i = 0; i < 16; i++) jobs.push(loadImg('p' + i, `cell-frontier/p${String(i).padStart(2, '0')}.jpg`));
   for (let i = 0; i < 4; i++) jobs.push(loadImg('c' + i, `cell-frontier/c${i}.png`));
   const [, , meta] = await Promise.all([Promise.all(jobs), null, fetch('cell-frontier/sprites.json').then(r => r.json())]);
   SPR = IMG.sprites; SPRM = meta;
