@@ -132,7 +132,7 @@ body.touch #touch{display:block}
     <span class="v">⏱ <b id="hTime">0</b></span>
     <span class="lives" id="hLives"></span>
   </div>
-  <canvas id="cv" width="320" height="240"></canvas>
+  <canvas id="cv" width="960" height="720"></canvas>
   <button class="btn sm" id="pauseBtn">Ⅱ</button>
   <div id="touch">
     <div id="zone"><div id="stick"><div id="knob"></div></div></div>
@@ -362,7 +362,8 @@ function toastMsg(big, small, scr) {
 
 // ================================================================ 게임 판
 const GW = 160, GH = 120, CS = 2, BW = 320, BH = 240;
-const cv = $('#cv'), ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
+const RES = 3;   // 판은 320×240 칸 좌표로 그리고, 스프라이트는 3배 해상도 그대로 찍음
+const cv = $('#cv'), ctx = cv.getContext('2d'); ctx.setTransform(RES, 0, 0, RES, 0, 0); ctx.imageSmoothingEnabled = false;
 const boardC = document.createElement('canvas'); boardC.width = BW; boardC.height = BH; const bctx = boardC.getContext('2d');
 const edgeC = document.createElement('canvas'); edgeC.width = BW; edgeC.height = BH; const ectx = edgeC.getContext('2d');
 const flashC = document.createElement('canvas'); flashC.width = BW; flashC.height = BH; const fctx = flashC.getContext('2d');
@@ -845,10 +846,11 @@ $('#ovPause').querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
 let SPRM = null;
 function spr(id, f, x, y, flip, alpha) {
   const m = SPRM[id]; if (!m) return;
-  const fr = ((f % m.n) + m.n) % m.n;
+  const fr = ((f % m.n) + m.n) % m.n, k = SPRM.s || 1, w = m.w / k, h = m.h / k;
   if (alpha !== undefined) ctx.globalAlpha = alpha;
-  if (flip) { ctx.save(); ctx.translate(Math.round(x), 0); ctx.scale(-1, 1); ctx.drawImage(SPR, m.x + fr * m.w, m.y, m.w, m.h, -Math.round(m.w / 2), Math.round(y - m.h / 2), m.w, m.h); ctx.restore(); }
-  else ctx.drawImage(SPR, m.x + fr * m.w, m.y, m.w, m.h, Math.round(x - m.w / 2), Math.round(y - m.h / 2), m.w, m.h);
+  x = Math.round(x * k) / k; y = Math.round(y * k) / k;
+  if (flip) { ctx.save(); ctx.translate(x, 0); ctx.scale(-1, 1); ctx.drawImage(SPR, m.x + fr * m.w, m.y, m.w, m.h, -w / 2, y - h / 2, w, h); ctx.restore(); }
+  else ctx.drawImage(SPR, m.x + fr * m.w, m.y, m.w, m.h, x - w / 2, y - h / 2, w, h);
   if (alpha !== undefined) ctx.globalAlpha = 1;
 }
 // 작은 도트 숫자 (3×5)
@@ -886,7 +888,10 @@ function render() {
   // 주인공
   const [px, py] = playerPx();
   if (G.state !== 'over' && !(P.inv > 0 && Math.floor(t * 16) % 2)) {
-    spr(P.trail.length ? 'probe_draw' : 'probe', Math.floor(t * 12), px, py);
+    if (P.dir) P.face = P.dir;   // 탐침 로켓: 움직이는 방향을 바라봄 (왼쪽은 뒤집기)
+    const fc = P.face || [1, 0], pid = P.trail.length ? 'probe_draw' : 'probe', pf = Math.floor(t * 12);
+    if (fc[1]) { ctx.save(); ctx.translate(px, py); ctx.rotate(fc[1] > 0 ? Math.PI / 2 : -Math.PI / 2); spr(pid, pf, 0, 0); ctx.restore(); }
+    else spr(pid, pf, px, py, fc[0] < 0);
     if (P.shield) { ctx.strokeStyle = 'rgba(120,230,255,.8)'; ctx.beginPath(); ctx.arc(px, py, 8, 0, 6.283); ctx.stroke(); }
     if (P.speedT > 0 && Math.floor(t * 20) % 2) { ctx.fillStyle = '#fff6a0'; ctx.fillRect(px - 1 - (P.dir ? P.dir[0] * 6 : 0), py - 1 - (P.dir ? P.dir[1] * 6 : 0), 2, 2); }
   }

@@ -38,7 +38,7 @@ g.save();g.translate(812,380);g.rotate(-0.06);const S=2.55;
 g.shadowColor='rgba(60,255,207,.55)';g.shadowBlur=40;g.fillStyle='#000';g.fillRect(-160*S-10,-120*S-10,320*S+20,240*S+20);g.shadowBlur=0;
 g.fillStyle='#ff8ab8';g.fillRect(-160*S-8,-120*S-8,320*S+16,240*S+16);g.fillStyle='#120a18';g.fillRect(-160*S-4,-120*S-4,320*S+8,240*S+8);
 g.drawImage(B,-160*S,-120*S,320*S,240*S);
-const spr=(id,f,x,y,s,flip)=>{const m=meta[id];g.save();g.translate(x,y);if(flip)g.scale(-1,1);g.drawImage(sp,m.x+f*m.w,m.y,m.w,m.h,-m.w*s/2,-m.h*s/2,m.w*s,m.h*s);g.restore();};
+const spr=(id,f,x,y,s,flip)=>{const m=meta[id];s/=meta.s||1;g.save();g.translate(x,y);if(flip)g.scale(-1,1);g.drawImage(sp,m.x+f*m.w,m.y,m.w,m.h,-m.w*s/2,-m.h*s/2,m.w*s,m.h*s);g.restore();};
 // 탐침 빛
 const px=(62-160)*S,py=(30-120)*S;const gl=g.createRadialGradient(px,py,0,px,py,60);gl.addColorStop(0,'rgba(255,200,80,.9)');gl.addColorStop(1,'rgba(255,120,40,0)');g.fillStyle=gl;g.fillRect(px-60,py-60,120,120);
 spr('probe_draw',2,px,py,4.2);

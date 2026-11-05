@@ -98,3 +98,8 @@ for (a, b_) in [((120, 72), (190, 70)), ((240, 100), (240, 140)), ((190, 178), (
         if k % 2 == 0: m.rect(int(x), int(y), 2, 2, '#ffffff')
 save(m, 'map.png')
 print('assets ->', OUT, 'sprites', sheet.size)
+
+# 숨은 그림 16장과 스프라이트는 첨부 그림(ref/)에서 잘라 만든 것으로 덮어씀
+import from_ref
+from_ref.build_pictures(); from_ref.build_sprites()
+print('pictures/sprites from ref/')

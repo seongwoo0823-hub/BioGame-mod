@@ -27,7 +27,7 @@ games/            게임 15종 (각각 하나의 HTML 파일)
 assets/           메인 화면 썸네일
 games/il-assets/  감염의 군주 스프라이트·아이콘 아틀라스 (WebP)
 games/bio-tower/  바이오 타워 조각·섬·배경 그림과 충돌 형태(pieces.json). tools/bio-tower/build.py로 다시 만듦
-games/cell-frontier/  세포 개척단 그림(숨은 그림 16장·덮개·지도·스프라이트). tools/cell-frontier/build.py로 다시 만듦
+games/cell-frontier/  세포 개척단 그림(숨은 그림 16장·덮개·지도·스프라이트). tools/cell-frontier/build.py로 다시 만듦 (숨은 그림·적·아이템은 tools/cell-frontier/ref/ 원화에서 from_ref.py가 잘라 냄)
 games/codon-glass/ 코돈 글래스 Tailwind CSS(tw.css). tools/codon-glass/build-css.sh로 다시 만듦 (썸네일 원본: tools/codon-glass/concept.html)
 games/helix/      헬릭스 게임 코드(js/)와 에셋(assets/) (hero-viewer.html: 주인공 미리보기, mob-viewer.html: 몬스터 32종 도감·챕터 시험장)
 vendor/           three.js r128 (3D 게임용), Matter.js 0.19 (바이오 타워 물리), PeerJS — 모두 MIT 라이선스
