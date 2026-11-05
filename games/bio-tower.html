@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>바이오 타워 · BIO TOWER</title>
+<meta name="theme-color" content="#5ab0f0">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+<script>if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));</script>
+<style>
+:root{--ink:#1a2238;--dim:#5a6a88;--acc:#ff7a3a;--pan:#fffaf0;--line:#1a2238;--px:'Press Start 2P',monospace;--font:'Noto Sans KR',system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#5ab0f0;font-family:var(--font);color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+#cv{position:absolute;left:0;top:0;image-rendering:pixelated;touch-action:none}
+.scr{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;padding:max(10px,env(safe-area-inset-top)) 12px max(10px,env(safe-area-inset-bottom));z-index:5}
+.scr.on{display:flex}
+.box{background:var(--pan);border:3px solid var(--line);border-radius:14px;box-shadow:0 6px 0 var(--line);padding:1.1em 1.3em;max-width:min(94vw,640px);max-height:92vh;overflow:auto}
+.btn{background:#fff;border:3px solid var(--line);border-radius:12px;padding:.6em 1.1em;font-weight:900;box-shadow:0 4px 0 var(--line);cursor:pointer;transition:transform .06s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.btn.pri{background:#ffb84a}.btn.go{background:#7ae070}.btn.sm{padding:.35em .7em;font-size:13px;box-shadow:0 3px 0 var(--line)}
+.btn:disabled{opacity:.45;cursor:default}
+.logo{text-align:center;margin-bottom:1em}
+.logo h1{margin:0;font-size:clamp(36px,8vw,70px);font-weight:900;color:#fff;letter-spacing:.04em;-webkit-text-stroke:3px var(--line);paint-order:stroke;text-shadow:0 6px 0 var(--line)}
+.logo div{font-family:var(--px);font-size:clamp(10px,1.8vw,14px);color:#fff;margin-top:.6em;text-shadow:0 2px 0 var(--line);letter-spacing:.2em}
+.menu{display:flex;flex-direction:column;gap:.7em;min-width:250px}.menu .btn{font-size:18px}
+h3{margin:0 0 .5em;font-size:22px}
+.row{display:flex;gap:.6em;flex-wrap:wrap;justify-content:center;margin-top:.9em;align-items:center}
+.slots{display:grid;grid-template-columns:repeat(2,1fr);gap:.6em;margin:.6em 0}
+.slot{display:flex;align-items:center;gap:.5em;border:3px solid var(--line);border-radius:10px;padding:.4em .6em;background:#fff;min-height:3.2em}
+.slot.empty{opacity:.55;border-style:dashed}
+.slot canvas{width:36px;height:36px;image-rendering:pixelated;flex:none}
+.slot b{flex:1;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.slot small{color:var(--dim);font-size:12px}
+.slot .x{border:0;background:none;font-size:18px;cursor:pointer;padding:0 .2em}
+input[type=text]{border:3px solid var(--line);border-radius:10px;padding:.45em .6em;width:9em;background:#fff;font-weight:700}
+#code{font-family:var(--px);font-size:22px;letter-spacing:.2em;color:var(--acc)}
+#netlog{font-size:13px;color:var(--dim);min-height:1.4em;text-align:center;margin-top:.6em;max-width:30em}
+.seg{display:flex;border:3px solid var(--line);border-radius:10px;overflow:hidden}.seg button{border:0;background:#fff;padding:.4em .8em;font-weight:700;cursor:pointer}.seg button.on{background:#ffb84a}
+/* 게임 화면 정보 */
+#hud{position:absolute;left:0;right:0;top:0;display:none;justify-content:space-between;align-items:flex-start;padding:max(6px,env(safe-area-inset-top)) 8px 0;pointer-events:none;z-index:3}
+#hud.on{display:flex}
+#plist{display:flex;flex-direction:column;gap:5px}
+.pc{display:flex;align-items:center;gap:6px;background:rgba(255,250,240,.92);border:3px solid var(--line);border-radius:10px;padding:3px 10px 3px 4px;min-width:9.5em;box-shadow:0 3px 0 var(--line);transition:transform .15s}
+.pc canvas{width:28px;height:28px;image-rendering:pixelated}
+.pc b{font-size:14px;flex:1;white-space:nowrap}.pc small{font-family:var(--px);font-size:9px}
+.pc.turn{background:#ffd27a;transform:translateX(8px)}.pc.out{opacity:.45;text-decoration:line-through}
+.pc .tm{display:block;height:4px;background:#ff7a3a;border-radius:2px;margin-top:2px}
+#hright{text-align:right;margin-right:48px}
+#hgt{font-family:var(--px);font-size:clamp(12px,2.4vw,20px);color:#fff;text-shadow:0 3px 0 var(--line)}
+#next{margin-top:6px;background:rgba(255,250,240,.92);border:3px solid var(--line);border-radius:10px;padding:4px 8px;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700}
+#next canvas{image-rendering:pixelated;height:32px}
+#tip{position:absolute;left:50%;bottom:max(10px,env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(255,250,240,.94);border:3px solid var(--line);border-radius:12px;padding:.4em .9em;font-size:14px;max-width:min(92vw,560px);text-align:center;display:none;z-index:3;pointer-events:none}
+#tip b{color:var(--acc)}
+#pauseB{position:absolute;right:max(8px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));z-index:4;display:none}
+#banner{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);font-weight:900;font-size:clamp(26px,6vw,54px);color:#fff;-webkit-text-stroke:3px var(--line);paint-order:stroke;text-shadow:0 5px 0 var(--line);pointer-events:none;z-index:4;opacity:0;transition:opacity .2s;white-space:nowrap;text-align:center}
+#banner small{display:block;font-size:.4em;-webkit-text-stroke:2px var(--line)}
+/* 터치 버튼 */
+#tbtns{position:absolute;right:max(10px,env(safe-area-inset-right));bottom:max(64px,calc(env(safe-area-inset-bottom) + 60px));display:none;flex-direction:column;gap:10px;z-index:4}
+body.touch #tbtns.on{display:flex}
+#tbtns button{width:74px;height:74px;border-radius:50%;border:3px solid var(--line);box-shadow:0 4px 0 var(--line);font-weight:900;font-size:15px;background:#fff}
+#tbtns button.drop{background:#ffb84a;width:84px;height:84px}
+@media (orientation:portrait){#tbtns{flex-direction:row;bottom:max(12px,env(safe-area-inset-bottom));right:50%;transform:translateX(50%);gap:28px}#tip{bottom:calc(max(12px,env(safe-area-inset-bottom)) + 96px)}}
+#loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#5ab0f0;z-index:50;font-family:var(--px);color:#fff;font-size:14px}
+.res{font-size:15px}.res li{margin:.25em 0}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:.35em .8em;font-size:14px}.keys kbd{font-family:var(--px);font-size:9px;border:2px solid var(--line);border-radius:5px;padding:2px 5px;background:#fff}
+</style>
+</head>
+<body>
+<div id="loading">LOADING…</div>
+<canvas id="cv" width="480" height="270"></canvas>
+<div id="hud"><div id="plist"></div><div id="hright"><div id="hgt">0.0m</div><div id="next">다음 <canvas id="ncv" width="100" height="64"></canvas></div></div></div>
+<button class="btn sm" id="pauseB">Ⅱ</button>
+<div id="banner"></div>
+<div id="tip"></div>
+<div id="tbtns"><button id="tRot">⟳<br>회전</button><button class="drop" id="tDrop">놓기</button></div>
+
+<!-- 처음 화면 -->
+<section class="scr on" id="sTitle">
+  <div class="logo"><h1>바이오 타워</h1><div>BIO TOWER</div></div>
+  <div class="menu">
+    <button class="btn pri" data-go="cpu">컴퓨터와 하기</button>
+    <button class="btn" data-go="local">한 기기에서 여럿이</button>
+    <button class="btn go" data-go="online">온라인 (최대 4명)</button>
+    <button class="btn" data-go="how">놀이 방법</button>
+    <button class="btn" data-go="hub">게임 목록</button>
+  </div>
+</section>
+<!-- 준비 화면 (컴퓨터 · 한 기기 · 온라인 공통) -->
+<section class="scr" id="sLobby"><div class="box" style="min-width:min(94vw,520px)">
+  <h3 id="lTitle">준비</h3>
+  <div id="lOnline" style="display:none">
+    <div class="row" style="justify-content:flex-start">이름 <input type="text" id="nick" maxlength="8"></div>
+    <div class="row" id="lJoinRow"><button class="btn pri" id="bHost">방 만들기</button><span>또는</span><input type="text" id="joinCode" maxlength="6" placeholder="방 코드" style="width:7em;text-transform:uppercase"><button class="btn go" id="bJoin">참가</button></div>
+    <div class="row" id="lCodeRow" style="display:none">방 코드 <span id="code"></span><button class="btn sm" id="bCopy">링크 복사</button></div>
+  </div>
+  <div class="slots" id="slots"></div>
+  <div class="row" id="lOpts"><span>컴퓨터 실력</span><div class="seg" id="cpuLv"><button data-v="0">쉬움</button><button data-v="1">보통</button><button data-v="2">어려움</button></div></div>
+  <div class="row"><button class="btn" id="lBack">← 뒤로</button><button class="btn go" id="lStart">시작!</button></div>
+  <div id="netlog"></div>
+</div></section>
+<!-- 놀이 방법 -->
+<section class="scr" id="sHow"><div class="box"><h3>놀이 방법</h3>
+  <p>차례대로 생물·세포·장기 조각을 떠 있는 섬 위에 쌓아요. <b>내가 놓은 조각 때문에 무언가 섬 아래로 떨어지면 내가 져요!</b> 나머지 사람은 모두 1승을 얻어요.</p>
+  <div class="keys">
+    <span><kbd>←</kbd><kbd>→</kbd> / <kbd>A</kbd><kbd>D</kbd></span><span>조각 옮기기 (마우스를 움직여도 돼요)</span>
+    <span><kbd>↑</kbd> / <kbd>W</kbd> / <kbd>R</kbd> / 우클릭</span><span>45° 돌리기</span>
+    <span><kbd>↓</kbd> / <kbd>SPACE</kbd> / 클릭</span><span>놓기</span>
+    <span>📱 휴대폰</span><span>화면을 좌우로 끌어 옮기고, 오른쪽 버튼으로 돌리기·놓기</span>
+  </div>
+  <p>⏱ 차례마다 20초 안에 놓아야 해요. 둥근 바이러스와 알은 잘 굴러가니 조심! 조각을 놓으면 그 생물에 대한 짧은 설명이 나와요.</p>
+  <div class="row"><button class="btn pri" data-close>알겠어요</button></div></div></section>
+<!-- 결과 -->
+<section class="scr" id="sRes"><div class="box" id="resBox"></div></section>
+<!-- 일시정지 -->
+<section class="scr" id="sPause"><div class="box" style="text-align:center"><h3>일시정지</h3><div class="menu" style="margin:auto">
+  <button class="btn pri" data-p="resume">계속하기</button><button class="btn" data-p="how">놀이 방법</button><button class="btn" data-p="sound">소리 끄기/켜기</button><button class="btn" data-p="log">입력 기록 보기</button><button class="btn" data-p="quit">처음 화면으로</button></div></div></section>
+
+<script src="../vendor/matter.min.js"></script>
+<script>
+'use strict';
+const {Engine, Bodies, Body, Composite, Vector} = Matter;
+const $ = s => document.querySelector(s);
+let W = 480, H = 270;   // 세로 화면이면 폭을 좁혀 크게 보이고 H를 늘려 위아래로 더 보여 줌
+const BASE = () => -(H - Math.max(100, H * (H > W ? 0.36 : 0.3)));   // 섬이 화면 아래쪽에 오도록 하는 카메라 기준
+const cv = $('#cv'), ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
+const IMG = {}; let PM = null;   // 조각 정보 (pieces.json)
+const KINDS = [];
+const COLORS = ['#ff5a5a', '#5ac85a', '#a070ff', '#ffc020'];
+const FACE_NAMES = ['적혈구', '엽록체', '뉴런', '막대균'];
+const store = {get(k, d) { try { const v = localStorage.getItem('bioTower.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('bioTower.' + k, JSON.stringify(v)); } catch (e) {} }};
+const STATS = Object.assign({games: 0, wins: 0, best: 0, rounds: 0}, store.get('stats', {}));
+const saveStats = () => { store.set('stats', STATS); try { localStorage.setItem('bioTower', JSON.stringify(STATS)); } catch (e) {} };
+
+// ================================================================ 소리 (직접 합성)
+const AU = (() => {
+  let c = null, out, nb, on = store.get('sound', true), timer = 0, step = 0, next = 0, playing = false;
+  const init = () => { if (c) { if (c.state === 'suspended') c.resume(); return; } try { c = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+    out = c.createGain(); out.gain.value = on ? 0.5 : 0; out.connect(c.destination);
+    nb = c.createBuffer(1, c.sampleRate, c.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    timer = setInterval(seq, 50); };
+  const tone = (f, d, type = 'square', v = .15, f2 = 0, t = 0) => { if (!c) return; const T = c.currentTime + t, o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.setValueAtTime(f, T); if (f2) o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), T + d); g.gain.setValueAtTime(.0001, T); g.gain.linearRampToValueAtTime(v, T + .005); g.gain.exponentialRampToValueAtTime(.0001, T + d); o.connect(g); g.connect(out); o.start(T); o.stop(T + d + .02); };
+  const noise = (d, v = .2, f = 1500, t = 0, f2) => { if (!c) return; const T = c.currentTime + t, s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain(); s.buffer = nb; fl.type = 'bandpass'; fl.frequency.setValueAtTime(f, T); if (f2) fl.frequency.exponentialRampToValueAtTime(f2, T + d); g.gain.setValueAtTime(v, T); g.gain.exponentialRampToValueAtTime(.0001, T + d); s.connect(fl); fl.connect(g); g.connect(out); s.start(T, Math.random() * .5); s.stop(T + d + .02); };
+  const S = {
+    ui: () => tone(880, .05, 'square', .08), rot: () => { tone(600, .04, 'square', .08); tone(900, .04, 'square', .06, 0, .03); },
+    drop: () => { tone(500, .18, 'triangle', .12, 180); noise(.12, .06, 2500, 0, 600); },
+    land: v => { tone(110 + Math.random() * 40, .12, 'sine', Math.min(.3, .08 + v * .05), 50); noise(.08, Math.min(.2, .04 + v * .03), 500); },
+    turn: () => { tone(660, .07, 'square', .08); tone(990, .1, 'square', .08, 0, .07); },
+    tick: () => tone(1400, .03, 'square', .05),
+    fall: () => { tone(700, .7, 'sawtooth', .12, 80); noise(.6, .12, 800, .1, 150); },
+    lose: () => [7, 4, 0, -5].forEach((s, i) => tone(392 * Math.pow(2, s / 12), .28, 'triangle', .14, 0, i * .2)),
+    win: () => [0, 4, 7, 12, 7, 12, 16].forEach((s, i) => tone(523 * Math.pow(2, s / 12), i === 6 ? .5 : .13, 'square', .1, 0, i * .1)),
+    join: () => { tone(523, .1, 'triangle', .1); tone(784, .15, 'triangle', .1, 0, .1); },
+  };
+  // 배경 음악: 통통 튀는 4마디 반복
+  const MEL = [0, 4, 7, 9, 7, 4, 2, -1, 0, 2, 4, 7, 9, 12, 9, -1], BASS = [0, 5, 3, 4], SC = [0, 2, 4, 5, 7, 9, 11];
+  const mf = n => 440 * Math.pow(2, (n - 69) / 12);
+  function seq() {
+    if (!c || !playing) return; const sd = 60 / 118 / 2;
+    while (next < c.currentTime + .2) {
+      const k = step % 16, bar = (step >> 4) % 4, ch = BASS[bar], T = next - c.currentTime;
+      const deg = d => 60 + SC[((d % 7) + 7) % 7] + 12 * Math.floor(d / 7);
+      if (k % 2 === 0) tone(mf(deg(ch) - 24), sd * 1.5, 'triangle', .12, 0, T);
+      if (k % 4 === 0) tone(140, .08, 'sine', .14, 50, T);
+      if (k % 4 === 2) noise(.03, .03, 7000, T);
+      const m = MEL[(k + bar * 2) % 16]; if (m >= 0) tone(mf(deg(m + ch)), sd * .8, 'square', .035, 0, T);
+      next += sd; step++;
+    }
+  }
+  return {init, play(n, a) { if (c && on && S[n]) try { S[n](a); } catch (e) {} }, music(v) { playing = v; if (c && v) { next = c.currentTime + .1; } },
+    toggle() { on = !on; store.set('sound', on); if (out) out.gain.value = on ? .5 : 0; return on; }};
+})();
+addEventListener('pointerdown', () => AU.init(), true); addEventListener('keydown', () => AU.init(), true);
+
+// ================================================================ 물리 세계 (방장 · 혼자 할 때만 계산)
+const PLATFORM_W = 192, FALL_Y = 70, SPAWN_GAP = 46;
+let engine = null, bodies = [], nextId = 1;
+function newWorld() {
+  engine = Engine.create({enableSleeping: true}); engine.gravity.y = 1; engine.positionIterations = 12; engine.velocityIterations = 10;
+  const ground = Bodies.rectangle(0, 5, PLATFORM_W, 10, {isStatic: true, friction: 1, frictionStatic: 1.2, label: 'ground'});
+  Composite.add(engine.world, ground); bodies = [];
+}
+function makeBody(k, x, y, ang) {
+  const m = PM[k]; let body;
+  const opt = {friction: 0.9, frictionStatic: 1.1, restitution: 0.02, density: 0.0016 * m.dens, sleepThreshold: 50, slop: 0.04};
+  if (m.r) { body = Bodies.circle(0, 0, m.r, opt); body.k_off = {x: 0, y: 0}; }
+  else {
+    const parts = [];
+    for (const poly of m.parts) {
+      const vs = poly.map(([px, py]) => ({x: px, y: py}));
+      const area = Math.abs(vs.reduce((a, v, i) => { const n = vs[(i + 1) % vs.length]; return a + v.x * n.y - n.x * v.y; }, 0)) / 2;
+      if (area < 3) continue;
+      const cx = vs.reduce((a, v) => a + v.x, 0) / vs.length, cy = vs.reduce((a, v) => a + v.y, 0) / vs.length;
+      const b = Bodies.fromVertices(cx, cy, [vs], opt); if (b) parts.push(b);
+    }
+    body = parts.length === 1 ? parts[0] : Body.create(Object.assign({parts}, opt));
+    body.k_off = {x: -body.position.x, y: -body.position.y};   // 그림 중심 기준 무게 중심 위치 보정
+  }
+  Body.setAngle(body, 0);
+  const c = rotV({x: -body.k_off.x, y: -body.k_off.y}, ang);
+  Body.setPosition(body, {x: x + c.x, y: y + c.y}); Body.setAngle(body, ang);
+  body.k = k; body.id_ = nextId++;
+  Composite.add(engine.world, body); bodies.push(body);
+  return body;
+}
+const rotV = (v, a) => ({x: v.x * Math.cos(a) - v.y * Math.sin(a), y: v.x * Math.sin(a) + v.y * Math.cos(a)});
+const centerOf = b => { const o = rotV(b.k_off, b.angle); return {x: b.position.x + o.x, y: b.position.y + o.y}; };
+function towerTop() { let t = 0; for (const b of bodies) if (!b.falling) t = Math.min(t, b.bounds.min.y); return t; }
+function pieceBox(k, rot) {   // 돌린 조각의 위아래 크기
+  const m = PM[k], c = Math.abs(Math.cos(rot)), s = Math.abs(Math.sin(rot)), w = m.w - 4, h = m.h - 4;
+  return {w: w * c + h * s, h: w * s + h * c};
+}
+
+// ================================================================ 게임 상태
+// players: {id, name, face, type: 'me'|'local'|'cpu'|'remote', wins}
+const G = {mode: 'title', role: 'solo', players: [], turn: 0, phase: 'idle', piece: null, nextK: null, timer: 20, settleT: 0, dropT: 0, height: 0, cam: -170, camT: -170,
+  round: 0, lastFact: '', events: [], loser: -1, cpuLv: store.get('cpuLv', 1), view: [], hang: null, snapA: null, snapB: null, snapT: 0, paused: false, fallen: false};
+const randK = () => KINDS[Math.floor(Math.random() * KINDS.length)];
+const me = () => G.players.find(p => p.id === NET.myId) || G.players[0];
+const curP = () => G.players[G.turn];
+const isMyTurn = () => { const p = curP(); if (!p || G.phase !== 'aim') return false; return (G.role !== 'guest' && (p.type === 'me' || p.type === 'local')) || (p.id === NET.myId && p.type !== 'cpu'); };
+
+function startRound() {
+  newWorld(); G.round++; G.turn = (G.round - 1) % G.players.length; G.phase = 'aim'; G.loser = -1; G.height = 0; G.fallen = false;
+  G.camT = G.cam = BASE(); G.events = []; G.nextK = randK(); nextPiece();
+  showScr(null); $('#hud').classList.add('on'); $('#pauseB').style.display = 'block'; $('#tbtns').classList.add('on');
+  banner(`${G.round}라운드`, '무너뜨리면 지는 거예요!'); AU.music(true); AU.play('turn');
+  if (window.ILOG) ILOG.runStart(`라운드 ${G.round} 시작 · ${G.players.length}명`);
+  renderPlayers();
+}
+function nextPiece() {
+  const k = G.nextK; G.nextK = randK();
+  const box = pieceBox(k, 0);
+  G.piece = {k, x: 0, rot: 0, y: towerTop() - SPAWN_GAP - box.h / 2, vis: 0};
+  G.timer = 20; G.phase = 'aim'; G.cpuPlan = null; G.cpuT = 0.6 + Math.random() * 0.5;
+  drawNext(); renderPlayers();
+  const p = curP(); if (p) tip(`<b>${p.name}</b> 차례 · ${PM[k].name}`);
+}
+function dropPiece() {
+  if (G.phase !== 'aim' || !G.piece) return;
+  const P = G.piece; P.x = clampX(P.x, P.k, P.rot);
+  makeBody(P.k, P.x, P.y, P.rot);
+  G.phase = 'drop'; G.dropT = 0; G.settleT = 0; G.piece = null; G.events.push('drop'); AU.play('drop');
+  G.lastFact = `<b>${PM[P.k].name}</b> · ${PM[P.k].fact}`; tip(G.lastFact);
+  if (window.ILOG) ILOG.game('놓기', `${PM[P.k].name} x ${Math.round(P.x)} 각도 ${Math.round(P.rot * 57.3)}°`);
+}
+const clampX = (x, k, rot) => { const b = pieceBox(k, rot), L = Math.min(200, W / 2 - 6); return Math.max(-L + b.w / 2, Math.min(L - b.w / 2, x)); };
+
+function stepHost(dt) {   // 방장(또는 혼자): 물리와 차례 진행
+  if (!engine) return;
+  Engine.update(engine, 1000 / 60);
+  // 닿는 소리 (빠르게 부딪힐 때)
+  for (const b of bodies) { const sp = b.speed; if (b.prevSp > 1.6 && sp < b.prevSp * 0.5 && !b.falling) { G.events.push('land'); AU.play('land', b.prevSp / 4); } b.prevSp = sp; }
+  // 떨어짐
+  for (const b of bodies) if (!b.falling && (b.position.y > FALL_Y || Math.abs(b.position.x) > 330)) { b.falling = true; if (G.phase === 'drop' || G.phase === 'aim') onFall(b); }
+  if (G.phase === 'aim') {
+    const p = curP(); G.timer -= dt;
+    if (p && p.type === 'cpu') cpuThink(dt);
+    if (G.timer <= 5 && Math.ceil(G.timer) !== Math.ceil(G.timer + dt)) AU.play('tick');
+    if (G.timer <= 0) dropPiece();
+  } else if (G.phase === 'drop') {
+    G.dropT += dt;
+    const calm = bodies.every(b => b.falling || b.isSleeping || (b.speed < 0.15 && Math.abs(b.angularVelocity) < 0.01));
+    G.settleT = calm ? G.settleT + dt : 0;
+    if ((G.settleT > 0.7 && G.dropT > 0.8) || G.dropT > 9) {
+      G.height = Math.max(G.height, -towerTop());
+      G.turn = nextAlive(G.turn); nextPiece(); AU.play('turn'); G.events.push('turn');
+    }
+  } else if (G.phase === 'over') { G.overT -= dt; if (G.overT <= 0 && !G.shownRes) { G.shownRes = true; showResult(); } }
+}
+const nextAlive = t => (t + 1) % G.players.length;
+function onFall(b) {
+  if (G.phase === 'over') return;
+  G.phase = 'over'; G.loser = G.turn; G.overT = 2.2; G.shownRes = false; G.events.push('fall');
+  AU.play('fall'); banner('와르르!', `${G.players[G.turn].name}이(가) 무너뜨렸어요`);
+  G.players.forEach((p, i) => { if (i !== G.loser) p.wins++; });
+  if (window.ILOG) ILOG.result('무너짐', `${G.players[G.turn].name} · ${PM[b.k].name} 떨어짐`);
+}
+function showResult() {
+  const L = G.players[G.loser], mine = me(), iLost = L && mine && L.id === mine.id;
+  const local = G.role === 'solo' && G.players.filter(p => p.type === 'me' || p.type === 'local').length;
+  if (G.role !== 'guest') { STATS.rounds++; if (mine && !iLost && (mine.type === 'me')) STATS.wins++; STATS.best = Math.max(STATS.best, +(G.height / 50).toFixed(1)); saveStats(); }
+  AU.play(iLost ? 'lose' : 'win'); AU.music(false);
+  const rank = G.players.map((p, i) => ({p, i})).sort((a, b) => b.p.wins - a.p.wins);
+  $('#resBox').innerHTML = `<h3>${iLost ? '앗, 무너뜨렸어요!' : L ? `${esc(L.name)}이(가) 무너뜨렸어요!` : '라운드 끝'}</h3>
+    <p>탑 높이 <b>${(G.height / 50).toFixed(2)}m</b> · ${G.round}라운드</p>
+    <ol class="res">${rank.map(({p, i}) => `<li>${faceTag(p.face)} <b>${esc(p.name)}</b> — ${p.wins}승 ${i === G.loser ? '😵' : '👍'}</li>`).join('')}</ol>
+    <p style="font-size:13px;color:var(--dim)">${G.lastFact || ''}</p>
+    <div class="row">${G.role !== 'guest' ? '<button class="btn go" id="rAgain">다음 라운드</button>' : '<span>방장이 다음 라운드를 시작하길 기다려요…</span>'}<button class="btn" id="rQuit">나가기</button></div>`;
+  showScr('sRes');
+  if ($('#rAgain')) $('#rAgain').onclick = () => { AU.play('ui'); if (G.role === 'host') NET.startGame(); else startRound(); };
+  $('#rQuit').onclick = quitToTitle;
+  if (G.role === 'host') NET.broadcast({t: 'end', loser: G.loser, players: NET.pubPlayers(), h: G.height});
+  if (window.ILOG) ILOG.runEnd(`라운드 끝 · 높이 ${(G.height / 50).toFixed(2)}m`);
+}
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const faceTag = f => `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${COLORS[f]};border:2px solid #1a2238;vertical-align:-1px"></span>`;
+
+// ================================================================ 컴퓨터 (조각을 놓을 자리 고르기)
+const SIL = document.createElement('canvas'); SIL.width = 440; SIL.height = 520; const sctx = SIL.getContext('2d', {willReadFrequently: true});
+function surfaceProfile() {   // 쌓인 모양의 윗면 높이 (x: -220~220)
+  sctx.clearRect(0, 0, 440, 520); sctx.fillStyle = '#000';
+  const top = towerTop() - 10, oy = top; sctx.fillRect(220 - PLATFORM_W / 2, -oy, PLATFORM_W, 6);
+  for (const b of bodies) { if (b.falling) continue; const ps = b.parts.length > 1 ? b.parts.slice(1) : [b];
+    for (const pt of ps) { sctx.beginPath(); pt.vertices.forEach((v, i) => i ? sctx.lineTo(v.x + 220, v.y - oy) : sctx.moveTo(v.x + 220, v.y - oy)); sctx.closePath(); sctx.fill(); } }
+  const d = sctx.getImageData(0, 0, 440, 520).data, prof = new Float32Array(440).fill(1e9);
+  for (let x = 0; x < 440; x++) for (let y = 0; y < 520; y++) if (d[(y * 440 + x) * 4 + 3] > 100) { prof[x] = y + oy; break; }
+  return prof;
+}
+function pieceBottom(k, rot) {   // 돌린 조각의 아랫면 (그림 중심 기준)
+  const m = PM[k], c = document.createElement('canvas'), S = 120; c.width = c.height = S; const g = c.getContext('2d', {willReadFrequently: true});
+  g.translate(S / 2, S / 2); g.rotate(rot); g.fillStyle = '#000';
+  if (m.r) { g.beginPath(); g.arc(0, 0, m.r, 0, 6.29); g.fill(); }
+  else for (const poly of m.parts) { g.beginPath(); poly.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.closePath(); g.fill(); }
+  const d = g.getImageData(0, 0, S, S).data, bot = new Float32Array(S).fill(-1e9);
+  for (let x = 0; x < S; x++) for (let y = S - 1; y >= 0; y--) if (d[(y * S + x) * 4 + 3] > 100) { bot[x] = y - S / 2; break; }
+  return bot;
+}
+function cpuThink(dt) {
+  const P = G.piece; if (!P) return;
+  if (!G.cpuPlan) {
+    const prof = surfaceProfile(), lv = G.cpuLv; let best = null;
+    const m = PM[P.k], rots = m.r ? [0] : [0, Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4, Math.PI, -Math.PI / 4];
+    for (const rot of rots) {
+      const bot = pieceBottom(P.k, rot);
+      for (let x = -90; x <= 90; x += 4) {
+        let rest = 1e9; const cols = [];
+        for (let i = 0; i < 120; i++) { if (bot[i] < -1e8) continue; const wx = Math.round(x + i - 60 + 220); if (wx < 0 || wx >= 440) continue; const r = prof[wx] - bot[i]; cols.push([i - 60, r]); if (r < rest) rest = r; }
+        if (rest > 1e8) continue;
+        const touch = cols.filter(c => c[1] - rest < 1.5).map(c => c[0]);
+        const spread = touch.length ? Math.min(-Math.min(...touch), Math.max(...touch)) : 0;   // 무게 중심 양쪽으로 닿는 폭
+        const supported = touch.length && Math.min(...touch) < 0 && Math.max(...touch) > 0;
+        const hgt = -rest + pieceBox(P.k, rot).h / 2;
+        const bw = pieceBox(P.k, rot).w, flat = Math.abs(Math.sin(rot * 2)) < 0.01;   // 0°·90°·180°만 반듯함
+        let score = (supported ? 30 : -40) + spread * 2.2 - hgt * 0.45 - Math.abs(x) * 0.3 + touch.length * 0.6 - (flat ? 0 : 14);
+        if (Math.abs(x) + bw / 2 > PLATFORM_W / 2 - 4 && -rest < 30) score -= 25;   // 섬 가장자리 밖으로 삐져나가면 위험
+        score += (Math.random() - 0.5) * [60, 22, 4][lv];
+        if (!best || score > best.score) best = {x, rot, score};
+      }
+    }
+    G.cpuPlan = best || {x: 0, rot: 0};
+  }
+  G.cpuT -= dt;
+  const plan = G.cpuPlan;
+  if (Math.abs(P.rot - plan.rot) > 0.01 && G.cpuT < 0.4) { P.rot = plan.rot; AU.play('rot'); }
+  P.x += Math.sign(plan.x - P.x) * Math.min(Math.abs(plan.x - P.x), 160 * dt);
+  if (G.cpuT <= 0 && Math.abs(P.x - plan.x) < 1 && Math.abs(P.rot - plan.rot) < 0.01) dropPiece();
+}
+
+// ================================================================ 입력
+const IN = {left: false, right: false, mouseX: null, dragX: null};
+const rotate = d => { const P = G.piece; if (!P || !isMyTurn()) return; P.rot = Math.round((P.rot + d * Math.PI / 4) / (Math.PI / 4)) * (Math.PI / 4); if (P.rot > Math.PI) P.rot -= 2 * Math.PI; if (P.rot <= -Math.PI) P.rot += 2 * Math.PI; AU.play('rot'); sendAim(true); };
+const drop = () => { if (!isMyTurn()) return; if (G.role === 'guest') { NET.toHost({t: 'in', x: G.piece.x, rot: G.piece.rot, drop: 1}); G.phase = 'wait'; AU.play('drop'); } else dropPiece(); };
+addEventListener('keydown', e => {
+  if (G.mode !== 'play') return;
+  if (e.code === 'Escape' || e.code === 'KeyP') { togglePause(); return; }
+  if (G.paused) return;
+  if (['ArrowLeft', 'KeyA'].includes(e.code)) { IN.left = true; IN.mouseX = null; e.preventDefault(); }
+  if (['ArrowRight', 'KeyD'].includes(e.code)) { IN.right = true; IN.mouseX = null; e.preventDefault(); }
+  if (['ArrowUp', 'KeyW', 'KeyR', 'KeyX'].includes(e.code) && !e.repeat) { rotate(1); e.preventDefault(); }
+  if (e.code === 'KeyQ' && !e.repeat) rotate(-1);
+  if (['ArrowDown', 'Space', 'KeyS', 'Enter'].includes(e.code) && !e.repeat) { drop(); e.preventDefault(); }
+});
+addEventListener('keyup', e => { if (['ArrowLeft', 'KeyA'].includes(e.code)) IN.left = false; if (['ArrowRight', 'KeyD'].includes(e.code)) IN.right = false; });
+const toWorldX = cx => { const r = cv.getBoundingClientRect(); return (cx - r.left) / r.width * W - W / 2; };
+cv.addEventListener('mousemove', e => { if (G.mode === 'play') IN.mouseX = toWorldX(e.clientX); });
+cv.addEventListener('mousedown', e => { if (G.mode !== 'play' || G.paused) return; if (e.button === 2) rotate(1); else if (e.button === 0) drop(); });
+cv.addEventListener('contextmenu', e => e.preventDefault());
+// 터치: 화면을 좌우로 끌기 → 조각 옮기기
+let tId = null, tLastX = 0;
+cv.addEventListener('touchstart', e => { document.body.classList.add('touch'); e.preventDefault(); const t = e.changedTouches[0]; tId = t.identifier; tLastX = t.clientX; }, {passive: false});
+cv.addEventListener('touchmove', e => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === tId && G.piece && isMyTurn()) { const r = cv.getBoundingClientRect(); G.piece.x = clampX(G.piece.x + (t.clientX - tLastX) / r.width * W * 1.1, G.piece.k, G.piece.rot); tLastX = t.clientX; sendAim(); } }, {passive: false});
+cv.addEventListener('touchend', e => { for (const t of e.changedTouches) if (t.identifier === tId) tId = null; });
+for (const [id, f] of [['#tRot', () => rotate(1)], ['#tDrop', drop]]) $(id).addEventListener('touchstart', e => { e.preventDefault(); AU.init(); f(); }, {passive: false});
+$('#tRot').onclick = () => rotate(1); $('#tDrop').onclick = drop;
+addEventListener('touchstart', () => document.body.classList.add('touch'), {passive: true});
+let aimSentT = 0;
+function sendAim(force) { if (G.role !== 'guest' || !G.piece) return; const now = performance.now(); if (force || now - aimSentT > 66) { aimSentT = now; NET.toHost({t: 'in', x: G.piece.x, rot: G.piece.rot}); } }
+function localAim(dt) {
+  const P = G.piece; if (!P || !isMyTurn() || G.paused) return;
+  if (IN.left) P.x -= 130 * dt; if (IN.right) P.x += 130 * dt;
+  if (IN.mouseX !== null && !document.body.classList.contains('touch')) P.x += (IN.mouseX - P.x) * Math.min(1, dt * 14);
+  P.x = clampX(P.x, P.k, P.rot);
+  if (IN.left || IN.right || IN.mouseX !== null) sendAim();
+}
+
+// ================================================================ 화면
+function showScr(id) { document.querySelectorAll('.scr').forEach(s => s.classList.toggle('on', s.id === id)); }
+let bannerT = 0;
+function banner(a, b) { const el = $('#banner'); el.innerHTML = esc(a) + (b ? `<small>${esc(b)}</small>` : ''); el.style.opacity = 1; bannerT = 1.8; }
+function tip(html) { const el = $('#tip'); el.innerHTML = html; el.style.display = 'block'; }
+function faceCanvas(f, s = 36) { const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'); g.drawImage(IMG.faces, f * 32, 0, 32, 32, 0, 0, 32, 32); return c; }
+function renderPlayers() {
+  const L = $('#plist'); L.innerHTML = '';
+  G.players.forEach((p, i) => {
+    const d = document.createElement('div'); d.className = 'pc' + (i === G.turn && G.phase !== 'over' ? ' turn' : '') + (i === G.loser ? ' out' : '');
+    d.appendChild(faceCanvas(p.face));
+    const t = document.createElement('div'); t.style.flex = '1';
+    t.innerHTML = `<b>${esc(p.name)}</b> <small>${p.wins}승${p.type === 'cpu' ? ' · CPU' : ''}</small>${i === G.turn && G.phase === 'aim' ? `<span class="tm" style="width:${Math.max(0, G.timer / 20 * 100)}%"></span>` : ''}`;
+    d.appendChild(t); L.appendChild(d);
+  });
+}
+function drawNext() { const c = $('#ncv'), g = c.getContext('2d'); g.clearRect(0, 0, 100, 64); g.imageSmoothingEnabled = false; if (!G.nextK) return; const m = PM[G.nextK], s = Math.min(1, 96 / m.w, 60 / m.h); g.drawImage(IMG.pieces, m.x, m.y, m.w, m.h, 50 - m.w * s / 2, 32 - m.h * s / 2, m.w * s, m.h * s); }
+function drawPiece(k, x, y, ang, alpha) {   // 그림 중심 (x, y) 기준
+  const m = PM[k]; ctx.save(); ctx.globalAlpha = alpha == null ? 1 : alpha; ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(ang);
+  ctx.drawImage(IMG.pieces, m.x, m.y, m.w, m.h, -Math.round(m.ox), -Math.round(m.oy), m.w, m.h); ctx.restore();
+}
+let clouds = [];
+function render(dt) {
+  // 높이에 따라 하늘 → 성층권 → 우주
+  const alt = Math.max(0, BASE() - G.cam) / 900, k = Math.min(1, alt);
+  const mix = (a, b, t) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(',')})`;
+  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, mix([90, 176, 240], [14, 20, 60], k)); g.addColorStop(1, mix([190, 232, 255], [60, 90, 170], k));
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  if (k > 0.3) { ctx.fillStyle = `rgba(255,255,255,${(k - 0.3) * 1.4})`; for (let i = 0; i < 60; i++) ctx.fillRect((i * 97) % W, (i * 53 + Math.floor(G.cam * 0.1)) % H, 1, 1); }
+  // 구름 (느린 시차)
+  if (!clouds.length) for (let i = 0; i < 7; i++) clouds.push({x: Math.random() * W, y: -Math.random() * 1500, s: i % 3, v: 4 + Math.random() * 8});
+  for (const c of clouds) { c.x += c.v * dt; if (c.x > W + 120) c.x = -130; const sy = c.y - G.cam * 0.5 - 60; if (sy > -60 && sy < H) ctx.drawImage(IMG.clouds, c.s * 120, 0, 120, 50, Math.round(c.x), Math.round(sy), 120, 50); }
+  // 언덕 (먼 땅)
+  const hy = H - 90 + (G.cam - BASE()) * -0.35 + 10; if (hy < H) { ctx.drawImage(IMG.hills, Math.round((W - 480) / 2), Math.round(hy)); if (hy + 90 < H) { ctx.fillStyle = '#2a6a28'; ctx.fillRect(0, Math.round(hy + 89), W, H); } }
+  // 섬과 조각
+  const ox = W / 2, oy = -G.cam;
+  ctx.save(); ctx.translate(ox, oy);
+  ctx.drawImage(IMG.island, -100, -6);
+  const list = G.role === 'guest' ? G.view : bodies.map(b => { const c = centerOf(b); return {k: b.k, x: c.x, y: c.y, a: b.angle}; });
+  for (const b of list) drawPiece(b.k, b.x, b.y, b.a);
+  // 매달린 조각 + 떨어질 자리 안내선
+  const P = G.role === 'guest' ? G.hang : G.piece;
+  if (P && (G.phase === 'aim' || G.phase === 'wait')) {
+    const t = performance.now() / 1000;
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(Math.round(P.x) + .5, P.y); ctx.lineTo(Math.round(P.x) + .5, 10); ctx.stroke(); ctx.setLineDash([]);
+    const col = COLORS[(G.players[G.turn] || {}).face || 0];
+    ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(P.x - 5, P.y - pieceBox(P.k, P.rot).h / 2 - 12 + Math.sin(t * 6) * 2); ctx.lineTo(P.x + 5, P.y - pieceBox(P.k, P.rot).h / 2 - 12 + Math.sin(t * 6) * 2); ctx.lineTo(P.x, P.y - pieceBox(P.k, P.rot).h / 2 - 5 + Math.sin(t * 6) * 2); ctx.fill();
+    drawPiece(P.k, P.x, P.y, P.rot, 0.92);
+  }
+  ctx.restore();
+  // 높이선
+  const topY = G.role === 'guest' ? G.viewTop : towerTop();
+  if (topY < -4) { const sy = Math.round(topY + oy); ctx.fillStyle = 'rgba(255,255,255,.5)'; for (let x = 0; x < W; x += 6) ctx.fillRect(x, sy, 3, 1); }
+  $('#hgt').textContent = (Math.max(0, -topY) / 50).toFixed(2) + 'm';
+}
+
+// ================================================================ 메인 루프
+let last = performance.now(), hudT = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (bannerT > 0) { bannerT -= dt; if (bannerT <= 0) $('#banner').style.opacity = 0; }
+  if (G.mode === 'play' && !G.paused) {
+    if (G.role !== 'guest') { const steps = window.SPEED || 1; for (let i = 0; i < steps; i++) stepHost(dt); } else guestStep(dt);
+    localAim(dt);
+    const top = G.role === 'guest' ? G.viewTop : towerTop();
+    G.camT = Math.min(BASE(), top - Math.max(120, H * 0.45)); G.cam += (G.camT - G.cam) * Math.min(1, dt * 3);
+    if (G.role === 'host') NET.hostTick(dt);
+    hudT -= dt; if (hudT <= 0) { hudT = 0.1; renderPlayers(); $('#tbtns').style.visibility = isMyTurn() ? 'visible' : 'hidden'; }
+  }
+  if (G.mode === 'play' || G.mode === 'title') render(dt);
+}
+function fit() {   // 가로는 480으로 고정, 세로 화면이면 보이는 높이를 늘림
+  const ar = innerHeight / innerWidth;
+  const nw = ar > 1 ? 330 : 480, nh = Math.max(270, Math.min(900, Math.round(nw * ar)));
+  if (nh !== H || nw !== W) { const b0 = BASE(); W = nw; H = nh; cv.width = W; cv.height = H; ctx.imageSmoothingEnabled = false; const d = BASE() - b0; G.cam += d; G.camT += d; }
+  const S = Math.min(innerWidth / W, innerHeight / H);
+  cv.style.width = W * S + 'px'; cv.style.height = H * S + 'px'; cv.style.left = (innerWidth - W * S) / 2 + 'px'; cv.style.top = (innerHeight - H * S) / 2 + 'px';
+}
+addEventListener('resize', fit);
+// 혼자·한 기기: 멈춤 / 온라인: 메뉴만 열고 경기는 계속 (다른 사람이 기다리지 않게)
+function togglePause() { if (G.mode !== 'play') return; const open = !$('#sPause').classList.contains('on'); if (G.role === 'solo') G.paused = open; showScr(open ? 'sPause' : null); }
+$('#pauseB').onclick = () => { AU.play('ui'); togglePause(); };
+document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { const a = b.dataset.p; AU.play('ui');
+  if (a === 'resume') { G.paused = false; showScr(null); } if (a === 'how') showScr('sHow'); if (a === 'sound') b.textContent = AU.toggle() ? '소리 끄기' : '소리 켜기';
+  if (a === 'log' && window.ILOG) ILOG.openViewer(); if (a === 'quit') quitToTitle(); });
+function quitToTitle() { NET.leave(); G.mode = 'title'; G.paused = false; engine = null; bodies = []; G.piece = null; G.view = []; G.hang = null; $('#hud').classList.remove('on'); $('#pauseB').style.display = 'none'; $('#tip').style.display = 'none'; $('#tbtns').classList.remove('on'); AU.music(false); showScr('sTitle'); }
+
+// ================================================================ 준비 화면
+let lobbyMode = 'cpu';
+document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { AU.init(); AU.play('ui'); const g = b.dataset.go;
+  if (g === 'hub') { location.href = '../index.html'; return; } if (g === 'how') { showScr('sHow'); return; } openLobby(g); });
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => { AU.play('ui'); showScr(G.mode === 'play' ? (G.paused ? 'sPause' : null) : 'sTitle'); });
+$('#lBack').onclick = () => { AU.play('ui'); NET.leave(); showScr('sTitle'); };
+$('#cpuLv').querySelectorAll('button').forEach(b => b.onclick = () => { G.cpuLv = +b.dataset.v; store.set('cpuLv', G.cpuLv); renderLobby(); });
+function openLobby(m) {
+  lobbyMode = m; G.role = 'solo'; G.players = [];
+  const nick = store.get('nick', '연구원' + (10 + Math.floor(Math.random() * 89)));
+  if (m === 'cpu') G.players = [{id: 'me', name: nick, face: 0, type: 'me', wins: 0}, {id: 'c1', name: 'CPU ' + FACE_NAMES[1], face: 1, type: 'cpu', wins: 0}];
+  if (m === 'local') G.players = [{id: 'p1', name: '1P', face: 0, type: 'local', wins: 0}, {id: 'p2', name: '2P', face: 1, type: 'local', wins: 0}];
+  $('#lTitle').textContent = {cpu: '컴퓨터와 하기', local: '한 기기에서 여럿이 (번갈아 하기)', online: '온라인 (최대 4명)'}[m];
+  $('#lOnline').style.display = m === 'online' ? 'block' : 'none'; $('#nick').value = nick;
+  $('#lJoinRow').style.display = 'flex'; $('#lCodeRow').style.display = 'none'; $('#netlog').textContent = m === 'online' ? '방을 만들거나 친구에게 받은 코드로 참가하세요.' : '';
+  if (m === 'online') { const q = new URLSearchParams(location.search).get('room'); if (q) $('#joinCode').value = q.toUpperCase(); }
+  showScr('sLobby'); renderLobby();
+}
+function renderLobby() {
+  $('#cpuLv').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.v === G.cpuLv));
+  const S = $('#slots'); S.innerHTML = '';
+  const canEdit = G.role !== 'guest' && (lobbyMode !== 'online' || G.role === 'host');
+  for (let i = 0; i < 4; i++) {
+    const p = G.players[i], d = document.createElement('div'); d.className = 'slot' + (p ? '' : ' empty');
+    if (p) {
+      d.appendChild(faceCanvas(p.face));
+      const t = document.createElement('b'); t.textContent = p.name; d.appendChild(t);
+      const s = document.createElement('small'); s.textContent = p.type === 'me' || p.id === NET.myId ? '나' : {local: '이 기기', cpu: 'CPU', remote: '온라인'}[p.type]; d.appendChild(s);
+      if (canEdit && i > 0 && p.type !== 'me' && !(G.role === 'host' && p.id === NET.myId)) { const x = document.createElement('button'); x.className = 'x'; x.textContent = '✕'; x.onclick = () => { if (p.type === 'remote') NET.kick(p.id); G.players.splice(i, 1); fixFaces(); renderLobby(); NET.syncLobby(); }; d.appendChild(x); }
+    } else if (canEdit) {
+      const add = (label, type) => { const b = document.createElement('button'); b.className = 'btn sm'; b.textContent = label; b.onclick = () => { AU.play('ui'); const f = freeFace(); G.players.push({id: type + Math.random().toString(36).slice(2, 7), name: type === 'cpu' ? 'CPU ' + FACE_NAMES[f] : (G.players.length + 1) + 'P', face: f, type, wins: 0}); renderLobby(); NET.syncLobby(); }; d.appendChild(b); };
+      if (lobbyMode === 'local') add('+ 사람', 'local');
+      add('+ CPU', 'cpu');
+    } else { d.innerHTML = '<small>빈자리</small>'; }
+    S.appendChild(d);
+  }
+  const n = G.players.length;
+  $('#lStart').disabled = n < 2 || G.role === 'guest' || (lobbyMode === 'online' && G.role !== 'host');
+  $('#lStart').textContent = G.role === 'guest' ? '방장이 시작해요' : n < 2 ? '2명 이상 필요' : '시작!';
+  $('#lOpts').style.display = G.players.some(p => p.type === 'cpu') || (canEdit && n < 4) ? 'flex' : 'none';
+}
+const freeFace = () => [0, 1, 2, 3].find(f => !G.players.some(p => p.face === f)) ?? 0;
+function fixFaces() { const used = new Set(); for (const p of G.players) { if (used.has(p.face)) p.face = [0, 1, 2, 3].find(f => !used.has(f)); used.add(p.face); } }
+$('#lStart').onclick = () => { AU.play('ui'); if (G.players.length < 2) return; G.players.forEach(p => p.wins = 0); G.round = 0; STATS.games++; saveStats();
+  if (lobbyMode === 'online') NET.startGame(); else { G.mode = 'play'; startRound(); } };
+$('#nick').onchange = () => { const v = $('#nick').value.trim().slice(0, 8) || '연구원'; store.set('nick', v); NET.rename(v); };
+
+// ================================================================ 온라인 (PeerJS · 방장이 물리를 계산하고 모두에게 보냄)
+const NET = (() => {
+  const PREFIX = 'biotower-v1-', BC_PREFIX = 'biotower-bc-v1-', VER = 1;
+  const myId = 'bt' + Math.random().toString(36).slice(2, 10);
+  let peer = null, hostConn = null, bc = null, code = '', role = null;
+  const conns = new Map(), seen = new Map();
+  let snapAcc = 0, pingAcc = 0, lastHostMsg = 0;
+  const log = m => { $('#netlog').textContent = m; };
+  const peerOpts = () => ({debug: 0, config: {iceServers: [{urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302']}, {urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp'}]}});
+  let peerLoad = null;
+  const loadPeer = () => window.Peer ? Promise.resolve() : peerLoad || (peerLoad = new Promise((ok, no) => { const s = document.createElement('script'); s.src = '../vendor/peerjs.min.js'; s.onload = ok; s.onerror = () => { peerLoad = null; no(new Error('load')); }; document.head.appendChild(s); }));
+  const openPeer = id => loadPeer().then(() => new Promise((ok, no) => { let p; try { p = id ? new Peer(id, peerOpts()) : new Peer(peerOpts()); } catch (e) { no(e); return; }
+    const to = setTimeout(() => { try { p.destroy(); } catch (e) {} no(new Error('server')); }, 12000);
+    p.on('open', () => { clearTimeout(to); ok(p); }); p.on('error', e => { clearTimeout(to); no(e); }); }));
+  const genCode = () => { const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 4; i++) s += c[Math.floor(Math.random() * c.length)]; return s; };
+  const openBc = c => { try { bc = new BroadcastChannel(BC_PREFIX + c); bc.onmessage = e => { const m = e.data; if (!m) return; if (role === 'host' && m.from && m.from !== myId) onHost(m, null); else if (role === 'guest' && !m.from && (!m.to || m.to === myId)) onGuest(m); }; } catch (e) { bc = null; } };
+  const send = (conn, m) => { if (conn && conn.open) try { conn.send(m); } catch (e) {} };
+  const broadcast = m => { for (const c of conns.values()) send(c, m); if (bc) try { bc.postMessage(m); } catch (e) {} };
+  const sendTo = (pid, m) => { const c = conns.get(pid); if (c) send(c, m); else if (bc) try { bc.postMessage(Object.assign({to: pid}, m)); } catch (e) {} };
+  const toHost = m => { m.from = myId; if (hostConn) send(hostConn, m); else if (bc) try { bc.postMessage(m); } catch (e) {} };
+  const pubPlayers = () => G.players.map(p => ({id: p.id, name: p.name, face: p.face, type: p.type === 'me' ? 'remote' : p.type, wins: p.wins, host: p.id === myId}));
+
+  // ---- 방장
+  async function host() {
+    const nick = ($('#nick').value.trim() || '방장').slice(0, 8); store.set('nick', nick);
+    log('방을 만드는 중…'); role = 'host'; G.role = 'host';
+    G.players = [{id: myId, name: nick, face: 0, type: 'me', wins: 0}];
+    for (let k = 0; k < 4 && !peer; k++) {
+      code = genCode();
+      try { peer = await openPeer(PREFIX + code); } catch (e) { if (!(e && e.type === 'unavailable-id')) { log('온라인 서버에 연결하지 못했어요. 같은 브라우저의 다른 탭에서는 계속 참가할 수 있어요.'); break; } }
+    }
+    if (!code) code = genCode();
+    openBc(code);
+    if (peer) peer.on('connection', c => { c.on('data', m => onHost(m, c)); c.on('close', () => { if (c.pid) dropPlayer(c.pid); }); });
+    $('#lJoinRow').style.display = 'none'; $('#lCodeRow').style.display = 'flex'; $('#code').textContent = code;
+    log(peer ? '친구에게 방 코드를 알려 주세요. 빈자리는 CPU로 채울 수 있어요.' : '이 기기의 다른 탭에서만 참가할 수 있어요.');
+    renderLobby();
+  }
+  function onHost(m, c) {
+    if (!m || !m.t) return;
+    const pid = m.from;
+    if (pid) seen.set(pid, performance.now());
+    if (m.t === 'hello') {
+      if (m.v !== VER) { const r = {t: 'deny', why: '게임 버전이 달라요. 새로고침해 주세요.'}; c ? send(c, r) : sendTo(pid, r); return; }
+      if (G.mode === 'play') { const r = {t: 'deny', why: '이미 경기 중이에요. 끝난 뒤 다시 참가하세요.'}; c ? send(c, r) : sendTo(pid, r); return; }
+      let p = G.players.find(x => x.id === pid);
+      if (!p) {
+        const cpuIdx = G.players.findIndex(x => x.type === 'cpu');
+        if (G.players.length >= 4 && cpuIdx < 0) { const r = {t: 'deny', why: '방이 가득 찼어요 (최대 4명).'}; c ? send(c, r) : sendTo(pid, r); return; }
+        if (G.players.length >= 4) G.players.splice(cpuIdx, 1);
+        p = {id: pid, name: String(m.name || '친구').slice(0, 8), face: freeFace(), type: 'remote', wins: 0}; G.players.push(p); AU.play('join');
+      }
+      if (c) { c.pid = pid; conns.set(pid, c); }
+      sendTo(pid, {t: 'welcome', code}); syncLobby(); renderLobby();
+    } else if (m.t === 'in') {
+      const i = G.players.findIndex(x => x.id === pid);
+      if (i !== G.turn || G.phase !== 'aim' || !G.piece) return;
+      G.piece.x = clampX(+m.x || 0, G.piece.k, G.piece.rot); if (typeof m.rot === 'number') G.piece.rot = m.rot;
+      if (m.drop) dropPiece();
+    } else if (m.t === 'name') { const p = G.players.find(x => x.id === pid); if (p) { p.name = String(m.name).slice(0, 8); syncLobby(); renderLobby(); } }
+    else if (m.t === 'bye') dropPlayer(pid);
+  }
+  function dropPlayer(pid) {
+    const i = G.players.findIndex(x => x.id === pid); if (i < 0) return;
+    conns.delete(pid);
+    if (G.mode === 'play') { G.players[i].type = 'cpu'; G.players[i].name += '(CPU)'; banner('연결 끊김', `${G.players[i].name}을(를) CPU가 이어받아요`); }
+    else { G.players.splice(i, 1); fixFaces(); renderLobby(); syncLobby(); }
+  }
+  const syncLobby = () => { if (role === 'host') broadcast({t: 'lobby', players: pubPlayers(), lv: G.cpuLv}); };
+  function startGame() { if (role !== 'host') return; G.mode = 'play'; broadcast({t: 'start', players: pubPlayers()}); startRound(); }
+  function hostTick(dt) {
+    snapAcc += dt; pingAcc += dt;
+    if (snapAcc >= 0.05) {
+      snapAcc = 0;
+      const b = bodies.filter(x => x.position.y < 400).map(x => { const c = centerOf(x); return [x.id_, x.k, Math.round(c.x * 10) / 10, Math.round(c.y * 10) / 10, Math.round(x.angle * 1000) / 1000]; });
+      const P = G.piece;
+      broadcast({t: 's', b, h: P ? [P.k, Math.round(P.x * 10) / 10, Math.round(P.y * 10) / 10, P.rot] : null, ph: G.phase, tu: G.turn, tm: Math.round(G.timer * 10) / 10, nx: G.nextK, top: Math.round(towerTop()), hg: Math.round(G.height), ev: G.events.splice(0), ro: G.round, lo: G.loser, fact: G.lastFact});
+    }
+    if (pingAcc >= 1) { pingAcc = 0; broadcast({t: 'pl', players: pubPlayers()}); const now = performance.now(); for (const p of G.players) if (p.type === 'remote' && now - (seen.get(p.id) || now) > 12000) dropPlayer(p.id); }
+  }
+  // ---- 참가자
+  async function join() {
+    const c = $('#joinCode').value.trim().toUpperCase(); if (!/^[A-Z0-9]{3,6}$/.test(c)) { log('방 코드를 확인하세요.'); return; }
+    const nick = ($('#nick').value.trim() || '친구').slice(0, 8); store.set('nick', nick);
+    code = c; role = 'guest'; G.role = 'guest'; log('방에 연결하는 중…'); openBc(code);
+    toHost({t: 'hello', v: VER, name: nick});   // 같은 브라우저의 탭이면 바로 응답
+    try {
+      peer = await openPeer();
+      hostConn = peer.connect(PREFIX + code, {reliable: true});
+      hostConn.on('open', () => { toHost({t: 'hello', v: VER, name: nick}); });
+      hostConn.on('data', onGuest);
+      hostConn.on('close', () => { if (role === 'guest') { banner('연결 끊김', '방장과의 연결이 끊어졌어요'); setTimeout(quitToTitle, 1500); } });
+      peer.on('error', e => { if (e && e.type === 'peer-unavailable' && !lastHostMsg) log(`방 [${code}]을(를) 찾을 수 없어요.`); });
+    } catch (e) { if (!lastHostMsg) log('온라인 서버에 연결하지 못했어요. 인터넷 연결을 확인하세요.'); }
+    setTimeout(() => { if (role === 'guest' && !lastHostMsg) log(`방 [${code}]에 연결하지 못했어요. 코드를 확인하거나 다른 네트워크로 시도해 보세요.`); }, 13000);
+  }
+  function onGuest(m) {
+    if (!m || !m.t) return; lastHostMsg = performance.now();
+    if (m.t === 'deny') { log('❌ ' + m.why); role = null; G.role = 'solo'; return; }
+    if (m.t === 'welcome') { log('참가했어요! 방장이 시작하길 기다려요.'); $('#lJoinRow').style.display = 'none'; $('#lCodeRow').style.display = 'flex'; $('#code').textContent = code; AU.play('join'); }
+    if (m.t === 'lobby' || m.t === 'pl' || m.t === 'start') { G.players = m.players.map(p => Object.assign({}, p, {type: p.id === myId ? 'me' : p.type})); if (m.lv != null) G.cpuLv = m.lv; if (G.mode !== 'play') renderLobby(); }
+    if (m.t === 'start') { G.mode = 'play'; G.view = []; G.viewTop = 0; G.round = 0; G.phase = 'aim'; showScr(null); $('#hud').classList.add('on'); $('#pauseB').style.display = 'block'; $('#tbtns').classList.add('on'); AU.music(true); G.snapB = null; }
+    if (m.t === 's') {
+      G.snapA = G.snapB; G.snapB = {t: performance.now(), m};
+      if (m.ro !== G.round) { G.round = m.ro; banner(`${m.ro}라운드`, '무너뜨리면 지는 거예요!'); showScr(null); G.shownRes = false; G.cam = G.camT = BASE(); }
+      const wasMine = isMyTurn(), prevTurn = G.turn;
+      G.turn = m.tu; G.timer = m.tm; G.loser = m.lo; G.viewTop = m.top; G.height = m.hg;
+      if (G.phase !== 'wait' || m.ph !== 'aim' || prevTurn !== m.tu) G.phase = m.ph;
+      if (m.nx !== G.nextK) { G.nextK = m.nx; drawNext(); }
+      if (m.h) { const mine = isMyTurn(); if (!mine || !G.hang || prevTurn !== m.tu || G.hang.k !== m.h[0]) G.hang = {k: m.h[0], x: m.h[1], y: m.h[2], rot: m.h[3]}; else G.hang.y = m.h[2]; G.piece = mine ? G.hang : null; } else { G.hang = null; G.piece = null; }
+      if (isMyTurn() && !wasMine) { AU.play('turn'); tip('<b>내 차례!</b> 옮기고 돌린 뒤 놓으세요'); }
+      if (m.fact && m.fact !== G.lastFact) { G.lastFact = m.fact; tip(m.fact); }
+      for (const e of m.ev) { if (e === 'drop') AU.play('drop'); if (e === 'land') AU.play('land', 1); if (e === 'fall') { AU.play('fall'); const L = G.players[m.lo]; banner('와르르!', L ? `${L.name}이(가) 무너뜨렸어요` : ''); } if (e === 'turn') AU.play('turn'); }
+    }
+    if (m.t === 'end') { G.players = m.players.map(p => Object.assign({}, p, {type: p.id === myId ? 'me' : p.type})); G.loser = m.loser; G.height = m.h; setTimeout(showResult, 400); }
+  }
+  function guestStep() {   // 받은 장면 사이를 부드럽게 이어 그림
+    const A = G.snapA, B = G.snapB; if (!B) return;
+    const u = A ? Math.min(1, (performance.now() - B.t) / Math.max(16, B.t - A.t)) : 1;
+    const prev = new Map(); if (A) for (const b of A.m.b) prev.set(b[0], b);
+    G.view = B.m.b.map(b => { const p = prev.get(b[0]); if (!p) return {k: b[1], x: b[2], y: b[3], a: b[4]}; return {k: b[1], x: p[2] + (b[2] - p[2]) * u, y: p[3] + (b[3] - p[3]) * u, a: p[4] + (b[4] - p[4]) * u}; });
+    if (role === 'guest' && performance.now() - lastHostMsg > 2500 && lastHostMsg) pingT();
+  }
+  let pingLast = 0; const pingT = () => { if (performance.now() - pingLast > 1000) { pingLast = performance.now(); toHost({t: 'ping'}); } };
+  setInterval(() => { if (role === 'guest') toHost({t: 'ping'}); }, 3000);
+  function leave() {
+    if (role === 'guest') toHost({t: 'bye'});
+    if (role === 'host') broadcast({t: 'deny', why: '방장이 방을 닫았어요.'});
+    try { if (peer) peer.destroy(); } catch (e) {} try { if (bc) bc.close(); } catch (e) {}
+    peer = null; hostConn = null; bc = null; conns.clear(); role = null; code = ''; G.role = 'solo'; lastHostMsg = 0;
+  }
+  return {myId, host, join, leave, broadcast, toHost, pubPlayers, syncLobby, startGame, hostTick, guestStep, kick: pid => { sendTo(pid, {t: 'deny', why: '방장이 내보냈어요.'}); conns.delete(pid); }, rename: n => { if (role === 'guest') toHost({t: 'name', name: n}); else { const p = G.players.find(x => x.id === myId); if (p) { p.name = n; syncLobby(); renderLobby(); } } }, get code() { return code; }};
+})();
+function guestStep(dt) { NET.guestStep(dt); }
+$('#bHost').onclick = () => { AU.play('ui'); NET.host(); };
+$('#bJoin').onclick = () => { AU.play('ui'); NET.join(); };
+$('#bCopy').onclick = () => { const u = new URL(location.href); u.searchParams.set('room', NET.code); navigator.clipboard && navigator.clipboard.writeText(u.toString()); $('#netlog').textContent = '참가 링크를 복사했어요!'; };
+addEventListener('pagehide', () => NET.leave());
+
+// ================================================================ 시작
+(async () => {
+  const L = (k, s) => new Promise(ok => { const i = new Image(); i.onload = () => { IMG[k] = i; ok(); }; i.onerror = ok; i.src = 'bio-tower/' + s; });
+  const [meta] = await Promise.all([fetch('bio-tower/pieces.json').then(r => r.json()), L('pieces', 'pieces.png'), L('island', 'island.png'), L('clouds', 'clouds.png'), L('hills', 'hills.png'), L('faces', 'faces.png')]);
+  PM = meta; KINDS.push(...Object.keys(PM));
+  $('#loading').style.display = 'none'; fit(); requestAnimationFrame(frame);
+  if (new URLSearchParams(location.search).get('room')) openLobby('online');
+})();
+window.ILOG_WATCH = () => G.mode === 'play' ? {단계: G.phase, 차례: (curP() || {}).name, 조각: G.piece ? PM[G.piece.k].name : '', x: G.piece ? Math.round(G.piece.x) : undefined, 높이: +(Math.max(0, -(G.role === 'guest' ? G.viewTop : towerTop())) / 50).toFixed(2)} : {화면: G.mode};
+</script>
+<script src="../ilog.js"></script>
+</body>
+</html>
