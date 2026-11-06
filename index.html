@@ -78,6 +78,9 @@ i[data-ic] svg.pg{width:1em;height:1em;vertical-align:0}
 .sum{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--sub);white-space:nowrap}
 .sum i{color:var(--ok);font-size:16px}
 .sum b{color:var(--ink)}
+.mini{height:28px;padding:0 10px;margin-left:4px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--sub);background:var(--bg2);border:1px solid var(--line)}
+.mini:hover{color:var(--ink);border-color:var(--line2)}
+.toast{position:fixed;left:50%;bottom:calc(24px + var(--safe-b));transform:translateX(-50%);z-index:60;padding:10px 16px;border-radius:12px;background:#1e293b;border:1px solid var(--line2);font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
 
 /* ---------- 이어하기 ---------- */
 .resume{display:flex;align-items:center;gap:14px;padding:10px;margin-bottom:14px;border-radius:var(--r);background:linear-gradient(100deg,rgba(56,189,248,.16),rgba(129,140,248,.10));border:1px solid rgba(56,189,248,.28)}
@@ -190,6 +193,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     <label class="search" aria-label="게임 검색"><i data-ic="search"></i><input id="q" type="search" placeholder="게임·단원 검색" autocomplete="off" enterkeyhint="go"><kbd>/</kbd></label>
     <div class="acts">
       <button class="ib ib-search" id="btnSearch" type="button" aria-label="검색 열기"><i data-ic="search"></i></button>
+      <button class="ib" id="btnReload" type="button" aria-label="강력 새로고침 (최신 버전 다시 받기)" title="강력 새로고침"><i data-ic="repeat"></i></button>
       <button class="ib" id="btnSnd" type="button" aria-label="효과음 끄기/켜기"><i data-ic="speaker"></i></button>
       <button class="ib" id="btnInstall" type="button" aria-label="앱으로 설치"><i data-ic="download"></i></button>
     </div>
@@ -204,7 +208,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
       <button type="button" role="tab" data-filter="action">액션 <b id="nAction"></b></button>
       <button type="button" role="tab" data-filter="casual">캐주얼 <b id="nCasual"></b></button>
     </nav>
-    <div class="sum" title="게임마다 정해진 목표 점수를 넘긴 수"><i data-ic="target"></i>목표 달성 <b id="heroGoal">0 / 12</b></div>
+    <div class="sum" title="게임마다 정해진 목표 점수를 넘긴 수"><i data-ic="target"></i>목표 달성 <b id="heroGoal">0 / 12</b><button class="mini" id="goalReset" type="button" aria-label="목표 달성 기록 초기화">초기화</button></div>
   </div>
 
   <a class="resume" id="resume" hidden>
@@ -366,6 +370,25 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
   renderGoals();
   addEventListener('pageshow',renderGoals);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)renderGoals();});
+
+
+  // ---------- 목표 초기화 ----------
+  function toast(t){const el=document.createElement('div');el.className='toast';el.textContent=t;document.body.appendChild(el);setTimeout(()=>el.remove(),2200);}
+  document.getElementById('goalReset').addEventListener('click',()=>{
+    tone('tap');
+    if(!confirm('모든 게임의 목표 달성 기록을 지울까요?\n(게임 진행 기록과 최고 점수는 그대로 남아요)'))return;
+    try{localStorage.removeItem('bioGoal');}catch(e){}
+    renderGoals();toast('목표 달성 기록을 초기화했어요');
+  });
+
+  // ---------- 강력 새로고침: 저장된 옛 파일을 지우고 최신 버전을 다시 받음 ----------
+  document.getElementById('btnReload').addEventListener('click',async()=>{
+    tone('tap');
+    const b=document.getElementById('btnReload');b.disabled=true;b.style.opacity=.5;toast('최신 버전을 받는 중…');
+    try{if(navigator.serviceWorker){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()));}}catch(e){}
+    try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
+    location.replace(location.pathname+'?r='+Date.now());
+  });
 
   // ---------- 앱 설치 ----------
   const standalone=matchMedia('(display-mode: standalone),(display-mode: fullscreen)').matches||navigator.standalone===true;

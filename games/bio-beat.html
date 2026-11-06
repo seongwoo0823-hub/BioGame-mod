@@ -235,6 +235,10 @@ button:focus-visible{outline:2px solid var(--yolk);outline-offset:2px}
 .top .brand{font-family:var(--ui);font-weight:900;font-size:17px;letter-spacing:.08em;text-shadow:none;background:linear-gradient(90deg,#fff,#9ec5ff);-webkit-background-clip:text;background-clip:text;color:transparent}
 .top nav button{font-family:var(--ui);font-weight:500;font-size:13px;border-radius:999px}
 .top nav button.cur{background:rgba(255,255,255,.16);color:#fff}
+.hubpill{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;font:600 13.5px var(--ui,sans-serif);cursor:pointer;white-space:nowrap}
+.hubpill:hover{background:rgba(255,255,255,.2)}
+@media (max-width:520px){.hubpill span{display:none}.hubpill{width:34px;padding:0;justify-content:center}}
+
 .top .mode{font-family:var(--ui);font-weight:700;border-radius:999px;background:rgba(255,255,255,.9);color:#16203a;padding:5px 12px}
 .tag{font-family:var(--ui);font-weight:700;border-radius:999px;background:rgba(255,255,255,.14);padding:4px 11px;letter-spacing:.06em}
 .jacket{position:relative;width:min(100%,250px);aspect-ratio:1;margin:14px auto 10px}
@@ -325,6 +329,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
 
   <div id="select" class="screen">
     <div class="top pnl">
+      <button class="hubpill" type="button" data-act="hub" aria-label="게임 목록으로 돌아가기">🏠<span>게임 목록</span></button>
       <div class="brand">BIO BEAT</div>
       <nav>
         <button data-act="hub">GAMES</button>
