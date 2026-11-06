@@ -1,5 +1,5 @@
 # 바이오 비트: 실제 음원(mp3)을 분석해 하·중·상 채보를 만듭니다. (analyze_song.py의 다음 버전)
-#   python3 make_chart.py <음원.mp3> <출력.json> [BPM]        한 곡
+#   python3 make_chart.py <음원.mp3> <출력.json> [BPM|-] [3]  한 곡 (BPM 대신 -는 자동, 3은 셔플 곡)
 #   python3 make_chart.py --all                               games/bio-beat/*.mp3 전부 (BPM은 아래 BPM_FIX 참고)
 #   python3 make_chart.py --selftest                          박자 검출 지연 보정값 확인 (합성 드럼으로)
 #
@@ -19,6 +19,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 GDIR = os.path.join(HERE, '../../games/bio-beat')
 # 자동 템포 검출이 박을 반/두 배로 잡는 곡은 여기서 고정 (check_tempo.py로 확인한 값)
 BPM_FIX = {'cell-powerplant': 86.98}
+# 셔플(셋잇단) 느낌 곡은 한 박을 3칸으로 나눔. 한 곡만: python3 make_chart.py 곡.mp3 곡.json - 3
+SUB_FIX = {'petri-dish': 3}
+BPM_FIX['petri-dish'] = 121.76
 ONSET_BIAS = -0.0249   # --selftest로 잰 검출 오차(초): 분석 창 가운데 기준이라 실제보다 약 25ms 일찍 잡힘 → 보정
 
 
@@ -82,7 +85,8 @@ def peaks(env, th, mind):
 
 
 # ---------------------------------------------------------------- 분석
-def analyze(x, force_bpm=None):
+def analyze(x, force_bpm=None, sub=4):
+    """sub: 한 박을 나누는 칸 수. 4 = 16분음표(보통), 3 = 셋잇단(셔플·스윙 느낌 곡)"""
     dur = len(x) / SR
     HOP = 256; NFFT = 2048; fps = SR / HOP; tf = lambda i: (i * HOP + NFFT / 2) / SR
     S = stft(x, NFFT, HOP); freqs = np.fft.rfftfreq(NFFT, 1 / SR)
@@ -149,7 +153,8 @@ def analyze(x, force_bpm=None):
     down = max(range(4), key=lambda k: kb[k::4].mean() + kb[(k + 2) % 4::4].mean() - sb[k::4].mean() - sb[(k + 2) % 4::4].mean() + 0.5 * kb[k::4].mean())
     beats = beats[down:] if down else beats
     if beats[0] > 0: beats = np.concatenate([beats[0] - (beats[1] - beats[0]) * np.arange(4, 0, -1), beats])   # 0번 마디가 음원 시작 전에
-    grid16 = np.interp(np.arange((len(beats) - 1) * 4 + 1) / 4, np.arange(len(beats)), beats)   # 16분음표 칸 시각
+    grid16 = np.interp(np.arange((len(beats) - 1) * sub + 1) / sub, np.arange(len(beats)), beats)   # 칸(16분음표 또는 셋잇단) 시각
+    PB = 4 * sub   # 한 마디의 칸 수
     t0 = float(beats[0]); nb = (len(beats) - 1) // 4
     bpm = 60 / float(np.median(np.diff(beats)))
     # ---- 멜로디(음높이) 추적: 음 성분에서 배음 합 (MIDI 45~81, 1/4 반음 간격)
@@ -193,12 +198,12 @@ def analyze(x, force_bpm=None):
         while i < N and v[i] and i not in hon and abs(pm[i] - pm[max(0, i - 1)]) < 1.2: i += 1
 
     # ---- 마디별 구간
-    tb = lambda b: float(grid16[min(len(grid16) - 1, b * 16)])
+    tb = lambda b: float(grid16[min(len(grid16) - 1, b * PB)])
     def frames(a, b): return slice(max(0, int((a - NFFT / 2 / SR) * fps)), max(0, int((b - NFFT / 2 / SR) * fps)))
     en = np.array([rms[frames(tb(b), tb(b + 1))].mean() if tb(b + 1) > 0 else 0 for b in range(nb)])
     voc = np.zeros(nb)
     for a, b_, p, e in notes:
-        k = int(np.searchsorted(grid16, a) - 1) // 16
+        k = int(np.searchsorted(grid16, a) - 1) // PB
         if 0 <= k < nb: voc[k] += (b_ - a)
     voc /= bar
     enN = en / (np.percentile(en[en > 0], 90) + 1e-9) if (en > 0).any() else en
@@ -226,7 +231,7 @@ def analyze(x, force_bpm=None):
             for k in range(max(0, b - 2), b):
                 if secs[k] == 'verse': secs[k] = 'build'
     chorus = next((tb(b) for b in range(nb) if secs[b] == 'chorus'), 0.0)
-    return dict(dur=dur, bpm=float(bpm), spb=60 / bpm, st=15 / bpm, bar=240 / bpm, t0=float(t0), nb=nb, grid=grid16, secs=secs, chorusStart=max(0.0, chorus),
+    return dict(dur=dur, bpm=float(bpm), spb=60 / bpm, st=15 / bpm, bar=240 / bpm, t0=float(t0), nb=nb, grid=grid16, sub=sub, secs=secs, chorusStart=max(0.0, chorus),
                 melody=notes, kick=K, snare=Sn, hat=Hh, perc=Pall, env=(allf, fps, NFFT / 2 / SR))
 
 
@@ -243,25 +248,29 @@ def make_chart(A, cfg):
     G = A['grid']; gi = np.arange(len(G))
     g_of = lambda t: int(round(float(np.interp(t, G, gi))))
     t_of = lambda g: float(G[min(len(G) - 1, max(0, g))])
-    sec_of = lambda g: A['secs'][min(len(A['secs']) - 1, max(0, g // 16))]
+    SUB = A.get('sub', 4); PB = 4 * SUB; hs = SUB / 4   # 칸 단위 (16분음표=4칸/박, 셋잇단=3칸/박)
+    sec_of = lambda g: A['secs'][min(len(A['secs']) - 1, max(0, g // PB))]
+    pos = lambda g: g % SUB; beat = lambda g: g // SUB
+    on8 = lambda g: g % SUB in (0, 2)   # 8분음표 자리 (셋잇단이면 스윙 8분: 1번째·3번째 칸)
     dur_end = A['dur'] - 0.3
     notes = []; free = [-9.0] * 4; lastT = -9.0; lane = 1; lastP = None; alt = 1
     # ---- 멜로디
     mel = []
     for a, b, p, e in A['melody']:
         g = g_of(a - 0.02)   # 노래는 자음이 먼저 나와 음높이가 박보다 조금 늦게 잡힘 → 반올림 전에 당김
-        if cfg['grid'] > 1: g = int(round(g / cfg['grid'])) * cfg['grid']
+        if cfg['grid'] > 1:   # 하: 8분음표 자리로 맞춤
+            b0 = g // SUB; g = min((b0 * SUB, b0 * SUB + 2, b0 * SUB + SUB), key=lambda c: abs(c - g))
         L = max(1, g_of(b) - g)
         if mel and mel[-1][0] == g:
             if e > mel[-1][3]: mel[-1] = (g, L, p, e)
             continue
         mel.append((g, L, p, e))
     # 노래가 없는 간주 마디: 2마디마다 첫 박에 2박짜리 롱노트 (화음이 길게 깔리는 곳)
-    sung_g = {m[0] // 16 for m in mel}
+    sung_g = {m[0] // PB for m in mel}
     lastp = mel[0][2] if mel else 60
     for b in range(len(A['secs'])):
         if A['secs'][b] in ('intro', 'break', 'outro') and b % 2 == 0 and b not in sung_g and (b + 1) not in sung_g:
-            mel.append((b * 16, 8, lastp + (b % 4 - 1.5), 0.0))
+            mel.append((b * PB, 2 * SUB, lastp + (b % 4 - 1.5), 0.0))
     mel.sort()
     for k, (g, L, p, e) in enumerate(mel):
         t = t_of(g)
@@ -279,7 +288,7 @@ def make_chart(A, cfg):
         l = pick(want, t, free, cfg['jack'])
         if l < 0: continue
         du = 0.0
-        if L >= cfg['hold']: du = t_of(g + min(L, 32)) - t - min(0.06, st / 2)   # 다음 음과 붙지 않게 살짝 짧게
+        if L >= cfg['hold'] * hs: du = t_of(g + min(L, 8 * SUB)) - t - min(0.06, st / 2)   # 다음 음과 붙지 않게 살짝 짧게
         if du < 0.25: du = 0.0
         notes.append([round(t, 4), l, round(du, 4), 'm']); free[l] = t + du; lastT = t; lane = l; lastP = p
     # ---- 드럼 (간주·후렴 등)
@@ -293,18 +302,17 @@ def make_chart(A, cfg):
             if g < 0: continue
             sec = sec_of(g); sung = sec in ('verse', 'chorus', 'build')
             if cfg['name'] == 'easy':
-                if sung or kind != 'k' or g % 8: continue   # 하: 간주에서 1·3박 킥만
+                if sung or kind != 'k' or pos(g) or beat(g) % 2: continue   # 하: 간주에서 1·3박 킥만
             elif cfg['name'] == 'normal':
                 if sung:   # 중: 노래 중엔 후렴의 1박 킥(동시치기)과 2·4박 스네어만
-                    if sec != 'chorus' or not ((kind == 'k' and g % 16 == 0) or (kind == 's' and g % 8 == 4)) or s < 0.4: continue
-                elif kind == 'h' or g % 2: continue
+                    if sec != 'chorus' or pos(g) or not ((kind == 'k' and beat(g) % 4 == 0) or (kind == 's' and beat(g) % 2 == 1)) or s < 0.4: continue
+                elif kind == 'h' or not on8(g): continue
             else:   # 상: 노래 중엔 4분음표 킥·2·4박 스네어(후렴은 8분까지), 간주는 8분 킥·스네어·하이햇
                 if sung:
                     if kind == 'h': continue
-                    step = 2 if sec == 'chorus' else 4
-                    if g % step or s < 0.35: continue
+                    if (not on8(g) if sec == 'chorus' else pos(g)) or s < 0.35: continue
                 else:
-                    if g % 2 or (kind == 'h' and s < 0.5): continue
+                    if not on8(g) or (kind == 'h' and s < 0.5): continue
             if g not in byg or byg[g][1] < s: byg[g] = (kind, s)
         dn = []
         for g, (kind, s) in sorted(byg.items()):
@@ -315,7 +323,7 @@ def make_chart(A, cfg):
             if not same and any(abs(n[0] - t) < cfg['gap'] for n in notes): continue
             if not same and dn and t - dn[-1] < cfg['gap']: continue
             used = {n[1] for n in same}
-            want = {'k': 0 if (g // 4) % 2 == 0 else 3, 's': 2 if (g // 8) % 2 else 1, 'h': 3 if (g // 2) % 2 else 0}[kind]
+            want = {'k': 0 if beat(g) % 2 == 0 else 3, 's': 2 if (beat(g) // 2) % 2 else 1, 'h': 3 if pos(g) else 0}[kind]
             if same: want = 3 if same[0][1] < 2 else 0   # 멜로디 반대쪽 손
             busy = [-9.0] * 4
             for n in notes:
@@ -370,8 +378,8 @@ def verify(A, notes):
     return round(ok / max(1, len(notes)), 3), round(float(np.median(errs)) * 1000 if errs else 0, 1)
 
 
-def build(path, out, force_bpm=None):
-    x = load(path); A = analyze(x, force_bpm)
+def build(path, out, force_bpm=None, sub=4):
+    x = load(path); A = analyze(x, force_bpm, sub)
     charts = []
     for cfg in DIFF:
         notes = make_chart(A, cfg); lv, m = level_of(notes, cfg); hit, merr = verify(A, notes)
@@ -403,5 +411,5 @@ if __name__ == '__main__':
     if sys.argv[1] == '--selftest': selftest()
     elif sys.argv[1] == '--all':
         for p in sorted(glob.glob(os.path.join(GDIR, '*.mp3'))):
-            n = os.path.basename(p)[:-4]; build(p, os.path.join(GDIR, n + '.json'), BPM_FIX.get(n))
-    else: build(sys.argv[1], sys.argv[2], float(sys.argv[3]) if len(sys.argv) > 3 else None)
+            n = os.path.basename(p)[:-4]; build(p, os.path.join(GDIR, n + '.json'), BPM_FIX.get(n), SUB_FIX.get(n, 4))
+    else: build(sys.argv[1], sys.argv[2], float(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[3] != '-' else None, int(sys.argv[4]) if len(sys.argv) > 4 else 4)
