@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="dev-pc lay-grid">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BIO ARCADE · 생명과학 게임 아케이드</title>
-<meta name="description" content="리듬게임, 런앤건 액션, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터, 핀볼, 3D 난투와 플랫포머까지 — 1인칭 슈팅, 핵앤슬래시 RPG, 로그라이트, 땅따먹기, 탑 쌓기, 코돈 퍼즐까지 — 생명과학으로 만든 게임 15종을 한곳에서 즐기세요.">
-<meta name="theme-color" content="#0b0f1e">
+<meta name="description" content="리듬게임, 런앤건, 카트 레이싱, 5대5 대전, 로그라이크, 핀볼, 3D 난투, FPS, 액션 RPG, 퍼즐까지 생명과학을 주제로 한 웹 게임 15종. PC·태블릿·휴대폰에서 설치 없이 바로 플레이.">
+<meta name="theme-color" content="#0b1020">
 <link rel="manifest" href="manifest.webmanifest?v=2">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-v2-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon-v2.png">
@@ -13,687 +13,218 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BIO ARCADE">
+<script>
+/* 기기 판별: 휴대폰 / 태블릿 / PC → <html class="dev-…">. 화면 폭에 따라 목록(lay-list) / 바둑판(lay-grid) */
+(function(){
+  var d=document.documentElement,ua=navigator.userAgent||'';
+  var coarse=matchMedia('(pointer:coarse)').matches,hover=matchMedia('(hover:hover)').matches;
+  var short=Math.min(screen.width,screen.height);
+  var tabUA=/ipad|tablet|playbook|silk|(android(?!.*mobile))/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  var phoneUA=!tabUA&&/iphone|ipod|android.*mobile|windows phone|mobile/i.test(ua);
+  var dev=phoneUA||(coarse&&!hover&&short<600)?'phone':(tabUA||(coarse&&!hover&&short<1100))?'tablet':'pc';
+  function lay(){var list=dev==='phone'||innerWidth<600;d.className=d.className.replace(/\b(dev|lay)-\w+/g,'').trim()+' dev-'+dev+' lay-'+(list?'list':'grid');}
+  lay();addEventListener('resize',lay);window.BIO_DEV=dev;
+})();
+</script>
+<script src="icons.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#080b16;
-  --glass:rgba(255,255,255,0.085);
-  --glass-hover:rgba(255,255,255,0.135);
-  --glass-strong:rgba(255,255,255,0.16);
-  --glass-pill:rgba(255,255,255,0.07);
-  --border:rgba(255,255,255,0.18);
-  --border-strong:rgba(255,255,255,0.34);
-  --ink:#f5f7ff;
-  --sub:rgba(235,240,255,0.72);
-  --dim:rgba(210,220,245,0.52);
-  --shadow:0 22px 50px -12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.28);
-  --radius-xl:28px;
-  --radius-lg:22px;
-  --radius-md:14px;
-  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-  color-scheme:dark;
+  --bg:#0b1020;--bg2:#10172b;--card:#151c31;--card-h:#1b2440;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.16);
+  --ink:#f1f5f9;--sub:#a3b0c6;--dim:#6f7d96;--acc:#38bdf8;--acc2:#818cf8;--ok:#34d399;--try:#fbbf24;
+  --r:16px;--pad:16px;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);
 }
-*,*::before,*::after{box-sizing:border-box}
-html{background:var(--bg);scroll-behavior:smooth}
-body{
-  margin:0;min-height:100vh;color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.55;
-  background:var(--bg);overflow-x:hidden;
-  -webkit-font-smoothing:antialiased;
-  padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0);
-}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;color-scheme:dark}
+body{min-height:100vh;background:radial-gradient(1200px 600px at 10% -10%,#17224a 0,transparent 60%),radial-gradient(900px 500px at 110% 0,#1d1640 0,transparent 55%),var(--bg);
+  color:var(--ink);font-family:'IBM Plex Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:15px;line-height:1.45;
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer}
 a{color:inherit;text-decoration:none}
+[hidden]{display:none!important}
+.wrap{max-width:1320px;margin:0 auto;padding:0 var(--pad) calc(28px + var(--safe-b))}
+i[data-ic]{display:inline-flex;font-style:normal;line-height:0}
+i[data-ic] svg.pg{width:1em;height:1em;vertical-align:0}
 
-/* ---------- iOS Dynamic Ambient Mesh Wallpaper ---------- */
-.ambient{
-  position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
-  background:
-    radial-gradient(circle at 15% 15%, rgba(56,189,248,0.26), transparent 42%),
-    radial-gradient(circle at 85% 18%, rgba(244,114,182,0.24), transparent 45%),
-    radial-gradient(circle at 50% 82%, rgba(139,92,246,0.24), transparent 50%),
-    radial-gradient(circle at 18% 85%, rgba(52,211,153,0.18), transparent 42%),
-    linear-gradient(180deg, #080c1a 0%, #0b1024 52%, #070a14 100%);
-}
-.orb{
-  position:absolute;border-radius:50%;filter:blur(70px);opacity:0.55;
-  animation:floatOrb 18s ease-in-out infinite alternate;
-}
-.orb.o1{width:460px;height:460px;left:-100px;top:-80px;background:#38bdf8}
-.orb.o2{width:520px;height:520px;right:-140px;top:60px;background:#f472b6;animation-duration:22s;animation-delay:-4s}
-.orb.o3{width:480px;height:480px;left:28%;bottom:-140px;background:#818cf8;animation-duration:25s;animation-delay:-9s}
-@keyframes floatOrb{
-  0%{transform:translate3d(0,0,0) scale(1)}
-  100%{transform:translate3d(40px,28px,0) scale(1.08)}
-}
+/* ---------- 위쪽 막대 ---------- */
+.bar{position:sticky;top:0;z-index:20;padding:calc(10px + var(--safe-t)) var(--pad) 10px;
+  background:rgba(11,16,32,.82);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);border-bottom:1px solid var(--line)}
+.bar-in{display:flex;align-items:center;gap:12px;max-width:calc(1320px - 2*var(--pad));margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:.02em;white-space:nowrap}
+.brand img{width:32px;height:32px;border-radius:9px}
+.search{flex:1;display:flex;align-items:center;gap:8px;height:42px;padding:0 14px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);max-width:420px;margin-left:auto;transition:border-color .15s}
+.search:focus-within{border-color:var(--acc)}
+.search i{color:var(--dim);font-size:18px}
+.search input{flex:1;min-width:0;background:none;border:0;outline:0;font-size:15px}
+.search input::placeholder{color:var(--dim)}
+.search kbd{font:600 11px/1 system-ui;color:var(--dim);border:1px solid var(--line2);border-radius:5px;padding:3px 6px}
+.acts{display:flex;gap:6px}
+.ib{width:42px;height:42px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:20px;color:var(--sub);background:var(--bg2);border:1px solid var(--line);transition:background .15s,color .15s}
+.ib:hover{color:var(--ink);background:var(--card-h)}
+.ib.on{color:var(--acc)}
+.ib-search{display:none}
 
-.wrap{max-width:1220px;margin:0 auto;padding:0 20px 48px}
+/* ---------- 분류 + 목표 요약 ---------- */
+.tools{display:flex;align-items:center;gap:12px;margin:18px 0 14px}
+.seg{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{height:34px;padding:0 14px;border-radius:9px;font-size:14px;font-weight:600;color:var(--sub);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.seg button b{font-weight:600;font-size:12px;color:var(--dim)}
+.seg button.on{background:var(--card-h);color:var(--ink);box-shadow:0 1px 0 rgba(255,255,255,.06) inset}
+.seg button.on b{color:var(--acc)}
+.sum{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--sub);white-space:nowrap}
+.sum i{color:var(--ok);font-size:16px}
+.sum b{color:var(--ink)}
 
-/* ---------- Top Navigation Glass Bar ---------- */
-.topbar{
-  position:sticky;top:14px;z-index:30;margin-top:16px;
-  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  padding:10px 16px;border-radius:999px;
-  background:rgba(18,24,46,0.62);
-  backdrop-filter:blur(30px) saturate(190%);
-  -webkit-backdrop-filter:blur(30px) saturate(190%);
-  border:1px solid var(--border);
-  box-shadow:0 14px 36px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
-}
-.brand-pill{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:-0.02em}
-.brand-dot{
-  width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:15px;
-  background:linear-gradient(135deg,#38bdf8,#818cf8,#f472b6);
-  box-shadow:0 4px 12px rgba(56,189,248,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
-}
-.filters{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.fbtn{
-  appearance:none;border:1px solid transparent;background:transparent;color:var(--sub);
-  font:inherit;font-size:13.5px;font-weight:600;padding:6px 13px;border-radius:999px;cursor:pointer;
-  transition:all .2s cubic-bezier(.2,.8,.2,1);
-}
-.fbtn:hover{color:#fff;background:rgba(255,255,255,0.08)}
-.fbtn.on{
-  color:#fff;background:rgba(255,255,255,0.18);
-  border-color:rgba(255,255,255,0.28);
-  box-shadow:0 4px 14px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.35);
-}
-.top-actions{display:flex;align-items:center;gap:8px}
-.search-box{
-  position:relative;display:flex;align-items:center;
-  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);
-  border-radius:999px;padding:5px 12px;transition:border-color .2s,background .2s;
-}
-.search-box:focus-within{background:rgba(255,255,255,0.14);border-color:rgba(255,255,255,0.38)}
-.search-box input{
-  background:transparent;border:none;outline:none;color:#fff;font:inherit;font-size:13.5px;width:135px;
-}
-.search-box input::placeholder{color:var(--dim)}
-.icon-pill{
-  appearance:none;border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.08);
-  color:var(--ink);font:inherit;font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;cursor:pointer;
-  transition:all .18s ease;
-}
-.icon-pill:hover{background:rgba(255,255,255,0.16);border-color:rgba(255,255,255,0.3)}
+/* ---------- 이어하기 ---------- */
+.resume{display:flex;align-items:center;gap:14px;padding:10px;margin-bottom:14px;border-radius:var(--r);background:linear-gradient(100deg,rgba(56,189,248,.16),rgba(129,140,248,.10));border:1px solid rgba(56,189,248,.28)}
+.resume img{width:120px;aspect-ratio:16/9;object-fit:cover;border-radius:10px;flex:none}
+.resume .t{flex:1;min-width:0}
+.resume small{display:block;font-size:12px;color:var(--acc);font-weight:600}
+.resume strong{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.resume .pl{flex:none;height:40px;padding:0 16px;border-radius:12px;background:var(--acc);color:#04111d;font-weight:700;display:inline-flex;align-items:center;gap:6px}
 
-/* ---------- Compact Slim Hero Bar ---------- */
-header.hero{
-  display:flex;align-items:center;justify-content:space-between;gap:12px 18px;flex-wrap:wrap;
-  padding:11px 18px;margin:12px 0 16px;
-  border-radius:18px;
-  background:linear-gradient(145deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.035) 100%);
-  backdrop-filter:blur(28px) saturate(190%);
-  -webkit-backdrop-filter:blur(28px) saturate(190%);
-  border:1px solid var(--border);
-  box-shadow:0 10px 28px -8px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.22);
-  position:relative;overflow:hidden;
-}
-.hero-main{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0}
-.logo{
-  font-size:17px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;margin:0;
-  background:linear-gradient(135deg,#ffffff 0%,#bae6fd 60%,#f5d0fe 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-}
-.tag{
-  margin:0;font-size:12px;font-weight:600;color:#7dd3fc;
-  padding:2px 8px;border-radius:999px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.25);
-}
-.lead{margin:0;color:var(--sub);font-size:12.5px;line-height:1.4}
-.hero-stats{
-  display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;
-}
-.stat-chip{
-  padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:500;color:var(--sub);
-  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);
-}
-.stat-chip b{color:#fff;font-weight:700}
+/* ---------- 게임 카드 (바둑판) ---------- */
+.games{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.card{position:relative;display:flex;flex-direction:column;border-radius:var(--r);background:var(--card);border:1px solid var(--line);overflow:hidden;transition:transform .18s,border-color .18s,background .18s}
+.th{position:relative;aspect-ratio:16/9;background:#0d1326;overflow:hidden}
+.th img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s}
+.badge{position:absolute;left:8px;top:8px;display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 8px;border-radius:7px;font-size:12px;font-weight:600;background:rgba(8,12,24,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#e0f2fe}
+.badge i{font-size:13px;color:var(--acc)}
+.recent{position:absolute;right:8px;top:8px;height:24px;padding:0 8px;border-radius:7px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;background:var(--acc);color:#04111d}
+.info{padding:12px 14px 14px;display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.info h2{font-size:17px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{font-size:13.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px;color:var(--dim);min-width:0}
+.goal{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:7px;background:rgba(255,255,255,.05);color:var(--sub);font-weight:600;white-space:nowrap;flex:none}
+.goal i{font-size:13px}
+.goal.ok{background:rgba(52,211,153,.14);color:var(--ok)}
+.goal.try{background:rgba(251,191,36,.12);color:var(--try)}
+.rec{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.rec b{color:var(--sub);font-weight:600}
+.go{display:none}
+.gtxt{font-size:12.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.empty{grid-column:1/-1;padding:48px 0;text-align:center;color:var(--dim)}
+.empty i{font-size:34px;display:block;margin:0 auto 8px;width:34px}
 
-#install{
-  display:inline-flex;align-items:center;gap:6px;padding:5px 12px;
-  border:1px solid rgba(255,255,255,0.32);border-radius:999px;
-  background:rgba(255,255,255,0.16);backdrop-filter:blur(14px);
-  color:#fff;font:inherit;font-size:12px;font-weight:600;cursor:pointer;
-  transition:transform .15s,background .15s;
-}
-#install:hover{background:rgba(255,255,255,0.25);transform:translateY(-1px)}
-#install[hidden],#iosHint[hidden]{display:none}
-#iosHint{
-  width:100%;margin:4px 0 0;padding:6px 12px;
-  background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:10px;
-  color:var(--sub);font-size:12px;text-align:center;
-}
+/* PC: 마우스를 올리면 살짝 떠오름 */
+.dev-pc .card:hover{transform:translateY(-3px);border-color:var(--line2);background:var(--card-h)}
+.dev-pc .card:hover .th img{transform:scale(1.04)}
+.card:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.card:active{transform:scale(.985)}
 
-/* ---------- Frosted Glass Game Cards Grid ---------- */
-.grid{
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;padding-bottom:28px;
-}
-.card{
-  --c:#38bdf8;
-  position:relative;display:flex;flex-direction:column;
-  border-radius:var(--radius-lg);overflow:hidden;
-  background:var(--glass);
-  backdrop-filter:blur(28px) saturate(190%);
-  -webkit-backdrop-filter:blur(28px) saturate(190%);
-  border:1px solid var(--border);
-  box-shadow:var(--shadow);
-  transition:transform .26s cubic-bezier(.2,.8,.2,1), background .26s, border-color .26s, box-shadow .26s;
-}
-.card:hover,.card:focus-visible{
-  transform:translateY(-6px) scale(1.01);
-  background:var(--glass-hover);
-  border-color:var(--border-strong);
-  box-shadow:0 28px 60px -12px rgba(0,0,0,0.65), 0 0 28px -6px var(--c), inset 0 1px 0 rgba(255,255,255,0.45);
-  outline:none;
-}
-.card:active{transform:translateY(-2px) scale(0.995)}
-.card[hidden]{display:none!important}
+/* ---------- 목록형 (휴대폰 · 좁은 창) ---------- */
+.lay-list .games{grid-template-columns:1fr;gap:10px}
+.lay-list .card{flex-direction:row;align-items:center;gap:12px;padding:10px;border-radius:14px}
+.lay-list .th{width:112px;flex:none;border-radius:10px}
+.lay-list .badge{left:4px;top:4px;height:20px;padding:0 6px;font-size:11px;border-radius:6px}
+.lay-list .recent{display:none}
+.lay-list .info{padding:0;gap:1px}
+.lay-list .info h2{font-size:16px}
+.lay-list .sub{font-size:13px}
+.lay-list .meta{margin-top:5px}
+.lay-list .rec,.lay-list .gtxt{display:none}
+.lay-list .go{display:inline-flex;color:var(--dim);font-size:18px;flex:none}
 
-.shot{
-  position:relative;aspect-ratio:16/9;overflow:hidden;
-  background:rgba(0,0,0,0.35);border-bottom:1px solid rgba(255,255,255,0.12);
+/* ---------- 휴대폰 ---------- */
+.dev-phone{--pad:14px}
+.dev-phone body{font-size:15px}
+.dev-phone .brand{font-size:17px}
+.dev-phone .brand img{width:30px;height:30px}
+.dev-phone .search{display:none;margin:0;max-width:none}
+.dev-phone .ib-search{display:inline-flex}
+.dev-phone .bar-in{flex-wrap:wrap}
+.dev-phone .acts{margin-left:auto}
+.dev-phone .bar.searching .search{display:flex;order:5;flex-basis:100%}
+.dev-phone .search kbd,.dev-tablet .search kbd{display:none}
+.dev-phone .tools{flex-direction:column;align-items:stretch;gap:10px;margin:14px 0 12px}
+.dev-phone .seg button{flex:1;padding:0 8px}
+.dev-phone .sum{margin-left:0;justify-content:flex-end;font-size:13px}
+.dev-phone .resume img{width:96px}
+.dev-phone .resume .pl span{display:none}
+.dev-phone .resume .pl{width:44px;padding:0;justify-content:center}
+@media (max-width:600px){
+  .search{display:none;margin:0;max-width:none}.ib-search{display:inline-flex}.bar-in{flex-wrap:wrap}.acts{margin-left:auto}
+  .bar.searching .search{display:flex;order:5;flex-basis:100%}.search kbd{display:none}
+  .tools{flex-direction:column;align-items:stretch;gap:10px}.seg button{flex:1;padding:0 8px}.sum{margin-left:0;justify-content:flex-end}
 }
-.shot img{
-  display:block;width:100%;height:100%;object-fit:cover;
-  transition:transform .45s cubic-bezier(.2,.8,.2,1);
-}
-.card:hover .shot img{transform:scale(1.06)}
-.shot::after{
-  content:"";position:absolute;inset:0;
-  background:linear-gradient(180deg, rgba(0,0,0,0.05) 45%, rgba(8,11,22,0.55) 100%);
-  pointer-events:none;
-}
-.genre{
-  position:absolute;left:12px;top:12px;z-index:2;
-  font-size:11px;font-weight:700;letter-spacing:0.06em;padding:5px 11px;border-radius:999px;
-  background:rgba(15,20,38,0.62);
-  backdrop-filter:blur(14px) saturate(180%);
-  -webkit-backdrop-filter:blur(14px) saturate(180%);
-  border:1px solid rgba(255,255,255,0.28);
-  color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.3);
-}
-.online-tag{
-  position:absolute;left:12px;bottom:10px;z-index:2;
-  font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;
-  background:rgba(16,185,129,0.28);backdrop-filter:blur(12px);
-  border:1px solid rgba(110,231,183,0.45);color:#a7f3d0;
-}
-.recent{
-  position:absolute;right:12px;top:12px;z-index:2;
-  font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;
-  background:rgba(250,204,21,0.24);backdrop-filter:blur(14px);
-  border:1px solid rgba(253,224,71,0.5);color:#fef08a;
-}
+@media (min-width:720px){.dev-phone.lay-list .games{grid-template-columns:1fr 1fr}}
 
-.body{display:flex;flex-direction:column;gap:10px;padding:18px 20px 20px;flex:1}
-.title{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.title h2{margin:0;font-weight:700;font-size:21px;letter-spacing:-0.02em;color:#fff}
-.title small{font-size:12px;font-weight:600;color:var(--c);opacity:0.95}
-.desc{margin:0;color:var(--sub);font-size:14px;line-height:1.55}
+/* ---------- 태블릿 ---------- */
+.dev-tablet{--pad:20px}
+.dev-tablet .games{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.dev-tablet .ib,.dev-tablet .search{height:46px}
+.dev-tablet .ib{width:46px}
+.dev-tablet .seg button{height:38px;padding:0 16px}
 
-.feat{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 0;padding:0;list-style:none}
-.feat li{
-  font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;
-  background:var(--glass-pill);border:1px solid rgba(255,255,255,0.12);color:var(--sub);
-}
-.keys{font-size:12.5px;color:var(--dim);margin-top:2px}
-.keys kbd{
-  font-family:var(--font);font-size:11.5px;font-weight:600;line-height:1;
-  padding:2px 7px;border-radius:6px;
-  background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:var(--ink);
-}
+/* ---------- PC ---------- */
+.dev-pc{--pad:28px}
+@media (min-width:1500px){.dev-pc .games{grid-template-columns:repeat(5,1fr)}}
 
-.foot{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1);
-}
-.rec{font-size:13px;color:var(--sub);min-width:0}
-.rec b{color:#fde047;font-weight:700}
-.play{
-  flex:none;font-size:13px;font-weight:700;letter-spacing:0.03em;
-  padding:8px 16px;border-radius:999px;
-  background:rgba(255,255,255,0.16);
-  border:1px solid rgba(255,255,255,0.28);
-  color:#fff;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,0.35);
-  transition:all .2s ease;
-}
-.card:hover .play{
-  background:var(--c);color:#080c18;border-color:transparent;
-  box-shadow:0 6px 18px -4px var(--c);
-}
+footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
 
-.c1{--c:#38bdf8}.c2{--c:#f472b6}.c3{--c:#facc15}.c4{--c:#fb7185}.c5{--c:#c084fc}.c6{--c:#fb923c}.c7{--c:#4ade80}.c8{--c:#e879f9}.c9{--c:#fda4af}.c10{--c:#5eead4}.c11{--c:#f59e0b}.c12{--c:#3cffae}.c13{--c:#ffd040}.c14{--c:#ff9a4a}.c15{--c:#007aff}
-
-/* ---------- Tips Glass Cards ---------- */
-.tips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:28px}
-.tip{
-  background:var(--glass);
-  backdrop-filter:blur(24px) saturate(180%);
-  -webkit-backdrop-filter:blur(24px) saturate(180%);
-  border:1px solid var(--border);
-  border-radius:var(--radius-md);
-  padding:16px 18px;font-size:14px;color:var(--sub);
-  box-shadow:0 12px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.22);
-}
-.tip b{display:block;color:#fff;font-weight:700;font-size:15.5px;margin-bottom:4px}
-
-footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
-
-@media (max-width:1040px){
-  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media (max-width:720px){
-  .topbar{border-radius:20px;padding:10px 12px}
-  .grid{grid-template-columns:1fr}
-  .tips{grid-template-columns:1fr}
-  .search-box{flex:1}
-  .search-box input{width:100%}
-}
-@media (prefers-reduced-motion:reduce){
-  .orb{animation:none}
-  .card,.shot img{transition:none}
-}
-
-/* ---------- Dedicated PWA Button /* ---------- Dedicated PWA Button & Student Ranking Modal ---------- */ 목표 표시 ---------- */
-.pwa-btn{
-  appearance:none;border:1px solid rgba(56,189,248,0.45);
-  background:linear-gradient(135deg, rgba(56,189,248,0.28), rgba(129,140,248,0.28));
-  color:#fff;font:inherit;font-size:13px;font-weight:700;padding:6px 13px;border-radius:999px;cursor:pointer;
-  display:inline-flex;align-items:center;gap:5px;
-  box-shadow:0 4px 14px rgba(56,189,248,0.25), inset 0 1px 0 rgba(255,255,255,0.35);
-  transition:all .18s ease;
-}
-.pwa-btn:hover{transform:translateY(-1px);background:linear-gradient(135deg, rgba(56,189,248,0.42), rgba(129,140,248,0.42));border-color:rgba(125,211,252,0.75)}
-.pwa-btn.installed{border-color:rgba(74,222,128,0.45);background:rgba(34,197,94,0.22);color:#bbf7d0}
-
-.goal{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0 2px;padding:7px 11px;border-radius:12px;font-size:12.5px;
-  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--sub)}
-.goal b{white-space:nowrap;font-size:12px;color:var(--dim)}.goal.ok{background:rgba(52,211,153,0.12);border-color:rgba(52,211,153,0.4)}.goal.ok b{color:#6ee7b7}
-.goal.try b{color:#fcd34d}
-
-.modal-backdrop{
-  position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;
-  background:rgba(4,7,18,0.72);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);
-}
-.modal-backdrop[hidden]{display:none!important}
-.glass-modal{
-  width:min(960px, 100%);max-height:min(88vh, 820px);display:flex;flex-direction:column;
-  border-radius:26px;overflow:hidden;
-  background:linear-gradient(155deg, rgba(26,34,64,0.92) 0%, rgba(14,19,38,0.95) 100%);
-  border:1px solid rgba(255,255,255,0.24);
-  box-shadow:0 32px 80px rgba(0,0,0,0.72), inset 0 1px 0 rgba(255,255,255,0.32);
-  color:var(--ink);
-}
-.glass-modal.sm{width:min(540px, 100%)}
-.m-head{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:16px 22px;border-bottom:1px solid rgba(255,255,255,0.12);
-  background:rgba(255,255,255,0.04);
-}
-.m-head h3{margin:0;font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px}
-.m-close{
-  appearance:none;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);
-  color:#fff;width:32px;height:32px;border-radius:50%;font-size:15px;cursor:pointer;display:grid;place-items:center;
-}
-.m-close:hover{background:rgba(255,255,255,0.18)}
-.m-body{padding:18px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
-
-.student-bar{
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-  padding:12px 14px;border-radius:16px;
-  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);
-}
-.student-bar label{font-size:12.5px;font-weight:600;color:#bae6fd;display:flex;align-items:center;gap:6px}
-.g-inp{
-  background:rgba(8,12,26,0.65);border:1px solid rgba(255,255,255,0.2);border-radius:10px;
-  color:#fff;font:inherit;font-size:13px;padding:6px 10px;outline:none;
-}
-.g-inp:focus{border-color:#38bdf8;box-shadow:0 0 0 2px rgba(56,189,248,0.25)}
-.g-btn{
-  appearance:none;border:1px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.12);
-  color:#fff;font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:10px;cursor:pointer;
-  transition:all .15s ease;display:inline-flex;align-items:center;gap:5px;
-}
-.g-btn:hover{background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.38)}
-.g-btn.pri{background:linear-gradient(135deg,#0284c7,#4f46e5);border-color:rgba(125,211,252,0.5)}
-.g-btn.pri:hover{filter:brightness(1.12)}
-.g-btn.gold{background:linear-gradient(135deg,#ca8a04,#db2777);border-color:rgba(253,224,71,0.5)}
-
-.rtabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,0.12);padding-bottom:10px}
-.rtab{
-  appearance:none;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.05);
-  color:var(--sub);font:inherit;font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:999px;cursor:pointer;
-}
-.rtab.on{background:rgba(56,189,248,0.24);border-color:#38bdf8;color:#fff}
-
-.rtable-wrap{overflow-x:auto;border-radius:14px;border:1px solid rgba(255,255,255,0.14);background:rgba(6,10,22,0.5)}
-.rtable{width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;white-space:nowrap}
-.rtable th,.rtable td{padding:9px 11px;border-bottom:1px solid rgba(255,255,255,0.08)}
-.rtable th{background:rgba(255,255,255,0.07);color:#bae6fd;font-weight:700;position:sticky;top:0}
-.rtable tr.me-row{background:rgba(56,189,248,0.16)}
-.rtable tr:hover{background:rgba(255,255,255,0.05)}
-.rk-badge{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;font-weight:800;font-size:11.5px;background:rgba(255,255,255,0.12)}
-.rk-1{background:linear-gradient(135deg,#facc15,#f59e0b);color:#000}
-.rk-2{background:linear-gradient(135deg,#e2e8f0,#94a3b8);color:#000}
-.rk-3{background:linear-gradient(135deg,#fb923c,#b45309);color:#fff}
-.env-pill{font-size:11px;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,0.09);color:var(--sub);border:1px solid rgba(255,255,255,0.12)}
-
-.guide-box{
-  padding:13px 15px;border-radius:14px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.13);
-  font-size:13px;line-height:1.55;color:var(--sub);
-}
-.guide-box h4{margin:0 0 6px;color:#fff;font-size:14px}
-.code-pre{
-  margin:8px 0 0;padding:10px 12px;border-radius:10px;background:rgba(4,7,16,0.85);
-  border:1px solid rgba(255,255,255,0.15);color:#a7f3d0;font-family:monospace;font-size:11.5px;
-  overflow-x:auto;white-space:pre;user-select:all;
-}
-.pwa-step{
-  display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;
-  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);font-size:13.5px;
-}
-.pwa-step b.num{
-  flex:none;width:24px;height:24px;border-radius:50%;background:#38bdf8;color:#061024;
-  display:grid;place-items:center;font-size:12.5px;font-weight:800;
-}
-
+/* ---------- 앱 설치 안내 창 ---------- */
+.modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(3,6,14,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.sheet{width:min(440px,100%);border-radius:20px;background:var(--bg2);border:1px solid var(--line2);box-shadow:0 30px 80px rgba(0,0,0,.5);overflow:hidden}
+.sheet header{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:16px}
+.sheet header img{width:28px;height:28px;border-radius:7px}
+.sheet header .ib{margin-left:auto;width:36px;height:36px;font-size:18px}
+.sheet .bd{padding:16px 18px 18px;display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--sub)}
+.step{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04)}
+.step .n{flex:none;width:22px;height:22px;border-radius:50%;background:var(--acc);color:#04111d;font:700 12px/22px system-ui;text-align:center}
+.step b{color:var(--ink)}
+.direct{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border-radius:12px;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:#bbf7d0}
+.btn{height:38px;padding:0 16px;border-radius:10px;background:var(--acc);color:#04111d;font-weight:700;white-space:nowrap}
+.btn.ghost{background:rgba(255,255,255,.08);color:var(--ink)}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--dim)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<div class="ambient" aria-hidden="true">
-  <div class="orb o1"></div>
-  <div class="orb o2"></div>
-  <div class="orb o3"></div>
-</div>
-
+<header class="bar" id="bar">
+  <div class="bar-in">
+    <a class="brand" href="./" aria-label="BIO ARCADE 처음으로"><img src="icons/icon-v2-192.png" alt="" width="32" height="32"><span>BIO ARCADE</span></a>
+    <label class="search" aria-label="게임 검색"><i data-ic="search"></i><input id="q" type="search" placeholder="게임·단원 검색" autocomplete="off" enterkeyhint="go"><kbd>/</kbd></label>
+    <div class="acts">
+      <button class="ib ib-search" id="btnSearch" type="button" aria-label="검색 열기"><i data-ic="search"></i></button>
+      <button class="ib" id="btnSnd" type="button" aria-label="효과음 끄기/켜기"><i data-ic="speaker"></i></button>
+      <button class="ib" id="btnInstall" type="button" aria-label="앱으로 설치"><i data-ic="download"></i></button>
+    </div>
+  </div>
+</header>
 <div class="wrap">
-  <nav class="topbar" aria-label="아케이드 탐색 바">
-    <div class="brand-pill">
-      <img src="icons/icon-v2-192.png" alt="BIO ARCADE 아이콘" width="30" height="30" style="width:30px;height:30px;border-radius:8px;box-shadow:0 4px 12px rgba(56,189,248,0.45)">
-      <span>BIO ARCADE</span>
-    </div>
-    <div class="filters" role="tablist" aria-label="장르 필터">
-      <button class="fbtn on" type="button" data-filter="all">전체 15</button>
-      <button class="fbtn" type="button" data-filter="online">🌐 온라인 멀티</button>
-      <button class="fbtn" type="button" data-filter="action">⚡ 액션·대전</button>
-      <button class="fbtn" type="button" data-filter="casual">🏎️ 레이싱·아케이드</button>
-    </div>
-    <div class="top-actions">
-      <label class="search-box" aria-label="게임 검색">
-        <span style="font-size:13px;margin-right:6px;opacity:.7">🔎</span>
-        <input id="gameSearch" type="search" placeholder="게임·단원 검색">
-      </label>
-      <button class="pwa-btn" id="topInstallBtn" type="button" title="바탕화면/홈 화면에 PWA 앱으로 설치">📲 앱 설치</button>
-      <button class="icon-pill" id="uiSndBtn" type="button" title="인터페이스 효과음 전환">🔊 사운드</button>
-    </div>
-  </nav>
 
-  <header class="hero">
-    <div class="hero-main">
-      <h1 class="logo">BIO ARCADE</h1>
-      <span class="tag">생명과학 게임 15종</span>
-      <p class="lead">세포·유전·면역·생태 테마 아케이드 컬렉션 · PC &amp; 모바일 즉시 플레이</p>
-    </div>
-    <div class="hero-stats">
-      <span class="stat-chip" id="goalChip" title="게임마다 정해진 목표 점수를 넘긴 수">🎯 목표 달성 <b id="heroGoal">0 / 12</b></span>
-      <span class="stat-chip">🌐 온라인 멀티 <b>4종</b></span>
-      <button id="install" class="pwa-btn" type="button">📲 PWA 앱 설치</button>
-    </div>
-    <p id="iosHint" hidden>📲 홈 화면에 설치하려면 Safari 아래쪽 <b>공유 버튼</b> → <b>「홈 화면에 추가」</b>를 선택하세요.</p>
-  </header>
+  <div class="tools">
+    <nav class="seg" role="tablist" aria-label="분류">
+      <button class="on" type="button" role="tab" data-filter="all">전체 <b id="nAll">15</b></button>
+      <button type="button" role="tab" data-filter="online">온라인 <b id="nOnline"></b></button>
+      <button type="button" role="tab" data-filter="action">액션 <b id="nAction"></b></button>
+      <button type="button" role="tab" data-filter="casual">캐주얼 <b id="nCasual"></b></button>
+    </nav>
+    <div class="sum" title="게임마다 정해진 목표 점수를 넘긴 수"><i data-ic="target"></i>목표 달성 <b id="heroGoal">0 / 12</b></div>
+  </div>
 
-  <main class="grid" id="games">
-    <a class="card c1" href="games/bio-beat.html" data-id="bio-beat" data-cat="online casual" data-kw="리듬 음악 퀴즈 세포 유전 생태 온라인">
-      <div class="shot">
-        <img src="assets/bio-beat.jpg" alt="BIO BEAT 플레이 화면" width="640" height="360">
-        <span class="genre">RHYTHM</span>
-        <span class="online-tag">🌐 온라인 2~4인</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>BIO BEAT</h2><small>생명과학 리듬게임</small></div>
-        <p class="desc">세포에서 생태계까지 세포부터 유전·인체·생태까지 단원별로 노래하는 생명과학 노래 43곡을 4키로 연주해요. 곡이 끝나면 생명과학 OX 퀴즈가 나와요.</p>
-        <ul class="feat"><li>노래 43곡 × 3난이도</li><li>오토 싱크 보정</li><li>실시간 대결 · 빠른 매칭</li></ul>
-        <div class="keys"><kbd>D</kbd> <kbd>F</kbd> <kbd>J</kbd> <kbd>K</kbd> 연주 · 모바일은 레인 터치</div>
-        <div class="foot"><span class="rec" data-rec="bio-beat">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
+  <a class="resume" id="resume" hidden>
+    <img alt="" width="120" height="68">
+    <div class="t"><small>이어서 플레이</small><strong></strong></div>
+    <span class="pl"><i data-ic="play"></i><span>플레이</span></span>
+  </a>
 
-    <a class="card c2" href="games/immune-strike.html" data-id="immune-strike" data-cat="action" data-kw="면역 특공대 액션 슈팅 호중구 대식세포 T세포 NK세포">
-      <div class="shot">
-        <img src="assets/immune-strike.jpg" alt="면역 특공대 플레이 화면" width="640" height="360">
-        <span class="genre">RUN &amp; GUN</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>면역 특공대</h2><small>IMMUNE STRIKE</small></div>
-        <p class="desc">호중구·대식세포·T세포·NK세포 중 하나로 출동해 세균, 바이러스, 암세포가 기다리는 3스테이지를 돌파하는 런앤건 액션.</p>
-        <ul class="feat"><li>면역세포 4종</li><li>보스 3 + 중간 보스</li><li>게임패드 지원</li></ul>
-        <div class="keys"><kbd>←</kbd><kbd>→</kbd> 이동 · <kbd>Z</kbd> 사격 · <kbd>X</kbd> 점프 · <kbd>C</kbd> 폭탄 · <kbd>V</kbd> 특수기</div>
-        <div class="foot"><span class="rec" data-rec="immune-strike">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
+  <main class="games" id="games" aria-label="게임 목록"></main>
 
-    <a class="card c3" href="games/bio-kart.html" data-id="bio-kart" data-cat="online casual" data-kw="바이오 카트 레이서 카트라이더 레이싱 드리프트 온라인">
-      <div class="shot">
-        <img src="assets/bio-kart.jpg" alt="바이오 카트 레이서 플레이 화면" width="640" height="360">
-        <span class="genre">KART RACING</span>
-        <span class="online-tag">🌐 온라인 8인</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>바이오 카트 레이서</h2><small>CLASSIC TOON 3D</small></div>
-        <p class="desc">클래식 카트라이더 감성의 툰 그래픽과 UI! 개성 넘치는 카트바디 15종으로 점프대·언덕·장애물이 가득한 몸속 15개 트랙을 질주하세요.</p>
-        <ul class="feat"><li>개성형 카트 15 · 캐릭터 15</li><li>언덕·점프대 입체 트랙</li><li>온라인 멀티 (P2P)</li></ul>
-        <div class="keys"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 주행 · <kbd>SHIFT</kbd> 드리프트 · <kbd>SPACE</kbd> 아이템</div>
-        <div class="foot"><span class="rec" data-rec="bio-kart">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
-
-    <a class="card c4" href="games/vessel-canyon.html" data-id="vessel-canyon" data-cat="online action" data-kw="혈관 협곡 롤 MOBA 5대5 세포 감염원 온라인">
-      <div class="shot">
-        <img src="assets/vessel-canyon.jpg" alt="혈관 협곡 플레이 화면" width="640" height="360">
-        <span class="genre">5 vs 5 MOBA</span>
-        <span class="online-tag">🌐 온라인 10인</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>혈관 협곡</h2><small>세포 5:5 대전</small></div>
-        <p class="desc">세포 10종과 감염원 10종이 3D 혈관 협곡에서 5대5로 맞붙는 칼바람 대전. 단계별 아이템 조합 트리 상점과 온라인 멀티를 지원해요.</p>
-        <ul class="feat"><li>챔피언 20종</li><li>3단 조합 트리 상점</li><li>온라인 멀티 (P2P)</li></ul>
-        <div class="keys">마우스 우클릭 이동·공격 · <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> 스킬 · <kbd>P</kbd> 상점</div>
-        <div class="foot"><span class="rec" data-rec="vessel-canyon">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
-
-    <a class="card c5" href="games/biotro.html" data-id="biotro" data-cat="casual" data-kw="바이오트로 포커 카드 덱빌딩 로그라이크 조커">
-      <div class="shot">
-        <img src="assets/biotro.jpg" alt="BIOTRO 플레이 화면" width="640" height="360">
-        <span class="genre">DECK ROGUELIKE</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>BIOTRO</h2><small>세포 포커 로그라이크</small></div>
-        <p class="desc">포커 족보로 칩 × 배수 점수를 쌓아 블라인드를 돌파하는 덱빌딩 로그라이크. 생명과학 조커, 소기관 카드, 시약 카드로 덱을 키워요.</p>
-        <ul class="feat"><li>조커 150종 (전설 5종)</li><li>보스 블라인드 27종</li><li>인장 · 에디션 · 바우처</li></ul>
-        <div class="keys">카드 클릭 선택 · <kbd>Enter</kbd> 핸드 플레이 · 드래그로 순서 변경</div>
-        <div class="foot"><span class="rec" data-rec="biotro">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
-
-    <a class="card c6" href="games/cell-bound.html" data-id="cell-bound" data-cat="action" data-kw="셀 바운드 아이작 로그라이크 던전 슈터 세포">
-      <div class="shot">
-        <img src="assets/cell-bound.jpg" alt="CELL BOUND 플레이 화면" width="640" height="360">
-        <span class="genre">ISAAC ROGUELIKE</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>CELL BOUND</h2><small>세포의 속박 · 리버스 에디션</small></div>
-        <p class="desc">바인딩 오브 아이작 스타일의 입체적인 던전과 문, 기괴한 병원체 보스를 물리치며 세포질에서 핵까지 8개 층을 탐험하는 슈터.</p>
-        <ul class="feat"><li>입체 던전 &amp; 특수 방문</li><li>아이템 157종 · 장신구 203종</li><li>보스 22종 · 세포 8종</li></ul>
-        <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd> 공격 · <kbd>E</kbd> 폭탄 · <kbd>Space</kbd> 액티브</div>
-        <div class="foot"><span class="rec" data-rec="cell-bound">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
-
-    <a class="card c7" href="games/cell-pinball.html" data-id="cell-pinball" data-cat="casual" data-kw="세포 탐사대 핀볼 소기관 미토콘드리아 골지체">
-      <div class="shot">
-        <img src="assets/cell-pinball.jpg" alt="세포 탐사대 플레이 화면" width="640" height="360">
-        <span class="genre">GLASS PINBALL</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>세포 탐사대</h2><small>CELL CADET · 핀볼</small></div>
-        <p class="desc">아이폰 글래스 UI로 깔끔하게 정돈된 세포 속 핀볼 테이블. 범퍼와 혈관 램프, 세포핵을 맞히며 16가지 실험 미션을 완수하세요.</p>
-        <ul class="feat"><li>글래스 HUD · 미션 16종</li><li>생명과학 도감</li><li>최대 4인 교대 플레이</li></ul>
-        <div class="keys"><kbd>Z</kbd> <kbd>/</kbd> 플리퍼 · <kbd>Space</kbd> 발사 · <kbd>C</kbd> 코인 · <kbd>F2</kbd> 시작</div>
-        <div class="foot"><span class="rec" data-rec="cell-pinball">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
-
-    <a class="card c8" href="games/cell-brawl.html" data-id="cell-brawl" data-cat="online action" data-kw="셀 브롤 브롤스타즈 3D 난투 면역 병원체 온라인">
-      <div class="shot">
-        <img src="assets/cell-brawl.jpg" alt="셀 브롤 플레이 화면" width="640" height="360">
-        <span class="genre">3D BRAWL</span>
-        <span class="online-tag">🌐 온라인 6인</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>셀 브롤</h2><small>면역 대작전</small></div>
-        <p class="desc">면역 세포와 병원체가 3D 경기장에서 맞붙는 실시간 난투. 3대3 ATP 그랩이나 생존 쇼다운으로 트로피를 모으세요.</p>
-        <ul class="feat"><li>브롤러 14종</li><li>ATP 그랩 / 쇼다운</li><li>온라인 멀티 (P2P)</li></ul>
-        <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · 클릭 공격 · <kbd>E</kbd> 궁극기 · <kbd>Q</kbd> 가젯</div>
-        <div class="foot"><span class="rec" data-rec="cell-brawl">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
-
-    <a class="card c9" href="games/only-up.html" data-id="only-up" data-cat="casual" data-kw="온리 업 소화 대탈출 3D 플랫포머 점프">
-      <div class="shot">
-        <img src="assets/only-up.jpg" alt="ONLY UP 플레이 화면" width="640" height="360">
-        <span class="genre">3D PLATFORMER</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>ONLY UP</h2><small>거꾸로 소화 대탈출</small></div>
-        <p class="desc">나노봇이 되어 항문에서 입까지 소화관을 거꾸로 거슬러 오르는 3D 점프 플랫포머. 한 번 떨어지면 아래 구간까지 미끄러져요.</p>
-        <ul class="feat"><li>소화 기관 7구간</li><li>체크포인트 이어하기</li><li>3D 물리 점프</li></ul>
-        <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · <kbd>Space</kbd> 점프 · 마우스 시점 · <kbd>R</kbd> 복귀</div>
-        <div class="foot"><span class="rec" data-rec="only-up">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
-
-    <a class="card c10" href="games/bio-strike.html" data-id="bio-strike" data-cat="online action" data-kw="바이오 스트라이크 FPS 슈팅 총 바이러스 세균 암세포 면역 온라인 스토리">
-      <div class="shot">
-        <img src="assets/bio-strike.jpg" alt="바이오 스트라이크 플레이 화면" width="640" height="360">
-        <span class="genre">3D FPS</span>
-        <span class="online-tag">🌐 온라인 8인</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>바이오 스트라이크</h2><small>BIO STRIKE · 생명과학 FPS</small></div>
-        <p class="desc">면역 요원이 되어 항체 소총·mRNA 백신 저격총으로 바이러스와 암세포를 쓸어버리는 1인칭 슈팅. 5장 스토리로 페이션트 제로를 추적하거나 친구들과 온라인 대전을 즐기세요.</p>
-        <ul class="feat"><li>스토리 5장 · 보스전</li><li>생물 무기 7종 · 병원체 8종</li><li>온라인 데스매치 · 팀전 (P2P)</li></ul>
-        <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · 클릭 사격 · 우클릭 조준 · <kbd>F</kbd> 수류탄 · <kbd>E</kbd> 근접</div>
-        <div class="foot"><span class="rec" data-rec="bio-strike">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
-    <a class="card c11" href="games/infection-lord.html" data-id="infection-lord" data-cat="action" data-kw="감염의 군주 디아블로 RPG 핵앤슬래시 액션 직업 스킬 트리 아이템 던전 보스 유전체 수호자 연금술사 신경검객 균사술사">
-      <div class="shot">
-        <img src="assets/infection-lord.jpg" alt="감염의 군주 플레이 화면" width="640" height="360">
-        <span class="genre">ACTION RPG</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>감염의 군주</h2><small>LORD OF INFECTION · 핵앤슬래시 RPG</small></div>
-        <p class="desc">유전체 수호자·연금술사·신경검객·균사술사 중 하나가 되어 세포 폐허에서 생명의 기원까지 5장을 돌파하는 디아블로풍 액션 RPG. 무작위 지도, 무작위 옵션 장비, 용병·도박까지!</p>
-        <ul class="feat"><li>직업 4 · 스킬 60 · 만렙 60</li><li>몬스터 55종 · 보스 10 · 3난이도</li><li>부위별 장비 30종 · 고유 아이템 30</li></ul>
-        <div class="keys">클릭 이동·공격 · 우클릭 스킬 · <kbd>Q</kbd><kbd>W</kbd><kbd>E</kbd><kbd>R</kbd> 스킬 · <kbd>I</kbd> 소지품 · <kbd>T</kbd> 스킬 트리</div>
-        <div class="foot"><span class="rec" data-rec="infection-lord">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
-    <a class="card c12" href="games/helix.html" data-id="helix" data-cat="action" data-kw="헬릭스 나선의 계승자 로그라이트 쿼터뷰 액션 하데스 방 탈출 변이 보스 낫 생명과학자">
-      <div class="shot">
-        <img src="assets/helix.jpg" alt="헬릭스 플레이 화면" width="640" height="360">
-        <span class="genre">ROGUELITE</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>헬릭스</h2><small>HELIX · 쿼터뷰 액션 로그라이트</small></div>
-        <p class="desc">이중나선의 낫을 든 생명과학자 이안이 되어 쉼터에서 출발, 배양실부터 유전체 금고까지 방을 하나씩 돌파하세요. 유전자 변이를 조합하고, 쓰러지면 쉼터에서 강해져 다시 내려갑니다.</p>
-        <ul class="feat"><li>4장 · 보스 4 · 중간 보스 8</li><li>몬스터 16종 · 변이 24종 · 4계통</li><li>영구 강화 · 기념품 · 생물 도감</li></ul>
-        <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 이동 · 클릭 베기 · 우클릭 회전 · <kbd>Space</kbd> 돌진 · <kbd>Q</kbd> 시약 · <kbd>R</kbd> 도약 · <kbd>F</kbd> 의식</div>
-        <div class="foot"><span class="rec" data-rec="helix">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
-    <a class="card c13" href="games/cell-frontier.html" data-id="cell-frontier" data-cat="casual" data-kw="세포 개척단 땅따먹기 구역 차지 퍼즐 숨은 그림 도트 오락실 세포 바다 숲 인체">
-      <div class="shot">
-        <img src="assets/cell-frontier.jpg" alt="세포 개척단 플레이 화면" width="640" height="360">
-        <span class="genre">ARCADE</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>세포 개척단</h2><small>CELL FRONTIER · 땅따먹기 아케이드</small></div>
-        <p class="desc">탐침을 몰고 선을 그어 땅을 차지하면 숨어 있던 생명과학 그림이 드러나요. 바이러스·해파리·말벌·암세포를 피해 목표 퍼센트를 채우세요!</p>
-        <ul class="feat"><li>나라 4곳 · 지역 16곳 · 숨은 그림 16장</li><li>보스 8종 · 순찰병 4종 · 아이템 5종</li><li>실시간 달성률 · 별 3개 도전</li></ul>
-        <div class="keys"><kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> 이동 · <kbd>Space</kbd> 누른 채 선 긋기 · <kbd>P</kbd> 일시정지</div>
-        <div class="foot"><span class="rec" data-rec="cell-frontier">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
-    <a class="card c14" href="games/bio-tower.html" data-id="bio-tower" data-cat="online casual" data-kw="바이오 타워 쌓기 탑 물리 무너뜨리기 온라인 4인 생물 세포 장기 동물">
-      <div class="shot">
-        <img src="assets/bio-tower.jpg" alt="바이오 타워 플레이 화면" width="640" height="360">
-        <span class="genre">ONLINE 4P</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>바이오 타워</h2><small>BIO TOWER · 생명 쌓기 대결</small></div>
-        <p class="desc">코끼리·기린·고래부터 적혈구·DNA·물곰까지 생물 조각을 번갈아 쌓아요. 멈춘 조각은 그 자리에 고정! 내가 놓은 조각이 섬 아래로 떨어지면 패배. 친구 최대 4명과 온라인으로 겨뤄요.</p>
-        <ul class="feat"><li>조각 48종 · 생물 설명</li><li>온라인 최대 4명 · CPU · 한 기기</li><li>진짜 물리 · 회전 45°</li></ul>
-        <div class="keys"><kbd>←</kbd><kbd>→</kbd> 옮기기 · <kbd>↑</kbd> 돌리기 · <kbd>Space</kbd> 놓기</div>
-        <div class="foot"><span class="rec" data-rec="bio-tower">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
-    <a class="card c15" href="games/codon-glass.html" data-id="codon-glass" data-cat="online casual" data-kw="코돈 글래스 퍼즐 mRNA 번역 리보솜 아미노산 염기 합10 온라인 4인 유전자">
-      <div class="shot">
-        <img src="assets/codon-glass.jpg" alt="코돈 글래스 플레이 화면" width="640" height="360">
-        <span class="genre">PUZZLE · ONLINE</span>
-      </div>
-      <div class="body">
-        <div class="title"><h2>코돈 글래스</h2><small>CODON GLASS · mRNA 번역 퍼즐</small></div>
-        <p class="desc">유리판 위 염기 구슬을 드래그로 묶어 코돈을 만들고 아미노산으로 번역해요. 표적 코돈·리보솜 번역·합10 세 가지 모드, 친구 최대 4명과 같은 판에서 온라인 대결!</p>
-        <ul class="feat"><li>모드 3종 · 모드별 최고 기록</li><li>온라인 최대 4명 · 같은 판 경쟁</li><li>막힌 판 자동 섞기</li></ul>
-        <div class="keys">마우스/터치 드래그로 사각형 선택 · 5'→3' 순서로 읽기</div>
-        <div class="foot"><span class="rec" data-rec="codon-glass">아직 기록이 없어요</span><span class="play">플레이 ▶</span></div>
-      </div>
-    </a>
-  </main>
-
-  <section class="tips" aria-label="플레이 안내">
-    <div class="tip"><b>🔊 풍부한 실시간 사운드</b>모든 음악과 타격·엔진·환경 효과음은 브라우저 WebAudio 신디사이저로 즉시 생성됩니다.</div>
-    <div class="tip"><b>📱 PC &amp; 모바일 자동 최적화</b>화면에 맞춰 PC 키보드/마우스 UI와 모바일 터치 패드 UI가 자동으로 전환됩니다.</div>
-    <div class="tip"><b>🏠 언제든 게임 목록으로 복귀</b>모든 게임 플레이 화면과 일시정지 메뉴에 「게임 목록」 버튼이 준비되어 있습니다.</div>
-  </section>
-
-  <footer>BIO ARCADE · iOS Frosted Glass Edition · 모든 게임 진행 기록은 기기에 안전하게 자동 저장됩니다</footer>
+  <footer>진행 기록은 이 기기에 자동으로 저장돼요</footer>
 </div>
 
-
-<!-- ========== 1. PWA 앱 설치 전용 안내 모달 ========== -->
-<div class="modal-backdrop" id="pwaModal" hidden role="dialog" aria-modal="true" aria-labelledby="pwaModalTitle">
-  <div class="glass-modal sm">
-    <div class="m-head">
-      <h3 id="pwaModalTitle">
-        <img src="icons/icon-v2-192.png" alt="" width="28" height="28" style="width:28px;height:28px;border-radius:7px">
-        <span>BIO ARCADE 앱(PWA) 설치</span>
-      </h3>
-      <button class="m-close" type="button" data-close="pwaModal" aria-label="닫기">✕</button>
-    </div>
-    <div class="m-body">
-      <div class="guide-box" style="display:flex;align-items:center;gap:14px;background:rgba(56,189,248,0.12);border-color:rgba(56,189,248,0.35);color:#e0f2fe">
-        <img src="icons/icon-v2-192.png" alt="BIO ARCADE" width="56" height="56" style="width:56px;height:56px;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,0.45);flex:none">
-        <div>
-          <b style="color:#fff;font-size:14.5px">BIO ARCADE 전용 앱 설치</b><br>
-          바탕화면이나 스마트폰 홈 화면에 세련된 전용 아이콘으로 설치하고 전체 화면·오프라인에서도 즉시 플레이하세요.
-        </div>
-      </div>
-      <div id="pwaDirectBox" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 15px;border-radius:14px;background:rgba(34,197,94,0.15);border:1px solid rgba(74,222,180,0.4)" hidden>
-        <div>
-          <b style="color:#bbf7d0;font-size:14px">🚀 원클릭 바로 설치 가능!</b>
-          <div style="font-size:12px;color:var(--sub)">아래 버튼을 누르면 브라우저 앱 설치 창이 바로 열립니다.</div>
-        </div>
-        <button class="g-btn pri" id="pwaPromptNowBtn" type="button" style="padding:8px 16px;font-size:13.5px">지금 설치하기</button>
-      </div>
-      <div id="pwaDeviceSteps" style="display:flex;flex-direction:column;gap:8px"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--dim);padding-top:4px">
-        <span id="swStatusTxt">🔄 서비스 워커 오프라인 캐시 확인 중...</span>
-        <button class="g-btn" type="button" data-close="pwaModal">닫기</button>
-      </div>
+<div class="modal" id="pwaModal" hidden role="dialog" aria-modal="true" aria-labelledby="pwaTitle">
+  <div class="sheet">
+    <header><img src="icons/icon-v2-192.png" alt=""><span id="pwaTitle">앱으로 설치하기</span><button class="ib" type="button" data-close aria-label="닫기"><i data-ic="x"></i></button></header>
+    <div class="bd">
+      <div class="direct" id="pwaDirect" hidden><span>이 브라우저는 바로 설치할 수 있어요</span><button class="btn" id="pwaNow" type="button">지금 설치</button></div>
+      <div id="pwaSteps" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div class="sw"><span id="swTxt">오프라인 저장 확인 중…</span><button class="btn ghost" type="button" data-close>닫기</button></div>
     </div>
   </div>
 </div>
@@ -701,297 +232,170 @@ footer{text-align:center;color:var(--dim);font-size:13.5px;padding:8px 0 24px}
 <script src="goal.js"></script>
 <script>
 (()=>{
+  // 게임 목록: id, 제목, 한 줄 소개, 분류, 온라인 인원, 검색어
+  const GAMES=[
+    ['bio-beat','바이오 비트','생명과학 노래 43곡 리듬게임','online casual','2~4','리듬 음악 노래 퀴즈 세포 유전 생태 bio beat'],
+    ['immune-strike','면역 특공대','면역세포로 돌파하는 런앤건 액션','action','','런앤건 면역 호중구 대식세포 T세포 NK세포 immune strike'],
+    ['bio-kart','바이오 카트','몸속 15개 트랙 카트 레이싱','online casual','8','카트 레이싱 레이스 혈관 소화 bio kart'],
+    ['vessel-canyon','혈관 협곡','세포와 감염원의 5:5 대전','online action','10','모바 MOBA 5대5 대전 면역 감염 vessel canyon'],
+    ['biotro','바이오트로','세포 포커 덱빌딩 로그라이크','casual','','포커 카드 덱빌딩 로그라이크 조커 소기관 biotro'],
+    ['cell-bound','셀 바운드','세포 던전을 탐험하는 슈터','action','','로그라이크 던전 슈터 세포질 핵 cell bound'],
+    ['cell-pinball','세포 탐사대 핀볼','세포 속 핀볼 테이블','casual','','핀볼 세포 미션 cell cadet pinball'],
+    ['cell-brawl','셀 브롤','면역세포 3D 난투','online action','6','난투 브롤 3D 면역 병원체 트로피 cell brawl'],
+    ['only-up','온리 업','소화관을 거슬러 오르는 점프','casual','','플랫포머 점프 소화관 나노봇 only up'],
+    ['bio-strike','바이오 스트라이크','면역 요원 1인칭 슈팅','online action','8','FPS 슈팅 총 백신 바이러스 암세포 bio strike'],
+    ['infection-lord','감염의 군주','핵앤슬래시 액션 RPG','action','','RPG 핵앤슬래시 디아블로 장비 감염 infection lord'],
+    ['helix','헬릭스','쿼터뷰 액션 로그라이트','action','','로그라이트 이중나선 유전자 변이 helix'],
+    ['cell-frontier','세포 개척단','선을 그어 땅을 넓히는 아케이드','casual','','땅따먹기 아케이드 숨은그림 cell frontier'],
+    ['bio-tower','바이오 타워','생물 조각 쌓기 대결','online casual','4','쌓기 타워 동물 물리 bio tower'],
+    ['codon-glass','코돈 글래스','mRNA 코돈 번역 퍼즐','online casual','4','퍼즐 코돈 mRNA 번역 아미노산 리보솜 codon glass']
+  ];
+  const ic=n=>window.BioIcon?BioIcon.svg(n):'';
   const get=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}};
   const set=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
   const fmtT=t=>{const m=Math.floor(t/60),s=t-m*60;return m+':'+s.toFixed(2).padStart(5,'0');};
+  const dev=window.BIO_DEV||'pc';
 
-  // iOS Glass UI Sound Synthesizer
-  let actx=null, uiSnd=get('bioArcadeUiSnd')!==false;
-  const sndBtn=document.getElementById('uiSndBtn');
-  const syncSndBtn=()=>{if(sndBtn)sndBtn.textContent=uiSnd?'🔊 사운드':'🔇 무음';};
-  syncSndBtn();
-  function playUiTone(kind){
+  // ---------- 카드 만들기 ----------
+  const box=document.getElementById('games');
+  box.innerHTML=GAMES.map(([id,t,s,cat,on,kw])=>`<a class="card" href="games/${id}.html" data-id="${id}" data-cat="${cat}" data-kw="${kw}">
+    <div class="th"><img src="assets/${id}.jpg" alt="" width="640" height="360" loading="lazy" decoding="async">${on?`<span class="badge"><i>${ic('globe')}</i>${on}인</span>`:''}</div>
+    <div class="info"><h2>${t}</h2><p class="sub">${s}</p><p class="gtxt"></p><p class="meta"><span class="goal"></span><span class="rec" data-rec="${id}"></span></p></div>
+    <i class="go">${ic('chevron')}</i></a>`).join('')+'<p class="empty" id="empty" hidden><i>'+ic('search')+'</i>찾는 게임이 없어요</p>';
+  const cards=[...box.querySelectorAll('.card')];
+  const cnt=c=>cards.filter(a=>a.dataset.cat.split(' ').includes(c)).length;
+  document.getElementById('nOnline').textContent=cnt('online');
+  document.getElementById('nAction').textContent=cnt('action');
+  document.getElementById('nCasual').textContent=cnt('casual');
+
+  // ---------- 효과음 ----------
+  let actx=null,uiSnd=get('bioArcadeUiSnd')!==false;
+  const sndBtn=document.getElementById('btnSnd');
+  const syncSnd=()=>{sndBtn.innerHTML=`<i>${ic(uiSnd?'speaker':'mute')}</i>`;sndBtn.classList.toggle('on',uiSnd);sndBtn.setAttribute('aria-label',uiSnd?'효과음 끄기':'효과음 켜기');};
+  syncSnd();
+  function tone(kind){
     if(!uiSnd)return;
     try{
       if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
       if(actx.state==='suspended')actx.resume();
       const t=actx.currentTime;
-      const o=actx.createOscillator(),g=actx.createGain();
-      o.type=kind==='launch'?'triangle':'sine';
-      if(kind==='hover'){
-        o.frequency.setValueAtTime(680,t);o.frequency.exponentialRampToValueAtTime(880,t+0.035);
-        g.gain.setValueAtTime(0.018,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.04);
-        o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+0.045);
-      }else if(kind==='tap'){
-        o.frequency.setValueAtTime(520,t);o.frequency.exponentialRampToValueAtTime(1040,t+0.065);
-        g.gain.setValueAtTime(0.055,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.075);
-        o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+0.08);
-      }else if(kind==='launch'){
-        [523.25,659.25,783.99,1046.5].forEach((f,i)=>{
-          const osc=actx.createOscillator(),gn=actx.createGain();
-          osc.type='triangle';osc.frequency.setValueAtTime(f,t+i*0.035);
-          gn.gain.setValueAtTime(0.06,t+i*0.035);gn.gain.exponentialRampToValueAtTime(0.0001,t+i*0.035+0.14);
-          osc.connect(gn);gn.connect(actx.destination);osc.start(t+i*0.035);osc.stop(t+i*0.035+0.15);
-        });
-      }
+      const note=(f,f2,at,len,vol,type)=>{const o=actx.createOscillator(),g=actx.createGain();o.type=type||'sine';
+        o.frequency.setValueAtTime(f,t+at);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+at+len*.8);
+        g.gain.setValueAtTime(vol,t+at);g.gain.exponentialRampToValueAtTime(.0001,t+at+len);o.connect(g);g.connect(actx.destination);o.start(t+at);o.stop(t+at+len+.01);};
+      if(kind==='hover')note(680,880,0,.04,.015);
+      else if(kind==='tap')note(520,1040,0,.075,.05);
+      else [523.25,659.25,783.99,1046.5].forEach((f,i)=>note(f,0,i*.035,.14,.055,'triangle'));
     }catch(e){}
   }
-  if(sndBtn)sndBtn.addEventListener('click',()=>{uiSnd=!uiSnd;set('bioArcadeUiSnd',uiSnd);syncSndBtn();playUiTone('tap');});
+  sndBtn.addEventListener('click',()=>{uiSnd=!uiSnd;set('bioArcadeUiSnd',uiSnd);syncSnd();tone('tap');});
 
+  // ---------- 기록 한 줄 (태블릿·PC) ----------
   const REC={
-    'bio-beat'(){
-      const r=get('biobeat_rec_v1');if(!r||typeof r!=='object')return '';
+    'bio-beat'(){const r=get('biobeat_rec_v1');if(!r||typeof r!=='object')return '';
       const songs=new Set(Object.keys(r).filter(k=>k[0]!=='_'&&r[k]&&r[k].score>0).map(k=>k.replace(/_\d$/,'')));
-      const out=[];if(songs.size)out.push(`클리어 <b>${songs.size}</b>곡`);
-      const q=r._quiz;if(q&&q.t)out.push(`OX 퀴즈 <b>${q.r}/${q.t}</b>`);
-      return out.join(' · ');
-    },
-    'immune-strike'(){
-      const hs=get('immuneStrikeHS');if(!Array.isArray(hs)||!hs.length||!hs[0])return '';
-      return `최고 점수 <b>${String(hs[0].s).padStart(8,'0')}</b> ${hs[0].n||''}`;
-    },
-    'bio-kart'(){
-      const s=get('biokart');const b=s&&s.best;if(!b||typeof b!=='object')return '';
-      const v=Object.values(b).filter(x=>typeof x==='number'&&isFinite(x));if(!v.length)return '';
-      return `기록 보유 트랙 <b>${new Set(Object.keys(b).map(k=>k.split('-')[1])).size}</b>개 · 최단 <b>${fmtT(Math.min(...v))}</b>`;
-    },
-    'biotro'(){
-      const s=get('biotroStats');if(!s||!s.runs)return '';
-      const out=[`최고 앤티 <b>${s.bestAnte||1}</b>`];if(s.stakeWin)out.push(`<b>${['흰색','빨간색','초록색','검은색','파란색','보라색','주황색','황금색'][s.stakeWin-1]}</b> 판돈 클리어`);if(s.bestHand)out.push(`최고 핸드 <b>${Number(s.bestHand).toLocaleString('en-US')}</b>`);if(s.wins)out.push(`승리 <b>${s.wins}</b>회`);
-      return out.join(' · ');
-    },
-    'cell-bound'(){
-      const s=get('cellBoundStats');if(!s||!s.runs)return '';
-      const F=['세포질 I','세포질 II','혈관 I','혈관 II','림프절 I','림프절 II','핵 I','핵 II'];
-      const out=[];if(s.wins)out.push(`승리 <b>${s.wins}</b>회`);else if(s.bestFloor)out.push(`최고 <b>${F[Math.min(7,s.bestFloor-1)]}</b>`);
-      if(s.kills)out.push(`처치 <b>${s.kills}</b>`);return out.join(' · ')||`플레이 <b>${s.runs}</b>회`;
-    },
-    'cell-pinball'(){
-      const hs=get('cellCadetHS');if(!Array.isArray(hs)||!hs.length||!hs[0])return '';
-      return `최고 점수 <b>${Number(hs[0].score||0).toLocaleString('en-US')}</b> ${hs[0].name||''}`;
-    },
-    'cell-brawl'(){
-      const t=get('cellbrawl:trophies');if(!t||typeof t!=='object')return '';
-      const v=Object.values(t).filter(x=>typeof x==='number'&&x>0);if(!v.length)return '';
-      return `트로피 <b>${v.reduce((a,b)=>a+b,0)}</b> · 최고 캐릭터 <b>${Math.max(...v)}</b>`;
-    },
-    'only-up'(){
-      const s=get('onlyupBioStats');if(s&&s.clears)return `탈출 <b>${s.clears}</b>회 · 최단 <b>${fmtT(s.best)}</b>`;
-      const p=get('onlyupBio');if(p&&p.cp>0)return `진행 중 <b>${p.cp+1}</b>/7 구간`;return '';
-    },
-    'bio-strike'(){
-      const s=get('bioStrike');if(!s||typeof s!=='object')return '';
-      const out=[];if(s.cleared)out.push(`스토리 <b>${s.cleared}</b>/5장`);
-      if(s.surv&&s.surv.wave)out.push(`생존 <b>${s.surv.wave}</b>웨이브`);
-      if(s.mp&&s.mp.k)out.push(`온라인 <b>${s.mp.k}</b>킬`);
-      return out.join(' · ');
-    },
-    'infection-lord'(){
-      const s=get('infectionLord');if(!s||!s.lvl)return '';
-      const D=['일반','악몽','지옥'];
-      return `최고 <b>Lv ${s.lvl}</b> ${s.cls||''} · 보스 <b>${s.bosses||0}</b> · ${D[s.diff||0]}`;
-    },
-    'helix'(){
-      const s=get('helix-save-v1');if(!s||!s.runs)return '';
-      return `출정 <b>${s.runs}</b>회 · 최고 <b>${s.best||0}</b>장 보스${s.wins?` · 정화 <b>${s.wins}</b>회`:''}`;
-    },
-    'codon-glass'(){
-      const s=get('codonGlass');if(!s||!s.plays)return '';const b=s.best||{};
-      return `${s.plays}판 · 표적 <b>${b.target||0}</b> · 번역 <b>${b.ribosome||0}</b> · 합10 <b>${b.sum10||0}</b>`;
-    },
-    'bio-tower'(){
-      const s=get('bioTower');if(!s||!s.rounds)return '';
-      return `${s.rounds}라운드 · <b>${s.wins||0}</b>승 · 최고 <b>${s.best||0}m</b>`;
-    },
-    'cell-frontier'(){
-      const s=get('cellFrontier');if(!s||!s.clear)return '';const c=Object.values(s.clear);if(!c.length)return '';
-      return `정복 <b>${c.length}</b>/16곳 · 별 <b>${c.reduce((a,x)=>a+(x.stars||0),0)}</b>개 · 최고 <b>${(s.best||0).toLocaleString()}</b>점`;
-    },
-    'vessel-canyon'(){
-      const s=get('vesselCanyonStats');if(!s||!(s.w||s.l))return '';
-      return `전적 <b>${s.w||0}승 ${s.l||0}패</b>`;
-    }
+      const out=[];if(songs.size)out.push(`클리어 <b>${songs.size}</b>곡`);const q=r._quiz;if(q&&q.t)out.push(`퀴즈 <b>${q.r}/${q.t}</b>`);return out.join(' · ');},
+    'immune-strike'(){const hs=get('immuneStrikeHS');if(!Array.isArray(hs)||!hs.length||!hs[0])return '';return `최고 <b>${Number(hs[0].s||0).toLocaleString()}</b>점`;},
+    'bio-kart'(){const s=get('biokart');const b=s&&s.best;if(!b||typeof b!=='object')return '';
+      const v=Object.values(b).filter(x=>typeof x==='number'&&isFinite(x));if(!v.length)return '';return `최단 <b>${fmtT(Math.min(...v))}</b>`;},
+    'biotro'(){const s=get('biotroStats');if(!s||!s.runs)return '';return `최고 앤티 <b>${s.bestAnte||1}</b>`;},
+    'cell-bound'(){const s=get('cellBoundStats');if(!s||!s.runs)return '';return s.wins?`승리 <b>${s.wins}</b>회`:`최고 <b>${s.bestFloor||1}</b>층`;},
+    'cell-pinball'(){const hs=get('cellCadetHS');if(!Array.isArray(hs)||!hs.length||!hs[0])return '';return `최고 <b>${Number(hs[0].score||0).toLocaleString()}</b>점`;},
+    'cell-brawl'(){const t=get('cellbrawl:trophies');if(!t||typeof t!=='object')return '';const v=Object.values(t).filter(x=>typeof x==='number'&&x>0);
+      return v.length?`트로피 <b>${v.reduce((a,b)=>a+b,0)}</b>`:'';},
+    'only-up'(){const s=get('onlyupBioStats');if(s&&s.clears)return `탈출 <b>${s.clears}</b>회`;const p=get('onlyupBio');return p&&p.cp>0?`<b>${p.cp+1}</b>/7 구간`:'';},
+    'bio-strike'(){const s=get('bioStrike');if(!s||typeof s!=='object')return '';const out=[];if(s.cleared)out.push(`스토리 <b>${s.cleared}</b>/5장`);
+      if(s.surv&&s.surv.wave)out.push(`생존 <b>${s.surv.wave}</b>웨이브`);return out.join(' · ');},
+    'infection-lord'(){const s=get('infectionLord');return s&&s.lvl?`최고 <b>Lv ${s.lvl}</b>`:'';},
+    'helix'(){const s=get('helix-save-v1');return s&&s.runs?`출정 <b>${s.runs}</b>회`:'';},
+    'codon-glass'(){const s=get('codonGlass');return s&&s.plays?`<b>${s.plays}</b>판`:'';},
+    'bio-tower'(){const s=get('bioTower');return s&&s.rounds?`<b>${s.wins||0}</b>승 · 최고 <b>${s.best||0}m</b>`:'';},
+    'cell-frontier'(){const s=get('cellFrontier');if(!s||!s.clear)return '';const c=Object.values(s.clear);return c.length?`정복 <b>${c.length}</b>/16곳`:'';},
+    'vessel-canyon'(){const s=get('vesselCanyonStats');return s&&(s.w||s.l)?`<b>${s.w||0}승 ${s.l||0}패</b>`:'';}
   };
-  for(const el of document.querySelectorAll('[data-rec]')){
-    let h='';try{h=REC[el.dataset.rec]();}catch(e){}
-    if(h)el.innerHTML=h;
-  }
+  for(const el of document.querySelectorAll('[data-rec]')){let h='';try{h=REC[el.dataset.rec]();}catch(e){}el.innerHTML=h||'';}
+
+  // ---------- 최근 플레이 / 이어하기 ----------
   const last=get('bioArcadeLast');
-  const cards=Array.from(document.querySelectorAll('.card'));
+  const lastCard=cards.find(a=>a.dataset.id===last);
+  if(lastCard){
+    const t=document.createElement('span');t.className='recent';t.textContent='최근';lastCard.querySelector('.th').appendChild(t);
+    const r=document.getElementById('resume');r.href=lastCard.getAttribute('href');r.dataset.id=last;
+    r.querySelector('img').src=`assets/${last}.jpg`;r.querySelector('strong').textContent=lastCard.querySelector('h2').textContent;r.hidden=false;
+    r.addEventListener('click',()=>tone('launch'));
+  }
   for(const a of cards){
-    if(a.dataset.id===last){
-      const t=document.createElement('span');t.className='recent';t.textContent='최근 플레이';
-      a.querySelector('.shot').appendChild(t);
-    }
-    a.addEventListener('pointerenter',()=>playUiTone('hover'));
-    a.addEventListener('click',()=>{set('bioArcadeLast',a.dataset.id);playUiTone('launch');});
+    if(dev==='pc')a.addEventListener('pointerenter',()=>tone('hover'));
+    a.addEventListener('click',()=>{set('bioArcadeLast',a.dataset.id);tone('launch');});
   }
 
-  // Category & Search Filtering
-  let curFilter='all';
-  const searchIn=document.getElementById('gameSearch');
-  function applyFilter(){
-    const q=(searchIn&&searchIn.value||'').trim().toLowerCase();
+  // ---------- 분류 · 검색 ----------
+  let cur='all';
+  const q=document.getElementById('q'),empty=document.getElementById('empty'),bar=document.getElementById('bar');
+  function apply(){
+    const s=q.value.trim().toLowerCase();let n=0;
     for(const c of cards){
-      const catMatch=curFilter==='all'||(c.dataset.cat||'').split(' ').includes(curFilter);
-      const txt=(c.textContent+' '+(c.dataset.kw||'')).toLowerCase();
-      const qMatch=!q||txt.includes(q);
-      c.hidden=!(catMatch&&qMatch);
+      const ok=(cur==='all'||c.dataset.cat.split(' ').includes(cur))&&(!s||(c.textContent+' '+c.dataset.kw).toLowerCase().includes(s));
+      c.hidden=!ok;if(ok)n++;
     }
+    empty.hidden=n>0;
+    document.getElementById('resume').classList.toggle('dim',!!s);
+    if(lastCard)document.getElementById('resume').hidden=!!s||cur!=='all';
   }
-  document.querySelectorAll('[data-filter]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      curFilter=btn.dataset.filter;
-      document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('on',b===btn));
-      playUiTone('tap');
-      applyFilter();
-    });
-  });
-  if(searchIn)searchIn.addEventListener('input',applyFilter);
+  document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{
+    cur=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-selected',x===b);});tone('tap');apply();}));
+  q.addEventListener('input',apply);
+  q.addEventListener('keydown',e=>{if(e.key==='Enter'){const f=cards.find(c=>!c.hidden);if(f){e.preventDefault();f.click();location.href=f.href;}}else if(e.key==='Escape'){q.value='';apply();q.blur();}});
+  document.getElementById('btnSearch').addEventListener('click',()=>{const on=!bar.classList.contains('searching');bar.classList.toggle('searching',on);if(on)q.focus();else{q.value='';apply();}});
+  addEventListener('keydown',e=>{if(e.key==='/'&&document.activeElement!==q&&!e.ctrlKey&&!e.metaKey){e.preventDefault();q.focus();}});
+  addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
 
-  window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
-
-  // ================= 1. PWA 앱 설치 버튼 & 스마트 기기별 설치 모달 =================
-  const standalone=matchMedia('(display-mode: standalone),(display-mode: fullscreen)').matches||navigator.standalone===true;
-  const btnHeroInstall=document.getElementById('install');
-  const btnTopInstall=document.getElementById('topInstallBtn');
-  const pwaModal=document.getElementById('pwaModal');
-  const pwaDirectBox=document.getElementById('pwaDirectBox');
-  const pwaPromptNowBtn=document.getElementById('pwaPromptNowBtn');
-  const pwaDeviceSteps=document.getElementById('pwaDeviceSteps');
-  const swStatusTxt=document.getElementById('swStatusTxt');
-  let deferred=null;
-
-  function detectEnvLabel(){
-    const ua=navigator.userAgent||'';
-    const isIOS=/iphone|ipad|ipod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-    const isAndroid=/android/i.test(ua);
-    const isMac=/macintosh|mac os x/i.test(ua)&&!isIOS;
-    const isWin=/windows/i.test(ua);
-    const isCrOS=/cros/i.test(ua);
-    const os=isIOS?'iOS/iPadOS':isAndroid?'Android':isCrOS?'ChromeOS':isWin?'Windows':isMac?'macOS':'Web';
-    const br=/edg\//i.test(ua)?'Edge':/whale/i.test(ua)?'Whale':/samsungbrowser/i.test(ua)?'Samsung':/crios|chrome/i.test(ua)?'Chrome':/safari/i.test(ua)?'Safari':/firefox/i.test(ua)?'Firefox':'Browser';
-    return os+' · '+br+(standalone?' (PWA앱)':'');
-  }
-
-  function syncInstallButtons(){
-    const btns=[btnHeroInstall,btnTopInstall].filter(Boolean);
-    btns.forEach(b=>{
-      if(standalone){
-        b.textContent='✅ 앱 설치됨';
-        b.classList.add('installed');
-      }else if(deferred){
-        b.textContent='📲 앱 즉시 설치';
-        b.classList.remove('installed');
-      }else{
-        b.textContent='📲 앱 설치';
-        b.classList.remove('installed');
-      }
-    });
-    if(pwaDirectBox)pwaDirectBox.hidden=!deferred;
-  }
-
-  function renderPwaInstructions(){
-    const ua=navigator.userAgent||'';
-    const isIOS=/iphone|ipad|ipod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-    const isAndroid=/android/i.test(ua);
-    let steps=[];
-    if(standalone){
-      steps=[
-        ['1','현재 이미 <b>BIO ARCADE 앱(독립 실행 모드)</b>으로 실행 중입니다!'],
-        ['2','바탕화면 또는 홈 화면의 BIO ARCADE 아이콘으로 언제든 오프라인 실행이 가능합니다.']
-      ];
-    }else if(isIOS){
-      steps=[
-        ['1','Safari 브라우저 하단(아이패드는 상단)의 <b>공유 버튼 [↑]</b>을 탭하세요.'],
-        ['2','메뉴를 아래로 스크롤하여 <b>「홈 화면에 추가 ➕」</b>를 선택하세요.'],
-        ['3','오른쪽 위 <b>「추가」</b>를 누르면 홈 화면에 세련된 <b>BIO ARCADE</b> 전용 앱이 생성됩니다!']
-      ];
-    }else if(isAndroid){
-      steps=[
-        ['1','크롬/삼성 인터넷 우측 상단 <b>메뉴 [⋮]</b> 또는 하단 메뉴를 여세요.'],
-        ['2','<b>「앱 설치」</b> 또는 <b>「홈 화면에 추가」</b>를 탭하세요.'],
-        ['3','설치가 완료되면 홈 화면에서 전체 화면 게임 앱으로 바로 실행됩니다!']
-      ];
-    }else{
-      steps=[
-        ['1','PC 크롬(Chrome)·엣지(Edge)·웨일(Whale) 주소창 오른쪽 끝의 <b>[⊕ 앱 설치]</b> 아이콘을 클릭하세요.'],
-        ['2','또는 브라우저 우측 상단 <b>메뉴 [⋮] → [전송, 저장, 공유] → [페이지를 앱으로 설치...]</b>를 선택하세요.'],
-        ['3','바탕화면과 작업 표시줄에 <b>BIO ARCADE</b> 단독 앱이 생성되며 오프라인에서도 작동합니다!']
-      ];
-    }
-    if(pwaDeviceSteps){
-      pwaDeviceSteps.innerHTML=steps.map(s=>`<div class="pwa-step"><b class="num">${s[0]}</b><div>${s[1]}</div></div>`).join('');
-    }
-  }
-
-  async function handleInstallClick(){
-    playUiTone('tap');
-    if(deferred){
-      try{
-        deferred.prompt();
-        const choice=await deferred.userChoice;
-        if(choice&&choice.outcome==='accepted')deferred=null;
-        syncInstallButtons();
-        return;
-      }catch(e){}
-    }
-    renderPwaInstructions();
-    if(pwaModal)pwaModal.hidden=false;
-  }
-
-  window.addEventListener('beforeinstallprompt',e=>{
-    e.preventDefault();
-    deferred=e;
-    syncInstallButtons();
-  });
-  window.addEventListener('appinstalled',()=>{
-    deferred=null;
-    syncInstallButtons();
-    if(pwaModal)pwaModal.hidden=true;
-  });
-  [btnHeroInstall,btnTopInstall,pwaPromptNowBtn].filter(Boolean).forEach(b=>b.addEventListener('click',handleInstallClick));
-  syncInstallButtons();
-
-  if('serviceWorker' in navigator&&location.protocol!=='file:'){
-    navigator.serviceWorker.register('sw.js').then(()=>{
-      if(swStatusTxt)swStatusTxt.textContent='✅ 오프라인 캐시 준비 완료 (PWA 활성화됨)';
-    }).catch(()=>{
-      if(swStatusTxt)swStatusTxt.textContent='ℹ️ 웹 브라우저 모드로 실행 중';
-    });
-  }else if(swStatusTxt){
-    swStatusTxt.textContent='ℹ️ 로컬 파일(file://) 모드 — 웹 호스팅(GitHub Pages 등) 배포 시 원클릭 PWA 설치가 활성화됩니다.';
-  }
-
-  document.querySelectorAll('[data-close]').forEach(b=>{
-    b.addEventListener('click',()=>{
-      const el=document.getElementById(b.dataset.close);
-      if(el)el.hidden=true;
-      playUiTone('tap');
-    });
-  });
-  [pwaModal].filter(Boolean).forEach(m=>{
-    m.addEventListener('click',e=>{if(e.target===m)m.hidden=true;});
-  });
-
-  // ================= 2. 목표 점수 (랭킹 대신) =================
-  // 각 게임 카드에 목표와 달성 여부를 보여 줌. 목표 값은 goal.js의 GOALS
+  // ---------- 목표 점수 ----------
   function renderGoals(){
     if(!window.BioGoal)return;
     const G=BioGoal.GOALS;let done=0,total=0;
-    document.querySelectorAll('.card[data-id]').forEach(card=>{
-      const id=card.dataset.id,g=G[id];if(!g)return;total++;
-      const st=BioGoal.status(id);if(st&&st.ok)done++;
-      let el=card.querySelector('.goal');
-      if(!el){el=document.createElement('div');el.className='goal';const foot=card.querySelector('.foot');foot.parentNode.insertBefore(el,foot);}
+    for(const card of cards){
+      const id=card.dataset.id,g=G[id],el=card.querySelector('.goal'),gt=card.querySelector('.gtxt');
+      if(!g){el.hidden=true;gt.hidden=true;continue;}
+      total++;const st=BioGoal.status(id);if(st&&st.ok)done++;
       el.className='goal'+(st&&st.ok?' ok':st?' try':'');
-      el.innerHTML=`<span>🎯 ${g.goal}</span><b>${st&&st.ok?'✅ 성공':st?'도전 중':'도전 전'}</b>`;
-    });
-    const h=document.getElementById('heroGoal');if(h)h.textContent=`${done} / ${total}`;
+      el.innerHTML=st&&st.ok?`<i>${ic('check')}</i>목표 달성`:`<i>${ic('target')}</i>${st?'도전 중':'목표'}`;
+      el.title='목표: '+g.goal;gt.textContent='목표 · '+g.goal;
+    }
+    document.getElementById('heroGoal').textContent=`${done} / ${total}`;
   }
   renderGoals();
   addEventListener('pageshow',renderGoals);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)renderGoals();});
+
+  // ---------- 앱 설치 ----------
+  const standalone=matchMedia('(display-mode: standalone),(display-mode: fullscreen)').matches||navigator.standalone===true;
+  const btnI=document.getElementById('btnInstall'),modal=document.getElementById('pwaModal'),direct=document.getElementById('pwaDirect'),steps=document.getElementById('pwaSteps'),swTxt=document.getElementById('swTxt');
+  let deferred=null;
+  if(standalone)btnI.hidden=true;
+  function syncI(){direct.hidden=!deferred;}
+  function renderSteps(){
+    const ua=navigator.userAgent||'';
+    const iOS=/iphone|ipad|ipod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),and=/android/i.test(ua);
+    const S=iOS?['Safari 아래쪽(아이패드는 위쪽)의 <b>공유</b> 버튼을 누르세요.','<b>홈 화면에 추가</b>를 고르세요.','오른쪽 위 <b>추가</b>를 누르면 홈 화면에 앱이 생겨요.']
+      :and?['브라우저 오른쪽 위 <b>메뉴(⋮)</b>를 여세요.','<b>앱 설치</b> 또는 <b>홈 화면에 추가</b>를 누르세요.','홈 화면에서 전체 화면으로 바로 실행돼요.']
+      :['주소창 오른쪽의 <b>설치</b> 아이콘을 누르세요.','또는 <b>메뉴(⋮) → 저장 및 공유 → 페이지를 앱으로 설치</b>를 고르세요.','바탕화면과 작업 표시줄에 앱이 생기고 오프라인에서도 열려요.'];
+    steps.innerHTML=S.map((s,i)=>`<div class="step"><span class="n">${i+1}</span><div>${s}</div></div>`).join('');
+  }
+  async function install(){
+    tone('tap');
+    if(deferred){try{deferred.prompt();const c=await deferred.userChoice;if(c&&c.outcome==='accepted'){deferred=null;btnI.hidden=true;}syncI();return;}catch(e){}}
+    renderSteps();modal.hidden=false;
+  }
+  addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;syncI();});
+  addEventListener('appinstalled',()=>{deferred=null;btnI.hidden=true;modal.hidden=true;});
+  btnI.addEventListener('click',install);
+  document.getElementById('pwaNow').addEventListener('click',install);
+  modal.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>{modal.hidden=true;tone('tap');}));
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.hidden=true;});
+  addEventListener('keydown',e=>{if(e.key==='Escape')modal.hidden=true;});
+  if('serviceWorker' in navigator&&location.protocol!=='file:'){
+    navigator.serviceWorker.register('sw.js').then(()=>{swTxt.textContent='오프라인에서도 열 수 있어요';}).catch(()=>{swTxt.textContent='웹 브라우저 모드로 실행 중';});
+  }else swTxt.textContent='웹에 올리면 앱 설치를 쓸 수 있어요';
 })();
 </script>
 <script src="ilog.js"></script>
