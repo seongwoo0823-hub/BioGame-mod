@@ -28,7 +28,7 @@ assets/           메인 화면 썸네일
 games/il-assets/  감염의 군주 스프라이트·아이콘 아틀라스 (WebP)
 games/bio-tower/  바이오 타워 조각·섬·배경 그림과 충돌 형태(pieces.json). tools/bio-tower/art/ 원화(Glif로 새로 그린 그림)에서 tools/bio-tower/from_art.py로 다시 만듦
 games/cell-frontier/  세포 개척단 그림(숨은 그림 16장·덮개·지도·스프라이트). tools/cell-frontier/build.py로 다시 만듦 (숨은 그림·적·아이템은 tools/cell-frontier/art/ 원화(Glif로 새로 그린 그림)에서 from_art.py가 만듦)
-games/bio-beat/    바이오 비트 노래 음원(mp3)과 채보(json). tools/bio-beat/make_chart.py가 음원을 분석해 하·중·상 채보를 만들고 embed_charts.py가 게임에 넣음
+games/bio-beat/    바이오 비트 노래 음원(mp3)과 채보(json), art/cover(앨범 커버)·art/mv(뮤직비디오 장면) — tools/bio-beat/cut_art.py가 tools/bio-beat/art/의 Glif 시트에서 잘라 냄. tools/bio-beat/make_chart.py가 음원을 분석해 하·중·상 채보를 만들고 embed_charts.py가 게임에 넣음
 games/codon-glass/ 코돈 글래스 Tailwind CSS(tw.css). tools/codon-glass/build-css.sh로 다시 만듦 (썸네일 원본: tools/codon-glass/concept.html)
 games/helix/      헬릭스 게임 코드(js/)와 에셋(assets/) (hero-viewer.html: 주인공 미리보기, mob-viewer.html: 몬스터 32종 도감·챕터 시험장)
 vendor/           three.js r128 (3D 게임용), Matter.js 0.19 (바이오 타워 물리), PeerJS — 모두 MIT 라이선스
@@ -57,15 +57,9 @@ GitHub Pages처럼 `https`로 배포된 주소에서 열면 앱으로 설치할 
 처음 접속할 때 게임 15종이 모두 기기에 저장되므로, 설치한 뒤에는 인터넷 없이도 실행됩니다.
 파일을 수정하면 다음 실행 때 자동으로 새 버전이 반영됩니다. 파일을 추가하거나 지웠다면 `sw.js`의 `CORE` 목록과 `VERSION`도 함께 바꿔 주세요.
 
-## 랭킹 시트와 관리자 비밀번호
+## 목표 점수 (성공 / 실패)
 
-랭킹은 구글 시트 + Apps Script 웹 앱으로 저장합니다. 스크립트는 `tools/apps-script/Code.gs`에 있습니다.
-
-1. 구글 시트 → 확장 프로그램 → Apps Script에 `Code.gs` 내용을 붙여 넣습니다.
-2. 프로젝트 설정 → **스크립트 속성**에 `ADMIN_PASS`를 새 비밀번호로 추가합니다. 예전 비밀번호(1211)는 페이지 소스에 공개되어 있었으므로 쓰지 마세요.
-3. 웹 앱으로 배포하고, 메인 화면 관리자 모드에서 `/exec` 주소를 저장합니다.
-
-관리자 비밀번호는 페이지 소스에 들어 있지 않고, 서버(Apps Script)가 확인합니다. 기록 수정·삭제·전체 삭제 요청도 서버에서 비밀번호를 확인한 뒤에만 처리합니다.
+랭킹 대신, 게임을 아주 잘하지 않아도 넘을 수 있는 목표를 게임마다 정해 두었습니다. 게임을 열면 위쪽에 목표가 잠깐 나오고, 판이 끝나면 **성공** 또는 **실패**를 알려 줍니다. 메인 화면 카드에도 목표와 달성 여부가 보입니다. 목표 값은 `goal.js`의 `GOALS`에서 바꿀 수 있습니다.
 
 ## 플레이어별 입력 기록
 

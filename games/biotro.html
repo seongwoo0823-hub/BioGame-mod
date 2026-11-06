@@ -1479,12 +1479,12 @@ function cashOut(){
     const inv=G.tags.filter(t=>t.id==='invest').length;if(inv){G.money+=25*inv;G.tags=G.tags.filter(t=>t.id!=='invest');toast(`투자 태그: +$${25*inv}`);}
     const wasFinal=G.ante===8&&!G.won;
     G.ante++;setupAnte();
-    if(wasFinal){G.won=true;const S=stats();S.wins++;S.stakeWin=Math.max(S.stakeWin||0,stake());saveStats(S);openShop();render();save();showWin();return;}
+    if(wasFinal){window.BioGoal&&BioGoal.result('biotro',8,{ok:true,text:'앤티 8 클리어!'});G.won=true;const S=stats();S.wins++;S.stakeWin=Math.max(S.stakeWin||0,stake());saveStats(S);openShop();render();save();showWin();return;}
   }else G.blind++;
   openShop();render();save();
 }
 function gameOver(){
-  G.over=true;G.phase='over';sfx('lose');shake(7);flash('#c0203a',.4,700);{const b=ctr($('#scoreBox'));burst(b.x,b.y,40,CG.red,{sp:260,life:.9});}
+  G.over=true;G.phase='over';window.BioGoal&&BioGoal.result('biotro',G.ante);sfx('lose');shake(7);flash('#c0203a',.4,700);{const b=ctr($('#scoreBox'));burst(b.x,b.y,40,CG.red,{sp:260,life:.9});}
   try{localStorage.removeItem('biotroRun');}catch(e){}
   const mp=mostPlayed();
   modal(`<h2 style="color:var(--mult)">게임 오버</h2>
@@ -2425,6 +2425,7 @@ applyFxOpt();fit();$("#deckImg").src=backURL();showTitle();requestAnimationFrame
   const step=d=>{let k=0;while(q.length&&(k++<1||d.timeRemaining()>6))q.shift()();if(q.length)ric(step);};ric(step);}
 if(document.fonts&&document.fonts.load){document.fonts.load("16px 'Press Start 2P'");document.fonts.load("16px 'Do Hyeon'");}
 </script>
+<script src="../goal.js"></script>
 <script src="../ilog.js"></script>
 </body>
 </html>

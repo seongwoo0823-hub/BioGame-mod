@@ -576,7 +576,7 @@ function updatePlayer(){
  const p=pl,c=p.c;if(bubble&&--bubble.t<=0)bubble=null;
  if(p.inv>0)p.inv--;if(p.hurtT>0)p.hurtT--;if(p.shotT>0)p.shotT--;if(p.meleeT>0)p.meleeT--;if(p.throwT>0)p.throwT--;if(p.landT>0)p.landT--;if(p.spCd>0)p.spCd--;if(p.slowT>0)p.slowT--;if(p.suppT>0)p.suppT--;if(p.shieldT>0)p.shieldT--;if(p.fcd>0)p.fcd--;
  p.beam=null;
- if(p.dead){p.deadT++;p.vy+=GRAV;p.y+=p.vy;p.x+=p.vx;p.vx*=.98;if(p.deadT===55)burst(p.x,p.y-12,24,c.col,3,3);if(p.deadT>110){if(p.lives>0){p.lives--;respawn();}else{state='over';stT=0;contT=600;MUS.play('over');announce('Game over');}}return;}
+ if(p.dead){p.deadT++;p.vy+=GRAV;p.y+=p.vy;p.x+=p.vx;p.vx*=.98;if(p.deadT===55)burst(p.x,p.y-12,24,c.col,3,3);if(p.deadT>110){if(p.lives>0){p.lives--;respawn();}else{state='over';stT=0;contT=600;MUS.play('over');window.BioGoal&&BioGoal.result('immune-strike',score);announce('Game over');}}return;}
  if(p.enterCd>0)p.enterCd--;
  if(p.slug&&p.winT<=0){updSlugDrive(p);return;}
  if(p.winT>0){p.winT++;p.vx*=.8;moveBody(p);if(p.og&&p.winT%40===0){p.vy=-3;}return;}
@@ -1503,7 +1503,7 @@ function drawClear(){G.globalAlpha=.65;R(0,40,W,190,'#000');G.globalAlpha=1;
  if(stT>70){const k=Math.max(0,1-(stT-70)/10);if(stT===71)sfx('stamp');const rc={S:'#ffe040',A:'#ff80c0',B:'#80c0ff',C:'#c0c0c0'}[bonus.rank];T('RANK',395,118,7,'#fff','center','p');T(bonus.rank,395,146,26+k*30,rc,'center','p',2);if(bonus.rb)T('+'+bonus.rb,395,174,6,rc,'center','p');}
  if(stT>80)T('SCORE  '+String(score).padStart(8,'0'),240,192,9,'#ff9ad0','center','p',2);if(stT>90&&frame%40<28)T(L.si<2?'ENTER — 다음 스테이지로':'ENTER — 최종 결과 보기',240,214,8,'#fff');}
 function updClear(){stT++;updParts();updAmb();if(stT%12===3&&stT<65)sfx('select');pl.winT++;moveBody(pl);if(pl.og&&pl.winT%40===0)pl.vy=-3;
- if((stT>90&&(kp('ok')||TAP))||stT>540){if(L.si<2){const lv=pl.lives,bm=pl.bombs;startStage(L.si+1);pl.lives=lv;pl.bombs=bm;}else{state='ending';stT=0;MUS.play('ending');}}}
+ if((stT>90&&(kp('ok')||TAP))||stT>540){if(L.si<2){const lv=pl.lives,bm=pl.bombs;startStage(L.si+1);pl.lives=lv;pl.bombs=bm;}else{state='ending';stT=0;window.BioGoal&&BioGoal.result('immune-strike',score);MUS.play('ending');}}}
 function drawOver(){G.globalAlpha=.6;R(0,0,W,H,'#000');G.globalAlpha=1;T('GAME OVER',240,90,18,'#ff3050','center','p',2);T('면역 체계가 무너졌다…',240,120,10,'#fff');
  const s=Math.ceil(contT/60);T('CONTINUE?  '+s,240,152,10,'#ffe060','center','p',2);if(!canStart()){if(frame%30<20||noCoinT>0)T('INSERT COIN',240,176,10,noCoinT>0?'#ff4060':'#fff','center','p',2);}else if(frame%40<28)T((padSeen?'START':'ENTER')+' — 이 자리에서 다시 싸운다',240,176,8,'#fff');T(creditText(),W-8,H-8,6,'#ffe060','right','p');}
 function updOver(){stT++;contT--;updParts();if(stT%60===0&&contT>0)sfx('select');if(contT<=0){toNameOrTitle();return;}
@@ -1582,6 +1582,7 @@ buildStage(0);
 if(document.fonts&&document.fonts.load){document.fonts.load("20px 'Do Hyeon'");document.fonts.load("10px 'Press Start 2P'");}
 requestAnimationFrame(loop);
 </script>
+<script src="../goal.js"></script>
 <script src="../ilog.js"></script>
 </body>
 </html>

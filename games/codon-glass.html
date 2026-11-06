@@ -1686,6 +1686,7 @@
       selectedIndices = [];
       saveBestScore();
       if (window.ILOG) ILOG.runEnd('끝 ' + score + '점');
+      if (window.BioGoal && !(typeof NET !== 'undefined' && NET.inMatch)) BioGoal.result('codon-glass', score);
 
       const overlay = document.getElementById('gameOverOverlay');
       overlay.classList.remove('hidden');
@@ -2183,6 +2184,7 @@
       });
     });
   </script>
+<script src="../goal.js"></script>
 <script src="../ilog.js"></script>
 </body>
 </html>

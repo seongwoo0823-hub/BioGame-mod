@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<!-- 바이오 비트 썸네일 (메인 화면 카드용): 1280×720으로 찍어 assets/bio-beat.jpg(640×360)로 줄임 -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{width:1280px;height:720px;overflow:hidden;font-family:'Noto Sans KR',sans-serif;
+  background:radial-gradient(120% 120% at 20% 10%,#2a3a8a 0%,#151a45 38%,#0a0b1e 70%),#0a0b1e;position:relative;color:#fff}
+.glow{position:absolute;border-radius:50%;filter:blur(60px);opacity:.75}
+.g1{width:520px;height:520px;left:640px;top:60px;background:#7b61ff}
+.g2{width:380px;height:380px;left:860px;top:300px;background:#ff4fa3;opacity:.45}
+.g3{width:420px;height:300px;left:-80px;top:420px;background:#3e91ff;opacity:.5}
+/* 앨범 슬리브 */
+.sleeve{position:absolute;left:525px;top:200px;width:345px;height:345px;border-radius:18px;overflow:hidden;
+  box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.12);transform:rotate(-4deg);z-index:3}
+.sleeve img{width:100%;height:100%;object-fit:cover;display:block}
+.sleeve::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.28),rgba(255,255,255,0) 35%,rgba(0,0,0,.25))}
+/* 레코드판 */
+.vinyl{position:absolute;left:735px;top:105px;width:520px;height:520px;border-radius:50%;z-index:2;
+  background:radial-gradient(circle,transparent 0 21%,rgba(0,0,0,0) 21%),repeating-radial-gradient(circle,#101014 0 1.6px,#1c1c22 1.6px 3.2px);
+  box-shadow:0 30px 80px rgba(0,0,0,.7),inset 0 0 0 6px #0b0b0e}
+.vinyl::before{content:'';position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 20deg,rgba(255,255,255,0) 0deg,rgba(255,255,255,.22) 25deg,rgba(255,255,255,0) 60deg,rgba(255,255,255,0) 180deg,rgba(160,190,255,.2) 205deg,rgba(255,255,255,0) 240deg)}
+.label{position:absolute;left:50%;top:50%;width:41%;height:41%;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,#0a0b1e 0 5%,transparent 5.5%),linear-gradient(135deg,#3e91ff,#7b61ff 55%,#ff4fa3);display:flex;align-items:center;justify-content:center;flex-direction:column;
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.25)}
+.label b{font-family:Montserrat;font-weight:900;font-size:34px;letter-spacing:.06em;margin-top:-40px;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+.label small{font-size:12px;letter-spacing:.32em;opacity:.9;margin-top:52px;font-weight:700}
+/* 톤암 */
+.arm{position:absolute;left:1215px;top:70px;width:14px;height:300px;border-radius:7px;background:linear-gradient(90deg,#c9ccd6,#f5f6fa 50%,#9aa0ae);transform-origin:7px 10px;transform:rotate(22deg);z-index:4;box-shadow:0 10px 20px rgba(0,0,0,.5)}
+.arm::before{content:'';position:absolute;left:-16px;top:-16px;width:46px;height:46px;border-radius:50%;background:radial-gradient(circle,#e8eaf0,#8a90a0);box-shadow:0 6px 16px rgba(0,0,0,.5)}
+.arm::after{content:'';position:absolute;left:-8px;bottom:-26px;width:30px;height:44px;border-radius:6px;background:linear-gradient(#f0f1f5,#a0a5b2)}
+/* 글자 */
+.title{position:absolute;left:70px;top:150px;z-index:5}
+.title h1{font-family:Montserrat;font-weight:900;font-size:150px;line-height:.88;letter-spacing:-.01em;
+  background:linear-gradient(180deg,#ffffff 30%,#b9ceff 70%,#8f8cff);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 12px 30px rgba(62,145,255,.45))}
+.title .k{margin-top:22px;font-weight:900;font-size:34px;letter-spacing:.02em}
+.title .s{margin-top:10px;font-size:20px;color:#c6d3ff;letter-spacing:.18em;font-weight:500}
+.pills{display:flex;gap:10px;margin-top:26px}
+.pills span{padding:9px 18px;border-radius:999px;font-weight:700;font-size:18px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(10px)}
+.eq{position:absolute;left:70px;bottom:52px;display:flex;gap:7px;align-items:flex-end;z-index:5}
+.eq i{display:block;width:10px;border-radius:5px;background:linear-gradient(#ff4fa3,#7b61ff,#3e91ff)}
+</style></head><body>
+<div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div>
+<div class="vinyl"><div class="label"><b>BIO BEAT</b><small>43 SONGS</small></div></div>
+<div class="sleeve"><img id="cov" src="../../games/bio-beat/art/cover/greenmagic.jpg"></div>
+<div class="arm"></div>
+<div class="title"><h1>BIO<br>BEAT</h1><div class="k">생명과학 리듬게임</div><div class="s">4 KEYS · VOCAL SONGS</div>
+  <div class="pills"><span>노래 43곡</span><span>레벨 1~20</span><span>온라인 대결</span></div></div>
+<div class="eq" id="eq"></div>
+<script>
+const eq=document.getElementById('eq');[18,34,52,28,64,40,22,58,36,26,48,30].forEach(h=>{const i=document.createElement('i');i.style.height=h+'px';eq.appendChild(i);});
+Promise.all([document.fonts.ready,new Promise(r=>{const im=document.getElementById('cov');im.complete?r():im.onload=r;})]).then(()=>setTimeout(()=>document.title='done',300));
+</script>
+</body></html>

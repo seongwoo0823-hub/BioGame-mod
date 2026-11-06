@@ -792,6 +792,7 @@ function showResult() {
   const k = ckey(d.w, d.r), prev = SAVE.clear[k], firstClear = !prev;
   SAVE.clear[k] = {stars: Math.max(stars, prev ? prev.stars : 0), pct: Math.max(p, prev ? prev.pct : 0), score: Math.max(total, prev ? prev.score : 0)};
   SAVE.best = Math.max(SAVE.best, total); SAVE.total = totalScore(); persist();
+  if (window.BioGoal) setTimeout(() => BioGoal.result('cell-frontier', total), 600);
   const [name, fact] = PICS[d.pic];
   const unlockMsg = firstClear && d.r === 1 && d.w < 3 ? `<p style="color:var(--gold)">🔓 새 나라 <b>${WORLDS[d.w + 1].name}</b>이(가) 열렸어요!</p>` : '';
   $('#resCard').innerHTML = `<div class="res"><canvas id="resCv" width="960" height="720"></canvas><div>
@@ -810,6 +811,7 @@ function showResult() {
 }
 function gameOver() {
   const d = G.def;
+  if (window.BioGoal) setTimeout(() => BioGoal.result('cell-frontier', G.score), 600);
   $('#resCard').innerHTML = `<h3 style="color:var(--hot)">탐사 실패</h3><p>${d.target}% 중 <b>${pct().toFixed(1)}%</b>를 개척했어요. 조금만 더 하면 그림이 다 보여요!</p>
     <canvas id="resCv" width="960" height="720" style="width:100%;max-width:420px;image-rendering:pixelated;border-radius:8px;display:block;margin:.6em auto"></canvas>
     <p style="font-size:13px;color:var(--dim)">팁: 작게 여러 번 감싸면 안전하고, 크게 감싸면 점수가 3배예요. 순찰병이 다가오면 빈 땅 쪽으로 잠깐 피하세요.</p>
@@ -963,6 +965,7 @@ function frame(now) {
 // 입력 기록(../ilog.js)이 읽을 게임 상태
 window.ILOG_WATCH = () => G && S.screen === 'game' ? {화면: G.state, 퍼센트: +pct().toFixed(1), x: G.p.x, y: G.p.y, 선: G.p.trail.length, 생명: G.lives} : {화면: S.screen};
 </script>
+<script src="../goal.js"></script>
 <script src="../ilog.js"></script>
 </body>
 </html>
