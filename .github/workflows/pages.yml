@@ -1,0 +1,36 @@
+# GitHub Pages 배포 (GitHub Actions 방식)
+# main에 올리면 자동으로 사이트를 다시 배포합니다. Jekyll 빌드를 거치지 않아 빠르고, 제작용 파일(tools 등)은 빼고 올립니다.
+# 처음 한 번: 저장소 Settings → Pages → Build and deployment → Source를 "GitHub Actions"로 바꿔 주세요.
+name: Deploy site
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect site files
+        run: |
+          mkdir _site
+          rsync -a ./ _site/ --exclude '.git' --exclude '.github' --exclude '_site' --exclude 'tools' \
+            --exclude 'README.md' --exclude '.gitignore' --exclude '_config.yml' --exclude 'games/bio-beat/*.json'
+          touch _site/.nojekyll
+          du -sh _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
