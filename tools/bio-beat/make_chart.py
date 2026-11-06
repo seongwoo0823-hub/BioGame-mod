@@ -20,8 +20,9 @@ GDIR = os.path.join(HERE, '../../games/bio-beat')
 # 자동 템포 검출이 박을 반/두 배로 잡는 곡은 여기서 고정 (check_tempo.py로 확인한 값)
 BPM_FIX = {'cell-powerplant': 86.98}
 # 셔플(셋잇단) 느낌 곡은 한 박을 3칸으로 나눔. 한 곡만: python3 make_chart.py 곡.mp3 곡.json - 3
-SUB_FIX = {'petri-dish': 3}
-BPM_FIX['petri-dish'] = 121.76
+SUB_FIX = {'petri-dish': 3, 'endo-exo-vibe': 3, 'sync-clone': 3, 'protein-swing': 3, 'digest-party': 3}
+BPM_FIX.update({'petri-dish': 121.76, 'gene-melody': 132.95, 'nature-verdict': 72.9, 'endo-exo-vibe': 139.675, 'sync-clone': 142.67,
+                'protein-swing': 85.5, 'digest-party': 100.025})
 ONSET_BIAS = -0.0249   # --selftest로 잰 검출 오차(초): 분석 창 가운데 기준이라 실제보다 약 25ms 일찍 잡힘 → 보정
 
 
