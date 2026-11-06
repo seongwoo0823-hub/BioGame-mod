@@ -1,0 +1,7 @@
+# GitHub Pages(Jekyll) 설정: 사이트 실행에 필요 없는 제작용 파일은 배포에서 뺌
+# (배포 파일이 많고 크면 'syncing_files' 단계가 10분을 넘겨 실패할 수 있음)
+exclude:
+  - tools
+  - README.md
+  - "games/bio-beat/*.json"
+  - .gitignore
