@@ -3461,6 +3461,7 @@ function updateSurvival(dt){
 }
 function showSurvResult(){
   const S = G.surv, p = G.player;
+  if (window.BioGoal) BioGoal.result('bio-strike', S.score);
   G.state = 'result'; G.frozen = true;
   if (document.pointerLockElement) document.exitPointerLock();
   const best = S.score > (SET.surv.score || 0);
@@ -4207,6 +4208,7 @@ function init(){
 }
 init();
 </script>
+<script src="../goal.js"></script>
 <script src="../ilog.js"></script>
 </body>
 </html>

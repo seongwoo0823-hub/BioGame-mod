@@ -1847,6 +1847,7 @@ function finish(failed){
   pbStop(failed?.6:1.2);
   if(failed){const rem=st.total-(st.cnt.KOOL+st.cnt.COOL+st.cnt.GOOD+st.cnt.MISS+st.cnt.FAIL);if(rem>0)st.cnt.FAIL+=rem;}
   const rate=st.total?st.acc/st.total*100:0,score=Math.round(rate*10000),grade=gradeOf(rate,failed);
+  if(window.BioGoal&&!st.practice)BioGoal.result('bio-beat',failed?0:score,failed?{ok:false,text:'게이지가 바닥나 중단'}:{text:score.toLocaleString('ko-KR')+'점 ('+st.song.ko+')'});   // 목표 점수 성공/실패
   const fc=!failed&&st.cnt.MISS===0&&st.cnt.FAIL===0,ak=fc&&st.cnt.COOL===0&&st.cnt.GOOD===0;
   const key=recKey(st.song.id,st.diff),old=REC[key];let isNew=false;
   if(st.practice){}
@@ -2613,6 +2614,7 @@ resize();updateOpts();boot();requestAnimationFrame(frame);
 window.ILOG_WATCH=()=>({화면:screen,곡:SONGS[SEL.i]&&SONGS[SEL.i].id,난이도:SEL.d,진행:PLAY&&!PLAY.ended?Math.floor(PLAY.T||0):undefined});
 })();
 </script>
+<script src="../goal.js"></script>
 <script src="../ilog.js"></script>
 </body>
 </html>

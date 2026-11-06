@@ -1947,6 +1947,7 @@ function showResult(){
   resetResultButtons();
   if (G.netMid && typeof NET !== 'undefined') NET.decorateResult();
   $('#resultModal').classList.remove('hidden');
+  if (window.BioGoal) BioGoal.result('cell-brawl', mode==='gem' ? (G.result==='win'?1:0) : G.rank, {ok: mode==='gem' ? G.result==='win' : G.rank<=3, text: title});
 }
 function togglePause(){
   if (state!=='game' || G.over) return;
@@ -3533,6 +3534,7 @@ renderLobby(true);
 requestAnimationFrame(frame);
 
 </script>
+<script src="../goal.js"></script>
 <script src="../ilog.js"></script>
 </body>
 </html>

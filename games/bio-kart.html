@@ -2991,6 +2991,7 @@ function showResult(R){if(G.R!==R||(G.screen!=='race'&&G.screen!=='pause'))retur
   const P=R.player,key=R.mode+'-'+MAPS.indexOf(R.map);let rec=false;
   if(P.finished&&(!SAVE.best[key]||P.finishT<SAVE.best[key])){SAVE.best[key]=P.finishT;rec=true;persist();}
   $('#resTitle').textContent=P.finished?(P.rank===1?'우승!':P.rank+'위로 완주!'):'RETIRE';
+  if(window.BioGoal)BioGoal.result('bio-kart',P.finished?P.rank:0,{ok:!!P.finished&&P.rank<=5,text:P.finished?P.rank+'위 완주':'리타이어'});
   $('#resList').innerHTML=R.order.map(k=>`<div class="rr${k.isP?' me':''}"><b style="background:${RCOL[k.i]}">${k.rank}</b><canvas data-ci="${k.ci}" width="22" height="22" class="pix"></canvas><span>${k.name}</span><em>${k.finished?fmt(k.finishT):'RETIRE'}</em></div>`).join('');
   document.querySelectorAll('#resList canvas').forEach(c=>c.getContext('2d').drawImage(headSpr(+c.dataset.ci),0,0));
   $('#resRec').textContent=rec?'새 최고 기록!':(P.lapTimes.length?'베스트 랩 '+fmt(Math.min(...P.lapTimes)):'');
@@ -3764,6 +3765,7 @@ const NET = (() => {
 newDemo();show('title');requestAnimationFrame(loop);
 
 </script>
+<script src="../goal.js"></script>
 <script src="../ilog.js"></script>
 </body>
 </html>
