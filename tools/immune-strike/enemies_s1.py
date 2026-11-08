@@ -1,257 +1,198 @@
-# 면역 특공대 1스테이지 세균 10종 — 의인화한 2~3등신 도트 (주인공 원화와 같은 화풍)
-#   오른쪽을 봄, 한 칸 32×32, 발끝 y=30
-#   칸: 0 서기 / 1 걷기 / 2 공격
+# 면역 특공대 1스테이지 세균 10종 — 의인화한 4~5등신 도트 (직접 그림)
+#   오른쪽을 봄, 한 칸 32×48, 발끝 y=46 · 칸: 0 서기 / 1 걷기 / 2 공격
 #   python3 enemies_s1.py  →  games/immune-strike/enemies-s1.png, art/enemies-s1-preview.png
 import math, os
-import numpy as np
 from pixel import Sprite, sheet, preview, OUTLINE
+from figure import figure, W, H, HX, HY
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, '../../games/immune-strike')
-C = 32
-GY = 30
-MOUTH = '#4a1830'
 
 
-# ---------------- 공통 몸 부품 ----------------
-def legs(sp, cx, f, col, gap=5, top=26):
-    """뭉툭한 다리 두 개: 0 서기, 1 걷기(앞뒤), 2 공격(앞으로 디딤)"""
-    off = [(0, 0), (-2, 2), (-2, 3)][f]
-    for i, dx in enumerate((-gap // 2 - 1, gap // 2)):
-        sx = cx + dx + off[i]
-        m = sp.m_capsule(sx, top, sx, GY - 1, 1.6)
-        sp.outline(m); sp.shade(m, col, outline=False)
-        foot = sp.m_capsule(sx, GY - 1, sx + 2, GY - 1, 1.1)
-        sp.outline(foot); sp.fill(foot, '#2e2440')
+# ---------------- 무기 ----------------
+def club(sp, hand, ang, col='#a0703a', L=11):
+    x, y = hand; x1, y1 = x + math.cos(ang) * L, y + math.sin(ang) * L
+    m = sp.m_capsule(x - math.cos(ang) * 2, y - math.sin(ang) * 2, x1, y1, 1); sp.outline(m); sp.fill(m, '#6a4628')
+    h = sp.m_capsule(x + math.cos(ang) * L * .5, y + math.sin(ang) * L * .5, x1, y1, 2.3); sp.shade(h, col)
 
 
-def arm(sp, x0, y0, x1, y1, col, hand=None):
-    m = sp.m_capsule(x0, y0, x1, y1, 1.3)
-    sp.outline(m); sp.shade(m, col, outline=False)
-    h = sp.m_ellipse(x1 + .5, y1 + .5, 1.7, 1.7)
-    sp.outline(h); sp.shade(h, hand or col, outline=False)
-
-
-def face(sp, x, y, mood='mad', mouth='line', look=1, gap=4):
-    """눈 두 개(3×4) + 눈썹 + 입. x,y = 왼쪽 눈 왼쪽 위"""
-    sp.eye(x, y, 4, 3, look); sp.eye(x + gap, y, 4, 3, look)
-    if mood == 'mad':
-        sp.dot(x, y - 2, OUTLINE); sp.dot(x + 1, y - 2, OUTLINE); sp.dot(x + 2, y - 1, OUTLINE)
-        sp.dot(x + gap, y - 1, OUTLINE); sp.dot(x + gap + 1, y - 2, OUTLINE); sp.dot(x + gap + 2, y - 2, OUTLINE)
-    elif mood == 'smug':
-        for i in range(3): sp.dot(x + i, y - 1, OUTLINE); sp.dot(x + gap + i, y - 1, OUTLINE)
-    mx = x + gap // 2 + 1; my = y + 6
-    if mouth == 'open':
-        sp.fill(sp.m_ellipse(mx + .5, my + .5, 1.8, 1.5), MOUTH); sp.dot(mx, my, '#ff8aa0')
-    elif mouth == 'grin':
-        sp.line([(mx - 2, my), (mx + 2, my)], MOUTH); sp.dot(mx - 1, my + 1, '#ffffff'); sp.dot(mx + 1, my + 1, '#ffffff')
-    elif mouth == 'fang':
-        sp.line([(mx - 2, my), (mx + 2, my)], MOUTH); sp.dot(mx + 1, my + 1, '#ffffff')
-    else:
-        sp.line([(mx - 1, my), (mx + 1, my)], MOUTH)
-
-
-def rod_body(sp, col, cx=15, top=10, bot=25, r=7, dy=0):
-    m = sp.m_capsule(cx, top + r + dy, cx, bot - r + dy, r)
-    sp.shade(m, col)
-    return m
-
-
-# ---------------- 무기·소품 ----------------
-def club(sp, x, y, ang, col='#a0703a'):
-    x1, y1 = x + math.cos(ang) * 9, y + math.sin(ang) * 9
-    m = sp.m_capsule(x, y, x1, y1, 1.2); sp.outline(m); sp.fill(m, '#6a4628')
-    h = sp.m_capsule(x + math.cos(ang) * 5, y + math.sin(ang) * 5, x1, y1, 2.4); sp.shade(h, col)
-
-
-def spear(sp, x, y, ang, col='#c0c8d8'):
-    x1, y1 = x + math.cos(ang) * 13, y + math.sin(ang) * 13
-    m = sp.m_capsule(x - math.cos(ang) * 3, y - math.sin(ang) * 3, x1, y1, .9); sp.outline(m); sp.fill(m, '#7a5030')
-    tip = [(x1 + math.cos(ang) * 4, y1 + math.sin(ang) * 4), (x1 + math.cos(ang + 1.9) * 2.2, y1 + math.sin(ang + 1.9) * 2.2),
-           (x1 + math.cos(ang - 1.9) * 2.2, y1 + math.sin(ang - 1.9) * 2.2)]
+def spear(sp, hand, ang, col='#c8d0e0', L=16):
+    x, y = hand; x1, y1 = x + math.cos(ang) * L, y + math.sin(ang) * L
+    m = sp.m_capsule(x - math.cos(ang) * 6, y - math.sin(ang) * 6, x1, y1, .8); sp.outline(m); sp.fill(m, '#7a5030')
+    tip = [(x1 + math.cos(ang) * 5, y1 + math.sin(ang) * 5), (x1 + math.cos(ang + 1.8) * 2.2, y1 + math.sin(ang + 1.8) * 2.2),
+           (x1 + math.cos(ang - 1.8) * 2.2, y1 + math.sin(ang - 1.8) * 2.2)]
     sp.shade(sp.m_poly(tip), col)
 
 
-def blaster(sp, x, y, col='#5a6a80', glow='#7af0d8'):
-    m = sp.m_capsule(x, y, x + 6, y, 1.6); sp.shade(m, col)
-    g = sp.m_capsule(x + 1, y + 1, x + 1, y + 3, 1); sp.outline(g); sp.fill(g, '#3a4458')
-    sp.dot(x + 7, y, glow)
+def gun(sp, hand, body='#5a6a80', glow='#7af0d8', L=8, ang=0):
+    x, y = hand
+    m = sp.m_capsule(x - 1, y - 1, x + L, y - 1, 1.6); sp.shade(m, body)
+    g = sp.m_capsule(x, y, x, y + 2, .9); sp.outline(g); sp.fill(g, '#3a4458')
+    sp.dot(x + L + 1, y - 1, glow); sp.dot(x + 2, y - 2, '#c0d0e0')
 
 
 def flask(sp, x, y, liquid='#90e050'):
-    sp.shade(sp.m_ellipse(x, y + 1, 2.8, 2.6), liquid)
-    neck = sp.m_capsule(x, y - 3, x, y - 1, .8); sp.outline(neck); sp.fill(neck, '#d8e8f0')
+    sp.shade(sp.m_ellipse(x, y + 1, 2.6, 2.6), liquid)
+    nk = sp.m_capsule(x, y - 3, x, y - 1, .8); sp.outline(nk); sp.fill(nk, '#d8e8f0')
     sp.dot(x - 1, y, '#f0ffe0')
 
 
 def bomb(sp, x, y, lit=False):
-    sp.shade(sp.m_ellipse(x, y, 3.2, 3.2), '#3a3448')
+    sp.shade(sp.m_ellipse(x, y, 3, 3), '#3a3448')
     sp.dot(x - 1, y - 1, '#8a84a0')
     sp.line([(x + 1, y - 3), (x + 2, y - 5)], '#c8a060')
     if lit: sp.dot(x + 3, y - 6, '#ffe060'); sp.dot(x + 2, y - 6, '#ff8030')
 
 
-def glove(sp, x, y, col='#e04848'):
-    sp.shade(sp.m_ellipse(x, y, 2.8, 2.5), col)
-    sp.dot(x - 1, y - 1, '#ffb0b0')
-
-
-def fork(sp, x, y, ang):
-    x1, y1 = x + math.cos(ang) * 10, y + math.sin(ang) * 10
-    m = sp.m_capsule(x, y, x1, y1, .8); sp.outline(m); sp.fill(m, '#c8d0e0')
+def fork(sp, hand, ang):
+    x, y = hand; x1, y1 = x + math.cos(ang) * 11, y + math.sin(ang) * 11
+    m = sp.m_capsule(x - math.cos(ang) * 2, y - math.sin(ang) * 2, x1, y1, .7); sp.outline(m); sp.fill(m, '#c8d0e0')
     px, py = -math.sin(ang), math.cos(ang)
     for k in (-1.6, 0, 1.6):
         sx, sy = x1 + px * k, y1 + py * k
-        t = sp.m_capsule(sx, sy, sx + math.cos(ang) * 3, sy + math.sin(ang) * 3, .5); sp.outline(t); sp.fill(t, '#e8eef8')
+        t = sp.m_capsule(sx, sy, sx + math.cos(ang) * 3, sy + math.sin(ang) * 3, .45); sp.outline(t); sp.fill(t, '#e8eef8')
+
+
+def shield(sp, x, y, col='#a06040'):
+    m = sp.m_ellipse(x, y, 3.6, 5.5); sp.shade(m, col)
+    sp.fill(sp.m_ellipse(x + .3, y, 1.3, 2.4), '#e0b060')
 
 
 # ================= 10종 =================
-def ecoli(sp, f):
-    """대장균: 초록 막대 몸, 뒤로 휘날리는 편모 머리카락, 몽둥이"""
-    b = 1 if f == 1 else 0
-    for k in range(3):
-        pts = [(9 - t * 1.6, 11 + k * 3 + math.sin(f * 1.5 + k + t) * 1.2 - b) for t in range(5)]
-        sp.line(pts, '#3d7a28')
-    legs(sp, 15, f, '#6aae45')
-    arm(sp, 12, 19 - b, 9, 21 - b, '#7cc055')
-    rod_body(sp, '#8fd060', dy=-b)
-    face(sp, 13, 13 - b, 'mad', 'open' if f == 2 else 'fang')
-    if f == 2: club(sp, 21, 15, -.2)
-    else: club(sp, 21, 21 - b, 1.05)
-    arm(sp, 18, 20 - b, 21, 21 - b if f != 2 else 15, '#7cc055')
+def ecoli():
+    """대장균: 막대 모양 머리 + 뒤로 날리는 편모 머리카락, 몽둥이 든 건달"""
+    def hb(sp, f, dy):
+        for k in range(3):
+            sp.line([(12 - t * 1.6, 9 + k * 2.5 + math.sin(f * 1.5 + k + t) * 1.1 + dy) for t in range(5)], '#3d7a28')
+    def wp(sp, f, hand, dy):
+        club(sp, hand, -.25 if f == 2 else -1.25)
+    return dict(skin='#8fd060', cloth='#2f5a2a', pants='#4a5a7a', belt='#5a3a20', hrx=5.5, hry=4.4,
+                head_back=hb, weapon=wp, mouth='grin', mouth_atk='open')
 
 
-def staph(sp, f):
-    """포도상구균: 포도송이 몸의 근육질 권투 선수"""
-    b = 1 if f == 1 else 0
-    legs(sp, 15, f, '#c8a030')
-    for x, y, r in ((10, 13, 4), (11, 21, 4.5), (20, 13, 4), (19, 22, 4.5)):
-        sp.shade(sp.m_ellipse(x, y - b, r, r), '#d8b038')
-    sp.shade(sp.m_ellipse(15.5, 17 - b, 6.5, 6.5), '#f0cc48')
-    face(sp, 13, 14 - b, 'mad', 'grin' if f != 2 else 'open')
-    glove(sp, 9, 20 - b)
-    if f == 2: arm(sp, 20, 19, 25, 18, '#e8c040', '#e04848'); glove(sp, 26, 18)
-    else: glove(sp, 22, 20 - b)
+def staph():
+    """포도상구균: 포도송이 아프로 머리, 권투 선수"""
+    def hd(sp, f, dy):
+        for x, y in ((12, 8), (15, 6.5), (18.5, 7.5), (11, 11.5), (13.5, 9.5)):
+            sp.shade(sp.m_ellipse(x, y + dy, 2.4, 2.4), '#e8b830')
+    def gl(sp, f, hand, dy):
+        pass
+    return dict(skin='#f0cc48', cloth='#f0cc48', sleeve='#f0cc48', pants='#c83a3a', boots='#f0f0f0', belt='#f0f0f0',
+                glove='#e04848', head=hd, wide=1, mouth='grin',
+                pose={0: dict(hb=(14, 23), hf=(21, 22)), 1: dict(hb=(13, 24), hf=(21, 23)), 2: dict(hb=(14, 23), hf=(27, 20))})
 
 
-def strep(sp, f):
-    """연쇄상구균: 공 사슬이 몸통+모자, 사슬 채찍"""
-    b = 1 if f == 1 else 0
-    legs(sp, 15, f, '#8a5ac8')
-    sp.shade(sp.m_ellipse(15, 20 - b, 6, 6), '#a070e0')
-    sp.shade(sp.m_ellipse(14, 11 - b, 4, 4), '#b080f0')
-    sp.shade(sp.m_ellipse(11, 6 - b, 2.6, 2.6), '#c090ff')
-    face(sp, 13, 17 - b, 'mad', 'fang' if f != 2 else 'open', gap=4)
-    if f == 2: pts = [(21, 19), (24, 17), (27, 16), (30, 16)]
-    else: pts = [(21, 21 - b), (22, 24 - b), (21, 27 - b)]
-    for x, y in pts: sp.shade(sp.m_ellipse(x, y, 1.6, 1.6), '#c8b8e8')
-    arm(sp, 19, 20 - b, 21, 21 - b if f != 2 else 19, '#a070e0')
+def strep():
+    """연쇄상구균: 공 사슬 포니테일, 사슬 채찍"""
+    def hb(sp, f, dy):
+        for i in range(4):
+            x = 11 - i * 2.2; y = 10 + i * 2.6 + math.sin(f + i) * .8
+            sp.shade(sp.m_ellipse(x, y + dy, 1.9, 1.9), '#b080f0')
+    def wp(sp, f, hand, dy):
+        x, y = hand
+        pts = [(x + 2 + k * 2.6, y - 1 - k * .3) for k in range(4)] if f == 2 else [(x + .5, y + 2 + k * 2.4) for k in range(4)]
+        for px, py in pts: sp.shade(sp.m_ellipse(px, py, 1.4, 1.4), '#c8b8e8')
+    return dict(skin='#a070e0', cloth='#3a2a5a', pants='#4a3a6a', head_back=hb, weapon_front=wp, mood='smug', mouth='grin')
 
 
-def salmo(sp, f):
-    """살모넬라: 편모 모히칸 머리, 포크를 든 식중독 악당"""
-    b = 1 if f == 1 else 0
-    legs(sp, 15, f, '#c0503a')
-    for k in range(5):
-        x = 10 + k * 2.4
-        sp.line([(x, 11 - b), (x - 1 + math.sin(f + k) * 1.2, 7 - b), (x + .5, 4 - b)], '#b04a30')
-    arm(sp, 12, 19 - b, 9, 21 - b, '#e07050')
-    rod_body(sp, '#e86a4a', dy=-b)
-    face(sp, 13, 14 - b, 'smug', 'grin' if f != 2 else 'open')
-    fork(sp, 20, 22 - b if f != 2 else 18, -.9 if f != 2 else -.15)
-    arm(sp, 18, 20 - b, 20, 21 - b if f != 2 else 18, '#e07050')
+def salmo():
+    """살모넬라: 편모 모히칸, 앞치마 두른 식중독 요리사, 포크"""
+    def hd(sp, f, dy):
+        for k in range(5):
+            x = 12 + k * 1.8
+            sp.line([(x, 8 + dy), (x - .6 + math.sin(f + k) * .8, 5 + dy), (x + .4, 3 + dy)], '#b04a30')
+    def ch(sp, f, dy):
+        m = sp.m_poly([(14, 22 + dy), (19, 22 + dy), (19.5, 32 + dy), (13.5, 32 + dy)]); sp.shade(m, '#f0ece0')
+    def wp(sp, f, hand, dy):
+        fork(sp, hand, -.15 if f == 2 else -1.1)
+    return dict(skin='#e86a4a', cloth='#e86a4a', pants='#7a4a3a', head=hd, chest=ch, weapon=wp, mood='smug', mouth='grin')
 
 
-def clos(sp, f):
-    """클로스트리디움 포자: 큰 둥근 포자 머리 + 막대 몸, 포자 폭탄"""
-    b = 1 if f == 1 else 0
-    legs(sp, 15, f, '#8a6838')
-    sp.shade(sp.m_capsule(15, 19 - b, 15, 23 - b, 4.5), '#b08850')
-    sp.shade(sp.m_ellipse(15.5, 11.5 - b, 7.5, 7), '#d8b878')
-    sp.fill(sp.m_ellipse(11, 8 - b, 1.2, 1), '#f2e0b0')
-    face(sp, 13, 10 - b, 'mad', 'fang' if f != 2 else 'open')
-    arm(sp, 12, 20 - b, 9, 22 - b, '#b08850')
-    if f == 2: arm(sp, 18, 19, 22, 15, '#b08850'); bomb(sp, 24, 13, True)
-    else: arm(sp, 18, 20 - b, 20, 22 - b, '#b08850'); bomb(sp, 22, 24 - b)
+def clos():
+    """클로스트리디움 포자: 둥근 포자 헬멧, 작업복, 포자 폭탄"""
+    def hd(sp, f, dy):
+        m = sp.m_ellipse(HX, HY - 2 + dy, 6, 5); m &= ~sp.m_ellipse(HX + 2, HY + 2 + dy, 4, 3)
+        sp.shade(m, '#d8b878'); sp.dot(13, 8 + dy, '#f2e0b0')
+    def wp(sp, f, hand, dy):
+        if f == 2: bomb(sp, hand[0] + 2, hand[1] - 3, True)
+        else: bomb(sp, hand[0] + 1, hand[1] + 3)
+    return dict(skin='#c8a060', cloth='#7a5a30', pants='#6a4a28', belt='#3a2a18', head=hd, weapon_front=wp,
+                pose={2: dict(hf=(23, 20))})
 
 
-def tb(sp, f):
-    """결핵균: 밀랍 갑옷을 두른 덩치, 투구 + 방패"""
-    b = 1 if f == 1 else 0
-    legs(sp, 15, f, '#9a8a50', gap=7)
-    m = sp.m_capsule(15, 15 - b, 15, 20 - b, 9)
-    sp.shade(m, '#c8b878')
-    for x in (9, 13, 17, 21):
-        ys = np.nonzero(m[:, x])[0]
-        if len(ys): sp.line([(x, ys.min() + 2), (x, ys.max() - 2)], '#a8985a')
-    hm = sp.m_poly([(7, 11 - b), (15, 4 - b), (23, 11 - b), (23, 13 - b), (7, 13 - b)])
-    sp.shade(hm, '#8a8aa0')
-    sp.dot(15, 5 - b, '#d0d0e0')
-    face(sp, 14, 14 - b, 'mad', 'open' if f == 2 else 'line')
-    sx = 23 if f != 2 else 25
-    sh = sp.m_ellipse(sx, 20 - b, 3.6, 5.5); sp.shade(sh, '#a06040')
-    sp.fill(sp.m_ellipse(sx + .3, 20 - b, 1.3, 2.2), '#e0b060')
+def tb():
+    """결핵균: 밀랍 갑옷 기사, 투구 + 방패 + 몽둥이 (덩치 큼)"""
+    def hd(sp, f, dy):
+        m = sp.m_poly([(10.5, 11 + dy), (16, 4 + dy), (21.5, 11 + dy), (21.5, 13 + dy), (10.5, 13 + dy)]); sp.shade(m, '#8a8aa0')
+        sp.dot(16, 5 + dy, '#d0d0e0')
+    def ch(sp, f, dy):
+        for x in (14, 17):
+            sp.line([(x, 21 + dy), (x, 30 + dy)], '#a8985a')
+    def wb(sp, f, hand, dy):
+        shield(sp, hand[0] + 1, hand[1] - 2)
+    def wp(sp, f, hand, dy):
+        club(sp, hand, -.3 if f == 2 else -1.2, '#8a8aa0')
+    return dict(skin='#c8b878', cloth='#c8b878', pants='#8a7a48', boots='#5a5a70', glove='#5a5a70', wide=2, head=hd, chest=ch,
+                weapon=wp, weapon_back=wb, mouth='line',
+                pose={0: dict(hb=(19, 26)), 1: dict(hb=(19, 25)), 2: dict(hb=(20, 24))})
 
 
-def helico(sp, f):
-    """헬리코박터: 나선 꼬리로 나는 비행사 (고글)"""
-    yb = [0, -1, 1][f]
-    for i in range(5):
-        x = 9 - i * 1.6; y = 22 + math.sin(f * 1.4 + i * 1.3) * 2.4 + yb
-        sp.shade(sp.m_ellipse(x, y, 2, 2), '#c8c850')
-    for k in range(3):
-        a = f * 1.1 + k * 2.1
-        sp.line([(4, 22 + yb), (4 + math.cos(a) * 3, 22 + yb + math.sin(a) * 4)], '#8a8a30')
-    sp.shade(sp.m_capsule(15, 15 + yb, 15, 21 + yb, 6.5), '#e0e070')
-    gm = sp.m_capsule(11, 9 + yb, 20, 9 + yb, 2.2); sp.shade(gm, '#6a5a3a')
-    sp.fill(sp.m_ellipse(13, 9.5 + yb, 1.5, 1.5), '#80d0ff'); sp.fill(sp.m_ellipse(18, 9.5 + yb, 1.5, 1.5), '#80d0ff')
-    face(sp, 13, 13 + yb, 'smug', 'grin' if f != 2 else 'open')
-    arm(sp, 19, 19 + yb, 23, 17 + yb if f == 2 else 21 + yb, '#d0d060')
-    if f == 2: blaster(sp, 24, 17 + yb, glow='#ffe060')
+def helico():
+    """헬리코박터: 고글 쓴 비행사, 나선 꼬리 스카프로 날아다님, 광선총"""
+    def bk(sp, f, dy):
+        for i in range(6):
+            x = 12 - i * 1.6; y = 22 + math.sin(f * 1.4 + i * 1.2) * 2 + dy
+            sp.shade(sp.m_ellipse(x, y, 1.8, 1.8), '#c8c850')
+    def hd(sp, f, dy):
+        g = sp.m_capsule(11.5, 9 + dy, 20.5, 9 + dy, 1.8); sp.shade(g, '#6a5a3a')
+        sp.fill(sp.m_ellipse(16.5, 9.2 + dy, 1.3, 1.3), '#80d0ff'); sp.fill(sp.m_ellipse(19.5, 9.2 + dy, 1.2, 1.2), '#80d0ff')
+    def wp(sp, f, hand, dy):
+        if f == 2: gun(sp, hand, '#6a6a40', '#ffe060')
+    return dict(skin='#e0e070', cloth='#8a6a3a', pants='#5a4a30', fly=True, back=bk, head=hd, weapon=wp, mood='smug', mouth='grin',
+                pose={0: dict(dy=-2), 1: dict(dy=-3), 2: dict(dy=-2)})
 
 
-def botul(sp, f):
-    """보툴리누스균: 방독면을 쓴 독약 박사"""
-    b = 1 if f == 1 else 0
-    legs(sp, 15, f, '#7a5a38')
-    arm(sp, 12, 20 - b, 9, 22 - b, '#a07a50')
-    rod_body(sp, '#a07a50', dy=-b)
-    mm = sp.m_ellipse(17, 16 - b, 5, 4); sp.shade(mm, '#5a4a5a')
-    sp.fill(sp.m_ellipse(15, 15 - b, 1.5, 1.5), '#a0ff70'); sp.fill(sp.m_ellipse(19.5, 15 - b, 1.5, 1.5), '#a0ff70')
-    sp.dot(14, 14 - b, '#ffffff')
-    fm = sp.m_ellipse(17.5, 19.5 - b, 1.8, 1.5); sp.shade(fm, '#3a3040')
-    if f == 2: arm(sp, 18, 21, 22, 16, '#a07a50'); flask(sp, 24, 14)
-    else: arm(sp, 18, 21 - b, 21, 23 - b, '#a07a50'); flask(sp, 23, 23 - b)
+def botul():
+    """보툴리누스균: 방독면 + 실험복을 입은 독약 박사"""
+    def hd(sp, f, dy):
+        m = sp.m_ellipse(HX + 1.5, HY + 1 + dy, 3.6, 3.2); sp.shade(m, '#5a4a5a')
+        sp.fill(sp.m_ellipse(HX + 1, HY - .5 + dy, 1, 1), '#a0ff70'); sp.fill(sp.m_ellipse(HX + 3.5, HY - .5 + dy, 1, 1), '#a0ff70')
+        f2 = sp.m_ellipse(HX + 3, HY + 3 + dy, 1.4, 1.2); sp.shade(f2, '#3a3040')
+    def ch(sp, f, dy):
+        sp.line([(16, 20 + dy), (16, 31 + dy)], '#c8c8d0')
+    def wp(sp, f, hand, dy):
+        flask(sp, hand[0] + 1, hand[1] - 3)
+    return dict(skin='#a07a50', cloth='#e8e8f0', pants='#5a6070', head=hd, chest=ch, weapon_front=wp, noface=True,
+                pose={2: dict(hf=(23, 19))})
 
 
-def bacil(sp, f):
-    """바실러스: 두 마디 막대 몸, 머리띠 + 창"""
-    b = 1 if f == 1 else 0
-    legs(sp, 15, f, '#a85a90')
-    sp.shade(sp.m_capsule(15, 20 - b, 15, 23 - b, 5), '#c06aa0')
-    sp.shade(sp.m_capsule(15, 11 - b, 15, 14 - b, 6), '#d07ab0')
-    band = sp.m_capsule(9, 10 - b, 21, 10 - b, 1.2); sp.fill(band, '#3a70e0')
-    sp.line([(8, 10 - b), (5, 12 - b), (4, 11 - b)], '#3a70e0')
-    face(sp, 13, 12 - b, 'mad', 'open' if f == 2 else 'line')
-    if f == 2: spear(sp, 18, 19, -.05)
-    else: spear(sp, 19, 26 - b, -1.35)
-    arm(sp, 18, 20 - b, 20, 20 - b if f != 2 else 19, '#d07ab0')
+def bacil():
+    """바실러스: 두 마디 막대 머리, 머리띠 무술가, 창"""
+    def hd(sp, f, dy):
+        m = sp.m_capsule(HX, HY - 6 + dy, HX, HY - 4 + dy, 3.2); sp.shade(m, '#c06aa0')
+        b = sp.m_capsule(11.5, HY - 2 + dy, 20.5, HY - 2 + dy, .9); sp.fill(b, '#3a70e0')
+        sp.line([(11, HY - 2 + dy), (8, HY + dy), (7, HY - 1 + dy)], '#3a70e0')
+    def wp(sp, f, hand, dy):
+        spear(sp, hand, -.05 if f == 2 else -1.45)
+    return dict(skin='#d07ab0', cloth='#f0f0f0', pants='#3a3a5a', belt='#202020', head=hd, weapon=wp)
 
 
-def pseudo(sp, f):
-    """녹농균: 끈적한 점액을 흘리는 청록 막대, 점액 물총"""
-    b = 1 if f == 1 else 0
-    sp.line([(9, 13 - b), (6, 12 - b), (4, 14 - b), (2, 12 - b + f % 2)], '#2a9a80')
-    legs(sp, 15, f, '#30a890')
-    arm(sp, 12, 20 - b, 9, 22 - b, '#40c8a8')
-    rod_body(sp, '#40d0b0', dy=-b)
-    for x, y in ((11, 24), (13, 26)):
-        sp.fill(sp.m_ellipse(x, y - b + (f == 1), 1, 1.5), '#8af8e0')
-    face(sp, 13, 14 - b, 'smug', 'fang' if f != 2 else 'open')
-    blaster(sp, 20, 20 - b if f != 2 else 18, '#3a8a80', '#8af8e0')
-    arm(sp, 18, 20 - b, 20, 20 - b if f != 2 else 18, '#40c8a8')
-    if f == 2:
-        for k in range(3): sp.fill(sp.m_ellipse(28 + k * 1.2, 18 + (k % 2), 1, 1), '#8af8e0')
+def pseudo():
+    """녹농균: 후드 쓴 청록 점액 악당, 점액 물총"""
+    def hb(sp, f, dy):
+        sp.line([(12, 10 + dy), (9, 9 + dy), (7, 11 + dy), (5, 9 + dy + f % 2)], '#2a9a80')
+    def hd(sp, f, dy):
+        m = sp.m_ellipse(HX - 1, HY - 1 + dy, 5.2, 5.4); m &= ~sp.m_ellipse(HX + 2, HY + 1 + dy, 3.6, 3.8)
+        sp.shade(m, '#2a5a60')
+    def ch(sp, f, dy):
+        for x, y in ((14, 32), (18, 33)):
+            sp.fill(sp.m_ellipse(x, y + dy + (f == 1), .8, 1.4), '#8af8e0')
+    def wp(sp, f, hand, dy):
+        gun(sp, hand, '#3a8a80', '#8af8e0')
+        if f == 2:
+            for k in range(3): sp.fill(sp.m_ellipse(hand[0] + 11 + k * 1.3, hand[1] - 1 + (k % 2), .9, .9), '#8af8e0')
+    return dict(skin='#40d0b0', cloth='#2a5a60', pants='#2e5060', head_back=hb, head=hd, chest=ch, weapon=wp, mood='smug', mouth='grin',
+                pose={0: dict(hf=(21, 25)), 1: dict(hf=(21, 25))})
 
 
 ENEMIES = [('ecoli', ecoli), ('staph', staph), ('strep', strep), ('salmo', salmo), ('clos', clos),
@@ -261,17 +202,17 @@ ENEMIES = [('ecoli', ecoli), ('staph', staph), ('strep', strep), ('salmo', salmo
 def build():
     rows = []
     for name, fn in ENEMIES:
-        row = []
+        spec = fn(); row = []
         for f in range(3):
-            sp = Sprite(C, C); fn(sp, f); row.append(sp.image())
+            sp = Sprite(W, H); figure(sp, f, spec); row.append(sp.image())
         rows.append(row)
-    img = sheet(rows, (C, C))
+    img = sheet(rows, (W, H))
     os.makedirs(OUT, exist_ok=True)
     img.save(os.path.join(OUT, 'enemies-s1.png'))
     half = (len(rows) + 1) // 2
-    blank = Sprite(C, C).image()
-    two = sheet([rows[i] + [blank] + (rows[i + half] if i + half < len(rows) else []) for i in range(half)], (C, C))
-    preview(two, os.path.join(HERE, 'art/enemies-s1-preview.png'), 5)
+    blank = Sprite(W, H).image()
+    two = sheet([rows[i] + [blank] + (rows[i + half] if i + half < len(rows) else []) for i in range(half)], (W, H))
+    preview(two, os.path.join(HERE, 'art/enemies-s1-preview.png'), 4)
     return img
 
 
