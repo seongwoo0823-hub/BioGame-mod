@@ -1953,7 +1953,7 @@ function mkEl(){const el=document.createElement('div');el.className='card';const
   el.addEventListener('pointerenter',e=>{if(e.pointerType!=='mouse')return;if(el._tip)showTip(el,el._tip());if(fxOn()&&!BUSY)el.classList.add('hov');});
   el.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||!fxOn()||el.classList.contains('drag'))return;const r=el.getBoundingClientRect(),px=(e.clientX-r.left)/r.width-.5,py=(e.clientY-r.top)/r.height-.5;
     cw.style.setProperty('--tx',(px*24).toFixed(1)+'deg');cw.style.setProperty('--ty',(-py*24).toFixed(1)+'deg');});
-  el.addEventListener('pointerleave',()=>{hideTip();el.classList.remove('hov');cw.style.setProperty('--tx','0deg');cw.style.setProperty('--ty','0deg');});bindDrag(el);return el;}
+  el.addEventListener('pointerleave',e=>{if(e.pointerType!=='mouse')return;hideTip();el.classList.remove('hov');cw.style.setProperty('--tx','0deg');cw.style.setProperty('--ty','0deg');});bindDrag(el);return el;}
 function setImg(el,src){const img=el._img||el.firstChild;if(img.getAttribute('src')!==src){img.src=src;el.style.setProperty('--m',`url("${src}")`);}}
 function setEd(el,ed){['foil','holo','poly','neg'].forEach(k=>el.classList.toggle('ed-'+k,ed===k));const host=el._cw||el;let e=host.querySelector('.ed');if(ed){if(!e){e=document.createElement('i');e.className='ed';host.appendChild(e);}}else if(e)e.remove();}
 function setLeg(el,on){const host=el._cw||el;let e=host.querySelector('.shn');if(on&&!e){e=document.createElement('i');e.className='shn';host.appendChild(e);}else if(!on&&e)e.remove();}
@@ -1967,15 +1967,20 @@ function bindDrag(el){
   el.addEventListener('pointerdown',e=>{
     if(e.button>0)return;e.stopPropagation();auInit();if(BUSY)return;
     const sx=e.clientX,sy=e.clientY,l0=parseFloat(el.style.left)||0,t0=parseFloat(el.style.top)||0;let drag=false,lx=e.clientX;
+    // 터치·펜: 꾹 누르면(0.35초) 카드 정보만 보여 줌 (선택은 바꾸지 않음). 짧게 누르면 선택하면서 정보도 함께 보여 줌
+    const touch=e.pointerType!=='mouse';let lp=false;
+    const lpT=touch?setTimeout(()=>{if(!drag&&el._tip){lp=true;tipTouch(el);try{navigator.vibrate&&navigator.vibrate(12);}catch(_){}}},350):0;
     const mv=ev=>{const dx=(ev.clientX-sx)/SCALE,dy=(ev.clientY-sy)/SCALE;
+      if(Math.hypot(dx,dy)>10)clearTimeout(lpT);
       if(!drag&&el._list&&Math.hypot(dx,dy)>10){drag=true;el.classList.add('drag');hideTip();hideAct();}
       if(drag){el.style.left=(l0+dx)+'px';el.style.top=(t0+dy)+'px';if(el._cw)el._cw.style.setProperty('--dr',clamp((ev.clientX-lx)/SCALE*1.6,-18,18).toFixed(1)+'deg');lx=ev.clientX;}};
     const off=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);};
-    const up=ev=>{off();
+    const up=ev=>{off();clearTimeout(lpT);
+      if(lp)return;
       if(drag){el.classList.remove('drag');if(el._cw)el._cw.style.setProperty('--dr','0deg');const list=el._list,it=el._it,cx=parseFloat(el.style.left)+40;let idx=0;
         for(const o of list){if(o===it)continue;const oe=EL(el._kf(o));if(oe&&parseFloat(oe.style.left)+40<cx)idx++;}
         list.splice(list.indexOf(it),1);list.splice(idx,0,it);if(el._onReorder)el._onReorder();sfx('pick');render();save();}
-      else if(ev.type==='pointerup'&&el._click)el._click(ev);};
+      else if(ev.type==='pointerup'){if(el._click)el._click(ev);if(touch&&el._tip&&el.isConnected)setTimeout(()=>tipTouch(el),0);}};
     addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up);
   });
 }
@@ -2004,7 +2009,11 @@ const tipVoucher=id=>`<h4>${VB[id].n}</h4><div class="d">${VB[id].d}</div><div c
 const tipTag=t=>`<h4>${TAG_BY[t.id].n}</h4><div class="d">${fmtDesc(TAG_BY[t.id].d,t.hand)}</div>`;
 function showTip(el,html){if(!html)return;const t=$('#tip');t.innerHTML=html;t.classList.add('on');const r=stageRect(el);
   let x=r.x+r.w/2-125,y=r.y-t.offsetHeight-14;if(y<6)y=r.y+r.h+14;x=clamp(x,6,1280-256);if(y+t.offsetHeight>714)y=714-t.offsetHeight;t.style.left=x+'px';t.style.top=y+'px';}
-function hideTip(){$('#tip').classList.remove('on');}
+function hideTip(){clearTimeout(TIPT);$('#tip').classList.remove('on');}
+// 터치용 정보 창: 보여 준 뒤 5초 지나거나 다른 곳을 누르면 닫힘
+let TIPT=0;
+function tipTouch(el){const h=el._tip&&el._tip();if(!h)return;showTip(el,h);clearTimeout(TIPT);TIPT=setTimeout(()=>$('#tip').classList.remove('on'),5000);}
+addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')hideTip();},true);
 
 /* ---------- 선택된 아이템의 버튼 ---------- */
 const UI={sel:null};
@@ -2017,7 +2026,6 @@ function selectItem(type,obj,el){
   if(UI.sel&&UI.sel.obj===obj){clearUI();return;}
   clearUI();UI.sel={type,obj,el};sfx('click');
   if(type!=='shop'&&type!=='pick')el.classList.add('sel');
-  if(matchMedia('(pointer:coarse)').matches&&el._tip)showTip(el,el._tip());
   refreshAct();
 }
 function refreshAct(){
