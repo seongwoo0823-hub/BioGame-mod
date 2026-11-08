@@ -243,10 +243,14 @@ button:focus-visible{outline:2px solid var(--yolk);outline-offset:2px}
 .tag{font-family:var(--ui);font-weight:700;border-radius:999px;background:rgba(255,255,255,.14);padding:4px 11px;letter-spacing:.06em}
 .jacket{position:relative;width:min(100%,250px);aspect-ratio:1;margin:14px auto 10px}
 .jacket img{position:relative;z-index:2;width:100%;height:100%;object-fit:cover;border-radius:20px;box-shadow:0 18px 40px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.12);display:block}
-.jacket .vinyl{position:absolute;z-index:1;top:4%;left:18%;width:92%;height:92%;border-radius:50%;
+.jacket .vinyl{position:absolute;z-index:1;top:4%;left:4%;width:92%;height:92%;border-radius:50%;
   background:radial-gradient(circle,#f2f2f2 0 7%,#1a1a1f 7.5% 9%,var(--vc,#3e91ff) 9.5% 26%,#111 26.5%),repeating-radial-gradient(circle,#141418 0 2px,#1d1d23 2px 4px);
-  box-shadow:0 10px 30px rgba(0,0,0,.5);transition:left .6s cubic-bezier(.2,.9,.3,1);animation:spin 3.2s linear infinite}
-.jacket.playing .vinyl{left:34%}
+  box-shadow:0 10px 30px rgba(0,0,0,.5);transition:left .7s cubic-bezier(.2,.9,.3,1);animation:spin 3.2s linear infinite;animation-play-state:paused}
+.jacket .vinyl::after{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 30deg,transparent 0,rgba(255,255,255,.18) 20deg,transparent 60deg,transparent 180deg,rgba(255,255,255,.12) 200deg,transparent 240deg)}
+.jacket.sel .vinyl{left:30%;animation-play-state:running}
+.jacket.playing .vinyl{left:40%;animation-duration:1.8s}
+.jacket.flip img,.jacket.flip .jk{animation:jflip .75s cubic-bezier(.2,.8,.25,1)}
+@keyframes jflip{0%{transform:perspective(700px) rotateY(-200deg) scale(.82);filter:brightness(.6)}60%{filter:brightness(1.15)}100%{transform:perspective(700px) rotateY(0) scale(1);filter:none}}
 @keyframes spin{to{transform:rotate(360deg)}}
 .jacket .jk{position:relative;z-index:2;width:100%;height:100%;max-width:none;margin:0;border-radius:20px;border:0;box-shadow:0 18px 40px rgba(0,0,0,.45)}
 .stitle{font-weight:900;font-size:26px;letter-spacing:-.01em}
@@ -517,7 +521,7 @@ const SONGS=[
  desc:'엽록체는 빛 에너지로 물과 이산화 탄소에서 포도당을 만들어요. 틸라코이드 막의 명반응에서 물이 분해되어 산소가 나오고 ATP·NADPH가 만들어지며, 스트로마의 탄소 고정 반응(캘빈 회로)에서 포도당이 합성돼요.'},
 {id:'cellpowerplant',ko:'세포의 발전소',en:'Powerhouse of the Cell',artist:'fathomlesskeyboard2130',unit:'세포 호흡과 에너지',genre:'VOCAL POP',bpm:87,audio:'bio-beat/cell-powerplant.mp3',scene:'mito',root:53,scale:'minor',reverb:0,
  desc:'세포 호흡은 세포질의 해당과정, 미토콘드리아 기질의 TCA 회로, 내막의 전자 전달계 세 단계로 포도당을 분해해 ATP를 만들어요. 마지막에 산소가 전자를 받아 물이 돼요.'},
-{id:'lifespark',ko:'생명의 스파크',en:'Spark of Life',artist:'fathomlesskeyboard2130',unit:'신경계와 흥분 전도',genre:'VOCAL POP',bpm:130,audio:'bio-beat/life-spark.mp3',scene:'neuron',root:50,scale:'minor',reverb:0,
+{id:'lifespark',ko:'생명의 스파크',en:'Spark of Life',artist:'fathomlesskeyboard2130',unit:'신경계와 흥분 전도',genre:'VOCAL POP',bpm:130,audio:'bio-beat/life-spark.mp3',scene:'spark',root:50,scale:'minor',reverb:0,
  desc:'휴지 상태의 뉴런은 안쪽이 약 -70mV로 분극되어 있어요. 역치 이상의 자극을 받으면 Na⁺ 통로가 열려 Na⁺이 들어오며 탈분극(활동 전위)이 일어나고, K⁺ 통로가 열려 K⁺이 나가며 재분극돼요.'},
 {id:'immunesystem',ko:'면역 시스템',en:'Immune System',artist:'fathomlesskeyboard2130',unit:'면역과 방어 작용',genre:'VOCAL POP',bpm:124,audio:'bio-beat/immune-system.mp3',scene:'immune',root:52,scale:'minor',reverb:0,
  desc:'백혈구는 침입자를 통째로 삼키는 식세포 작용(비특이적 방어)을 해요. B 림프구는 형질세포와 기억세포로 분화하고, 형질세포가 만든 항체가 특정 항원에만 결합하는 항원 항체 반응(특이적 방어)을 일으켜요.'},
@@ -539,7 +543,7 @@ const SONGS=[
  desc:'콩팥의 네프론에서 혈액이 사구체 → 보먼주머니로 여과되고, 세뇨관에서 포도당·아미노산 등 필요한 물질은 재흡수, 노폐물은 분비되어 오줌이 만들어져요. 콩팥은 몸속 물과 무기염류의 양도 조절해요.'},
 {id:'autofocus',ko:'내 눈속의 오토 포커스',en:'Auto Focus in My Eyes',artist:'fathomlesskeyboard2130',unit:'감각 기관과 눈',genre:'VOCAL POP',bpm:108,audio:'bio-beat/auto-focus.mp3',scene:'eye',root:55,scale:'major',reverb:0,
  desc:'가까운 곳을 볼 때는 섬모체근이 수축하고 진대가 느슨해져 수정체가 두꺼워지고, 먼 곳을 볼 때는 수정체가 얇아져요. 상은 망막에 맺히고, 시각 신경을 통해 대뇌로 전달돼요.'},
-{id:'homeostasis',ko:'항상성 유지',en:'Keeping Homeostasis',artist:'fathomlesskeyboard2130',unit:'항상성과 몸의 조절',genre:'VOCAL POP',bpm:96,audio:'bio-beat/homeostasis.mp3',scene:'lofi',root:55,scale:'major',reverb:0,
+{id:'homeostasis',ko:'항상성 유지',en:'Keeping Homeostasis',artist:'fathomlesskeyboard2130',unit:'항상성과 몸의 조절',genre:'VOCAL POP',bpm:96,audio:'bio-beat/homeostasis.mp3',scene:'balance',root:55,scale:'major',reverb:0,
  desc:'항상성은 몸 안의 상태(체온·혈당량·체액 농도)를 일정하게 유지하는 성질이에요. 간뇌의 시상 하부가 신경과 호르몬으로 조절하며, 주로 결과가 원인을 억제하는 음성 피드백으로 유지돼요.'},
 {id:'musclesecret',ko:'근육의 비밀',en:'Secret of Muscles',artist:'fathomlesskeyboard2130',unit:'근육의 구조와 수축',genre:'VOCAL POP',bpm:98,audio:'bio-beat/muscle-secret.mp3',scene:'muscle',root:55,scale:'major',reverb:0,
  desc:'골격근은 근육 섬유 다발이고, 근육 섬유 속 근원섬유에는 액틴과 마이오신 필라멘트가 있어요. 수축할 때 필라멘트 길이는 그대로이고 액틴이 마이오신 사이로 미끄러져 들어가 근육 원섬유 마디(Z선 사이)가 짧아져요. 이때 ATP가 필요해요.'},
@@ -551,49 +555,49 @@ const SONGS=[
  desc:'식사 후 혈당량이 높아지면 이자의 β세포에서 인슐린이 분비되어 간에서 포도당을 글리코젠으로 저장하고 세포가 포도당을 흡수하게 해요. 혈당량이 낮아지면 α세포의 글루카곤이 글리코젠을 포도당으로 분해해요.'},
 {id:'centraldogma',ko:'생명의 중심원리',en:'Central Dogma',artist:'fathomlesskeyboard2130',unit:'유전자 발현(전사와 번역)',genre:'VOCAL POP',bpm:129,audio:'bio-beat/central-dogma.mp3',scene:'protein',root:55,scale:'major',reverb:0,
  desc:'유전 정보는 DNA → RNA → 단백질 순서로 흘러요. 핵 속에서 DNA의 정보가 mRNA로 옮겨지는 전사가, 세포질의 리보솜에서 mRNA의 코돈에 맞는 아미노산을 tRNA가 운반해 단백질을 만드는 번역이 일어나요.'},
-{id:'photoquest',ko:'엽록체 광합성 퀘스트',en:'Chloroplast Quest',artist:'fathomlesskeyboard2130',unit:'광합성',genre:'VOCAL POP',bpm:105,audio:'bio-beat/photo-quest.mp3',scene:'photo',root:55,scale:'major',reverb:0,
+{id:'photoquest',ko:'엽록체 광합성 퀘스트',en:'Chloroplast Quest',artist:'fathomlesskeyboard2130',unit:'광합성',genre:'VOCAL POP',bpm:105,audio:'bio-beat/photo-quest.mp3',scene:'quest',root:55,scale:'major',reverb:0,
  desc:'엽록체의 틸라코이드에서 빛에너지로 물을 분해해 산소를 내고 ATP·NADPH를 만드는 명반응이, 스트로마에서 이산화 탄소를 고정해 포도당을 만드는 탄소 고정 반응(캘빈 회로)이 일어나요.'},
-{id:'lifesurfing',ko:'생명의 서핑',en:'Surfing of Life',artist:'fathomlesskeyboard2130',unit:'생명 현상의 특성',genre:'VOCAL POP',bpm:107,audio:'bio-beat/life-surfing.mp3',scene:'cycle',root:55,scale:'major',reverb:0,
+{id:'lifesurfing',ko:'생명의 서핑',en:'Surfing of Life',artist:'fathomlesskeyboard2130',unit:'생명 현상의 특성',genre:'VOCAL POP',bpm:107,audio:'bio-beat/life-surfing.mp3',scene:'surf',root:55,scale:'major',reverb:0,
  desc:'생물은 세포로 이루어져 있고, 물질대사로 에너지를 얻으며, 자극에 반응하고 항상성을 유지해요. 또 생식과 유전으로 자손을 남기고, 환경에 적응하며 진화해요.'},
-{id:'phospholipiddance',ko:'인지질의 춤',en:'Dance of Phospholipids',artist:'fathomlesskeyboard2130',unit:'세포막과 물질 수송',genre:'VOCAL POP',bpm:108,audio:'bio-beat/phospholipid-dance.mp3',scene:'cell',root:55,scale:'major',reverb:0,
+{id:'phospholipiddance',ko:'인지질의 춤',en:'Dance of Phospholipids',artist:'fathomlesskeyboard2130',unit:'세포막과 물질 수송',genre:'VOCAL POP',bpm:108,audio:'bio-beat/phospholipid-dance.mp3',scene:'lipid',root:55,scale:'major',reverb:0,
  desc:'세포막은 친수성 머리와 소수성 꼬리를 가진 인지질이 2중층을 이루고 단백질이 박힌 유동 모자이크 구조예요. 산소·이산화 탄소는 확산으로, 포도당·이온은 막단백질을 통해 이동하고, 능동 수송에는 ATP가 쓰여요.'},
 {id:'greattree',ko:'생명의 거대한 나무',en:'Great Tree of Life',artist:'fathomlesskeyboard2130',unit:'생물의 분류와 다양성',genre:'VOCAL POP',bpm:110,audio:'bio-beat/great-tree.mp3',scene:'tree',root:55,scale:'major',reverb:0,
  desc:'생물은 종 < 속 < 과 < 목 < 강 < 문 < 계 < 역 순서로 분류해요. 세균역·고세균역·진핵생물역의 3역 체계가 있고, 계통수는 공통 조상에서 갈라져 나온 생물들의 진화적 관계를 나뭇가지처럼 보여 줘요.'},
-{id:'eternalhelix',ko:'영원한 이중나선',en:'Eternal Double Helix',artist:'fathomlesskeyboard2130',unit:'유전자와 DNA',genre:'VOCAL POP',bpm:143,audio:'bio-beat/eternal-helix.mp3',scene:'dna',root:55,scale:'major',reverb:0,
+{id:'eternalhelix',ko:'영원한 이중나선',en:'Eternal Double Helix',artist:'fathomlesskeyboard2130',unit:'유전자와 DNA',genre:'VOCAL POP',bpm:143,audio:'bio-beat/eternal-helix.mp3',scene:'galaxy',root:55,scale:'major',reverb:0,
  desc:'DNA는 인산·당·염기로 된 뉴클레오타이드가 이어진 두 가닥이 꼬인 이중 나선이에요. A는 T와 2개, G는 C와 3개의 수소 결합으로 짝을 짓고, 염기 서열에 유전 정보가 담겨 있어요.'},
 {id:'actionspike',ko:'액션 스파이크',en:'Action Spike',artist:'fathomlesskeyboard2130',unit:'신경계와 흥분 전도',genre:'VOCAL POP',bpm:140,audio:'bio-beat/action-spike.mp3',scene:'neuron',root:55,scale:'major',reverb:0,
  desc:'뉴런이 역치 이상의 자극을 받으면 Na⁺ 통로가 열려 탈분극이 일어나고 활동 전위(스파이크)가 생겨요. 이어 K⁺이 빠져나가며 재분극되고, 흥분은 축삭을 따라 전도되어 시냅스에서 신경 전달 물질로 다음 뉴런에 전달돼요.'},
-{id:'genemelody',ko:'유전의 멜로디',en:'Melody of Heredity',artist:'fathomlesskeyboard2130',unit:'사람의 유전',genre:'VOCAL POP',bpm:133,audio:'bio-beat/gene-melody.mp3',scene:'mendel',root:55,scale:'major',reverb:0,
+{id:'genemelody',ko:'유전의 멜로디',en:'Melody of Heredity',artist:'fathomlesskeyboard2130',unit:'사람의 유전',genre:'VOCAL POP',bpm:133,audio:'bio-beat/gene-melody.mp3',scene:'piano',root:55,scale:'major',reverb:0,
  desc:'사람의 형질은 상염색체 유전과 성염색체(X 염색체) 유전으로 나뉘어요. 가계도로 우성·열성을 판단하고, ABO식 혈액형처럼 대립유전자가 3개인 복대립 유전, 피부색처럼 여러 유전자가 관여하는 다인자 유전도 있어요.'},
 {id:'natureverdict',ko:'자연의 판결',en:'Verdict of Nature',artist:'fathomlesskeyboard2130',unit:'생물의 진화',genre:'VOCAL POP',bpm:73,audio:'bio-beat/nature-verdict.mp3',scene:'evo',root:55,scale:'major',reverb:0,
  desc:'같은 종의 개체 사이에는 변이가 있고, 환경에 더 유리한 변이를 가진 개체가 더 많이 살아남아 자손을 남겨요. 이 자연 선택이 오랜 세월 쌓이면 생물이 진화해요(다윈의 자연 선택설).'},
 {id:'endoexovibe',ko:'내분비와 외분비의 바이브',en:'Endocrine & Exocrine Vibe',artist:'fathomlesskeyboard2130',unit:'호르몬과 내분비계',genre:'VOCAL POP',bpm:140,audio:'bio-beat/endo-exo-vibe.mp3',scene:'hormone',root:55,scale:'major',reverb:0,
  desc:'내분비샘은 관 없이 호르몬을 혈액으로 바로 분비해 표적 기관에 작용하고(뇌하수체·갑상샘·이자의 이자섬 등), 외분비샘은 관을 통해 몸 밖이나 소화관으로 분비해요(땀샘·침샘·소화샘). 이자는 두 가지를 모두 해요.'},
-{id:'cellpowerhouse',ko:'세포 발전소',en:'Cell Powerhouse',artist:'fathomlesskeyboard2130',unit:'세포 호흡과 에너지',genre:'VOCAL POP',bpm:87,audio:'bio-beat/cell-powerhouse.mp3',scene:'mito',root:55,scale:'major',reverb:0,
+{id:'cellpowerhouse',ko:'세포 발전소',en:'Cell Powerhouse',artist:'fathomlesskeyboard2130',unit:'세포 호흡과 에너지',genre:'VOCAL POP',bpm:87,audio:'bio-beat/cell-powerhouse.mp3',scene:'city',root:55,scale:'major',reverb:0,
  desc:'세포 호흡은 포도당을 산소로 분해해 에너지를 얻는 과정이에요. 해당과정(세포질) → TCA 회로(미토콘드리아 기질) → 전자 전달계(내막)를 거쳐 많은 ATP가 만들어지고, 이산화 탄소와 물이 생겨요.'},
-{id:'funkyfoodweb',ko:'Funky Food Web',en:'Funky Food Web',artist:'fathomlesskeyboard2130',unit:'생태계와 상호 작용',genre:'VOCAL POP',bpm:105,audio:'bio-beat/funky-food-web.mp3',scene:'eco',root:55,scale:'major',reverb:0,
+{id:'funkyfoodweb',ko:'Funky Food Web',en:'Funky Food Web',artist:'fathomlesskeyboard2130',unit:'생태계와 상호 작용',genre:'VOCAL POP',bpm:105,audio:'bio-beat/funky-food-web.mp3',scene:'disco',root:55,scale:'major',reverb:0,
  desc:'생산자 → 1차 소비자 → 2차 소비자로 이어지는 먹이 사슬이 얽혀 먹이 그물을 이뤄요. 에너지는 단계를 지날수록 줄어들어 생태 피라미드를 이루고, 분해자가 사체를 분해해 물질을 순환시켜요.'},
-{id:'syncclone',ko:'100 싱크로율 클론',en:'100% Sync Clone',artist:'fathomlesskeyboard2130',unit:'DNA 복제',genre:'VOCAL POP',bpm:143,audio:'bio-beat/sync-clone.mp3',scene:'mitosis',root:55,scale:'major',reverb:0,
+{id:'syncclone',ko:'100 싱크로율 클론',en:'100% Sync Clone',artist:'fathomlesskeyboard2130',unit:'DNA 복제',genre:'VOCAL POP',bpm:143,audio:'bio-beat/sync-clone.mp3',scene:'clone',root:55,scale:'major',reverb:0,
  desc:'세포 분열 전 간기에 DNA는 두 가닥이 풀린 뒤 각 가닥을 주형으로 새 가닥이 만들어지는 반보존적 복제를 해요. 그래서 복제된 두 DNA는 원래 DNA와 염기 서열이 같고, 체세포 분열로 생긴 딸세포는 유전적으로 똑같아요.'},
-{id:'eternalcatalyst',ko:'영원한 촉매제',en:'Eternal Catalyst',artist:'fathomlesskeyboard2130',unit:'효소와 물질대사',genre:'VOCAL POP',bpm:150,audio:'bio-beat/eternal-catalyst.mp3',scene:'enzyme',root:55,scale:'major',reverb:0,
+{id:'eternalcatalyst',ko:'영원한 촉매제',en:'Eternal Catalyst',artist:'fathomlesskeyboard2130',unit:'효소와 물질대사',genre:'VOCAL POP',bpm:150,audio:'bio-beat/eternal-catalyst.mp3',scene:'catalyst',root:55,scale:'major',reverb:0,
  desc:'효소는 활성 부위에 꼭 맞는 기질과만 결합하는 기질 특이성이 있고, 활성화 에너지를 낮춰 반응을 빠르게 해요. 반응 뒤에도 변하지 않아 계속 쓰이며, 온도와 pH가 알맞을 때 가장 잘 작용해요.'},
-{id:'proteinswing',ko:'단백질 스윙 파티',en:'Protein Swing Party',artist:'fathomlesskeyboard2130',unit:'유전자 발현(전사와 번역)',genre:'VOCAL POP',bpm:85,audio:'bio-beat/protein-swing.mp3',scene:'protein',root:55,scale:'major',reverb:0,
+{id:'proteinswing',ko:'단백질 스윙 파티',en:'Protein Swing Party',artist:'fathomlesskeyboard2130',unit:'유전자 발현(전사와 번역)',genre:'VOCAL POP',bpm:85,audio:'bio-beat/protein-swing.mp3',scene:'swing',root:55,scale:'major',reverb:0,
  desc:'핵 속에서 DNA의 정보가 mRNA로 전사되고, 세포질의 리보솜에서 mRNA의 코돈을 따라 tRNA가 아미노산을 운반해 펩타이드 결합으로 이어 붙이면 단백질이 만들어져요(번역). AUG는 개시 코돈이에요.'},
-{id:'heart44',ko:'심장의 4/4박자',en:'Heart\'s 4/4 Beat',artist:'fathomlesskeyboard2130',unit:'순환계와 심장',genre:'VOCAL POP',bpm:122,audio:'bio-beat/heart-44.mp3',scene:'heart',root:55,scale:'major',reverb:0,
+{id:'heart44',ko:'심장의 4/4박자',en:'Heart\'s 4/4 Beat',artist:'fathomlesskeyboard2130',unit:'순환계와 심장',genre:'VOCAL POP',bpm:122,audio:'bio-beat/heart-44.mp3',scene:'heart44',root:55,scale:'major',reverb:0,
  desc:'심장은 2개의 심방과 2개의 심실로 되어 있고, 동방결절의 신호로 심방 → 심실 순서로 수축해요. 판막이 혈액의 역류를 막고, 우심실에서 나간 피는 폐순환, 좌심실에서 나간 피는 체순환을 해요.'},
-{id:'dreamybreath',ko:'몽환적인 호흡',en:'Dreamy Breath',artist:'fathomlesskeyboard2130',unit:'호흡계와 기체 교환',genre:'VOCAL POP',bpm:112,audio:'bio-beat/dreamy-breath.mp3',scene:'lung',root:55,scale:'major',reverb:0,
+{id:'dreamybreath',ko:'몽환적인 호흡',en:'Dreamy Breath',artist:'fathomlesskeyboard2130',unit:'호흡계와 기체 교환',genre:'VOCAL POP',bpm:112,audio:'bio-beat/dreamy-breath.mp3',scene:'dreamy',root:55,scale:'major',reverb:0,
  desc:'폐포에서 들어온 산소는 혈액의 헤모글로빈과 결합해 온몸의 조직으로 운반되고, 조직에서 나온 이산화 탄소는 혈액을 따라 폐로 돌아와 날숨으로 나가요. 기체 교환은 모두 분압(농도) 차에 의한 확산으로 일어나요.'},
-{id:'nephrongroove',ko:'네프론의 그루브',en:'Nephron Groove',artist:'fathomlesskeyboard2130',unit:'배설계와 콩팥',genre:'VOCAL POP',bpm:133,audio:'bio-beat/nephron-groove.mp3',scene:'kidney',root:55,scale:'major',reverb:0,
+{id:'nephrongroove',ko:'네프론의 그루브',en:'Nephron Groove',artist:'fathomlesskeyboard2130',unit:'배설계와 콩팥',genre:'VOCAL POP',bpm:133,audio:'bio-beat/nephron-groove.mp3',scene:'groove',root:55,scale:'major',reverb:0,
  desc:'네프론은 사구체·보먼주머니·세뇨관으로 이루어진 콩팥의 기본 단위예요. 여과 → 재흡수 → 분비 과정을 거쳐 오줌이 만들어지고, 단백질과 혈구는 너무 커서 여과되지 않아요.'},
-{id:'muscleburst',ko:'근수축 폭발',en:'Muscle Burst',artist:'fathomlesskeyboard2130',unit:'근육의 구조와 수축',genre:'VOCAL POP',bpm:150,audio:'bio-beat/muscle-burst.mp3',scene:'muscle',root:55,scale:'major',reverb:0,
+{id:'muscleburst',ko:'근수축 폭발',en:'Muscle Burst',artist:'fathomlesskeyboard2130',unit:'근육의 구조와 수축',genre:'VOCAL POP',bpm:150,audio:'bio-beat/muscle-burst.mp3',scene:'gym',root:55,scale:'major',reverb:0,
  desc:'운동 신경의 신호가 오면 근육 섬유 속에서 액틴 필라멘트가 마이오신 필라멘트 사이로 미끄러져 들어가 근육 원섬유 마디가 짧아져요(활주설). 이 과정에는 ATP가 필요해요.'},
-{id:'innersea',ko:'내 안의 바다',en:'The Sea Within Me',artist:'fathomlesskeyboard2130',unit:'체액과 삼투압 조절',genre:'VOCAL POP',bpm:140,audio:'bio-beat/inner-sea.mp3',scene:'lofi',root:55,scale:'major',reverb:0,
+{id:'innersea',ko:'내 안의 바다',en:'The Sea Within Me',artist:'fathomlesskeyboard2130',unit:'체액과 삼투압 조절',genre:'VOCAL POP',bpm:140,audio:'bio-beat/inner-sea.mp3',scene:'sea',root:55,scale:'major',reverb:0,
  desc:'우리 몸의 체액은 일정한 농도로 유지돼요. 땀을 많이 흘려 체액 농도가 높아지면 뇌하수체 후엽에서 항이뇨 호르몬(ADH) 분비가 늘어 콩팥에서 물의 재흡수가 많아지고, 오줌량이 줄어요.'},
-{id:'digestparty',ko:'소화 파티',en:'Digestion Party',artist:'fathomlesskeyboard2130',unit:'소화계와 영양소 흡수',genre:'VOCAL POP',bpm:100,audio:'bio-beat/digest-party.mp3',scene:'digest',root:55,scale:'major',reverb:0,
+{id:'digestparty',ko:'소화 파티',en:'Digestion Party',artist:'fathomlesskeyboard2130',unit:'소화계와 영양소 흡수',genre:'VOCAL POP',bpm:100,audio:'bio-beat/digest-party.mp3',scene:'party',root:55,scale:'major',reverb:0,
  desc:'녹말은 아밀레이스로 엿당, 다시 포도당으로, 단백질은 펩신·트립신으로 아미노산으로, 지방은 쓸개즙의 도움을 받아 라이페이스로 지방산과 모노글리세리드로 분해돼요. 소장 융털에서 흡수되어 온몸으로 운반돼요.'},
-{id:'focusver1',ko:'너에게만 맞춘 포커스 ver1',en:'Focus Only On You ver1',artist:'fathomlesskeyboard2130',unit:'감각 기관과 눈',genre:'VOCAL POP',bpm:141,audio:'bio-beat/focus-ver1.mp3',scene:'eye',root:55,scale:'major',reverb:0,
+{id:'focusver1',ko:'너에게만 맞춘 포커스 ver1',en:'Focus Only On You ver1',artist:'fathomlesskeyboard2130',unit:'감각 기관과 눈',genre:'VOCAL POP',bpm:141,audio:'bio-beat/focus-ver1.mp3',scene:'camera',root:55,scale:'major',reverb:0,
  desc:'빛은 각막 → 수정체 → 유리체를 지나 망막에 상을 맺어요. 가까운 곳을 볼 때는 섬모체근이 수축해 수정체가 두꺼워지고, 어두운 곳에서는 홍채가 작아져 동공이 커져요.'},
-{id:'focusver2',ko:'너에게만 맞춘 포커스 ver2',en:'Focus Only On You ver2',artist:'fathomlesskeyboard2130',unit:'감각 기관과 눈',genre:'VOCAL POP',bpm:103,audio:'bio-beat/focus-ver2.mp3',scene:'eye',root:55,scale:'major',reverb:0,
+{id:'focusver2',ko:'너에게만 맞춘 포커스 ver2',en:'Focus Only On You ver2',artist:'fathomlesskeyboard2130',unit:'감각 기관과 눈',genre:'VOCAL POP',bpm:103,audio:'bio-beat/focus-ver2.mp3',scene:'bokeh',root:55,scale:'major',reverb:0,
  desc:'망막에는 밝은 곳에서 색을 구별하는 원뿔 세포와 어두운 곳에서 명암을 구별하는 막대 세포가 있어요. 시각 신경이 모여 나가는 맹점에는 시각 세포가 없어 상이 맺혀도 보이지 않아요.'}
 ];
 const DIFF=[{ko:'하',en:'EASY'},{ko:'중',en:'NORMAL'},{ko:'상',en:'HARD'}];
@@ -1635,6 +1639,171 @@ tree(W,H,T,B,en,pu){
     if(k===0){EL(x,y-2+bob,3,1.5,c);P(x-4,y-2+bob,c);}else if(k===1){R(x-1,y-3+bob,3,3,c);P(x-2,y-4+bob,c);P(x+2,y-4+bob,c);}
     else if(k===2){R(x-2,y-3+bob,5,2,'#e04040');R(x,y-1+bob,1,2,'#ffffff');}else{C(x,y-2+bob,2,c);P(x,y-2+bob,'#ffff80');}});
   for(let i=0;i<10;i++){const f=(T*.2+hsh(i))%1;P(hsh(i+5)*W+Math.sin(f*10+i)*4,f*H,'#5ab04a');}
+},
+// ---- 곡마다 다른 도트 뮤비 (새 장면) ----
+lipid(W,H,T,B,en,pu){
+  BANDS(['#1a0a3a','#3a1a6a','#6a2a8a'],W,H);STARS(W,H,Math.round(W*H/260),5,T,'#c8a0ff',2);
+  const n=Math.ceil(W/9)+2,mid=H*.55,g=Math.max(5,H*.1);
+  for(let i=0;i<n;i++){const x=i*9-((T*12)%9),w=Math.sin(B*Math.PI*.5+i*.5)*2*(.5+en),y1=mid-g+w,y2=mid+g+w;
+    for(const [y,d] of [[y1,1],[y2,-1]]){for(let k=1;k<=g*.9;k++)P(x-1+Math.round(Math.sin(T*6+i+k)*.6),y+d*k,'#ffd27a');for(let k=1;k<=g*.9;k++)P(x+1+Math.round(Math.cos(T*6+i+k)*.6),y+d*k,'#ffb04a');
+      C(x,y,3,i%5===0?'#ff6ab0':'#ff9ad8');P(x-1,y-1,'#ffe0f4');}}
+  const cx=(T*20)%(W+40)-20;R(cx-3,mid-g-6,7,g*2+12,'#2affc8');R(cx-1,mid-g-6,3,g*2+12,'#0a3a3a');
+  for(let k=0;k<4;k++){const f=((T*.8+k/4)%1);C(cx,mid-g-14+f*(g*2+28),1.5,'#ffffff');}
+  if(W>=90)TXT('BILAYER',3,3,'#ff9ad8');
+},
+surf(W,H,T,B,en,pu){
+  BANDS(['#ff8a5a','#ffb07a','#ffd8a0','#ffe8c0'],W,H*.6);
+  const m=Math.min(W,H),hz=H*.58;C(W*.7,hz-2,m*.16,'#fff070');C(W*.7,hz-2,m*.13,'#ffd84a');
+  for(let y=hz;y<H;y++){R(0,y,W,1,y%3?'#1a7ac0':'#2a9ad8');}
+  for(let y=hz;y<H;y+=4)for(let x=0;x<W;x+=12)P(x+((T*20+y*3)%12),y,'#a0e8ff');
+  const wx=W*.35+Math.sin(T*.4)*W*.05,crest=hz-m*.22;
+  for(let x=0;x<W*.7;x++){const t=x/(W*.7),y=hz-Math.sin(t*Math.PI)*m*.22*(1+pu*.15);R(x,y,1,hz-y+2,t<.55?'#1a8ad0':'#3ab0e8');if(x%2===0)P(x,y,'#e8ffff');}
+  const sx=wx+W*.12,sy=crest+m*.12+Math.sin(B*Math.PI)*2;R(sx-8,sy+6,18,2,'#ff5a7a');CELLY(sx,sy,B,Math.max(4,m*.06));
+  for(let k=0;k<12;k++){const f=(T*1.3+hsh(k))%1;P(sx-10-f*20,sy+6-Math.sin(f*3)*4,'#ffffff');}
+  if(W>=90)TXT('SURF',3,3,'#ffffff');
+},
+clone(W,H,T,B,en,pu){
+  BANDS(['#0a0a18','#14102a','#201838'],W,H);
+  const gy=H*.82,n=Math.max(3,Math.floor(W/34));
+  for(let i=0;i<n;i++){const x=(i+.5)*W/n;for(let k=0;k<gy;k+=2){const w=(k/gy)*W/n*.5;if(Math.floor(B)%2===i%2)R(x-w/2,k,w,1,'rgba(255,240,180,.08)');}}
+  R(0,gy,W,H-gy,'#2a1a40');for(let x=0;x<W;x+=8)R(x,gy,4,2,Math.floor(B)%2?'#ff4ad0':'#4ad0ff');
+  for(let i=0;i<n;i++){const x=(i+.5)*W/n;CELLY(x,gy-Math.max(5,H*.07),B,Math.max(5,H*.07));}
+  if(W>=60)TXT('100% SYNC',W/2-18,4,'#ffe060');
+},
+sea(W,H,T,B,en,pu){
+  BANDS(['#0a5a8a','#0a3a6a','#08204a','#061430'],W,H);
+  for(let k=0;k<5;k++){const x=(hsh(k)*W+T*4)%W;for(let y=0;y<H*.8;y++)if((y+k)%3===0)P(x+y*.3,y,'rgba(180,240,255,.18)');}
+  for(let i=0;i<14;i++){const f=(T*.15+hsh(i))%1,x=hsh(i+3)*W+Math.sin(T+i)*3;RING(x,H-f*H,1+hsh(i+7)*2,'#b0f0ff');}
+  for(let i=0;i<5;i++){const x=((T*(8+i*3)+hsh(i)*W)%(W+20))-10,y=H*.3+hsh(i+9)*H*.5+Math.sin(T*2+i)*3;EL(x,y,5,2.5,'#e04a5a');EL(x,y,2,1,'#b02a3a');}
+  for(let i=0;i<3;i++){const x=W*(.2+i*.3),y=H*.35+Math.sin(T*.8+i*2)*H*.1;EL(x,y,6,4,'#ff9ad8');for(let k=0;k<4;k++)L(x-4+k*3,y+3,x-4+k*3+Math.sin(T*3+k)*2,y+10,'#ffc0e8');}
+  R(0,H-4,W,4,'#c8b080');for(let x=0;x<W;x+=7)R(x,H-6,2,2,'#e8d0a0');
+  if(W>=90)TXT('0.9% NACL',3,3,'#a0e8ff');
+},
+party(W,H,T,B,en,pu){
+  BANDS(['#1a0a2a','#2a0a3a'],W,H);const gy=H*.6,b=Math.floor(B);
+  for(let j=0;gy+j*6<H;j++)for(let i=0;i*10<W;i++)R(i*10,gy+j*6,10,6,(i+j+b)%3===0?'#ff4ab0':(i+j+b)%3===1?'#4ab0ff':'#ffe04a');
+  const bx=W/2,by=H*.18;L(bx,0,bx,by-6,'#c0c0c0');C(bx,by,6,'#d0d8e8');for(let k=0;k<8;k++){const a=T*2+k*.8;P(bx+Math.cos(a)*5,by+Math.sin(a)*5,'#ffffff');}
+  for(let k=0;k<10;k++){const a=T*1.5+k*.63;L(bx,by,bx+Math.cos(a)*W,by+Math.sin(a)*H,['rgba(255,80,180,.25)','rgba(80,180,255,.25)'][k%2]);}
+  const foods=[['#ffd84a',0],['#ff8a4a',1],['#8ae04a',2]];
+  foods.forEach(([c,i])=>{const x=W*(.25+i*.25),y=gy-6-Math.abs(Math.sin(B*Math.PI+i))*6;R(x-4,y-4,8,8,c);P(x-2,y-2,'#2a1a10');P(x+1,y-2,'#2a1a10');});
+  const px=((T*25)%(W+20))-10;C(px,gy-8,5,'#ffe060');if(Math.floor(T*6)%2)R(px+1,gy-9,5,2,'#2a0a3a');
+  if(W>=60)TXT('PARTY',3,3,'#ffe04a');
+},
+disco(W,H,T,B,en,pu){
+  BANDS(['#2a0a40','#4a1050','#6a1a50'],W,H);const gy=H*.86,b=Math.floor(B);
+  for(let i=0;i*12<W;i++)R(i*12,gy,12,H-gy,(i+b)%2?'#ff7ab0':'#ffd04a');
+  for(let k=0;k<6;k++){const a=-1.2+k*.5+Math.sin(T+k)*.2;TL(W*k/5,0,W*k/5+Math.cos(a+1.57)*H*.4,H*.9,'rgba(255,255,200,.07)',6);}
+  for(let i=0;i<4;i++){const x=W*(.15+i*.23),ph=B*Math.PI+i;CREATURE(i,x,gy-Math.round(Math.abs(Math.sin(ph))*3),Math.max(1,Math.round(H/90)),ph);}
+  if(W>=80)TXT('FUNKY WEB',W/2-18,4,'#ffd04a');
+},
+dreamy(W,H,T,B,en,pu){
+  BANDS(['#2a2a6a','#6a5aa0','#c89ad0','#ffc8d8'],W,H);STARS(W,H,Math.round(W*H/200),11,T,'#ffffff',1);
+  const m=Math.min(W,H),br=1+Math.sin(T*Math.PI*2/4)*.12,cx=W/2,cy=H*.48;
+  L(cx,cy-m*.28,cx,cy-m*.1,'#e0d0ff');
+  for(const d of[-1,1]){EL(cx+d*m*.12,cy+m*.05,m*.1*br,m*.17*br,'#ff9ac0');EL(cx+d*m*.12-d*2,cy,m*.05*br,m*.08*br,'#ffc8dc');}
+  for(let i=0;i<4;i++){const x=((T*6+i*W/4)%(W+30))-15,y=H*.75+i%2*6;EL(x,y,12,4,'#ffffff');EL(x+8,y-3,8,4,'#ffffff');}
+  C(W*.85,H*.18,m*.07,'#fff4c0');C(W*.85+3,H*.18-2,m*.06,'#6a5aa0');
+  if(W>=90)TXT('BREATHE',3,3,'#ffe0f0');
+},
+balance(W,H,T,B,en,pu){
+  BANDS(['#f8e8d0','#f0d8b8'],W,H);const m=Math.min(W,H),cx=W/2,gy=H*.82;R(0,gy,W,H-gy,'#c89a6a');
+  const tilt=Math.sin(B*Math.PI*.25)*.25;const lx=cx-Math.cos(tilt)*m*.4,ly=gy-m*.3-Math.sin(tilt)*m*.4,rx=cx+Math.cos(tilt)*m*.4,ry=gy-m*.3+Math.sin(tilt)*m*.4;
+  R(cx-2,gy-m*.3,4,m*.3,'#6a4a2a');TL(lx,ly,rx,ry,'#6a4a2a',2);
+  C(lx,ly-6,6,'#ff7a4a');for(let k=0;k<8;k++){const a=k*.785+T;P(lx+Math.cos(a)*9,ly-6+Math.sin(a)*9,'#ffb04a');}
+  C(rx,ry-6,6,'#7ac8ff');for(let k=0;k<6;k++){const a=k*1.05;L(rx,ry-6,rx+Math.cos(a)*5,ry-6+Math.sin(a)*5,'#ffffff');}
+  const tx=W*.88,th=H*.55;R(tx-2,H*.15,5,th,'#ffffff');R(tx-1,H*.15+th*(.5+tilt),3,th*(.5-tilt),'#ff4a4a');C(tx,H*.15+th+2,4,'#ff4a4a');
+  if(W>=70)TXT('36.5C',3,3,'#8a5a3a');
+},
+catalyst(W,H,T,B,en,pu){
+  BANDS(['#06101e','#0a1a30'],W,H);for(let x=0;x<W;x+=10)for(let y=0;y<H;y+=10)P(x,y,'#14304a');
+  const gy=H*.85,m=Math.min(W,H),hill=(x,low)=>gy-Math.exp(-((x-W/2)**2)/(2*(W*.13)**2))*m*(low?.28:.55);
+  for(let x=0;x<W;x++){P(x,hill(x,false),'#ff5a7a');P(x,hill(x,true),'#3affc0');}
+  const f=((B/4)%1+1)%1,bx=W*.1+f*W*.8;C(bx,hill(bx,true)-3,3,'#ffe060');
+  for(let i=0;i<6;i++){const a=T*(1+i*.2)+i,x=W*.5+Math.cos(a)*W*.3,y=H*.3+Math.sin(a*1.3)*H*.15;C(x,y,2,i%2?'#7ac8ff':'#ff9ad8');}
+  if(W>=80)TXT('EA DOWN',3,3,'#3affc0');
+},
+heart44(W,H,T,B,en,pu){
+  BANDS(['#2a0a14','#4a0a20'],W,H);const m=Math.min(W,H),cx=W*.38,cy=H*.48,s=1+pu*.2,r=m*.16*s;
+  C(cx-r*.55,cy-r*.3,r*.6,'#ff3a5a');C(cx+r*.55,cy-r*.3,r*.6,'#ff3a5a');for(let y=0;y<r*1.2;y++)R(cx-r*1.05+y*.9,cy-r*.1+y,(r*1.05-y*.9)*2,1,'#ff3a5a');
+  P(cx-r*.7,cy-r*.6,'#ffb0c0');const beat=((Math.floor(B)%4)+4)%4;
+  for(let i=0;i<4;i++)R(W*.62+i*m*.08,H*.3,m*.06,m*.06,i===beat?'#ffe060':'#5a2a3a');
+  const dx=W*.75,dy=H*.75;EL(dx,dy,m*.1,m*.04,'#d0d0d8');R(dx-m*.1,dy,m*.2,m*.08,'#c02a3a');EL(dx,dy+m*.08,m*.1,m*.04,'#8a1a2a');
+  TL(dx-m*.12,dy-m*.08-(beat%2)*3,dx-m*.02,dy-2,'#e8c080',2);TL(dx+m*.12,dy-m*.08-((beat+1)%2)*3,dx+m*.02,dy-2,'#e8c080',2);
+  TXT('4/4',W*.62,H*.18,'#ffe060',Math.max(1,Math.round(H/90)));
+},
+gym(W,H,T,B,en,pu){
+  BANDS(['#2a2a3a','#3a3a4a'],W,H);const gy=H*.85,m=Math.min(W,H);R(0,gy,W,H-gy,'#5a4a3a');
+  for(let x=0;x<W;x+=16)R(x,H*.2,1,gy-H*.2,'#4a4a5a');
+  const up=Math.abs(Math.sin(B*Math.PI*.5)),cx=W*.4,by=gy-m*.18-up*m*.15;
+  CELLY(cx,gy-m*.1,B,Math.max(6,m*.09));TL(cx-m*.18,by,cx+m*.18,by,'#c0c0c8',2);R(cx-m*.22,by-5,4,10,'#2a2a2a');R(cx+m*.2,by-5,4,10,'#2a2a2a');
+  const sx=W*.78,sy=H*.45,c=.5+.5*Math.sin(B*Math.PI);
+  for(let k=0;k<5;k++){const y=sy-10+k*5;R(sx-14,y,6+c*4,2,'#ff7a7a');R(sx+8-c*4,y,6+c*4,2,'#ff7a7a');R(sx-5,y-1,10,1,'#7ac8ff');}
+  R(sx-15,sy-12,1,26,'#ffffff');R(sx+14,sy-12,1,26,'#ffffff');
+  if(W>=70)TXT('ATP',sx-6,sy+16,'#ffe060');
+},
+spark(W,H,T,B,en,pu){
+  BANDS(['#0a0a1a','#1a1a3a','#1a3a4a'],W,H*.65);const hz=H*.65;
+  for(let y=hz;y<H;y++)R(0,y,W,1,y%2?'#0a3a3a':'#0a4a4a');
+  if(pu>.5){let x=W*hsh(Math.floor(B)),y=0;while(y<hz){const nx=x+(hsh(y+B)-.5)*12,ny=y+6;TL(x,y,nx,ny,'#fffbd0',2);x=nx;y=ny;}R(0,0,W,hz,'rgba(255,255,255,.06)');}
+  for(let i=0;i<10;i++){const x=hsh(i)*W+Math.sin(T+i)*3,y=hz+4+hsh(i+2)*(H-hz-6);C(x,y,1.5,['#ff9ad8','#7ac8ff','#ffe060'][i%3]);if(i%3===0)L(x,y,x+4,y-2,'#ffffff');}
+  if(W>=90)TXT('ORIGIN',3,3,'#ffe060');
+},
+camera(W,H,T,B,en,pu){
+  BANDS(['#101018','#181828'],W,H);const m=Math.min(W,H),cx=W/2,cy=H/2,z=1+.15*Math.sin(T*.8);
+  for(let i=0;i<10;i++){const x=hsh(i)*W,y=hsh(i+4)*H,r=3+hsh(i+8)*8;C(x,y,r,['rgba(255,180,220,.25)','rgba(180,220,255,.25)','rgba(255,240,180,.25)'][i%3]);}
+  RING(cx,cy,m*.35*z,'#e0e0f0');RING(cx,cy,m*.25*z,'#a0a0c0');C(cx,cy,m*.15*z,'#202040');C(cx-m*.05,cy-m*.05,m*.04,'#8ab0ff');
+  for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]]){const x=cx+a*m*.42,y=cy+b*m*.32;L(x,y,x-a*8,y,'#ffffff');L(x,y,x,y-b*8,'#ffffff');}
+  if(Math.floor(T*2)%2)C(W-8,6,2,'#ff3a3a');TXT('REC',W-28,4,'#ffffff');
+},
+bokeh(W,H,T,B,en,pu){
+  BANDS(['#1a0a2a','#3a1a4a','#5a2a5a'],W,H);
+  for(let i=0;i<16;i++){const x=(hsh(i)*W+T*(2+hsh(i+1)*4))%W,y=hsh(i+5)*H,r=2+hsh(i+9)*6*(1+pu*.3);C(x,y,r,['rgba(255,150,200,.35)','rgba(255,220,150,.35)','rgba(150,200,255,.35)'][i%3]);}
+  const m=Math.min(W,H),cx=W/2,cy=H*.5,s=m*.1*(1+pu*.15);C(cx-s*.55,cy-s*.3,s*.6,'#ff6aa0');C(cx+s*.55,cy-s*.3,s*.6,'#ff6aa0');for(let y=0;y<s*1.2;y++)R(cx-s*1.05+y*.9,cy-s*.1+y,(s*1.05-y*.9)*2,1,'#ff6aa0');
+  RING(cx,cy,m*.3,'#ffffff');if(W>=90)TXT('FOCUS ON YOU',W/2-24,H-8,'#ffd0e8');
+},
+swing(W,H,T,B,en,pu){
+  BANDS(['#2a1a0a','#3a2a14'],W,H);const gy=H*.8;R(0,gy,W,H-gy,'#6a3a1a');for(let x=0;x<W;x+=6)R(x,gy,3,1,'#8a5a2a');
+  for(let k=0;k<3;k++)TL(W*(.2+k*.3),0,W*(.2+k*.3)+(k-1)*10,gy,'rgba(255,230,160,.08)',14);
+  const sw=Math.sin(B*Math.PI)*.3;for(let i=0;i<3;i++){const x=W*(.25+i*.25);EL(x,gy-H*.14,H*.08,H*.06,['#ff9a4a','#ffd04a','#ff6a8a'][i]);
+    TL(x+H*.05,gy-H*.16,x+H*.12+Math.cos(sw+i)*4,gy-H*.25+Math.sin(sw+i)*3,'#e8c040',2);R(x-3,gy-H*.15,2,2,'#2a1a0a');R(x+2,gy-H*.15,2,2,'#2a1a0a');}
+  for(let i=0;i<6;i++){const f=(T*.5+i/6)%1;const x=W*.1+f*W*.8,y=H*.25+Math.sin(f*8)*H*.08;R(x,y,2,4,'#ffe8b0');R(x+2,y,2,1,'#ffe8b0');}
+  if(W>=90)TXT('PROTEIN SWING',3,3,'#ffd04a');
+},
+city(W,H,T,B,en,pu){
+  BANDS(['#0a0a2a','#1a1040','#3a1a50'],W,H);STARS(W,H,Math.round(W*H/300),3,T,'#ffffff',0);
+  const gy=H*.88;for(let i=0;i<14;i++){const x=i*W/14,h=H*(.2+hsh(i)*.45),w=W/14-2;R(x,gy-h,w,h,'#141430');for(let y=gy-h+3;y<gy-3;y+=4)for(let xx=x+2;xx<x+w-2;xx+=4)if(hsh(xx*y+Math.floor(B))>.45)R(xx,y,2,2,'#ffe060');}
+  R(0,gy,W,H-gy,'#0a0a18');const mx=W*.5,my=H*.25;EL(mx,my,W*.12,H*.07,'#ff7a4a');for(let k=0;k<6;k++)P(mx-W*.09+k*W*.035,my+Math.sin(T*4+k)*2,'#ffd0a0');
+  for(let i=0;i<8;i++){const f=(T*.6+i/8)%1;P(mx+(hsh(i)-.5)*W*.8*f,my+f*(gy-my),'#ffe060');}
+  if(W>=80)TXT('ATP CITY',3,3,'#ff9a6a');
+},
+galaxy(W,H,T,B,en,pu){
+  BANDS(['#04040e','#0a0a24'],W,H);STARS(W,H,Math.round(W*H/120),21,T,'#c0c8ff',.5);
+  const cx=W/2,cy=H/2,m=Math.min(W,H);
+  for(let i=0;i<60;i++){const t=i/60,a=t*Math.PI*4+T*.4,r=t*m*.45;for(const s of[1,-1]){const x=cx+Math.cos(a)*r*s,y=cy+Math.sin(a)*r*.5*s;C(x,y,1+(1-t)*1.5,s>0?'#7ac8ff':'#ff7ac8');}
+    if(i%6===0)L(cx+Math.cos(a)*r,cy+Math.sin(a)*r*.5,cx-Math.cos(a)*r,cy-Math.sin(a)*r*.5,'rgba(255,255,255,.3)');}
+  C(cx,cy,3+pu*2,'#ffffff');if(W>=90)TXT('ETERNAL',3,3,'#c0c8ff');
+},
+piano(W,H,T,B,en,pu){
+  BANDS(['#0e1a10','#1a2a1a'],W,H);const ky=H*.62,kw=Math.max(5,Math.floor(W/16)),b=Math.floor(B*2);
+  for(let i=0;i*kw<W;i++){R(i*kw,ky,kw-1,H-ky,(i===b%16)?'#ffe060':'#f4f4ec');}
+  for(let i=0;i*kw<W;i++)if([0,1,3,4,5].includes(i%7))R(i*kw+kw*.65,ky,kw*.6,(H-ky)*.6,'#1a1a1a');
+  for(let i=0;i<8;i++){const f=(T*.35+i/8)%1,x=W*.05+hsh(i)*W*.9,y=ky-f*ky;C(x,y,3,i%2?'#7ad04a':'#e8d04a');P(x-1,y-1,'#ffffff');if(i%3===0)L(x+3,y,x+3,y-8,'#ffffff');}
+  if(W>=90)TXT('AA AA BB',3,3,'#a0e080');
+},
+groove(W,H,T,B,en,pu){
+  BANDS(['#0a1420','#14243a'],W,H);const m=Math.min(W,H),gy=H*.78;
+  R(W*.15,gy-4,W*.7,H-gy+4,'#2a2a3a');R(W*.15,gy-4,W*.7,2,'#4ad0ff');
+  for(const [cx,d] of [[W*.33,1],[W*.67,-1]]){C(cx,gy-m*.02,m*.14,'#101018');RING(cx,gy-m*.02,m*.1,'#3a3a4a');const a=T*3*d;L(cx,gy-m*.02,cx+Math.cos(a)*m*.13,gy-m*.02+Math.sin(a)*m*.13,'#ffe060');C(cx,gy-m*.02,2,'#ff4a7a');}
+  const n=12;for(let i=0;i<n;i++){const h=(.2+.8*Math.abs(Math.sin(T*3+i*.7)))*H*.3*(.5+en);R(W*.1+i*W*.8/n,gy-m*.2-h,W*.8/n-2,h,i%2?'#4ad0ff':'#ff4ad0');}
+  if(W>=90)TXT('NEPHRON',3,3,'#4ad0ff');
+},
+quest(W,H,T,B,en,pu){
+  BANDS(['#7ad0ff','#b0e8ff'],W,H*.7);const gy=H*.78;R(0,gy,W,H-gy,'#4aa040');for(let x=0;x<W;x+=4)P(x+((T*20)%4),gy,'#7ad060');
+  for(let i=0;i<6;i++){const x=((i*W/5)-(T*10)%(W/5)),h=H*.2;R(x-2,gy-h,4,h,'#6a4a2a');C(x,gy-h,H*.1,'#3a9a3a');C(x-3,gy-h-3,H*.05,'#5ac050');}
+  C(W*.8,H*.15,6,'#ffe060');for(let k=0;k<5;k++){const f=(T*.7+k/5)%1;P(W*.8-f*W*.4,H*.15+f*(gy-H*.25),'#fff8a0');}
+  const hx=W*.3,hy=gy-6-Math.abs(Math.sin(B*Math.PI))*4;R(hx-3,hy-8,7,6,'#ffd2b0');R(hx-3,hy-9,7,2,'#2a8a3a');R(hx-2,hy-2,5,6,'#3a7ae0');P(hx+2,hy-6,'#101010');
+  for(let i=0;i<3;i++){const x=W*.5+i*12-((T*10)%12);C(x,gy-14+Math.sin(T*4+i)*2,2,'#ffe060');}
+  TXT('LV.'+(1+Math.floor(B/16)%9),3,3,'#ffffff');TXT('HP',3,9,'#ff6a6a');R(13,9,20,3,'#3a1a1a');R(13,9,20*(.6+.4*Math.sin(T*.3)),3,'#ff6a6a');
 }
 };
 function renderScene(g,song,W,H,T,B,en,pu,dancers){
@@ -1693,7 +1862,7 @@ function showScreen(name){
   if(name!=='select'&&PB.preview)pbStop(.3);
   setBgArt(name==='play'?null:(name==='title'?SONGS[0]:SONGS[SEL.i]));
 }
-/* 곡 그림: 앨범 커버(art/cover)와 뮤직비디오 장면(art/mv) — tools/bio-beat/cut_art.py가 Glif 시트에서 잘라 냄 */
+/* 곡 그림: 앨범 커버(art/cover) — tools/bio-beat/covers/ 생성기가 만듦 (K-pop 앨범풍 그래픽) */
 const ARTIMG={};
 const artUrl=(kind,id)=>`bio-beat/art/${kind}/${id}.jpg`;
 function artImg(kind,id){const k=kind+'/'+id;if(!ARTIMG[k]){const im=new Image();im.decoding='async';im.src=artUrl(kind,id);ARTIMG[k]=im;}return ARTIMG[k];}
@@ -1704,23 +1873,21 @@ function setBgArt(song){
   else{bg.classList.remove('on');sh.classList.remove('on');}
 }
 const vinylHue=id=>{let h=0;for(const c of id)h=(h*31+c.charCodeAt(0))%360;return h;};
-/* 플레이 배경: 곡마다 애니메이션풍 장면을 천천히 확대·이동(켄 번스)시키고, 박자에 맞춰 빛·입자가 반짝이는 뮤직비디오 연출 */
-let mvParts=[],mvLast=0;
-function drawMV(song,now,pu,en){
-  if(!hasArt(song))return false;const im=artImg('mv',song.id);if(!im.complete||!im.naturalWidth)return false;
-  ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=true;
-  const t=Math.max(0,now),tn=performance.now(),dt=Math.min(.05,(tn-(mvLast||tn))/1000);mvLast=tn;
-  const zoom=1.12+.05*Math.sin(t*.11)+pu*.02*(.4+en);
-  const iw=im.naturalWidth,ih=im.naturalHeight,sc=Math.max(W/iw,H/ih)*zoom,dw=iw*sc,dh=ih*sc;
-  const px=Math.sin(t*.07)*(dw-W)*.45,py=Math.cos(t*.053)*(dh-H)*.4;
-  ctx.drawImage(im,(W-dw)/2+px,(H-dh)/2+py,dw,dh);
-  if(pu>0){ctx.fillStyle=`rgba(255,255,255,${.06*pu*en})`;ctx.fillRect(0,0,W,H);}
-  while(mvParts.length<70)mvParts.push({x:Math.random()*W,y:H+Math.random()*H*.5,v:18+Math.random()*46,r:.8+Math.random()*2.4,a:.25+Math.random()*.55,h:Math.random()<.5?'#ffffff':'#bfe0ff'});
-  for(const q of mvParts){q.y-=q.v*dt*(1+pu*1.5);ctx.globalAlpha=q.a*(.45+.55*en);ctx.fillStyle=q.h;ctx.beginPath();ctx.arc(q.x,q.y,q.r*(1+pu*.6),0,6.283);ctx.fill();}
-  mvParts=mvParts.filter(q=>q.y>-12);ctx.globalAlpha=1;
-  const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.6)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-  return true;
+/* 플레이 배경: 곡마다 다른 도트 뮤직비디오 (SCENES) + 뮤비 연출 (첫 장면 제목 카드 · 주사선 · 박자 섬광 · 비네트) */
+let SCAN=null;
+function mvFX(song,now,pu,en){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  if(!SCAN||SCAN.ps!==PS){const c=document.createElement('canvas');c.width=1;c.height=PS*2;const g=c.getContext('2d');g.fillStyle='rgba(0,0,0,.16)';g.fillRect(0,PS,1,Math.max(1,PS*.6));SCAN={ps:PS,p:ctx.createPattern(c,'repeat')};}
+  ctx.fillStyle=SCAN.p;ctx.fillRect(0,0,W,H);
+  if(pu>0){ctx.fillStyle=`rgba(255,255,255,${.07*pu*(.4+en)})`;ctx.fillRect(0,0,W,H);}
+  const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.55)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  // 시작 4초: 뮤비 제목 카드
+  if(now>-1&&now<4.2){const k=Math.min(1,Math.min(now+1,4.2-now)/.6);ctx.globalAlpha=Math.max(0,k);
+    const fs=Math.max(16,Math.min(34,W*.03)),x=Math.max(16,W*.03),y=H*.16;ctx.fillStyle='rgba(8,8,20,.5)';ctx.fillRect(0,y-fs*1.1,Math.min(W*.42,x+fs*song.ko.length*1.05+40),fs*2.4);
+    ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='middle';ctx.font=`900 ${fs}px "Noto Sans KR",system-ui,sans-serif`;ctx.fillText(song.ko,x,y-fs*.1);
+    ctx.font=`700 ${fs*.4}px Montserrat,system-ui,sans-serif`;ctx.fillStyle='rgba(255,255,255,.8)';ctx.fillText(((song.en||'')+'  ·  M/V').toUpperCase(),x,y+fs*.78);ctx.globalAlpha=1;}
 }
+function drawMV(){return false;}
 
 /* ================= boot / generation ================= */
 const ICONS={};
@@ -1789,7 +1956,8 @@ function updateSelect(){
   const s=SONGS[SEL.i],d=DATA[s.id];
   ITEMS.forEach((el,i)=>{if(!el)return;el.classList.toggle('sel',i===SEL.i);const r=REC[recKey(SONGS[i].id,SEL.d)];el.querySelector('.gr').textContent=r?r.grade:'';});
   const cur=$('.item.sel');if(cur)cur.scrollIntoView({block:'nearest'});
-  {const img=$('#jkImg'),cv=$('#jk');if(hasArt(s)){img.src=artUrl('cover',s.id);img.hidden=false;cv.hidden=true;}else{img.hidden=true;cv.hidden=false;}$('#jacket').style.setProperty('--vc',`hsl(${vinylHue(s.id)},75%,58%)`);setBgArt(s);}
+  {const img=$('#jkImg'),cv=$('#jk'),j=$('#jacket');if(hasArt(s)){img.src=artUrl('cover',s.id);img.hidden=false;cv.hidden=true;}else{img.hidden=true;cv.hidden=false;}j.style.setProperty('--vc',`hsl(${vinylHue(s.id)},75%,58%)`);setBgArt(s);
+   if(j.dataset.sid!==s.id){j.dataset.sid=s.id;j.classList.remove('flip','sel');void j.offsetWidth;j.classList.add('flip');clearTimeout(j._t);j._t=setTimeout(()=>j.classList.add('sel'),250);}}
   $('#sGenre').textContent=s.genre;$('#sTitle').textContent=s.ko;$('#sEn').textContent=s.en;$('#sUnit').textContent=s.unit;$('#sArtist').textContent=s.artist;
   $('#sBpm').textContent=`${s.bpm} · ${d?fmtTime(d.duration):'-'}`;$('#sDesc').textContent=s.desc;
   for(let k=0;k<3;k++){$('#lv'+k).textContent=d?d.charts[k].level:'-';}
@@ -1888,7 +2056,7 @@ function startGame(net){
   if(actx.state==='suspended')actx.resume().catch(()=>{});
   pbStop(.1);if(previewTimer){clearTimeout(previewTimer);previewTimer=null;}
   const song=SONGS[SEL.i],data=DATA[song.id];if(!data)return;
-  if(hasArt(song))artImg('mv',song.id);mvParts=[];
+
   const chart=data.charts[SEL.d];
   let map=[0,1,2,3];
   if(SET.mod===1)map=[3,2,1,0];
@@ -2038,7 +2206,7 @@ function drawPlay(){
   const bt=now*song.bpm/60,bar=Math.floor(Math.max(0,now-(data.t0||0))/data.bar),sec=data.secs[Math.min(data.secs.length-1,data.secPerBar?bar:Math.floor(bar/8))]||'intro';
   st.en+=((ENERGY[sec]||.5)-st.en)*.04;
   const pu=now>0?Math.pow(1-(((bt%1)+1)%1),3):0;
-  if(!drawMV(song,now,pu,st.en)){renderScene(lctx,song,lo.width,lo.height,now+100,bt+400,st.en,pu,true);blitLo();}
+  renderScene(lctx,song,lo.width,lo.height,now+100,bt+400,st.en,pu,true);blitLo();mvFX(song,now,pu,st.en);
   ctx.fillStyle=`rgba(0,0,0,${SET.dim/100})`;ctx.fillRect(0,0,W,H);
   const Lg=layout(),{pw,px,side,lw,kh,info,JY}=Lg;
   const pps=SET.speed*JY*.13/st.rate,vis=(JY+40)/pps,tnow=performance.now();

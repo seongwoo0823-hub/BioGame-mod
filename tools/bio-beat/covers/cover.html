@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<!-- 바이오 비트 앨범 커버 생성기: 요즘 K-pop 앨범 그래픽(크롬·파스텔 미니멀·홀로그램·리소·네온·콜라주·글래스·에디토리얼·드리미·팝)을 참고한 10가지 화풍
+     render.js가 ?i=곡번호 로 열어 600×600을 찍어 games/bio-beat/art/cover/<id>.jpg 로 저장 -->
+<link rel="stylesheet" href="fonts/black-han-sans/index.css"><link rel="stylesheet" href="fonts/noto-sans-kr/700.css"><link rel="stylesheet" href="fonts/noto-sans-kr/300.css">
+<link rel="stylesheet" href="fonts/do-hyeon/index.css"><link rel="stylesheet" href="fonts/gowun-batang/700.css"><link rel="stylesheet" href="fonts/montserrat/600.css"><link rel="stylesheet" href="fonts/montserrat/900.css">
+<link rel="stylesheet" href="fonts/playfair-display/700-italic.css"><link rel="stylesheet" href="fonts/bebas-neue/index.css"><link rel="stylesheet" href="fonts/nanum-pen-script/index.css">
+<link rel="stylesheet" href="fonts/jua/index.css"><link rel="stylesheet" href="fonts/syne/800.css"><link rel="stylesheet" href="fonts/dela-gothic-one/index.css"><link rel="stylesheet" href="fonts/monoton/index.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#222;width:600px;height:600px;overflow:hidden}
+#c{position:relative;width:600px;height:600px;overflow:hidden}
+.abs{position:absolute}
+svg.m{position:absolute;overflow:visible}
+.grain{position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;opacity:.35}
+.lbl{font-family:Montserrat;font-weight:600;letter-spacing:.32em;font-size:13px;text-transform:uppercase}
+</style></head><body><div id="c"></div>
+<script src="motifs.js"></script>
+<script src="songs.js"></script>
+<script>
+const q=new URLSearchParams(location.search);const I=+(q.get('i')||0);const S=SONGS[I];
+const c=document.getElementById('c');
+const svgM=(name,cols,x,y,size,extra='')=>`<svg class="m" viewBox="0 0 200 200" style="left:${x}px;top:${y}px;width:${size}px;height:${size}px;${extra}">${M[name](...cols)}</svg>`;
+const grain=(op=.35,f=.9)=>`<svg class="grain" style="opacity:${op}" viewBox="0 0 600 600"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency="${f}" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="600" height="600" filter="url(#g)"/></svg>`;
+const trk=`BIO BEAT · TRACK ${String(I+1).padStart(2,'0')}`;
+const rnd=(()=>{let s=I*9301+49297;return()=>((s=(s*9301+49297)%233280)/233280);})();
+const sparkle=(x,y,s,col)=>`<svg class="m" viewBox="-10 -10 20 20" style="left:${x-s/2}px;top:${y-s/2}px;width:${s}px;height:${s}px"><path d="M0 -10 Q1 -1 10 0 Q1 1 0 10 Q-1 1 -10 0 Q-1 -1 0 -10Z" fill="${col}"/></svg>`;
+const ko=S.ko, en=(S.en||'').toUpperCase();
+const ST={
+ chrome(p){return `<div class="abs" style="inset:0;background:radial-gradient(120% 90% at 20% 10%,${p[0]} 0,${p[1]} 45%,${p[2]} 100%)"></div>
+  <div class="abs" style="inset:0;background:conic-gradient(from 200deg at 70% 60%,transparent,rgba(255,255,255,.35),transparent 40%)"></div>
+  ${svgM(S.m,['url(#ch)','#dfe6f2','#ffffff','#5a6478'],130,96,340,'filter:drop-shadow(0 20px 30px rgba(0,0,0,.35))')}
+  <svg width="0" height="0"><defs><linearGradient id="ch" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#9aa6bc"/><stop offset=".55" stop-color="#4e5870"/><stop offset=".8" stop-color="#e6ecf8"/><stop offset="1" stop-color="#8090a8"/></linearGradient></defs></svg>
+  <div class="abs" style="left:0;right:0;top:432px;text-align:center;font-family:'Dela Gothic One';font-size:${ko.length>8?46:60}px;line-height:1.05;background:linear-gradient(180deg,#ffffff 8%,#b9c3d8 42%,#2c3448 52%,#8a96b0 70%,#f4f6fc 92%);-webkit-background-clip:text;color:transparent;-webkit-text-stroke:1.5px rgba(30,34,60,.75);filter:drop-shadow(0 4px 6px rgba(20,20,50,.45));padding:0 30px">${ko}</div>
+  <div class="abs lbl" style="left:0;right:0;top:40px;text-align:center;color:rgba(255,255,255,.9)">${trk}</div>
+  ${sparkle(90,120,40,'#fff')}${sparkle(510,170,28,'#fff')}${sparkle(470,90,18,'#fff')}${sparkle(120,400,22,'#fff')}${grain(.18)}`;},
+ pastel(p){return `<div class="abs" style="inset:0;background:${p[0]}"></div>
+  <div class="abs" style="left:150px;top:120px;width:300px;height:300px;border-radius:50%;background:${p[1]}"></div>
+  ${svgM(S.m,[p[2],p[3],'#ffffff',p[4]],190,160,220)}
+  <div class="abs" style="left:44px;bottom:70px;font-family:'Noto Sans KR';font-weight:700;font-size:34px;color:${p[4]};letter-spacing:-.01em">${ko}</div>
+  <div class="abs lbl" style="left:46px;bottom:44px;color:${p[4]};opacity:.7;font-size:12px">${en}</div>
+  <div class="abs lbl" style="right:44px;top:44px;color:${p[4]};opacity:.75;font-size:12px">${trk}</div>
+  <div class="abs" style="left:44px;top:40px;font-family:Montserrat;font-weight:900;font-size:22px;color:${p[4]}">●</div>${grain(.3)}`;},
+ holo(p){return `<div class="abs" style="inset:0;background:${p[0]}"></div>
+  ${[0,1,2,3].map(k=>`<div class="abs" style="left:${[-80,300,60,340][k]}px;top:${[-60,-40,300,320][k]}px;width:420px;height:420px;border-radius:50%;background:${p[k+1]};filter:blur(70px);opacity:.9"></div>`).join('')}
+  <div class="abs" style="left:-20px;right:-20px;top:30px;text-align:center;font-family:Syne;font-weight:800;font-size:${Math.min(84,Math.round(520/(Math.max(...en.split(' ').map(w=>w.length))*1.04)))}px;line-height:.92;color:transparent;-webkit-text-stroke:2px rgba(255,255,255,.95);padding:0 30px;word-break:keep-all;letter-spacing:-.02em">${en}</div>
+  ${svgM(S.m,['rgba(255,255,255,.85)',p[2],'#ffffff',p[5]],170,190,260,'filter:drop-shadow(0 0 30px rgba(255,255,255,.8))')}
+  <div class="abs" style="left:0;right:0;bottom:56px;text-align:center;font-family:'Noto Sans KR';font-weight:700;font-size:30px;color:#fff;text-shadow:0 2px 14px ${p[5]},0 0 2px ${p[5]}">${ko}</div>
+  <div class="abs lbl" style="left:0;right:0;bottom:30px;text-align:center;color:rgba(255,255,255,.85);font-size:11px">${trk}</div>${grain(.22)}`;},
+ riso(p){return `<div class="abs" style="inset:0;background:#f3ecdc"></div>
+  <div class="abs" style="inset:0;background-image:radial-gradient(${p[0]} 28%,transparent 30%);background-size:12px 12px;opacity:.55;clip-path:circle(46% at 62% 44%)"></div>
+  ${svgM(S.m,[p[1],p[0],'#f3ecdc',p[1]],200,92,330,'mix-blend-mode:multiply;opacity:.9')}
+  ${svgM(S.m,[p[0],p[1],'#f3ecdc',p[0]],192,84,330,'mix-blend-mode:multiply;opacity:.75')}
+  <div class="abs" style="left:36px;top:${ko.length>7?380:360}px;width:520px;font-family:'Black Han Sans';font-size:${ko.length>9?56:ko.length>6?70:92}px;line-height:1;color:${p[1]};mix-blend-mode:multiply;word-break:keep-all">${ko}</div>
+  <div class="abs lbl" style="left:38px;top:40px;color:${p[1]};font-size:12px">${trk}</div>
+  <div class="abs lbl" style="left:38px;bottom:30px;color:${p[0]};font-size:11px">${en}</div>${grain(.5,1.4)}`;},
+ neon(p){return `<div class="abs" style="inset:0;background:linear-gradient(180deg,#07051a 0,#120a36 55%,${p[2]} 100%)"></div>
+  <div class="abs" style="left:-200px;right:-200px;top:330px;height:400px;transform:perspective(300px) rotateX(62deg);background-image:linear-gradient(${p[0]} 2px,transparent 2px),linear-gradient(90deg,${p[0]} 2px,transparent 2px);background-size:50px 50px;opacity:.7"></div>
+  <div class="abs" style="left:200px;top:150px;width:200px;height:200px;border-radius:50%;background:linear-gradient(${p[1]},${p[0]});box-shadow:0 0 80px ${p[1]}"></div>
+  ${svgM(S.m,['rgba(10,6,30,.6)',p[1],'#ffffff',p[0]],170,110,260,`filter:drop-shadow(0 0 8px ${p[0]}) drop-shadow(0 0 20px ${p[0]})`)}
+  ${[[-3,p[0]],[3,'#3cf'],[0,'#fff']].map(([o,col])=>`<div class="abs" style="left:${o}px;right:0;top:412px;text-align:center;font-family:'Do Hyeon';font-size:${ko.length>8?54:72}px;color:${col};${o?'opacity:.7;mix-blend-mode:screen':''}">${ko}</div>`).join('')}
+  <div class="abs lbl" style="left:0;right:0;top:36px;text-align:center;color:${p[1]};text-shadow:0 0 10px ${p[1]};font-size:12px">${trk}</div>
+  <div class="abs" style="left:0;right:0;top:500px;text-align:center;font-family:Monoton;font-size:${Math.min(26,Math.round(540/(en.length*.95)))}px;color:${p[0]};text-shadow:0 0 12px ${p[0]};white-space:nowrap">${en}</div>${grain(.15)}`;},
+ collage(p){const tape=(x,y,r)=>`<div class="abs" style="left:${x}px;top:${y}px;width:120px;height:34px;background:rgba(255,250,220,.75);transform:rotate(${r}deg);box-shadow:0 2px 4px rgba(0,0,0,.15)"></div>`;
+  return `<div class="abs" style="inset:0;background:${p[0]}"></div>
+  <div class="abs" style="left:40px;top:60px;width:330px;height:380px;background:${p[1]};clip-path:polygon(2% 4%,98% 0,100% 96%,60% 100%,40% 97%,0 100%);transform:rotate(-4deg)"></div>
+  <div class="abs" style="left:270px;top:250px;width:290px;height:300px;background:#fffdf6;clip-path:polygon(0 3%,96% 0,100% 100%,4% 97%);transform:rotate(5deg);box-shadow:0 6px 18px rgba(0,0,0,.18)"></div>
+  ${svgM(S.m,[p[2],p[3],'#fff',p[4]],90,110,280,'filter:drop-shadow(5px 5px 0 #fff) drop-shadow(-5px -5px 0 #fff) drop-shadow(0 8px 10px rgba(0,0,0,.25))')}
+  <div class="abs" style="left:300px;top:300px;width:240px;font-family:'Nanum Pen Script';font-size:${ko.length>8?56:70}px;line-height:.95;color:${p[4]};transform:rotate(5deg);word-break:keep-all">${ko}</div>
+  ${tape(60,40,-12)}${tape(420,230,18)}
+  <div class="abs" style="left:440px;top:60px;width:110px;height:110px;border-radius:50%;background:${p[3]};display:flex;align-items:center;justify-content:center;transform:rotate(14deg);font-family:Jua;font-size:20px;color:#fff;text-align:center;line-height:1.1">TRACK<br>${String(I+1).padStart(2,'0')}</div>
+  <div class="abs lbl" style="left:40px;bottom:30px;color:${p[4]};font-size:11px">BIO BEAT · ${en}</div>${grain(.35,1.1)}`;},
+ glass(p){return `<div class="abs" style="inset:0;background:${p[0]}"></div>
+  ${[0,1,2].map(k=>`<div class="abs" style="left:${[20,330,140][k]}px;top:${[40,80,330][k]}px;width:${[260,240,300][k]}px;height:${[260,240,300][k]}px;border-radius:50%;background:${p[k+1]}"></div>`).join('')}
+  <div class="abs" style="left:110px;top:100px;width:380px;height:400px;border-radius:40px;background:rgba(255,255,255,.18);backdrop-filter:blur(26px);border:1.5px solid rgba(255,255,255,.55);box-shadow:0 30px 60px rgba(0,0,0,.18)"></div>
+  ${svgM(S.m,['rgba(255,255,255,.75)',p[2],'#ffffff',p[4]],190,140,220)}
+  <div class="abs" style="left:110px;width:380px;top:385px;text-align:center;font-family:'Noto Sans KR';font-weight:700;font-size:${ko.length>8?28:34}px;color:${p[4]}">${ko}</div>
+  <div class="abs lbl" style="left:110px;width:380px;top:440px;text-align:center;color:${p[4]};opacity:.75;font-size:11px">${en}</div>
+  <div class="abs lbl" style="left:0;right:0;top:36px;text-align:center;color:${p[4]};font-size:12px">${trk}</div>${grain(.2)}`;},
+ editorial(p){return `<div class="abs" style="inset:0;background:${p[0]}"></div>
+  ${svgM(S.m,['none',p[1],p[1],p[1]],300,56,250,'opacity:.9')}
+  <div class="abs" style="left:34px;top:330px;width:540px;font-family:'Playfair Display';font-style:italic;font-weight:700;font-size:${en.length>16?58:76}px;line-height:.95;color:${p[1]}">${S.en||ko}</div>
+  <div class="abs" style="left:40px;top:44px;writing-mode:vertical-rl;font-family:'Gowun Batang';font-weight:700;font-size:30px;letter-spacing:.2em;color:${p[2]}">${ko}</div>
+  <div class="abs lbl" style="left:36px;bottom:34px;color:${p[1]};font-size:11px;opacity:.8">${trk}</div>
+  <div class="abs lbl" style="right:36px;bottom:34px;color:${p[2]};font-size:11px">NO.${String(I+1).padStart(3,'0')}</div>
+  <div class="abs" style="left:24px;right:24px;top:24px;bottom:24px;border:1px solid ${p[1]};opacity:.35"></div>${grain(.55,1.2)}`;},
+ dreamy(p){let st='';for(let k=0;k<26;k++)st+=`<div class="abs" style="left:${rnd()*600}px;top:${rnd()*330}px;width:${2+rnd()*3}px;height:${2+rnd()*3}px;border-radius:50%;background:#fff;opacity:${.5+rnd()*.5}"></div>`;
+  const cloud=(x,y,s,o)=>`<div class="abs" style="left:${x}px;top:${y}px;width:${s}px;height:${s*.45}px;background:#fff;border-radius:999px;opacity:${o};filter:blur(6px);box-shadow:${s*.25}px ${-s*.15}px 0 ${s*.05}px #fff,${-s*.2}px ${-s*.08}px 0 0 #fff"></div>`;
+  return `<div class="abs" style="inset:0;background:linear-gradient(180deg,${p[0]} 0,${p[1]} 60%,${p[2]} 100%)"></div>${st}
+  ${cloud(40,420,220,.8)}${cloud(330,460,260,.75)}${cloud(380,120,140,.5)}
+  ${svgM(S.m,[p[3],p[4],'#ffffff',p[5]],200,150,200,'filter:drop-shadow(0 0 24px rgba(255,255,255,.9))')}
+  <div class="abs" style="left:0;right:0;top:390px;text-align:center;font-family:'Gowun Batang';font-weight:700;font-size:${ko.length>8?36:46}px;color:${p[5]};text-shadow:0 0 14px #fff,0 0 4px #fff">${ko}</div>
+  <div class="abs lbl" style="left:0;right:0;top:450px;text-align:center;color:${p[5]};font-size:11px">${en}</div>
+  <div class="abs lbl" style="left:0;right:0;top:40px;text-align:center;color:${p[5]};font-size:11px">${trk}</div>${grain(.2)}`;},
+ pop(p){const words=ko.split(' ');return `<div class="abs" style="inset:0;background:${p[0]}"></div>
+  <div class="abs" style="left:-60px;top:330px;width:760px;height:340px;background:${p[1]};transform:rotate(-8deg)"></div>
+  <div class="abs" style="left:350px;top:-80px;width:340px;height:340px;border-radius:50%;background:${p[2]}"></div>
+  ${svgM(S.m,[p[3],p[2],'#ffffff',p[4]],300,150,280,'filter:drop-shadow(10px 10px 0 rgba(0,0,0,.25))')}
+  <div class="abs" style="left:36px;top:${words.length>2?60:110}px;width:330px;font-family:'Black Han Sans';font-size:${ko.length>9?62:84}px;line-height:.98;color:${p[4]};word-break:keep-all">${words.join('<br>')}</div>
+  <div class="abs lbl" style="left:40px;bottom:40px;color:${p[0]};font-size:13px;font-weight:600">${trk}</div>
+  <div class="abs" style="right:36px;bottom:30px;font-family:'Bebas Neue';font-size:${Math.min(40,Math.round(560/(en.length*.5)))}px;color:${p[4]};white-space:nowrap">${en}</div>${grain(.2)}`;}
+};
+c.innerHTML=ST[S.s](S.p);
+Promise.all([document.fonts.ready]).then(()=>setTimeout(()=>document.title='done',250));
+</script></body></html>
