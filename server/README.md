@@ -7,7 +7,13 @@
 - `setup.sh` Oracle Cloud(Ubuntu)에 한 번에 설치: Node.js · Caddy(https 인증서) · 서비스 등록 · 방화벽
 - 게임 쪽: 루트의 `net.js` (`RELAY_URL`에 서버 주소). 서버에 닿지 않으면 자동으로 예전 P2P 방식으로 돌아감
 
-## 설치 (Oracle Cloud 무료 서버, 서울)
+## 설치 (Render 무료, 싱가포르) — 지금 쓰는 방법
+1. https://render.com → **GitHub로 가입** (카드 필요 없음)
+2. 대시보드 **New → Blueprint** → GitHub 연결 → 이 저장소 고르기 → 루트의 `render.yaml`대로 `bio-arcade-relay`가 만들어짐 → **Apply**
+3. 몇 분 뒤 서비스 화면 위쪽의 `https://bio-arcade-relay-xxxx.onrender.com` 주소를 `net.js`의 `RELAY_URL`에 `wss://…` 로 넣기
+- 무료 서버는 15분 동안 안 쓰면 잠들고 깨어나는 데 약 1분: `net.js`가 메인 화면·게임을 열 때 미리 깨우고 4분마다 두드려 잠들지 않게 함
+
+## 설치 (Oracle Cloud 무료 서버) — 다른 방법
 1. Oracle Cloud 가입 — 홈 지역(Home Region)을 **South Korea Central (Seoul)** 로 고르기 (나중에 못 바꿈)
 2. 컴퓨트 → 인스턴스 → 인스턴스 생성: 이미지 **Ubuntu 22.04**, 모양 **VM.Standard.A1.Flex(1 OCPU, 6GB)** 또는 **VM.Standard.E2.1.Micro** (Always Free)
 3. 네트워킹 → 가상 클라우드 네트워크 → 서브넷 → 보안 목록 → **수신 규칙 추가**: 소스 `0.0.0.0/0`, TCP, 대상 포트 `80,443`

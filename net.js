@@ -3,7 +3,7 @@
  *   해외 중계를 돌아 느려지므로, 우리 서버(server/server.js)에 웹소켓으로 접속해 서버가 메시지를 전달하게 합니다.
  *   게임 코드는 그대로: vendor/peerjs.min.js가 new Peer()를 만들 때 BioRelay가 켜져 있으면 이 파일의 RelayPeer를 대신 돌려줍니다.
  *   (RelayPeer는 PeerJS와 같은 모양: on('open'|'connection'|'error'|'disconnected'), connect(), destroy(), conn.send/close/on('open'|'data'|'close'))
- *   서버에 4초 안에 닿지 않으면 자동으로 원래 P2P 방식으로 돌아갑니다.
+ *   서버에 8초 안에 닿지 않으면 자동으로 원래 P2P 방식으로 돌아갑니다.
  *
  *   ▶ 설정: RELAY_URL 에 서버 주소 (예: 'wss://biogame.duckdns.org'). 비어 있으면 꺼짐(지금처럼 P2P).
  *     시험용: 주소창에 ?relay=wss://… 를 붙이거나 localStorage 'bioRelayUrl', 끄기 ?relay=off
@@ -66,7 +66,7 @@
     var self = this, ws, ok = false;
     try { ws = new WebSocket(url); } catch (e) { setTimeout(function () { self._fallback(); }, 0); return; }
     this._ws = ws;
-    var timer = setTimeout(function () { if (!ok) { try { ws.close(); } catch (e) {} self._fallback(); } }, 4000);
+    var timer = setTimeout(function () { if (!ok) { try { ws.close(); } catch (e) {} self._fallback(); } }, BioRelay.waitMs || 8000);
     ws.onopen = function () { ok = true; clearTimeout(timer); self._ctl({t: 'open', id: self._want == null ? undefined : self._want}); };
     ws.onmessage = function (e) { self._msg(e.data); };
     ws.onerror = function () { if (!ok) { clearTimeout(timer); self._fallback(); } };
@@ -143,10 +143,16 @@
     this._want = this.id; this._start();
   };
 
+  // 무료 서버(Render)는 15분 동안 아무도 안 쓰면 잠들고 깨어나는 데 1분쯤 걸림 →
+  // 페이지를 열자마자 미리 깨우고, 페이지가 열려 있는 동안 4분마다 살짝 두드려 잠들지 않게 함
+  function wake() { if (!url || document.hidden) return; try { fetch(url.replace(/^ws/, 'http') + '/?wake=' + Date.now(), {mode: 'no-cors', cache: 'no-store'}).catch(function () {}); } catch (e) {} }
+  if (url) { wake(); setInterval(wake, 4 * 60 * 1000); document.addEventListener('visibilitychange', function () { if (!document.hidden) wake(); }); }
+
   var BioRelay = window.BioRelay = {
     url: url,
     // 서버를 쓸지: 주소가 있고, 최근 1분 안에 연결 실패가 없을 때
     enabled: function () { return !!url && typeof WebSocket !== 'undefined' && Date.now() - downAt > 60000; },
+    wake: wake,
     create: function (id, opts, fallback) { return new RelayPeer(id, opts, fallback); },
     droppable: null,
     RelayPeer: RelayPeer

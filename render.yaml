@@ -1,0 +1,13 @@
+# Render 블루프린트: BIO ARCADE 실시간 중계 서버 (server/ 폴더)
+# Render 대시보드 → New → Blueprint → 이 저장소를 고르면 아래 설정대로 서버가 만들어짐
+services:
+  - type: web
+    name: bio-arcade-relay
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: server
+    buildCommand: npm install --omit=dev --no-audit --no-fund
+    startCommand: node server.js
+    healthCheckPath: /
+    autoDeploy: true
