@@ -102,7 +102,7 @@ def body(M, J, q, mats, opt):
         M.add(capsule(J[s + 'sh'], J[s + 'el'], 2.1 * opt.get('arm', 1), 1.8 * opt.get('arm', 1)), mats.get('sleeve', cloth))
         M.add(capsule(J[s + 'el'], J[s + 'ha'] - J[s + 'fa'] * 0.8, 1.8, 1.5), mats.get('forearm', gloves))
         M.add(ellipsoid(J[s + 'ha'], 1.7), gloves)
-    H = J['head']; Rh = J['Rh']
+    H = J['head']; Rh = J['Rh']; M.head = H.copy()
     M.add(ellipsoid(H, (4.3, 4.6, 4.2)), SKIN, pid=900)
     # 눈 (얼굴이 보일 때만 그려짐)
     for s in (1, -1):
@@ -195,8 +195,8 @@ def guardian(q, f):
         M.add(ellipsoid(H + Rh @ np.array([0, 0.9, -0.2]), (4.7, 4.3, 4.6)), A, pid=901)
         M.add(box(H + Rh @ np.array([0, -0.6, 4.2]), Rh, (2.9, 0.5, 0.4)), DARK if t == 1 else MT('#3ae0ff', True), pid=902)
         plume = RED if t == 1 else MT('#3ae0ff', True)
-        M.add(capsule(H + Rh @ np.array([0, 4.5, 2.0]), H + Rh @ np.array([0, 5.4, -4.5]), 1.0, 1.6), plume)
-        M.add(capsule(H + Rh @ np.array([0, 5.4, -4.5]), H + Rh @ np.array([0, 2.0, -7.0]), 1.6, 0.8), plume)
+        M.add(capsule(H + Rh @ np.array([0, 4.5, 2.0]), H + Rh @ np.array([0, 5.4, -4.5]), 1.0, 1.6), plume, pid=904)
+        M.add(capsule(H + Rh @ np.array([0, 5.4, -4.5]), H + Rh @ np.array([0, 2.0, -7.0]), 1.6, 0.8), plume, pid=904)
         for s in (1, -1): M.decal(H + Rh @ np.array([s * 1.4, -0.6, 4.7]), '#8adfff', 1, 1.2)
     if sh: draw_shield(M, J, q, t)
     draw_weapon(M, J, q, 'r', q['w1'], grp, t, '#ffd040', 'w1')
@@ -225,7 +225,7 @@ def alchemist(q, f):
         M.add(ellipsoid(bp + R @ np.array([-2.0, 4.6, 0]), (1.4, 2.0, 1.4)), VIAL, pid=961)
     hood = C if t < 2 else Mat(['#6a6a50', '#b0b088', '#e0e0b8', '#ffffe8'])
     M.add(ellipsoid(H + Rh @ np.array([0, 0.8, -0.9]), (4.9, 4.9, 4.7)), hood, pid=901)
-    if t >= 1: M.add(capsule(H + Rh @ np.array([0, 3.0, -3.5]), H + Rh @ np.array([0, -1.0, -6.6]), 2.2, 1.0), hood)
+    if t >= 1: M.add(capsule(H + Rh @ np.array([0, 3.0, -3.5]), H + Rh @ np.array([0, -1.0, -6.6]), 2.2, 1.0), hood, pid=904)
     if t == 2: M.add(ellipsoid(H + Rh @ np.array([0, 0.6, 3.4]), (3.0, 2.0, 1.2)), MT('#7aff5a', True), pid=903)
     else:
         for s in (1, -1): M.decal(H + Rh @ np.array([s * 1.7, 1.6, 4.0]), '#ffd860', 1, 1.0); M.decal(H + Rh @ np.array([s * 2.4, 1.6, 3.6]), '#8a6020', 1, 1.0)
@@ -244,7 +244,7 @@ def alchemist(q, f):
         for s in 'lr': M.add(ellipsoid(J[s + 'ha'] + np.array([0, 2.5, 0.6]), 1.0 + 2.2 * q['glow']), VIAL, pid=980)
     ground(M, J, q); return M
 
-NAVY = Mat(['#0a0e1a', '#18223a', '#2a3c62', '#44628e'])
+NAVY = Mat(['#162444', '#24407a', '#3a64b4', '#6a9ae8'])
 BLADE = Mat(['#1a8ab8', '#4ae0ff', '#b0f6ff', '#ffffff'], True, glow='#3ac8ff')
 HAIR = Mat(['#0a0a12', '#1c1a2a', '#34304a', '#504a6a'])
 def swordsman(q, f):
@@ -252,7 +252,7 @@ def swordsman(q, f):
     M = Model(); J = skeleton(q)
     C = [MT('#5a5a62'), NAVY, Mat(['#06060c', '#10101c', '#1c1c30', '#2c2c48'])][t]
     scarf = Mat(['#0a3a4a', '#126a80', '#20a0c0', '#5ae0ff']) if t < 2 else MT('#4ae0ff', True)
-    mats = dict(torso=C, pants=DARK, boots=Mat(['#0a0a10', '#1a1a24', '#2c2c3a', '#46465a']), gloves=DARK, sleeve=C, belt=scarf)
+    mats = dict(torso=C, pants=Mat(['#1a1a2a', '#2c2c44', '#44446a', '#62628e']), boots=Mat(['#140e0a', '#2e2016', '#4a3424', '#6a4c34']), gloves=Mat(['#140e0a', '#2e2016', '#4a3424', '#6a4c34']), sleeve=C, belt=scarf)
     H, Rh = body(M, J, q, mats, dict(eye='#4ae0ff'))
     R = J['R']; cp = q['cape']
     if t >= 1:
@@ -268,7 +268,7 @@ def swordsman(q, f):
     M.add(capsule(nk + R @ np.array([1.2, 0, -2.0]), nk + R @ np.array([2.0, -3.0 + 3 * cp, -7.0 - 3 * cp]), 1.1, 0.6), scarf)
     M.add(ellipsoid(H + Rh @ np.array([0, 1.4, -0.8]), (4.5, 3.8, 4.4)), HAIR, pid=901)
     for a, b in ((0.0, 0.0), (1.6, 0.4), (-1.6, 0.4), (0.8, -1.0), (-0.8, -1.0)):
-        M.add(capsule(H + Rh @ np.array([a, 3.5, -1 + b]), H + Rh @ np.array([a * 1.5, 6.4, -3.6 + b]), 1.2, 0.3), HAIR)
+        M.add(capsule(H + Rh @ np.array([a, 3.5, -1 + b]), H + Rh @ np.array([a * 1.5, 6.4, -3.6 + b]), 1.2, 0.3), HAIR, pid=904)
     if grp == 'blade' and t >= 1:   # 신경검: 빛나는 칼날
         for s, w in (('r', 'w1'), ('l', 'w2')):
             if s == 'l' and sh: continue
@@ -306,7 +306,7 @@ def mancer(q, f):
     for k in range(5 if t else 2):
         a = -1.0 + k * 0.5; p0 = an + np.array([math.sin(a) * 5.8, 0.5, math.cos(a) * 4.6])
         M.add(capsule(p0, p0 + np.array([math.sin(a + 0.5) * 2, -1.5, math.cos(a) * 2]), 0.5, 0.3), MYC if t < 2 else MT('#e08aff', True))
-    cap_c = H + Rh @ np.array([0, 3.2, -0.3]); cs = [0.75, 1.0, 1.15][t]
+    cap_c = H + Rh @ np.array([0, 3.2, -0.3]); cs = [0.62, 0.8, 0.9][t]
     M.add(ellipsoid(cap_c, (7.4 * cs, 3.0 * cs, 7.0 * cs)), CP, pid=901)
     M.add(ellipsoid(H + Rh @ np.array([0, 2.0, -0.3]), (6.6 * cs, 1.2, 6.2 * cs)), MYC, pid=902)
     for a, r in ((0.3, 4.5), (1.8, 5.2), (3.4, 3.8), (4.6, 5.5), (5.6, 2.5), (2.5, 2.0)):

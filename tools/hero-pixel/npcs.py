@@ -55,7 +55,7 @@ def npc_merc(q, f):  # 백혈구 용병: 흰 판금, 창, 둥근 방패
     H, Rh = body(M, J, q, mats, dict(bulk=1.1, arm=1.1)); R = J['R']
     for s in 'lr': M.add(ellipsoid(J[s + 'sh'] + R @ np.array([0, 0.6, 0]), (3.0, 2.4, 3.0)), A)
     M.add(ellipsoid(H + Rh @ np.array([0, 0.9, -0.2]), (4.6, 4.3, 4.6)), A, pid=901); M.add(box(H + Rh @ np.array([0, -0.4, 4.2]), Rh, (2.6, 0.5, 0.4)), DARK, pid=902)
-    for k in range(5): M.add(ellipsoid(H + Rh @ np.array([0, 4.6 - k * 0.3, -1.5 - k * 1.3]), 1.2), mt('#c83a4a'))
+    for k in range(5): M.add(ellipsoid(H + Rh @ np.array([0, 4.6 - k * 0.3, -1.5 - k * 1.3]), 1.2), mt('#c83a4a'), pid=904)
     la = J['lha']; nrm = R @ np.array([0.5, 0.1, 1.0]); nrm /= np.linalg.norm(nrm); up_ = np.array([0, 1.0, 0]) - nrm * nrm[1]; up_ /= np.linalg.norm(up_); rt = np.cross(up_, nrm)
     M.add(ellipsoid(la + nrm * 1.5, (5.0, 5.0, 1.0)) if False else box(la + nrm * 1.5, np.stack([rt, up_, nrm], 1), (4.2, 4.2, 0.6)), mt('#c83a4a'), pid=910)
     M.decal(la + nrm * 2.3, '#ffffff', 1, 1.0)

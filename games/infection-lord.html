@@ -1287,12 +1287,12 @@ function makePost(){
     fragmentShader: 'uniform sampler2D tex; uniform float thr; varying vec2 vUv; void main(){ vec3 c = texture2D(tex, vUv).rgb; float l = max(c.r, max(c.g, c.b)); float k = smoothstep(thr, thr + 0.32, l); gl_FragColor = vec4(c * k, 1.0); }', depthTest: false, depthWrite: false });
   const blur = new THREE.ShaderMaterial({ uniforms: { tex: { value: null }, dir: { value: new THREE.Vector2() } }, vertexShader: qv,
     fragmentShader: 'uniform sampler2D tex; uniform vec2 dir; varying vec2 vUv; void main(){ vec3 c = texture2D(tex, vUv).rgb * 0.227; c += (texture2D(tex, vUv + dir * 1.385).rgb + texture2D(tex, vUv - dir * 1.385).rgb) * 0.316; c += (texture2D(tex, vUv + dir * 3.231).rgb + texture2D(tex, vUv - dir * 3.231).rgb) * 0.070; gl_FragColor = vec4(c, 1.0); }', depthTest: false, depthWrite: false });
-  const comp = new THREE.ShaderMaterial({ uniforms: { tex: { value: null }, bloom: { value: null }, str: { value: OPT.px ? 0.55 : 0.85 }, sat: { value: 1.12 }, tint: { value: new THREE.Color('#ffffff') }, vig: { value: 0.55 }, hurt: { value: 0 }, px: { value: OPT.px ? 1 : 0 }, res: { value: new THREE.Vector2(1, 1) } }, vertexShader: qv,
+  const comp = new THREE.ShaderMaterial({ uniforms: { tex: { value: null }, bloom: { value: null }, str: { value: OPT.px ? 0.55 : 0.85 }, sat: { value: 1.12 }, tint: { value: new THREE.Color('#ffffff') }, vig: { value: OPT.px ? 0.3 : 0.55 }, hurt: { value: 0 }, px: { value: OPT.px ? 1 : 0 }, res: { value: new THREE.Vector2(1, 1) } }, vertexShader: qv,
     fragmentShader: 'uniform sampler2D tex; uniform sampler2D bloom; uniform float str; uniform float sat; uniform vec3 tint; uniform float vig; uniform float hurt; uniform float px; uniform vec2 res; varying vec2 vUv;\n' +
       'float bayer(vec2 p){ vec2 q = mod(floor(p), 4.0); float i = q.x + q.y * 4.0; return mod(i * 9.0 + floor(i / 4.0) * 7.0, 16.0) / 16.0; }\n' +
       'void main(){ vec2 uv = px > 0.5 ? (floor(vUv * res) + 0.5) / res : vUv; vec3 c = texture2D(tex, uv).rgb; vec3 b = texture2D(bloom, uv).rgb; c += b * str; float l = dot(c, vec3(0.299, 0.587, 0.114)); c = mix(vec3(l), c, sat); c = (c - 0.5) * 1.06 + 0.5; c *= tint;\n' +
       ' vec2 d = uv - 0.5; float v = smoothstep(0.85, 0.25, length(d * vec2(1.0, 0.85))); c *= mix(1.0 - vig, 1.0, v); c = mix(c, vec3(0.55, 0.0, 0.02), hurt * (1.0 - v) * 0.8);\n' +
-      ' if (px > 0.5){ vec2 cell = floor(vUv * res); float d = bayer(cell) - 0.5; c = floor(max(c, 0.0) * 14.0 + 0.5 + d * 0.9) / 14.0; }\n' +
+      ' if (px > 0.5){ vec2 cell = floor(vUv * res); float d = bayer(cell) - 0.5; c = floor(max(c, 0.0) * 20.0 + 0.5 + d * 0.55) / 20.0; }\n' +
       ' gl_FragColor = vec4(max(c, 0.0), 1.0); }', depthTest: false, depthWrite: false });
   P.comp = comp;
   P.resize = () => {

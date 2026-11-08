@@ -4,9 +4,16 @@ from PIL import Image
 
 def hexc(h): h = h.lstrip('#'); return np.array([int(h[i:i+2], 16) for i in (0, 2, 4)], np.uint8)
 
+LIFT = True   # 레퍼런스처럼 밝고 또렷한 색: 어두운 단계를 끌어올리고 채도를 살짝 높임
+def _lift(c):
+    import colorsys
+    r, g, b = [v / 255 for v in c]; h, l, s = colorsys.rgb_to_hls(r, g, b)
+    l = 0.07 + 0.93 * l ** 0.8; s = min(1, s * 1.12)
+    r, g, b = colorsys.hls_to_rgb(h, min(0.97, l), s); return np.array([int(r * 255), int(g * 255), int(b * 255)], np.uint8)
 class Mat:
     def __init__(s, ramp, emissive=False, outline=None, glow=None):
         s.ramp = [hexc(c) for c in ramp]; s.em = emissive
+        if LIFT and not emissive: s.ramp = [_lift(c) for c in s.ramp]
         s.outline = hexc(outline) if outline else None; s.glow = hexc(glow) if glow else None
 
 def _basis(d):
@@ -65,12 +72,19 @@ def frame_from(dirv, up=(0, 1, 0)):
     x = np.cross(y, upv); x /= np.linalg.norm(x); z = np.cross(x, y)
     return np.stack([x, y, z], 1)
 
+HEADK = 1.3   # 머리 크기 배율 (약 4등신 — 레퍼런스처럼 작은 캐릭터도 얼굴이 읽히게)
 class Model:
-    def __init__(s): s.parts = []; s.decals = []; s.tips = {}
+    def __init__(s): s.parts = []; s.decals = []; s.tips = {}; s.head = None
+    def _hx(s, p):
+        H = s.head; return H + (p - H) * HEADK + np.array([0, (HEADK - 1) * 4.6, 0])
     def add(s, pn, mat, pid=None):
-        p, n = pn; s.parts.append((p, n, mat, pid if pid is not None else len(s.parts)))
+        p, n = pn
+        if s.head is not None and pid is not None and 900 <= pid < 910: p = s._hx(p)
+        s.parts.append((p, n, mat, pid if pid is not None else len(s.parts)))
     def decal(s, pos, color, size=1, bias=1.2):
-        s.decals.append((np.array(pos, float), hexc(color), size, bias))
+        pos = np.array(pos, float)
+        if s.head is not None and np.linalg.norm(pos - s.head) < 8 and pos[1] > s.head[1] - 3: pos = s._hx(pos); bias *= HEADK
+        s.decals.append((pos, hexc(color), size, bias))
 
 def rot_y(a): c, s_ = math.cos(a), math.sin(a); return np.array([[c, 0, s_], [0, 1, 0], [-s_, 0, c]])
 def rot_x(a): c, s_ = math.cos(a), math.sin(a); return np.array([[1, 0, 0], [0, c, -s_], [0, s_, c]])
