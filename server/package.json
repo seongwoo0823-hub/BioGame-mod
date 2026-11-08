@@ -1,0 +1,9 @@
+{
+  "name": "bio-arcade-relay",
+  "version": "1.0.0",
+  "description": "BIO ARCADE 실시간 중계 서버 (WebSocket)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": { "ws": "^8.18.0" },
+  "license": "MIT"
+}
