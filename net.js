@@ -11,7 +11,7 @@
 (function () {
   'use strict';
   if (window.BioRelay) return;
-  var RELAY_URL = '';
+  var RELAY_URL = 'wss://bio-arcade-relay.onrender.com';
 
   var url = RELAY_URL;
   try {
