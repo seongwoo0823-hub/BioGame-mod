@@ -201,7 +201,30 @@ def save(im, name, hi_scale):
     im.resize((im.width * hi_scale, im.height * hi_scale), Image.NEAREST).save(os.path.join(OUT, name + '.webp'), 'WEBP', quality=92)
 
 
+def water(rng, deep='#1a6ab0', mid='#2a8ad0', foam='#e8f8ff'):
+    """바다 (128×128): 파란 물결 + 흰 물결선"""
+    w = 128; cv = Canvas(w, w, deep)
+    for y in range(w):
+        for x in range(w):
+            v = math.sin((x * .7 + y * .35) * .25 + math.sin(y * .09) * 1.6) * .5 + .5
+            cv.a[y, x] = shade(mid, (v - .5) * .25) if v > .45 else shade(deep, (v - .5) * .2)
+    for _ in range(40):   # 흰 물결선
+        x, y = rng.random() * w, rng.random() * w; L = 4 + int(rng.random() * 8)
+        for t in range(L): cv.px(x + t, y + math.sin(t * .6) * 1.2, shade(foam, -t / L * .3))
+    return cv
+
+
+def abyss(rng):
+    """어둠 (128×128): 거의 검은 바탕 + 아주 희미한 바위 결"""
+    w = 128; cv = Canvas(w, w, '#0a0806')
+    for _ in range(300): cv.px(rng.random() * w, rng.random() * w, shade('#1a1612', rng.random() * .2))
+    return cv
+
+
 if __name__ == '__main__':
+    rr = random.Random(9)
+    class RW: random = rr.random; choice = rr.choice
+    save(water(RW).img(), 'water', 4); save(abyss(RW).img(), 'abyss', 4)
     for ci, fn in enumerate([floor_c1, floor_c2, floor_c3, floor_c4, floor_c5]):
         rng = random.Random(100 + ci); np.random.seed(100 + ci)
         r2 = np.random.default_rng(100 + ci)

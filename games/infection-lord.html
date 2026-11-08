@@ -1850,6 +1850,17 @@ function genTown(rng){
 /* ===================== 레벨(지역) 구성 ===================== */
 const LEVELS = new Map();
 const TEXC = {};
+const TILEC = {};
+function loadTile(f){   // 반복 깔리는 도트 질감 (흐릿해지지 않게 가장 가까운 점으로). 지역마다 따로 반복 수를 정하도록 복제본을 돌려줌
+  let T0 = TILEC[f];
+  if (!T0){
+    T0 = TILEC[f] = { img: null, clones: [] };
+    const img = new Image(); img.onload = () => { T0.img = img; T0.clones.forEach(c => { c.image = img; c.needsUpdate = true; }); }; img.src = ADIR + f;
+  }
+  const t = new THREE.Texture(); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.NearestFilter; t.minFilter = THREE.LinearFilter; t.generateMipmaps = false;
+  if (T0.img){ t.image = T0.img; t.needsUpdate = true; } else T0.clones.push(t);
+  return t;
+}
 function chapterTex(ci){
   if (TEXC[ci]) return TEXC[ci];
   const th = CHAPTERS[ci].theme;
@@ -1919,37 +1930,39 @@ function buildLevel(ci, zi){
   const th = C.theme;
   const lv = { ci, zi, C, Z, town, type, w: M.w, h: M.h, g: M.g, dist: M.dist, M, rng, root: new THREE.Group(), mons: [], items: [], objs: [], decals: [], corpses: [], lights: [], walls: [], seen: new Uint8Array(M.w * M.h), mlvl: zoneLevel(ci, zi), name: levelName(ci, zi), flow: null, flowCell: -1 };
   const tex = chapterTex(ci);
-  // 바닥
-  const fmap = tex.floor.col.clone(); fmap.needsUpdate = true; fmap.repeat.set(M.w * T / 11, M.h * T / 11); lv.floorMap = fmap;
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(M.w * T, M.h * T), new THREE.MeshLambertMaterial({ map: fmap, color: town ? '#b8b0a4' : '#a8a8a8' }));
-  floor.rotation.x = -Math.PI / 2; floor.position.set(M.w * T / 2, 0, M.h * T / 2); lv.root.add(floor);
-  // 벽
-  const wallCells = [];
+  // 바닥: 땅인 칸만 이어 붙인 판 (대지 위의 땅) — 레퍼런스풍 쿼터뷰: 가장자리는 아래로 떨어지는 절벽, 그 밑은 바다나 어둠
+  const fmap = tex.floor.col.clone(); fmap.needsUpdate = true; fmap.repeat.set(1, 1); lv.floorMap = fmap;
+  { const pos = [], uv = [], U = 1 / 11;
+    for (let j = 0; j < M.h; j++) for (let i = 0; i < M.w; i++){
+      if (!M.g[j * M.w + i]) continue;
+      const x0 = i * T, x1 = x0 + T, z0 = j * T, z1 = z0 + T;
+      pos.push(x0, 0, z0, x0, 0, z1, x1, 0, z1, x0, 0, z0, x1, 0, z1, x1, 0, z0);
+      uv.push(x0 * U, -z0 * U, x0 * U, -z1 * U, x1 * U, -z1 * U, x0 * U, -z0 * U, x1 * U, -z1 * U, x1 * U, -z0 * U);
+    }
+    const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); fg.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); fg.computeVertexNormals();
+    lv.root.add(new THREE.Mesh(fg, new THREE.MeshLambertMaterial({ map: fmap, color: town ? '#b8b0a4' : '#a8a8a8' }))); }
+  // 절벽: 빈칸과 맞닿은 땅 칸 아래에 돌 기둥을 세워 땅 가장자리가 아래로 떨어지게
+  const CH_ = 5.2, cliffCells = [];
   for (let j = 0; j < M.h; j++) for (let i = 0; i < M.w; i++){
-    if (M.g[j * M.w + i]) continue;
-    let adj = false; for (let dy = -1; dy <= 1 && !adj; dy++) for (let dx = -1; dx <= 1; dx++) if (isFloor(lv, i + dx, j + dy)){ adj = true; break; }
-    if (adj) wallCells.push([i, j]);
+    if (!M.g[j * M.w + i]) continue;
+    if (!isFloor(lv, i + 1, j) || !isFloor(lv, i - 1, j) || !isFloor(lv, i, j + 1) || !isFloor(lv, i, j - 1)) cliffCells.push([i, j]);
   }
-  const organic = false;   // 모든 지역: 블록이 쌓인 절벽 (레퍼런스풍 쿼터뷰)
-  const wmat = new THREE.MeshLambertMaterial({ map: tex.wall, color: town ? '#d0c6b0' : '#f0e8e0', emissive: '#1a1612', flatShading: organic || OPT.px });
-  const wgeo = organic ? new THREE.DodecahedronGeometry(1.35, 0) : new THREE.BoxGeometry(T, 1, T).translate(0, 0.5, 0);
-  const wim = new THREE.InstancedMesh(wgeo, wmat, wallCells.length);
-  wallCells.forEach(([i, j], k) => {
-    const x = cx2w(i), z = cx2w(j);
-    const o = organic ? { x: x + (rng() - 0.5) * 0.5, y: rng() * 0.4, z: z + (rng() - 0.5) * 0.5, sx: 1 + rng() * 0.35, sy: 1.1 + rng() * 1.1, sz: 1 + rng() * 0.35, ry: rng() * TAU, rx: (rng() - 0.5) * 0.3 } : { x, y: 0, z, sx: 1, sy: 2.7 + (rng() < 0.15 ? 0.6 : 0), sz: 1, ry: 0 };
-    o.i = i; o.j = j; o.k = k; o.cut = false; lv.walls.push(o);
-    _e.set(o.rx || 0, o.ry, 0); _q.setFromEuler(_e); _s.set(o.sx, o.sy, o.sz); _p.set(o.x, o.y, o.z); _m4.compose(_p, _q, _s); wim.setMatrixAt(k, _m4);
-  });
-  wim.instanceMatrix.needsUpdate = true; lv.root.add(wim); lv.wim = wim;
-  // 벽 아래 접촉 그림자 (그림 같은 깊이감)
-  const ao = new THREE.InstancedMesh(cgeo('aoPlane', () => new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2)), new THREE.MeshBasicMaterial({ map: SHADOW_TEX, transparent: true, depthWrite: false, opacity: 0.75 }), wallCells.length);
-  lv.walls.forEach((o, k) => { _q.identity(); _s.set(4.2, 1, 4.2); _p.set(cx2w(o.i), 0.025, cx2w(o.j)); _m4.compose(_p, _q, _s); ao.setMatrixAt(k, _m4); });
-  ao.instanceMatrix.needsUpdate = true; ao.renderOrder = 1; lv.root.add(ao);
-  if (!organic){ // 벽 위 장식 띠 (밝게 칠한 윗면)
-    const tm = new THREE.MeshLambertMaterial({ map: tex.top || null, color: tex.top ? '#ffffff' : '#5a7034', emissive: '#0c0e08' }); /* 절벽 윗면: 이끼 낀 돌 (top_c*.webp) */ const trim = new THREE.InstancedMesh(new THREE.BoxGeometry(T * 1.06, 0.22, T * 1.06), tm, wallCells.length);
-    lv.walls.forEach((o, k) => { _q.identity(); _s.set(1, 1, 1); _p.set(o.x, o.sy, o.z); _m4.compose(_p, _q, _s); trim.setMatrixAt(k, _m4); });
-    trim.instanceMatrix.needsUpdate = true; lv.root.add(trim); lv.trim = trim;
+  if (cliffCells.length){
+    const cmat = new THREE.MeshLambertMaterial({ map: tex.wall, color: '#e8e0d4', emissive: '#14100c', flatShading: true });
+    const cim = new THREE.InstancedMesh(new THREE.BoxGeometry(T, CH_, T).translate(0, -CH_ / 2 - 0.004, 0), cmat, cliffCells.length);
+    cliffCells.forEach(([i, j], k) => { _q.identity(); _s.set(1, 0.92 + rng() * 0.16, 1); _p.set(cx2w(i), 0, cx2w(j)); _m4.compose(_p, _q, _s); cim.setMatrixAt(k, _m4); });
+    cim.instanceMatrix.needsUpdate = true; lv.root.add(cim);
+    // 땅 가장자리 이끼 테두리 (절벽 위 풀)
+    const em = new THREE.InstancedMesh(new THREE.BoxGeometry(T * 1.02, 0.14, T * 1.02).translate(0, -0.06, 0), new THREE.MeshLambertMaterial({ map: tex.top || null, color: '#ffffff', emissive: '#0c0e08' }), cliffCells.length);
+    cliffCells.forEach(([i, j], k) => { _q.identity(); _s.set(1, 1, 1); _p.set(cx2w(i), 0, cx2w(j)); _m4.compose(_p, _q, _s); em.setMatrixAt(k, _m4); });
+    em.instanceMatrix.needsUpdate = true; lv.root.add(em);
   }
+  // 아래 세상: 1~3장은 바다(물결이 흐름), 4~5장은 어둠
+  { const seaTex = loadTile(ci < 3 ? 'water.webp' : 'abyss.webp'), W2 = M.w * T + 120, H2 = M.h * T + 120;
+    seaTex.repeat.set(W2 / 7, H2 / 7);
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(W2, H2), new THREE.MeshBasicMaterial({ map: seaTex, color: ci < 3 ? '#d8e8ff' : '#ffffff', fog: true }));
+    sea.rotation.x = -Math.PI / 2; sea.position.set(M.w * T / 2, -CH_ * 0.82, M.h * T / 2); lv.root.add(sea); lv.sea = seaTex; lv.seaFlow = ci < 3; }
+  // 절벽 아래 그림자는 쓰지 않음 (예전 솟은 벽용 접촉 그림자·윗면 띠 제거)
   decorate(lv, rng, th);
   // 오브젝트
   const S = M.start;
@@ -2011,6 +2024,7 @@ function decoMesh(lv, key, items){
 }
 const _dr = new V3(), _lc = new THREE.Color();
 function updDeco8(lv){
+  if (lv && lv.sea && lv.seaFlow){ lv.sea.offset.x = (G.time * 0.018) % 1; lv.sea.offset.y = (G.time * 0.011) % 1; }
   if (!lv || !lv.deco8) return;
   camera.updateMatrixWorld(); _dr.setFromMatrixColumn(camera.matrixWorld, 0); _dr.y = 0; _dr.normalize();
   if (HERO) lightAt(HERO.x, HERO.z, _lc);
