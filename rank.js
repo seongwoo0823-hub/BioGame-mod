@@ -3,18 +3,18 @@
  *   보낸 기록은 어느 기기에서든 메인 화면 '랭킹'에서 볼 수 있음.
  *   저장 위치: rankings/{게임 id}/scores/{자동 id}  ·  성공 기준: config/goals
  *
- *   ▶ 설정: 아래 FIREBASE에 Firebase 웹 앱 설정의 apiKey · projectId 를 넣으면 켜짐 (비어 있으면 랭킹 버튼이 숨겨짐)
+ *   ▶ 설정: 아래 FIREBASE.projectId (Firebase 프로젝트 ID). 비어 있으면 랭킹 버튼이 숨겨짐
  */
 (function () {
   'use strict';
   var FIREBASE = {
-    apiKey: '',
-    projectId: ''
+    apiKey: '',                 // 없어도 됨 (Firestore 보안 규칙이 허용하면 키 없이 읽고 씀)
+    projectId: 'biogame-2f966'
   };
   var NAME_RE = /^(\d{5})\s+([가-힣]{2,5})$/;
-  function ready() { return !!(FIREBASE.apiKey && FIREBASE.projectId); }
+  function ready() { return !!FIREBASE.projectId; }
   function base() { return 'https://firestore.googleapis.com/v1/projects/' + FIREBASE.projectId + '/databases/(default)/documents'; }
-  function key() { return '?key=' + encodeURIComponent(FIREBASE.apiKey); }
+  function key() { return FIREBASE.apiKey ? '?key=' + encodeURIComponent(FIREBASE.apiKey) : ''; }
   function toFields(o) {
     var f = {};
     for (var k in o) {
