@@ -95,9 +95,9 @@ def _shift(m, dy, dx):
 
 
 def solid_parts(m, cx, cy):
-    """충돌 모양: 다리 사이 같은 좁은 틈은 메우고(닫힘 연산) 굵은 띠로 잘라 조각 수를 줄임.
-    조각이 수십 개면 바닥에 닿을 때 덜덜 떨며 미끄러지므로, 12개 안쪽이 되도록 띠를 키움"""
-    r = 3; p = np.pad(m, r + 1)
+    """충돌 모양: 그림 모양을 최대한 그대로 따름 (다리 사이·목 아래 같은 틈도 남겨 다리로 서고, 모양대로 기울고 넘어짐).
+    아주 좁은 틈(1픽셀)만 메우고, 가는 띠로 잘라 22개 안쪽이 되게 함"""
+    r = 1; p = np.pad(m, r + 1)
     d = p.copy()
     for dy in range(-r, r + 1):
         for dx in range(-r, r + 1):
@@ -107,9 +107,9 @@ def solid_parts(m, cx, cy):
         for dx in range(-r, r + 1):
             if dy * dy + dx * dx <= r * r: e &= _shift(d, dy, dx)
     c = e[r + 1:-(r + 1), r + 1:-(r + 1)] | m
-    for band in (6, 8, 10, 12, 16, 20):
-        parts = [q for q in collision(c, cx, cy, band=band) if abs((q[1][0] - q[0][0]) + (q[2][0] - q[3][0])) * (q[2][1] - q[0][1]) / 2 >= 6]
-        if len(parts) <= 12: break
+    for band in (4, 5, 6, 8, 10, 12, 16):
+        parts = [q for q in collision(c, cx, cy, band=band) if abs((q[1][0] - q[0][0]) + (q[2][0] - q[3][0])) * (q[2][1] - q[0][1]) / 2 >= 4]
+        if len(parts) <= 22: break
     return parts
 
 

@@ -33,6 +33,39 @@
   Emitter.prototype.removeAllListeners = function (e) { if (e) delete this._ev[e]; else this._ev = {}; return this; };
   Emitter.prototype.emit = function (e) { var a = (this._ev[e] || []).slice(), args = [].slice.call(arguments, 1); for (var i = 0; i < a.length; i++) { try { a[i].apply(this, args); } catch (x) { console.error(x); } } return a.length > 0; };
 
+
+  // ---------- 연결 방식 표시 (게임 화면 오른쪽 아래 작은 배지) ----------
+  var live = 0, badgeEl = null, hideT = null;
+  function badge(mode, ms) {
+    if (!document.body) return;
+    if (!badgeEl) {
+      badgeEl = document.createElement('div');
+      badgeEl.style.cssText = 'position:fixed;right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));z-index:2147482000;pointer-events:none;' +
+        'padding:4px 10px 4px 8px;border-radius:999px;font:600 11px/1.3 "Noto Sans KR",system-ui,sans-serif;color:#fff;background:rgba(10,14,28,.72);border:1px solid rgba(255,255,255,.22);' +
+        'backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;gap:6px;transition:opacity .3s';
+      document.body.appendChild(badgeEl);
+    }
+    clearTimeout(hideT);
+    if (!mode) { badgeEl.style.opacity = '0'; return; }
+    var col = mode === 'server' ? '#34d399' : mode === 'p2p' ? '#fbbf24' : '#94a3b8';
+    var txt = mode === 'server' ? '서버 연결' + (ms != null ? ' · ' + ms + 'ms' : '') : mode === 'p2p' ? 'P2P 직접 연결' : '서버 연결 중…';
+    badgeEl.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:' + col + ';box-shadow:0 0 6px ' + col + '"></span>' + txt;
+    badgeEl.title = mode === 'server' ? '우리 중계 서버를 거쳐 연결됨' : mode === 'p2p' ? '서버 대신 기기끼리 직접 연결됨' : '';
+    badgeEl.style.opacity = '1';
+  }
+  function peerUp(mode, ms) { badge(mode, ms); }
+  function peerDown() { live = Math.max(0, live - 1); if (!live) { clearTimeout(hideT); hideT = setTimeout(function () { badge(null); }, 1500); } }
+  // 메인 화면용: 서버가 깨어 있는지와 응답 시간
+  function check(timeout) {
+    if (!url) return Promise.resolve({ok: false, off: true});
+    var t0 = performance.now(), ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var tm = setTimeout(function () { ctl && ctl.abort(); }, timeout || 8000);
+    return fetch(url.replace(/^ws/, 'http') + '/?t=' + Date.now(), {cache: 'no-store', signal: ctl && ctl.signal})
+      .then(function (r) { return r.json(); })
+      .then(function (j) { clearTimeout(tm); return {ok: !!j.ok, ms: Math.round(performance.now() - t0), peers: j.peers}; })
+      .catch(function () { clearTimeout(tm); return {ok: false}; });
+  }
+
   // ---------- 연결 하나 (PeerJS DataConnection 모양) ----------
   function RelayConn(peer, cid, remote, meta) {
     Emitter.call(this);
@@ -58,7 +91,7 @@
     this.id = null; this.open = false; this.destroyed = false; this.disconnected = false;
     this.connections = {}; this.options = opts || {};
     this._conns = {}; this._want = id; this._fallbackFn = fallback; this._inner = null;
-    this.relay = true;
+    this.relay = true; live++; badge('wait');
     this._start();
   }
   RelayPeer.prototype = Object.create(Emitter.prototype);
@@ -89,7 +122,7 @@
     this._inner = inner; this.relay = false;
     ['open', 'connection', 'error', 'disconnected', 'close', 'call'].forEach(function (ev) {
       inner.on(ev, function () {
-        if (ev === 'open') { self.id = inner.id; self.open = true; }
+        if (ev === 'open') { self.id = inner.id; self.open = true; peerUp('p2p'); }
         if (ev === 'disconnected') self.disconnected = true;
         self.emit.apply(self, [ev].concat([].slice.call(arguments)));
       });
@@ -106,7 +139,10 @@
     var m; try { m = JSON.parse(s); } catch (e) { return; }
     var c2;
     switch (m.t) {
-      case 'open': this.id = m.id; this.open = true; this.disconnected = false; this.emit('open', m.id); break;
+      case 'open': this.id = m.id; this.open = true; this.disconnected = false; peerUp('server');
+        var me = this; clearInterval(this._pingT); this._ping = function () { me._ctl({t: 'ping', ts: performance.now()}); }; this._ping(); this._pingT = setInterval(this._ping, 3000);
+        this.emit('open', m.id); break;
+      case 'pong': if (typeof m.ts === 'number') { this.rtt = Math.round(performance.now() - m.ts); peerUp('server', this.rtt); } break;
       case 'error':
         if (m.cid && (c2 = this._conns[m.cid])) { c2.emit('error', perr(m.type, m.message)); c2._closed = true; delete this._conns[m.cid]; }
         this.emit('error', perr(m.type, m.message || m.type));
@@ -129,8 +165,9 @@
     return c;
   };
   RelayPeer.prototype.destroy = function () {
-    if (this._inner) { this.destroyed = true; try { this._inner.destroy(); } catch (e) {} return; }
     if (this.destroyed) return;
+    clearInterval(this._pingT); peerDown();
+    if (this._inner) { this.destroyed = true; try { this._inner.destroy(); } catch (e) {} return; }
     this.destroyed = true; this.open = false;
     for (var k in this._conns) this._conns[k]._end();
     try { this._ws && this._ws.close(); } catch (e) {}
@@ -153,6 +190,9 @@
     // 서버를 쓸지: 주소가 있고, 최근 1분 안에 연결 실패가 없을 때
     enabled: function () { return !!url && typeof WebSocket !== 'undefined' && Date.now() - downAt > 60000; },
     wake: wake,
+    check: check,
+    // 서버를 쓰지 않는 P2P 연결(vendor/peerjs.min.js)도 배지를 띄움
+    markP2P: function (peer) { live++; badge('wait'); peer.on('open', function () { peerUp('p2p'); }); var d = false, down = function () { if (!d) { d = true; peerDown(); } }; peer.on('close', down); var od = peer.destroy; peer.destroy = function () { down(); return od.apply(this, arguments); }; },
     create: function (id, opts, fallback) { return new RelayPeer(id, opts, fallback); },
     droppable: null,
     RelayPeer: RelayPeer
