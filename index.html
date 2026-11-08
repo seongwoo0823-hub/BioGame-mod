@@ -99,10 +99,26 @@ i[data-ic] svg.pg{width:1em;height:1em;vertical-align:0}
 .rempty{padding:30px 0;text-align:center;color:var(--dim)}
 .rme{display:flex;gap:8px}
 .srv{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:600;color:var(--sub);background:var(--bg2);border:1px solid var(--line);white-space:nowrap;flex:none}
+.srv button{height:22px;margin-left:2px;padding:0 9px;border-radius:999px;background:#f87171;color:#1a0505;font-size:11.5px;font-weight:700}
+.srv button:hover{background:#fca5a5}
+.srv.off{padding-right:3px}
 .srv i{width:8px;height:8px;border-radius:50%;background:#94a3b8;flex:none}
 .srv.ok i{background:#34d399;box-shadow:0 0 6px #34d399}.srv.wake i{background:#fbbf24;animation:srvb 1s infinite}.srv.off i{background:#f87171}
 @keyframes srvb{50%{opacity:.3}}
-.dev-phone .srv span,.lay-list .srv span{display:none}.dev-phone .srv,.lay-list .srv{width:28px;padding:0;justify-content:center}
+/* 휴대폰·좁은 창: 로고 모서리에 작은 점으로, 꺼졌을 때만 위쪽 막대 아래에 '재시도' 띠 */
+.lay-list .bar-in{position:relative}
+.lay-list .srv{position:absolute;left:22px;top:22px;height:auto;padding:0;border:0;background:none;z-index:2}
+.lay-list .srv i{width:11px;height:11px;border:2px solid var(--bg)}
+.lay-list .srv span,.lay-list .srv button{display:none}
+.lay-list .srv.off{left:0;top:calc(100% + 8px);height:32px;padding:0 4px 0 10px;border:1px solid rgba(248,113,113,.4);background:rgba(40,12,16,.92);color:#fecaca}
+.lay-list .srv.off i{width:8px;height:8px;border:0}
+.lay-list .srv.off span,.lay-list .srv.off button{display:inline}
+.lay-list .srv.off button{display:inline-flex;align-items:center}
+.lay-list .srv.off{top:calc(100% + 10px)}
+.lay-list body.srv-off .tools{margin-top:56px}
+.dev-phone .ib{width:36px;height:36px;font-size:18px;border-radius:11px}
+.dev-phone .acts{gap:4px}
+.dev-phone .brand{font-size:16px;gap:8px}
 .mini:hover{color:var(--ink);border-color:var(--line2)}
 .toast{position:fixed;left:50%;bottom:calc(24px + var(--safe-b));transform:translateX(-50%);z-index:60;padding:10px 16px;border-radius:12px;background:#1e293b;border:1px solid var(--line2);font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
 
@@ -215,7 +231,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
   <div class="bar-in">
     <a class="brand" href="./" aria-label="BIO ARCADE 처음으로"><img src="icons/icon-v2-192.png" alt="" width="32" height="32"><span>BIO ARCADE</span></a>
     <label class="search" aria-label="게임 검색"><i data-ic="search"></i><input id="q" type="search" placeholder="게임·단원 검색" autocomplete="off" enterkeyhint="go"><kbd>/</kbd></label>
-    <span class="srv" id="srv" title="온라인 게임 중계 서버 상태"><i></i><span>서버 확인 중</span></span>
+    <span class="srv" id="srv" title="온라인 게임 중계 서버 상태"><i></i><span>서버 확인 중</span><button type="button" id="srvRetry" hidden>재시도</button></span>
     <div class="acts">
       <button class="ib ib-search" id="btnSearch" type="button" aria-label="검색 열기"><i data-ic="search"></i></button>
       <button class="ib" id="btnRank" type="button" aria-label="랭킹 보기" title="랭킹" hidden><i data-ic="trophy"></i></button>
@@ -499,14 +515,18 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
   (function(){
     const el=document.getElementById('srv');if(!el)return;
     if(!window.BioRelay||!BioRelay.url){el.hidden=true;return;}
-    const set=(c,t,tip)=>{el.className='srv '+c;el.querySelector('span').textContent=t;el.title=tip;};
-    let tries=0;
-    const run=async()=>{
-      const r=await BioRelay.check(tries?12000:6000);
-      if(r.ok){set('ok',`서버 연결 · ${r.ms}ms`,`온라인 게임 중계 서버가 켜져 있어요 (응답 ${r.ms}ms${r.peers!=null?', 접속 '+r.peers+'명':''})`);setTimeout(()=>{tries=0;run();},60000);return;}
+    const rb=document.getElementById('srvRetry');
+    const set=(c,t,tip)=>{el.className='srv '+c;el.querySelector('span').textContent=t;el.title=tip;rb.hidden=c!=='off';document.body.classList.toggle('srv-off',c==='off');};
+    let tries=0,timer=null,busy=false;
+    // 서버가 꺼졌을 때: 재시도 버튼 → 서버를 깨우고 다시 확인
+    rb.addEventListener('click',()=>{tone('tap');clearTimeout(timer);tries=0;BioRelay.wake&&BioRelay.wake();set('wake','서버 깨우는 중','서버를 다시 깨우는 중이에요 (최대 1분)');if(!busy)run();});
+    const later=(f,ms)=>{clearTimeout(timer);timer=setTimeout(f,ms);};
+    const run=async()=>{busy=true;
+      const r=await BioRelay.check(tries?12000:6000);busy=false;
+      if(r.ok){set('ok',`서버 연결 · ${r.ms}ms`,`온라인 게임 중계 서버가 켜져 있어요 (응답 ${r.ms}ms${r.peers!=null?', 접속 '+r.peers+'명':''})`);later(()=>{tries=0;run();},60000);return;}
       tries++;
-      if(tries<=8){set('wake','서버 깨우는 중','무료 서버가 잠들어 있어 깨우는 중이에요 (최대 1분)');setTimeout(run,5000);}
-      else{set('off','서버 꺼짐 · P2P','중계 서버에 닿지 않아요. 온라인 게임은 기기끼리 직접(P2P) 연결돼요');setTimeout(()=>{tries=0;run();},60000);}
+      if(tries<=8){set('wake','서버 깨우는 중','무료 서버가 잠들어 있어 깨우는 중이에요 (최대 1분)');later(run,5000);}
+      else{set('off','서버 꺼짐 · P2P','중계 서버에 닿지 않아요. 온라인 게임은 기기끼리 직접(P2P) 연결돼요. 재시도를 눌러 다시 깨워 보세요');later(()=>{tries=0;run();},60000);}
     };
     run();
   })();
