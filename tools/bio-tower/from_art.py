@@ -113,12 +113,36 @@ def solid_parts(m, cx, cy):
     return parts
 
 
+def despill(im, band=5):
+    """자홍 배경에서 오려 낸 가장자리의 분홍 기운 없애기:
+    가장자리 띠(band 픽셀) 안에서 자홍 기운(R·B가 G보다 높음)이 강하면 지우고, 약하면 색만 빼 줌. 마지막에 1픽셀 깎음"""
+    a = np.asarray(im).astype(np.float32).copy(); al = a[..., 3] > 127
+    near = ~al
+    for _ in range(band):
+        n = near.copy(); n[1:] |= near[:-1]; n[:-1] |= near[1:]; n[:, 1:] |= near[:, :-1]; n[:, :-1] |= near[:, 1:]; near = n
+    edge = al & near
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    t = np.minimum(r, b) - g
+    kill = edge & (t > 38)
+    soft = edge & (t > 8) & ~kill
+    a[kill, 3] = 0
+    for ch in (0, 2): a[soft, ch] = np.maximum(g[soft], a[soft, ch] - t[soft] * .9)
+    m = a[..., 3] > 127                       # 1픽셀 깎기
+    e = m.copy(); e[1:] &= m[:-1]; e[:-1] &= m[1:]; e[:, 1:] &= m[:, :-1]; e[:, :-1] &= m[:, 1:]
+    a[..., 3] = np.where(e, a[..., 3], 0)
+    return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), 'RGBA')
+
+
+SCALE = 1.5   # 조각(동물·생물) 크기 배율 (섬·땅은 그대로)
+
+
 def build_pieces():
     defs = [d for row in ANIMALS for d in row] + [d for row in BIO for d in row]
     items = list(zip(defs, grid_items(ART('animals.jpg'), 6, 5) + grid_items(ART('bio.jpg'), 6, 3)))
     ims = []; meta = {}
     for (pid, name, L, dens, fact), im in items:
-        bb = im.getbbox(); im = im.crop(bb); w, h = im.size; s = L / max(w, h)
+        im = despill(im)
+        bb = im.getbbox(); im = im.crop(bb); w, h = im.size; s = L * SCALE / max(w, h)
         W1, H1 = max(6, round(w * s)), max(6, round(h * s))
         can = Image.new('RGBA', ((W1 + 2) * RES, (H1 + 2) * RES), (0, 0, 0, 0))
         can.paste(shrink(im, W1 * RES, H1 * RES), (RES, RES)); hi = outline(can)   # 고해상도 그림 + 1px 테두리

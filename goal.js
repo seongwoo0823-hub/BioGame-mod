@@ -7,20 +7,33 @@
  */
 (function () {
   'use strict';
+  // tpl의 {t} 자리에 기준 값이 들어감. 기준 값은 메인 화면 '기준 수정'(비밀번호)으로 바꿀 수 있음 → localStorage 'bioGoalCfg'
   var GOALS = {
-    'bio-beat':      {goal: '아무 곡이나 점수 650,000점 넘기기', t: 650000, unit: '점'},
-    'immune-strike': {goal: '점수 15,000점 넘기기', t: 15000, unit: '점'},
-    'bio-kart':      {goal: '레이스 5위 안으로 완주하기', t: 5, low: true, unit: '위'},
-    'biotro':        {goal: '앤티 3까지 도달하기', t: 3, unit: '앤티', pre: true},
-    'cell-bound':    {goal: '3층까지 내려가기', t: 3, unit: '층'},
-    'cell-pinball':  {goal: '한 판 점수 500,000점 넘기기', t: 500000, unit: '점'},
-    'cell-brawl':    {goal: 'ATP 그랩 승리 또는 쇼다운 3등 안에 들기', t: 1, unit: ''},
-    'only-up':       {goal: '구간 3까지 올라가기', t: 3, unit: '구간', pre: true},
-    'bio-strike':    {goal: '생존 모드 점수 3,000점 넘기기', t: 3000, unit: '점'},
-    'helix':         {goal: '한 번의 출정에서 방 6개 정리하기', t: 6, unit: '방'},
-    'cell-frontier': {goal: '한 지역에서 점수 12,000점 넘기기', t: 12000, unit: '점'},
-    'codon-glass':   {goal: '혼자 하기 점수 50점 넘기기', t: 50, unit: '점'}
+    'bio-beat':      {tpl: '아무 곡이나 점수 {t}점 넘기기', t: 650000, unit: '점'},
+    'immune-strike': {tpl: '점수 {t}점 넘기기', t: 15000, unit: '점'},
+    'bio-kart':      {tpl: '레이스 {t}위 안으로 완주하기', t: 5, low: true, unit: '위'},
+    'biotro':        {tpl: '앤티 {t}까지 도달하기', t: 3, unit: '앤티', pre: true},
+    'cell-bound':    {tpl: '{t}층까지 내려가기', t: 3, unit: '층'},
+    'cell-pinball':  {tpl: '한 판 점수 {t}점 넘기기', t: 500000, unit: '점'},
+    'cell-brawl':    {tpl: 'ATP 그랩 승리 또는 쇼다운 {t}등 안에 들기', t: 3, unit: '등', low: true, rankOnly: true},
+    'only-up':       {tpl: '구간 {t}까지 올라가기', t: 3, unit: '구간', pre: true},
+    'bio-strike':    {tpl: '생존 모드 점수 {t}점 넘기기', t: 3000, unit: '점'},
+    'helix':         {tpl: '한 번의 출정에서 방 {t}개 정리하기', t: 6, unit: '방'},
+    'cell-frontier': {tpl: '한 지역에서 점수 {t}점 넘기기', t: 12000, unit: '점'},
+    'codon-glass':   {tpl: '혼자 하기 점수 {t}점 넘기기', t: 50, unit: '점'}
   };
+  var DEF = {};
+  function applyCfg(cfg) {
+    for (var id in GOALS) {
+      var g = GOALS[id];
+      if (DEF[id] == null) DEF[id] = g.t;
+      var v = cfg && cfg[id];
+      g.t = (typeof v === 'number' && isFinite(v) && v > 0 && !g.fixed) ? v : DEF[id];
+      g.goal = g.tpl.replace('{t}', g.t.toLocaleString('ko-KR'));
+    }
+  }
+  function loadCfg() { try { return JSON.parse(localStorage.getItem('bioGoalCfg') || '{}') || {}; } catch (e) { return {}; } }
+  applyCfg(loadCfg());
   var KEY = 'bioGoal';
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } }
   function save(d) { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) {} }
@@ -43,7 +56,10 @@
       '.bg-card .big{font-size:44px;font-weight:900;letter-spacing:.04em;margin:2px 0 6px}',
       '.bg-card.ok .big{color:#5effa8;text-shadow:0 0 24px rgba(94,255,168,.55)}.bg-card.no .big{color:#ff7a8a;text-shadow:0 0 24px rgba(255,122,138,.45)}',
       '.bg-card .g{font-size:13px;color:rgba(255,255,255,.75)}.bg-card .v{font-size:16px;margin:8px 0 12px}.bg-card .v b{font-size:20px}',
-      '.bg-card button{border:0;border-radius:999px;padding:8px 22px;font:700 14px "Noto Sans KR",sans-serif;color:#0b1220;background:#fff;cursor:pointer}'
+      '.bg-card button{border:0;border-radius:999px;padding:8px 18px;font:700 14px "Noto Sans KR",sans-serif;color:#0b1220;background:#fff;cursor:pointer}',
+      '.bg-card .bg-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.bg-card .bg-send{background:#38bdf8}.bg-card button:disabled{opacity:.5}',
+      '.bg-card .bg-rk{margin:0 0 12px}.bg-card .bg-in{width:100%;box-sizing:border-box;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);color:#fff;font:600 16px "Noto Sans KR",sans-serif;text-align:center;outline:0}',
+      '.bg-card .bg-msg{font-size:12.5px;margin-top:6px;min-height:16px;color:rgba(255,255,255,.75)}.bg-card .bg-msg.err{color:#fca5a5}.bg-card .bg-msg.good{color:#86efac}'
     ].join('');
     document.head.appendChild(s);
   }
@@ -74,14 +90,33 @@
     if (resEl) resEl.remove();
     resEl = document.createElement('div'); resEl.className = 'bg-res';
     var shown = o.text != null ? o.text : fmtV(g, value);
-    resEl.innerHTML = '<div class="bg-card ' + (ok ? 'ok' : 'no') + '"><div class="g">🎯 ' + g.goal + '</div>' +
+    var canRank = !!(window.BioRank && BioRank.ready());
+    resEl.innerHTML = '<div class="bg-card ' + (ok ? 'ok' : 'no') + '"><div class="g">목표 · ' + g.goal + '</div>' +
       '<div class="big">' + (ok ? '성공!' : '실패') + '</div>' +
       '<div class="v">내 기록 <b>' + shown + '</b>' + (o.ok == null && g.t > 1 ? ' / 목표 ' + fmtV(g, g.t) : '') + '</div>' +
-      '<button type="button">확인</button></div>';
+      (canRank ? '<div class="bg-rk" hidden><input class="bg-in" maxlength="20" placeholder="20800 홍길동" autocomplete="off"><div class="bg-msg"></div></div>' : '') +
+      '<div class="bg-btns">' + (canRank ? '<button type="button" class="bg-send">랭킹에 보내기</button>' : '') + '<button type="button" class="bg-ok">' + (canRank ? '안 보내기' : '확인') + '</button></div></div>';
     document.body.appendChild(resEl);
     var close = function () { if (resEl) { resEl.remove(); resEl = null; } };
-    resEl.querySelector('button').onclick = close;
-    clearTimeout(resT); resT = setTimeout(close, 7000);
+    resEl.querySelector('.bg-ok').onclick = close;
+    clearTimeout(resT);
+    if (!canRank) resT = setTimeout(close, 7000);
+    else {
+      var rk = resEl.querySelector('.bg-rk'), inp = resEl.querySelector('.bg-in'), msg = resEl.querySelector('.bg-msg'), send = resEl.querySelector('.bg-send');
+      try { inp.value = localStorage.getItem('bioRankWho') || ''; } catch (e) {}
+      ['keydown', 'keyup', 'keypress'].forEach(function (k) { inp.addEventListener(k, function (e) { e.stopPropagation(); if (k === 'keydown' && e.key === 'Enter') send.click(); }); });
+      send.onclick = function () {
+        if (rk.hidden) { rk.hidden = false; send.textContent = '보내기'; resEl.querySelector('.bg-ok').textContent = '닫기'; inp.focus(); return; }
+        var who = inp.value.trim().replace(/\s+/g, ' ');
+        if (!BioRank.parseName(who)) { msg.textContent = "학번 5자리와 이름을 띄어 써 주세요 (예: 20800 홍길동)"; msg.className = 'bg-msg err'; return; }
+        send.disabled = true; msg.className = 'bg-msg'; msg.textContent = '보내는 중…';
+        BioRank.submit(id, {who: who, value: typeof value === 'number' ? value : 0, text: String(shown).replace(/<[^>]*>/g, ''), ok: ok}).then(function () {
+          try { localStorage.setItem('bioRankWho', who); } catch (e) {}
+          msg.textContent = '랭킹에 올렸어요! 메인 화면 → 랭킹에서 볼 수 있어요.'; msg.className = 'bg-msg good';
+          rk.querySelector('.bg-in').disabled = true; send.hidden = true; resEl.querySelector('.bg-ok').textContent = '확인';
+        }).catch(function (e) { send.disabled = false; msg.className = 'bg-msg err'; msg.textContent = '보내지 못했어요: ' + (e && e.message || e); });
+      };
+    }
     return ok;
   }
   var reached = {};
@@ -89,7 +124,9 @@
     var g = GOALS[id]; if (!g || reached[id]) return;
     if (g.low ? value <= g.t : value >= g.t) { reached[id] = true; result(id, value); }
   }
-  window.BioGoal = {GOALS: GOALS, show: show, result: result, progress: progress, status: function (id) { return load()[id] || null; }, all: load};
+  function setCfg(cfg) { try { localStorage.setItem('bioGoalCfg', JSON.stringify(cfg || {})); } catch (e) {} applyCfg(cfg || {}); }
+  window.BioGoal = {GOALS: GOALS, DEFAULTS: DEF, show: show, result: result, progress: progress, status: function (id) { return load()[id] || null; }, all: load,
+    config: loadCfg, setConfig: setCfg};
   // 게임 페이지(games/…/이름.html)라면 목표를 한 번 보여 줌
   var m = /\/games\/([a-z0-9-]+)\.html/.exec(location.pathname);
   if (m && GOALS[m[1]]) {
