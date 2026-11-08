@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-v2-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Nanum+Myeongjo:wght@400;700;800&family=East+Sea+Dokdo&display=swap" rel="stylesheet">
 <style>
 :root{
   --gold:#c7b377; --gold2:#e8d49a; --dim:#8a7d63; --txt:#d8d0bc;
@@ -123,6 +123,15 @@ button{font-family:var(--serif);cursor:pointer}
 .por .pi b{position:absolute;left:2px;top:0;font-size:11px;color:#fff;font-family:var(--cin)}
 .por .hp{height:5px;width:52px;margin:0 auto 2px;background:#300;border:1px solid #000}
 .por .hp i{display:block;height:100%;background:#2fbf2f}
+#zoneCard{position:absolute;left:0;right:0;top:13%;z-index:40;pointer-events:none;text-align:center;opacity:0;transform:translateY(-10px);transition:opacity .6s,transform .6s}
+#zoneCard.on{opacity:1;transform:none}
+#zoneCard .zn{font-family:'East Sea Dokdo','Nanum Myeongjo',serif;font-size:clamp(48px,8.5vw,104px);line-height:1;color:#fffaf0;letter-spacing:.04em;
+  text-shadow:3px 3px 0 #7a1010,-2px -2px 0 #2a0a0a,2px -2px 0 #2a0a0a,-2px 2px 0 #2a0a0a,0 6px 18px rgba(0,0,0,.7)}
+#zoneCard .zl{display:flex;align-items:center;justify-content:center;gap:10px;margin:8px auto 4px;width:min(84vw,640px)}
+#zoneCard .zl i{flex:1;height:2px;background:linear-gradient(90deg,transparent,#f0e8d8 30%,#f0e8d8)}
+#zoneCard .zl i:last-child{background:linear-gradient(270deg,transparent,#f0e8d8 30%,#f0e8d8)}
+#zoneCard .zl b{width:12px;height:12px;border:2px solid #f0e8d8;transform:rotate(45deg);box-shadow:0 0 0 2px rgba(0,0,0,.5)}
+#zoneCard .zs{font-family:'East Sea Dokdo','Nanum Myeongjo',serif;font-size:clamp(24px,3.6vw,42px);color:#fff;text-shadow:2px 2px 0 #1a0a0a,-1px -1px 0 #1a0a0a,0 3px 10px rgba(0,0,0,.6)}
 #areaName{position:absolute;right:16px;top:8px;text-align:right;font-size:15px;color:var(--gold2);text-shadow:0 1px 3px #000;line-height:1.4}
 #areaName small{display:block;font-size:12px;color:var(--dim)}
 #minimap{position:absolute;right:12px;top:58px;width:180px;height:180px;opacity:.85}
@@ -559,6 +568,7 @@ body.px #selLogo .t1{background:none;-webkit-text-fill-color:initial}
   <div id="floatLayer"></div>
   <div id="portraits"></div>
   <div id="areaName"></div>
+  <div id="zoneCard"><div class="zn"></div><div class="zl"><i></i><b></b><b></b><i></i></div><div class="zs"></div></div>
   <canvas id="minimap" width="180" height="180"></canvas>
   <div id="targetBar" class="hidden"><div class="nm"></div><div class="b"><i></i></div><div class="mods"></div></div>
   <div id="bossBar" class="hidden"><div class="nm"></div><div class="b"><i class="lag"></i><i class="fill"></i></div></div>
@@ -1246,7 +1256,7 @@ const V3 = THREE.Vector3;
 let renderer, scene, camera, clock, ambLight, hemiLight, moonLight, playerLight;
 const TORCH_POOL = [], FLASH_POOL = [];
 const T = 2;          // 타일 크기(월드 단위)
-const CAM_OFF = new V3(11.2, 17.5, 11.2);
+const CAM_OFF = new V3(17.4, 27.1, 17.4);   // 멀리서 내려다보기: 작은 캐릭터가 넓은 맵을 돌아다니는 느낌 (예전 11.2, 17.5, 11.2)
 function qPR(){ return Math.min(devicePixelRatio || 1, OPT.q === 'high' ? 1.75 : OPT.q === 'mid' ? 1.25 : 0.85); }
 function initRenderer(){
   renderer = new THREE.WebGLRenderer({ canvas: $('#gl'), antialias: true, powerPreference: 'high-performance' });
@@ -1257,7 +1267,7 @@ function initRenderer(){
   ambLight = new THREE.AmbientLight('#ffffff', 0.5); scene.add(ambLight);
   hemiLight = new THREE.HemisphereLight('#a8a8ff', '#3a2018', 0.5); scene.add(hemiLight);
   moonLight = new THREE.DirectionalLight('#ffe8d0', 0.7); moonLight.position.set(-12, 30, 4); scene.add(moonLight); scene.add(moonLight.target);
-  playerLight = new THREE.PointLight('#ffd8a8', 1.7, 22, 1.4); scene.add(playerLight);
+  playerLight = new THREE.PointLight('#ffd8a8', 1.7, 34, 1.3); scene.add(playerLight);
   for (let i = 0; i < 6; i++){ const l = new THREE.PointLight('#ffa050', 0, 11, 1.6); scene.add(l); TORCH_POOL.push(l); }
   for (let i = 0; i < 4; i++){ const l = new THREE.PointLight('#ffffff', 0, 10, 2); scene.add(l); FLASH_POOL.push({ l, t: 0 }); }
   clock = new THREE.Clock();
@@ -1844,11 +1854,12 @@ function chapterTex(ci){
   if (TEXC[ci]) return TEXC[ci];
   const th = CHAPTERS[ci].theme;
   // 에셋 팩 바닥 타일을 펼쳐 만든 손그림 질감 (불러오기 실패 시 절차적 질감)
-  const T2 = TEXC[ci] = { floor: floorTex(th, 11 + ci * 7), wall: wallTex(th, 5 + ci * 3) };
+  const T2 = TEXC[ci] = { floor: floorTex(th, 11 + ci * 7), wall: wallTex(th, 5 + ci * 3), top: wallTex(th, 7 + ci * 3) };
   const load = (f, cb) => { const img = new Image(); img.onload = () => cb(img); img.src = ADIR + f; };
   const apply = (t, img) => { t.image = img; t.needsUpdate = true; };
   load('floor_c' + (ci + 1) + '.webp', img => { apply(T2.floor.col, img); LEVELS.forEach(lv => { if (lv.ci === ci && lv.floorMap) apply(lv.floorMap, img); }); });
   load('wall_c' + (ci + 1) + '.webp', img => apply(T2.wall, img));
+  load('top_c' + (ci + 1) + '.webp', img => apply(T2.top, img));
   return T2;
 }
 function zoneLevel(ci, zi){ const C = CHAPTERS[ci]; if (zi < 0) return 1; return C.lvl + zi * 3 + DIFFS[G.diff].lvl; }
@@ -1919,7 +1930,7 @@ function buildLevel(ci, zi){
     let adj = false; for (let dy = -1; dy <= 1 && !adj; dy++) for (let dx = -1; dx <= 1; dx++) if (isFloor(lv, i + dx, j + dy)){ adj = true; break; }
     if (adj) wallCells.push([i, j]);
   }
-  const organic = type === 'cave' || type === 'town' || type === 'arena';
+  const organic = false;   // 모든 지역: 블록이 쌓인 절벽 (레퍼런스풍 쿼터뷰)
   const wmat = new THREE.MeshLambertMaterial({ map: tex.wall, color: town ? '#d0c6b0' : '#f0e8e0', emissive: '#1a1612', flatShading: organic || OPT.px });
   const wgeo = organic ? new THREE.DodecahedronGeometry(1.35, 0) : new THREE.BoxGeometry(T, 1, T).translate(0, 0.5, 0);
   const wim = new THREE.InstancedMesh(wgeo, wmat, wallCells.length);
@@ -1935,7 +1946,7 @@ function buildLevel(ci, zi){
   lv.walls.forEach((o, k) => { _q.identity(); _s.set(4.2, 1, 4.2); _p.set(cx2w(o.i), 0.025, cx2w(o.j)); _m4.compose(_p, _q, _s); ao.setMatrixAt(k, _m4); });
   ao.instanceMatrix.needsUpdate = true; ao.renderOrder = 1; lv.root.add(ao);
   if (!organic){ // 벽 위 장식 띠 (밝게 칠한 윗면)
-    const tm = new THREE.MeshLambertMaterial({ map: tex.wall, color: '#d8d0c8', emissive: '#2a241e' }); const trim = new THREE.InstancedMesh(new THREE.BoxGeometry(T * 1.06, 0.22, T * 1.06), tm, wallCells.length);
+    const tm = new THREE.MeshLambertMaterial({ map: tex.top || null, color: tex.top ? '#ffffff' : '#5a7034', emissive: '#0c0e08' }); /* 절벽 윗면: 이끼 낀 돌 (top_c*.webp) */ const trim = new THREE.InstancedMesh(new THREE.BoxGeometry(T * 1.06, 0.22, T * 1.06), tm, wallCells.length);
     lv.walls.forEach((o, k) => { _q.identity(); _s.set(1, 1, 1); _p.set(o.x, o.sy, o.z); _m4.compose(_p, _q, _s); trim.setMatrixAt(k, _m4); });
     trim.instanceMatrix.needsUpdate = true; lv.root.add(trim); lv.trim = trim;
   }
@@ -3872,11 +3883,13 @@ function enterLevel(ci, zi, arrive, extra){
   // 조명·안개: 어둡지만 채도 높은 색의 빛 (손그림 액션 RPG 톤)
   const th = lv.C.theme;
   scene.fog.color.set(th.fog); scene.background.set(th.fog);
-  ambLight.color.set(th.amb); ambLight.intensity = lv.town ? 0.3 : 0.2;
-  hemiLight.color.set(th.sky || th.amb); hemiLight.groundColor.set(shade(th.fog, 0.1)); hemiLight.intensity = lv.town ? 0.32 : 0.22;
-  moonLight.color.set(th.rim || '#ffffff'); moonLight.intensity = lv.town ? 0.45 : 0.3;
+  // 밝은 쿼터뷰 도트 화풍: 그림 색이 그대로 보이도록 흰빛에 장 분위기 색을 살짝만 섞음
+  const wl = c => new THREE.Color(c).lerp(new THREE.Color('#fff6e8'), 0.68);
+  ambLight.color.copy(wl(th.amb)); ambLight.intensity = lv.town ? 0.62 : 0.5;
+  hemiLight.color.copy(wl(th.sky || th.amb)); hemiLight.groundColor.set(shade(th.fog, 0.35)); hemiLight.intensity = lv.town ? 0.5 : 0.42;
+  moonLight.color.copy(wl(th.rim || '#ffffff')); moonLight.intensity = lv.town ? 0.85 : 0.7;
   RIM.color.value.set(th.rim || '#ffd8b0');
-  scene.fog.near = lv.town ? 36 : 30; scene.fog.far = lv.town ? 78 : 62;
+  scene.fog.near = lv.town ? 56 : 48; scene.fog.far = lv.town ? 118 : 98;
   if (POST){ POST.comp.uniforms.tint.value.set('#ffffff'); }
   G.redMoon = 0;
   SND.music(lv.town ? 'town' : 'field', ci + 1); SND.setAmb(lv.town ? 'town' : ci + 1);
@@ -3886,7 +3899,10 @@ function enterLevel(ci, zi, arrive, extra){
   PL.loc = { ci, zi };
   const pd = progD(); if (ci > pd.ch) pd.ch = ci;
   $('#areaName').innerHTML = esc(lv.name) + '<small>' + DIFFS[G.diff].name + ' · ' + (lv.town ? CHAPTERS[ci].n + '장 ' + CHAPTERS[ci].name : '몬스터 레벨 ' + lv.mlvl) + '</small>';
-  msg(lv.name, 'big');
+  // 지역 타이틀 카드: 붓글씨 지역 이름 + 레벨 (레퍼런스풍 쿼터뷰 지역 구성)
+  { const zc = $('#zoneCard'); zc.querySelector('.zn').textContent = lv.name;
+    zc.querySelector('.zs').textContent = lv.town ? CHAPTERS[ci].n + '장 · 안전 지역' : (CHAPTERS[ci].zones[zi] && CHAPTERS[ci].zones[zi].lair ? '보스 지역 · ' : '') + '레벨 ' + lv.mlvl + ' 사냥터';
+    zc.classList.remove('on'); void zc.offsetWidth; zc.classList.add('on'); clearTimeout(G.zcT); G.zcT = setTimeout(() => zc.classList.remove('on'), 3200); }
   if (lv.town && lv.ci > 0 && !PL.seenTown) PL.seenTown = {};
   if (lv.town){ restockVendors(); const k = G.diff + '-' + ci; if (!PL.seenTown) PL.seenTown = {}; if (!PL.seenTown[k]){ PL.seenTown[k] = 1; later(1.2, () => { const el = lv.objs.find(o => o.type === 'npc' && o.npc.id === 'elder'); if (el) openNpc(el, true); }); } }
   closeAllPanels();
