@@ -11,3 +11,6 @@ services:
     startCommand: node server.js
     healthCheckPath: /
     autoDeploy: true
+    buildFilter:          # server/ 폴더가 바뀔 때만 다시 배포 (게임 파일을 고칠 때마다 서버가 재시작되지 않게)
+      paths:
+        - server/**
