@@ -57,13 +57,24 @@
   function peerDown() { live = Math.max(0, live - 1); if (!live) { clearTimeout(hideT); hideT = setTimeout(function () { badge(null); }, 1500); } }
   // 메인 화면용: 서버가 깨어 있는지와 응답 시간
   function check(timeout) {
+    // 첫 요청은 연결 준비(보안 연결 등) 시간이 섞여 크게 나오므로, 연결을 연 뒤 몇 번 더 재서 가장 빠른 값을 씀
     if (!url) return Promise.resolve({ok: false, off: true});
-    var t0 = performance.now(), ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    var tm = setTimeout(function () { ctl && ctl.abort(); }, timeout || 8000);
-    return fetch(url.replace(/^ws/, 'http') + '/?t=' + Date.now(), {cache: 'no-store', signal: ctl && ctl.signal})
-      .then(function (r) { return r.json(); })
-      .then(function (j) { clearTimeout(tm); return {ok: !!j.ok, ms: Math.round(performance.now() - t0), peers: j.peers}; })
-      .catch(function () { clearTimeout(tm); return {ok: false}; });
+    var base = url.replace(/^ws/, 'http') + '/';
+    function one(to) {
+      var t0 = performance.now(), ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var tm = setTimeout(function () { ctl && ctl.abort(); }, to);
+      return fetch(base + '?t=' + Date.now() + Math.random(), {cache: 'no-store', signal: ctl && ctl.signal})
+        .then(function (r) { return r.json(); })
+        .then(function (j) { clearTimeout(tm); return {ok: !!j.ok, ms: Math.round(performance.now() - t0), peers: j.peers}; })
+        .catch(function () { clearTimeout(tm); return {ok: false}; });
+    }
+    return one(timeout || 8000).then(function (first) {
+      if (!first.ok) return first;
+      return one(4000).then(function (a) { return one(4000).then(function (b) {
+        var best = first; [a, b].forEach(function (x) { if (x.ok && x.ms < best.ms) best = x; });
+        return best;
+      }); });
+    });
   }
 
   // ---------- 연결 하나 (PeerJS DataConnection 모양) ----------
@@ -79,7 +90,12 @@
     var ws = this._p._ws; if (!ws || ws.readyState !== 1) return;
     // 서버 쪽으로 보내는 길이 막히면 위치처럼 계속 새로 오는 정보만 건너뜀 (사건·행동 정보는 절대 버리지 않음)
     if (ws.bufferedAmount > 65536 && BioRelay.droppable && BioRelay.droppable(d)) return;
-    ws.send('D' + this._cid + JSON.stringify(d));
+    var body = JSON.stringify(d), P = this._p;
+    if (!P._multi) { ws.send('D' + this._cid + body); return; }
+    // 방장이 여러 참가자에게 같은 내용을 연달아 보내면 모아서 한 번만 올리고 서버가 나눠 줌 (방장 업로드를 참가자 수만큼 줄임)
+    var q = P._q || (P._q = []), last = q[q.length - 1];
+    if (last && last.b === body && last.ids.indexOf(this._cid) < 0) last.ids.push(this._cid); else q.push({b: body, ids: [this._cid]});   // 보내는 순서는 그대로 지킴
+    if (!P._qT) { P._qT = true; Promise.resolve().then(function () { P._flush(); }); }
   };
   RelayConn.prototype.close = function () { if (this._closed) return; this._p._ctl({t: 'close', cid: this._cid}); this._end(); };
   RelayConn.prototype._open = function () { var c = this; setTimeout(function () { if (!c._closed && !c.open) { c.open = true; c.emit('open'); } }, 0); };
@@ -128,6 +144,15 @@
       });
     });
   };
+  RelayPeer.prototype._flush = function () {
+    var q = this._q || [], ws = this._ws; this._q = []; this._qT = false;
+    if (!ws || ws.readyState !== 1) return;
+    for (var i = 0; i < q.length; i++) {
+      var ids = q[i].ids, body = q[i].b;
+      if (ids.length === 1) ws.send('D' + ids[0] + body);
+      else ws.send('M' + ids.join('') + '|' + body);
+    }
+  };
   RelayPeer.prototype._ctl = function (o) { var ws = this._ws; if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); };
   RelayPeer.prototype._msg = function (s) {
     if (typeof s !== 'string') return;
@@ -139,7 +164,7 @@
     var m; try { m = JSON.parse(s); } catch (e) { return; }
     var c2;
     switch (m.t) {
-      case 'open': this.id = m.id; this.open = true; this.disconnected = false; peerUp('server');
+      case 'open': this.id = m.id; this.open = true; this.disconnected = false; this._multi = (m.v || 1) >= 2; peerUp('server');
         var me = this; clearInterval(this._pingT); this._ping = function () { me._ctl({t: 'ping', ts: performance.now()}); }; this._ping(); this._pingT = setInterval(this._ping, 3000);
         this.emit('open', m.id); break;
       case 'pong': if (typeof m.ts === 'number') { this.rtt = Math.round(performance.now() - m.ts); peerUp('server', this.rtt); } break;

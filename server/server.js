@@ -7,6 +7,7 @@
 //     {"t":"connect","to":id,"cid":연결id,"meta":…} → 상대에게 {"t":"conn","from":…,"cid":…,"meta":…}, 나에게 {"t":"connopen","cid":…}
 //                                                    상대가 없으면 {"t":"error","type":"peer-unavailable","cid":…}
 //     "D" + cid(8글자) + 내용                       → 연결 상대에게 그대로 전달 (서버는 내용을 해석하지 않아 빠름)
+//     "M" + cid들(8글자씩 이어 붙임) + "|" + 내용    → 각 상대에게 "D"+cid+내용 (방장이 같은 상태를 한 번만 올리면 서버가 나눠 줌)
 //     {"t":"close","cid":…}                         → 상대에게 {"t":"close","cid":…}
 //
 //   실행: PORT=8080 node server.js   (앞에 Caddy가 https/wss 인증서를 붙여 줌 — setup.sh 참고)
@@ -40,6 +41,17 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (buf, isBin) => {
     const s = isBin ? null : buf.toString();
     if (!s) return;
+    if (s.charCodeAt(0) === 77 /* M */) {                    // 같은 내용을 여러 연결에: "M" + cid들(8글자씩) + "|" + 내용 → 서버가 나눠 보냄
+      const bar = s.indexOf('|'); if (bar < 9) return;
+      const ids = s.slice(1, bar), body = s.slice(bar + 1);
+      for (let i = 0; i + 8 <= ids.length; i += 8) {
+        const cid = ids.slice(i, i + 8), L = links.get(cid);
+        if (!L || (L[0] !== ws && L[1] !== ws)) continue;
+        const other = L[0] === ws ? L[1] : L[0];
+        if (other && other.readyState === 1 && other.bufferedAmount < 4 * 1024 * 1024) { other.send('D' + cid + body); served++; }
+      }
+      return;
+    }
     if (s.charCodeAt(0) === 68 /* D */) {                    // 게임 데이터: 그대로 전달
       const cid = s.slice(1, 9), L = links.get(cid);
       if (!L) return;
@@ -55,7 +67,7 @@ wss.on('connection', (ws, req) => {
         if (!ID_RE.test(id)) return send(ws, {t: 'error', type: 'invalid-id'});
         if (peers.has(id)) return send(ws, {t: 'error', type: 'unavailable-id'});
       } else { do { id = rid(16); } while (peers.has(id)); }
-      ws.id = id; peers.set(id, ws); send(ws, {t: 'open', id});
+      ws.id = id; peers.set(id, ws); send(ws, {t: 'open', id, v: 2});   // v2: 'M' 여러 연결 한꺼번에 보내기 지원
     } else if (m.t === 'connect') {
       if (!ws.id || typeof m.cid !== 'string' || m.cid.length !== 8 || links.has(m.cid)) return;
       const target = peers.get(m.to);
