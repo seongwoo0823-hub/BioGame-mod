@@ -322,7 +322,6 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     ['cell-brawl','셀 브롤','면역세포 3D 난투','online action','6','난투 브롤 3D 면역 병원체 트로피 cell brawl'],
     ['only-up','온리 업','소화관을 거슬러 오르는 점프','casual','','플랫포머 점프 소화관 나노봇 only up'],
     ['bio-strike','바이오 스트라이크','면역 요원 1인칭 슈팅','online action','8','FPS 슈팅 총 백신 바이러스 암세포 bio strike'],
-    ['infection-lord','감염의 군주','핵앤슬래시 액션 RPG','action','','RPG 핵앤슬래시 디아블로 장비 감염 infection lord'],
     ['helix','헬릭스','쿼터뷰 액션 로그라이트','action','','로그라이트 이중나선 유전자 변이 helix'],
     ['cell-frontier','세포 개척단','선을 그어 땅을 넓히는 아케이드','casual','','땅따먹기 아케이드 숨은그림 cell frontier'],
     ['bio-tower','바이오 타워','생물 조각 쌓기 대결','online casual','4','쌓기 타워 동물 물리 bio tower'],
@@ -384,7 +383,6 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     'only-up'(){const s=get('onlyupBioStats');if(s&&s.clears)return `탈출 <b>${s.clears}</b>회`;const p=get('onlyupBio');return p&&p.cp>0?`<b>${p.cp+1}</b>/7 구간`:'';},
     'bio-strike'(){const s=get('bioStrike');if(!s||typeof s!=='object')return '';const out=[];if(s.cleared)out.push(`스토리 <b>${s.cleared}</b>/5장`);
       if(s.surv&&s.surv.wave)out.push(`생존 <b>${s.surv.wave}</b>웨이브`);return out.join(' · ');},
-    'infection-lord'(){const s=get('infectionLord');return s&&s.lvl?`최고 <b>Lv ${s.lvl}</b>`:'';},
     'helix'(){const s=get('helix-save-v1');return s&&s.runs?`출정 <b>${s.runs}</b>회`:'';},
     'outbreak'(){const s=get('outbreakStats');if(!s||!s.plays)return '';return `최고 <b>${s.bestDays||0}</b>일 생존`+(s.escapes?` · 탈출 <b>${s.escapes}</b>회`:'');},
     'codon-glass'(){const s=get('codonGlass');return s&&s.plays?`<b>${s.plays}</b>판`:'';},

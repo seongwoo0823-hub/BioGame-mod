@@ -15,9 +15,9 @@
 | 셀 브롤 : 면역 대작전 | 3D 실시간 난투 (3대3 · 생존) | `games/cell-brawl.html` |
 | ONLY UP : 거꾸로 소화 대탈출 | 3D 점프 플랫포머 | `games/only-up.html` |
 | 바이오 스트라이크 BIO STRIKE | 3D 1인칭 슈팅 (스토리 5장 · 생존 · 온라인 8인) | `games/bio-strike.html` |
-| 감염의 군주 LORD OF INFECTION | 쿼터뷰 핵앤슬래시 RPG (직업 4 · 5장 · 무작위 지도 · 무작위 옵션 장비) | `games/infection-lord.html` |
 | 헬릭스 HELIX | 쿼터뷰 액션 로그라이트 (쉼터 · 4장 · 유전자 변이 24종 · 보스 4 · 중간 보스 8) | `games/helix.html` |
 | 세포 개척단 CELL FRONTIER | 땅따먹기 아케이드 (나라 4 · 지역 16 · 숨은 그림 16장 · 보스 8) | `games/cell-frontier.html` |
+| 감염 도시 OUTBREAK CITY | 쿼터뷰 좀비 생존 (도시·하수도·지하 연구소, 백신 제작, Kenney CC0 3D 에셋) | `games/outbreak.html` |
 | 바이오 타워 BIO TOWER | 물리 탑 쌓기 대결 (조각 48종 · 멈추면 고정 · 온라인 최대 4명 · CPU · 한 기기) | `games/bio-tower.html` |
 | 코돈 글래스 CODON GLASS | mRNA 번역 퍼즐 (모드 3 · 온라인 최대 4명 같은 판 경쟁) | `games/codon-glass.html` |
 
@@ -27,7 +27,6 @@ rank.js           공용 랭킹·성공 기준 (Firebase Firestore). 맨 위 FIR
 icons.js          픽토그램: 사이트와 모든 게임의 이모지를 단순한 선 그림(SVG)으로 바꿈 (HTML 글자와 캔버스 글자 모두, 각 게임 <head>에서 불러옴)
 games/            게임 15종 (각각 하나의 HTML 파일)
 assets/           메인 화면 썸네일
-games/il-assets/  감염의 군주 스프라이트·아이콘 아틀라스 (WebP)
 games/bio-tower/  바이오 타워 조각·섬·배경 그림과 충돌 형태(pieces.json). tools/bio-tower/art/ 원화(Glif로 새로 그린 그림)에서 tools/bio-tower/from_art.py로 다시 만듦
 games/cell-frontier/  세포 개척단 그림(숨은 그림 16장·덮개·지도·스프라이트). tools/cell-frontier/build.py로 다시 만듦 (숨은 그림·적·아이템은 tools/cell-frontier/art/ 원화(Glif로 새로 그린 그림)에서 from_art.py가 만듦)
 games/bio-beat/    바이오 비트 노래 음원(mp3)과 채보(json), art/cover(K-pop 앨범풍 커버 43장) — tools/bio-beat/covers/의 생성기(cover.html·render.js)가 만듦. 뮤직비디오는 게임 안에서 곡마다 다른 도트 장면(SCENES)으로 그림. tools/bio-beat/make_chart.py가 음원을 분석해 하·중·상 채보를 만들고 embed_charts.py가 게임에 넣음
