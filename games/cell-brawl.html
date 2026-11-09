@@ -3102,7 +3102,7 @@ const NET = (() => {
         if (typeof m.t !== 'number') break;
         st.rtt = Math.max(1, Math.round(performance.now() - m.t));
         const pill = $('#netHudPill');
-        if (pill && state === 'game' && G && G.netMid) pill.textContent = `🟢 P2P [${st.code}] · ${st.rtt}ms · 예측보간`;
+        if (pill && state === 'game' && G && G.netMid) pill.textContent = `🟢 ${window.BioRelay&&BioRelay.label?BioRelay.label():'P2P'} [${st.code}] · ${st.rtt}ms · 예측보간`;
         break;
       }
       case 'notice': notice(String(m.text || '').slice(0, 80)); break;
@@ -3156,7 +3156,7 @@ const NET = (() => {
     if (pill){
       pill.style.display = 'block';
       const hc = pkt.netPlayers.filter(p => !p.isAI).length;
-      pill.textContent = st.role === 'host' ? `👑 방장 P2P [${st.code}] · ${hc}명 참가` : `🟢 P2P 연결 [${st.code}] · 예측보간 활성`;
+      pill.textContent = st.role === 'host' ? `👑 방장 ${window.BioRelay&&BioRelay.label?BioRelay.label():'P2P'} [${st.code}] · ${hc}명 참가` : `🟢 ${window.BioRelay&&BioRelay.label?BioRelay.label():'P2P'} 연결 [${st.code}] · 예측보간 활성`;
     }
   }
 

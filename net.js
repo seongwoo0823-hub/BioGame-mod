@@ -53,8 +53,9 @@
     badgeEl.title = mode === 'server' ? '우리 중계 서버를 거쳐 연결됨' : mode === 'p2p' ? '서버 대신 기기끼리 직접 연결됨' : '';
     badgeEl.style.opacity = '1';
   }
-  function peerUp(mode, ms) { badge(mode, ms); }
-  function peerDown() { live = Math.max(0, live - 1); if (!live) { clearTimeout(hideT); hideT = setTimeout(function () { badge(null); }, 1500); } }
+  var curMode = null;   // 지금 연결 방식: 'server' | 'p2p' | null
+  function peerUp(mode, ms) { curMode = mode; badge(mode, ms); }
+  function peerDown() { live = Math.max(0, live - 1); if (!live) { curMode = null; clearTimeout(hideT); hideT = setTimeout(function () { badge(null); }, 1500); } }
   // 메인 화면용: 서버가 깨어 있는지와 응답 시간
   function check(timeout) {
     // 첫 요청은 연결 준비(보안 연결 등) 시간이 섞여 크게 나오므로, 연결을 연 뒤 몇 번 더 재서 가장 빠른 값을 씀
@@ -219,6 +220,9 @@
     // 서버를 쓰지 않는 P2P 연결(vendor/peerjs.min.js)도 배지를 띄움
     markP2P: function (peer) { live++; badge('wait'); peer.on('open', function () { peerUp('p2p'); }); var d = false, down = function () { if (!d) { d = true; peerDown(); } }; peer.on('close', down); var od = peer.destroy; peer.destroy = function () { down(); return od.apply(this, arguments); }; },
     create: function (id, opts, fallback) { return new RelayPeer(id, opts, fallback); },
+    // 게임 화면에 쓸 연결 방식 이름 (서버 경유면 '서버', 기기끼리 직접이면 'P2P')
+    mode: function () { return curMode; },
+    label: function () { return curMode === 'server' ? '서버' : 'P2P'; },
     droppable: null,
     RelayPeer: RelayPeer
   };

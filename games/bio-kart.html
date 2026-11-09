@@ -189,7 +189,7 @@ body.portrait .modes,body.portrait .gar,body.portrait .help,body.portrait .netgr
 .nslot.me{background:rgba(255,93,143,.35);box-shadow:0 0 0 2px var(--yolk)}
 .nslot b{font-family:var(--px);font-size:.7em;padding:.25em .4em;color:#fff;font-weight:400}
 .nslot small{margin-left:auto;color:var(--dim);font-size:.78em}
-#netHudBadge{position:absolute;left:1.2em;top:6.2em;font-family:var(--kr);font-size:.78em;background:rgba(18,12,38,.78);padding:.22em .65em;border-radius:6px;box-shadow:0 0 0 2px var(--teal);color:var(--teal);display:none}
+#netHudBadge{position:absolute;left:50%;transform:translateX(-50%);top:.7em;white-space:nowrap;font-family:var(--kr);font-size:.78em;background:rgba(18,12,38,.78);padding:.22em .65em;border-radius:6px;box-shadow:0 0 0 2px var(--teal);color:var(--teal);display:none}
 #exRow{display:flex;align-items:center;gap:.45em}
 #petIco{width:2.5em;height:2.2em;border-radius:8px;background:rgba(27,21,48,.6);box-shadow:0 0 0 2px var(--ink);transition:transform .15s,box-shadow .15s;overflow:hidden}
 #petIco canvas{width:100%;height:100%;display:block}
@@ -275,7 +275,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
 <section class="scr" id="scr-title">
   <h1 class="logo">BIO KART<span>바이오 카트 레이서</span></h1>
   <p class="tagline">세포와 우리 몸속을 달리는 생명과학 레이싱</p>
-  <div class="tmenu"><button class="btn go" data-go="mode">게임 시작</button><button class="btn go" data-go="online" style="background:#3a86ff;color:#fff">🌐 온라인 멀티 (P2P)</button><button class="btn alt" data-go="help">게임 방법 &amp; 도감</button><button class="btn alt sndBtn" data-go="sound">소리 켜짐</button><button class="btn alt" type="button" onclick="location.href='../index.html'">게임 목록</button></div>
+  <div class="tmenu"><button class="btn go" data-go="mode">게임 시작</button><button class="btn go" data-go="online" style="background:#3a86ff;color:#fff">🌐 온라인 멀티</button><button class="btn alt" data-go="help">게임 방법 &amp; 도감</button><button class="btn alt sndBtn" data-go="sound">소리 켜짐</button><button class="btn alt" type="button" onclick="location.href='../index.html'">게임 목록</button></div>
 </section>
 
 <section class="scr" id="scr-mode">
@@ -306,7 +306,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
 </section>
 
 <section class="scr" id="scr-online">
-  <h2>🌐 온라인 P2P 멀티플레이 <small id="netSubStatus" style="font-family:var(--kr);color:var(--teal);font-size:.78em">방장 권한 판정(Host-Authoritative) + 예측 보간</small></h2>
+  <h2>🌐 온라인 멀티플레이 <small id="netSubStatus" style="font-family:var(--kr);color:var(--teal);font-size:.78em">방장 권한 판정(Host-Authoritative) + 예측 보간</small></h2>
   <div class="netgrid">
     <div class="panel" style="display:flex;flex-direction:column;gap:.45em;overflow:auto">
       <div class="netrow">
@@ -3374,8 +3374,8 @@ const NET = (() => {
       badge.style.display = 'block';
       const humanCnt = pkt.netPlayers.filter(p => !p.isAI).length;
       badge.textContent = st.role === 'host'
-        ? `👑 방장 P2P [${st.code}] · 플레이어 ${humanCnt}명`
-        : `🟢 P2P 연결 [${st.code}] · 예측보간 활성`;
+        ? `👑 방장 ${window.BioRelay&&BioRelay.label?BioRelay.label():'P2P'} [${st.code}] · 플레이어 ${humanCnt}명`
+        : `🟢 ${window.BioRelay&&BioRelay.label?BioRelay.label():'P2P'} 연결 [${st.code}] · 예측보간 활성`;
     }
     show('race');
   }
@@ -3445,7 +3445,7 @@ const NET = (() => {
       } else if(m.type === 'pong' && m.to === myId){
         st.rtt = Math.max(1, Math.round(performance.now() - m.t));
         const badge = $('#netHudBadge');
-        if(badge && G.screen === 'race') badge.textContent = `🟢 P2P [${st.code}] · ${st.rtt}ms · 예측보간`;
+        if(badge && G.screen === 'race') badge.textContent = `🟢 ${window.BioRelay&&BioRelay.label?BioRelay.label():'P2P'} [${st.code}] · ${st.rtt}ms · 예측보간`;
       }
     }
   }

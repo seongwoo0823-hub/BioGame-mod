@@ -6214,7 +6214,7 @@ const NET={
     const el=$('netTopBadge');if(!el)return;
     if(!this.active){el.style.display='none';return;}
     el.style.display='inline';
-    el.textContent=this.role==='host'?`👑 방장 P2P (${this.code})`:`🌐 P2P (${this.code}) · ${this.rtt}ms`;
+    el.textContent=this.role==='host'?`👑 방장 ${window.BioRelay&&BioRelay.label?BioRelay.label():'P2P'} (${this.code})`:`🌐 ${window.BioRelay&&BioRelay.label?BioRelay.label():'P2P'} (${this.code}) · ${this.rtt}ms`;
   }
 };
 /* 참가자 화면: 버프·보호막·둔화의 남은 시간만 줄임 (판정은 방장) */
