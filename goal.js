@@ -20,7 +20,8 @@
     'bio-strike':    {tpl: '생존 모드 점수 {t}점 넘기기', t: 3000, unit: '점'},
     'helix':         {tpl: '한 번의 출정에서 방 {t}개 정리하기', t: 6, unit: '방'},
     'cell-frontier': {tpl: '한 지역에서 점수 {t}점 넘기기', t: 12000, unit: '점'},
-    'codon-glass':   {tpl: '혼자 하기 점수 {t}점 넘기기', t: 50, unit: '점'}
+    'codon-glass':   {tpl: '혼자 하기 점수 {t}점 넘기기', t: 50, unit: '점'},
+    'outbreak':      {tpl: '감염 도시에서 {t}일 동안 살아남기', t: 2, unit: '일'}
   };
   var DEF = {};
   function applyCfg(cfg) {

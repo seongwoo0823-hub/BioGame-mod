@@ -326,6 +326,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     ['helix','헬릭스','쿼터뷰 액션 로그라이트','action','','로그라이트 이중나선 유전자 변이 helix'],
     ['cell-frontier','세포 개척단','선을 그어 땅을 넓히는 아케이드','casual','','땅따먹기 아케이드 숨은그림 cell frontier'],
     ['bio-tower','바이오 타워','생물 조각 쌓기 대결','online casual','4','쌓기 타워 동물 물리 bio tower'],
+    ['outbreak','감염 도시','좀비 아포칼립스 생존 시뮬레이션','action','','좀비 생존 서바이벌 감염 바이러스 백신 면역 아포칼립스 outbreak'],
     ['codon-glass','코돈 글래스','mRNA 코돈 번역 퍼즐','online casual','4','퍼즐 코돈 mRNA 번역 아미노산 리보솜 codon glass']
   ];
   const ic=n=>window.BioIcon?BioIcon.svg(n):'';
@@ -385,6 +386,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
       if(s.surv&&s.surv.wave)out.push(`생존 <b>${s.surv.wave}</b>웨이브`);return out.join(' · ');},
     'infection-lord'(){const s=get('infectionLord');return s&&s.lvl?`최고 <b>Lv ${s.lvl}</b>`:'';},
     'helix'(){const s=get('helix-save-v1');return s&&s.runs?`출정 <b>${s.runs}</b>회`:'';},
+    'outbreak'(){const s=get('outbreakStats');if(!s||!s.plays)return '';return `최고 <b>${s.bestDays||0}</b>일 생존`+(s.escapes?` · 탈출 <b>${s.escapes}</b>회`:'');},
     'codon-glass'(){const s=get('codonGlass');return s&&s.plays?`<b>${s.plays}</b>판`:'';},
     'bio-tower'(){const s=get('bioTower');return s&&s.rounds?`<b>${s.wins||0}</b>승 · 최고 <b>${s.best||0}m</b>`:'';},
     'cell-frontier'(){const s=get('cellFrontier');if(!s||!s.clear)return '';const c=Object.values(s.clear);return c.length?`정복 <b>${c.length}</b>/16곳`:'';},
