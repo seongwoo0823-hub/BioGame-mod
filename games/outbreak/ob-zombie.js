@@ -99,7 +99,8 @@
   function thinkMove(zz, dt, t, sightR) {
     const P = OB.P;
     if (zz.state === 'dead') return;
-    if (zz.downT > 0) { zz.downT -= dt; if (zz.downT <= 0) zz.state = 'chase'; return; }
+    if (zz.downT > 0) { zz.downT -= dt; if (zz.downT <= 0) { zz.state = 'chase'; zz.upT = 0.6; } return; }
+    if (zz.upT > 0) { zz.upT -= dt; return; }
     if (zz.hitT > 0) { zz.hitT -= dt; }
     // 감지 (나눠서)
     zz.pT -= dt;
@@ -142,8 +143,12 @@
     const ty = Math.atan2(dx, dz); zz.ry += OB.angDiff(zz.ry, ty) * Math.min(1, dt * 5);
     mx = Math.sin(zz.ry) * spd * dt; mz = Math.cos(zz.ry) * spd * dt;
     if (zz.hitT > 0) { mx *= 0.2; mz *= 0.2; }
+    if (zz.vaultT > 0) { zz.vaultT -= dt; mx *= 0.35; mz *= 0.35; }
     const ox = zz.x, oz = zz.z;
     OB.move(zz, mx, mz, 0.3, 'z');
+    { const [ci, cj] = OB.cellOf(ox, oz), [ni, nj] = OB.cellOf(zz.x, zz.z); let key = null;
+      if (ni !== ci) key = 'W,' + Math.max(ci, ni) + ',' + cj; else if (nj !== cj) key = 'N,' + ci + ',' + Math.max(cj, nj);
+      const o = key && OB.W.eRef[key]; if (o && o.broken && !OB.W.doors.includes(o) && !(zz.vaultT > 0)) zz.vaultT = 0.9; }
     const got = Math.hypot(zz.x - ox, zz.z - oz);
     zz.moving = got > spd * dt * 0.2;
     // 막혔다: 앞에 문·창문이 있으면 두드리거나 깸
@@ -154,7 +159,7 @@
         if (e) {
           zz.bangT -= dt;
           if (zz.bangT <= 0) {
-            zz.bangT = 1.1; OB.noise(zz.x, zz.z, 9, 'bang'); OB.sfx && OB.sfx('bang', zz.d);
+            zz.bangT = 1.1; zz.bangA = 0.7; OB.noise(zz.x, zz.z, 9, 'bang'); OB.sfx && OB.sfx('bang', zz.d);
             if (e.kind === 'door') { if (e.o.bar > 0) { e.o.barHp = (e.o.barHp == null ? 50 : e.o.barHp) - 8; if (e.o.barHp <= 0) { OB.removeBarricade(e.o); } } else { e.o.hp -= 9; if (e.o.hp <= 0) OB.breakDoor(e.o); } }
             else if (e.kind === 'window') { if (e.o.bar > 0) { e.o.barHp = (e.o.barHp == null ? 50 : e.o.barHp) - 8; if (e.o.barHp <= 0) OB.removeBarricade(e.o); } else if (!e.o.broken) { e.o.hp -= 12; if (e.o.hp <= 0) OB.breakWindow(e.o); } }
           }
@@ -185,12 +190,22 @@
       C.update(0); return;
     }
     if (zz.downT > 0) { C.obj.rotation.x = -Math.PI / 2 * Math.min(1, (2.6 - zz.downT) * 4); OB.setAnim(C, 'idle'); C.update(dt); return; }
-    C.obj.rotation.x = 0;
+    C.obj.rotation.x = 0; C.obj.position.y = 0;
+    if (zz.upT > 0) { const k = zz.upT / 0.6; OB.setAnim(C, 'idle'); C.update(dt); C.obj.rotation.x = -Math.PI / 2 * k * k; const b = C.bones; OB.addRot(b.LeftArm, 1.0 * k, 0, 0); OB.addRot(b.RightArm, 0, 0, 1.0 * k); return; }
     const run = zz.type === 'runner' && zz.state === 'chase';
     OB.setAnim(C, run ? 'run' : (zz.moving ? 'run' : 'idle'), 0.25);
     C.act.run.timeScale = run ? 1.05 : 0.42 + zz.T.spd * 0.12;
     C.update(dt);
     if (!run) zombiePose(zz, t);
+    const b = C.bones;
+    if (zz.bangA > 0) {   // 문·창문 두드리기: 두 팔을 들어 내리침
+      zz.bangA -= dt; const k = 1 - zz.bangA / 0.7, up = k < 0.45 ? k / 0.45 : Math.max(0, 1 - (k - 0.45) / 0.2);
+      OB.addRot(b.LeftArm, 1.3 * up, 0, 0); OB.addRot(b.RightArm, 0, 0, 1.3 * up); OB.addRot(b.Spine, -0.15 * up + (k > 0.45 && k < 0.7 ? 0.35 : 0), 0, 0);
+    }
+    if (zz.vaultT > 0) {  // 깨진 창문 넘어오기
+      const k = 1 - zz.vaultT / 0.9, l = Math.sin(k * Math.PI); C.obj.position.y = 0.5 * l;
+      OB.addRot(b.Spine, 0.6 * l, 0, 0); OB.addRot(b.LeftUpLeg, -1.0 * l, 0, 0); OB.addRot(b.RightUpLeg, -0.6 * l, 0, 0); OB.addRot(b.LeftLeg, 1.2 * l, 0, 0);
+    }
     if (zz.hitT > 0) OB.addRot(C.bones.Spine, -0.4 * zz.hitT / 0.3, 0, 0);
   }
   // ---------- 피해 ----------

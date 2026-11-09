@@ -177,7 +177,7 @@
     const root = new THREE.Group(); obj.scale.setScalar(OBA.CH_SCALE); root.add(obj);
     const bones = {}; mesh.skeleton.bones.forEach(b => { bones[b.name] = b; });
     // 덧붙여 돌리는 뼈들의 기본 자세 (동작에 그 뼈가 없으면 매 프레임 쌓이지 않도록 되돌림)
-    const rest = {}; for (const n of ['Spine', 'Chest', 'Head', 'Neck', 'LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm']) if (bones[n]) rest[n] = bones[n].quaternion.clone();
+    const rest = {}; for (const n of ['Spine', 'Chest', 'Head', 'Neck', 'LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm', 'LeftUpLeg', 'RightUpLeg', 'LeftLeg', 'RightLeg']) if (bones[n]) rest[n] = bones[n].quaternion.clone();
     const mixer = new THREE.AnimationMixer(obj);
     const act = {}; for (const n in CH.clips) { act[n] = mixer.clipAction(CH.clips[n]); }
     const C = { root, obj, mesh, bones, mixer, act, skin, rest };

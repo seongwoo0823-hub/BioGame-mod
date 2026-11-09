@@ -125,7 +125,7 @@
   };
   function toggleLantern() { if (!hasItem('lantern')) { OB.msg('랜턴이 없어요'); return; } OB.P.flash = !OB.P.flash; OB.sfx('ui'); }
   OB.onAttack = function () {
-    const p = OB.P; if (!p || p.dead || OB.state.screen !== 'play' || p.asleep) return;
+    const p = OB.P; if (!p || p.dead || OB.state.screen !== 'play' || p.asleep || p.act) return;
     const w = p.weapon ? ITEMS[p.weapon.id] : ITEMS.fists;
     if (w.kind === 'gun') { shoot(); return; }
     if (p.swingT > 0 || p.stamina < 4) return;
@@ -133,7 +133,7 @@
     OB.sfx('swing'); aimAuto();
   };
   OB.onShove = function () {
-    const p = OB.P; if (!p || p.dead || OB.state.screen !== 'play' || p.shoveT > 0 || p.stamina < 6) return;
+    const p = OB.P; if (!p || p.dead || OB.state.screen !== 'play' || p.shoveT > 0 || p.stamina < 6 || p.act || p.asleep) return;
     p.shoveT = 0.55; p.stamina -= 8; aimAuto();
     for (const zz of OB.zombiesNear(p.x, p.z, 1.5)) {
       if (Math.abs(OB.angDiff(p.ry, Math.atan2(zz.x - p.x, zz.z - p.z))) > 1.1) continue;
@@ -186,7 +186,8 @@
   function reload() {
     const p = OB.P; if (!p.weapon || ITEMS[p.weapon.id].kind !== 'gun') return;
     const w = ITEMS[p.weapon.id], need = w.mag - p.weapon.ammo, have = countItem('darts');
-    if (!have) { OB.msg('진정제 다트가 없어요'); return; } const n = Math.min(need, have); takeItem('darts', n); p.weapon.ammo += n; OB.msg(`장전 (${p.weapon.ammo}/${w.mag})`); OB.sfx('pick');
+    if (!have) { OB.msg('진정제 다트가 없어요'); return; } if (need <= 0 || p.act) return;
+    startAct('reload', 0.7, { ev: [{ at: 0.6, fn: () => { const n = Math.min(need, countItem('darts')); takeItem('darts', n); p.weapon.ammo += n; OB.msg(`장전 (${p.weapon.ammo}/${w.mag})`); OB.sfx('pick'); } }] });
   }
   // ---------- 다치기 ----------
   OB.hurtPlayer = function (zz) {
@@ -222,17 +223,18 @@
       for (const n in d.nutr || {}) p.nutr[n] = Math.min(6, (p.nutr[n] || 0) + d.nutr[n]);
       if ((bad && Math.random() < 0.6) || (dirty && Math.random() < 0.4) || (d.raw && Math.random() < 0.45)) { p.sick = Math.max(p.sick, 12 * 60); OB.msg('속이 메스꺼워요... 배탈이 났어요', 'bad'); learn('food', '식중독', '상한 음식이나 끓이지 않은 물 속 세균·독소는 소화기관에 염증을 일으켜요. 음식을 익히고 물을 끓이면 대부분의 병원체가 죽어요.'); }
       OB.sfx(d.kind === 'food' ? 'eat' : 'drink'); OB.msg(`${itemName(it)}을(를) ${d.kind === 'food' ? '먹었어요' : '마셨어요'}`);
+      playUse(d.kind === 'food' ? 'eat' : 'drink');
       if (d.note) OB.state.learned['f_' + it.id] = { title: d.name, text: d.note };
       rm(); OB.state.ate = true; quests(); return;
     }
     if (d.kind === 'weapon' || d.kind === 'gun') { equip(it, from); return; }
     if (d.kind === 'wear') { const slot = d.slot; if (from) { from.splice(from.indexOf(it), 1); } else p.inv.splice(p.inv.indexOf(it), 1); if (p[slot]) p.inv.push(p[slot]); p[slot] = it; OB.msg(`${d.name} 착용`); return; }
     if (d.kind === 'bag') { if (from) from.splice(from.indexOf(it), 1); else p.inv.splice(p.inv.indexOf(it), 1); if (p.bag) p.inv.push(p.bag); p.bag = it; OB.msg(`${d.name}을(를) 멨어요 (들 수 있는 무게 ${capOf()}kg)`); return; }
-    if (d.use === 'bandage') { const w = p.wounds.find(x => !x.bandaged); if (!w && p.bleed <= 0) { OB.msg('감을 상처가 없어요'); return; } if (w) w.bandaged = true; p.bleed = Math.max(0, p.bleed - 0.8); rm(); OB.msg('붕대를 감았어요. 피가 멈춰요'); return; }
-    if (d.use === 'disinfect') { const ws = p.wounds.filter(x => !x.dis && !x.rolled); if (!ws.length) { OB.msg('소독할 새 상처가 없어요'); return; } ws.forEach(w => { w.dis = true; w.chance *= w.type === 'bite' ? 1 : 0.4; }); it.uses = (it.uses || 1) - 1; if (it.uses <= 0) rm(); OB.msg('상처를 소독했어요 (세균 감염 위험 ↓)'); learn('dis', '소독과 바이러스', '소독약은 상처 표면의 세균을 죽이지만, 이미 혈액에 들어간 바이러스는 없앨 수 없어요. 그래서 물리면 소독만으로는 부족해요.'); return; }
-    if (d.use === 'painkill') { p.painT = 240; p.temp = Math.max(36.5, p.temp - 1); rm(); OB.msg('해열진통제를 먹었어요 (열과 통증이 줄어요)'); learn('pain', '해열제', '열은 우리 몸이 병원체와 싸우며 체온을 올린 결과예요. 해열제는 증상을 줄일 뿐 원인을 없애지 않아요.'); return; }
-    if (d.use === 'antiviral') { p.antiviral = 8 * 60; rm(); OB.msg('항바이러스제를 먹었어요 (8시간 동안 바이러스 증식이 느려져요)', 'good'); learn('av', '항바이러스제', '항바이러스제는 바이러스의 복제 효소 등을 방해해 증식을 늦춰요. 세균을 죽이는 항생제는 바이러스에 효과가 없어요.'); return; }
-    if (d.use === 'vitamin') { p.nutr.vit = Math.min(6, p.nutr.vit + 3); rm(); OB.msg('비타민을 먹었어요'); return; }
+    if (d.use === 'bandage') { const w = p.wounds.find(x => !x.bandaged); if (!w && p.bleed <= 0) { OB.msg('감을 상처가 없어요'); return; } if (w) w.bandaged = true; p.bleed = Math.max(0, p.bleed - 0.8); rm(); OB.msg('붕대를 감았어요. 피가 멈춰요'); playUse('bandage'); return; }
+    if (d.use === 'disinfect') { const ws = p.wounds.filter(x => !x.dis && !x.rolled); if (!ws.length) { OB.msg('소독할 새 상처가 없어요'); return; } ws.forEach(w => { w.dis = true; w.chance *= w.type === 'bite' ? 1 : 0.4; }); it.uses = (it.uses || 1) - 1; if (it.uses <= 0) rm(); OB.msg('상처를 소독했어요 (세균 감염 위험 ↓)'); playUse('bandage'); learn('dis', '소독과 바이러스', '소독약은 상처 표면의 세균을 죽이지만, 이미 혈액에 들어간 바이러스는 없앨 수 없어요. 그래서 물리면 소독만으로는 부족해요.'); return; }
+    if (d.use === 'painkill') { p.painT = 240; p.temp = Math.max(36.5, p.temp - 1); rm(); OB.msg('해열진통제를 먹었어요 (열과 통증이 줄어요)'); playUse('drink'); learn('pain', '해열제', '열은 우리 몸이 병원체와 싸우며 체온을 올린 결과예요. 해열제는 증상을 줄일 뿐 원인을 없애지 않아요.'); return; }
+    if (d.use === 'antiviral') { p.antiviral = 8 * 60; rm(); OB.msg('항바이러스제를 먹었어요 (8시간 동안 바이러스 증식이 느려져요)', 'good'); playUse('drink'); learn('av', '항바이러스제', '항바이러스제는 바이러스의 복제 효소 등을 방해해 증식을 늦춰요. 세균을 죽이는 항생제는 바이러스에 효과가 없어요.'); return; }
+    if (d.use === 'vitamin') { p.nutr.vit = Math.min(6, p.nutr.vit + 3); rm(); OB.msg('비타민을 먹었어요'); playUse('drink'); return; }
     if (d.use === 'vaccine') {
       rm(); p.vaccinated = true;
       if (p.infected && p.virus < 80) { p.infected = false; p.virus = 0; OB.toast('백신 접종!', '기억세포와 항체가 바이러스를 물리쳤어요. 이제 감염 위험이 크게 줄어요.'); }
@@ -244,12 +246,68 @@
     if (it.id === 'notes') { readNotes(); return; }
     OB.msg(d.note || '지금은 쓸 수 없어요');
   }
+  // 아이템 쓰는 동작: 가방 창이 열려 있으면 닫은 뒤에 보여 줌
+  function playUse(type) { const p = OB.P; if (OB.paused) p.queueAct = type; else if (!p.act) startAct(type, type === 'bandage' ? 1.2 : 1.0); }
   function equip(it, from) {
     const p = OB.P; const L = from || p.inv; const i = L.indexOf(it); if (i >= 0) L.splice(i, 1);
     if (p.weapon) p.inv.push(p.weapon); p.weapon = it; OB.attachWeapon(p); OB.msg(`${ITEMS[it.id].name}을(를) 들었어요`); OB.sfx('pick'); quests();
   }
   function quickUse(k) { const q = quickList()[k]; if (q) { useItem(q); refreshHUD(true); } }
   function quickList() { const p = OB.P; return p.inv.filter(it => ['food', 'drink', 'med'].includes(ITEMS[it.id].kind) || ITEMS[it.id].kind === 'weapon' || ITEMS[it.id].kind === 'gun').slice(0, 6); }
+
+  // ================= 행동 동작 =================
+  //  행동하는 동안은 이동을 멈추고, 시간(k: 0→1)에 따라 자세·위치를 바꿈. ev: [{at, fn}] 정해진 순간에 실제 효과
+  //  뼈 축: 오른팔 Z+ = 앞 / 오른 팔꿈치 Z+ = 굽힘, 왼팔 X+ = 앞 / 왼 팔꿈치 X+ = 굽힘, 허벅지 X- = 들기, 무릎 X+ = 굽힘, 척추·머리 X+ = 숙이기
+  const ss = t => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+  const bell = (k, a, b) => k < a ? ss(k / a) : k > b ? ss((1 - k) / (1 - b)) : 1;
+  function startAct(type, dur, opt) {
+    const p = OB.P; if (!p || p.act || p.dead) return false;
+    p.act = Object.assign({ type, t: 0, dur, ev: [], x0: p.x, z0: p.z }, opt || {});
+    p.swingT = 0; p.shoveT = 0; return true;
+  }
+  OB.startAct = startAct;
+  const addR = OB.addRot;
+  const R_ARM = (b, a, e) => { addR(b.RightArm, 0, 0, a); if (e) addR(b.RightForeArm, 0, 0, e); };
+  const L_ARM = (b, a, e) => { addR(b.LeftArm, a, 0, 0); if (e) addR(b.LeftForeArm, e, 0, 0); };
+  function crouch(C, a) { const b = C.bones; addR(b.LeftUpLeg, -1.25 * a, 0, 0); addR(b.RightUpLeg, -1.25 * a, 0, 0); addR(b.LeftLeg, 1.9 * a, 0, 0); addR(b.RightLeg, 1.9 * a, 0, 0); addR(b.Spine, 0.35 * a, 0, 0); C.obj.position.y = -0.36 * a; }
+  function climbPose(C, t) { const b = C.bones, s = Math.sin(t * 9); R_ARM(b, 2.5 + s * 0.35, 0.3); L_ARM(b, 2.5 - s * 0.35, 0.3); addR(b.LeftUpLeg, -0.6 - s * 0.4, 0, 0); addR(b.RightUpLeg, -0.6 + s * 0.4, 0, 0); addR(b.LeftLeg, 0.9, 0, 0); addR(b.RightLeg, 0.9, 0, 0); }
+  const ACTS = {
+    vault: { clip: 'jump', ts: 0.55, pos: (p, A, k) => { const e = ss(k); p.x = A.x0 + (A.x1 - A.x0) * e; p.z = A.z0 + (A.z1 - A.z0) * e; },
+      pose: (C, b, k) => { const l = Math.sin(k * Math.PI); C.obj.position.y = 0.55 * l; addR(b.Spine, 0.55 * l, 0, 0); R_ARM(b, 1.3 * l, 0.2); L_ARM(b, 1.3 * l, 0.2); addR(b.LeftUpLeg, -1.0 * l, 0, 0); addR(b.RightUpLeg, -0.7 * l, 0, 0); addR(b.LeftLeg, 1.3 * l, 0, 0); addR(b.RightLeg, 1.0 * l, 0, 0); } },
+    door: { pose: (C, b, k) => { const a = bell(k, 0.35, 0.6); R_ARM(b, 1.25 * a, -0.2 * a); addR(b.Spine, 0.12 * a, 0, 0); } },
+    loot: { pose: (C, b, k, A) => { const a = ss(k / 0.7); if (A.low) { crouch(C, a); R_ARM(b, 0.9 * a, 0.5 * a); L_ARM(b, 0.9 * a, 0.5 * a); } else { R_ARM(b, 1.35 * a, 0.5 * a + Math.sin(A.t * 12) * 0.15 * a); L_ARM(b, 1.2 * a, 0.5 * a); addR(b.Spine, 0.15 * a, 0, 0); } } },
+    stand: { pose: (C, b, k, A) => { const a = 1 - ss(k); if (A.low) crouch(C, a); R_ARM(b, 0.9 * a, 0.5 * a); L_ARM(b, 0.9 * a, 0.5 * a); } },
+    pick: { pose: (C, b, k) => { const a = bell(k, 0.45, 0.6); crouch(C, a); R_ARM(b, 1.1 * a, 0.3 * a); } },
+    eat: { pose: (C, b, k, A) => { const a = bell(k, 0.25, 0.8); R_ARM(b, 1.4 * a, 1.9 * a); addR(b.Head, (0.12 + Math.sin(A.t * 16) * 0.06) * a, 0, 0); } },
+    drink: { pose: (C, b, k) => { const a = bell(k, 0.25, 0.8); R_ARM(b, 1.55 * a, 1.9 * a); addR(b.Head, -0.38 * a, 0, 0); addR(b.Spine, -0.12 * a, 0, 0); } },
+    bandage: { pose: (C, b, k, A) => { const a = bell(k, 0.2, 0.85); R_ARM(b, 0.95 * a, (0.9 + Math.sin(A.t * 10) * 0.3) * a); L_ARM(b, 0.95 * a, 0.9 * a); addR(b.Spine, 0.28 * a, 0, 0); addR(b.Head, 0.3 * a, 0, 0); } },
+    hammer: { pose: (C, b, k) => { const ph = (k * 3) % 1, arm = ph < 0.55 ? 0.8 + 1.8 * ss(ph / 0.55) : 2.6 - 1.9 * ss((ph - 0.55) / 0.25); const a = bell(k, 0.08, 0.92); R_ARM(b, arm * a, 0.4 * a); L_ARM(b, 1.25 * a, 0.3 * a); addR(b.Spine, 0.15 * a, 0, 0); } },
+    cook: { pose: (C, b, k, A) => { const a = bell(k, 0.15, 0.85); crouch(C, 0.65 * a); R_ARM(b, 1.0 * a, 0.6 * a); L_ARM(b, 0.8 * a, 0.5 * a); addR(b.Spine, 0, Math.sin(A.t * 7) * 0.25 * a, 0); } },
+    work: { pose: (C, b, k, A) => { const a = bell(k, 0.15, 0.85); R_ARM(b, 1.15 * a, (0.8 + Math.sin(A.t * 13) * 0.25) * a); L_ARM(b, 1.15 * a, (0.8 + Math.cos(A.t * 11) * 0.25) * a); addR(b.Spine, 0.18 * a, 0, 0); addR(b.Head, 0.2 * a, 0, 0); } },
+    reload: { pose: (C, b, k) => { const a = bell(k, 0.25, 0.75); R_ARM(b, 0.8, 0.5 * a); L_ARM(b, 1.1 * a, 1.2 * a); addR(b.Head, 0.3 * a, 0, 0); } },
+    lie: { pos: (p, A, k) => { const e = ss(Math.min(1, k * 1.6)); p.x = A.x0 + (A.x1 - A.x0) * e; p.z = A.z0 + (A.z1 - A.z0) * e; p.ry = A.ry1; },
+      pose: (C, b, k) => { const e = ss((k - 0.35) / 0.65); C.obj.rotation.x = -Math.PI / 2 * e; C.obj.position.y = 0.78 * e; } },
+    getup: { pos: (p, A, k) => { if (k > 0.5) { const e = ss((k - 0.5) * 2); p.x = A.x0 + (A.x1 - A.x0) * e; p.z = A.z0 + (A.z1 - A.z0) * e; } },
+      pose: (C, b, k) => { const e = 1 - ss(k * 1.6); C.obj.rotation.x = -Math.PI / 2 * e; C.obj.position.y = 0.78 * e; } },
+    down: { pose: (C, b, k) => { const c = ss(k / 0.35), s = ss((k - 0.35) / 0.65); crouch(C, c * (1 - s)); C.obj.position.y -= 2.1 * s; if (s > 0) climbPose(C, k * 6); } },
+    climbup: { pose: (C, b, k) => { C.obj.position.y = 2.2 * ss(k); climbPose(C, k * 6); } },
+    climbdown: { pose: (C, b, k) => { C.obj.position.y = 2.2 * (1 - ss(k)); climbPose(C, k * 6); } },
+    rise: { pose: (C, b, k) => { C.obj.position.y = -2.0 * (1 - ss(k)); if (k < 0.75) climbPose(C, k * 6); } },
+    stairsdown: { clip: 'run', ts: 0.5, pos: (p, A, k) => { p.x = A.x0 + Math.sin(p.ry) * 1.6 * k; p.z = A.z0 + Math.cos(p.ry) * 1.6 * k; }, pose: (C, b, k) => { C.obj.position.y = -1.6 * ss(k); } },
+    stairsup: { clip: 'run', ts: 0.5, pos: (p, A, k) => { p.x = A.x0 + Math.sin(p.ry) * 1.4 * k; p.z = A.z0 + Math.cos(p.ry) * 1.4 * k; }, pose: (C, b, k) => { C.obj.position.y = -1.4 * (1 - ss(k)); } }
+  };
+  function updateAct(p, dt) {
+    const A = p.act, C = p.C, D = ACTS[A.type]; A.t += dt; const k = Math.min(1, A.t / A.dur);
+    if (D.pos) D.pos(p, A, k);
+    for (const e of A.ev) if (!e.done && k >= e.at) { e.done = true; e.fn(); }
+    const clip = D.clip || 'idle'; OB.setAnim(C, clip, 0.12); C.act[clip].timeScale = D.ts || 1;
+    C.root.position.set(p.x, 0, p.z); C.root.rotation.y = p.ry;
+    C.obj.position.set(0, 0, 0); C.obj.rotation.set(0, 0, 0);
+    C.update(dt);
+    D.pose(C, C.bones, k, A);
+    if (A.t >= A.dur) { const done = A.onEnd; p.act = null; if (!A.hold) { C.obj.position.set(0, 0, 0); C.obj.rotation.set(0, 0, 0); } if (done) done(); }
+  }
+  const face = (x, z) => { const p = OB.P; p.ry = Math.atan2(x - p.x, z - p.z); };
 
   // ================= 상호작용 =================
   function nearestInteract() {
@@ -268,37 +326,52 @@
     if (S.campfire) cand('fire', S.campfire.x, S.campfire.z, 'fire', '모닥불로 요리·물 끓이기');
     return best;
   }
+  const LOW = { crate: 1, dumpster: 1, bag: 1, car: 1, toolbox: 1, mil: 1, golfbag: 1, mail: 1 };
   function interact() {
-    const p = OB.P, t = nearestInteract(); if (!t || !t.label) return;
+    const p = OB.P, t = nearestInteract(); if (!t || !t.label || p.act) return;
     if (t.kind === 'door') {
       const d = t.o; if (d.bar > 0) { OB.msg('판자로 막혀 있어요 (B: 판자 떼기)'); return; }
-      if (d.locked) { if (hasItem('keycard')) { d.locked = false; OB.msg('출입 카드로 문을 열었어요', 'good'); OB.sfx('ui'); } else { OB.msg('잠겨 있어요. 출입 카드가 필요해요'); OB.sfx('bang'); return; } }
-      d.open = !d.open; OB.sfx('door'); OB.noise(d.x, d.z, 3);
+      if (d.locked) { if (hasItem('keycard')) { d.locked = false; OB.msg('출입 카드로 문을 열었어요', 'good'); OB.sfx('ui'); } else { OB.msg('잠겨 있어요. 출입 카드가 필요해요'); OB.sfx('bang'); face(d.x, d.z); startAct('door', 0.45); return; } }
+      face(d.x, d.z); startAct('door', 0.45, { ev: [{ at: 0.4, fn: () => { d.open = !d.open; OB.sfx('door'); OB.noise(d.x, d.z, 3); } }] });
     } else if (t.kind === 'window') {
       const w = t.o; if (w.bar > 0) { OB.msg('판자를 쳐서 막았어요'); return; }
-      if (!w.broken) { if (confirm('창문을 깰까요? (소리가 크게 나요)')) OB.breakWindow(w); return; }
+      if (!w.broken) { if (confirm('창문을 깰까요? (소리가 크게 나요)')) { face(w.x, w.z); startAct('door', 0.45, { ev: [{ at: 0.4, fn: () => OB.breakWindow(w) }] }); } return; }
       climb(w);
     } else if (t.kind === 'cont') {
-      if (t.o.kind === 'pump') { if (hasItem('gascan')) { takeItem('gascan'); giveItem(OB.item('fuel')); OB.msg('연료통에 연료를 가득 채웠어요', 'good'); OB.sfx('drink'); quests(); } else OB.msg('연료를 담을 빈 연료통이 필요해요'); return; }
-      openInv(t.o);
-    } else if (t.kind === 'ground') { pickGround(t.o); }
-    else if (t.kind === 'bed') sleep();
-    else if (t.kind === 'cent') centrifuge();
+      const c = t.o; face(c.x, c.z);
+      if (c.kind === 'pump') { if (hasItem('gascan')) startAct('work', 1.4, { onEnd: () => { takeItem('gascan'); giveItem(OB.item('fuel')); OB.msg('연료통에 연료를 가득 채웠어요', 'good'); OB.sfx('drink'); quests(); } }); else OB.msg('연료를 담을 빈 연료통이 필요해요'); return; }
+      const low = !!LOW[c.kind]; p.lowPose = low;
+      startAct('loot', 0.55, { low, hold: true, onEnd: () => { OB.sfx('pick'); openInv(c); } });
+    } else if (t.kind === 'ground') { const g = t.o; face(g.x, g.z); startAct('pick', 0.6, { ev: [{ at: 0.45, fn: () => { if (OB.ground.includes(g)) pickGround(g); } }] }); }
+    else if (t.kind === 'bed') sleep(t.o);
+    else if (t.kind === 'cent') { face(t.x, t.z); startAct('work', 1.5, { onEnd: centrifuge }); }
     else if (t.kind === 'portal') usePortal(t.o);
-    else if (t.kind === 'boat') boat();
-    else if (t.kind === 'fire') cook(true);
+    else if (t.kind === 'boat') { face(t.x, t.z); startAct('vault', 0.9, { x1: t.x + 1.5, z1: t.z, onEnd: boat }); }
+    else if (t.kind === 'fire') { face(t.x, t.z); startAct('cook', 1.6, { onEnd: () => cook(true) }); }
   }
   function usePortal(pt) {
     const p = OB.P, down = !OB.under();
-    p.x = down ? pt.ux : pt.x; p.z = (down ? pt.uz : pt.z) + 1.2; OB._camT = null; OB.sfx('door'); OB.noise(p.x, p.z, 4);
+    if (!pt._go) {
+      const go = () => { pt._go = true; usePortal(pt); pt._go = false; };
+      if (pt.stairs) startAct(down ? 'stairsdown' : 'stairsup', 0.8, { onEnd: go });
+      else { face(down ? pt.x : pt.ux, down ? pt.z : pt.uz - 1.7); startAct(down ? 'down' : 'climbup', 0.9, { onEnd: go }); }
+      OB.sfx('door'); return;
+    }
+    p.x = down ? pt.ux : pt.x; p.z = (down ? pt.uz : pt.z) + 1.2; OB._camT = null; OB.noise(p.x, p.z, 4);
+    if (pt.stairs) { p.ry = 0; startAct(down ? 'stairsup' : 'stairsup', 0.7); } else if (down) { p.ry = Math.PI; startAct('climbdown', 0.9); } else startAct('rise', 0.9);
     if (down) { OB.toast(pt.stairs ? '지하 연구소' : '하수도', pt.stairs ? '비상 전원만 들어와 있어요. 랜턴(F)을 켜세요.' : '축축하고 어두워요. 감염자가 숨어 있을지 몰라요.'); learn('sewer', '하수 처리와 감염병', '하수에는 사람과 동물의 배설물 속 세균·바이러스가 많아요. 하수 처리장은 미생물로 오염 물질을 분해하고 소독해 감염병이 퍼지는 것을 막아요.'); }
     else OB.msg(`${pt.name}(으)로 올라왔어요`);
     quests();
   }
   function climb(w) {
     const p = OB.P; const nx = w.ax === 'W' ? (p.x < w.x ? 1 : -1) : 0, nz = w.ax === 'N' ? (p.z < w.z ? 1 : -1) : 0;
-    p.x = w.x + nx * 0.7; p.z = w.z + nz * 0.7; OB.noise(p.x, p.z, 5); OB.msg('창문을 넘어갔어요');
-    if (!w.cleared && Math.random() < 0.25) { p.hp -= 5; p.bleed += 0.3; p.wounds.push({ type: 'glass', name: '유리 상처', age: 0, chance: 0, bandaged: false, rolled: true }); OB.msg('깨진 유리에 베였어요', 'bad'); }
+    // 창문 앞에 붙은 뒤 넘어감 (출발: 창문 앞 0.65m, 도착: 반대편 0.75m)
+    p.x = w.x - nx * 0.65 + (w.ax === 'N' ? (p.x - w.x) * 0.3 : 0); p.z = w.z - nz * 0.65 + (w.ax === 'W' ? (p.z - w.z) * 0.3 : 0);
+    face(w.x + nx, w.z + nz);
+    startAct('vault', 1.0, { x1: w.x + nx * 0.75 + (p.x - w.x) * (w.ax === 'N' ? 1 : 0), z1: w.z + nz * 0.75 + (p.z - w.z) * (w.ax === 'W' ? 1 : 0), ev: [{ at: 0.45, fn: () => OB.sfx('step') }], onEnd: () => {
+      OB.noise(p.x, p.z, 5); OB.msg('창문을 넘어갔어요');
+      if (!w.cleared && Math.random() < 0.25) { p.hp -= 5; p.bleed += 0.3; p.wounds.push({ type: 'glass', name: '유리 상처', age: 0, chance: 0, bandaged: false, rolled: true }); OB.msg('깨진 유리에 베였어요', 'bad'); }
+    } });
   }
   OB.breakWindow = function (w) { w.broken = true; w.hp = 0; OB.noise(w.x, w.z, 14, 'glass'); OB.sfx('glass', OB.P ? Math.hypot(w.x - OB.P.x, w.z - OB.P.z) : 0); };
   OB.breakDoor = function (d) { d.broken = true; d.open = true; d.bar = 0; if (d.mesh) d.mesh.visible = false; OB.noise(d.x, d.z, 14); OB.msg('어딘가에서 문이 부서지는 소리가 나요!', 'bad'); };
@@ -310,7 +383,10 @@
     if (o.bar >= 3) { OB.msg('더는 판자를 칠 수 없어요'); return; }
     if (t.kind === 'door' && o.open) { OB.msg('문을 먼저 닫아요'); return; }
     if (!hammer || countItem('planks') < 1 || countItem('nails') < 2) { OB.msg('바리케이드: 망치 + 판자 1 + 못 2가 필요해요'); return; }
-    takeItem('planks', 1); takeItem('nails', 2); o.bar++; o.barHp = 50; drawBars(o); OB.sfx('hammer'); OB.noise(o.x, o.z, 10); OB.msg(`판자를 박았어요 (${o.bar}/3)`, 'good');
+    if (p.act) return; face(o.x, o.z);
+    takeItem('planks', 1); takeItem('nails', 2);
+    const hit = () => { OB.sfx('hammer'); OB.noise(o.x, o.z, 10); };
+    startAct('hammer', 1.5, { ev: [{ at: 0.24, fn: hit }, { at: 0.57, fn: hit }, { at: 0.9, fn: hit }], onEnd: () => { o.bar++; o.barHp = 50; drawBars(o); OB.msg(`판자를 박았어요 (${o.bar}/3)`, 'good'); } });
   }
   function drawBars(o) {
     if (o.barG) { OB.scene.remove(o.barG); o.barG = null; }
@@ -332,13 +408,15 @@
     giveItem(g.it); if (g.mesh) OB.scene.remove(g.mesh); OB.ground.splice(OB.ground.indexOf(g), 1); OB.sfx('pick'); OB.msg(`${itemName(g.it)}을(를) 주웠어요`); quests();
   }
   // ---------- 잠 ----------
-  function sleep() {
+  function sleep(bed) {
     const p = OB.P; if (p.fatigue < 25) { OB.msg('아직 졸리지 않아요'); return; }
     if (OB.zombiesNear(p.x, p.z, 14).some(z => z.state === 'chase')) { OB.msg('감염자가 가까이 있어서 잘 수 없어요'); return; }
-    p.asleep = true; p.sleepStart = OB.minute; OB.msg('잠이 들었어요... (깨려면 아무 키나)'); $('#sleep').classList.add('on');
+    p.bed = { x: p.x, z: p.z };
+    startAct('lie', 1.0, { x1: bed.x, z1: bed.z + 0.8, ry1: 0, hold: true, onEnd: () => { p.asleep = true; p.sleepStart = OB.minute; $('#sleep').classList.add('on'); } });
+    OB.msg('잠이 들었어요... (깨려면 아무 키나)');
     learn('sleep', '잠과 면역', '잠을 자는 동안 면역세포가 만들어지고 기억이 정리돼요. 잠이 부족하면 면역력이 떨어져요.');
   }
-  function wake(why) { const p = OB.P; if (!p.asleep) return; p.asleep = false; $('#sleep').classList.remove('on'); if (why) OB.msg(why, 'bad'); }
+  function wake(why) { const p = OB.P; if (!p.asleep) return; p.asleep = false; $('#sleep').classList.remove('on'); if (why) OB.msg(why, 'bad'); const b = p.bed || { x: p.x + 1.2, z: p.z }; startAct('getup', 0.9, { x1: b.x, z1: b.z }); }
   // ---------- 요리 ----------
   function cook(fire) {
     const p = OB.P;
@@ -348,6 +426,7 @@
     if (!n) { OB.msg('익히거나 끓일 것이 없어요 (생고기·생선·달걀·더러운 물·호박)'); return; }
     if (!fire) { const m = p.inv.find(x => x.id === 'matches'); m.uses--; if (m.uses <= 0) p.inv.splice(p.inv.indexOf(m), 1); }
     OB.minute += 20; OB.sfx('eat'); OB.msg(`요리했어요 (${n}가지)`, 'good');
+    if (!fire) playUse('cook');
     learn('cook', '가열 살균', '대부분의 세균은 70~100℃에서 단백질이 변성되어 죽어요. 그래서 음식을 익히고 물을 끓여 마셔요.');
   }
   // ================= 이야기 (목표) =================
@@ -407,7 +486,9 @@
   function updatePlayer(dt) {
     const p = OB.P, K = OB.keys, C = p.C;
     if (p.dead) { C.obj.rotation.x = Math.max(-Math.PI / 2, C.obj.rotation.x - dt * 3); C.update(dt * 0.3); return; }
-    if (p.asleep) { OB.setAnim(C, 'idle'); C.update(dt); C.obj.rotation.x = -Math.PI / 2 * 0.0; return; }
+    if (p.act) { updateAct(p, dt); p.inside = OB.bldAt(p.x, p.z); return; }
+    if (p.asleep) { OB.setAnim(C, 'idle'); C.act.idle.timeScale = 0.4; C.update(dt); C.obj.rotation.x = -Math.PI / 2; C.obj.position.y = 0.78; return; }
+    C.obj.position.set(0, 0, 0); C.obj.rotation.set(0, 0, 0);
     let sx = 0, sy = 0;
     if (K.KeyW || K.ArrowUp) sy -= 1; if (K.KeyS || K.ArrowDown) sy += 1; if (K.KeyA || K.ArrowLeft) sx -= 1; if (K.KeyD || K.ArrowRight) sx += 1;
     if (OB.joy && (OB.joy.x || OB.joy.y)) { sx = OB.joy.x; sy = OB.joy.y; }
@@ -592,7 +673,12 @@
 
   // ================= 창(패널) =================
   function show(sel) { $$('.scr').forEach(e => e.classList.remove('on')); if (sel) $(sel).classList.add('on'); }
-  function closePanels() { $$('.panel').forEach(e => e.classList.remove('on')); OB.state.screen = 'play'; OB.paused = false; OB.state.cont = null; }
+  function closePanels() {
+    $$('.panel').forEach(e => e.classList.remove('on')); OB.state.screen = 'play'; OB.paused = false; OB.state.cont = null;
+    const p = OB.P; if (!p || p.dead) return;
+    if (p.lowPose != null) { const low = p.lowPose; p.lowPose = null; p.act = null; startAct('stand', 0.35, { low }); }
+    if (p.queueAct) { const q = p.queueAct; p.queueAct = null; if (p.act) { const prev = p.act.onEnd; p.act.onEnd = () => { prev && prev(); startAct(q, 1.0); }; } else startAct(q, 1.0); }
+  }
   OB.closePanels = closePanels;
   function panel(sel) { $$('.panel').forEach(e => e.classList.remove('on')); $(sel).classList.add('on'); OB.state.screen = 'panel'; OB.paused = true; }
   function dialog(title, html) { $('#dlgT').textContent = title; $('#dlgB').innerHTML = html; panel('#dlg'); }
