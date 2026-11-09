@@ -13,6 +13,8 @@
   OB.day = () => Math.floor(OB.minute / 1440) + 1;
   OB.hour = () => (OB.minute % 1440) / 60;
   OB.isNight = () => { const h = OB.hour(); return h >= 20.5 || h < 5.5; };
+  OB.under = () => !!(OB.P && OB.W && OB.W.isUnder && OB.W.isUnder(OB.P.x));
+  OB.isDark = () => OB.isNight() || OB.under();
   const fmtTime = () => { const h = Math.floor(OB.hour()), m = Math.floor(OB.minute % 60); return `${OB.day()}일차 ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`; };
   const C1 = new THREE.Color(), C2 = new THREE.Color();
   function updateLight() {
@@ -32,6 +34,13 @@
       OB.glow.position.set(P.x, 2.2, P.z);
     }
     $('#night').style.opacity = (1 - sunK) * 0.35;
+    if (OB.under()) {   // 지하: 어둡고 축축한 빛, 랜턴이 없으면 주변만 희미하게
+      const c = OB.cellOf(P.x, P.z), g = OB.W.ground[c[1] * OBW.N + c[0]], lab = g === OBW.GR.ulab;
+      OB.sun.intensity = 0; OB.hemi.intensity = lab ? 0.5 : 0.34; OB.hemi.color.set(lab ? '#b8d0ff' : g === OBW.GR.cave ? '#ffd0a0' : '#c8e0b0');
+      OB.scene.background.set('#05070a'); OB.scene.fog.color.set('#05070a');
+      OB.glow.intensity = lantern ? 1.5 : 0.9; OB.glow.distance = lantern ? 12 : 8; $('#night').style.opacity = 0.38;
+      OB.scene.fog.near = OB.zoom - 4; OB.scene.fog.far = OB.zoom + 26;
+    } else { OB.glow.distance = 7; OB.hemi.color.set('#ffffff'); OB.scene.fog.near = 45; OB.scene.fog.far = 95; }
   }
 
   // ================= 효과음 (합성) =================
@@ -252,6 +261,7 @@
     for (const c of W.containers) if (Math.abs(c.x - p.x) < 3 && Math.abs(c.z - p.z) < 3) cand(c, c.x, c.z, 'cont', c.kind === 'pump' ? '주유기' : `${c.name} 뒤지기`);
     for (const b of W.beds) if (Math.abs(b.x - p.x) < 3 && Math.abs(b.z - p.z) < 3) cand(b, b.x, b.z, 'bed', '잠자기');
     for (const g of OB.ground) if (Math.abs(g.x - p.x) < 2.5 && Math.abs(g.z - p.z) < 2.5) cand(g, g.x, g.z, 'ground', `${itemName(g.it)} 줍기`);
+    for (const pt of W.portals || []) { const u = OB.under(); const x = u ? pt.ux : pt.x, z = u ? pt.uz : pt.z; cand(pt, x, z, 'portal', u ? pt.up : (pt.stairs ? '계단으로 지하 연구소에 내려가기' : `맨홀로 하수도에 내려가기`)); }
     const S = W.spots;
     if (S.centrifuge) cand('cent', S.centrifuge.x, S.centrifuge.z, 'cent', '원심분리기로 백신 만들기');
     if (S.boat) cand('boat', S.boat.x - 2, S.boat.z, 'boat', '쾌속정 타기');
@@ -274,8 +284,16 @@
     } else if (t.kind === 'ground') { pickGround(t.o); }
     else if (t.kind === 'bed') sleep();
     else if (t.kind === 'cent') centrifuge();
+    else if (t.kind === 'portal') usePortal(t.o);
     else if (t.kind === 'boat') boat();
     else if (t.kind === 'fire') cook(true);
+  }
+  function usePortal(pt) {
+    const p = OB.P, down = !OB.under();
+    p.x = down ? pt.ux : pt.x; p.z = (down ? pt.uz : pt.z) + 1.2; OB._camT = null; OB.sfx('door'); OB.noise(p.x, p.z, 4);
+    if (down) { OB.toast(pt.stairs ? '지하 연구소' : '하수도', pt.stairs ? '비상 전원만 들어와 있어요. 랜턴(F)을 켜세요.' : '축축하고 어두워요. 감염자가 숨어 있을지 몰라요.'); learn('sewer', '하수 처리와 감염병', '하수에는 사람과 동물의 배설물 속 세균·바이러스가 많아요. 하수 처리장은 미생물로 오염 물질을 분해하고 소독해 감염병이 퍼지는 것을 막아요.'); }
+    else OB.msg(`${pt.name}(으)로 올라왔어요`);
+    quests();
   }
   function climb(w) {
     const p = OB.P; const nx = w.ax === 'W' ? (p.x < w.x ? 1 : -1) : 0, nz = w.ax === 'N' ? (p.z < w.z ? 1 : -1) : 0;
@@ -336,9 +354,9 @@
   const QL = [
     { id: 'prep', t: '준비하기', d: '무기를 들고, 무언가를 먹거나 마셔요. (Tab: 가방)', done: s => s.q.armed && s.ate },
     { id: 'radio', t: '라디오 듣기', d: '집 안 어딘가의 휴대용 라디오를 찾아 사용해요.', done: s => s.q.radio },
-    { id: 'card', t: '출입 카드 찾기', d: '시내 경찰서 사물함에서 연구소 출입 카드를 찾아요.', done: s => s.q.card, mark: 'police' },
-    { id: 'lab', t: '연구소 조사', d: '북동쪽 바이러스 연구소에 들어가 연구 노트를 읽어요.', done: s => s.q.notes, mark: 'lab' },
-    { id: 'vaccine', t: '백신 만들기', d: '감염자 혈액 샘플 3개(주사기 필요: 병원) + 세포 배양액(공장) → 연구소 원심분리기.', done: s => s.q.vaccine, mark: 'centrifuge' },
+    { id: 'card', t: '연구소로 가는 길 찾기', d: '경찰서 사물함의 출입 카드로 연구소 문을 열거나, 맨홀로 하수도를 지나 지하 연구소 뒷문으로 가요.', done: s => s.q.card || s.q.underLab, mark: 'police' },
+    { id: 'lab', t: '지하 연구소 조사', d: '연구소 계단(또는 하수도)으로 지하 연구소에 내려가 수석 연구원의 연구 노트를 읽어요.', done: s => s.q.notes, mark: 'ulab' },
+    { id: 'vaccine', t: '백신 만들기', d: '감염자 혈액 샘플 3개(주사기: 병원) + 세포 배양액(지하 연구소 냉장 보관고·공장) → 지하 연구소 원심분리기.', done: s => s.q.vaccine, mark: 'centrifuge' },
     { id: 'escape', t: '탈출하기', d: '보트 열쇠(항구 사무소)와 연료(주유소 주유기 + 빈 연료통)를 챙겨 항구의 쾌속정으로!', done: s => s.q.escaped, mark: 'boat' }
   ];
   function curQuest() { const s = OB.state; return QL.find(q => !q.done(s)); }
@@ -346,6 +364,7 @@
     const s = OB.state, p = OB.P; if (!p) return;
     if (p.weapon) s.q.armed = true;
     if (hasItem('keycard')) s.q.card = true;
+    if (OB.under() && OB.W.ground[OB.cellOf(p.x, p.z)[1] * OBW.N + OB.cellOf(p.x, p.z)[0]] === OBW.GR.ulab) s.q.underLab = true;
     if (hasItem('notes') && !s.q.notesRead) { }
     const q = curQuest(); const k = q ? q.id : 'done';
     if (s.lastQ !== k) { if (s.lastQ) OB.toast(q ? '새 목표: ' + q.t : '모든 목표 완료!', q ? q.d : '계속 살아남아 보세요'); s.lastQ = k; }
@@ -518,7 +537,7 @@
   function refreshHUD(force) {
     const p = OB.P; if (!p) return; hudT -= 1; if (hudT > 0 && !force) return; hudT = 6;
     $('#clock').textContent = fmtTime() + (OB.isNight() ? ' 🌙' : ' ☀️');
-    const zone = OB.W.zones.reduce((a, z) => { const d = Math.hypot(z.i * 2 - p.x, z.j * 2 - p.z); return d < a[1] ? [z.name, d] : a; }, ['', 1e9]);
+    const un = OB.under(); const zone = OB.W.zones.filter(z => !!z.under === un).reduce((a, z) => { const d = Math.hypot(z.i * 2 - p.x, z.j * 2 - p.z); return d < a[1] ? [z.name, d] : a; }, ['', 1e9]);
     $('#place').textContent = p.inside >= 0 ? OB.W.buildings[p.inside].name : zone[0];
     bar('#bHp', p.hp, p.hp < 30); bar('#bFood', 100 - p.hunger, p.hunger > 70); bar('#bWater', 100 - p.thirst, p.thirst > 70); bar('#bSleep', 100 - p.fatigue, p.fatigue > 75); bar('#bSta', p.stamina, p.stamina < 20);
     bar('#bImm', p.immunity, p.immunity < 40);
@@ -544,7 +563,7 @@
     drawMini();
   }
   // ---------- 미니맵 ----------
-  const GCOL = ['#5a8a4a', '#3a3e46', '#8a8a86', '#c8b89a', '#3a7ab0', '#e0cc90', '#8a6a4a', '#6aa858', '#c0ccd8', '#6a5a4a', '#a07850', '#d8dce0', '#2a5a90'];
+  const GCOL = ['#5a8a4a', '#3a3e46', '#8a8a86', '#c8b89a', '#3a7ab0', '#e0cc90', '#8a6a4a', '#6aa858', '#c0ccd8', '#6a5a4a', '#a07850', '#d8dce0', '#2a5a90', '#6a7060', '#9a6a44', '#a8b4cc', '#101318'];
   let miniBase = null;
   function buildMiniBase() {
     const W = OB.W, N = OBW.N, c = document.createElement('canvas'); c.width = c.height = N * 2; const g = c.getContext('2d');
@@ -563,7 +582,13 @@
     g.fillStyle = '#fff'; g.beginPath(); g.arc(W / 2, W / 2, 3.5, 0, TAU); g.fill();
     g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 2; g.beginPath(); g.arc(W / 2, W / 2, W / 2 - 2, 0, TAU); g.stroke();
   }
-  function markPos(k) { const S = OB.W.spots[k]; if (!S) return null; return S.x != null ? [S.x, S.z] : [S.i * 2 + 1, S.j * 2 + 1]; }
+  function markPos(k) {
+    const S = OB.W.spots[k]; if (!S) return null; const pos = S.x != null ? [S.x, S.z] : [S.i * 2 + 1, S.j * 2 + 1];
+    const tu = OB.W.isUnder(pos[0]), pu = OB.under();
+    if (tu && !pu) { const st = (OB.W.portals || []).find(p => p.stairs); return st ? [st.x, st.z] : pos; }   // 지하 목표 → 연구소 계단
+    if (!tu && pu) { const P = OB.P; const near = (OB.W.portals || []).reduce((a, p) => Math.hypot(p.ux - P.x, p.uz - P.z) < Math.hypot(a.ux - P.x, a.uz - P.z) ? p : a); return [near.ux, near.uz]; }
+    return pos;
+  }
 
   // ================= 창(패널) =================
   function show(sel) { $$('.scr').forEach(e => e.classList.remove('on')); if (sel) $(sel).classList.add('on'); }
@@ -649,12 +674,15 @@
   }
   function openMap() {
     if (!miniBase) buildMiniBase();
-    const cv = $('#mapC'), g = cv.getContext('2d'), N = OBW.N, S = Math.min(innerWidth * 0.86, innerHeight * 0.74) | 0; cv.width = cv.height = S;
-    g.imageSmoothingEnabled = false; g.drawImage(miniBase, 0, 0, S, S); const k = S / (N * 2);
+    const cv = $('#mapC'), g = cv.getContext('2d'), un = OB.under(), U = OB.W.UND, S = Math.min(innerWidth * 0.86, innerHeight * 0.74) | 0;
+    const ox = un ? U.x0 : 0, oz = un ? U.z0 : 0, vw = un ? U.x1 - U.x0 : OBW.CN * 2, vh = un ? U.z1 - U.z0 : OBW.CN * 2;
+    cv.width = un ? Math.round(S * vw / vh) : S; cv.height = S; const k = S / vh;
+    g.imageSmoothingEnabled = false; g.drawImage(miniBase, ox, oz, vw, vh, 0, 0, vw * k, vh * k); g.translate(-ox * k, -oz * k);
     g.font = `bold ${Math.max(10, S / 50)}px sans-serif`; g.textAlign = 'center';
-    for (const z of OB.W.zones) { g.fillStyle = 'rgba(0,0,0,.55)'; g.fillText(z.name, z.i * 2 * k + 1, z.j * 2 * k + 1); g.fillStyle = '#fff'; g.fillText(z.name, z.i * 2 * k, z.j * 2 * k); }
+    for (const z of OB.W.zones.filter(z => !!z.under === un)) { g.fillStyle = 'rgba(0,0,0,.55)'; g.fillText(z.name, z.i * 2 * k + 1, z.j * 2 * k + 1); g.fillStyle = '#fff'; g.fillText(z.name, z.i * 2 * k, z.j * 2 * k); }
     const q = curQuest(), mk = q && q.mark && markPos(q.mark); if (mk) { g.fillStyle = '#ffd23a'; g.beginPath(); g.arc(mk[0] * k, mk[1] * k, 7, 0, TAU); g.fill(); g.strokeStyle = '#000'; g.stroke(); }
-    const p = OB.P; g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 2; g.beginPath(); g.arc(p.x * k, p.z * k, 6, 0, TAU); g.fill(); g.stroke();
+    for (const pt of OB.W.portals || []) { const x = un ? pt.ux : pt.x, z = un ? pt.uz : pt.z; g.fillStyle = '#7ad0ff'; g.fillRect(x * k - 4, z * k - 4, 8, 8); }
+    const p = OB.P; g.fillStyle = '#fff'; g.strokeStyle = '#000'; g.lineWidth = 2; g.beginPath(); g.arc(p.x * k, p.z * k, 6, 0, TAU); g.fill(); g.stroke(); g.setTransform(1, 0, 0, 1, 0, 0);
     panel('#map');
   }
   function pauseMenu() { panel('#pause'); save(); }
@@ -732,17 +760,17 @@
     requestAnimationFrame(loop);
   }
   function buildWorld(seed) {
-    if (OB.W) { OB.scene.remove(OB.W.group); }
+    if (OB.W) { OB.scene.remove(OB.W.group); if (OB.W.ug) OB.scene.remove(OB.W.ug); }
     R = (s => () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; })(seed * 7 + 3);
-    OB.W = OBW.generate(seed); OB.scene.add(OB.W.group); miniBase = null;
+    OB.W = OBW.generate(seed); OB.scene.add(OB.W.group); if (OB.W.ug) { OB.scene.add(OB.W.ug); OB.W.ug.visible = false; } miniBase = null;
     // 이야기 아이템 넣기
     const W = OB.W, put = (pred, id) => { const c = W.containers.find(pred); if (c) { OB.fillContainer(c, R); c.items.unshift(OB.item(id)); } };
     const homeC = W.containers.filter(c => c.bld === W.home.id);
     if (homeC.length) { OB.fillContainer(homeC[0], R); homeC[0].items.unshift(OB.item('radio')); }
     const B = k => W.buildings.find(b => b.kind === k);
     put(c => c.kind === 'locker' && c.bld === B('police').id, 'keycard');
-    put(c => c.kind === 'desk' && c.bld === B('lab').id, 'notes');
-    put(c => c.kind === 'lab' && c.bld === B('lab').id, 'medium');
+    put(c => c.notes, 'notes');
+    put(c => c.medium, 'medium'); put(c => c.gear, 'lantern'); put(c => c.gear, 'antiviral');
     put(c => c.kind === 'toolbox' && c.bld === B('factory').id, 'medium');
     put(c => c.kind === 'toolbox' && c.bld === B('factory').id, 'gascan');
     put(c => c.kind === 'medcab' && c.bld === B('hospital').id, 'syringe'); put(c => c.kind === 'medcab' && c.bld === B('hospital').id, 'syringe'); put(c => c.kind === 'medcab' && c.bld === B('hospital').id, 'syringe');
@@ -816,7 +844,8 @@
       }
       // 밤마다 무리
       if (OB.day() > (s.hordeDay || 1) && OB.hour() > 21) { s.hordeDay = OB.day(); OB.horde(10 + OB.day() * 6); OB.msg('멀리서 감염자 무리의 소리가 들려요...', 'bad'); }
-      updateDoors(dt); cutaway(); updateFX(dt); updateAnimals(dt);
+      const un = OB.under(); if (OB.W.group.visible === un) { OB.W.group.visible = !un; if (OB.W.ug) OB.W.ug.visible = un; OB.sun.castShadow = !un; }
+      updateDoors(dt); if (!un) cutaway(); updateFX(dt); updateAnimals(dt);
       saveT += dt; if (saveT > 30) { saveT = 0; save(); }
     }
     if (p) { OB.updateCamera(dt); updateLight(); refreshHUD(); }

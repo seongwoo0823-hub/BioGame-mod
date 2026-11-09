@@ -4,13 +4,13 @@
  */
 (function () {
   'use strict';
-  const CS = 2, N = 96;
-  const KITS = ['nature', 'urban', 'build', 'bld', 'car', 'food', 'shop', 'station', 'factory', 'holiday', 'golf', 'coaster', 'boat', 'train', 'town', 'proto', 'blaster', 'pets', 'space'];
+  const CS = 2, N = 160, CN = 96;   // 전체 격자 160칸 (도시 96칸 + 동쪽 바깥에 지하 구역)
+  const KITS = ['nature', 'urban', 'build', 'bld', 'car', 'food', 'shop', 'station', 'factory', 'holiday', 'golf', 'coaster', 'boat', 'train', 'town', 'proto', 'blaster', 'pets', 'space', 'dungeon', 'cave', 'mspace'];
   // 땅 종류
-  const GR = { grass: 0, road: 1, walk: 2, floor: 3, water: 4, sand: 5, dirt: 6, park: 7, lab: 8, rail: 9, wood: 10, tile: 11, deep: 12 };
+  const GR = { grass: 0, road: 1, walk: 2, floor: 3, water: 4, sand: 5, dirt: 6, park: 7, lab: 8, rail: 9, wood: 10, tile: 11, deep: 12, sewer: 13, cave: 14, ulab: 15, rock: 16 };
   // 경계 종류
   const E = { none: 0, wall: 1, window: 2, door: 3, fence: 4, solid: 5, rail: 6 };
-  const OBW = window.OBW = { CS, N, GR, E, KITS };
+  const OBW = window.OBW = { CS, N, CN, GR, E, KITS };
 
   function rng(seed) { let s = seed >>> 0 || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
   const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), V = new THREE.Vector3(), SV = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
@@ -57,7 +57,7 @@
     W.getN = (i, j) => (i < 0 || j < 0 || i >= N || j > N) ? E.solid : W.eN[j * (N + 1) + i];
 
     // ================= 큰 틀: 땅 =================
-    setG(0, 0, N - 1, N - 1, GR.grass);
+    setG(0, 0, N - 1, N - 1, GR.rock); setG(0, 0, CN - 1, CN - 1, GR.grass);
     const ROADV = [30, 62], ROADH = [30, 62];
     for (const r of ROADV) { setG(r - 1, 12, r - 1, 85, GR.walk); setG(r + 2, 12, r + 2, 85, GR.walk); setG(r, 12, r + 1, 85, GR.road); }
     for (const r of ROADH) { setG(12, r - 1, 85, r - 1, GR.walk); setG(12, r + 2, 85, r + 2, GR.walk); setG(12, r, 85, r + 1, GR.road); }
@@ -66,13 +66,13 @@
     setG(4, 46, 29, 47, GR.dirt); setG(64, 46, 86, 47, GR.road); setG(46, 64, 47, 87, GR.road); setG(46, 8, 47, 29, GR.road);
     setG(12, 12, 85, 12, GR.walk); setG(12, 85, 85, 85, GR.walk); setG(12, 12, 12, 85, GR.walk); setG(85, 12, 85, 85, GR.walk);
     // 해변과 바다 (동쪽)
-    setG(87, 0, 89, N - 1, GR.sand); setG(90, 0, N - 1, N - 1, GR.water); setG(93, 0, N - 1, N - 1, GR.deep);
+    setG(87, 0, 89, CN - 1, GR.sand); setG(90, 0, CN - 1, CN - 1, GR.water); setG(93, 0, CN - 1, CN - 1, GR.deep);
     // 호수 (서쪽 숲)
-    for (let j = 0; j < N; j++) for (let i = 0; i < 12; i++) { const d = Math.hypot((i - 5) / 4.2, (j - 22) / 6.5); if (d < 1) W.ground[id(i, j)] = GR.water; else if (d < 1.25) W.ground[id(i, j)] = GR.sand; }
+    for (let j = 0; j < CN; j++) for (let i = 0; i < 12; i++) { const d = Math.hypot((i - 5) / 4.2, (j - 22) / 6.5); if (d < 1) W.ground[id(i, j)] = GR.water; else if (d < 1.25) W.ground[id(i, j)] = GR.sand; }
     // 철도 (남쪽)
     setG(0, 89, 86, 90, GR.rail); setG(40, 87, 54, 88, GR.walk);
     // 바깥 경계는 지나갈 수 없음
-    for (let k = 0; k < N; k++) { edgeW(0, k, E.solid); edgeW(N, k, E.solid); edgeN(k, 0, E.solid); edgeN(k, N, E.solid); }
+    for (let k = 0; k < CN; k++) { edgeW(0, k, E.solid); edgeW(CN, k, E.solid); edgeN(k, 0, E.solid); edgeN(k, CN, E.solid); }
 
     // ================= 건물 =================
     const PASTEL = ['#ffffff', '#ffe9d6', '#e8f2ff', '#f3ffe6', '#fff6cc', '#ffe0e6', '#e6e0ff', '#dff7f2'];
@@ -290,7 +290,7 @@
       B.locked = true;
       for (let k = 0; k < 4; k++) furn(B, 'station', 'table-large', cx(69 + k * 1.5), cz(22), 0, 1.6, 0.8, 'lab');
       for (let k = 0; k < 3; k++) furn(B, 'station', 'computer-system', cx(70 + k * 2), cz(16) - 0.2, 0, 1.6, 0.6, 'desk');
-      furn(B, 'factory', 'machine-window', cx(77), cz(17) + 0.5, 0, [1.2, 1.3, 1.2], 0.9); W.spots.centrifuge = { x: cx(77), z: cz(17) + 0.5 + 1.2 };
+      furn(B, 'factory', 'machine-window', cx(77), cz(17) + 0.5, 0, [1.2, 1.3, 1.2], 0.9);
       furn(B, 'station', 'container-tall', cx(79) - 0.2, cz(21), Math.PI / 2, 1.8, 0.5, 'medcab'); furn(B, 'station', 'container-tall', cx(79) - 0.2, cz(23), Math.PI / 2, 1.8, 0.5, 'medcab');
       for (let k = 0; k < 3; k++) { const x = cx(66) + k * 0.1, z = cz(17 + k * 3); put('space', pick(['satelliteDish', 'satelliteDish_detailed', 'machine_generator']), x, 0, z, 0, 2); circle(x, z, 1.0); }
       put('space', 'satelliteDish_large', cx(82), 0, cz(18), 0, 2.5); circle(cx(82), cz(18), 1.6);
@@ -358,7 +358,7 @@
       put('nature', 'campfire_stones', cx(7), 0, cz(57), 0, 3); put('nature', 'campfire_logs', cx(7), 0, cz(57), 0, 3); W.spots.campfire = { x: cx(7), z: cz(57) }; circle(cx(7), cz(57), 0.6);
       put('nature', 'log_large', cx(9), 0, cz(56), 0.8, 2.5); circle(cx(9), cz(56), 0.6);
       // 나무들
-      for (let j = 0; j < N; j++) for (let i = 0; i < 13; i++) {
+      for (let j = 0; j < CN; j++) for (let i = 0; i < 13; i++) {
         const g = W.ground[id(i, j)]; if (g !== GR.grass || W.bld[id(i, j)] >= 0) continue;
         if (Math.abs(j - 46.5) < 2 || (i >= 2 && i <= 11 && j >= 32 && j <= 39) || (i >= 3 && i <= 12 && j >= 52 && j <= 60)) continue;
         if (R() < 0.42) tree(cx(i) + rf(-.6, .6), cz(j) + rf(-.6, .6), pick(['tree_pineRoundA', 'tree_pineRoundC', 'tree_pineTallA', 'tree_pineDefaultA', 'tree_cone', 'tree_default_dark', 'tree_oak_dark']), rf(3.4, 4.6));
@@ -401,7 +401,7 @@
       for (let k = 0; k < 4; k++) { put('coaster', 'bench', cx(42 + k * 3), 0.3, cz(87), 0, 2.2); }
       put('urban', 'detail-light-double', cx(44), 0.3, cz(87) - 0.6, 0, 2.6); put('urban', 'detail-light-double', cx(50), 0.3, cz(87) - 0.6, 0, 2.6);
       // 남쪽 밭
-      for (let j = 92; j < N; j++) for (let i = 4; i < 84; i++) { W.ground[id(i, j)] = GR.dirt; if ((i + j) % 2 === 0 && R() < 0.7) put('nature', pick(['crop_carrot', 'crop_melon', 'crop_pumpkin', 'crop_turnip', 'crops_cornStageB', 'crops_wheatStageB']), cx(i), 0, cz(j), 0, 2.4); }
+      for (let j = 92; j < CN; j++) for (let i = 4; i < 84; i++) { W.ground[id(i, j)] = GR.dirt; if ((i + j) % 2 === 0 && R() < 0.7) put('nature', pick(['crop_carrot', 'crop_melon', 'crop_pumpkin', 'crop_turnip', 'crops_cornStageB', 'crops_wheatStageB']), cx(i), 0, cz(j), 0, 2.4); }
       W.zones.push({ name: '기차역', i: 47, j: 87 }, { name: '농장', i: 40, j: 94 });
       W.containers.push({ x: cx(20), z: cz(93), kind: 'crate', items: null, bld: -1, name: '농장 창고 상자' });
     }
@@ -421,7 +421,7 @@
       put('blaster', 'crate-medium', cx(i) + 1.5, 0, cz(j) - 1, 0, 1.6); W.containers.push({ x: cx(i) + 1.5, z: cz(j) - 1, kind: 'mil', items: null, bld: -1, name: '군용 보급 상자' }); circle(cx(i) + 1.5, cz(j) - 1, 0.5);
     }
     // 들판 꾸미기 (주택가 블록 바깥 풀밭)
-    for (let j = 0; j < N; j++) for (let i = 13; i < 87; i++) {
+    for (let j = 0; j < CN; j++) for (let i = 13; i < 87; i++) {
       const g = W.ground[id(i, j)]; if (g !== GR.grass || W.bld[id(i, j)] >= 0 || W.solidC[id(i, j)]) continue;
       if (R() < 0.04) put('nature', pick(['grass', 'grass_large', 'flower_yellowA', 'flower_redA', 'plant_bush']), cx(i) + rf(-.7, .7), 0, cz(j) + rf(-.7, .7), rf(0, 6), 2.4);
     }
@@ -430,6 +430,7 @@
     const ANI = [['animal-deer', 'f'], ['animal-fox', 'f'], ['animal-bunny', 'f'], ['animal-beaver', 'f'], ['animal-cow', 'farm'], ['animal-pig', 'farm'], ['animal-chick', 'farm'], ['animal-hog', 'farm'], ['animal-dog', 'town'], ['animal-cat', 'town'], ['animal-parrot', 'park'], ['animal-penguin', 'harbor'], ['animal-crab', 'harbor'], ['animal-fish', 'lake']];
     const AREA = { f: () => [rf(1, 11) * CS, rf(26, 80) * CS], farm: () => [rf(6, 80) * CS, rf(92.5, 95) * CS], town: () => [rf(14, 84) * CS, rf(14, 84) * CS], park: () => [rf(16, 44) * CS, rf(3, 10) * CS], harbor: () => [rf(87.2, 89) * CS, rf(30, 70) * CS], lake: () => [rf(3, 7) * CS, rf(18, 26) * CS] };
     for (const [m, a] of ANI) for (let k = 0; k < (a === 'farm' ? 4 : a === 'f' ? 3 : 2); k++) { const [x, z] = AREA[a](); W.animals.push({ m, area: a, x, z, ry: rf(0, 6.28), t: rf(0, 5), hx: x, hz: z }); }
+    underground();
     // ================= 땅 그리기 =================
     const gb = {};
     const GT = {
@@ -437,7 +438,7 @@
       [GR.sand]: ['nature', 'ground_grass', '#f0dca0'], [GR.dirt]: ['urban', 'road-dirt-center', null], [GR.rail]: ['urban', 'road-dirt-center', '#a89a88'], [GR.wood]: null, [GR.water]: null, [GR.deep]: null,
       [GR.floor]: ['urban', 'grass', null], [GR.tile]: ['urban', 'grass', null], [GR.lab]: ['urban', 'grass', null]
     };
-    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    for (let j = 0; j < CN; j++) for (let i = 0; i < CN; i++) {
       const g = W.ground[id(i, j)], t = GT[g]; if (!t) continue;
       const ck = Math.floor(i / 16) + ',' + Math.floor(j / 16); const b = gb[ck] = gb[ck] || new OBA.Batch();
       b.add(t[0], t[1], mat(cx(i), 0, cz(j), 0, [2, 1, 2]), t[2]);
@@ -446,11 +447,11 @@
     for (const r of ROADV) for (let j = 13; j < 85; j += 2) put('urban', 'road-asphalt-straight', cx(r) + 1, 0.005, cz(j) + 1, 0, [0.06, 1, 0.8], '#fff6c0');
     for (const r of ROADH) for (let i = 13; i < 85; i += 2) put('urban', 'road-asphalt-straight', cx(i) + 1, 0.005, cz(r) + 1, Math.PI / 2, [0.06, 1, 0.8], '#fff6c0');
     // 물
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(N * CS * 1.6, N * CS * 1.6), new THREE.MeshLambertMaterial({ color: '#3a8ac8', transparent: true, opacity: 0.88 }));
-    water.rotation.x = -Math.PI / 2; water.position.set(N * CS / 2, -0.25, N * CS / 2); water.receiveShadow = true; W.group.add(water); W.water = water;
-    const under = new THREE.Mesh(new THREE.PlaneGeometry(N * CS * 1.6, N * CS * 1.6), new THREE.MeshLambertMaterial({ color: '#2a5a3a' }));
-    under.rotation.x = -Math.PI / 2; under.position.set(N * CS / 2, -0.6, N * CS / 2); W.group.add(under);
-    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) if (W.ground[id(i, j)] === GR.water || W.ground[id(i, j)] === GR.deep) W.solidC[id(i, j)] = 1;
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(CN * CS * 1.6, CN * CS * 1.6), new THREE.MeshLambertMaterial({ color: '#3a8ac8', transparent: true, opacity: 0.88 }));
+    water.rotation.x = -Math.PI / 2; water.position.set(CN * CS / 2, -0.25, CN * CS / 2); water.receiveShadow = true; W.group.add(water); W.water = water;
+    const under = new THREE.Mesh(new THREE.PlaneGeometry(CN * CS * 1.6, CN * CS * 1.6), new THREE.MeshLambertMaterial({ color: '#2a5a3a' }));
+    under.rotation.x = -Math.PI / 2; under.position.set(CN * CS / 2, -0.6, CN * CS / 2); W.group.add(under);
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const g = W.ground[id(i, j)]; if (g === GR.water || g === GR.deep || g === GR.rock) W.solidC[id(i, j)] = 1; }
     // 합치기
     for (const k in gb) { const g = gb[k].build({ shadow: false, receive: true }); g.userData.ground = true; W.group.add(g); }
     W.chunks = [];
@@ -468,6 +469,111 @@
       const piv = new THREE.Group(); piv.position.set(0, 0, -0.45); m.position.set(0, 0, 0); piv.add(m); hinge.add(piv);
       d.mesh = hinge; d.piv = piv; W.group.add(hinge);
     }
+    // ================= 지하: 하수도 · 무너진 동굴 · 지하 연구소 =================
+    //  도시 동쪽 바깥(격자 104칸~)에 4m 모듈 격자로 만듦. 맨홀·계단으로 순간이동해서 들어감.
+    function underground() {
+      const UX = 104, UY = 8, MW = 24, MH = 38;
+      const T = { rock: 0, sewer: 1, water: 2, cave: 3, lab: 4 };
+      const UM = new Uint8Array(MW * MH);
+      const um = (x, y) => (x < 0 || y < 0 || x >= MW || y >= MH) ? 0 : UM[y * MW + x];
+      const carve = (x0, y0, x1, y1, t) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) UM[y * MW + x] = t; };
+      // 하수도 본관: 걷는 길 + 가운데 물길
+      carve(2, 1, 4, 32, T.sewer); carve(3, 2, 3, 31, T.water);
+      carve(3, 10, 3, 10, T.sewer); carve(3, 22, 3, 22, T.sewer); carve(3, 16, 3, 16, T.sewer);
+      carve(5, 4, 6, 4, T.sewer); carve(7, 2, 10, 6, T.sewer);      // 북쪽 하수 처리실
+      carve(5, 10, 12, 10, T.sewer);                                // 동쪽 가지 → 동굴
+      carve(5, 22, 11, 22, T.sewer);                                // 동쪽 가지 → 연구소 서쪽 문
+      carve(8, 23, 8, 24, T.sewer); carve(6, 25, 10, 29, T.sewer);   // 남쪽 저수조
+      carve(0, 16, 1, 16, T.sewer);
+      // 무너진 동굴
+      carve(13, 8, 16, 12, T.cave); carve(15, 12, 18, 15, T.cave); carve(17, 15, 18, 18, T.cave); carve(12, 13, 14, 15, T.cave); carve(19, 9, 21, 11, T.cave); carve(17, 10, 18, 10, T.cave);
+      // 지하 연구소
+      carve(15, 19, 21, 22, T.lab);                                 // 로비 (지상 계단)
+      carve(17, 23, 18, 30, T.lab);                                 // 중앙 복도
+      carve(12, 24, 15, 28, T.lab); carve(16, 26, 16, 26, T.lab);   // 서쪽: 원심분리 실험실
+      carve(12, 22, 12, 23, T.lab);                                 // 하수도에서 들어오는 뒷문
+      carve(19, 24, 22, 28, T.lab);                                 // 동쪽: 자료실
+      carve(14, 31, 21, 35, T.lab);                                 // 남쪽: 냉장 보관실·창고
+      const GT2 = [GR.rock, GR.sewer, GR.water, GR.cave, GR.ulab], KIT = [null, 'dungeon', 'dungeon', 'cave', 'mspace'];
+      const mc = (mx, my) => [(UX + mx * 2 + 1) * CS, (UY + my * 2 + 1) * CS];
+      const ug = W.ug = new THREE.Group(); const fb = new OBA.Batch(), wb = new OBA.Batch();
+      W.UND = { UX, UY, MW, MH, x0: UX * CS, z0: UY * CS, x1: (UX + MW * 2) * CS, z1: (UY + MH * 2) * CS };
+      for (let my = 0; my < MH; my++) for (let mx = 0; mx < MW; mx++) {
+        const t = um(mx, my); if (!t) continue;
+        const i0 = UX + mx * 2, j0 = UY + my * 2;
+        for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) { W.ground[id(i0 + a, j0 + b)] = GT2[t]; W.solidC[id(i0 + a, j0 + b)] = t === T.water ? 1 : 0; }
+        const [x, z] = mc(mx, my), kit = KIT[t];
+        if (t !== T.water) fb.add(kit, R() < 0.25 ? 'template-floor-detail' : 'template-floor', mat(x, 0, z, Math.floor(R() * 4) * Math.PI / 2, 1), t === T.sewer ? '#d8dcd0' : null);
+        // 벽: 옆이 바위면 그 경계에 벽 (안쪽을 향하게)
+        for (const [dx, dy, ax] of [[0, -1, 'N'], [0, 1, 'S'], [-1, 0, 'W'], [1, 0, 'E']]) {
+          const n = um(mx + dx, my + dy);
+          const ex = x + dx * 2, ez = z + dy * 2, ry = Math.atan2(dx, dy);   // 안쪽(-dx,-dy)을 -z로
+          if (!n) {
+            wb.add(kit, R() < 0.2 ? 'template-wall-detail-a' : 'template-wall', mat(ex, 0, ez, ry, 1), t === T.water ? '#c8d0c8' : null);
+            if (ax === 'N') { edgeN(i0, j0, E.solid); edgeN(i0 + 1, j0, E.solid); } else if (ax === 'S') { edgeN(i0, j0 + 2, E.solid); edgeN(i0 + 1, j0 + 2, E.solid); }
+            else if (ax === 'W') { edgeW(i0, j0, E.solid); edgeW(i0, j0 + 1, E.solid); } else { edgeW(i0 + 2, j0, E.solid); edgeW(i0 + 2, j0 + 1, E.solid); }
+          } else if (n !== t && n !== T.water && t !== T.water && (dx > 0 || dy > 0)) {
+            // 구역이 바뀌는 곳에 문틀
+            const gk = KIT[Math.max(n, t)]; fb.add(gk, 'gate', mat(ex, 0, ez, dx ? Math.PI / 2 : 0, 1));
+          }
+        }
+        // 모서리 기둥 (바깥 모서리)
+        for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) if (!um(mx + dx, my) && !um(mx, my + dy)) fb.add(kit, 'template-wall-corner', mat(x + dx * 2, 0, z + dy * 2, Math.atan2(-dx, -dy) + Math.PI / 4 * 0, 1));
+      }
+      // 물길: 초록빛 하수
+      for (let my = 0; my < MH; my++) for (let mx = 0; mx < MW; mx++) if (um(mx, my) === T.water) {
+        const [x, z] = mc(mx, my); const w = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), W._sewerMat || (W._sewerMat = new THREE.MeshLambertMaterial({ color: '#2c4428', emissive: '#060c06', transparent: true, opacity: 0.94 })));
+        w.rotation.x = -Math.PI / 2; w.position.set(x, -0.35, z); ug.add(w);
+      }
+      const dark = new THREE.Mesh(new THREE.PlaneGeometry(W.UND.x1 - W.UND.x0 + 60, W.UND.z1 - W.UND.z0 + 60), new THREE.MeshBasicMaterial({ color: '#05070a' }));
+      dark.rotation.x = -Math.PI / 2; dark.position.set((W.UND.x0 + W.UND.x1) / 2, -0.7, (W.UND.z0 + W.UND.z1) / 2); ug.add(dark);
+      // ---------- 소품 · 보관함 ----------
+      const P2 = (k, m, mx, my, ox, oz, ry, s, r, cont, name, extra) => {
+        const [x, z] = mc(mx, my); const X = x + ox, Z = z + oz; fb.add(k, m, mat(X, 0, Z, ry || 0, s || 1)); if (r) circle(X, Z, r);
+        if (cont) { const c = Object.assign({ x: X, z: Z, kind: cont, items: null, bld: -1, name: name || CONT_NAME[cont], area: 'under' }, extra || {}); W.containers.push(c); return c; }
+      };
+      // 하수도
+      for (const [mx, my] of [[2, 6], [4, 13], [2, 19], [4, 27], [8, 3], [9, 5], [7, 27], [10, 25]]) P2('food', 'barrel', mx, my, 0, 0, R() * 6, 1.6, 0.6);
+      P2('blaster', 'crate-wide', 9, 3, 0.5, -1, 0.2, 1.6, 0.7, 'crate', '하수도 정비 상자');
+      P2('blaster', 'crate-medium', 6, 28, 1, 1, 0, 1.6, 0.5, 'crate', '떠내려온 상자');
+      P2('factory', 'box-large', 4, 30, 0, 0, 0, 1.6, 0.8, 'toolbox', '정비공 공구함');
+      P2('urban', 'detail-dumpster-open', 10, 29, 0, 0, 0, 1.6, 0.6, 'dumpster');
+      for (const [mx, my] of [[2, 3], [4, 9], [2, 24], [4, 18]]) P2('food', 'bag', mx, my, 0, 0, R() * 6, 0.8, 0, 'bag', '버려진 배낭');
+      // 동굴: 수정과 버섯
+      for (let k = 0; k < 16; k++) { const cand = []; for (let my = 0; my < MH; my++) for (let mx = 0; mx < MW; mx++) if (um(mx, my) === T.cave) cand.push([mx, my]); const [mx, my] = pick(cand); const [ck, cm] = pick([['space', 'rock_crystals'], ['space', 'rock_crystalsLargeA'], ['space', 'rocks_smallA'], ['nature', 'rock_largeA'], ['nature', 'mushroom_red'], ['space', 'rock_largeB']]); P2(ck, cm, mx, my, rf(-1.4, 1.4), rf(-1.4, 1.4), R() * 6, rf(1.4, 2.4), 0.5); }
+      P2('food', 'bag', 20, 10, 0, 0, 0, 0.8, 0, 'bag', '실종된 연구원의 배낭', { gear: true });
+      P2('space', 'bones', 20, 10, 1, 1, 0.5, 2, 0);
+      // 지하 연구소
+      P2('station', 'table-large', 16, 20, 0, 0, 0, 1.8, 0.9, 'desk', '안내 데스크');
+      P2('station', 'computer-screen', 16, 20, 0, -0.4, 0, 1.6, 0);
+      for (let k = 0; k < 3; k++) P2('station', 'chair-cushion', 18 + k, 21, 0, 0, Math.PI, 1.8, 0.3);
+      P2('factory', 'machine-window', 13, 25, 0, 0, 0, [1.3, 1.4, 1.3], 1.0); { const [x, z] = mc(13, 25); W.spots.centrifuge = { x, z: z + 1.6 }; }
+      P2('station', 'table-large', 14, 27, 0, 0, 0, 1.6, 0.8, 'lab', '실험대'); P2('station', 'table-large', 12, 27, 0.5, 0, 0, 1.6, 0.8, 'lab', '실험대');
+      P2('factory', 'pipe-glass-large', 15, 24, 0, 0, 0, 1.4, 0.6); P2('factory', 'pipe-glass-large', 12, 24, 0.5, 0, 0, 1.4, 0.6);
+      P2('station', 'computer-system', 15, 28, 0, 0.6, Math.PI, 1.6, 0.6);
+      P2('station', 'table-large', 20, 25, 0, 0, Math.PI / 2, 1.8, 0.9, 'desk', '수석 연구원의 책상', { notes: true });
+      P2('station', 'computer-wide', 20, 25, 0.4, 0, Math.PI / 2, 1.6, 0);
+      for (let k = 0; k < 3; k++) P2('station', 'container-tall', 22, 24 + k * 2, 1.2, 0, -Math.PI / 2, 1.8, 0.5, 'medcab', '자료·약품 보관장');
+      for (let k = 0; k < 4; k++) P2('shop', 'freezers-standing', 14 + k * 2, 31, 0, -1.4, 0, 2, 0.6, 'freezer', '냉장 보관고', k === 1 ? { medium: true } : null);
+      for (let k = 0; k < 3; k++) P2('blaster', 'crate-wide', 15 + k * 2, 34, 0, 0.8, 0, 1.6, 0.7, k === 1 ? 'mil' : 'crate', k === 1 ? '보안 무기 상자' : '보급품 상자');
+      P2('space', 'machine_generator', 21, 33, 0, 0, 0, 2, 1.0); P2('space', 'machine_wireless', 14, 21, 0, 0, 0, 2, 0.8);
+      P2('space', 'stairs', 20, 19, 0.5, 0, Math.PI, 1.0, 0);
+      // ---------- 맨홀·계단 (순간이동) ----------
+      const MAN = (ci, cj) => { const x = cx(ci), z = cz(cj); put('proto', 'shape-cylinder', x, 0.01, z, 0, [1.4, 0.05, 1.4], '#4a4e56'); return [x, z]; };
+      W.portals = [];
+      const add = (name, cpos, mx, my, upLabel) => { const [ux, uz] = mc(mx, my); P2('cave', 'ladder', mx, my, 0, -1.7, 0, 1.2, 0); W.portals.push({ name, x: cpos[0], z: cpos[1], ux, uz, up: upLabel }); };
+      add('시내 맨홀', MAN(40, 31), 2, 1, '사다리로 올라가기 (시내)');
+      add('공장 앞 맨홀', MAN(47, 66), 2, 32, '사다리로 올라가기 (공장 앞)');
+      add('항구 길 맨홀', MAN(80, 47), 0, 16, '사다리로 올라가기 (항구 길)');
+      { const [ux, uz] = mc(20, 20); W.portals.push({ name: '연구소 지하 계단', x: cx(78), z: cz(23), ux, uz, up: '계단으로 올라가기 (연구소)', stairs: true }); put('build', 'stairs-closed-short', cx(78), 0.1, cz(23) + 0.4, Math.PI, 1, '#c0c8d8'); }
+      W.spots.ulab = { x: mc(17, 22)[0], z: mc(17, 22)[1] };
+      W.zones.push({ name: '하수도', i: UX + 6, j: UY + 32, under: true }, { name: '무너진 동굴', i: UX + 32, j: UY + 24, under: true }, { name: '지하 연구소', i: UX + 36, j: UY + 52, under: true });
+      // 만들기
+      const gf = fb.build({ receive: true }); ug.add(gf);
+      const gw = wb.build({ receive: true, variant: 'ucut' }); ug.add(gw); W.ugWalls = gw;
+      W.isUnder = x => x >= CN * CS;
+    }
+
     // 시작 위치: 서쪽 주택가의 집 하나
     const homes = W.buildings.filter(b => b.kind === 'house');
     const home = homes.reduce((a, b) => Math.hypot(b.i0 - 20, b.j0 - 40) < Math.hypot(a.i0 - 20, a.j0 - 40) ? b : a, homes[0]);

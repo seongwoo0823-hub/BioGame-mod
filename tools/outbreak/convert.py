@@ -15,9 +15,9 @@ KITS = {   # 게임 속 키트 이름: 폴더
     'mspace': 'kenney_modular-space-kit_1.0', 'cave': 'kenney_modular-cave-kit_1.0', 'dungeon': 'kenney_modular-dungeon-kit_1.0',
 }
 # 큰 키트는 게임에서 쓰는 모델만 남김 (used.json: 지도를 여러 번 만들어 모은 목록)
-SUBSET = {'nature', 'car', 'coaster', 'train', 'space', 'boat', 'factory', 'holiday', 'golf', 'town', 'food'}
+SUBSET = {'nature', 'car', 'coaster', 'train', 'space', 'boat', 'factory', 'holiday', 'golf', 'town', 'food', 'dungeon', 'cave', 'mspace'}
 USED = set(json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'used.json')))) if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'used.json')) else None
-GAME_KITS = ['nature', 'urban', 'build', 'bld', 'car', 'food', 'shop', 'station', 'factory', 'holiday', 'golf', 'coaster', 'boat', 'train', 'town', 'proto', 'blaster', 'pets', 'space']
+GAME_KITS = ['nature', 'urban', 'build', 'bld', 'car', 'food', 'shop', 'station', 'factory', 'holiday', 'golf', 'coaster', 'boat', 'train', 'town', 'proto', 'blaster', 'pets', 'space', 'dungeon', 'cave', 'mspace']
 only = sys.argv[1:] or GAME_KITS
 idx = json.load(open(OUT + 'index.json')) if os.path.exists(OUT + 'index.json') else {}
 idx = {k: v for k, v in idx.items() if k in GAME_KITS}

@@ -43,6 +43,7 @@
   };
   // 재질: 텍스처(키트 색지도) + 꼭짓점 색(기본색·물들이기). variant: '' 기본, 'cut' 벽 잘라 보기, 'ghost' 반투명
   OBA.CUT = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1.0);
+  OBA.UCUT = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1.7);   // 지하 벽은 늘 반쯤 잘라서 보여 줌
   OBA.material = function (key, variant) {
     const id = key + '|' + (variant || '');
     if (OBA.mats[id]) return OBA.mats[id];
@@ -50,6 +51,7 @@
     if (key !== '-') { const [k, ti] = key.split(':'); const tn = OBA.idx[k].tex[+ti]; map = texture(tn, k !== 'urban'); }
     const m = new THREE.MeshLambertMaterial({ map, vertexColors: true });
     if (variant === 'cut') { m.clippingPlanes = [OBA.CUT]; m.side = THREE.DoubleSide; }
+    if (variant === 'ucut') { m.clippingPlanes = [OBA.UCUT]; m.side = THREE.DoubleSide; }
     if (variant === 'ghost') { m.transparent = true; m.opacity = 0.16; m.depthWrite = false; }
     if (variant === 'glow') { m.emissive = new THREE.Color('#ffffff'); m.emissiveIntensity = 0.35; }
     return OBA.mats[id] = m;

@@ -21,6 +21,8 @@
     const W = OB.W, N = OBW.N, CS = OBW.CS;
     const dens = (i, j) => {
       const g = W.ground[j * N + i]; if (W.solidC[j * N + i] || g === OBW.GR.water || g === OBW.GR.deep) return 0;
+      if (g === OBW.GR.sewer) return 0.075; if (g === OBW.GR.cave) return 0.06; if (g === OBW.GR.ulab) return 0.07;
+      if (i >= OBW.CN || j >= OBW.CN) return 0;
       if (i >= 33 && i <= 60 && j >= 33 && j <= 60) return 0.11;   // 시내
       if (W.bld[j * N + i] >= 0) return 0.06;
       if (g === OBW.GR.road || g === OBW.GR.walk) return 0.05;
@@ -62,7 +64,7 @@
     MAX_DRAW = OB.lowGfx ? 26 : 48;
     const P = OB.P, W = OB.W; if (!P) return;
     flowT -= dt; if (flowT <= 0) { OB.buildFlow(P.x, P.z, 34); flowT = 0.5; }
-    const night = OB.isNight(), sightR = (night ? (P.flash ? 13 : 7.5) : 17) * (P.sneak ? 0.55 : 1) * (P.inside >= 0 && night && !P.flash ? 0.7 : 1);
+    const night = OB.isDark(), sightR = (night ? (P.flash ? 13 : 7.5) : 17) * (P.sneak ? 0.55 : 1) * (P.inside >= 0 && night && !P.flash ? 0.7 : 1);
     // 그릴 좀비 고르기 (가까운 순)
     const near = [];
     for (const zz of Z) { zz.d = Math.hypot(zz.x - P.x, zz.z - P.z); }
@@ -112,7 +114,7 @@
         if (zz.state === 'chase' && t - zz.seenT > 12) { zz.state = 'search'; }
       }
     }
-    let spd = zz.T.spd * (OB.isNight() ? 1.15 : 1), mx = 0, mz = 0, want = null;
+    let spd = zz.T.spd * (OB.isDark() ? 1.15 : 1), mx = 0, mz = 0, want = null;
     if (zz.state === 'chase' && !P.dead) {
       const direct = t - zz.seenT < 0.6;
       if (direct) want = [P.x, P.z];
