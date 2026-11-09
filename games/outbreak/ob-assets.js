@@ -181,7 +181,13 @@
     const mixer = new THREE.AnimationMixer(obj);
     const act = {}; for (const n in CH.clips) { act[n] = mixer.clipAction(CH.clips[n]); }
     const C = { root, obj, mesh, bones, mixer, act, skin, rest };
-    C.update = dt => { for (const n in rest) bones[n].quaternion.copy(rest[n]); mixer.update(dt); };
+    // three.js는 동작 값이 그대로면 뼈에 다시 쓰지 않음 → 기본 자세(T자)가 아니라 '직전에 동작이 만든 자세'로 되돌린 뒤 덧붙임
+    const base = {}; for (const n in rest) base[n] = rest[n].clone();
+    C.update = dt => {
+      for (const n in base) bones[n].quaternion.copy(base[n]);
+      mixer.update(dt);
+      for (const n in base) base[n].copy(bones[n].quaternion);
+    };
     return C;
   };
 })();

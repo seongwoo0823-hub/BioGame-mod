@@ -147,6 +147,15 @@ body.touch #hot{display:none}
   .panel .box{max-height:94vh;padding:12px 14px}#inv .box{height:94vh}.box h2{font-size:22px}
   .logo h1{font-size:44px}.logo p{margin:.3em 0 .8em}.btn{padding:.55em 1em;font-size:15px}
 }
+/* 홈 화면 앱(전체 화면)으로 열면 iPad·iPhone 상태바가 위를 덮음 → 위쪽 여백 */
+@media (display-mode: standalone),(display-mode: fullscreen){
+  .tl{top:max(34px,env(safe-area-inset-top))}.hubpill{top:max(34px,env(safe-area-inset-top))}
+  .tr{top:max(80px,calc(env(safe-area-inset-top) + 46px))}
+  body.touch #log{top:calc(max(34px,env(safe-area-inset-top)) + 250px)}
+}
+/* 터치: 안내 메시지가 조이스틱과 겹치지 않게 위로 */
+body.touch #log{bottom:auto;top:calc(max(10px,env(safe-area-inset-top)) + 250px);max-width:min(380px,46vw)}
+@media (max-height:520px){body.touch #log{top:calc(max(10px,env(safe-area-inset-top)) + 150px)}}
 </style>
 </head>
 <body>

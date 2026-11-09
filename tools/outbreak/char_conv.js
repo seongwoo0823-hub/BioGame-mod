@@ -17,7 +17,8 @@ sk.material = new THREE.MeshLambertMaterial({ name: 'skin' });
 const clips = [];
 for (const a of ['idle', 'run', 'jump']) {
   const o = L.parse(buf(fs.readFileSync(S + packs[0] + '/Animations/' + a + '.fbx')), '');
-  const c = o.animations[0]; c.name = a;
+  // 파일 안에 'Targeting Pose'(T자 기준 자세)가 함께 들어 있음 → 가장 긴 진짜 동작을 고름
+  const c = o.animations.filter(x => !/Targeting Pose/i.test(x.name)).sort((x, y) => y.duration - x.duration)[0]; c.name = a;
   c.tracks = c.tracks.filter(t => t.name.endsWith('.quaternion') || t.name === 'Hips.position' || t.name === 'HipsCtrl.position');
   for (const t of c.tracks) { t.times = Float32Array.from(t.times, v => Math.round(v * 1000) / 1000); t.values = Float32Array.from(t.values, v => Math.round(v * 10000) / 10000); }
   c.optimize(); clips.push(c);
