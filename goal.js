@@ -21,7 +21,8 @@
     'helix':         {tpl: '한 번의 출정에서 방 {t}개 정리하기', t: 6, unit: '방'},
     'cell-frontier': {tpl: '한 지역에서 점수 {t}점 넘기기', t: 12000, unit: '점'},
     'codon-glass':   {tpl: '혼자 하기 점수 {t}점 넘기기', t: 50, unit: '점'},
-    'outbreak':      {tpl: '감염 도시에서 {t}일 동안 살아남기', t: 2, unit: '일'}
+    'outbreak':      {tpl: '감염 도시에서 {t}일 동안 살아남기', t: 2, unit: '일'},
+    'bio-kingdom':   {tpl: '모험 스테이지 {t}개 깨기', t: 5, unit: '개'}
   };
   var DEF = {};
   function applyCfg(cfg) {

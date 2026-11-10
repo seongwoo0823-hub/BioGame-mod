@@ -325,6 +325,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     ['helix','헬릭스','쿼터뷰 액션 로그라이트','action','','로그라이트 이중나선 유전자 변이 helix'],
     ['cell-frontier','세포 개척단','선을 그어 땅을 넓히는 아케이드','casual','','땅따먹기 아케이드 숨은그림 cell frontier'],
     ['bio-tower','바이오 타워','생물 조각 쌓기 대결','online casual','4','쌓기 타워 동물 물리 bio tower'],
+    ['bio-kingdom','바이오 킹덤','동물 영웅과 생명의 왕국 키우기','casual','','왕국 건설 영웅 뽑기 수집 RPG 광합성 세포호흡 단백질 동물 병원체 bio kingdom'],
     ['outbreak','감염 도시','좀비 아포칼립스 생존 시뮬레이션','action','','좀비 생존 서바이벌 감염 바이러스 백신 면역 아포칼립스 outbreak'],
     ['codon-glass','코돈 글래스','mRNA 코돈 번역 퍼즐','online casual','4','퍼즐 코돈 mRNA 번역 아미노산 리보솜 codon glass']
   ];
@@ -384,6 +385,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     'bio-strike'(){const s=get('bioStrike');if(!s||typeof s!=='object')return '';const out=[];if(s.cleared)out.push(`스토리 <b>${s.cleared}</b>/5장`);
       if(s.surv&&s.surv.wave)out.push(`생존 <b>${s.surv.wave}</b>웨이브`);return out.join(' · ');},
     'helix'(){const s=get('helix-save-v1');return s&&s.runs?`출정 <b>${s.runs}</b>회`:'';},
+    'bio-kingdom'(){const s=get('bioKingdomSave');if(!s||!s.v)return '';return `스테이지 <b>${s.clear||0}</b>개 클리어 · 영웅 <b>${Object.keys(s.heroes||{}).length}</b>명`;},
     'outbreak'(){const s=get('outbreakStats');if(!s||!s.plays)return '';return `최고 <b>${s.bestDays||0}</b>일 생존`+(s.escapes?` · 탈출 <b>${s.escapes}</b>회`:'');},
     'codon-glass'(){const s=get('codonGlass');return s&&s.plays?`<b>${s.plays}</b>판`:'';},
     'bio-tower'(){const s=get('bioTower');return s&&s.rounds?`<b>${s.wins||0}</b>승 · 최고 <b>${s.best||0}m</b>`:'';},
