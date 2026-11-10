@@ -381,7 +381,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     'cell-pinball'(){const hs=get('cellCadetHS');if(!Array.isArray(hs)||!hs.length||!hs[0])return '';return `최고 <b>${Number(hs[0].score||0).toLocaleString()}</b>점`;},
     'cell-brawl'(){const t=get('cellbrawl:trophies');if(!t||typeof t!=='object')return '';const v=Object.values(t).filter(x=>typeof x==='number'&&x>0);
       return v.length?`트로피 <b>${v.reduce((a,b)=>a+b,0)}</b>`:'';},
-    'only-up'(){const s=get('onlyupBioStats');if(s&&s.clears)return `탈출 <b>${s.clears}</b>회`;const p=get('onlyupBio');return p&&p.cp>0?`<b>${p.cp+1}</b>/7 구간`:'';},
+    'only-up'(){const s=get('onlyupBioStats');if(s&&s.clears)return `탈출 <b>${s.clears}</b>회`+(s.best>0?` · 최고 <b>${Math.floor(s.best/60)}분 ${(s.best%60).toFixed(1)}초</b>`:'');const p=get('onlyupBio');return p&&p.cp>0?`<b>${p.cp+1}</b>/7 구간`:'';},
     'bio-strike'(){const s=get('bioStrike');if(!s||typeof s!=='object')return '';const out=[];if(s.cleared)out.push(`스토리 <b>${s.cleared}</b>/5장`);
       if(s.surv&&s.surv.wave)out.push(`생존 <b>${s.surv.wave}</b>웨이브`);return out.join(' · ');},
     'helix'(){const s=get('helix-save-v1');return s&&s.runs?`출정 <b>${s.runs}</b>회`:'';},

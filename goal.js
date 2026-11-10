@@ -2,7 +2,7 @@
  * 게임을 아주 잘하지 않아도 넘을 수 있는 목표를 미리 보여 주고, 판이 끝나면 '성공' / '실패'를 알려 줍니다.
  *   BioGoal.show(id)              게임을 열면 위쪽에 목표를 잠깐 보여 줌 (goal.js를 넣으면 자동으로 한 번)
  *   BioGoal.result(id, value, o)  판이 끝났을 때. o = {ok: true/false 직접 지정, text: '표시할 기록'}
- *   BioGoal.progress(id, value)   계속 이어지는 게임(ONLY UP)에서 목표에 처음 닿으면 성공을 띄움
+ *   BioGoal.progress(id, value, o) 계속 이어지는 게임(ONLY UP)에서 목표에 처음 닿으면 성공을 띄움
  *   BioGoal.status(id)            {best, ok, tries} (메인 화면에서 읽음)
  */
 (function () {
@@ -122,9 +122,9 @@
     return ok;
   }
   var reached = {};
-  function progress(id, value) {
+  function progress(id, value, o) {
     var g = GOALS[id]; if (!g || reached[id]) return;
-    if (g.low ? value <= g.t : value >= g.t) { reached[id] = true; result(id, value); }
+    if (g.low ? value <= g.t : value >= g.t) { reached[id] = true; result(id, value, o); }
   }
   function setCfg(cfg) { try { localStorage.setItem('bioGoalCfg', JSON.stringify(cfg || {})); } catch (e) {} applyCfg(cfg || {}); }
   window.BioGoal = {GOALS: GOALS, DEFAULTS: DEF, show: show, result: result, progress: progress, status: function (id) { return load()[id] || null; }, all: load,

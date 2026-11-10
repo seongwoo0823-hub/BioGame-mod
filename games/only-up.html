@@ -974,7 +974,8 @@ function pauseGame(){if(state!=='play')return;state='pause';touchMove.x=touchMov
   if(document.pointerLockElement)document.exitPointerLock();setTimeout(()=>$('btn-resume').focus(),50);}
 function resumeGame(){$('pause').hidden=true;state='play';AU.init();requestLock();}
 function die(msg){AU.sizzle();toast(msg,'마지막 체크포인트인 '+STAGES[cpStage].name+' 구간 입구로 돌아가요.');respawnAt(cpStage);}
-function win(){state='win';window.BioGoal&&BioGoal.result('only-up',7,{ok:true,text:'정상 도착!'});AU.fanfare();try{localStorage.removeItem('onlyupBio');const st=JSON.parse(localStorage.getItem('onlyupBioStats')||'{}')||{};st.clears=(st.clears||0)+1;if(!(st.best>0)||time<st.best)st.best=time;localStorage.setItem('onlyupBioStats',JSON.stringify(st));}catch(e){}
+function fmtR(t){const m=Math.floor(t/60),s=t%60;return m+'분 '+s.toFixed(1).padStart(4,'0')+'초';}
+function win(){state='win';window.BioGoal&&BioGoal.result('only-up',8-Math.min(99999,time)/100000,{ok:true,text:'정상 도착 · 완료 '+fmtR(time)});AU.fanfare();try{localStorage.removeItem('onlyupBio');const st=JSON.parse(localStorage.getItem('onlyupBioStats')||'{}')||{};st.clears=(st.clears||0)+1;if(!(st.best>0)||time<st.best)st.best=time;localStorage.setItem('onlyupBioStats',JSON.stringify(st));}catch(e){}
   $('w-time').textContent=fmt(time);$('w-fall').textContent=falls;$('w-jump').textContent=jumps;$('hud').hidden=true;$('touch').hidden=true;$('win').hidden=false;
   if(document.pointerLockElement)document.exitPointerLock();setTimeout(()=>$('btn-again').focus(),50);}
 function requestLock(){if(matchMedia('(pointer: coarse)').matches)return;const c=$('c');try{const r=c.requestPointerLock&&c.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(e){}}
@@ -1017,7 +1018,7 @@ function update(dt){
     if(onGround){lastGroundY=pl.y;
       const sp=Math.hypot(vel.x,vel.z);if(sp>1.5){stepT-=dt;if(stepT<=0){stepT=0.29;AU.step();}}else stepT=0.05;
       const si=stageAt(pl.y);if(si>cpStage){cpStage=si;AU.chime();banner(si);save();}}}
-  if(pl.y>bestY){bestY=pl.y;if(window.BioGoal)BioGoal.progress('only-up',stageAt(bestY)+1);}
+  if(pl.y>bestY){bestY=pl.y;if(window.BioGoal)BioGoal.progress('only-up',stageAt(bestY)+1,{text:'구간 '+(stageAt(bestY)+1)+' · '+fmtR(time)});}
   if(pl.y>Y_END+0.6){win();return;}
   // animation
   const sp=Math.hypot(vel.x,vel.z);if(sp>0.4){const tgt=Math.atan2(vel.x,vel.z);let d=tgt-facing;d=Math.atan2(Math.sin(d),Math.cos(d));facing+=d*Math.min(1,dt*14);}
