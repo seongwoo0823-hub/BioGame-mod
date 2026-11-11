@@ -1,14 +1,14 @@
 /* BIO ARCADE 서비스 워커: 처음 접속할 때 전체 게임을 저장해 두고, 이후에는 오프라인에서도 실행. */
-const VERSION = 'biogame-hub-v69-onlyup-time';
+const VERSION = 'biogame-hub-v70-ranking';
 const FONT_CACHE = 'bio-arcade-fonts';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './games/bio-beat.html', './games/immune-strike.html', './games/bio-kart.html',
   './games/vessel-canyon.html', './games/biotro.html', './games/cell-bound.html',
-  './games/cell-pinball.html', './games/cell-brawl.html', './games/only-up.html', './games/bio-strike.html', './ilog.js', './goal.js', './icons.js', './rank.js', './net.js', './games/cell-frontier.html', './games/bio-tower.html', './games/codon-glass.html', './games/outbreak.html', './games/bio-kingdom.html', './games/bio-kingdom/bk-data.js', './games/bio-kingdom/bk-core.js', './games/bio-kingdom/bk-art.js', './games/bio-kingdom/bk-kingdom.js', './games/bio-kingdom/bk-battle.js', './games/bio-kingdom/bk-ui.js', './games/outbreak/ob-assets.js', './games/outbreak/ob-world.js', './games/outbreak/ob-core.js', './games/outbreak/ob-items.js', './games/outbreak/ob-zombie.js', './games/outbreak/ob-main.js', './games/outbreak/char.json', './games/outbreak/m/index.json', './games/codon-glass/tw.css', './vendor/matter.min.js', './games/helix.html', './games/helix/js/audio.js', './games/helix/js/data.js', './games/helix/js/engine.js', './games/helix/js/world.js', './games/helix/js/game.js', './games/helix/js/weapons.js', './games/helix/js/foes2.js', './games/helix/js/run.js', './games/helix/js/ui.js',
+  './games/cell-pinball.html', './games/cell-brawl.html', './games/only-up.html', './games/bio-strike.html', './ilog.js', './goal.js', './icons.js', './rank.js', './net.js', './games/cell-frontier.html', './games/bio-tower.html', './games/codon-glass.html', './games/codon-glass/tw.css', './vendor/matter.min.js', './games/helix.html', './games/helix/js/audio.js', './games/helix/js/data.js', './games/helix/js/engine.js', './games/helix/js/world.js', './games/helix/js/game.js', './games/helix/js/weapons.js', './games/helix/js/foes2.js', './games/helix/js/run.js', './games/helix/js/ui.js',
   './assets/bio-beat.jpg', './assets/immune-strike.jpg', './assets/bio-kart.jpg',
   './assets/vessel-canyon.jpg', './assets/biotro.jpg', './assets/cell-bound.jpg',
-  './assets/cell-pinball.jpg', './assets/cell-brawl.jpg', './assets/only-up.jpg', './assets/bio-strike.jpg', './assets/helix.jpg', './assets/cell-frontier.jpg', './assets/bio-tower.jpg', './assets/codon-glass.jpg', './assets/outbreak.jpg', './assets/bio-kingdom.jpg',
+  './assets/cell-pinball.jpg', './assets/cell-brawl.jpg', './assets/only-up.jpg', './assets/bio-strike.jpg', './assets/helix.jpg', './assets/cell-frontier.jpg', './assets/bio-tower.jpg', './assets/codon-glass.jpg',
   './icons/icon-v2-192.png', './icons/icon-v2-512.png', './icons/icon-v2-maskable-512.png',
   './icons/apple-touch-icon-v2.png', './icons/favicon-v2-32.png',
   './vendor/three.min.js', './vendor/peerjs.min.js',

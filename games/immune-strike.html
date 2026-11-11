@@ -541,7 +541,7 @@ function hurtP(d,src,noKnock){const p=pl;if(!p||p.dead||state!=='play')return;d*
  p.hp-=d;p.inv=50;p.hurtT=18;sfx('hurt');hitstop=Math.max(hitstop,4);flashC={c:'#ff0020',t:8,a:.3};if(Math.random()<.3)say(p.ci,'hurt');if(!lowWarned&&p.hp<p.c.hp*.3&&p.hp>0){lowWarned=true;say(p.ci,'low',true);}cam.shake=Math.max(cam.shake,4);burst(p.x,p.y-12,8,p.c.col);
  if(!noKnock&&!p.grab){p.vx=(src&&src.x>p.x?-1:1)*2.2;p.vy=-2;p.og=false;}
  if(p.hp<=0)killP();}
-function killP(){const p=pl;if(p.dead)return;p.deathsStage++;hitstop=18;flashC={c:'#ff0020',t:20,a:.5};bubble={ci:p.ci,txt:['으아아악!!','이럴 수가…!','큭… 여기까지인가.','…방심했다.'][p.ci],t:90};explodeFX(p.x,p.y-12,26);lowWarned=false;p.dead=true;p.deadT=0;p.vy=-4;p.vx=-p.face*1.5;p.grab=null;p.hp=0;p.beam=null;sfx('die');burst(p.x,p.y-12,20,p.c.col,3);cam.shake=6;}
+function killP(){const p=pl;if(p.dead)return;p.deathsStage++;p.deathsAll=(p.deathsAll||0)+1;hitstop=18;flashC={c:'#ff0020',t:20,a:.5};bubble={ci:p.ci,txt:['으아아악!!','이럴 수가…!','큭… 여기까지인가.','…방심했다.'][p.ci],t:90};explodeFX(p.x,p.y-12,26);lowWarned=false;p.dead=true;p.deadT=0;p.vy=-4;p.vx=-p.face*1.5;p.grab=null;p.hp=0;p.beam=null;sfx('die');burst(p.x,p.y-12,20,p.c.col,3);cam.shake=6;}
 function respawn(){const p=pl;p.dead=false;p.slug=null;p.w=12;p.h=22;p.hp=p.c.hp;p.inv=150;p.wep=null;p.ammo=0;p.bombs=Math.max(p.bombs,10);p.x=clamp(p.x,cam.x+40,cam.x+W-60);p.y=-10;p.vy=0;p.vx=0;p.slowT=0;p.suppT=0;p.hurtT=0;}
 function aimAng(p){return p.aim===0?0:p.diag?p.aim*Math.PI/4:p.aim*Math.PI/2;}
 function muzzle(p){const c=p.c;const k=p.wep||c.id;const len=GL[k]+1;const by=p.y-6-c.br+2+(p.crouch?6:0);const a=aimAng(p);const dx=Math.cos(a)*p.face,dy=Math.sin(a);return {x:p.x+p.face*1+dx*len,y:by+dy*len,dx,dy};}
@@ -577,7 +577,7 @@ function updatePlayer(){
  const p=pl,c=p.c;if(bubble&&--bubble.t<=0)bubble=null;
  if(p.inv>0)p.inv--;if(p.hurtT>0)p.hurtT--;if(p.shotT>0)p.shotT--;if(p.meleeT>0)p.meleeT--;if(p.throwT>0)p.throwT--;if(p.landT>0)p.landT--;if(p.spCd>0)p.spCd--;if(p.slowT>0)p.slowT--;if(p.suppT>0)p.suppT--;if(p.shieldT>0)p.shieldT--;if(p.fcd>0)p.fcd--;
  p.beam=null;
- if(p.dead){p.deadT++;p.vy+=GRAV;p.y+=p.vy;p.x+=p.vx;p.vx*=.98;if(p.deadT===55)burst(p.x,p.y-12,24,c.col,3,3);if(p.deadT>110){if(p.lives>0){p.lives--;respawn();}else{state='over';stT=0;contT=600;MUS.play('over');window.BioGoal&&BioGoal.result('immune-strike',score);announce('Game over');}}return;}
+ if(p.dead){p.deadT++;p.vy+=GRAV;p.y+=p.vy;p.x+=p.vx;p.vx*=.98;if(p.deadT===55)burst(p.x,p.y-12,24,c.col,3,3);if(p.deadT>110){if(p.lives>0){p.lives--;respawn();}else{state='over';stT=0;contT=600;MUS.play('over');window.BioGoal&&BioGoal.result('immune-strike',score,isRank(totalTime+stageTime));announce('Game over');}}return;}
  if(p.enterCd>0)p.enterCd--;
  if(p.slug&&p.winT<=0){updSlugDrive(p);return;}
  if(p.winT>0){p.winT++;p.vx*=.8;moveBody(p);if(p.og&&p.winT%40===0){p.vy=-3;}return;}
@@ -1381,6 +1381,7 @@ function drawDemoOverlay(){R(0,H/2+46,W,26,'rgba(0,0,0,.55)');T('DEMO PLAY',240,
 
 // ================= FLOW =================
 function msgShow(t,sub,c,dur){msg={t,sub:sub||'',c:c||'#fff',life:dur||150,ml:dur||150};}
+function isRank(fr){const sec=Math.round(fr/6)/10,dd=pl&&pl.deathsAll||0;return {text:score.toLocaleString('ko-KR')+'점 · '+Math.floor(sec/60)+'분 '+Math.floor(sec%60)+'초 · 죽음 '+dd+'회',rank:{v:BioGoal.key([[score,1e9,1],[dd,1000,-1]]),f:{score:score,time:sec,deaths:dd}}};}
 function startGame(ci){pl=newPlayer(ci);score=0;conts=0;totalTime=0;startStage(0);}
 function startStage(si){combo=0;comboT=0;cutin=null;bubble=null;hitstop=0;slowmo=0;flashC=null;buildStage(si);enemies=[];pbul=[];ebul=[];parts=[];items=[];zones=[];boss=null;LK=null;goT=0;msg=null;clearT=0;bigFlash=0;stageTime=0;
  cam.x=0;cam.lock=null;cam.shake=0;CX=0;CY=0;mboss=null;const p=pl;p.slug=null;p.w=12;p.h=22;p.deathsStage=0;p.enterCd=0;p.x=70;p.y=-10;p.vx=0;p.vy=0;p.dead=false;p.hp=p.c.hp;p.inv=120;p.winT=0;p.grab=null;p.slowT=0;p.suppT=0;p.shieldT=0;p.rescued=0;p.kills=0;p.beam=null;p.dashT=0;p.engulfT=0;p.spT=0;
@@ -1504,7 +1505,7 @@ function drawClear(){G.globalAlpha=.65;R(0,40,W,190,'#000');G.globalAlpha=1;
  if(stT>70){const k=Math.max(0,1-(stT-70)/10);if(stT===71)sfx('stamp');const rc={S:'#ffe040',A:'#ff80c0',B:'#80c0ff',C:'#c0c0c0'}[bonus.rank];T('RANK',395,118,7,'#fff','center','p');T(bonus.rank,395,146,26+k*30,rc,'center','p',2);if(bonus.rb)T('+'+bonus.rb,395,174,6,rc,'center','p');}
  if(stT>80)T('SCORE  '+String(score).padStart(8,'0'),240,192,9,'#ff9ad0','center','p',2);if(stT>90&&frame%40<28)T(L.si<2?'ENTER — 다음 스테이지로':'ENTER — 최종 결과 보기',240,214,8,'#fff');}
 function updClear(){stT++;updParts();updAmb();if(stT%12===3&&stT<65)sfx('select');pl.winT++;moveBody(pl);if(pl.og&&pl.winT%40===0)pl.vy=-3;
- if((stT>90&&(kp('ok')||TAP))||stT>540){if(L.si<2){const lv=pl.lives,bm=pl.bombs;startStage(L.si+1);pl.lives=lv;pl.bombs=bm;}else{state='ending';stT=0;window.BioGoal&&BioGoal.result('immune-strike',score);MUS.play('ending');}}}
+ if((stT>90&&(kp('ok')||TAP))||stT>540){if(L.si<2){const lv=pl.lives,bm=pl.bombs;startStage(L.si+1);pl.lives=lv;pl.bombs=bm;}else{state='ending';stT=0;window.BioGoal&&BioGoal.result('immune-strike',score,isRank(totalTime));MUS.play('ending');}}}
 function drawOver(){G.globalAlpha=.6;R(0,0,W,H,'#000');G.globalAlpha=1;T('GAME OVER',240,90,18,'#ff3050','center','p',2);T('면역 체계가 무너졌다…',240,120,10,'#fff');
  const s=Math.ceil(contT/60);T('CONTINUE?  '+s,240,152,10,'#ffe060','center','p',2);if(!canStart()){if(frame%30<20||noCoinT>0)T('INSERT COIN',240,176,10,noCoinT>0?'#ff4060':'#fff','center','p',2);}else if(frame%40<28)T((padSeen?'START':'ENTER')+' — 이 자리에서 다시 싸운다',240,176,8,'#fff');T(creditText(),W-8,H-8,6,'#ffe060','right','p');}
 function updOver(){stT++;contT--;updParts();if(stT%60===0&&contT>0)sfx('select');if(contT<=0){toNameOrTitle();return;}

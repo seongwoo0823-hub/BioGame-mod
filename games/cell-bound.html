@@ -4816,8 +4816,9 @@ function roomClear(){RM.cleared=1;sfx('clear');S.cleared++;
   for(const id of PL.items){const h=IT[id].on&&IT[id].on.clear;if(h)h();}
   trinketTrig('clear',{x:DOORX,y:DOORY});famRoomClear();
   updateMood();saveRun();}
-function gameOver(){if(G.mode==='dead')return;G.mode='dead';window.BioGoal&&BioGoal.result('cell-bound',S.floor);G.menu=0;sfx('death');setMusic('dead');clearSave();const st=stats();st.deaths++;st.kills+=S.kills;saveStats(st);}
-function winGame(){if(G.mode==='win')return;S.won=1;G.mode='win';window.BioGoal&&BioGoal.result('cell-bound',S.floor,{ok:true,text:'최종 보스 격파!'});G.menu=0;sfx('win');setMusic('title');clearSave();const st=stats();st.wins++;st.kills+=S.kills;st.bestFloor=Math.max(st.bestFloor,9);st.charWins[PL.ch]=(st.charWins[PL.ch]||0)+1;saveStats(st);}
+function cbRank(txt,won){const sec=Math.round(S.time/6)/10,fl=S.floor+(won?1:0);return {text:(txt?txt+' · ':S.floor+'층 · ')+Math.floor(sec/60)+'분 '+Math.floor(sec%60)+'초',rank:{v:BioGoal.key([[fl,100,1],[sec*10,1e8,-1]]),f:{floor:S.floor+(won?'층 (클리어)':'층'),time:sec}}};}
+function gameOver(){if(G.mode==='dead')return;G.mode='dead';window.BioGoal&&BioGoal.result('cell-bound',S.floor,cbRank());G.menu=0;sfx('death');setMusic('dead');clearSave();const st=stats();st.deaths++;st.kills+=S.kills;saveStats(st);}
+function winGame(){if(G.mode==='win')return;S.won=1;G.mode='win';window.BioGoal&&BioGoal.result('cell-bound',S.floor,Object.assign(cbRank('최종 보스 격파!',1),{ok:true}));G.menu=0;sfx('win');setMusic('title');clearSave();const st=stats();st.wins++;st.kills+=S.kills;st.bestFloor=Math.max(st.bestFloor,9);st.charWins[PL.ch]=(st.charWins[PL.ch]||0)+1;saveStats(st);}
 function update(){
   readInput();G.t++;
   const playing=G.mode==='play'||G.mode==='pause';if(playing!==G.wasPlaying){G.wasPlaying=playing;document.body.classList.toggle('playing',playing);}

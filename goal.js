@@ -21,8 +21,7 @@
     'helix':         {tpl: '한 번의 출정에서 방 {t}개 정리하기', t: 6, unit: '방'},
     'cell-frontier': {tpl: '한 지역에서 점수 {t}점 넘기기', t: 12000, unit: '점'},
     'codon-glass':   {tpl: '혼자 하기 점수 {t}점 넘기기', t: 50, unit: '점'},
-    'outbreak':      {tpl: '감염 도시에서 {t}일 동안 살아남기', t: 2, unit: '일'},
-    'bio-kingdom':   {tpl: '모험 스테이지 {t}개 깨기', t: 5, unit: '개'}
+    'bio-tower':     {tpl: '연속 {t}승 하기', t: 2, unit: '연승'}
   };
   var DEF = {};
   function applyCfg(cfg) {
@@ -80,22 +79,23 @@
     var g = GOALS[id]; if (!g) return null;
     o = o || {};
     var ok = typeof o.ok === 'boolean' ? o.ok : (g.low ? (value > 0 && value <= g.t) : value >= g.t);
+    var ro = !!o.rankOnly;   // 목표와 상관없는 기록 (예: 온라인 대전) → 성공/실패 없이 기록만
     var d = load(), r = d[id] || {tries: 0};
-    r.tries++; r.last = Date.now();
-    if (typeof value === 'number' && isFinite(value)) {
+    if (!ro) { r.tries++; r.last = Date.now(); }
+    if (!ro && typeof value === 'number' && isFinite(value)) {
       if (r.best == null || (g.low ? (value > 0 && value < r.best) : value > r.best)) r.best = value;
     }
-    if (ok) r.ok = true;
+    if (ok && !ro) r.ok = true;
     d[id] = r; save(d);
     if (!document.body) return ok;
     css();
     if (resEl) resEl.remove();
     resEl = document.createElement('div'); resEl.className = 'bg-res';
     var shown = o.text != null ? o.text : fmtV(g, value);
-    var canRank = !!(window.BioRank && BioRank.ready());
-    resEl.innerHTML = '<div class="bg-card ' + (ok ? 'ok' : 'no') + '"><div class="g">목표 · ' + g.goal + '</div>' +
-      '<div class="big">' + (ok ? '성공!' : '실패') + '</div>' +
-      '<div class="v">내 기록 <b>' + shown + '</b>' + (o.ok == null && g.t > 1 ? ' / 목표 ' + fmtV(g, g.t) : '') + '</div>' +
+    var canRank = !!(window.BioRank && BioRank.ready()) && o.rank !== false;
+    resEl.innerHTML = '<div class="bg-card ' + (ro ? 'ok' : ok ? 'ok' : 'no') + '"><div class="g">' + (ro ? (o.title || '기록') : '목표 · ' + g.goal) + '</div>' +
+      '<div class="big">' + (ro ? '기록' : ok ? '성공!' : '실패') + '</div>' +
+      '<div class="v">내 기록 <b>' + shown + '</b>' + (!ro && o.ok == null && g.t > 1 ? ' / 목표 ' + fmtV(g, g.t) : '') + '</div>' +
       (canRank ? '<div class="bg-rk" hidden><input class="bg-in" maxlength="20" placeholder="20800 홍길동" autocomplete="off"><div class="bg-msg"></div></div>' : '') +
       '<div class="bg-btns">' + (canRank ? '<button type="button" class="bg-send">랭킹에 보내기</button>' : '') + '<button type="button" class="bg-ok">' + (canRank ? '안 보내기' : '확인') + '</button></div></div>';
     document.body.appendChild(resEl);
@@ -112,7 +112,7 @@
         var who = inp.value.trim().replace(/\s+/g, ' ');
         if (!BioRank.parseName(who)) { msg.textContent = "학번 5자리와 이름을 띄어 써 주세요 (예: 20800 홍길동)"; msg.className = 'bg-msg err'; return; }
         send.disabled = true; msg.className = 'bg-msg'; msg.textContent = '보내는 중…';
-        BioRank.submit(id, {who: who, value: typeof value === 'number' ? value : 0, text: String(shown).replace(/<[^>]*>/g, ''), ok: ok}).then(function () {
+        BioRank.submit(id, {who: who, value: typeof value === 'number' ? value : 0, text: String(shown).replace(/<[^>]*>/g, ''), ok: ok && !ro, rank: o.rank}).then(function () {
           try { localStorage.setItem('bioRankWho', who); } catch (e) {}
           msg.textContent = '랭킹에 올렸어요! 메인 화면 → 랭킹에서 볼 수 있어요.'; msg.className = 'bg-msg good';
           rk.querySelector('.bg-in').disabled = true; send.hidden = true; resEl.querySelector('.bg-ok').textContent = '확인';
@@ -126,9 +126,15 @@
     var g = GOALS[id]; if (!g || reached[id]) return;
     if (g.low ? value <= g.t : value >= g.t) { reached[id] = true; result(id, value, o); }
   }
+  // 여러 기준을 '클수록 좋은' 숫자 하나로: parts = [[값, 최대(칸 크기), 1 클수록 좋음 | -1 작을수록 좋음], ...]
+  function key(parts) {
+    var v = 0;
+    parts.forEach(function (p) { var m = p[1], x = Math.max(0, Math.min(m - 1, Math.round(+p[0] || 0))); v = v * m + (p[2] < 0 ? m - 1 - x : x); });
+    return v;
+  }
   function setCfg(cfg) { try { localStorage.setItem('bioGoalCfg', JSON.stringify(cfg || {})); } catch (e) {} applyCfg(cfg || {}); }
   window.BioGoal = {GOALS: GOALS, DEFAULTS: DEF, show: show, result: result, progress: progress, status: function (id) { return load()[id] || null; }, all: load,
-    config: loadCfg, setConfig: setCfg};
+    config: loadCfg, setConfig: setCfg, key: key};
   // 게임 페이지(games/…/이름.html)라면 목표를 한 번 보여 줌
   var m = /\/games\/([a-z0-9-]+)\.html/.exec(location.pathname);
   if (m && GOALS[m[1]]) {

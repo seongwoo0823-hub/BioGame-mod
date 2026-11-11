@@ -1688,7 +1688,7 @@
       selectedIndices = [];
       saveBestScore();
       if (window.ILOG) ILOG.runEnd('끝 ' + score + '점');
-      if (window.BioGoal && !(typeof NET !== 'undefined' && NET.inMatch)) BioGoal.result('codon-glass', score);
+      if (window.BioGoal && !(typeof NET !== 'undefined' && NET.inMatch)) BioGoal.result('codon-glass', score, {text: score + '점 (' + ({target: '표적 코돈', ribosome: '리보솜 번역', sum10: '에너지 합 10'})[gameMode] + ')', rank: {v: score, cat: ({target: '표적 코돈', ribosome: '리보솜 번역', sum10: '에너지 합 10'})[gameMode], f: {score: score}}});
 
       const overlay = document.getElementById('gameOverOverlay');
       overlay.classList.remove('hidden');

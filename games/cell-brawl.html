@@ -1949,7 +1949,9 @@ function showResult(){
   resetResultButtons();
   if (G.netMid && typeof NET !== 'undefined') NET.decorateResult();
   $('#resultModal').classList.remove('hidden');
-  if (window.BioGoal) BioGoal.result('cell-brawl', mode==='gem' ? (G.result==='win'?1:0) : G.rank, {ok: mode==='gem' ? G.result==='win' : G.rank<=BioGoal.GOALS['cell-brawl'].t, text: title});
+  if (window.BioGoal) { const P = G.player, gr = P.gemTotal||0, kl = P.kills||0;
+    BioGoal.result('cell-brawl', mode==='gem' ? (G.result==='win'?1:0) : G.rank, {ok: mode==='gem' ? G.result==='win' : G.rank<=BioGoal.GOALS['cell-brawl'].t, text: title + ` · ATP ${gr}개 · ${kl}킬`,
+      rank: {v: BioGoal.key([[gr,1e5,1],[kl,1e5,1]]), cat: mode==='gem' ? 'ATP 그랩' : '쇼다운', f: {grab: gr, kills: kl}}}); }
 }
 function togglePause(){
   if (state!=='game' || G.over) return;
@@ -2264,7 +2266,7 @@ function updatePickups(dt){
     g.vy -= 18*dt; g.y += g.vy*dt; if (g.y<0.6){ g.y = 0.6; g.vy = Math.abs(g.vy)>2 ? -g.vy*0.4 : 0; }
     g.m.position.set(g.x, g.y + (g.vy===0 ? Math.sin(G.time*3+i)*0.12 : 0), g.z); g.m.rotation.y += dt*2.5;
     if (G.time<g.pick) continue;
-    for (const u of G.units){ if (u.alive && Math.hypot(u.pos.x-g.x,u.pos.z-g.z)<1.25){ u.gems++; world.remove(g.m); G.gems.splice(i,1); burst(g.x,0.8,g.z,0xffd23f,6,3); if (u.isPlayer) SND.play('gem'); else sfxAt('gem',g.x,g.z,0.4); break; } }
+    for (const u of G.units){ if (u.alive && Math.hypot(u.pos.x-g.x,u.pos.z-g.z)<1.25){ u.gems++; u.gemTotal = (u.gemTotal||0) + 1; world.remove(g.m); G.gems.splice(i,1); burst(g.x,0.8,g.z,0xffd23f,6,3); if (u.isPlayer) SND.play('gem'); else sfxAt('gem',g.x,g.z,0.4); break; } }
   }
   for (let i=G.cubes.length-1;i>=0;i--){
     const c = G.cubes[i]; c.m.position.set(c.x, 0.55+Math.sin(G.time*3+i)*0.1, c.z); c.m.rotation.y += dt*1.8;

@@ -1480,12 +1480,13 @@ function cashOut(){
     const inv=G.tags.filter(t=>t.id==='invest').length;if(inv){G.money+=25*inv;G.tags=G.tags.filter(t=>t.id!=='invest');toast(`투자 태그: +$${25*inv}`);}
     const wasFinal=G.ante===8&&!G.won;
     G.ante++;setupAnte();
-    if(wasFinal){window.BioGoal&&BioGoal.result('biotro',8,{ok:true,text:'앤티 8 클리어!'});G.won=true;const S=stats();S.wins++;S.stakeWin=Math.max(S.stakeWin||0,stake());saveStats(S);openShop();render();save();showWin();return;}
+    if(wasFinal){window.BioGoal&&BioGoal.result('biotro',8,btRank(8,'앤티 8 클리어!'));G.won=true;const S=stats();S.wins++;S.stakeWin=Math.max(S.stakeWin||0,stake());saveStats(S);openShop();render();save();showWin();return;}
   }else G.blind++;
   openShop();render();save();
 }
+function btRank(a,txt){const b=isFinite(G.st&&G.st.best)?Math.floor(G.st.best):0,o={text:(txt||'앤티 '+a)+' · 최고 핸드 '+fmt(b)+'점',rank:{v:BioGoal.key([[a,100,1],[Math.min(b,9e12),1e13,1]]),f:{ante:a,score:b}}};if(txt)o.ok=true;return o;}
 function gameOver(){
-  G.over=true;G.phase='over';window.BioGoal&&BioGoal.result('biotro',G.ante);sfx('lose');shake(7);flash('#c0203a',.4,700);{const b=ctr($('#scoreBox'));burst(b.x,b.y,40,CG.red,{sp:260,life:.9});}
+  G.over=true;G.phase='over';window.BioGoal&&BioGoal.result('biotro',G.ante,btRank(G.ante));sfx('lose');shake(7);flash('#c0203a',.4,700);{const b=ctr($('#scoreBox'));burst(b.x,b.y,40,CG.red,{sp:260,life:.9});}
   try{localStorage.removeItem('biotroRun');}catch(e){}
   const mp=mostPlayed();
   modal(`<h2 style="color:var(--mult)">게임 오버</h2>

@@ -3290,7 +3290,8 @@ function endArena(fromNet){
   let win;
   if (A.mode === 'tdm') win = A.teamScore[me.team] > A.teamScore[1 - me.team];
   else win = list[0] === me;
-  if (A.net !== 'off'){ SET.mp.k += me.k; SET.mp.d += me.d; SET.mp.games++; if (win) SET.mp.wins++; store.save(); }
+  if (A.net !== 'off'){ SET.mp.k += me.k; SET.mp.d += me.d; SET.mp.games++; if (win) SET.mp.wins++; store.save();
+    if (window.BioGoal) BioGoal.result('bio-strike', me.k, {rankOnly: true, title: '온라인 대전 기록', text: `${me.k}킬 · ${me.d}데스`, rank: {v: BioGoal.key([[me.k, 1e5, 1], [me.d, 1e4, -1]]), cat: '온라인', f: {kills: me.k, deaths: me.d}}}); }
   G.state = 'result'; G.frozen = true;
   if (document.pointerLockElement) document.exitPointerLock();
   SFX.play(win ? 'win' : 'lose');
@@ -3463,7 +3464,7 @@ function updateSurvival(dt){
 }
 function showSurvResult(){
   const S = G.surv, p = G.player;
-  if (window.BioGoal) BioGoal.result('bio-strike', S.score);
+  if (window.BioGoal) BioGoal.result('bio-strike', S.score, {text: S.score.toLocaleString('ko-KR') + '점 · ' + p.kills + '킬', rank: {v: S.score, cat: '생존 모드', f: {score: S.score, kills: p.kills}}});
   G.state = 'result'; G.frozen = true;
   if (document.pointerLockElement) document.exitPointerLock();
   const best = S.score > (SET.surv.score || 0);

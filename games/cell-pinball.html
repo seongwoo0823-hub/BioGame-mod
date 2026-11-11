@@ -982,7 +982,7 @@ function serve(){ G.balls=[newBall()]; G.saveUntil=0; G.skillLane=Math.floor(Mat
 function newGame(){ audio(); G.np=+$("bPlayers").value; G.players=Array.from({length:G.np},(_,i)=>freshPlayer(i)); G.cur=0; PS=G.players[0];
   G.mode="play"; G.paused=false; G.tilted=false; G.tilt=0; G.multiball=false; drops.forEach(d=>d.up=true); say("새 게임\n연구원 1",1600,true); sfx("rank"); serve();
   $("note").innerHTML=`<h3>세포 탐사대</h3><p>실험 표적으로 실험을 고르고, 혈관 램프로 시작하세요. 실험을 끝낼 때마다 연구 등급이 오릅니다.</p>`; $("table").focus(); }
-function gameOver(){ G.mode="over"; G.balls=[]; window.BioGoal&&BioGoal.result('cell-pinball',Math.max(0,...G.players.map(p=>p.score))); say("게임 끝",3000,true); sfx("drain");
+function gameOver(){ G.mode="over"; G.balls=[]; {const sc=Math.max(0,...G.players.map(p=>p.score));window.BioGoal&&BioGoal.result('cell-pinball',sc,{rank:{v:sc,f:{score:sc}}});} say("게임 끝",3000,true); sfx("drain");
   const queue=G.players.map((p,i)=>({p,i})).sort((a,b)=>b.p.score-a.p.score);
   const ask=()=>{ const it=queue.shift(); if(!it){ setTimeout(()=>{ if(G.mode==="over"){ G.mode="attract"; G.balls=[newBall()]; PS=freshPlayer(0);} },6000); return; }
     const list=loadHS(); if(it.p.score>0&&(list.length<5||it.p.score>list[list.length-1].score)){

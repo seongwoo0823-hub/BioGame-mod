@@ -229,7 +229,9 @@ function confirmStart() {
 }
 function showResults(win) {
   const run = G.run; const sec = Math.round((performance.now() - run.t0) / 1000);
-  if (window.BioGoal) BioGoal.result('helix', run.cleared, {ok: win || run.cleared >= BioGoal.GOALS.helix.t, text: win ? '유전체 금고 정화!' : '방 ' + run.cleared + '개 정리'});
+  const secR = Math.round((performance.now() - run.t0) / 100) / 10;
+  if (window.BioGoal) BioGoal.result('helix', run.cleared, {ok: win || run.cleared >= BioGoal.GOALS.helix.t, text: (win ? '유전체 금고 정화!' : '방 ' + run.cleared + '개 정리') + ' · ' + Math.floor(secR / 60) + '분 ' + Math.floor(secR % 60) + '초',
+    rank: {v: BioGoal.key([[run.cleared + (win ? 1 : 0), 1000, 1], [secR * 10, 1e8, -1]]), f: {rooms: run.cleared + (win ? ' (클리어)' : ''), time: secR}}});
   const where = `${run.ch}장 ${CH[run.ch - 1].name} · 방 ${run.room}`;
   const p = openPanel(`<h2 style="color:${win ? '#3cffae' : '#ff8a96'}">${win ? '유전체 금고 정화 완료!' : '쓰러졌습니다'}</h2>
     <p class="sub">${win ? '나선의 지배자가 잠들었습니다. 쉼터의 모두가 당신을 기다립니다.' : '재생 장치가 당신을 쉼터로 되돌립니다. 모은 DNA 샘플은 그대로 남습니다.'}</p>

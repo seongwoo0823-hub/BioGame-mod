@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <script src="../icons.js"></script>
 <script src="../net.js"></script>
+<script src="../goal.js"></script>
+<script src="../rank.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>바이오 타워 · BIO TOWER</title>
 <meta name="theme-color" content="#5ab0f0">
@@ -325,10 +327,17 @@ function onFall(b) {
   G.players.forEach((p, i) => { if (i !== G.loser) p.wins++; });
   if (window.ILOG) ILOG.result('떨어짐', `${G.players[G.turn].name} · ${PM[b.k].name} 떨어짐`);
 }
+const STK = {n: 0, h: 0};
+function streakResult(n, h) {
+  if (!window.BioGoal) return;
+  BioGoal.result('bio-tower', n, {text: `${n}연승 · 탑 ${h.toFixed(2)}m`, rank: {v: BioGoal.key([[n, 1e4, 1], [h * 100, 1e6, 1]]), f: {streak: n, height: h.toFixed(2) + 'm'}}});
+}
 function showResult() {
   const L = G.players[G.loser], mine = me(), iLost = L && mine && L.id === mine.id;
   const local = G.role === 'solo' && G.players.filter(p => p.type === 'me' || p.type === 'local').length;
   if (G.role !== 'guest') { STATS.rounds++; if (mine && !iLost && (mine.type === 'me')) STATS.wins++; STATS.best = Math.max(STATS.best, +(G.height / 50).toFixed(1)); saveStats(); }
+  // 연속 승리: 내가 떨어뜨리지 않으면 +1, 떨어뜨리면 지금까지 연승을 기록으로 남김
+  if (mine && L) { const h = G.height / 50; if (!iLost) { STK.n++; STK.h = Math.max(STK.h, h); } else { const n = STK.n, hm = STK.h; STK.n = 0; STK.h = 0; if (n > 0) setTimeout(() => streakResult(n, hm), 900); } }
   AU.play(iLost ? 'lose' : 'win'); AU.music(false);
   const rank = G.players.map((p, i) => ({p, i})).sort((a, b) => b.p.wins - a.p.wins);
   $('#resBox').innerHTML = `<h3>${iLost ? '앗, 떨어뜨렸어요!' : L ? `${esc(L.name)}이(가) 떨어뜨렸어요!` : '라운드 끝'}</h3>
@@ -548,7 +557,7 @@ $('#pauseB').onclick = () => { AU.play('ui'); togglePause(); };
 document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { const a = b.dataset.p; AU.play('ui');
   if (a === 'resume') { G.paused = false; showScr(null); } if (a === 'how') showScr('sHow'); if (a === 'sound') b.textContent = AU.toggle() ? '소리 끄기' : '소리 켜기';
   if (a === 'log' && window.ILOG) ILOG.openViewer(); if (a === 'quit') quitToTitle(); });
-function quitToTitle() { NET.leave(); G.mode = 'title'; G.paused = false; engine = null; bodies = []; G.piece = null; G.view = []; G.hang = null; $('#hud').classList.remove('on'); $('#pauseB').style.display = 'none'; $('#tip').style.display = 'none'; $('#tbtns').classList.remove('on'); AU.music(false); showScr('sTitle'); }
+function quitToTitle() { if (STK.n > 0) { const n = STK.n, h = STK.h; STK.n = 0; STK.h = 0; setTimeout(() => streakResult(n, h), 300); } NET.leave(); G.mode = 'title'; G.paused = false; engine = null; bodies = []; G.piece = null; G.view = []; G.hang = null; $('#hud').classList.remove('on'); $('#pauseB').style.display = 'none'; $('#tip').style.display = 'none'; $('#tbtns').classList.remove('on'); AU.music(false); showScr('sTitle'); }
 
 // ================================================================ 준비 화면
 let lobbyMode = 'cpu';

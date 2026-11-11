@@ -17,7 +17,6 @@
 | 바이오 스트라이크 BIO STRIKE | 3D 1인칭 슈팅 (스토리 5장 · 생존 · 온라인 8인) | `games/bio-strike.html` |
 | 헬릭스 HELIX | 쿼터뷰 액션 로그라이트 (쉼터 · 4장 · 유전자 변이 24종 · 보스 4 · 중간 보스 8) | `games/helix.html` |
 | 세포 개척단 CELL FRONTIER | 땅따먹기 아케이드 (나라 4 · 지역 16 · 숨은 그림 16장 · 보스 8) | `games/cell-frontier.html` |
-| 감염 도시 OUTBREAK CITY | 쿼터뷰 좀비 생존 (도시·하수도·지하 연구소, 백신 제작, Kenney CC0 3D 에셋) | `games/outbreak.html` |
 | 바이오 타워 BIO TOWER | 물리 탑 쌓기 대결 (조각 48종 · 멈추면 고정 · 온라인 최대 4명 · CPU · 한 기기) | `games/bio-tower.html` |
 | 코돈 글래스 CODON GLASS | mRNA 번역 퍼즐 (모드 3 · 온라인 최대 4명 같은 판 경쟁) | `games/codon-glass.html` |
 
