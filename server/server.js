@@ -120,6 +120,13 @@ const server = http.createServer((req, res) => {
   if (u.pathname === '/__status') { let rooms = 0; for (const c of peers.values()) if (c.named) rooms++; return json(res, {ok: true, name: 'bio-arcade-classroom', v: 4, peers: peers.size, clients: clients.size, links: links.size, rooms, served, up: Math.round((Date.now() - started) / 1000)}); }
   if (u.pathname === '/__rooms') return json(res, {ok: true, rooms: roomsOf(u.searchParams.get('p') || '')});
   if (u.pathname === '/__info') return json(res, {ok: true, urls: lanUrls(), port: PORT, clients: clients.size});
+  // 바탕화면 컨트롤러 등 예전 도구와 호환되는 주소
+  if (u.pathname === '/health' || u.pathname === '/api/status' || u.pathname === '/ping') return json(res, {status: 'ok', ok: true, name: 'bio-arcade-classroom', port: PORT, uptimeSec: Math.round((Date.now() - started) / 1000), peers: peers.size, clients: clients.size, links: links.size, served, lanIps: lanUrls().map(x => x.replace(/^http:\/\/|:\d+$/g, ''))});
+  if (u.pathname === '/api/stop') {
+    const ra = req.socket.remoteAddress || '';
+    if (ra === '127.0.0.1' || ra === '::1' || ra === '::ffff:127.0.0.1') { json(res, {ok: true, msg: 'Server stopping'}); setTimeout(() => process.exit(0), 150); return; }
+    res.writeHead(403); res.end('Forbidden'); return;
+  }
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); res.end(); return; }
   sendFile(req, res, u.pathname);
 });
