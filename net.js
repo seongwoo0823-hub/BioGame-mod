@@ -1,30 +1,27 @@
-/* BIO ARCADE 실시간 중계 연결 (서버 경유)
- *   온라인 게임들은 원래 PeerJS로 기기끼리 직접(P2P) 연결합니다. 학교 와이파이처럼 직접 연결이 막히면
- *   해외 중계를 돌아 느려지므로, 우리 서버(server/server.js)에 웹소켓으로 접속해 서버가 메시지를 전달하게 합니다.
- *   게임 코드는 그대로: vendor/peerjs.min.js가 new Peer()를 만들 때 BioRelay가 켜져 있으면 이 파일의 RelayPeer를 대신 돌려줍니다.
- *   (RelayPeer는 PeerJS와 같은 모양: on('open'|'connection'|'error'|'disconnected'), connect(), destroy(), conn.send/close/on('open'|'data'|'close'))
- *   서버가 잠들어 있으면(무료 서버는 15분 동안 안 쓰면 잠듦) 깨어날 때까지 최대 75초 다시 시도합니다.
- *   한 기기만 몰래 P2P로 바뀌면 방장과 참가자가 서로 다른 곳에 있게 되어 방을 못 찾으므로,
- *   서버가 정말 꺼져 있을 때만 P2P로 돌아갑니다.
- *   방 목록: BioRelay.rooms(접두어) · BioRelay.roomPanel({...}) — 서버에 열린 방을 보여 주고 눌러서 참가
+/* BIO ARCADE 실시간 중계 연결 (교실 서버 경유)
+ *   온라인 게임들은 원래 PeerJS로 기기끼리 직접(P2P) 연결합니다. 선생님 컴퓨터에서 교실 서버(server/server.js)를 켜고
+ *   학생들이 그 서버 주소(예: http://192.168.0.12:8080)로 접속하면, 같은 서버에 웹소켓으로 붙어 서버가 메시지를 전달합니다.
+ *   게임 코드는 그대로: vendor/peerjs.min.js가 new Peer()를 만들 때 BioRelay가 켜져 있으면 이 파일의 RelayPeer를 대신 돌려줌.
  *
- *   ▶ 설정: RELAY_URL 에 서버 주소 (예: 'wss://biogame.duckdns.org'). 비어 있으면 꺼짐(지금처럼 P2P).
- *     시험용: 주소창에 ?relay=wss://… 를 붙이거나 localStorage 'bioRelayUrl', 끄기 ?relay=off
+ *   ▶ 켜지는 조건: 교실 서버가 이 파일을 보낼 때 맨 앞에 window.BIO_LOCAL_RELAY=1 을 붙여 줌 → 페이지를 연 그 서버로 중계
+ *     GitHub Pages 등 다른 곳에서 열면 꺼짐(예전처럼 P2P). 시험용: ?relay=ws://주소 · 끄기 ?relay=off
+ *   방 목록: BioRelay.rooms(접두어) · BioRelay.roomPanel({...}) — 서버에 열린 방을 보여 주고 눌러서 참가
  */
 (function () {
   'use strict';
   if (window.BioRelay) return;
-  var RELAY_URL = 'wss://bio-arcade-relay.onrender.com';
+  // 교실 서버에서 연 페이지면 같은 주소로 중계 (http → ws, https → wss)
+  var RELAY_URL = window.BIO_LOCAL_RELAY && /^https?:$/.test(location.protocol) ? (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host : '';
 
   var url = RELAY_URL;
   try {
     var q = new URLSearchParams(location.search).get('relay');
     if (q === 'off') url = '';
-    else if (q && /^wss?:\/\//.test(q)) { url = q; localStorage.setItem('bioRelayUrl', q); }
-    else if (localStorage.getItem('bioRelayUrl')) url = localStorage.getItem('bioRelayUrl');
+    else if (q && /^wss?:\/\//.test(q)) url = q;
+    localStorage.removeItem('bioRelayUrl');   // 예전 Render 주소가 남아 있지 않게
   } catch (e) {}
 
-  var WAKE_MAX = 75000;     // 잠든 서버가 깨어나길 기다리는 최대 시간
+  var WAKE_MAX = 20000;     // 서버에 닿지 않을 때 다시 시도하는 최대 시간 (그 뒤엔 P2P)
   var srv = {ok: false, t: 0}; // 마지막으로 확인한 서버 상태
   function rid(n) { var s = 'abcdefghijkmnpqrstuvwxyz23456789', o = ''; for (var i = 0; i < n; i++) o += s[Math.random() * s.length | 0]; return o; }
   function perr(type, msg) { var e = new Error(msg || type); e.type = type; return e; }
@@ -52,7 +49,7 @@
     clearTimeout(hideT);
     if (!mode) { badgeEl.style.opacity = '0'; return; }
     var col = mode === 'server' ? '#34d399' : mode === 'p2p' ? '#fbbf24' : '#94a3b8';
-    var txt = mode === 'server' ? '서버 연결' + (ms != null ? ' · ' + ms + 'ms' : '') : mode === 'p2p' ? 'P2P 직접 연결' : mode === 'wake' ? '서버 깨우는 중… (최대 1분)' : '서버 연결 중…';
+    var txt = mode === 'server' ? '서버 연결' + (ms != null ? ' · ' + ms + 'ms' : '') : mode === 'p2p' ? 'P2P 직접 연결' : mode === 'wake' ? '교실 서버에 다시 연결하는 중…' : '서버 연결 중…';
     if (mode === 'wake') col = '#60a5fa';
     badgeEl.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:' + col + ';box-shadow:0 0 6px ' + col + '"></span>' + txt;
     badgeEl.title = mode === 'server' ? '우리 중계 서버를 거쳐 연결됨' : mode === 'p2p' ? '서버 대신 기기끼리 직접 연결됨' : '';
@@ -65,13 +62,13 @@
   function check(timeout) {
     // 첫 요청은 연결 준비(보안 연결 등) 시간이 섞여 크게 나오므로, 연결을 연 뒤 몇 번 더 재서 가장 빠른 값을 씀
     if (!url) return Promise.resolve({ok: false, off: true});
-    var base = url.replace(/^ws/, 'http') + '/';
+    var base = url.replace(/^ws/, 'http') + '/__status';
     function one(to) {
       var t0 = performance.now(), ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
       var tm = setTimeout(function () { ctl && ctl.abort(); }, to);
       return fetch(base + '?t=' + Date.now() + Math.random(), {cache: 'no-store', signal: ctl && ctl.signal})
         .then(function (r) { return r.json(); })
-        .then(function (j) { clearTimeout(tm); return {ok: !!j.ok, ms: Math.round(performance.now() - t0), peers: j.peers}; })
+        .then(function (j) { clearTimeout(tm); return {ok: !!j.ok, ms: Math.round(performance.now() - t0), peers: j.clients != null ? j.clients : j.peers, rooms: j.rooms}; })
         .catch(function () { clearTimeout(tm); return {ok: false}; });
     }
     return one(timeout || 8000).then(function (first) {
@@ -230,15 +227,13 @@
     this._want = this.id; this._t0 = Date.now(); this._tries = 0; this._start();
   };
 
-  // 무료 서버(Render)는 15분 동안 아무도 안 쓰면 잠들고 깨어나는 데 1분쯤 걸림 →
-  // 페이지를 열자마자 미리 깨우고, 페이지가 열려 있는 동안 4분마다 살짝 두드려 잠들지 않게 함
   var httpBase = url ? url.replace(/^ws/, 'http').replace(/\/+$/, '') : '';
-  function wake() { if (!url || document.hidden) return; try { fetch(httpBase + '/?wake=' + Date.now(), {cache: 'no-store'}).then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok) srv = {ok: true, t: Date.now()}; }).catch(function () {}); } catch (e) {} }
+  function wake() { if (!url || document.hidden) return; try { fetch(httpBase + '/__status?t=' + Date.now(), {cache: 'no-store'}).then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok) srv = {ok: true, t: Date.now()}; }).catch(function () {}); } catch (e) {} }
 
   // ---------- 열린 방 목록 ----------
   function rooms(prefix) {
     if (!url) return Promise.resolve(null);
-    return fetch(httpBase + '/rooms?p=' + encodeURIComponent(prefix) + '&t=' + Date.now(), {cache: 'no-store'})
+    return fetch(httpBase + '/__rooms?p=' + encodeURIComponent(prefix) + '&t=' + Date.now(), {cache: 'no-store'})
       .then(function (r) { return r.json(); }).then(function (j) { return j && j.ok ? j.rooms : null; }).catch(function () { return null; });
   }
   //  opts: {prefix: 'biostrike-v1-', input: '#codeIn', join: 버튼 선택자 또는 함수(code), after: 목록을 붙일 요소(기본: 입력칸이 든 줄),
@@ -273,7 +268,7 @@
       if (!box.isConnected) { clearInterval(timer); return; }
       if (document.hidden || !box.offsetParent) return;
       rooms(o.prefix).then(function (rs) {
-        if (rs == null) { list.innerHTML = '<span class="be">서버에 닿지 않아요 (서버 깨우는 중일 수 있어요)</span>'; last = ''; return; }
+        if (rs == null) { list.innerHTML = '<span class="be">교실 서버에 닿지 않아요. 선생님 컴퓨터의 서버 창이 켜져 있는지 확인하세요.</span>'; last = ''; return; }
         rs = rs.filter(function (r) { return !(o.hide && o.hide(r.code)); });
         var key = JSON.stringify(rs); if (key === last) return; last = key;
         if (!rs.length) { list.innerHTML = '<span class="be">지금 열린 방이 없어요. 방을 만들면 다른 사람 화면에 여기 보여요.</span>'; return; }
@@ -287,7 +282,7 @@
     tick(); timer = setInterval(tick, 3000);
     return box;
   }
-  if (url) { wake(); setInterval(wake, 4 * 60 * 1000); document.addEventListener('visibilitychange', function () { if (!document.hidden) wake(); }); }
+  if (url) wake();   // 페이지를 열 때 서버 상태를 한 번 확인
 
   var BioRelay = window.BioRelay = {
     url: url,

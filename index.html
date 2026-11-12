@@ -115,6 +115,9 @@ i[data-ic] svg.pg{width:1em;height:1em;vertical-align:0}
 .rrow .v small{display:block;margin:0}
 .rempty{padding:30px 0;text-align:center;color:var(--dim)}
 .rme{display:flex;gap:8px}
+.lanbox{position:fixed;left:50%;top:72px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;max-width:calc(100vw - 24px);padding:12px 44px 12px 16px;border-radius:16px;background:rgba(10,20,40,.92);border:1px solid rgba(52,211,153,.5);box-shadow:0 10px 40px rgba(0,0,0,.5);color:#fff;font-size:13px}
+.lanbox b{font-size:14px}.lanbox span{color:var(--dim)}.lanbox code{font:800 22px/1.2 ui-monospace,Menlo,Consolas,monospace;color:#34d399;letter-spacing:.02em}
+.lanbox button{position:absolute;right:10px;top:10px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.1);color:#fff}
 .srv{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:600;color:var(--sub);background:var(--bg2);border:1px solid var(--line);white-space:nowrap;flex:none}
 .srv button{height:22px;margin-left:2px;padding:0 9px;border-radius:999px;background:#f87171;color:#1a0505;font-size:11.5px;font-weight:700}
 .srv button:hover{background:#fca5a5}
@@ -537,24 +540,32 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
   rModal.addEventListener('click',e=>{if(e.target===rModal)rModal.hidden=true;});
 
 
-  // ---------- 중계 서버 상태 (위쪽 작은 표시) ----------
+  // ---------- 교실 서버 상태 (위쪽 작은 표시) ----------
+  //  선생님 컴퓨터의 교실 서버(server/server.js)로 연 경우에만 보임. GitHub Pages로 열면 숨김(P2P)
   (function(){
     const el=document.getElementById('srv');if(!el)return;
     if(!window.BioRelay||!BioRelay.url){el.hidden=true;return;}
     const rb=document.getElementById('srvRetry');
     const set=(c,t,tip)=>{el.className='srv '+c;el.querySelector('span').textContent=t;el.title=tip;rb.hidden=c!=='off';document.body.classList.toggle('srv-off',c==='off');};
-    let tries=0,timer=null,busy=false;
-    // 서버가 꺼졌을 때: 재시도 버튼 → 서버를 깨우고 다시 확인
-    rb.addEventListener('click',()=>{tone('tap');clearTimeout(timer);tries=0;BioRelay.wake&&BioRelay.wake();set('wake','서버 깨우는 중','서버를 다시 깨우는 중이에요 (최대 1분)');if(!busy)run();});
+    let timer=null,busy=false;
+    rb.addEventListener('click',()=>{tone('tap');clearTimeout(timer);set('wake','교실 서버 확인 중','다시 확인하는 중이에요');if(!busy)run();});
     const later=(f,ms)=>{clearTimeout(timer);timer=setTimeout(f,ms);};
     const run=async()=>{busy=true;
-      const r=await BioRelay.check(tries?12000:6000);busy=false;
-      if(r.ok){set('ok',`서버 연결 · ${r.ms}ms`,`온라인 게임 중계 서버가 켜져 있어요 (응답 ${r.ms}ms${r.peers!=null?', 접속 '+r.peers+'명':''})`);later(()=>{tries=0;run();},60000);return;}
-      tries++;
-      if(tries<=8){set('wake','서버 깨우는 중','무료 서버가 잠들어 있어 깨우는 중이에요 (최대 1분)');later(run,5000);}
-      else{set('off','서버 꺼짐 · P2P','중계 서버에 닿지 않아요. 온라인 게임은 기기끼리 직접(P2P) 연결돼요. 재시도를 눌러 다시 깨워 보세요');later(()=>{tries=0;run();},60000);}
+      const r=await BioRelay.check(5000);busy=false;
+      if(r.ok){set('ok',`교실 서버 · 접속 ${r.peers||0}명`,`선생님 컴퓨터의 교실 서버에 연결됐어요 (응답 ${r.ms}ms, 지금 접속 ${r.peers||0}명, 열린 방 ${r.rooms||0}개)`);later(run,15000);return;}
+      set('off','교실 서버 꺼짐','선생님 컴퓨터의 서버 창이 꺼진 것 같아요. 서버를 다시 켠 뒤 재시도를 누르세요');later(run,10000);
     };
     run();
+    // 선생님 컴퓨터(localhost)에서 열면 학생 접속 주소를 크게 보여 줌
+    if(/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){
+      fetch('/__info',{cache:'no-store'}).then(r=>r.json()).then(j=>{
+        if(!j||!j.urls||!j.urls.length)return;
+        const b=document.createElement('div');b.className='lanbox';
+        b.innerHTML=`<b>🧑‍🏫 학생 접속 주소</b><span>같은 와이파이에서 주소창에 입력하세요</span>${j.urls.map(u=>`<code>${u.replace(/^http:\/\//,'')}</code>`).join('')}<button type="button" aria-label="닫기">✕</button>`;
+        b.querySelector('button').onclick=()=>b.remove();
+        document.body.appendChild(b);
+      }).catch(()=>{});
+    }
   })();
 
   // ---------- 강력 새로고침: 저장된 옛 파일을 지우고 최신 버전을 다시 받음 ----------

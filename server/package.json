@@ -1,9 +1,8 @@
 {
-  "name": "bio-arcade-relay",
-  "version": "1.0.0",
-  "description": "BIO ARCADE 실시간 중계 서버 (WebSocket)",
+  "name": "bio-arcade-classroom-server",
+  "version": "4.0.0",
+  "description": "BIO ARCADE 교실 서버: 게임 사이트 + 온라인 중계 (추가 설치 없이 Node.js만 필요)",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
-  "dependencies": { "ws": "^8.18.0" },
   "license": "MIT"
 }

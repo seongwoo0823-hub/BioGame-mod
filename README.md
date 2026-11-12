@@ -38,6 +38,12 @@ manifest.webmanifest, sw.js   앱 설치(PWA) · 오프라인 실행
 
 각 게임의 타이틀·메뉴·일시정지 화면에 있는 **게임 목록** 버튼으로 메인 화면에 돌아올 수 있습니다.
 
+## 교실 서버 (온라인 게임용)
+
+선생님 컴퓨터에서 `start-server-windows.bat`(윈도우) 또는 `start-server-mac.command`(맥)를 더블클릭하면
+게임 사이트와 온라인 중계 서버가 함께 켜지고, 학생들은 화면에 나오는 주소(예: `http://192.168.0.12:8080`)로 접속합니다.
+Node.js만 있으면 되고 추가 설치는 필요 없어요. 자세한 방법: [server/README.md](server/README.md)
+
 ## 로컬에서 실행
 
 ```bash
