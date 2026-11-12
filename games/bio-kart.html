@@ -127,6 +127,7 @@ h2{font-size:1.1em;color:var(--yolk);margin-bottom:.8em;line-height:1.5}
 .chip.sel{background:var(--yolk);color:var(--ink)}
 .gar{display:grid;grid-template-columns:minmax(12em,.8fr) 1.4fr;gap:1.2em;flex:1;min-height:0}
 .garL{display:flex;flex-direction:column;gap:.5em;overflow:auto}
+#garColors{display:flex;flex-wrap:wrap;gap:.3em;justify-content:center;margin:.3em 0}#garColors button{width:1.6em;height:1.6em;border:none;border-radius:50%;box-shadow:0 0 0 2px var(--ink);padding:0;font-size:.7em;color:#fff}#garColors button.sel{box-shadow:0 0 0 3px var(--yolk);transform:scale(1.15)}
 #garPrev{width:10.5em;height:9.2em;align-self:center;border-radius:12px;background:radial-gradient(circle,rgba(76,201,240,.28),rgba(27,21,48,.65) 75%);box-shadow:inset 0 0 18px rgba(62,230,193,.25)}
 #garName{font-size:1.35em;color:#fff;text-align:center}#garName small{color:var(--dim);font-size:.75em}
 #garInfo p{margin:.25em 0;font-size:.95em;line-height:1.45;color:var(--dim)}
@@ -148,6 +149,13 @@ h2{font-size:1.1em;color:var(--yolk);margin-bottom:.8em;line-height:1.5}
 .mcard{border:none;background:var(--panel);box-shadow:0 0 0 3px var(--ink);display:flex;gap:.6em;padding:.45em;text-align:left;align-items:center}
 .mcard canvas{width:4.4em;height:4.4em;image-rendering:pixelated;flex:none}
 .mcard.sel{background:var(--panel2);box-shadow:0 0 0 3px var(--yolk)}
+#worldRow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.5em;padding:4px;margin-bottom:.4em}
+.wcard{border:none;padding:.5em .6em;text-align:left;background:var(--panel);box-shadow:0 0 0 3px var(--ink);color:var(--white,#fff);font-family:var(--kr);display:flex;flex-direction:column;gap:.15em;min-width:0}
+.wcard b{font-size:1.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wcard small{opacity:.75;font-size:.72em;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wcard i{font-style:normal;font-size:.75em;font-weight:700}.wcard.sel{box-shadow:0 0 0 3px var(--yolk);transform:translateY(-2px)}
+.mcard.lock{filter:grayscale(.85) brightness(.7)}.mcard .done{color:#7CFC9A;font-weight:700}.mcard .lk{color:#ffd60a;font-weight:700}
+.mcard .dlv{display:inline-block;padding:0 .45em;border-radius:6px;font-size:.78em;font-weight:800;color:#1b1530}
+@media (max-width:760px){#worldRow{grid-template-columns:repeat(5,minmax(5.6em,1fr));overflow-x:auto}.wcard small{display:none}}
 .mi{display:flex;flex-direction:column;gap:.1em;min-width:0}
 .mi b{font-weight:400;font-size:1em}.mi small{color:var(--teal);font-size:.75em}
 .stars{color:var(--yolk);font-size:.75em;letter-spacing:.05em}.meta{font-size:.72em;color:var(--dim)}.best{font-size:.7em;color:var(--mem)}
@@ -260,14 +268,14 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
     <div id="speedWrap"><canvas id="speedo" width="140" height="56"></canvas><div id="draft">DRAFT</div><div id="spdReadout"><div id="spdNum">0</div><div id="spdUnit">km/h</div></div></div>
     <div id="gauge"><div id="gfill"></div></div>
     <div id="exRow"><div id="petIco"><canvas id="petCv" width="96" height="84"></canvas></div><div id="exGauge"><div id="exFill"></div><span id="exLbl">EXCEED</span></div><span id="exKey">X</span></div>
-    <div class="hint">SHIFT 드리프트 · CTRL 부스터/아이템 · ALT 교체 · X 익시드</div>
+    <div class="hint">SHIFT 드리프트 · SPACE 점프 · CTRL 아이템 · ALT 교체 · X 익시드 · ESC 메뉴</div>
   </div>
   <div id="mirrorWrap"><canvas id="mirror" width="96" height="38"></canvas></div>
 </div>
 <div id="touch">
   <button class="tb" data-k="left" aria-label="왼쪽">◀</button><button class="tb" data-k="right" aria-label="오른쪽">▶</button>
   <button class="tb" data-k="drift">드리프트</button><button class="tb" data-k="use">부스터<br>아이템</button>
-  <button class="tb" data-k="down">브레이크</button><button class="tb" data-k="tap">↑ 순간 부스터</button><button class="tb" data-k="swap">⟳</button><button class="tb" data-k="exceed">익시드</button>
+  <button class="tb" data-k="down">브레이크</button><button class="tb" data-k="tap">↑ 순간 부스터</button><button class="tb" data-k="swap">⟳</button><button class="tb" data-k="jump">점프</button><button class="tb" data-k="exceed">익시드</button>
   <button class="tb" id="pauseBtn" data-go="pausebtn" aria-label="일시정지">II</button>
 </div>
 <div class="scr" id="scr-race"></div>
@@ -275,7 +283,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
 <section class="scr" id="scr-title">
   <h1 class="logo">BIO KART<span>바이오 카트 레이서</span></h1>
   <p class="tagline">세포와 우리 몸속을 달리는 생명과학 레이싱</p>
-  <div class="tmenu"><button class="btn go" data-go="mode">게임 시작</button><button class="btn go" data-go="online" style="background:#3a86ff;color:#fff">🌐 온라인 멀티</button><button class="btn alt" data-go="help">게임 방법 &amp; 도감</button><button class="btn alt sndBtn" data-go="sound">소리 켜짐</button><button class="btn alt" type="button" onclick="location.href='../index.html'">게임 목록</button></div>
+  <div class="tmenu"><button class="btn go" data-go="mode">게임 시작 (싱글)</button><button class="btn go" data-go="online" style="background:#3a86ff;color:#fff">🌐 온라인 대전</button><button class="btn alt" data-go="garage">🏎️ 차고</button><button class="btn alt" data-go="mapdex">🗺️ 맵 도감</button><button class="btn alt" data-go="help">⚙️ 설정 · 도움말</button><button class="btn alt sndBtn" data-go="sound">소리 켜짐</button><button class="btn alt" type="button" onclick="location.href='../index.html'">게임 종료</button></div>
 </section>
 
 <section class="scr" id="scr-mode">
@@ -284,7 +292,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
     <button class="mode" data-mode="speed"><h3>스피드전</h3><p>캐릭터와 카트의 성능이 모두 똑같아요. 오직 실력으로 승부!</p>
       <ul><li>드리프트하면 부스터 게이지가 차요</li><li>게이지가 꽉 차면 ATP 부스터 1개 획득 (최대 2개)</li><li>순간 부스터, 출발 부스터, 드래프트 사용 가능</li><li>익시드: 드리프트·드래프트로 게이지를 채워 X키로 폭주!</li></ul></button>
     <button class="mode" data-mode="item"><h3>아이템전</h3><p>캐릭터마다 고유 능력, 카트마다 다른 성능!</p>
-      <ul><li>트랙의 ? 세포 박스를 지나면 아이템 랜덤 획득</li><li>생명과학 아이템 15종 (최대 2개 보유)</li><li>순위가 낮을수록 강한 아이템이 잘 나와요</li><li>익시드 발동 시 공격 1회 방어 실드</li></ul></button>
+      <ul><li>트랙의 ? 세포 박스를 지나면 아이템 랜덤 획득</li><li>생명과학 아이템 10종: 공격 4 · 방어 3 · 이동 3 (최대 2개 보유)</li><li>순위가 낮을수록 강한 아이템이 잘 나와요</li><li>익시드 발동 시 공격 1회 방어 실드</li></ul></button>
   </div>
   <div class="diffs"><span>상대 난이도</span><button class="chip" data-diff="0">쉬움</button><button class="chip" data-diff="1">보통</button><button class="chip" data-diff="2">어려움</button></div>
   <div class="nav"><button class="btn alt" data-go="title">뒤로</button><div class="row"><button class="btn alt" data-go="online" style="background:#3a86ff">🌐 온라인 방 만들기·참가</button><button class="btn go" data-go="garage">캐릭터 &amp; 카트 고르기</button></div></div>
@@ -293,7 +301,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
 <section class="scr" id="scr-garage">
   <h2>차고 <small id="garMode" style="font-family:var(--kr);color:var(--teal);font-size:.8em"></small></h2>
   <div class="gar">
-    <div class="garL panel"><canvas id="garPrev" width="96" height="84"></canvas><div id="garName"></div><div id="garInfo"></div></div>
+    <div class="garL panel"><canvas id="garPrev" width="96" height="84"></canvas><div id="garColors"></div><div id="garName"></div><div id="garInfo"></div></div>
     <div class="garR"><div class="tabs"><button class="chip" data-tab="char">캐릭터 15</button><button class="chip" data-tab="kart">카트 15</button><button class="chip" data-tab="gear">파츠 &amp; 펫</button></div><div id="garGrid"></div></div>
   </div>
   <div class="nav"><button class="btn alt" data-go="mode">뒤로</button><button class="btn go" data-go="maps">트랙 고르기</button></div>
@@ -301,7 +309,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
 
 <section class="scr" id="scr-maps">
   <h2>트랙 선택 <small id="mapMode" style="font-family:var(--kr);color:var(--teal);font-size:.8em"></small></h2>
-  <div class="mapwrap"><div id="mapGrid"></div><p id="mapFact"></p></div>
+  <div class="mapwrap"><div id="worldRow"></div><div id="mapGrid"></div><p id="mapFact"></p></div>
   <div class="nav"><button class="btn alt" data-go="garage">뒤로</button><button class="btn go" data-go="start">출발!</button></div>
 </section>
 
@@ -334,10 +342,12 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
           <button class="chip" id="btnNetMode" type="button">모드: 스피드전</button>
           <select id="netMapSel" class="netinp" style="text-transform:none;min-width:10em"></select>
           <label class="opt" style="margin:0;font-size:.88em"><input type="checkbox" id="netAiFill" checked> AI 빈자리 자동 채우기</label>
+          <label class="opt" style="margin:0;font-size:.88em"><input type="checkbox" id="netPrivate"> 🔒 비공개 방 (방 목록에 안 보임, 코드로만 참가)</label>
         </div>
+        <div class="netrow" style="margin:.4em 0 0"><button class="btn go" id="btnNetReady" type="button" style="font-size:.9em;padding:.4em .9em;display:none">✋ 준비 완료</button><span id="netReadyInfo" style="font-size:.85em;color:var(--teal)"></span></div>
       </div>
       <p style="margin:.3em 0 0;font-size:.82em;color:var(--dim);line-height:1.45">
-        💡 <b>방장 권한 P2P + 클라이언트 예측 보간</b>: 서버 비용 없이 WebRTC(PeerJS)와 브라우저 멀티탭(BroadcastChannel)을 동시에 지원해요. 빈 슬롯은 AI 봇이 자동으로 채워 최대 8명이 함께 달립니다.
+        💡 교실 서버(선생님 컴퓨터)로 접속하면 서버를 거쳐, 아니면 기기끼리 직접(P2P) 연결돼요. 방장이 경기를 계산하고(아이템 효과 포함) 참가자에게 나눠 줘서 조작으로 결과를 바꿀 수 없어요. 빈자리는 AI가 채워 최대 8명이 함께 달려요.
       </p>
     </div>
     <div class="panel" style="display:flex;flex-direction:column;overflow:auto">
@@ -365,6 +375,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
       <h3>설정</h3>
       <label class="opt"><input type="checkbox" id="optAuto"> 휴대폰 자동 가속</label>
       <label class="opt"><input type="checkbox" id="optMirror"> 백미러 표시 (PC)</label>
+      <label class="opt"><input type="checkbox" id="optUnlock"> 모든 맵 열기 (잠금 없이 고르기)</label>
       <label class="opt">3D 그래픽 품질 <select id="optDot"><option value="0">표준 3D</option><option value="1">고화질 3D</option><option value="2">울트라 카트 3D</option></select></label>
       <label class="opt"><input type="checkbox" id="optBgm"> 배경 음악 (트랙마다 다른 테마곡)</label>
       <label class="opt">음악 볼륨 <input type="range" id="volMusic" min="0" max="1" step="0.05"></label>
@@ -372,7 +383,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
       <h3>조작 (키보드)</h3>
       <p><kbd>↑</kbd> 가속 <kbd>↓</kbd> 브레이크/후진 <kbd>←</kbd><kbd>→</kbd> 방향</p>
       <p><kbd>SHIFT</kbd> + 방향키를 함께 누르면 드리프트 (스치듯 짧게 누른 SHIFT로는 발동하지 않아요). 드리프트 중 안쪽 방향키를 누르면 더 깊게, 떼면 완만하게, 반대 방향키(카운터)를 누르면 빠르게 똑바로 펴져요.</p>
-      <p><kbd>CTRL</kbd> 또는 <kbd>SPACE</kbd>: 부스터/아이템 사용</p>
+      <p><kbd>CTRL</kbd>: 부스터/아이템 사용 · <kbd>SPACE</kbd>: 점프 (점액·장애물을 넘어요)</p>
       <p><kbd>ALT</kbd> 또는 <kbd>Z</kbd>: 아이템 순서 교체</p>
       <p><kbd>X</kbd> 또는 <kbd>E</kbd>: 익시드(EXCEED) 발동</p>
       <p><kbd>R</kbd> 트랙으로 복귀 <kbd>ESC</kbd> 일시정지 <kbd>M</kbd> 소리</p>
@@ -452,23 +463,19 @@ const KARTS=[
 {name:'머슬 V8',unit:'근수축',shape:'muscle',c1:'#d62828',c2:'#fcbf49',s:[8,5,4,4,9],d:'근섬유 엔진의 묵직한 파워카'},
 {name:'혈소판 글라이더',unit:'혈액 응고',shape:'plate',c1:'#ffb703',c2:'#fb8500',s:[6,6,7,8,3],d:'납작한 판 모양, 미끄러지듯 드리프트'},
 ];
-/* ================= 아이템 15 ================= */
+/* ================= 아이템 10 (생명과학 개념) ================= */
+//  공격 4 · 방어 3 · 이동 3. 효과는 방장(서버 역할) 쪽 계산으로만 정해져 온라인에서 조작할 수 없음
 const ITEMS=[
-{id:'atp',name:'ATP 부스터',c:'#ff7b00',d:'세포 호흡으로 만든 ATP를 터뜨려 순간 가속!'},
-{id:'adre',name:'아드레날린',c:'#ff2e63',d:'교감 신경 흥분! 더 강하고 긴 부스터.'},
-{id:'missile',name:'바이러스 미사일',c:'#7b2cbf',d:'바로 앞 카트를 추적해 감염(스핀)시켜요.'},
-{id:'shield',name:'항생제 실드',c:'#00b4d8',d:'공격을 1회 막아 주는 보호막.'},
-{id:'mucus',name:'점액 웅덩이',c:'#7cb518',d:'뒤에 점액을 뿌려 밟은 카트를 미끄러뜨려요.'},
-{id:'bomb',name:'백혈구 포획탄',c:'#90e0ef',d:'앞으로 던지면 주변 카트를 식세포 작용으로 가둬요.'},
-{id:'toxin',name:'신경 독소',c:'#3d0066',d:'1등 카트의 신경 전달을 마비시켜요.'},
-{id:'cloud',name:'히스타민 구름',c:'#ff85a1',d:'앞 카트들의 시야를 염증 구름으로 가려요.'},
-{id:'magnet',name:'수용체 자석',c:'#f72585',d:'앞 카트의 수용체에 결합해 끌려가요.'},
-{id:'crispr',name:'CRISPR 가위',c:'#4cc9f0',d:'앞 카트들의 아이템 유전자를 잘라내요.'},
-{id:'clot',name:'혈전 장벽',c:'#9d0208',d:'혈소판이 뭉친 벽을 뒤에 설치해요.'},
-{id:'vaccine',name:'백신',c:'#2ec4b6',d:'4초간 모든 공격에 면역 + 가속.'},
-{id:'storm',name:'사이토카인 폭풍',c:'#ff9f1c',d:'주변 카트를 강력한 면역 반응으로 날려요.'},
-{id:'osmo',name:'삼투 쇼크',c:'#4361ee',d:'앞 카트들이 탈수되어 3초간 느려져요.'},
-{id:'hormone',name:'호르몬 교란',c:'#b5179e',d:'바로 앞 카트의 좌우 조작이 반대가 돼요.'},
+{id:'missile',name:'바이러스 공격',c:'#7b2cbf',kind:'공격',d:'앞 카트를 쫓아가 감염시켜요. 맞으면 잠깐 느려져요.'},
+{id:'mucus',name:'세균 점액',c:'#7cb518',kind:'공격',d:'뒤에 끈적한 점액 지대를 깔아요. 밟으면 핸들이 마구 흔들려요.'},
+{id:'storm',name:'신경 자극',c:'#ffd60a',kind:'공격',d:'주변 카트에 활동 전위 전기 충격! 잠깐 움직이지 못해요.'},
+{id:'osmo',name:'효소 분해',c:'#4361ee',kind:'공격',d:'소화 효소가 바로 앞 카트의 에너지를 분해해 3초간 느려져요.'},
+{id:'shield',name:'세포막 보호막',c:'#00b4d8',kind:'방어',d:'인지질 이중층 보호막이 6초 동안 모든 공격을 막아요.'},
+{id:'wbc',name:'백혈구 방어',c:'#e9f5ff',kind:'방어',d:'백혈구가 날아오는 공격과 주변 점액을 식세포 작용으로 먹어 치워요.'},
+{id:'repair',name:'DNA 복구',c:'#3a86ff',kind:'방어',d:'손상된 DNA를 복구해 모든 상태 이상을 풀고 잠깐 면역이 돼요.'},
+{id:'atp',name:'ATP 부스터',c:'#ff7b00',kind:'이동',d:'세포 호흡으로 만든 ATP를 터뜨려 강하게 순간 가속!'},
+{id:'mito',name:'미토콘드리아 에너지',c:'#f77f00',kind:'이동',d:'미토콘드리아가 4초 동안 쉬지 않고 에너지를 공급해 계속 가속해요.'},
+{id:'photo',name:'광합성 에너지',c:'#38b000',kind:'이동',d:'8초 동안 부스터 발판·점프대에서 더 강한 부스터를 받아요 (빛에너지 충전).'},
 ];
 const ITEM_BY={};ITEMS.forEach(it=>ITEM_BY[it.id]=it);
 /* ================= 파츠 6종 & 펫 8종 (효과값: 아이템전 기준, 스피드전은 SPEED_GEAR 배율) ================= */
@@ -526,75 +533,293 @@ function genDNA(){const p=[];for(let x=-3;x<=3.01;x+=0.6)p.push([x,-0.85+0.35*Ma
 function genBrain(){const p=[];const N=54;for(let k=0;k<N;k++){const t=k/N*TAU,r=1+0.15*Math.sin(9*t);p.push([Math.cos(t)*3.3*r,Math.sin(t)*2.3*r]);}return p;}
 function genEight(){const p=[];const N=32;for(let k=0;k<N;k++){const t=0.55+k/N*TAU,d=1+Math.sin(t)**2;p.push([3.6*Math.cos(t)/d,2.9*Math.sin(t)*Math.cos(t)/d]);}return p;}
 
+function genRound(){const p=[];const N=36;for(let k=0;k<N;k++){const t=k/N*TAU,c=Math.cos(t),s=Math.sin(t);p.push([2.6*Math.sign(c)*Math.pow(Math.abs(c),0.55),1.5*Math.sign(s)*Math.pow(Math.abs(s),0.55)]);}return p;}
+function genTrefoil(){const p=[];const N=48;for(let k=0;k<N;k++){const t=k/N*TAU,r=2.2+0.75*Math.cos(3*t);p.push([Math.cos(t)*r,Math.sin(t)*r]);}return p;}
+function genBean(){const p=[];const N=40;for(let k=0;k<N;k++){const t=k/N*TAU,r=1+0.18*Math.cos(2*t)-0.3*Math.max(0,Math.sin(t))**3;p.push([Math.cos(t)*3.4*r,Math.sin(t)*2.2*r+0.4*Math.sin(3*t)]);}return p;}
+function genVolcano(){const p=[];const N=52;for(let k=0;k<N;k++){const t=k/N*TAU,r=2.4+0.5*Math.sin(5*t+0.6)+0.25*Math.cos(2*t);p.push([Math.cos(t)*r*1.25,Math.sin(t)*r*0.95]);}return p;}
+function genOrigin(){const p=[];const N=60;for(let k=0;k<N;k++){const t=k/N*TAU,r=2.5+0.45*Math.sin(4*t)+0.35*Math.sin(7*t+1);p.push([Math.cos(t)*r*1.3,Math.sin(t)*r]);}return p;}
 const TH=(sky,far,off,road,curb,sh,wall,line,deco,dc)=>({sky,far,off,road,curb,sh,wall,line,deco,dc});
+const WORLDS=[
+{name:'생태계 정글',en:'ECO JUNGLE',c:'#52b788',d:'울창한 나무와 거대한 버섯, 계곡과 폭포 사이로 먹이 사슬을 따라 달려요.'},
+{name:'세포 연구소',en:'CELL LAB',c:'#4cc9f0',d:'세포막 터널을 지나 미토콘드리아·소포체·핵 속까지! 세포소기관 사이를 질주해요.'},
+{name:'유전자의 세계',en:'GENE WORLD',c:'#9d4edd',d:'거대한 DNA 이중나선과 염색체, 돌연변이 연구 시설을 누비는 유전 트랙.'},
+{name:'생명의 바다',en:'LIFE OCEAN',c:'#00b4d8',d:'산호초 해저터널에서 혈관의 급류, 신경 회로와 심장 박동까지!'},
+{name:'진화의 대지',en:'EVOLUTION',c:'#f48c06',d:'공룡의 평원, 빙하기 절벽, 화산 지대를 지나 생명의 기원으로.'},
+];
+const DIFFN=['','입문','초급','중급','상급','최상급'];
 const MAPS=[
-{name:'세포막 서킷',unit:'세포의 구조',diff:1,laps:3,lapSec:51,hw:74,pads:3,
+{name:'생명의 숲',
+ world:0,
+ unit:'생태계',
+ diff:1,
+ laps:3,
+ lapSec:52,
+ hw:76,
+ pads:3,
+ song:'m3',
  pts:[[0,-1],[1.2,-1],[2,-0.6],[2,0.6],[1.2,1],[-1.2,1],[-2,0.6],[-2,-0.6],[-1.2,-1]],
- th:TH(['#5fb8ff','#d4f0ff'],'#ffb3c6',['#8fdcc8','#7dcfb9'],['#868aa3','#7f839c'],['#ff5d8f','#ffffff'],['#ffe5a8','#f5d68c'],['#ffd166','#c99700'],'#ffe14d',['lipid','protein'],['#ffd166','#ff5d8f']),
- fact:'세포막은 인지질 이중층과 막단백질로 이루어져 있고, 물질의 출입을 선택적으로 조절하는 선택적 투과성을 가져요.'},
-{name:'혈관 순환로',unit:'순환계',diff:1,laps:3,lapSec:52,hw:72,pads:3,
+ obs:[{k:'flow',n:4,v:55,spr:'animal',r:9}],
+ th:TH(["#7fd1ff", "#e3f7ff"],'#2d6a4f',["#5aa83c", "#4e9a34"],["#8a8170", "#837a69"],["#ffd166", "#3a5a40"],["#a3c27a", "#96b56e"],["#8b5e34", "#3a5a40"],'#fff3b0',["tree", "mushroom", "fern", "tree"],["#2d6a4f", "#e63946"]),
+ fact:'숲은 생산자(식물) → 1차 소비자 → 2차 소비자로 이어지는 먹이 사슬과, 분해자(버섯·세균)가 함께 이루는 생태계예요. 길을 건너는 동물을 조심!'},
+{name:'먹이사슬 협곡',
+ world:0,
+ unit:'생태계',
+ diff:2,
+ laps:3,
+ lapSec:54,
+ hw:72,
+ pads:3,
+ song:'m1',
+ hill:1.3,
  pts:[[0,-1],[1.3,-1.1],[2.2,-0.4],[2,0.7],[1,1.05],[0.3,0.55],[-0.3,0.55],[-1,1.05],[-2,0.7],[-2.2,-0.4],[-1.3,-1.1]],
- obs:[{k:'flow',n:6,v:75,spr:'rbc',r:9}],
- th:TH(['#ff7c8a','#ffe0e3'],'#9d0208',['#e35d6a','#d44f5d'],['#6c6385','#665d7e'],['#ffffff','#ff4d6d'],['#ffb3c1','#ffa3b5'],['#ff99ac','#c9184a'],'#ffd6e0',['rbc','platelet'],['#e63946','#ffccd5']),
- fact:'혈액은 심장 → 동맥 → 모세 혈관 → 정맥 → 심장 순서로 순환해요. 적혈구는 헤모글로빈으로 산소를 운반해요.'},
-{name:'미토콘드리아 크리스타',unit:'세포 호흡',diff:2,laps:3,lapSec:58,hw:70,pads:4,
+ obs:[{k:'flow',n:5,v:80,spr:'animal',r:10},{k:'osc',at:[0.3,0.62],amp:0.7,per:2.6,spr:'log',r:11}],
+ th:TH(["#8fd3ff", "#fef3d6"],'#9c6644',["#b5835a", "#a7764e"],["#857a6b", "#7f7465"],["#ffffff", "#bc6c25"],["#d4a373", "#c99766"],["#7f5539", "#4a2f1d"],'#fefae0',["rock", "tree", "fern", "rock"],["#6b4226", "#52b788"]),
+ fact:'먹이 사슬이 여러 개 얽혀 먹이 그물을 이뤄요. 에너지는 먹이 사슬을 따라 이동하면서 단계마다 약 90%가 열로 빠져나가요. 굴러오는 쓰러진 나무를 피하세요!'},
+{name:'습지의 미로',
+ world:0,
+ unit:'생태계',
+ diff:3,
+ laps:2,
+ lapSec:86,
+ hw:64,
+ pads:4,
+ song:'m4',
+ pts:[[-1.5,-1.75],[0,-1.85],[1.8,-1.75],[2.7,-1.25],[1.8,-0.85],[0,-1.0],[-1.8,-0.85],[-2.7,-0.45],[-1.8,-0.05],[0,-0.2],[1.8,-0.05],[2.7,0.35],[1.8,0.75],[0,0.6],[-1.8,0.75],[-2.7,1.15],[-1.8,1.55],[0,1.4],[1.8,1.55],[3.0,1.7],[3.8,0.8],[3.9,-0.6],[3.6,-2.0],[2.6,-2.75],[0,-2.9],[-2.4,-2.75],[-3.2,-2.3],[-2.6,-1.8]],
+ obs:[{k:'osc',at:[0.12,0.33,0.55,0.77],amp:0.7,per:2.4,spr:'log',r:10}],
+ slow:[[0.2,0.24],[0.48,0.52],[0.8,0.84]],
+ th:TH(["#a3d9c9", "#eefaf5"],'#40916c',["#52796f", "#4a6f65"],["#7a7f74", "#74796e"],["#ffffff", "#2d6a4f"],["#95d5b2", "#84c7a3"],["#6c584c", "#2d6a4f"],'#f1faee',["fern", "mushroom", "tree", "rock"],["#1b4332", "#b7e4c7"]),
+ fact:'습지는 물이 고여 있는 땅으로, 물을 깨끗하게 거르고 많은 생물에게 서식지를 제공해 "지구의 콩팥"이라고도 불려요. 갈색 진흙 구간은 속도가 줄어요!'},
+{name:'포식자의 둥지',
+ world:0,
+ unit:'생태계',
+ diff:4,
+ laps:3,
+ lapSec:60,
+ hw:62,
+ pads:4,
+ song:'m7',
+ hill:1.3,
  pts:[[-1.5,-1],[0,-1.05],[1.5,-1],[2.6,-0.7],[2.8,0.3],[2.2,1.0],[1.6,0.0],[1.0,1.0],[0.4,0.0],[-0.2,1.0],[-0.8,0.0],[-1.4,1.0],[-2.4,0.8],[-2.7,-0.2],[-2.4,-0.85]],
- th:TH(['#ffc04d','#fff1c9'],'#e76f51',['#f4a259','#e8934a'],['#6b6f86','#656980'],['#ffffff','#e76f51'],['#ffe0a8','#f6d08a'],['#ffd166','#bc6c25'],'#fff3b0',['atp','cell'],['#ffbe0b','#fb5607']),
- fact:'미토콘드리아 내막이 접힌 크리스타는 표면적을 넓혀 세포 호흡(산화적 인산화)으로 ATP를 많이 만들 수 있게 해요.'},
-{name:'엽록체 그라나',unit:'광합성',diff:2,laps:3,lapSec:58,hw:70,pads:3,
+ obs:[{k:'flow',n:6,v:-95,spr:'animal',r:10},{k:'osc',at:[0.2,0.45,0.7,0.9],amp:0.75,per:2,spr:'log',r:10}],
+ th:TH(["#6aa84f", "#e9f5db"],'#1b4332',["#386641", "#2f5a37"],["#6f6a60", "#69645a"],["#ffd60a", "#1b4332"],["#6a994e", "#5f8b45"],["#582f0e", "#1b4332"],'#ffe066',["tree", "tree", "rock", "fern"],["#081c15", "#d00000"]),
+ fact:'포식자는 먹이 개체 수를 조절해 생태계 평형을 유지해요. 포식자가 사라지면 피식자가 늘었다가 먹이 부족으로 다시 줄어드는 변화가 생겨요. 마주 달려오는 포식자를 조심!'},
+{name:'세포막 터널',
+ world:1,
+ unit:'세포',
+ diff:1,
+ laps:3,
+ lapSec:52,
+ hw:76,
+ pads:3,
+ song:'m0',
+ gen:genRound,
+ obs:[{k:'flow',n:4,v:60,spr:'vesicle',r:9}],
+ th:TH(["#9fd8ff", "#eaf7ff"],'#ffb3c6',["#cfe8ef", "#bfdde6"],["#7d8597", "#777f91"],["#ff5d8f", "#ffffff"],["#ffe5a8", "#f5d68c"],["#ffd166", "#c99700"],'#ffe14d',["lipid", "protein", "vesicle", "lipid"],["#ffd166", "#ff5d8f"]),
+ fact:'세포막은 인지질 이중층과 막단백질로 이루어져 있고, 물질 출입을 선택적으로 조절해요(선택적 투과성). 막을 통과하는 소포를 피하세요!'},
+{name:'미토콘드리아 서킷',
+ world:1,
+ unit:'세포',
+ diff:2,
+ laps:3,
+ lapSec:58,
+ hw:70,
+ pads:4,
+ song:'m2',
  pts:[[-1,-1.2],[0.5,-1.3],[1.8,-1],[2.4,-0.2],[1.8,0.2],[2.4,0.75],[1.8,1.35],[0.5,1.15],[0,0.5],[-0.5,1.15],[-1.8,1.35],[-2.5,0.4],[-2.2,-0.6]],
- th:TH(['#7fd8ff','#e6fbff'],'#2d6a4f',['#6cc551','#5db544'],['#727190','#6c6b8a'],['#ffffff','#52b788'],['#d9ed92','#cfe57e'],['#b5e48c','#2d6a4f'],'#fffbe0',['granum','leafcell'],['#38b000','#ccff33']),
- fact:'엽록체의 틸라코이드가 쌓인 그라나에서 명반응이, 스트로마에서 탄소 고정 반응(캘빈 회로)이 일어나요.'},
-{name:'소화관 대장정',unit:'소화계',diff:3,laps:2,lapSec:88,hw:64,pads:4,
+ obs:[{k:'osc',at:[0.25,0.5,0.75],amp:0.65,per:2.6,spr:'protein',r:10}],
+ th:TH(["#ffc04d", "#fff1c9"],'#e76f51',["#f4a259", "#e8934a"],["#6b6f86", "#656980"],["#ffffff", "#e76f51"],["#ffe0a8", "#f6d08a"],["#ffd166", "#bc6c25"],'#fff3b0',["mitoch", "atp", "protein", "atp"],["#ffbe0b", "#fb5607"]),
+ fact:'미토콘드리아는 포도당을 분해해 ATP를 만드는 세포 호흡 장소예요. 안쪽 막이 주름진 크리스타 덕분에 표면적이 넓어 ATP를 많이 만들어요.'},
+{name:'소포체 롤러코스터',
+ world:1,
+ unit:'세포',
+ diff:3,
+ laps:2,
+ lapSec:80,
+ hw:64,
+ pads:6,
+ song:'m9',
+ hill:1.9,
+ pts:[[-1.5,-0.5],[0,-0.45],[1.5,-0.5],[3,-0.5],[4.3,-1.1],[5.0,-0.7],[5.2,0.2],[4.6,0.9],[3.8,0.6],[2,0.55],[0.5,0.6],[-1,0.55],[-2,1.2],[-2.8,0.9],[-3.3,1.5],[-3.9,0.8],[-3.5,0],[-4.0,-0.8],[-3.2,-1.3],[-2.5,-0.9],[-2.2,-0.4]],
+ obs:[{k:'flow',n:5,v:85,spr:'vesicle',r:9}],
+ th:TH(["#b8f2a0", "#f1ffe9"],'#4ea8de',["#ffd6a5", "#f4c890"],["#77779a", "#717194"],["#ffffff", "#ff9f1c"],["#fdffb6", "#f2f4a0"],["#ffe8a3", "#e85d04"],'#ffffff',["ribo", "vesicle", "protein", "ribo"],["#9bf6ff", "#ffadad"]),
+ fact:'소포체는 핵막과 이어진 막 구조예요. 리보솜이 붙은 거친면 소포체는 단백질을, 매끈면 소포체는 지질을 만들어요. 오르락내리락 롤러코스터 구간!'},
+{name:'핵 속의 질주',
+ world:1,
+ unit:'세포',
+ diff:4,
+ laps:2,
+ lapSec:92,
+ hw:60,
+ pads:4,
+ song:'m13',
+ gen:genBrain,
+ obs:[{k:'osc',at:[0.1,0.3,0.5,0.7,0.9],amp:0.75,per:2.2,spr:'enzyme',r:9},{k:'flow',n:4,v:-100,spr:'protein',r:9}],
+ th:TH(["#5a00a8", "#c77dff"],'#3c096c',["#cdb4db", "#bfa3cf"],["#73708c", "#6d6a86"],["#ffffff", "#7400b8"],["#e0c3fc", "#d4b2f5"],["#e0aaff", "#5a189a"],'#ffffff',["chromo", "helix", "protein", "chromo"],["#ffd60a", "#e0aaff"]),
+ fact:'핵에는 유전 물질인 DNA가 들어 있고, 핵막의 핵공으로 mRNA 같은 물질이 드나들어요. 핵 속을 오가는 효소를 피하세요!'},
+{name:'DNA 이중나선',
+ world:2,
+ unit:'유전',
+ diff:3,
+ laps:3,
+ lapSec:58,
+ hw:64,
+ pads:3,
+ song:'m8',
+ gen:genDNA,
+ obs:[{k:'osc',at:[0.08,0.2,0.32,0.58,0.7,0.82],amp:0.7,per:2.6,spr:'base',r:9}],
+ th:TH(["#10002b", "#5a189a"],'#7209b7',["#3c4fd4", "#3445c4"],["#8d99ae", "#8692a8"],["#ffbe0b", "#3a86ff"],["#4c5fe0", "#4457d6"],["#ff006e", "#8338ec"],'#ffffff',["base", "helix", "base", "helix"],["#ffbe0b", "#ff006e"]),
+ fact:'DNA는 두 가닥이 꼬인 이중 나선 구조예요. A는 T와, G는 C와 상보적으로 결합해요. 움직이는 염기를 피하세요!'},
+{name:'염색체 회전로',
+ world:2,
+ unit:'유전',
+ diff:3,
+ laps:3,
+ lapSec:58,
+ hw:64,
+ pads:3,
+ song:'m14',
+ gen:genFlower,
+ obs:[{k:'osc',at:[0.15,0.4,0.65,0.9],amp:0.7,per:2.4,spr:'chromo',r:10}],
+ th:TH(["#ff9e94", "#faf3dd"],'#5e6472',["#b8f2e6", "#a6e3d6"],["#6e6a8a", "#686484"],["#ffffff", "#ff6b6b"],["#faf3dd", "#efe6c8"],["#ffa69e", "#5e6472"],'#ffffff',["chromo", "helix", "base", "chromo"],["#ff6b6b", "#5e6472"]),
+ fact:'DNA는 히스톤 단백질을 감아 뉴클레오솜을 이루고, 세포 분열 때 꼬이고 응축되어 염색체가 돼요. 사람의 체세포에는 23쌍(46개)의 염색체가 있어요.'},
+{name:'돌연변이 미궁',
+ world:2,
+ unit:'유전',
+ diff:4,
+ laps:3,
+ lapSec:62,
+ hw:60,
+ pads:3,
+ song:'m12',
+ pts:[[-1,-1.6],[1,-1.7],[2.4,-1],[2.6,0.4],[1.8,1.5],[0.2,1.7],[-0.6,1.0],[0.2,0.4],[1.2,0.3],[1.3,-0.5],[0.2,-0.7],[-1.0,-0.2],[-1.6,0.9],[-2.4,1.4],[-3.0,0.3],[-2.6,-1.2]],
+ obs:[{k:'osc',at:[0.12,0.3,0.45,0.6,0.75,0.9],amp:0.7,per:2.2,spr:'virus',r:9},{k:'flow',n:3,v:70,spr:'lab',r:9}],
+ th:TH(["#47c78f", "#c7f9cc"],'#22577a',["#80ed99", "#6edc88"],["#6f7590", "#69708a"],["#ffffff", "#38a3a5"],["#c7f9cc", "#b4f0bb"],["#c7f9cc", "#22577a"],'#ffffff',["lab", "virus", "helix", "lab"],["#ffffff", "#8338ec"]),
+ fact:'돌연변이는 DNA 염기 서열이나 염색체에 생긴 변화예요. 대부분은 해롭거나 영향이 없지만, 일부는 생물의 다양성과 진화의 바탕이 돼요.'},
+{name:'진화의 절벽',
+ world:2,
+ unit:'유전',
+ diff:5,
+ laps:2,
+ lapSec:84,
+ hw:56,
+ pads:4,
+ song:'m11',
+ hill:2.0,
+ pts:[[-1.2,-2.2],[0.6,-2.4],[1.6,-1.9],[1.4,-1.1],[0.5,-0.8],[0.38,0.5],[0.35,2.2],[0,2.9],[-0.35,2.2],[-0.38,0.5],[-0.8,-0.6],[-1.6,-0.6],[-2.3,-1.4]],
+ obs:[{k:'osc',at:[0.2,0.4,0.6,0.8],amp:0.8,per:2,spr:'base',r:9}],
+ th:TH(["#1d1d3b", "#4a4e69"],'#f2cc8f',["#3d405b", "#363952"],["#81839a", "#7b7d94"],["#f2cc8f", "#e07a5f"],["#4a4e69", "#444862"],["#f2cc8f", "#e07a5f"],'#f4f1de',["helix", "base", "chromo", "helix"],["#f2cc8f", "#81b29a"]),
+ fact:'자연 선택: 환경에 유리한 변이를 가진 개체가 더 많이 살아남아 자손을 남기고, 이 과정이 오래 쌓이면 진화가 일어나요. 좁고 높은 절벽 길!'},
+{name:'산호초 해저터널',
+ world:3,
+ unit:'생명의 바다',
+ diff:1,
+ laps:3,
+ lapSec:56,
+ hw:74,
+ pads:3,
+ song:'m6',
+ pts:[[-2.08,0.3],[-2.08,-0.9],[-1.8,-1.37],[-0.3,-2.23],[0.3,-2.23],[1.8,-1.37],[2.08,-0.85],[1.0,-0.45],[0.35,0],[1.0,0.45],[2.08,0.85],[1.8,1.37],[0.3,2.23],[-0.3,2.23],[-1.8,1.37],[-2.08,0.9]],
+ obs:[{k:'flow',n:5,v:50,spr:'jelly',r:9}],
+ th:TH(["#0096c7", "#90e0ef"],'#023e8a',["#e9d8a6", "#dfc98f"],["#7a8a9a", "#748494"],["#ffffff", "#ff7b9c"],["#f6e7b4", "#ecdca3"],["#48cae4", "#0077b6"],'#ffffff',["coral", "kelp", "shell", "coral"],["#ff7b9c", "#ffd166"]),
+ fact:'산호는 동물이지만 몸속에 사는 조류(갈충조)와 공생하며 광합성 산물을 얻어요. 산호초는 바다 생물의 약 25%가 사는 풍부한 생태계예요.'},
+{name:'혈관의 급류',
+ world:3,
+ unit:'생명의 바다',
+ diff:3,
+ laps:2,
+ lapSec:88,
+ hw:62,
+ pads:4,
+ song:'m5',
  pts:[[-1.5,-2],[0.5,-2.05],[2,-2],[2.8,-1.5],[2.2,-0.95],[0.5,-0.9],[-1.0,-0.95],[-1.8,-0.5],[-1.0,-0.1],[0.5,-0.1],[1.6,-0.05],[2.2,0.35],[1.6,0.75],[0,0.7],[-1.4,0.8],[-2.2,1.4],[-3.0,0.8],[-3.1,-0.6],[-2.8,-1.7]],
- obs:[{k:'flow',n:5,v:60,spr:'bolus',r:11}],slow:[[0.3,0.345],[0.6,0.645]],
- th:TH(['#ffb5bb','#fff0f1'],'#b56576',['#f4978e','#e8877e'],['#7a6a80','#74647a'],['#ffffff','#e5989b'],['#ffd6a5','#f8c98c'],['#ffcad4','#9d4459'],'#fff1e6',['villi','bolus'],['#ffb4a2','#e5989b']),
- fact:'음식물은 입 → 식도 → 위 → 소장 → 대장을 지나요. 소장의 융털은 표면적을 넓혀 영양소 흡수를 도와요. (초록 구간은 점액 지대: 감속!)'},
-{name:'두근두근 심장',unit:'순환계',diff:3,laps:3,lapSec:60,hw:64,pads:4,beat:true,
+ obs:[{k:'flow',n:7,v:95,spr:'rbc',r:10}],
+ slow:[[0.3,0.34],[0.62,0.66]],
+ th:TH(["#ff7c8a", "#ffe0e3"],'#9d0208',["#e35d6a", "#d44f5d"],["#6c6385", "#665d7e"],["#ffffff", "#ff4d6d"],["#ffb3c1", "#ffa3b5"],["#ff99ac", "#c9184a"],'#ffd6e0',["rbc", "platelet", "rbc", "vesicle"],["#e63946", "#ffccd5"]),
+ fact:'혈액은 심장 → 동맥 → 모세 혈관 → 정맥 → 심장으로 순환해요. 동맥은 압력이 높아 벽이 두껍고 탄력이 있어요. 빠르게 흐르는 적혈구 급류!'},
+{name:'신경 신호 회로',
+ world:3,
+ unit:'생명의 바다',
+ diff:4,
+ laps:3,
+ lapSec:70,
+ hw:60,
+ pads:5,
+ song:'m9',
+ gen:genTrefoil,
+ obs:[{k:'flow',n:5,v:-110,spr:'spark',r:8},{k:'osc',at:[0.17,0.5,0.83],amp:0.75,per:1.8,spr:'neuron',r:9}],
+ th:TH(["#03045e", "#0077b6"],'#90e0ef',["#023e8a", "#03307a"],["#8d99ae", "#8692a8"],["#ffd60a", "#00b4d8"],["#0353a4", "#034a96"],["#ffd60a", "#0077b6"],'#ffffff',["neuron", "spark", "jelly", "neuron"],["#ffd60a", "#90e0ef"]),
+ fact:'뉴런은 자극을 받으면 활동 전위(전기 신호)를 만들어 축삭을 따라 전달하고, 시냅스에서 신경 전달 물질로 다음 뉴런에 신호를 넘겨요. 마주 오는 신경 신호를 피하세요!'},
+{name:'심장의 박동',
+ world:3,
+ unit:'생명의 바다',
+ diff:5,
+ laps:3,
+ lapSec:62,
+ hw:58,
+ pads:4,
+ song:'m5',
+ beat:true,
  pts:[[1.65,0.75],[0.8,1.5],[0,2.1],[-0.8,1.5],[-1.65,0.75],[-2.3,-0.2],[-2.2,-1.1],[-1.5,-1.6],[-0.7,-1.4],[0,-0.2],[0.7,-1.4],[1.5,-1.6],[2.2,-1.1],[2.3,-0.2]],
  obs:[{k:'osc',at:[0.3,0.55,0.8],amp:0.75,per:1.8,spr:'valve',r:10}],
- th:TH(['#ff5c6c','#ffd6d6'],'#7f0e1a',['#d62839','#c41f30'],['#5e5470','#584e6a'],['#ffffff','#ff4d6d'],['#ff8fa3','#ff7a92'],['#ffb3c1','#800f2f'],'#ffe5ec',['valve','rbc'],['#ff4d6d','#ffccd5']),
- fact:'심장은 2심방 2심실! 심장 박동에 맞춰 판막이 열리고 닫히며 혈액이 거꾸로 흐르는 것을 막아요. 부스터 발판은 박동할 때만 작동해요.'},
-{name:'폐포 버블',unit:'호흡계',diff:3,laps:3,lapSec:58,hw:64,pads:3,
- gen:genFlower,obs:[{k:'flow',n:6,v:90,spr:'o2',r:8}],
- th:TH(['#a9d6ff','#eef6ff'],'#ffafcc',['#ffc8dd','#f7b7cf'],['#7b7f9a','#757994'],['#ffffff','#ff8fab'],['#e2ece9','#d5e2de'],['#ffe5ec','#c9184a'],'#ffffff',['alv','o2'],['#ffafcc','#bde0fe']),
- fact:'폐포는 수많은 작은 공기주머니로 표면적이 매우 넓어요. 폐포와 모세 혈관 사이에서 확산으로 O₂와 CO₂가 교환돼요.'},
-{name:'네프론 헤어핀',unit:'배설계',diff:4,laps:2,lapSec:84,hw:62,pads:4,
- pts:[[-1.2,-2.2],[0.6,-2.4],[1.6,-1.9],[1.4,-1.1],[0.5,-0.8],[0.38,0.5],[0.35,2.2],[0,2.9],[-0.35,2.2],[-0.38,0.5],[-0.8,-0.6],[-1.6,-0.6],[-2.3,-1.4]],
- slow:[[0.47,0.52]],
- th:TH(['#90c8ff','#e9f4ff'],'#7b2cbf',['#cdb4db','#bfa3cf'],['#6d6a85','#67647f'],['#ffffff','#9d4edd'],['#e0c3fc','#d4b2f5'],['#e0aaff','#5a189a'],'#f3e8ff',['glom','drop'],['#c77dff','#90e0ef']),
- fact:'네프론은 사구체 → 보먼주머니 → 세뇨관(헨레 고리) → 집합관으로 이어져요. 여과·재흡수·분비로 오줌이 만들어져요.'},
-{name:'DNA 이중나선',unit:'유전',diff:4,laps:3,lapSec:58,hw:62,pads:3,
- gen:genDNA,obs:[{k:'osc',at:[0.08,0.2,0.32,0.58,0.7,0.82],amp:0.7,per:2.6,spr:'base',r:9}],
- th:TH(['#10002b','#5a189a'],'#7209b7',['#3c4fd4','#3445c4'],['#8d99ae','#8692a8'],['#ffbe0b','#3a86ff'],['#4c5fe0','#4457d6'],['#ff006e','#8338ec'],'#ffffff',['base','helix'],['#ffbe0b','#ff006e']),
- fact:'DNA는 두 가닥이 꼬인 이중 나선 구조예요. A는 T와, G는 C와 상보적으로 결합해요. 움직이는 염기를 피하세요!'},
-{name:'뉴런 시냅스',unit:'신경계',diff:3,laps:2,lapSec:80,hw:64,pads:7,
- pts:[[-1.5,-0.5],[0,-0.45],[1.5,-0.5],[3,-0.5],[4.3,-1.1],[5.0,-0.7],[5.2,0.2],[4.6,0.9],[3.8,0.6],[2,0.55],[0.5,0.6],[-1,0.55],[-2,1.2],[-2.8,0.9],[-3.3,1.5],[-3.9,0.8],[-3.5,0],[-4.0,-0.8],[-3.2,-1.3],[-2.5,-0.9],[-2.2,-0.4]],
- th:TH(['#1d1d3b','#4a4e69'],'#f2cc8f',['#3d405b','#363952'],['#81839a','#7b7d94'],['#f2cc8f','#e07a5f'],['#4a4e69','#444862'],['#f2cc8f','#e07a5f'],'#f4f1de',['neuron','spark'],['#f2cc8f','#81b29a']),
- fact:'말이집 신경에서는 랑비에 결절에서만 활동 전위가 생겨 흥분이 띄엄띄엄 빠르게 전달돼요(도약 전도). 축삭의 부스터 발판이 바로 그것!'},
-{name:'간 소엽',unit:'물질대사',diff:4,laps:3,lapSec:60,hw:58,pads:3,
- pts:[[-2.08,0.3],[-2.08,-0.9],[-1.8,-1.37],[-0.3,-2.23],[0.3,-2.23],[1.8,-1.37],[2.08,-0.85],[1.0,-0.45],[0.35,0],[1.0,0.45],[2.08,0.85],[1.8,1.37],[0.3,2.23],[-0.3,2.23],[-1.8,1.37],[-2.08,0.9]],
- obs:[{k:'osc',at:[0.15,0.62,0.88],amp:0.6,per:3,spr:'hepa',r:10}],
- th:TH(['#d4a373','#f3e9dc'],'#7f5539',['#9c6644','#8c5a3c'],['#7f7a8a','#797484'],['#ffffff','#b08968'],['#ddb892','#d2ab84'],['#e6ccb2','#7f5539'],'#fefae0',['hepa','cell'],['#b08968','#ede0d4']),
- fact:'간은 육각형 간소엽들로 이루어져 있어요. 독소 분해, 요소 합성, 글리코젠 저장 등 다양한 물질대사를 담당해요.'},
-{name:'골지체 미로',unit:'세포 소기관',diff:5,laps:2,lapSec:92,hw:58,pads:4,
- pts:[[-1.5,-1.75],[0,-1.85],[1.8,-1.75],[2.7,-1.25],[1.8,-0.85],[0,-1.0],[-1.8,-0.85],[-2.7,-0.45],[-1.8,-0.05],[0,-0.2],[1.8,-0.05],[2.7,0.35],[1.8,0.75],[0,0.6],[-1.8,0.75],[-2.7,1.15],[-1.8,1.55],[0,1.4],[1.8,1.55],[3.0,1.7],[3.8,0.8],[3.9,-0.6],[3.6,-2.0],[2.6,-2.75],[0,-2.9],[-2.4,-2.75],[-3.2,-2.3],[-2.6,-1.8]],
- obs:[{k:'flow',n:5,v:85,spr:'vesicle',r:9}],
- th:TH(['#b8f2a0','#f1ffe9'],'#4ea8de',['#ffd6a5','#f4c890'],['#77779a','#717194'],['#ffffff','#ff9f1c'],['#fdffb6','#f2f4a0'],['#ffe8a3','#e85d04'],'#ffffff',['vesicle','cell'],['#9bf6ff','#ffadad']),
- fact:'골지체는 납작한 주머니가 층층이 쌓인 구조로, 단백질을 가공·포장해 소낭에 담아 세포 밖으로 분비해요.'},
-{name:'림프절 방어선',unit:'면역',diff:4,laps:3,lapSec:62,hw:60,pads:3,
- pts:[[-1,-1.6],[1,-1.7],[2.4,-1],[2.6,0.4],[1.8,1.5],[0.2,1.7],[-0.6,1.0],[0.2,0.4],[1.2,0.3],[1.3,-0.5],[0.2,-0.7],[-1.0,-0.2],[-1.6,0.9],[-2.4,1.4],[-3.0,0.3],[-2.6,-1.2]],
- obs:[{k:'osc',at:[0.12,0.3,0.45,0.6,0.75,0.9],amp:0.7,per:2.2,spr:'virus',r:9}],
- th:TH(['#47c78f','#c7f9cc'],'#22577a',['#80ed99','#6edc88'],['#6f7590','#69708a'],['#ffffff','#38a3a5'],['#c7f9cc','#b4f0bb'],['#c7f9cc','#22577a'],'#ffffff',['wbc','virus'],['#ffffff','#8338ec']),
- fact:'림프절에서는 B 림프구와 T 림프구가 병원체(항원)를 만나 특이적 방어 작용이 시작돼요. 떠다니는 바이러스를 피하세요!'},
-{name:'대뇌 피질',unit:'신경계',diff:5,laps:2,lapSec:98,hw:56,pads:4,
- gen:genBrain,obs:[{k:'flow',n:5,v:-110,spr:'spark',r:8}],
- th:TH(['#5a00a8','#c77dff'],'#3c096c',['#f7a1c4','#ea92b6'],['#73708c','#6d6a86'],['#ffffff','#7400b8'],['#ffc6dd','#f7b7d2'],['#e0aaff','#5a189a'],'#ffffff',['neuron','spark'],['#ffd60a','#e0aaff']),
- fact:'대뇌 겉질(피질)은 주름(이랑과 고랑)이 많아 표면적이 넓어요. 감각·운동·연합 기능을 담당해요. 마주 오는 신경 신호를 조심!'},
-{name:'세포 분열',unit:'세포 분열',diff:5,laps:2,lapSec:92,hw:58,pads:4,cross:true,
- gen:genEight,obs:[{k:'osc',at:[0.12,0.22,0.38,0.62,0.72,0.88],amp:0.7,per:2.4,spr:'chromo',r:10},{k:'flow',n:3,v:70,spr:'vesicle',r:9}],
- th:TH(['#ff9e94','#faf3dd'],'#5e6472',['#b8f2e6','#a6e3d6'],['#6e6a8a','#686484'],['#ffffff','#ff6b6b'],['#faf3dd','#efe6c8'],['#ffa69e','#5e6472'],'#ffffff',['chromo','spindle'],['#ff6b6b','#5e6472']),
- fact:'체세포 분열은 전기 → 중기 → 후기 → 말기 순서! 중기에 염색체가 적도판에 배열되고, 후기에 방추사가 염색 분체를 양극으로 끌어당겨요.'},
+ th:TH(["#ff5c6c", "#ffd6d6"],'#7f0e1a',["#d62839", "#c41f30"],["#5e5470", "#584e6a"],["#ffffff", "#ff4d6d"],["#ff8fa3", "#ff7a92"],["#ffb3c1", "#800f2f"],'#ffe5ec',["valve", "rbc", "valve", "rbc"],["#ff4d6d", "#ffccd5"]),
+ fact:'심장은 2심방 2심실! 박동에 맞춰 판막이 열리고 닫히며 혈액이 거꾸로 흐르는 것을 막아요. 부스터 발판은 박동할 때만 작동해요.'},
+{name:'공룡의 평원',
+ world:4,
+ unit:'진화',
+ diff:3,
+ laps:3,
+ lapSec:64,
+ hw:66,
+ pads:3,
+ song:'m10',
+ gen:genBean,
+ obs:[{k:'flow',n:4,v:65,spr:'dino',r:14}],
+ th:TH(["#ffb347", "#ffe5b4"],'#9c6644',["#a3b18a", "#94a37b"],["#8a7f6a", "#847a64"],["#ffffff", "#bc6c25"],["#dda15e", "#d09553"],["#606c38", "#283618"],'#fefae0',["fern", "dino", "bone", "tree"],["#606c38", "#bc6c25"]),
+ fact:'공룡은 중생대에 번성했던 파충류예요. 화석은 생물이 살았던 시대와 환경을 알려 주는 진화의 증거예요. 거대한 공룡이 지나가요!'},
+{name:'빙하기 절벽',
+ world:4,
+ unit:'진화',
+ diff:4,
+ laps:2,
+ lapSec:92,
+ hw:60,
+ pads:4,
+ song:'m14',
+ cross:true,
+ hill:1.4,
+ gen:genEight,
+ obs:[{k:'osc',at:[0.12,0.3,0.7,0.88],amp:0.7,per:2.4,spr:'rock',r:10}],
+ ice:[[0.18,0.26],[0.5,0.58],[0.82,0.9]],
+ th:TH(["#a8dadc", "#f1faee"],'#457b9d',["#e8f1f8", "#d8e6f0"],["#8d99ae", "#8692a8"],["#ffffff", "#457b9d"],["#cfe1ee", "#c2d6e6"],["#a8dadc", "#1d3557"],'#ffffff',["ice", "rock", "bone", "ice"],["#caf0f8", "#457b9d"]),
+ fact:'빙하기에는 매머드처럼 두꺼운 털과 지방층으로 추위에 적응한 동물이 살았어요. 파란 빙판 구간은 미끄러워 핸들이 잘 안 먹혀요!'},
+{name:'화산의 유전자',
+ world:4,
+ unit:'진화',
+ diff:5,
+ laps:2,
+ lapSec:76,
+ hw:56,
+ pads:4,
+ song:'m13',
+ hill:1.6,
+ gen:genVolcano,
+ obs:[{k:'osc',at:[0.1,0.28,0.46,0.64,0.82],amp:0.8,per:1.9,spr:'rock',r:10}],
+ slow:[[0.36,0.4],[0.74,0.78]],
+ th:TH(["#3d0c02", "#f48c06"],'#370617',["#4a2c2a", "#3f2523"],["#6b6b6b", "#636363"],["#ffba08", "#370617"],["#6a040f", "#5c030d"],["#9d0208", "#370617"],'#ffba08',["volcano", "rock", "fern", "rock"],["#e85d04", "#ffba08"]),
+ fact:'화산 폭발이나 운석 충돌 같은 큰 환경 변화는 대멸종을 일으켰고, 살아남은 생물이 새로운 환경에 적응하며 다양하게 진화했어요. 떨어지는 바위를 조심!'},
+{name:'생명의 기원',
+ world:4,
+ unit:'진화',
+ diff:5,
+ laps:2,
+ lapSec:84,
+ hw:56,
+ pads:5,
+ song:'m6',
+ gen:genOrigin,
+ obs:[{k:'flow',n:5,v:-90,spr:'egg',r:9},{k:'osc',at:[0.2,0.45,0.7,0.95],amp:0.75,per:2.2,spr:'stromat',r:10}],
+ th:TH(["#2b2d42", "#8d99ae"],'#06d6a0',["#1b9aaa", "#178b9a"],["#7c7f8e", "#767988"],["#06d6a0", "#ffffff"],["#118ab2", "#0f7ea3"],["#06d6a0", "#073b4c"],'#ffffff',["stromat", "egg", "coral", "kelp"],["#06d6a0", "#ffd166"]),
+ fact:'원시 지구의 바다에서 간단한 유기물이 만들어지고, 막에 둘러싸인 원시 세포가 생겨났다고 여겨져요. 남세균이 만든 스트로마톨라이트는 가장 오래된 생명의 흔적 중 하나예요.'}
 ];
 
 /* ================= 트랙 빌드 ================= */
@@ -629,8 +854,9 @@ function buildTrack(map){
   // 아이템 박스 줄
   tr.boxRows=[0.14,0.38,0.62,0.85].map(f=>{const c=Math.round(f*N);let best=c,bv=9;for(let o=-25;o<=25;o++){const i=(c+o+N)%N;if(S[i]<bv&&tr.pads.every(p=>Math.abs(p.s-i*sp)>120)){bv=S[i];best=i;}}return best*sp;});
   tr.slows=(map.slow||[]).map(([a,b])=>[a*len,b*len]);
+  tr.ices=(map.ice||[]).map(([a,b])=>[a*len,b*len]);   // 빙판: 미끄러운 구간
   // 3D 고저차(언덕/경사/고가 구간) 프로파일 생성 (출발선 부근은 완만하게 0으로 수렴)
-  const Z=new Float32Array(N),mi=MAPS.indexOf(map),amp=11+(map.diff||2)*3.5;
+  const Z=new Float32Array(N),mi=MAPS.indexOf(map),amp=(11+(map.diff||2)*3.5)*(map.hill||1);
   const f1=2+(mi%3),f2=3+((mi+1)%4),ph1=mi*1.1,ph2=mi*2.3;
   for(let i=0;i<N;i++){
     const u=i/N,t=u*TAU;
@@ -684,7 +910,8 @@ function buildGrid(tr){
       const idx=gy*gw+gx,d=Math.sqrt(d2);if(d<Math.abs(LAT[idx])){const sl=((wx-ax)*(-ey)+(wy-ay)*ex)/l;LAT[idx]=sl>=0?d:-d;PROG[idx]=(i+u)*sp;}}}}
   for(let idx=0;idx<G;idx++){const l=LAT[idx];if(Math.abs(l)>=hw)continue;const p=PROG[idx];
     for(const pd of tr.pads)if(p>=pd.s&&p<=pd.s+pd.len&&Math.abs(l-pd.lat)<pd.w)FEAT[idx]=1;
-    for(const s of tr.slows)if(p>=s[0]&&p<=s[1])FEAT[idx]=2;}
+    for(const s of tr.slows)if(p>=s[0]&&p<=s[1])FEAT[idx]=2;
+    for(const s of tr.ices||[])if(p>=s[0]&&p<=s[1])FEAT[idx]=3;}
   tr.grid={minX,minY,gw,gh,LAT,PROG,FEAT};
 }
 function featAt(tr,x,y){const g=tr.grid,gx=((x-g.minX)/CS)|0,gy=((y-g.minY)/CS)|0;if(gx<0||gy<0||gx>=g.gw||gy>=g.gh)return 0;return g.FEAT[gy*g.gw+gx];}
@@ -704,8 +931,9 @@ function checkSpacing(tr){const {N,X,Y,hw,sp}=tr,minD=2*(hw+40),skip=Math.ceil(m
   return {worst,need:minD,at,ok:worst>=minD};}
 
 /* ================= 레이스 ================= */
-const W_FRONT={atp:3,adre:.5,missile:2,shield:4,mucus:4,bomb:2.5,toxin:0,cloud:2,magnet:.3,crispr:0,clot:3,vaccine:.3,storm:1,osmo:0,hormone:1};
-const W_BACK={atp:5,adre:3,missile:3,shield:1,mucus:1,bomb:2,toxin:2.5,cloud:1.5,magnet:3,crispr:1.2,clot:.5,vaccine:1.8,storm:1.5,osmo:1,hormone:1.5};
+// 순위에 따른 아이템 확률: 앞쪽은 방어·견제, 뒤쪽은 공격·가속 위주 (1등은 효소 분해·바이러스가 안 나옴)
+const W_FRONT={missile:0.6,mucus:4,storm:1.5,osmo:0,shield:4,wbc:3,repair:1.5,atp:3,mito:0.6,photo:1.5};
+const W_BACK={missile:3.5,mucus:0.8,storm:2,osmo:2.5,shield:1,wbc:1.2,repair:1.6,atp:4,mito:3,photo:1.8};
 
 function makeStats(mode,ki,ci,F){
   let st;
@@ -733,10 +961,11 @@ function makeRace(o){
     // 파츠 & 펫: 온라인 슬롯 정보 > 내 선택 > AI 랜덤
     let gear=(np&&Array.isArray(np.parts))?{parts:np.parts,pet:np.pet??-1}:(isP&&!np&&Array.isArray(o.parts))?{parts:o.parts,pet:o.pet??-1}:randGear();
     const fx=gearFx(o.mode,gear.parts,gear.pet);
-    const k={i,ci,ki,cid:CHARS[ci].id,ab:o.mode==='item'?CHARS[ci].id:'',isP,isNetHuman,isIdleSlot,auto:isP&&!!o.autoPlayer,name:kName,
+    const kc=np?(np.kc||null):(isP?(o.kc||null):null);
+    const k={i,ci,ki,kc,cid:CHARS[ci].id,ab:o.mode==='item'?CHARS[ci].id:'',isP,isNetHuman,isIdleSlot,auto:isP&&!!o.autoPlayer,name:kName,
       parts:gear.parts.slice(),pet:gear.pet,fx,exG:0,exT:0,exMax:1,exShield:0,exAt:-9,petFx:0,petCD:0,pltCD:0,kick:0,steerS:0,cntS:0,grip:HND.grip,
       st:makeStats(o.mode,ki,ci,fx),x:p.x,y:p.y,ang:p.ang,mvAng:p.ang,spd:0,drifting:false,driftDir:0,recover:0,wasSliding:false,
-      gauge:0,items:[],boostT:0,boostMul:1,spinT:0,spinDir:1,stunT:0,shieldT:0,invT:0,revT:0,slowT:0,cloudT:0,magT:0,magTarget:null,
+      gauge:0,items:[],boostT:0,boostMul:1,spinT:0,spinDir:1,stunT:0,shieldT:0,invT:0,revT:0,slowT:0,cloudT:0,magT:0,magTarget:null,wobT:0,photoT:0,jumpCD:0,
       seg:0,prog:0,lat:0,dist:-back,lapsDone:0,lapStart:0,lapTimes:[],finished:isIdleSlot,finishT:0,rank:i+1,draftC:0,draftOn:0,ibWin:0,padCD:0,obsCD:0,
       wrongT:0,chloroT:0,lastUp:false,upAt:-9,stemPend:false,stuckT:0,rb:1,skill:1,hitFx:0};
     const L=locate(tr,k.x,k.y,Math.round((tr.len-back)/tr.sp),6);k.seg=L.i;k.prog=(L.i+L.u)*tr.sp;
@@ -756,7 +985,7 @@ function ev(R,t,k,a){R.ev.push({t,k,a});}
 function boost(k,mul,dur){k.boostMul=k.boostT>0?Math.max(k.boostMul,mul):mul;k.boostT=Math.max(k.boostT,dur);}
 function blocked(R,k){
   if(k.invT>0)return true;
-  if(k.shieldT>0){k.shieldT=0;ev(R,'block',k);return true;}
+  if(k.shieldT>0){ev(R,'block',k,'세포막 보호막이 막았어요!');return true;}   // 보호막은 시간 동안 계속 막음
   if(k.exShield>0){k.exShield=0;ev(R,'block',k,'익시드 실드로 방어!');return true;}
   if(k.fx.pltShield>0&&k.pltCD<=0){k.pltCD=k.fx.pltShield;petTrig(R,k);ev(R,'block',k,'혈소판 응고 실드!');return true;}
   if(k.ab==='macro'&&Math.random()<0.25){ev(R,'block',k,'식세포 작용으로 방어!');return true;}
@@ -787,11 +1016,14 @@ function hit(R,k,kind,src){
   if(kind==='spin'){k.spinT=Math.max(k.spinT,1.5*m);k.spinDir=Math.random()<.5?1:-1;k.spd*=0.35;}
   else if(kind==='stun'){k.stunT=Math.max(k.stunT,1.9*m);}
   else if(kind==='slip'){k.spinT=Math.max(k.spinT,1.0*m);k.spinDir=Math.random()<.5?1:-1;k.spd*=0.5;}
+  else if(kind==='virus'){k.slowT=Math.max(k.slowT,2.5*m);k.spinT=Math.max(k.spinT,0.35);k.spinDir=Math.random()<.5?1:-1;k.spd*=0.7;}
+  else if(kind==='mucus'){k.wobT=Math.max(k.wobT||0,1.8*m);k.spd*=0.75;}
+  else if(kind==='shock'){k.stunT=Math.max(k.stunT,1.0*m);k.spd*=0.6;}
   else {k.spinT=Math.max(k.spinT,0.5*m);k.spinDir=Math.random()<.5?1:-1;k.spd*=0.5;}
   k.stemPend=k.ab==='stem';ev(R,'hit',k,kind);return true;}
 function rankUpdate(R){R.order=R.karts.slice().sort((a,b)=>{if(!!a.isIdleSlot!==!!b.isIdleSlot)return a.isIdleSlot?1:-1;if(a.finished!==b.finished)return a.finished?-1:1;if(a.finished)return a.finishT-b.finishT;return b.dist-a.dist;});R.order.forEach((k,i)=>k.rank=i+1);}
 function rollItem(R,k,rk){const n=R.karts.length;rk=rk||k.rank;const r=(rk-1)/(n-1);let tot=0;
-  const w=ITEMS.map(it=>{let v=W_FRONT[it.id]*(1-r)+W_BACK[it.id]*r;if(k.ab==='mito'&&(it.id==='atp'||it.id==='adre'))v*=1.8;if(k.rank===1&&(it.id==='toxin'||it.id==='magnet'))v=0;tot+=v;return v;});
+  const w=ITEMS.map(it=>{let v=W_FRONT[it.id]*(1-r)+W_BACK[it.id]*r;if(k.ab==='mito'&&(it.id==='atp'||it.id==='mito'))v*=1.8;if(k.rank===1&&(it.id==='osmo'||it.id==='missile'))v=0;tot+=v;return v;});
   let x=Math.random()*tot;for(let i=0;i<w.length;i++){x-=w[i];if(x<=0)return ITEMS[i].id;}return 'atp';}
 function giveItem(R,k,id){if(k.items.length<2){k.items.push(id);ev(R,'get',k,id);return true;}return false;}
 
@@ -802,20 +1034,17 @@ function useItem(R,k){
   ev(R,'use',k,it);
   switch(it){
   case 'atp':boost(k,1.46,1.55*k.st.boostDur);addEx(R,k,0.07);break;
-  case 'adre':boost(k,1.58,2.35*k.st.boostDur);addEx(R,k,0.07);break;
+  case 'mito':boost(k,1.24,4.0*k.st.boostDur);addEx(R,k,0.07);break;
+  case 'photo':k.photoT=8;boost(k,1.15,0.8);break;
   case 'missile':if(ahead&&!ahead.finished){R.proj.push({type:'missile',x:k.x+ca*12,y:k.y+sa*12,ang:k.mvAng,spd:Math.max(420,k.spd+170),tgt:ahead,src:k,life:7});ev(R,'warn',ahead,'missile');}break;
-  case 'shield':k.shieldT=8;break;
-  case 'mucus':R.gi.push({type:'mucus',x:k.x-ca*26,y:k.y-sa*26,r:15,life:30,src:k,arm:0.6});break;
-  case 'bomb':R.proj.push({type:'bomb',x:k.x,y:k.y,vx:ca*(Math.max(k.spd,0)+190),vy:sa*(Math.max(k.spd,0)+190),t:0,dur:0.75,src:k,alt:0});break;
-  case 'toxin':{const L=R.order[0];if(L!==k&&!L.finished){R.proj.push({type:'toxin',tgt:L,src:k,life:1.5,x:L.x,y:L.y,alt:120});ev(R,'warn',L,'toxin');}break;}
-  case 'cloud':for(const o of R.karts)if(o!==k&&o.rank<k.rank&&!o.finished&&o.invT<=0)o.cloudT=4.5*m;break;
-  case 'magnet':if(ahead&&ahead.dist-k.dist<650&&!ahead.finished){k.magT=2.6;k.magTarget=ahead;boost(k,1.32,2.6);}else boost(k,1.25,1.0);break;
-  case 'crispr':for(const o of R.karts)if(o!==k&&o.rank<k.rank&&!o.finished&&!blocked(R,o)){o.items=[];o.slowT=Math.max(o.slowT,1.3*m);ev(R,'cut',o);}break;
-  case 'clot':R.gi.push({type:'clot',x:k.x-ca*26,y:k.y-sa*26,r:13,life:25,src:k,arm:0.6});break;
-  case 'vaccine':k.invT=4.2;boost(k,1.15,4.2);break;
-  case 'storm':for(const o of R.karts)if(o!==k&&Math.hypot(o.x-k.x,o.y-k.y)<150)hit(R,o,'spin',k);ev(R,'storm',k);break;
-  case 'osmo':for(const o of R.karts)if(o!==k&&o.rank<k.rank&&!o.finished&&!blocked(R,o)){o.slowT=Math.max(o.slowT,3*m);ev(R,'osmo',o);}break;
-  case 'hormone':if(ahead&&!ahead.finished&&!blocked(R,ahead)){ahead.revT=3*m;ev(R,'rev',ahead);}break;
+  case 'mucus':R.gi.push({type:'mucus',x:k.x-ca*26,y:k.y-sa*26,r:17,life:30,src:k,arm:0.6});break;
+  case 'storm':for(const o of R.karts)if(o!==k&&!o.isIdleSlot&&Math.hypot(o.x-k.x,o.y-k.y)<150)hit(R,o,'shock',k);ev(R,'storm',k);break;
+  case 'osmo':if(ahead&&!ahead.finished&&!blocked(R,ahead)){ahead.slowT=Math.max(ahead.slowT,3*m);ev(R,'osmo',ahead);}break;
+  case 'shield':k.shieldT=6;break;
+  case 'wbc':{let n=0;for(let q=R.proj.length-1;q>=0;q--){const pj=R.proj[q];if(pj.tgt===k||Math.hypot(pj.x-k.x,pj.y-k.y)<260){R.proj.splice(q,1);n++;}}
+    for(let q=R.gi.length-1;q>=0;q--){const g=R.gi[q];if(g.src!==k&&Math.hypot(g.x-k.x,g.y-k.y)<260){R.gi.splice(q,1);n++;}}
+    k.invT=Math.max(k.invT,1.2);ev(R,'wbc',k,n);break;}
+  case 'repair':k.spinT=0;k.stunT=0;k.slowT=0;k.revT=0;k.cloudT=0;k.wobT=0;k.invT=Math.max(k.invT,1.5);boost(k,1.12,0.8);ev(R,'repair',k);break;
   }}
 
 function updObs(R){const tr=R.tr;for(const o of R.obs){let s,lat;
@@ -861,15 +1090,16 @@ function aiInput(R,k,dt){
   inp.use=false;inp.swap=false;
   if(k.items.length){ai.itemCD-=dt;if(ai.itemCD<=0){const it=k.items[0],ahead=R.order[k.rank-2],gap=ahead?ahead.dist-k.dist:1e9;let use=false;
     const straight=Math.abs(turnA)<0.3,threat=R.proj.some(p=>p.tgt===k);
+    const bad=k.slowT>0||k.wobT>0||k.revT>0||k.cloudT>0;
     switch(it){
-      case 'atp':case 'adre':use=straight&&k.boostT<=0;break;
-      case 'missile':case 'hormone':use=ahead&&gap<900&&gap>25;break;
-      case 'toxin':case 'crispr':case 'osmo':case 'cloud':use=k.rank>1;break;
-      case 'shield':case 'vaccine':use=threat||Math.random()<dt*0.25;break;
-      case 'mucus':case 'clot':use=R.karts.some(o=>o!==k&&k.dist-o.dist>15&&k.dist-o.dist<160)||Math.random()<dt*0.2;break;
-      case 'bomb':use=ahead&&gap<230&&gap>50;break;
-      case 'magnet':use=ahead&&gap<480&&gap>80;break;
-      case 'storm':use=R.karts.some(o=>o!==k&&Math.hypot(o.x-k.x,o.y-k.y)<120);break;}
+      case 'atp':case 'mito':use=straight&&k.boostT<=0;break;
+      case 'photo':use=straight||Math.random()<dt*0.3;break;
+      case 'missile':case 'osmo':use=ahead&&gap<900&&gap>25;break;
+      case 'shield':use=threat||Math.random()<dt*0.25;break;
+      case 'wbc':use=threat||R.gi.some(g=>g.src!==k&&Math.hypot(g.x-k.x,g.y-k.y)<200)||Math.random()<dt*0.15;break;
+      case 'repair':use=bad||Math.random()<dt*0.1;break;
+      case 'mucus':use=R.karts.some(o=>o!==k&&k.dist-o.dist>15&&k.dist-o.dist<160)||Math.random()<dt*0.2;break;
+      case 'storm':use=R.karts.some(o=>o!==k&&!o.isIdleSlot&&Math.hypot(o.x-k.x,o.y-k.y)<120);break;}
     if(!use&&k.items.length===2&&Math.random()<dt*0.3)inp.swap=true;
     if(use){inp.use=true;ai.itemCD=rnd(0.4,1.4)/k.skill;}}}
   // 익시드: 게이지가 차면 잠깐 반응 시간을 두고 직선 구간(또는 뒤처졌을 때) 발동
@@ -885,7 +1115,7 @@ function updKart(R,k,inp,dt){
   const tr=R.tr,st=k.st,F=k.fx;
   k.boostT=Math.max(0,k.boostT-dt);k.shieldT=Math.max(0,k.shieldT-dt);k.invT=Math.max(0,k.invT-dt);k.revT=Math.max(0,k.revT-dt);
   k.slowT=Math.max(0,k.slowT-dt);k.cloudT=Math.max(0,k.cloudT-dt);k.magT=Math.max(0,k.magT-dt);k.padCD-=dt;k.obsCD-=dt;k.ibWin-=dt;k.hitFx-=dt;
-  k.chainT=Math.max(0,(k.chainT||0)-dt);k.driftHop=Math.max(0,(k.driftHop||0)-dt);
+  k.chainT=Math.max(0,(k.chainT||0)-dt);k.wobT=Math.max(0,(k.wobT||0)-dt);k.photoT=Math.max(0,(k.photoT||0)-dt);k.jumpCD=Math.max(0,(k.jumpCD||0)-dt);k.driftHop=Math.max(0,(k.driftHop||0)-dt);
   k.petFx=Math.max(0,k.petFx-dt*1.6);k.petCD-=dt;k.pltCD-=dt;
   // 익시드 지속 시간
   if(k.exT>0){k.exT-=dt;k.slowT=0;k.cloudT=0;if(k.exT<=0){k.exT=0;k.exShield=0;ev(R,'exend',k);}}
@@ -893,7 +1123,9 @@ function updKart(R,k,inp,dt){
   if(k.spinT>0){k.spinT-=dt;ctrl=false;k.ang+=k.spinDir*13*dt;k.spd*=Math.pow(0.3,dt);if(k.spinT<=0){k.ang=k.mvAng;if(k.stemPend){boost(k,1.35,1.1);k.stemPend=false;}}}
   if(k.stunT>0){k.stunT-=dt;ctrl=false;k.spd*=Math.pow(0.005,dt);if(k.stunT<=0&&k.stemPend){boost(k,1.35,1.1);k.stemPend=false;}}
   // 조향 입력: 키보드/터치는 -1/0/1 디지털, AI는 아날로그(inp.ax)
-  let steer=inp.ax!=null?clamp(+inp.ax||0,-1,1):(inp.right?1:0)-(inp.left?1:0);if(k.revT>0)steer=-steer;if(!ctrl)steer=0;
+  let steer=inp.ax!=null?clamp(+inp.ax||0,-1,1):(inp.right?1:0)-(inp.left?1:0);if(k.revT>0)steer=-steer;
+  if(k.wobT>0)steer=clamp(steer+Math.sin(R.clock*13+k.i)*0.85,-1,1);   // 세균 점액: 핸들이 좌우로 흔들림
+  if(!ctrl)steer=0;
   // 조향 램프: 짧게 톡 누르면 살짝, 길게 누르면 끝까지 꺾임 (선형 레이트 리밋 = 프레임 독립)
   // 손을 떼거나 반대로 꺾을 때는 더 빠르게 중앙 복귀. 터치는 조금 더 완만하게. 무거운 카트는 아주 약간 묵직
   {const s0=k.steerS,away=steer!==0&&(s0===0||Math.sign(steer)===Math.sign(s0))&&Math.abs(steer)>Math.abs(s0);
@@ -910,6 +1142,8 @@ function updKart(R,k,inp,dt){
     if(k.pet>=0&&PETS[k.pet].id==='para')petTrig(R,k);
   }
   k.lastUp=up;
+  // 점프 (Space): 땅에 있을 때 짧게 뛰어오름. 장애물·점액을 넘을 수 있고, 제자리 점프로는 착지 부스터를 주지 않음
+  if(ctrl&&inp.jump&&(k.z||0)<=0.05&&(k.vz||0)<=0&&k.jumpCD<=0&&R.state==='race'){k.vz=62;k.z=0.4;k.airT=0.01;k.hop=true;k.jumpCD=0.85;ev(R,'hop',k);}
   if(ctrl&&inp.use)useItem(R,k);
   if(ctrl&&inp.swap&&k.items.length===2)k.items.reverse();
   // 익시드 발동 (X / E 키, 터치 버튼, AI)
@@ -926,7 +1160,7 @@ function updKart(R,k,inp,dt){
   if(k.cloudT>0&&!k.isP)maxS*=0.94;
   if(k.ab==='adre'&&k.rank>=5)maxS*=1.09;
   if(exOn)maxS*=EXC.spd[R.mode==='speed'?'speed':'item'];
-  if(feat===1&&k.padCD<=0&&R.beatOn&&R.state==='race'){boost(k,1.42,1.05);k.padCD=0.55;ev(R,'pad',k);}
+  if(feat===1&&k.padCD<=0&&R.beatOn&&R.state==='race'){const ph=k.photoT>0;boost(k,ph?1.62:1.42,ph?1.8:1.05);k.padCD=0.55;ev(R,'pad',k,ph);}
   const acc=st.acc*(exOn?EXC.acc:1);
   if(k.boostT>0&&ctrl){maxS*=k.boostMul;k.spd+=(maxS-k.spd)*(1-Math.exp(-dt*6.5));}
   else if(up&&k.spd<maxS)k.spd=Math.min(maxS,k.spd+acc*dt*(1.25-0.55*Math.max(0,k.spd)/maxS));
@@ -964,12 +1198,12 @@ function updKart(R,k,inp,dt){
       const over=Math.max(0,Math.abs(slip0)-HND.dLim);
       if(over>0&&Math.sign(push)===Math.sign(slip0))push*=Math.max(0,1-over/0.3);
       k.ang+=push*dt;
-      gripT=st.dgrip*(1+HND.dCntGrip*c)+over*9;
+      gripT=(st.dgrip*(1+HND.dCntGrip*c)+over*9)*(feat===3&&!exOn?0.6:1);
     }else{
       // 속도 감응 조향: 고속일수록 핸들이 둔해져 직진 안정성↑ (저속 기동성은 그대로)
       const fS=clamp(1-(sp-HND.spdRef)*HND.spdFall,HND.spdMin,1);
       k.ang+=k.steerS*st.turn*sf*fS*dt*ds;
-      gripT=HND.grip;
+      gripT=HND.grip*(feat===3&&!exOn?0.22:1);   // 빙판: 접지력이 크게 줄어 미끄러짐
       k.recover-=dt;
     }
     // 그립 이징: 진입은 빠르게 미끄러지고, 탈출은 천천히 접지력 회복 (키틴 타이어는 더 빠름)
@@ -1007,9 +1241,9 @@ function updKart(R,k,inp,dt){
   if(tr.ramps&&k.rampCD<=0&&(k.z||0)<=0.5&&k.spd>85&&R.state==='race'){
     for(const rp of tr.ramps){
       if(k.prog>=rp.s+rp.len*0.55&&k.prog<=rp.s+rp.len+10&&Math.abs(k.lat-rp.lat)<rp.w+6){
-        k.vz=Math.max(k.vz||0,74+Math.min(52,k.spd*0.22));
+        k.vz=Math.max(k.vz||0,74+Math.min(52,k.spd*0.22));k.hop=false;
         k.z=(k.z||0)+1.2;k.airT=0.01;k.rampCD=0.75;
-        boost(k,1.25,0.65);ev(R,'jump',k);break;
+        boost(k,k.photoT>0?1.45:1.25,k.photoT>0?1.2:0.65);ev(R,'jump',k);break;
       }
     }
   }
@@ -1019,7 +1253,8 @@ function updKart(R,k,inp,dt){
     k.airT=(k.airT||0)+dt;
     if(k.z<=0){
       k.z=0;k.vz=0;
-      if(k.airT>0.26&&R.state==='race'){boost(k,1.22,0.5);addEx(R,k,0.04);ev(R,'land',k);}
+      if(k.airT>0.26&&R.state==='race'&&!k.hop){boost(k,1.22,0.5);addEx(R,k,0.04);ev(R,'land',k);}else if(k.hop)ev(R,'hopland',k);
+      k.hop=false;
       k.airT=0;
     }
   }
@@ -1099,19 +1334,19 @@ function stepRace(R,pinp,dt){
         if(giveItem(R,k,id)&&k.ab==='ribo'&&Math.random()<0.25)giveItem(R,k,rollItem(R,k));break;}}}
   // 바닥 설치물
   for(let i=R.gi.length-1;i>=0;i--){const g=R.gi[i];g.life-=dt;g.arm-=dt;let rm=g.life<=0;
-    if(!rm)for(const k of K){if(k.isIdleSlot||(k===g.src&&g.arm>0))continue;if(Math.hypot(k.x-g.x,k.y-g.y)<g.r+8){hit(R,k,g.type==='mucus'?'slip':'bump',g.src);rm=true;break;}}
+    if(!rm)for(const k of K){if(k.isIdleSlot||(k===g.src&&g.arm>0)||(k.z||0)>4)continue;if(Math.hypot(k.x-g.x,k.y-g.y)<g.r+8){hit(R,k,g.type==='mucus'?'mucus':'bump',g.src);rm=true;break;}}
     if(rm)R.gi.splice(i,1);}
   // 투사체
   for(let i=R.proj.length-1;i>=0;i--){const p=R.proj[i];let rm=false;
     if(p.type==='missile'){const t=p.tgt;p.life-=dt;const a=Math.atan2(t.y-p.y,t.x-p.x);p.ang+=clamp(wrapA(a-p.ang),-6*dt,6*dt);p.spd=Math.max(p.spd,t.spd+140);
-      p.x+=Math.cos(p.ang)*p.spd*dt;p.y+=Math.sin(p.ang)*p.spd*dt;if(Math.hypot(t.x-p.x,t.y-p.y)<15){hit(R,t,'spin',p.src);rm=true;ev(R,'boom',null,{x:p.x,y:p.y});}
+      p.x+=Math.cos(p.ang)*p.spd*dt;p.y+=Math.sin(p.ang)*p.spd*dt;if(Math.hypot(t.x-p.x,t.y-p.y)<15){hit(R,t,'virus',p.src);rm=true;ev(R,'boom',null,{x:p.x,y:p.y});}
       if(p.life<=0||t.finished)rm=true;}
     else if(p.type==='toxin'){p.life-=dt;p.x=p.tgt.x;p.y=p.tgt.y;p.alt=p.life*80;if(p.life<=0){hit(R,p.tgt,'spin',p.src);rm=true;ev(R,'boom',null,{x:p.x,y:p.y});}}
     else if(p.type==='bomb'){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.alt=Math.sin(Math.PI*Math.min(1,p.t/p.dur))*38;
       if(p.t>=p.dur){for(const k of K){if(k===p.src)continue;if(Math.hypot(k.x-p.x,k.y-p.y)<55)hit(R,k,'stun',p.src);}rm=true;ev(R,'splash',null,{x:p.x,y:p.y});}}
     if(rm)R.proj.splice(i,1);}
   // 장애물
-  for(const o of R.obs)for(const k of K){if(k.obsCD>0||k.isIdleSlot)continue;if(Math.hypot(k.x-o.x,k.y-o.y)<o.r+8){k.obsCD=1.0;hit(R,k,'bump',null);}}
+  for(const o of R.obs)for(const k of K){if(k.obsCD>0||k.isIdleSlot||(k.z||0)>6)continue;if(Math.hypot(k.x-o.x,k.y-o.y)<o.r+8){k.obsCD=1.0;hit(R,k,'bump',null);}}
   rankUpdate(R);
   // 종료 판정
   const all=K.every(k=>k.finished);
@@ -1178,10 +1413,14 @@ vaccine:['......##','.....##.','....##..','...###..','..###...','.###....','##..
 storm:['#..#..#.','.#.#.#..','..###...','#######.','..###...','.#.#.#..','#..#..#.','........'],
 osmo:['...#....','..###...','.#####..','.#####..','#######.','#######.','.#####..','..###...'],
 hormone:['..####..','.#....#.','#..##..#','#.#..#.#','#.#.##.#','#..#...#','.#....#.','..####..'],
+wbc:['..####..','.######.','##.##.##','########','#.####.#','########','.##..##.','..####..'],
+repair:['#.....#.','.#...#..','..###...','.#...#..','#.....#.','.#...#..','..###...','.#...#..'],
+mito:['.######.','#......#','#.#.#.##','##.#.#.#','#.#.#.##','##.#.#.#','#......#','.######.'],
+photo:['...#....','.#.#.#..','..###...','###.###.','..###...','.#.#.#..','...#....','........'],
 };
 function iconSpr(id){const key='i'+id;if(SPR[key])return SPR[key];const c=cv(14,14),g=c.getContext('2d'),it=ITEM_BY[id];
   PX(g,1,0,12,14,OUT);PX(g,0,1,14,12,OUT);PX(g,1,1,12,12,it.c);PX(g,1,1,12,2,shade(it.c,.35));PX(g,1,11,12,2,shade(it.c,-.3));
-  const gl=GLY[id],fg=['toxin','missile','clot'].includes(id)?'#fff':'#1b1530';
+  const gl=GLY[id],fg=['toxin','missile','clot','repair','osmo'].includes(id)?'#fff':'#1b1530';
   for(let y=0;y<8;y++)for(let x=0;x<8;x++)if(gl[y][x]==='#'){PX(g,3+x,3+y,1,1,fg);}
   return SPR[key]=c;}
 
@@ -1370,9 +1609,9 @@ function buildSmoothHead(B,C,hx,hy,hz,scale=1){
   }
 }
 
-const KVS=0.42;   // 카트·운전자 복셀 크기 (같은 크기라야 한 덩어리처럼 보임)
-function buildSmoothKart(K,C){
-  const B=new KR3D.Builder(KVS),G=new KR3D.Builder(KVS);
+const KVS=0.27;   // 카트·운전자 복셀 크기 (같은 크기라야 한 덩어리처럼 보임)
+function buildSmoothKart(K,C,vs){
+  vs=vs||KVS;const B=new KR3D.Builder(vs),G=new KR3D.Builder(vs);
   const sh=K.shape,b=K.c1,a=K.c2,bd=shade(b,-.32),bl=shade(b,.35),metal='#cbd5e1',dark='#1e1b2e',white='#ffffff',gold='#ffd60a';
   const big=sh==='tank'||sh==='muscle'||sh==='spike',small=sh==='compact'||sh==='flag'||sh==='leaf';
   const L=small?6.6:7.8,W=sh==='flag'?2.3:small?3.8:4.8;
@@ -1625,8 +1864,8 @@ function buildSmoothKart(K,C){
   return {g:B.build(),glass:G.build(),L,W,big};
 }
 
-function buildWheelGeo(big){
-  const B=new KR3D.Builder(KVS*0.85);
+function buildWheelGeo(big,vs){
+  const B=new KR3D.Builder((vs||KVS)*0.85);
   const r=big?2.45:1.95,w=big?1.85:1.45;
   // 타이어 트레드 & 숄더
   B.cyl(0,0,0,r,r,w,'#252236',Math.PI/2,0,0);
@@ -1639,8 +1878,8 @@ function buildWheelGeo(big){
   B.sphere(0,0,w*0.56,r*0.24,r*0.24,0.22,'#ff4d6d');
   return B.build();
 }
-function buildBoostPodGeo(c1,c2){
-  const B=new KR3D.Builder(KVS);
+function buildBoostPodGeo(c1,c2,vs){
+  const B=new KR3D.Builder(vs||KVS);
   for(const sd of [-1,1]){
     B.cyl(-1.0,0,sd*2.2,0.85,1.05,2.8,'#3a3456',0,0,Math.PI/2);
     B.torus(-2.3,0,sd*2.2,0.88,0.22,c2,0,Math.PI/2,0);
@@ -1701,7 +1940,7 @@ const GEO={};
 function vgeo(key,fn){return GEO[key]||(GEO[key]=fn());}
 function decoGeo(type,c1,c2){
   return vgeo('d'+type+c1+c2,()=>{
-    const B=new KR3D.Builder(0,{res:13}),d1=shade(c1,-.28),l1=shade(c1,.38);
+    const B=new KR3D.Builder(0,{res:16}),d1=shade(c1,-.28),l1=shade(c1,.38);
     switch(type){
       case 'lipid':
         B.sphere(0,0.72,0,0.22,0.22,0.22,c1);
@@ -1767,6 +2006,75 @@ function decoGeo(type,c1,c2){
         B.cyl(0,0.48,0,0.09,0.09,0.88,c1,0,0,0.52);
         B.cyl(0,0.48,0,0.09,0.09,0.88,c1,0,0,-0.52);
         B.sphere(0,0.48,0,0.14,0.14,0.14,c2);break;
+      // ----- 생태계 정글 -----
+      case 'tree':   // 굵은 줄기 + 층층이 쌓인 잎
+        B.cyl(0,0.28,0,0.09,0.12,0.56,'#7f5539');
+        B.sphere(0,0.62,0,0.34,0.22,0.34,'#2d6a4f');B.sphere(0.06,0.8,0.04,0.26,0.18,0.26,'#40916c');B.sphere(-0.04,0.95,-0.02,0.16,0.12,0.16,'#52b788');
+        B.sphere(0.2,0.66,0.12,0.07,0.07,0.07,'#e63946');break;
+      case 'mushroom':
+        B.cyl(0,0.25,0,0.1,0.13,0.5,'#f1e3c8');
+        B.sphere(0,0.55,0,0.36,0.2,0.36,'#d62828',0,0,0);B.cyl(0,0.48,0,0.34,0.34,0.04,'#f1e3c8');
+        for(const [x,z] of [[0.15,0.1],[-0.12,0.16],[0.02,-0.2],[-0.2,-0.05],[0.22,-0.12]])B.sphere(x,0.66,z,0.05,0.04,0.05,'#ffffff');break;
+      case 'fern':
+        for(let i=0;i<7;i++){const a=i/7*TAU;B.rbox(Math.cos(a)*0.2,0.2,Math.sin(a)*0.2,0.5,0.06,0.12,i&1?'#52b788':'#2d6a4f',0,-a,0.55);}
+        B.sphere(0,0.08,0,0.12,0.08,0.12,'#386641');break;
+      case 'rock':
+        B.sphere(0,0.2,0,0.34,0.24,0.3,'#8d8d8d');B.sphere(0.18,0.32,0.08,0.18,0.16,0.18,'#a5a5a5');B.sphere(-0.15,0.12,-0.12,0.16,0.1,0.14,'#6c6c6c');
+        B.sphere(-0.05,0.4,-0.02,0.1,0.06,0.1,'#6a994e');break;
+      case 'log':   // 쓰러진 나무
+        B.cyl(0,0.16,0,0.15,0.15,1.1,'#7f5539',0,0,Math.PI/2);B.cyl(0.56,0.16,0,0.12,0.12,0.02,'#ddb892',0,0,Math.PI/2);
+        B.cyl(-0.56,0.16,0,0.12,0.12,0.02,'#ddb892',0,0,Math.PI/2);B.sphere(0.2,0.32,0.05,0.12,0.06,0.1,'#52b788');break;
+      case 'animal':   // 사슴 같은 초식 동물
+        B.sphere(0,0.42,0,0.3,0.16,0.14,'#bc6c25');B.sphere(0.32,0.6,0,0.12,0.1,0.09,'#bc6c25');
+        for(const [x,z] of [[0.18,0.08],[0.18,-0.08],[-0.18,0.08],[-0.18,-0.08]])B.cyl(x,0.17,z,0.035,0.035,0.34,'#7f4f24');
+        B.sphere(0.42,0.62,0.05,0.03,0.03,0.03,'#1b1530');B.sphere(0.42,0.62,-0.05,0.03,0.03,0.03,'#1b1530');
+        B.cyl(0.3,0.78,0.06,0.015,0.015,0.18,'#ddb892',0.4,0,0);B.cyl(0.3,0.78,-0.06,0.015,0.015,0.18,'#ddb892',-0.4,0,0);
+        B.sphere(-0.3,0.48,0,0.05,0.05,0.05,'#ffffff');break;
+      // ----- 세포 연구소 -----
+      case 'mitoch':
+        B.sphere(0,0.35,0,0.42,0.22,0.24,'#f77f00');
+        for(const x of [-0.24,-0.08,0.08,0.24])B.rbox(x,0.35,0,0.04,0.3,0.36,'#fcbf49');break;
+      case 'ribo':
+        B.sphere(0,0.28,0,0.28,0.22,0.28,'#9d4edd');B.sphere(0,0.56,0,0.2,0.14,0.2,'#e0aaff');
+        B.cyl(0.3,0.4,0,0.03,0.03,0.6,'#ffd60a',0,0,1.2);break;
+      case 'enzyme':   // 활성 부위가 파인 효소
+        B.sphere(0,0.4,0,0.34,0.34,0.34,c1);B.sphere(0.3,0.42,0,0.16,0.14,0.18,'#1b1530');B.sphere(0.05,0.56,0.22,0.08,0.08,0.08,'#ffffff');break;
+      case 'lab':   // 실험 플라스크
+        B.cyl(0,0.3,0,0.26,0.26,0.6,'#caf0f8');B.cyl(0,0.22,0,0.24,0.24,0.38,'#06d6a0');B.cyl(0,0.66,0,0.08,0.1,0.18,'#e9f5ff');
+        for(const [x,y] of [[0.08,0.3],[-0.1,0.2],[0.02,0.12]])B.sphere(x,y,0.2,0.04,0.04,0.04,'#ffffff');break;
+      // ----- 생명의 바다 -----
+      case 'coral':
+        for(let i=0;i<6;i++){const a=i/6*TAU,h=0.35+0.25*((i*7)%3)/2;B.cyl(Math.cos(a)*0.12,h/2,Math.sin(a)*0.12,0.05,0.07,h,i&1?'#ff7b9c':'#ffb3c6',Math.sin(a)*0.35,0,-Math.cos(a)*0.35);B.sphere(Math.cos(a)*(0.12+h*0.17),h,Math.sin(a)*(0.12+h*0.17),0.07,0.07,0.07,'#ffd6e0');}
+        B.sphere(0,0.06,0,0.2,0.08,0.2,'#e5989b');break;
+      case 'jelly':   // 해파리
+        B.sphere(0,0.55,0,0.3,0.22,0.3,'#c77dff',0,0,0);B.sphere(0,0.6,0,0.2,0.14,0.2,'#e0aaff');
+        for(let i=0;i<6;i++){const a=i/6*TAU;B.cyl(Math.cos(a)*0.18,0.28,Math.sin(a)*0.18,0.025,0.025,0.42,'#f3c4fb');}
+        B.sphere(0.24,0.56,0.08,0.035,0.035,0.035,'#1b1530');B.sphere(0.24,0.56,-0.08,0.035,0.035,0.035,'#1b1530');break;
+      case 'kelp':
+        for(let i=0;i<3;i++){const x=(i-1)*0.14;for(let j=0;j<5;j++)B.rbox(x+Math.sin(j*0.9+i)*0.05,0.1+j*0.18,0,0.1,0.2,0.05,j&1?'#2d6a4f':'#52b788',0,0,Math.sin(j+i)*0.25);}break;
+      case 'shell':
+        B.sphere(0,0.16,0,0.3,0.14,0.26,'#ffe5b4');for(let i=-2;i<=2;i++)B.rbox(i*0.1,0.2,0,0.03,0.2,0.4,'#f4a261',0,0,i*0.25);
+        B.sphere(0.05,0.3,0,0.08,0.06,0.08,'#ffffff');break;
+      // ----- 진화의 대지 -----
+      case 'dino':   // 목이 긴 초식 공룡
+        B.sphere(0,0.42,0,0.38,0.22,0.2,'#606c38');
+        for(const [x,z] of [[0.22,0.12],[0.22,-0.12],[-0.22,0.12],[-0.22,-0.12]])B.cyl(x,0.14,z,0.06,0.07,0.28,'#4a5a2a');
+        B.cyl(0.42,0.68,0,0.07,0.09,0.5,'#606c38',0,0,-0.6);B.sphere(0.6,0.9,0,0.1,0.08,0.08,'#606c38');
+        B.cyl(-0.5,0.38,0,0.04,0.09,0.45,'#606c38',0,0,1.25);
+        B.sphere(0.66,0.93,0.05,0.025,0.025,0.025,'#1b1530');B.sphere(0.66,0.93,-0.05,0.025,0.025,0.025,'#1b1530');
+        for(let i=0;i<4;i++)B.cone(0.15-i*0.13,0.66,0,0.04,0.1,'#dda15e');break;
+      case 'bone':
+        B.cyl(0,0.1,0,0.05,0.05,0.7,'#f1e3c8',0,0,Math.PI/2);for(const x of [-0.36,0.36])for(const z of [-0.06,0.06])B.sphere(x,0.1,z,0.08,0.08,0.08,'#f1e3c8');break;
+      case 'volcano':
+        B.cone(0,0.35,0,0.5,0.7,'#4a2c2a');B.cone(0,0.42,0,0.36,0.56,'#6a040f');B.cyl(0,0.66,0,0.12,0.12,0.06,'#ffba08');
+        B.sphere(0,0.72,0,0.08,0.06,0.08,'#f48c06');B.sphere(0.06,0.86,0,0.06,0.06,0.06,'#adb5bd');break;
+      case 'ice':
+        B.cone(0,0.35,0,0.16,0.7,'#caf0f8',0,0,0.08);B.cone(0.16,0.22,0.08,0.11,0.44,'#a8dadc',0,0,-0.3);B.cone(-0.14,0.2,-0.06,0.1,0.4,'#e7f5ff',0.2,0,0.35);
+        B.sphere(0,0.04,0,0.26,0.05,0.22,'#ffffff');break;
+      case 'egg':
+        B.sphere(0,0.3,0,0.22,0.3,0.22,'#fefae0');B.sphere(0.08,0.4,0.12,0.05,0.06,0.05,'#06d6a0');B.sphere(-0.1,0.24,0.14,0.04,0.05,0.04,'#118ab2');break;
+      case 'stromat':   // 스트로마톨라이트 (남세균이 쌓은 층)
+        for(let i=0;i<5;i++)B.cyl(0,0.06+i*0.11,0,0.3-i*0.03,0.32-i*0.03,0.1,i&1?'#06d6a0':'#8d6e63');B.sphere(0,0.62,0,0.16,0.08,0.16,'#06d6a0');break;
       default:
         B.sphere(0,0.45,0,0.38,0.36,0.38,c1);
         B.sphere(0.08,0.52,0.08,0.18,0.18,0.18,c2);break;
@@ -1774,13 +2082,16 @@ function decoGeo(type,c1,c2){
     return B.build();
   });
 }
-function kartGeo(ki,ci){
-  return vgeo('k'+ki+'_'+ci,()=>{
-    const m=buildSmoothKart(KARTS[ki],CHARS[ci]);
-    const HB=new KR3D.Builder(KVS);
+const KVS_LOD=0.5;   // 멀리 있는 카트용 굵은 블록 (가까이 오면 자세한 모델로 바뀜)
+const KCOLS=['#e63946','#ff7b00','#ffd60a','#52b788','#06d6a0','#4cc9f0','#3a86ff','#9d4edd','#ff70a6','#f1faee','#343a40','#8b5e34'];   // 차고 색상 팔레트
+function kartGeo(ki,ci,lod,kc){
+  return vgeo('k'+ki+'_'+ci+(lod?'L':'')+(kc?kc:''),()=>{
+    const K=kc?Object.assign({},KARTS[ki],{c1:kc,c2:shade(kc,.45)}):KARTS[ki];
+    const vs=lod?KVS_LOD:KVS,m=buildSmoothKart(K,CHARS[ci],vs);
+    const HB=new KR3D.Builder(vs);
     buildSmoothHead(HB,CHARS[ci],0,0,0,1.02);
-    const WG=buildWheelGeo(m.big);
-    const BP=buildBoostPodGeo(KARTS[ki].c1,KARTS[ki].c2);
+    const WG=buildWheelGeo(m.big,vs);
+    const BP=buildBoostPodGeo(K.c1,K.c2,vs);
     return {g:m.g,glass:m.glass,head:HB.build(),wheel:WG,pod:BP,L:m.L,W:m.W,big:m.big};
   });
 }
@@ -1790,7 +2101,7 @@ function headGeo(ci){
 /* ----- 생명과학 펫 8종 3D 모델 (+x 앞) ----- */
 function petEyes(B,x,y,z,sz=1){for(const sd of [-1,1]){B.sphere(x,y,sd*z,0.48*sz,0.52*sz,0.48*sz,'#ffffff');B.sphere(x+0.3*sz,y+0.04,sd*z,0.24*sz,0.28*sz,0.24*sz,'#1b1530');}}
 function petGeo(pi){
-  return vgeo('pet'+pi,()=>{const P=PETS[pi],c1=P.c1,c2=P.c2,B=new KR3D.Builder(0.34);
+  return vgeo('pet'+pi,()=>{const P=PETS[pi],c1=P.c1,c2=P.c2,B=new KR3D.Builder(0.22);
     switch(P.id){
     case 'amoeba':B.sphere(0,0,0,2.2,1.6,2.0,c1);B.sphere(1.4,-0.4,1.2,1.0,0.8,1.0,c1);B.sphere(-1.3,-0.3,-1.3,1.1,0.8,1.1,c1);B.sphere(-0.5,0.1,1.7,0.9,0.7,0.9,c1);B.sphere(0.4,-0.3,-1.8,0.8,0.6,0.8,c1);
       B.sphere(-0.4,0.6,0,0.85,0.85,0.85,c2);petEyes(B,1.9,0.5,0.6);break;
@@ -1812,7 +2123,7 @@ function petGeo(pi){
 }
 function itemGeo(kind){
   return vgeo('p'+kind,()=>{
-    const B=new KR3D.Builder(0,{res:20});
+    const B=new KR3D.Builder(0,{res:28});
     if(kind==='missile'){
       B.sphere(0,0,0,3.2,3.2,3.2,'#8338ec');
       for(let a=0;a<10;a++){const t=a/10*TAU,p=(a%3-1)*0.55;B.cone(Math.cos(t)*Math.cos(p)*4.2,Math.sin(p)*4.2,Math.sin(t)*Math.cos(p)*4.2,0.8,2.2,'#ff70a6',0,-t,Math.PI/2);}
@@ -1854,11 +2165,12 @@ function badgeTex(n,col){const key='bt'+n+col;if(SPR[key])return SPR[key];return
 /* ----- 고해상도 카트라이더 트랙 바닥 & 랜드마크 ----- */
 function groundCanvas(tr,th){
   const g=tr.grid,gw=g.gw,gh=g.gh,c=cv(gw,gh),cx=c.getContext('2d'),img=cx.createImageData(gw,gh),D=img.data,hw=tr.hw,len=tr.len;
-  const cols=[th.off[0],th.off[1],th.road[0],th.road[1],th.curb[0],th.curb[1],th.line,th.sh[0],th.sh[1],th.wall[0],th.wall[1],'#ffffff','#1d1636','#ffe14d','#ff7b00','#5e8c1f','#8fbf3a'].map(rgb);
+  const cols=[th.off[0],th.off[1],th.road[0],th.road[1],th.curb[0],th.curb[1],th.line,th.sh[0],th.sh[1],th.wall[0],th.wall[1],'#ffffff','#1d1636','#ffe14d','#ff7b00','#5e8c1f','#8fbf3a','#bde0fe','#e7f5ff'].map(rgb);
   for(let gy=0;gy<gh;gy++)for(let gx=0;gx<gw;gx++){const idx=gy*gw+gx,l=g.LAT[idx],d=Math.abs(l),wx=g.minX+gx*CS+CS/2,wy=g.minY+gy*CS+CS/2;let ci;
     if(d<hw){const f=g.FEAT[idx],p=g.PROG[idx];
       if(f===1)ci=13;
       else if(f===2)ci=((((gx>>1)*7)^((gy>>1)*13))&3)?15:16;
+      else if(f===3)ci=((((gx>>1)*7)^((gy>>1)*13))&3)?17:18;
       else if(p<14||p>len-4)ci=((((p/5)|0)+(((l+600)/5)|0))&1)?11:12;
       else if(d<2.4&&(((p/24)|0)&1))ci=6;
       else if(Math.abs(d-(hw-8))<1.8)ci=11; // 카트라이더 스타일 화이트 레이싱 숄더 라인
@@ -1897,8 +2209,8 @@ function chevCanvas(){
 
 // 배경 언덕·구름용 블록 덩어리 (흰색 블록에 인스턴스 색을 곱함)
 let _hillG=null,_cloudG=null;
-function HILLG(){if(!_hillG){const B=new KR3D.Builder(0,{res:11,jit:0.1});B.sphere(0,0,0,1,1,1,'#ffffff');B.sphere(0.35,0.3,-0.25,0.55,0.6,0.55,'#ffffff');_hillG=B.build();}return _hillG;}
-function CLOUDG(){if(!_cloudG){const B=new KR3D.Builder(0,{res:9,jit:0.04});B.sphere(0,0,0,1,0.62,0.8,'#ffffff');B.sphere(0.45,0.25,0.1,0.55,0.5,0.5,'#ffffff');_cloudG=B.build();}return _cloudG;}
+function HILLG(){if(!_hillG){const B=new KR3D.Builder(0,{res:16,jit:0.1});B.sphere(0,0,0,1,1,1,'#ffffff');B.sphere(0.35,0.3,-0.25,0.55,0.6,0.55,'#ffffff');_hillG=B.build();}return _hillG;}
+function CLOUDG(){if(!_cloudG){const B=new KR3D.Builder(0,{res:13,jit:0.04});B.sphere(0,0,0,1,0.62,0.8,'#ffffff');B.sphere(0.45,0.25,0.1,0.55,0.5,0.5,'#ffffff');_cloudG=B.build();}return _cloudG;}
 function instBoxes(list,geo,mat,shadow){
   const m=track3(new THREE.InstancedMesh(geo,mat,Math.max(1,list.length)));m.count=list.length;
   const o=new THREE.Object3D(),col=new THREE.Color();
@@ -1924,86 +2236,86 @@ function clearStatic(){
 /* ----- 맵별 시그니처 3D 바이오 랜드마크 & 터널/아치 생성 ----- */
 function buildMapLandmarks(R,tr,th,mapIdx){
   A.animMeshes=[];
-  const hw=tr.hw,span=hw*2+34;
-  // 모든 맵에 5~8개의 테마 아치/터널/대형 생체 구조물 배치
-  const nArch=mapIdx===8||mapIdx===9?8:6;
+  const hw=tr.hw,span=hw*2+34,map=R.map,wd=map.world||0,c1=th.dc[0],c2=th.dc[1],w0=th.wall[0],w1=th.wall[1];
+  // 월드마다 트랙 위를 가로지르는 대형 구조물 6~8개
+  const nArch=map.diff>=4?8:6;
   for(let k=0;k<nArch;k++){
     const s=(k+0.55)/nArch*tr.len;
     if(s<140||s>tr.len-140)continue;
-    const p=posAt(tr,s,0);
-    const grp=new THREE.Group();
-    grp.position.set(p.x,heightAt(tr,s),p.y);
-    grp.rotation.y=-p.ang;
-    const B=new KR3D.Builder(2.6);
-    const c1=th.dc[0],c2=th.dc[1],w0=th.wall[0],w1=th.wall[1];
-    if(mapIdx===0){
-      // 세포막 서킷: 거대 인지질 이중층 아치 & 막단백질 채널 게이트
-      for(const sd of [-1,1]){
-        B.cyl(0,22,sd*(hw+18),5.5,6.5,44,c2);
-        B.sphere(0,46,sd*(hw+18),9,9,9,c1);
+    const p=posAt(tr,s,0),grp=new THREE.Group();
+    grp.position.set(p.x,heightAt(tr,s),p.y);grp.rotation.y=-p.ang;
+    const B=new KR3D.Builder(1.7),v=k%3;let spin=null;
+    if(wd===0){
+      if(v===0){   // 거대한 나무 두 그루가 만든 잎 아치
+        for(const sd of [-1,1]){B.cyl(0,24,sd*(hw+20),6,8,48,'#7f5539');B.sphere(0,52,sd*(hw+20),16,12,16,'#2d6a4f');}
+        B.rbox(0,58,0,14,8,span,'#40916c');for(let z=-hw;z<=hw;z+=hw/3)B.sphere(0,52,z,7,5,7,'#52b788');
+        for(let z=-hw;z<=hw;z+=hw/2)B.cyl(0,40,z,0.8,0.8,24,'#6a994e');   // 늘어진 덩굴
+      }else if(v===1){   // 바위 협곡 아치 + 옆으로 쏟아지는 폭포
+        for(const sd of [-1,1])B.sphere(0,20,sd*(hw+22),14,26,14,'#8d8d8d');B.rbox(0,46,0,16,10,span,'#a5a5a5');
+        B.rbox(0,24,hw+36,6,48,10,'#4cc9f0');B.rbox(0,2,hw+36,14,4,22,'#caf0f8');
+      }else{   // 거대 버섯 게이트
+        for(const sd of [-1,1]){B.cyl(0,20,sd*(hw+18),5,6,40,'#f1e3c8');B.sphere(0,42,sd*(hw+18),18,9,18,'#d62828');for(const [dx,dz] of [[6,4],[-5,-6],[2,-8]])B.sphere(dx,48,sd*(hw+18)+dz,2.5,2,2.5,'#ffffff');}
       }
-      for(let i=-5;i<=5;i++){
-        const z=i*(hw*0.18),y=48+Math.cos(i*0.42)*14;
-        B.sphere(0,y,z,4.8,4.8,4.8,i%2?c1:c2);
-        B.cyl(0,y-7,z,1.2,1.2,12,'#ffe5a8');
+    }else if(wd===1){
+      if(v===0){   // 세포막 터널: 인지질 머리가 늘어선 고리
+        for(let a=0;a<14;a++){const t=Math.PI*a/13,z=Math.cos(t)*(hw+16),y=Math.sin(t)*(hw*0.55)+6;B.sphere(0,y,z,5,5,5,a%2?c1:c2);B.cyl(-6,y,z,1,1,8,'#ffe5a8',0,0,Math.PI/2);}
+      }else if(v===1){   // 미토콘드리아 아치 + 회전하는 ATP 합성효소
+        for(const sd of [-1,1])B.cyl(0,26,sd*(hw+18),5,7,52,w1);B.torus(0,48,0,hw+18,4.2,'#f77f00',Math.PI/2,0,0);
+        spin=new KR3D.Builder(1.7);spin.sphere(0,0,0,9,9,9,'#fcbf49');for(let i=0;i<6;i++){const a=i/6*TAU;spin.rbox(Math.cos(a)*16,0,Math.sin(a)*16,14,3.5,5,'#f77f00',0,-a,0);}
+      }else{   // 리보솜 게이트 + mRNA 리본
+        for(const sd of [-1,1]){B.sphere(0,14,sd*(hw+20),12,10,12,'#9d4edd');B.sphere(0,30,sd*(hw+20),9,7,9,'#e0aaff');}
+        for(let z=-hw-10;z<=hw+10;z+=6)B.rbox(0,44+Math.sin(z*0.08)*3,z,3,2,6,['#ff006e','#3a86ff','#ffbe0b','#06d6a0'][Math.abs(Math.round(z/6))%4]);
       }
-    }else if(mapIdx===1||mapIdx===5){
-      // 혈관 순환로 / 두근두근 심장: 맥동하는 심장 판막 아치 & 적혈구 링 터널
-      B.torus(0,18,0,hw+16,6.5,c1,0,Math.PI/2,0);
-      B.torus(14,18,0,hw+14,4.5,c2,0,Math.PI/2,0);
-      for(const sd of [-1,1])B.sphere(0,36,sd*(hw*0.65),11,5,11,'#e63946',0.4,0,sd*0.5);
-    }else if(mapIdx===2){
-      // 미토콘드리아 크리스타: 회전하는 황금 ATP 합성효소 터빈 & 크리스타 에너지 아치
-      for(const sd of [-1,1])B.cyl(0,26,sd*(hw+18),5,7,52,w1);
-      B.torus(0,48,0,hw+18,4.2,c1,Math.PI/2,0,0);
-      const rotB=new KR3D.Builder(2.6);
-      rotB.sphere(0,0,0,9,9,9,c1);
-      for(let i=0;i<6;i++){const a=i/6*TAU;rotB.rbox(Math.cos(a)*16,0,Math.sin(a)*16,14,3.5,5,c2,0,-a,0);}
-      const rm=new THREE.Mesh(track3(rotB.build()),VMAT);
-      rm.position.set(0,52,0);grp.add(rm);
-      A.animMeshes.push({m:rm,ry:2.8});
-    }else if(mapIdx===3){
-      // 엽록체 그라나: 틸라코이드 그라나 타워 & 광합성 태양광 아치
-      for(const sd of [-1,1]){
-        for(let j=0;j<6;j++)B.cyl(0,5+j*7.5,sd*(hw+20),12,12,5.5,j%2?c1:c2);
+    }else if(wd===2){
+      if(v!==1){   // 트랙 위를 가로지르는 DNA 이중나선 다리
+        for(let i=-8;i<=8;i++){const x=i*6,t=i*0.42+k,y1=38+Math.sin(t)*14,z1=Math.cos(t)*(hw+14),y2=38-Math.sin(t)*14,z2=-Math.cos(t)*(hw+14);
+          B.sphere(x,y1,z1,4.2,4.2,4.2,'#3a86ff');B.sphere(x,y2,z2,4.2,4.2,4.2,'#ff006e');
+          if(i%2===0)B.cyl(x,(y1+y2)/2,(z1+z2)/2,1.4,1.4,Math.hypot(y1-y2,z1-z2),['#ffbe0b','#06d6a0'][(i/2)&1],Math.atan2(z2-z1,y2-y1),0,0);}
+      }else{   // X자 염색체 게이트 (회전)
+        for(const sd of [-1,1])B.cyl(0,22,sd*(hw+18),4,5,44,w0);
+        spin=new KR3D.Builder(1.7);spin.cyl(0,0,0,4,4,46,c1,0,0,0.55);spin.cyl(0,0,0,4,4,46,c1,0,0,-0.55);spin.sphere(0,0,0,5,5,5,c2);
       }
-      B.rbox(0,50,0,12,3.5,span,'#ccff33');
-    }else if(mapIdx===8){
-      // DNA 이중나선: 트랙 위를 가로지르는 거대 3D 이중나선 브릿지
-      for(let i=-8;i<=8;i++){
-        const x=i*6,t=i*0.42+k,y1=38+Math.sin(t)*14,z1=Math.cos(t)*(hw+14),y2=38-Math.sin(t)*14,z2=-Math.cos(t)*(hw+14);
-        B.sphere(x,y1,z1,4.2,4.2,4.2,'#3a86ff');
-        B.sphere(x,y2,z2,4.2,4.2,4.2,'#ff006e');
-        if(i%2===0)B.cyl(x,(y1+y2)/2,(z1+z2)/2,1.4,1.4,Math.hypot(y1-y2,z1-z2),'#ffbe0b',Math.atan2(z2-z1,y2-y1),0,0);
+    }else if(wd===3){
+      if(map.beat){   // 박동하는 심장 판막 고리
+        B.torus(0,18,0,hw+16,6.5,c1,0,Math.PI/2,0);B.torus(14,18,0,hw+14,4.5,c2,0,Math.PI/2,0);
+        for(const sd of [-1,1])B.sphere(0,36,sd*(hw*0.65),11,5,11,'#e63946',0.4,0,sd*0.5);
+      }else if(v===0){   // 산호 아치 + 둥둥 뜬 해파리
+        for(const sd of [-1,1])for(let j=0;j<5;j++)B.sphere(0,6+j*9,sd*(hw+18)+Math.sin(j)*4,7-j*0.6,6,7-j*0.6,j&1?'#ff7b9c':'#ffb3c6');
+        B.torus(0,40,0,hw+18,3.5,'#ffd166',0,Math.PI/2,0);
+        for(const z of [-hw*0.5,hw*0.5]){B.sphere(0,62,z,7,5,7,'#c77dff');for(let i=0;i<4;i++)B.cyl(Math.cos(i)*4,54,z+Math.sin(i)*4,0.6,0.6,10,'#e0aaff');}
+      }else if(v===1){   // 신경 세포 아치: 말이집 고리 + 전기 아크
+        B.torus(0,16,0,hw+16,7.5,'#f2cc8f',0,Math.PI/2,0);B.torus(18,16,0,hw+16,7.5,'#f2cc8f',0,Math.PI/2,0);B.torus(9,16,0,hw+20,2.5,'#4cc9f0',0,Math.PI/2,0);
+      }else{   // 적혈구 고리 터널
+        B.torus(0,18,0,hw+16,7,'#e63946',0,Math.PI/2,0);B.torus(0,18,0,hw+9,3,'#ff8fa3',0,Math.PI/2,0);
       }
-    }else if(mapIdx===9||mapIdx===13){
-      // 뉴런 시냅스 / 대뇌 피질: 말이집(미엘린 수초) 터널 & 도약 전도 전기 아크 링
-      B.torus(0,16,0,hw+16,7.5,'#f2cc8f',0,Math.PI/2,0);
-      B.torus(18,16,0,hw+16,7.5,'#f2cc8f',0,Math.PI/2,0);
-      B.torus(9,16,0,hw+20,2.5,'#4cc9f0',0,Math.PI/2,0);
-    }else if(mapIdx===14){
-      // 세포 분열: 거대 방추사 아치 & 메타페이즈 염색체 게이트
-      for(const sd of [-1,1]){
-        B.sphere(0,12,sd*(hw+22),8,8,8,c2);
-        for(let j=-2;j<=2;j++)B.cyl(j*5,34,sd*(hw*0.5),1.2,1.2,hw*1.2,'#ffffff',sd*0.85,0,0);
-      }
-      B.cyl(0,48,0,3.2,3.2,22,c1,0.55,0,0);
-      B.cyl(0,48,0,3.2,3.2,22,c1,-0.55,0,0);
     }else{
-      // 기타 생명과학 테마 아치 게이트
-      for(const sd of [-1,1]){
-        B.cyl(0,22,sd*(hw+18),5,6.5,44,w0);
-        B.sphere(0,45,sd*(hw+18),8,8,8,c1);
+      if(v===0){   // 공룡 갈비뼈 아치
+        for(let i=-3;i<=3;i++)B.torus(i*7,10,0,hw+14,2.4,'#f1e3c8',0,Math.PI/2,0);B.rbox(0,hw+24,0,50,5,6,'#f1e3c8');
+      }else if(v===1&&map.ice){   // 빙하 아치
+        for(const sd of [-1,1])B.cone(0,24,sd*(hw+20),12,48,'#caf0f8');B.rbox(0,46,0,14,10,span,'#e7f5ff');for(let z=-hw;z<=hw;z+=hw/4)B.cone(0,38,z,2.5,10,'#a8dadc',Math.PI,0,0);
+      }else if(v===1){   // 용암이 흐르는 바위 아치
+        for(const sd of [-1,1])B.sphere(0,20,sd*(hw+22),14,24,14,'#4a2c2a');B.rbox(0,44,0,14,9,span,'#370617');B.rbox(0,40,0,15,2,span*0.9,'#f48c06');
+      }else{   // 고대 고사리 게이트
+        for(const sd of [-1,1]){B.cyl(0,22,sd*(hw+18),4,5,44,'#606c38');for(let a=0;a<6;a++){const t=a/6*TAU;B.rbox(Math.cos(t)*10,46,sd*(hw+18)+Math.sin(t)*10,22,2,5,'#52b788',0,-t,0.4);}}
       }
-      B.rbox(0,45,0,8,4.5,span,w1);
-      B.sphere(0,48,0,7.5,7.5,7.5,c2);
     }
-    const m=new THREE.Mesh(track3(B.build()),VMAT);
-    m.castShadow=true;m.receiveShadow=true;
-    grp.add(m);
+    const m=new THREE.Mesh(track3(B.build()),VMAT);m.castShadow=true;m.receiveShadow=true;grp.add(m);
+    if(spin){const rm=new THREE.Mesh(track3(spin.build()),VMAT);rm.position.set(0,52,0);grp.add(rm);A.animMeshes.push({m:rm,ry:2.4});}
     STAT.add(grp);
-    if(mapIdx===1||mapIdx===5)A.animMeshes.push({m:grp,pulse:true,base:1});
+    if(map.beat)A.animMeshes.push({m:grp,pulse:true,base:1});
   }
+  // 트랙 밖 대형 배경 구조물: 정글 폭포, 연구소 세포, 바다 산호초, 화산·빙하 등
+  const cx0=tr.X.reduce((a,b)=>a+b,0)/tr.N,cy0=tr.Y.reduce((a,b)=>a+b,0)/tr.N;
+  const big=(x,z,fn)=>{if(Math.abs(latAt(tr,x,z))<tr.hw+120)return;fn(x,z);};
+  for(let q=0;q<5;q++){const a=q/5*TAU+mapIdx,r=1400+q*90,x=cx0+Math.cos(a)*r,z=cy0+Math.sin(a)*r;
+    big(x,z,(X,Z)=>{const bgB=new KR3D.Builder(4),x=0,z=0;
+      if(wd===0){bgB.sphere(x,60,z,70,90,70,'#40916c');bgB.cyl(x,30,z,14,18,60,'#7f5539');}
+      else if(wd===1){bgB.sphere(x,40,z,90,60,90,c1);bgB.sphere(x+20,60,z+10,30,24,30,c2);}
+      else if(wd===2){for(let i=0;i<10;i++){const t=i*0.7;bgB.sphere(x+Math.cos(t)*40,20+i*22,z+Math.sin(t)*40,12,12,12,'#3a86ff');bgB.sphere(x-Math.cos(t)*40,20+i*22,z-Math.sin(t)*40,12,12,12,'#ff006e');}}
+      else if(wd===3){bgB.sphere(x,30,z,80,40,80,'#ff7b9c');bgB.cyl(x+40,60,z,10,10,90,'#ffb3c6');}
+      else{if(map.ice)bgB.cone(x,120,z,110,240,'#e7f5ff');else{bgB.cone(x,110,z,130,220,'#4a2c2a');bgB.cyl(x,222,z,26,26,10,'#ffba08');}}
+      const bm=new THREE.Mesh(track3(bgB.build()),VMAT);bm.position.set(X,0,Z);STAT.add(bm);
+    });}
 }
 
 function buildAssets(R){
@@ -2022,8 +2334,8 @@ function buildAssets(R){
   SEED=A.mapIdx*97+13;
   // 블록 도로: 트랙을 따라 가로 10칸 × 세로(구간마다) 블록으로 나눠 칸마다 색을 살짝 달리 칠함 (언덕 구간은 그대로 솟아오름)
   {
-    const rPos=[],rNor=[],rCol=[],rIdx=[],N=tr.N,hw=tr.hw+3.5,LS=10;let vc=0;
-    const cRoad=[new THREE.Color(th.road[0]),new THREE.Color(th.road[1])],cLine=new THREE.Color(th.line),cWhite=new THREE.Color('#f4f4f8'),cSide=new THREE.Color(shade(th.wall[0],-.3)),cSide2=new THREE.Color(shade(th.wall[0],-.45));
+    const rPos=[],rNor=[],rCol=[],rIdx=[],N=tr.N,hw=tr.hw+3.5,LS=16;let vc=0;
+    const cMud0=new THREE.Color('#7a5230'),cMud1=new THREE.Color('#5e8c1f'),cIce0=new THREE.Color('#bde0fe'),cIce1=new THREE.Color('#f1f8ff'),cRoad=[new THREE.Color(th.road[0]),new THREE.Color(th.road[1])],cLine=new THREE.Color(th.line),cWhite=new THREE.Color('#f4f4f8'),cSide=new THREE.Color(shade(th.wall[0],-.3)),cSide2=new THREE.Color(shade(th.wall[0],-.45));
     const P=[];for(let i=0;i<=N;i++){const ii=i%N,s0=ii*tr.sp,hz=heightAt(tr,s0)+0.14,row=[];for(let q=0;q<=LS;q++){const p=posAt(tr,s0,-hw+2*hw*q/LS);row.push([p.x,hz,p.y]);}P.push(row);}
     const quad=(a,b,c,d,col,n)=>{for(const v of [a,b,c,d]){rPos.push(v[0],v[1],v[2]);rNor.push(n[0],n[1],n[2]);rCol.push(col.r,col.g,col.b);}rIdx.push(vc,vc+1,vc+2,vc,vc+2,vc+3);vc+=4;};
     const tmp=new THREE.Color();
@@ -2032,6 +2344,7 @@ function buildAssets(R){
         let base=cRoad[((i>>1)+q)&1];
         if((q===LS/2-1||q===LS/2)&&(i%4)<2&&false)base=cLine;
         if(q===0||q===LS-1)base=((i>>1)&1)?cWhite:cRoad[0];          // 가장자리 숄더 블록
+        {const c=A0[q],d=A1[q+1],ft=featAt(tr,(c[0]+d[0])/2,(c[2]+d[2])/2);if(ft===2)base=((i+q)&1)?cMud0:cMud1;else if(ft===3)base=((i+q)&1)?cIce0:cIce1;}   // 진흙·빙판 구간은 도로 블록 색으로 표시
         const j=0.9+0.16*KR3D.hash(i,q,A.mapIdx);tmp.copy(base).multiplyScalar(j);
         quad(A0[q],A1[q],A1[q+1],A0[q+1],tmp,[0,1,0]);
       }
@@ -2053,7 +2366,7 @@ function buildAssets(R){
   // 3D 점프대(Jump Ramps) 웨지 메쉬 설치
   if(tr.ramps){
     for(const rp of tr.ramps){
-      const RB=new KR3D.Builder(1.6);
+      const RB=new KR3D.Builder(1.1);
       const steps=6;
       for(let q=0;q<steps;q++){
         const u0=q/steps,u1=(q+1)/steps,xm=(u0+u1)*0.5*rp.len-rp.len*0.5,h=((u0+u1)*0.5)*rp.h;
@@ -2094,7 +2407,7 @@ function buildAssets(R){
   // 출발선 카트라이더풍 대형 3D 아치 타워 & 배너
   const pc=posAt(tr,0,0);
   for(const sd of [-1,1]){
-    const p=posAt(tr,0,sd*(tr.hw+20)),PB=new KR3D.Builder(1.5);
+    const p=posAt(tr,0,sd*(tr.hw+20)),PB=new KR3D.Builder(1.0);
     PB.cyl(0,21,0,3.2,4.2,42,th.wall[0]);
     for(let y=6;y<=36;y+=10)PB.torus(0,y,0,3.8,0.8,th.wall[1],Math.PI/2,0,0);
     PB.sphere(0,43,0,4.8,4.8,4.8,'#ffd23f');
@@ -2105,7 +2418,7 @@ function buildAssets(R){
   const bbar=new THREE.Mesh(BOXG,track3(new THREE.MeshLambertMaterial({color:th.wall[1]})));bbar.scale.set(3.5,bw+8,3.5);bbar.position.set(pc.x,50,pc.y);bbar.rotation.z=Math.PI/2;bbar.rotation.y=-pc.ang-Math.PI/2;STAT.add(bbar);
   // 트랙 바깥 블록 지형: 벽 너머로 높낮이가 있는 블록 기둥을 깔아 온리 업 같은 입체 바닥을 만듦
   {
-    const BS=18,terr=[],seen=new Set(),c0=th.off[0],c1=th.off[1],cw=shade(th.wall[0],-.15);
+    const BS=14,terr=[],seen=new Set(),c0=th.off[0],c1=th.off[1],cw=shade(th.wall[0],-.15);
     const noise=(x,y)=>{const f=(a,b)=>KR3D.hash(a,b,A.mapIdx*7+1);const X=Math.floor(x),Y=Math.floor(y),u=x-X,v=y-Y,s1=u*u*(3-2*u),s2=v*v*(3-2*v);
       return (f(X,Y)*(1-s1)+f(X+1,Y)*s1)*(1-s2)+(f(X,Y+1)*(1-s1)+f(X+1,Y+1)*s1)*s2;};
     for(let sv=0;sv<tr.len;sv+=BS*0.8)for(const sd of [-1,1])for(let off=tr.hw+44;off<tr.hw+270;off+=BS*0.85){
@@ -2122,7 +2435,7 @@ function buildAssets(R){
   // 장식 (매끈한 3D 생명과학 오브젝트)
   const nd=Math.round(tr.len/52),byType={};
   for(let i=0;i<nd;i++){const s=srnd()*tr.len,sd=srnd()<.5?-1:1,off=tr.hw+65+srnd()*240,p=posAt(tr,s,sd*off);if(Math.abs(latAt(tr,p.x,p.y))<tr.hw+52)continue;
-    const ty=th.deco[i%th.deco.length],sz=28+srnd()*68,fl=ty==='o2'||ty==='vesicle'||ty==='virus'||ty==='spark';(byType[ty]=byType[ty]||[]).push([p.x,fl?sz*0.42:0,p.y,srnd()*TAU,sz]);}
+    const ty=th.deco[i%th.deco.length],sz=28+srnd()*68,fl=ty==='o2'||ty==='vesicle'||ty==='virus'||ty==='spark'||ty==='jelly';(byType[ty]=byType[ty]||[]).push([p.x,fl?sz*0.42:0,p.y,srnd()*TAU,sz]);}
   for(const ty in byType){const geo=decoGeo(ty,th.dc[0],th.dc[1]);
     chunkAdd(byType[ty],L=>{const m=track3(new THREE.InstancedMesh(geo,VMAT,L.length)),o=new THREE.Object3D();
       L.forEach((d,i)=>{o.position.set(d[0],d[1],d[2]);o.rotation.set(0,d[3],0);o.scale.setScalar(d[4]);o.updateMatrix();m.setMatrixAt(i,o.matrix);});m.castShadow=true;m.receiveShadow=true;return m;});}
@@ -2158,8 +2471,8 @@ function buildAssets(R){
 }
 // 카트 모델 캐시(최대 15x15 조합)가 레이스마다 계속 늘어 GPU 메모리를 잡아먹지 않도록, 이번 레이스에 없는 조합은 정리
 function pruneKartGeo(R){
-  const keep=new Set(R.karts.map(k=>'k'+k.ki+'_'+k.ci));keep.add('k'+S.ki+'_'+S.ci);
-  const keys=Object.keys(GEO).filter(k=>/^k\d+_\d+$/.test(k));if(keys.length<=24)return;
+  const keep=new Set();for(const k of R.karts){const c=k.kc||'';keep.add('k'+k.ki+'_'+k.ci+c);keep.add('k'+k.ki+'_'+k.ci+'L'+c);}keep.add('k'+S.ki+'_'+S.ci+(S.kc||''));
+  const keys=Object.keys(GEO).filter(k=>/^k\d+_\d+L?(#[0-9a-f]{6})?$/.test(k));if(keys.length<=48)return;
   for(const key of keys){if(keep.has(key))continue;const e=GEO[key];for(const g of [e.g,e.glass,e.head,e.wheel,e.pod])if(g&&g.dispose)g.dispose();delete GEO[key];}
 }
 
@@ -2179,7 +2492,7 @@ const FLAMEM=[
 ];
 const EXAURAG=new THREE.SphereGeometry(1,24,16),EXRINGG=new THREE.TorusGeometry(1,0.07,8,40);
 function makeKartObj(k){
-  const root=new THREE.Group(),body=new THREE.Group(),kg=kartGeo(k.ki,k.ci);root.add(body);
+  const root=new THREE.Group(),body=new THREE.Group(),kg=kartGeo(k.ki,k.ci,false,k.kc);root.add(body);
   const m=new THREE.Mesh(kg.g,VMAT);m.castShadow=true;m.receiveShadow=true;body.add(m);
   const mOut=new THREE.Mesh(kg.g,OUTMAT);mOut.scale.setScalar(1.035);body.add(mOut);
   if(kg.glass){const gm=new THREE.Mesh(kg.glass,GLASS);body.add(gm);}
@@ -2221,10 +2534,14 @@ function makeKartObj(k){
   // 펫 (카트 옆을 부드럽게 따라다님)
   let pet=null;if(k.pet>=0&&PETS[k.pet]){pet=new THREE.Mesh(petGeo(k.pet),VMAT);pet.castShadow=true;pet.position.set(k.x,10,k.y);scene.add(pet);}
   scene.add(root);
-  return {k,root,body,driver,wheels,boostPod,flames,sonicRing,shield,cage,badge,aura,exRing,pet,pp:{x:k.x,y:k.y},pa:k.ang,auraA:0,lastPetFx:0,rank:-1,podExt:0};
+  const lodSet=k.isP?null:{hi:kg,lo:kartGeo(k.ki,k.ci,true,k.kc),mesh:m,glass:body.children.find(c=>c.material===GLASS)||null};
+  return {k,root,body,driver,wheels,boostPod,flames,sonicRing,shield,cage,badge,aura,exRing,pet,pp:{x:k.x,y:k.y},pa:k.ang,auraA:0,lastPetFx:0,rank:-1,podExt:0,lodSet,lod:false};
 }
+function setKartLod(o,lo){const L=o.lodSet;if(!L||o.lod===lo)return;o.lod=lo;const g=lo?L.lo:L.hi;
+  L.mesh.geometry=g.g;if(L.glass)L.glass.geometry=g.glass;o.driver.geometry=g.head;o.boostPod.geometry=g.pod;for(const w of o.wheels)w.wm.geometry=g.wheel;}
 function syncKart(o,R,dt){
   const k=o.k,root=o.root;if(k.isIdleSlot){root.visible=false;if(o.pet)o.pet.visible=false;return;}
+  if(o.lodSet){const d=Math.hypot(k.x-camera.position.x,k.y-camera.position.z);setKartLod(o,o.lod?d>200:d>240);}
   const gz=heightAt(R.tr,k.prog)+(k.z||0);k._renderY=gz;
   root.visible=true;root.position.set(k.x,gz,k.y);root.rotation.y=-k.ang;
   const sq=k.slowT>0?0.78:1,ease=r=>1-Math.exp(-r*dt);
@@ -2354,7 +2671,7 @@ function render(R,dt){
   }
   for(const o of KOBJ)syncKart(o,R,dt);
   R.boxes.forEach((b,i)=>{const m=A.boxes[i];if(!m)return;m.visible=b.act;if(b.act){if(b._z==null){const L=locate(R.tr,b.x,b.y,0,R.tr.N);b._z=heightAt(R.tr,(L.i+L.u)*R.tr.sp);}m.position.set(b.x,b._z+9+Math.sin(R.clock*4+b.ph)*1.6,b.y);m.rotation.set(R.clock*0.9+b.ph,R.clock*1.8+b.ph,0.4);}});
-  R.obs.forEach((o,i)=>{const m=A.obs[i];const fl=o.spr==='o2'||o.spr==='spark'||o.spr==='vesicle',oz=heightAt(R.tr,o.s0||0);m.position.set(o.x,oz+(fl?4+Math.sin(R.clock*3+i)*2:0),o.y);m.rotation.y=-(o.ang||0)+Math.PI/2+(fl?R.clock:0);});
+  R.obs.forEach((o,i)=>{const m=A.obs[i];const fl=o.spr==='o2'||o.spr==='spark'||o.spr==='vesicle'||o.spr==='jelly',oz=heightAt(R.tr,o.s0||0);m.position.set(o.x,oz+(fl?4+Math.sin(R.clock*3+i)*2:0),o.y);m.rotation.y=-(o.ang||0)+Math.PI/2+(fl?R.clock:0);});
   const gH=o=>{const L=locate(R.tr,o.x,o.y,o._seg||0,o._seg==null?R.tr.N:10);o._seg=L.i;return heightAt(R.tr,(L.i+L.u)*R.tr.sp);};
   const pool=A.pool;let n=0;for(const g of R.gi){const m=poolMesh(pool.gi,n++,g.type,g.type==='clot');if(g._z==null)g._z=gH(g);m.position.set(g.x,g._z+0.3,g.y);m.rotation.y=(g.x*0.37)%TAU;m.scale.setScalar(g.type==='mucus'?1.15:1.3);}
   for(let i=n;i<pool.gi.length;i++)pool.gi[i].visible=false;
@@ -2606,18 +2923,22 @@ function handleEvents(R){
       case 'exceed':if(me){if(R.clock-(P._exSfx??-9)>1){P._exSfx=R.clock;showMsg('EXCEED!','ex',1.4);sfx('exceed');CAM.exFlash=1;CAM.shake=Math.max(CAM.shake,0.12);}}else if(dv>0)sfx('exceed',dv*0.45);break;
       case 'exend':if(me)sfx('exend');break;
       case 'pet':if(e.k)e.k.petFx=1;if(me&&R.clock-(P._petSfx??-9)>0.6){P._petSfx=R.clock;petIcoT=0.7;const pt=PETS[e.a];if(pt){showFeed(`🐾 <b>${pt.name}</b> ${pt.skill}!`,1.1);sfx('pet');}}break;
-      case 'pad':if(me)sfx('pad');break;
+      case 'pad':if(me){sfx('pad');if(e.a)showSub('광합성 부스터!',0.8);}break;
       case 'jump':if(me){showSub('점프 부스터!',0.85);sfx('jump');}break;
+      case 'hop':if(me)sfx('jump',0.6);break;
+      case 'hopland':if(me){sfx('land',0.5);CAM.shake=Math.max(CAM.shake,0.05);}break;
       case 'land':if(me){showSub('착지 대시!',0.75);sfx('land');CAM.shake=Math.max(CAM.shake,0.1);}break;
       case 'get':if(me){const it=ITEM_BY[e.a];showFeed(R.mode==='speed'?`<b>ATP 부스터</b> 충전! <small>Ctrl / 아이템 버튼으로 사용</small>`:`<b>${it.name}</b> <small>${it.d}</small>`,R.mode==='speed'?1.4:2.4);sfx(R.mode==='speed'?'gauge':'get');}break;
-      case 'use':if(me)sfx('u_'+e.a);else if(dv>0)sfx('u_'+e.a,dv*0.4);break;
+      case 'use':{const us={wbc:'u_vaccine',repair:'u_vaccine',mito:'u_adre',photo:'u_atp'}[e.a]||'u_'+e.a;if(me)sfx(us);else if(dv>0)sfx(us,dv*0.4);break;}
       case 'dup':if(me){showSub('DNA 복제! 아이템 유지',1.2);sfx('dup');}break;
       case 'box':if(me)sfx('box');else if(dv>0.5)sfx('box',dv*0.25);break;
-      case 'hit':if(me){sfx('h_'+e.a);CAM.shake=0.3;showSub(e.a==='stun'?'포획당했어요!':e.a==='slip'?'점액에 미끄러졌어요!':'으앗!',1);}else if(dv>0)sfx('h_'+e.a,dv*0.4);break;
+      case 'hit':{const hs={virus:'h_spin',mucus:'h_slip',shock:'h_stun'}[e.a]||'h_'+e.a;if(me){sfx(hs);CAM.shake=0.3;showSub({stun:'포획당했어요!',slip:'미끄러졌어요!',virus:'바이러스 감염! 감속 중…',mucus:'세균 점액! 핸들이 흔들려요',shock:'신경 자극! 전기 충격!'}[e.a]||'으앗!',1.1);}else if(dv>0)sfx(hs,dv*0.4);break;}
+      case 'wbc':if(me){showSub(e.a?`백혈구가 공격 ${e.a}개를 먹어 치웠어요!`:'백혈구 방어 대기!',1.3);sfx('block');}break;
+      case 'repair':if(me){showSub('DNA 복구! 상태 이상 해제',1.2);sfx('dup');}break;
       case 'block':if(me){showSub(e.a||'실드로 방어!',1.2);sfx('block');}else if(dv>0)sfx('block',dv*0.4);break;
-      case 'warn':if(me){showSub(e.a==='toxin'?'⚠ 신경 독소가 떨어져요!':'⚠ 바이러스 미사일이 쫓아와요!',1.5);sfx('warn');}break;
+      case 'warn':if(me){showSub('⚠ 바이러스가 쫓아와요!',1.5);sfx('warn');}break;
       case 'cut':if(me){showSub('CRISPR! 아이템이 잘렸어요',1.4);sfx('cut');}break;
-      case 'osmo':if(me){showSub('삼투 쇼크! 탈수 중...',1.4);sfx('osmo');}break;
+      case 'osmo':if(me){showSub('효소 분해! 에너지가 줄어요…',1.4);sfx('osmo');}break;
       case 'rev':if(me){showSub('호르몬 교란! 좌우 반대!',1.6);sfx('rev');}break;
       case 'boom':FX.push({x:e.a.x,y:e.a.y,type:'boom',t:0.4,d:0.4,w:22,h:22});if(!dm)sfx('boom',distVol(e.a));break;
       case 'splash':FX.push({x:e.a.x,y:e.a.y,type:'splash',t:0.5,d:0.5,w:60,h:36});if(!dm)sfx('splash',distVol(e.a));break;
@@ -2908,7 +3229,7 @@ function audioTick(R,dt){if(!AU.c)return;const C=AU.c,now=C.currentTime,L=AU.L,P
     if(R.map.beat&&R.state==='race'){if(R.beatOn&&!AU.lastBeat)sfx('heart',0.7);AU.lastBeat=R.beatOn;}
   }else for(const k of ['eng','drift','boost','rough'])set(L[k].g.gain,0,0.03);
   set(AU.mus.gain,AU.bgm?0.34*AU.mv*(G.paused?0.35:1):0,0.1);
-  const key=(!G.demo&&(G.screen==='race'||G.screen==='pause'))?'m'+A.mapIdx:'title';
+  const key=(!G.demo&&(G.screen==='race'||G.screen==='pause'))?((MAPS[A.mapIdx]&&MAPS[A.mapIdx].song)||'m'+A.mapIdx):'title';
   if(key!==AU.songKey){AU.songKey=key;AU.song=getSong(key);AU.step=0;AU.next=Math.max(now+0.08,AU.hold);}
   if(G.paused){AU.next=Math.max(now+0.05,AU.hold);return;}
   const tempo=(racing&&P.lapsDone===R.laps-1&&!P.finished)?1.1:1,sd=60/(AU.song.def.bpm*tempo)/4;
@@ -2917,40 +3238,40 @@ function audioTick(R,dt){if(!AU.c)return;const C=AU.c,now=C.currentTime,L=AU.L,P
 }
 
 /* ================= 입력 ================= */
-const KEY={},EDGE={use:false,swap:false,exceed:false},TOUCH={};
+const KEY={},EDGE={use:false,swap:false,exceed:false,jump:false},TOUCH={};
 const KMAP={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ShiftLeft:'drift',ShiftRight:'drift',
-  ControlLeft:'use',ControlRight:'use',Space:'use',AltLeft:'swap',AltRight:'swap',KeyZ:'swap',KeyX:'exceed',KeyE:'exceed'};
+  ControlLeft:'use',ControlRight:'use',Space:'jump',AltLeft:'swap',AltRight:'swap',KeyZ:'swap',KeyX:'exceed',KeyE:'exceed'};
 addEventListener('keydown',e=>{const k=KMAP[e.code];
   if(G.screen==='race'||G.screen==='pause'){if(e.code==='Escape'||e.code==='KeyP'){togglePause();e.preventDefault();return;}}
   if(G.screen==='race'){if(e.code==='KeyR'&&G.R&&G.R.state==='race'){respawn(G.R,G.R.player);}if(e.code==='KeyM'){toggleSound();}}
-  if(k&&G.screen==='race'){e.preventDefault();if(!KEY[k]&&(k==='use'||k==='swap'||k==='exceed'))EDGE[k]=true;KEY[k]=true;}});
+  if(k&&G.screen==='race'){e.preventDefault();if(!KEY[k]&&(k==='use'||k==='swap'||k==='exceed'||k==='jump'))EDGE[k]=true;KEY[k]=true;}});
 addEventListener('keyup',e=>{const k=KMAP[e.code];if(k){KEY[k]=false;if(G.screen==='race')e.preventDefault();}});
 addEventListener('blur',()=>{for(const k in KEY)KEY[k]=false;for(const k in TOUCH)TOUCH[k]=false;});
 let tapUp=0;
 function readInput(first){const t=G.touch,auto=t&&G.autoAcc;
   let up=!!(KEY.up||TOUCH.up)||auto;if(auto&&tapUp>0){up=tapUp===2?false:true;if(first)tapUp--;}
-  const inp={up,down:!!(KEY.down||TOUCH.down),left:!!(KEY.left||TOUCH.left),right:!!(KEY.right||TOUCH.right),drift:!!(KEY.drift||TOUCH.drift),touch:!!(TOUCH.left||TOUCH.right)&&!(KEY.left||KEY.right),use:first&&EDGE.use,swap:first&&EDGE.swap,exceed:first&&EDGE.exceed};
+  const inp={up,down:!!(KEY.down||TOUCH.down),left:!!(KEY.left||TOUCH.left),right:!!(KEY.right||TOUCH.right),drift:!!(KEY.drift||TOUCH.drift),touch:!!(TOUCH.left||TOUCH.right)&&!(KEY.left||KEY.right),use:first&&EDGE.use,swap:first&&EDGE.swap,exceed:first&&EDGE.exceed,jump:first&&EDGE.jump};
   if(inp.down&&auto)inp.up=false;
-  if(first){EDGE.use=false;EDGE.swap=false;EDGE.exceed=false;}return inp;}
+  if(first){EDGE.use=false;EDGE.swap=false;EDGE.exceed=false;EDGE.jump=false;}return inp;}
 document.querySelectorAll('#touch [data-k]').forEach(b=>{const k=b.dataset.k;
   const on=e=>{e.preventDefault();try{b.setPointerCapture&&b.setPointerCapture(e.pointerId);}catch(_){}b.classList.add('on');
-    if(k==='use'||k==='swap'||k==='exceed')EDGE[k]=true;else if(k==='tap'){if(G.autoAcc)tapUp=2;else TOUCH.up=true;}else TOUCH[k]=true;};
+    if(k==='use'||k==='swap'||k==='exceed'||k==='jump')EDGE[k]=true;else if(k==='tap'){if(G.autoAcc)tapUp=2;else TOUCH.up=true;}else TOUCH[k]=true;};
   const off=e=>{b.classList.remove('on');if(k==='tap'){if(!G.autoAcc)TOUCH.up=false;}else TOUCH[k]=false;};
   b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off);});
 
 /* ================= 화면/메뉴 ================= */
 const G={R:null,demo:true,paused:false,screen:'title',acc:0,last:0,touch:matchMedia('(pointer:coarse)').matches||('ontouchstart' in window),autoAcc:SAVE.autoAcc!==false,mirror:SAVE.mirror!==false,dot:SAVE.dot??2};
-const S={mode:SAVE.mode||'speed',diff:SAVE.diff??1,ci:SAVE.ci??0,ki:SAVE.ki??0,map:SAVE.map??0,tab:'char',
+const S={kc:SAVE.kc||null,mode:SAVE.mode||'speed',diff:SAVE.diff??1,ci:SAVE.ci??0,ki:SAVE.ki??0,map:SAVE.map??0,tab:'char',
   // 파츠 & 펫 (예전 저장 데이터에는 없으므로 기본값으로 보정)
   parts:GEAR_PARTS.map((_,i)=>{const v=Array.isArray(SAVE.parts)?SAVE.parts[i]|0:0;return v>=0&&v<3?v:0;}),
   pet:Number.isInteger(SAVE.pet)&&SAVE.pet>=-1&&SAVE.pet<PETS.length?SAVE.pet:0};
 SAVE.best=SAVE.best||{};
-function persist(){Object.assign(SAVE,{mv:AU.mv,sv:AU.sv,mode:S.mode,diff:S.diff,ci:S.ci,ki:S.ki,map:S.map,parts:S.parts.slice(),pet:S.pet,sound:AU.on,bgm:AU.bgm,autoAcc:G.autoAcc,mirror:G.mirror,dot:G.dot});try{localStorage.setItem('biokart',JSON.stringify(SAVE));}catch(e){}}
+function persist(){Object.assign(SAVE,{kc:S.kc||null,mv:AU.mv,sv:AU.sv,mode:S.mode,diff:S.diff,ci:S.ci,ki:S.ki,map:S.map,parts:S.parts.slice(),pet:S.pet,sound:AU.on,bgm:AU.bgm,autoAcc:G.autoAcc,mirror:G.mirror,dot:G.dot});try{localStorage.setItem('biokart',JSON.stringify(SAVE));}catch(e){}}
 function show(id){document.querySelectorAll('.scr').forEach(s=>s.classList.toggle('on',s.id==='scr-'+id));G.screen=id;
   document.body.classList.toggle('racing',id==='race'||id==='pause');document.body.classList.toggle('demo',G.demo);
   if(id!=='garage')clearInterval(garTimer);if(id==='garage')renderGarage();if(id==='maps')renderMaps();if(id==='mode')renderMode();if(id==='help')drawPetDex();if(id==='online'&&typeof NET!=='undefined')NET.renderLobby();}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(!b)return;auInit();const g=b.dataset.go;sfx(g==='start'||g==='retry'?'start':b.textContent.trim()==='뒤로'?'back':'click');if(g==='respawn'){togglePause();if(G.R&&G.R.state==='race'){respawn(G.R,G.R.player);ev(G.R,'respawn',G.R.player);}return;}
-  if(g==='pausebtn'){togglePause();return;}if(G.screen==='garage'&&typeof NET!=='undefined'&&NET.returnToOnline&&(g==='mode'||g==='maps')){NET.returnToOnline=false;NET.syncMyGaragePick();show('online');return;}if(g==='start')startRace();else if(g==='resume')togglePause();else if(g==='retry'){if(typeof NET!=='undefined'&&NET.active&&NET.role==='guest'){show('online');return;}startRace();}else if(g==='lobby'){G.paused=false;newDemo(true);show('title');}
+  if(g==='pausebtn'){togglePause();return;}if(G.screen==='garage'&&typeof NET!=='undefined'&&NET.returnToOnline&&(g==='mode'||g==='maps')){NET.returnToOnline=false;NET.syncMyGaragePick();show('online');return;}if(g==='mapdex'){G.mapDex=true;show('maps');renderMaps();return;}if(G.screen==='maps'&&G.mapDex&&g==='garage'){G.mapDex=false;show('title');return;}if(g==='mode')G.mapDex=false;if(g==='start'){if(!mapOpen(S.map)){$('#mapFact').textContent='🔒 이 맵은 아직 잠겨 있어요. 같은 월드의 앞 맵을 완주하세요.';return;}startRace();}else if(g==='resume')togglePause();else if(g==='retry'){if(typeof NET!=='undefined'&&NET.active&&NET.role==='guest'){show('online');return;}startRace();}else if(g==='lobby'){G.paused=false;newDemo(true);show('title');}
   else if(g==='sound'){toggleSound();}else{if(G.screen==='result'||G.screen==='pause'){G.paused=false;newDemo(true);}show(g);}});
 function toggleSound(){AU.on=!AU.on;if(AU.m)AU.m.gain.setTargetAtTime(AU.on?1:0,AU.c.currentTime,0.02);document.querySelectorAll('.sndBtn').forEach(b=>b.textContent=AU.on?'소리 켜짐':'소리 꺼짐');persist();}
 function togglePause(){if(G.screen==='race'){G.paused=true;show('pause');}else if(G.screen==='pause'){G.paused=false;G.acc=0;show('race');}}
@@ -3001,36 +3322,48 @@ function renderGarage(){
   else info+=`<p class="ab">능력: <b>${C.ab}</b></p><p>${K.d}</p>`+statBar('속도',K.s[0])+statBar('가속',K.s[1])+statBar('핸들링',K.s[2])+statBar('드리프트',K.s[3])+statBar('무게',K.s[4]);
   const pt=PETS[S.pet];info+=`<p style="font-size:.85em">🐾 펫: ${pt?pt.name:'없음'} · 파츠·펫은 <b style="color:var(--yolk);font-weight:400">파츠 &amp; 펫</b> 탭에서!</p>`;}
   $('#garInfo').innerHTML=info;
-  const pv=$('#garPrev');pv.width=192;pv.height=168;const pg=pv.getContext('2d'),kg=kartGeo(S.ki,S.ci);pvInit();pvSetKartPet(kg,S.pet);
+  {const gc=$('#garColors');gc.innerHTML='';const opts=[null,...KCOLS];   // 카트 색상 바꾸기 (기본 = 카트 고유 색)
+    opts.forEach(c=>{const b=document.createElement('button');b.title=c?'색상 '+c:'기본 색';b.style.background=c||`linear-gradient(135deg,${K.c1} 50%,${K.c2} 50%)`;if(!c)b.textContent='기본';if((S.kc||null)===c)b.className='sel';
+      b.onclick=()=>{S.kc=c;sfx('sel');persist();renderGarage();if(typeof NET!=='undefined'&&NET.syncMyGaragePick)NET.syncMyGaragePick();};gc.appendChild(b);});}
+  const pv=$('#garPrev');pv.width=192;pv.height=168;const pg=pv.getContext('2d'),kg=kartGeo(S.ki,S.ci,false,S.kc);pvInit();pvSetKartPet(kg,S.pet);
   const draw=()=>{garView+=0.04;pg.clearRect(0,0,192,168);pg.drawImage(pvRender(192,168,garView,S.pet>=0?42:34,S.pet>=0?6:4.5),0,0,192,168);};draw();
   clearInterval(garTimer);garTimer=setInterval(draw,50);
   $('#garMode').textContent=S.mode==='speed'?'스피드전':'아이템전';
 }
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{S.tab=b.dataset.tab;sfx('sel');renderGarage();}));
 const THUMBS=[];
-function renderMaps(){const grid=$('#mapGrid');grid.innerHTML='';
-  MAPS.forEach((m,i)=>{const d=document.createElement('button');d.className='mcard'+(S.map===i?' sel':'');
+// 맵 잠금: 월드마다 첫 맵은 열려 있고, 앞 맵을 완주하면 다음 맵이 열림 (설정에서 모든 맵 열기 가능)
+function mapDone(i){return !!(SAVE.done&&SAVE.done[i]);}
+function mapOpen(i){if(SAVE.unlockAll)return true;const w=MAPS[i].world,first=MAPS.findIndex(m=>m.world===w);return i===first||mapDone(i-1);}
+const DCOL=['','#8ce99a','#74c0fc','#ffd43b','#ff922b','#ff6b6b'];
+function renderMaps(){const grid=$('#mapGrid'),row=$('#worldRow');grid.innerHTML='';row.innerHTML='';
+  if(!MAPS[S.map])S.map=0;const W0=MAPS[S.map].world;
+  WORLDS.forEach((w,wi)=>{const ms=MAPS.map((m,i)=>i).filter(i=>MAPS[i].world===wi),dn=ms.filter(mapDone).length;
+    const b=document.createElement('button');b.className='wcard'+(wi===W0?' sel':'');b.style.borderTop='6px solid '+w.c;
+    b.innerHTML=`<i style="color:${w.c}">WORLD 0${wi+1} · ${w.en}</i><b>${w.name}</b><small>${w.d}</small><i>완주 ${dn}/${ms.length}</i>`;
+    b.onclick=()=>{const first=ms.find(mapOpen)??ms[0];S.map=first;sfx('sel');persist();renderMaps();};row.appendChild(b);});
+  MAPS.forEach((m,i)=>{if(m.world!==W0)return;const open=mapOpen(i),d=document.createElement('button');d.className='mcard'+(S.map===i?' sel':'')+(open?'':' lock');
     if(!THUMBS[i])THUMBS[i]=trackThumb(i,96);d.appendChild(canvasOf(THUMBS[i]));
-    const best=SAVE.best[S.mode+'-'+i];
-    const est=Math.round(m.laps*m.lapSec*0.92/10)*10;
-    d.insertAdjacentHTML('beforeend',`<div class="mi"><b>${m.name}</b><small>${m.unit}</small><span class="stars">${'★'.repeat(m.diff)}${'☆'.repeat(5-m.diff)}</span><span class="meta">${m.laps}바퀴, 약 ${Math.floor(est/60)}분 ${est%60?est%60+'초':''}</span>${best?`<span class="best">최고 ${fmt(best)}</span>`:''}</div>`);
-    d.onclick=()=>{S.map=i;sfx('sel');persist();renderMaps();};grid.appendChild(d);});
-  $('#mapFact').textContent=MAPS[S.map].fact;$('#mapMode').textContent=(S.mode==='speed'?'스피드전':'아이템전')+' / '+['쉬움','보통','어려움'][S.diff];}
+    const best=SAVE.best[S.mode+'-'+i],est=Math.round(m.laps*m.lapSec*0.92/10)*10;
+    d.insertAdjacentHTML('beforeend',`<div class="mi"><b>${m.name}</b><small><span class="dlv" style="background:${DCOL[m.diff]}">${DIFFN[m.diff]}</span> ${m.laps}바퀴 · 약 ${Math.floor(est/60)}분${est%60?' '+est%60+'초':''}</small>${open?(best?`<span class="best">최고 ${fmt(best)}</span>`:'<span class="meta">기록 없음</span>'):'<span class="lk">🔒 앞 맵을 완주하면 열려요</span>'}${mapDone(i)?'<span class="done">✔ 완주</span>':''}</div>`);
+    d.onclick=()=>{if(!open){sfx('err');$('#mapFact').textContent='🔒 '+m.name+': 같은 월드의 앞 맵을 완주하면 열려요. (설정 → 모든 맵 열기)';return;}S.map=i;sfx('sel');persist();renderMaps();};grid.appendChild(d);});
+  $('#mapFact').textContent=(mapOpen(S.map)?'':'🔒 ')+MAPS[S.map].fact;$('#mapMode').textContent=(S.mode==='speed'?'스피드전':'아이템전')+' / '+['쉬움','보통','어려움'][S.diff];}
 
 function startRace(){if(typeof NET!=="undefined"&&NET.active&&NET.role==="host"){NET.startOnlineMatch();return;}if(typeof NET!=="undefined")NET.leave();auInit();G.demo=false;G.paused=false;G.acc=0;PARTS.length=0;FX.length=0;lastItems='x';lastOrder='';
-  G.R=makeRace({map:S.map,mode:S.mode,ci:S.ci,ki:S.ki,diff:S.diff,parts:S.parts,pet:S.pet});buildAssets(G.R);camReset(G.R);
+  G.R=makeRace({map:S.map,mode:S.mode,ci:S.ci,ki:S.ki,kc:S.kc,diff:S.diff,parts:S.parts,pet:S.pet});buildAssets(G.R);camReset(G.R);
   $('#hudModeTag').textContent=(S.mode==='speed'?'스피드전':'아이템전')+'  '+MAPS[S.map].name;
   show('race');}
 function newDemo(force){if(!force&&!G.demo)return;
-  G.demo=true;const mi=Math.random()*15|0;G.R=makeRace({map:mi,mode:'item',ci:Math.random()*15|0,ki:Math.random()*15|0,diff:1,autoPlayer:true});G.R.countT=0.01;buildAssets(G.R);camReset(G.R);document.body.classList.add('demo');}
+  G.demo=true;const mi=Math.random()*MAPS.length|0;G.R=makeRace({map:mi,mode:'item',ci:Math.random()*15|0,ki:Math.random()*15|0,diff:1,autoPlayer:true});G.R.countT=0.01;buildAssets(G.R);camReset(G.R);document.body.classList.add('demo');}
 function showResult(R){if(G.R!==R||(G.screen!=='race'&&G.screen!=='pause'))return;
   const P=R.player,key=R.mode+'-'+MAPS.indexOf(R.map);let rec=false;
+  if(P.finished){SAVE.done=SAVE.done||{};SAVE.done[MAPS.indexOf(R.map)]=1;persist();}
   if(P.finished&&(!SAVE.best[key]||P.finishT<SAVE.best[key])){SAVE.best[key]=P.finishT;rec=true;persist();}
   $('#resTitle').textContent=P.finished?(P.rank===1?'우승!':P.rank+'위로 완주!'):'RETIRE';
   if(window.BioGoal)BioGoal.result('bio-kart',P.finished?P.rank:0,{ok:!!P.finished&&P.rank<=BioGoal.GOALS['bio-kart'].t,text:P.finished?P.rank+'위 완주 · '+fmt(P.finishT)+' ('+R.map.name+')':'리타이어',rank:P.finished?{v:BioGoal.key([[P.finishT*1000,1e9,-1]]),cat:R.map.name+(R.mode==='speed'?' · 스피드전':' · 아이템전'),f:{time:Math.round(P.finishT*1000)/1000,place:P.rank+'위'}}:false});
   $('#resList').innerHTML=R.order.map(k=>`<div class="rr${k.isP?' me':''}"><b style="background:${RCOL[k.i]}">${k.rank}</b><canvas data-ci="${k.ci}" width="22" height="22" class="pix"></canvas><span>${k.name}</span><em>${k.finished?fmt(k.finishT):'RETIRE'}</em></div>`).join('');
   document.querySelectorAll('#resList canvas').forEach(c=>c.getContext('2d').drawImage(headSpr(+c.dataset.ci),0,0));
-  $('#resRec').textContent=rec?'새 최고 기록!':(P.lapTimes.length?'베스트 랩 '+fmt(Math.min(...P.lapTimes)):'');
+  {const lt=P.lapTimes,bl=lt.length?Math.min(...lt):0;$('#resRec').innerHTML=(rec?'<b style="color:#ffd60a">새 최고 기록!</b> ':'')+(lt.length?lt.map((t,i)=>`<span style="margin:0 .4em;white-space:nowrap${t===bl?';color:#4cc9f0':''}">${i+1}랩 ${fmt(t)}</span>`).join(''):'');}
   $('#resFact').textContent=R.map.fact;
   if(AU.c){AU.hold=AU.c.currentTime+3;sfx(P.finished&&P.rank<=3?'res_win':'res_lose');}
   show('result');}
@@ -3051,6 +3384,7 @@ function resize(){const vw=innerWidth,vh=innerHeight;
 addEventListener('resize',resize);resize();
 document.body.classList.toggle('touch',G.touch);
 $('#optAuto').checked=G.autoAcc;$('#optAuto').onchange=e=>{G.autoAcc=e.target.checked;persist();};
+$('#optUnlock').checked=!!SAVE.unlockAll;$('#optUnlock').onchange=e=>{SAVE.unlockAll=e.target.checked;persist();};
 $('#optMirror').checked=G.mirror;document.body.classList.toggle('nomirror',!G.mirror);$('#optMirror').onchange=e=>{G.mirror=e.target.checked;document.body.classList.toggle('nomirror',!G.mirror);persist();};
 $('#optDot').value=G.dot;$('#optDot').onchange=e=>{G.dot=+e.target.value;persist();resize();};
 $('#volMusic').value=AU.mv;$('#volMusic').oninput=e=>{AU.mv=+e.target.value;persist();};$('#volSfx').value=AU.sv;$('#volSfx').oninput=e=>{AU.sv=+e.target.value;if(AU.sfx)AU.sfx.gain.value=AU.sv;sfx('get');persist();};
@@ -3225,13 +3559,13 @@ const NET = (() => {
     cleanup();
     st.code = (customCode || genCode()).toUpperCase();
     st.role = 'host'; st.active = true; st.mySlot = 7;
-    st.players[myId] = { id: myId, name: st.nick, ci: S.ci, ki: S.ki, parts: S.parts.slice(), pet: S.pet, isHost: true, joinT: Date.now(), slot: 7, rtt: 0 };
+    st.players[myId] = { id: myId, name: st.nick, ci: S.ci, ki: S.ki, kc: S.kc || null, parts: S.parts.slice(), pet: S.pet, isHost: true, ready: true, joinT: Date.now(), slot: 7, rtt: 0 };
     setupChannel(st.code);
     if(window.Peer){
       try{
         const p = new window.Peer(PREFIX + st.code, peerOpts());
         peer = p;
-        p.on('open', () => { renderLobby(); });
+        p.on('open', () => { publishRoomInfo(false); renderLobby(); });
         p.on('connection', conn => {
           conn.on('open', () => {
             peerConns.set(conn.peer, conn);
@@ -3277,7 +3611,7 @@ const NET = (() => {
     st._qmPool = isQuick ? (qmPool || ['QM1','QM2','QM3','QM4']) : null;
     st._qmIdx = isQuick ? (qmIdx || 0) : 0;
     setupChannel(code);
-    const joinReq = { type: 'join_req', id: myId, name: st.nick, ci: S.ci, ki: S.ki, parts: S.parts.slice(), pet: S.pet };
+    const joinReq = { type: 'join_req', id: myId, name: st.nick, ci: S.ci, ki: S.ki, kc: S.kc || null, parts: S.parts.slice(), pet: S.pet };
     sendToHost(joinReq);
     const advanceQuick = reason => {
       clearTimeout(_joinTimer);
@@ -3371,7 +3705,7 @@ const NET = (() => {
     for(const id in st.players){
       const p = st.players[id];
       if(p.slot >= 0 && p.slot < 8){
-        arr[p.slot] = { slot: p.slot, id: p.id, name: p.name, ci: p.ci, ki: p.ki, parts: Array.isArray(p.parts) ? p.parts : [0,0,0,0,0,0], pet: p.pet ?? -1, isHost: p.isHost, isAI: false };
+        arr[p.slot] = { slot: p.slot, id: p.id, name: p.name, ci: p.ci, ki: p.ki, kc: p.kc || null, ready: !!p.ready, parts: Array.isArray(p.parts) ? p.parts : [0,0,0,0,0,0], pet: p.pet ?? -1, isHost: p.isHost, isAI: false };
         usedChars.add(p.ci);
       }
     }
@@ -3391,14 +3725,21 @@ const NET = (() => {
     return arr;
   }
 
+  function publishRoomInfo(playing){ try{ if(peer && window.BioRelay && BioRelay.setInfo) BioRelay.setInfo(peer, { name: st.nick + '의 방', private: !!st.priv, playing: !!playing }); }catch(e){} }
+  let _forceT = 0;
   function startOnlineMatch(){
     if(!st.active || st.role !== 'host') return;
+    const notReady = Object.values(st.players).filter(p => !p.isHost && !p.ready);
+    if(notReady.length && performance.now() - _forceT > 3000){ _forceT = performance.now(); log(`⏳ 아직 준비하지 않은 플레이어: ${notReady.map(p => p.name).join(', ')} · 3초 안에 한 번 더 누르면 그대로 출발해요.`); return; }
+    _forceT = 0;
+    for(const p of Object.values(st.players)) if(!p.isHost) p.ready = false;   // 다음 경기에서는 다시 준비
     const netPlayers = buildSlotArray();
     const pkt = {
       type: 'match_start', code: st.code, mode: S.mode, map: S.map, diff: S.diff,
       aiFill: st.aiFill, netPlayers
     };
     sendAll(pkt);
+    publishRoomInfo(true);
     launchOnlineRace(pkt);
   }
 
@@ -3440,15 +3781,17 @@ const NET = (() => {
           if(bc){ try{ bc.postMessage(rej); }catch(e){} }
           return;
         }
-        st.players[m.id] = { id: m.id, peerId: m.peerId, name: m.name || '게스트', ci: m.ci||0, ki: m.ki||0, parts: Array.isArray(m.parts) ? m.parts : [0,0,0,0,0,0], pet: m.pet ?? -1, isHost: false, joinT: Date.now(), rtt: 0 };
+        st.players[m.id] = { id: m.id, peerId: m.peerId, name: m.name || '게스트', ci: m.ci||0, ki: m.ki||0, kc: (typeof m.kc === 'string' && /^#[0-9a-f]{6}$/.test(m.kc)) ? m.kc : null, parts: Array.isArray(m.parts) ? m.parts : [0,0,0,0,0,0], pet: m.pet ?? -1, isHost: false, ready: false, joinT: Date.now(), rtt: 0 };
         log(`🎉 [${m.name}] 님이 방에 참가했습니다!`);
         sfx('get');
         broadcastRoomState();
       } else if(m.type === 'update_pick' && st.players[m.id]){
         st.players[m.id].name = m.name || st.players[m.id].name;
-        st.players[m.id].ci = m.ci; st.players[m.id].ki = m.ki;
+        st.players[m.id].ci = m.ci; st.players[m.id].ki = m.ki; st.players[m.id].kc = (typeof m.kc === 'string' && /^#[0-9a-f]{6}$/.test(m.kc)) ? m.kc : null;
         if(Array.isArray(m.parts)) st.players[m.id].parts = m.parts; if(m.pet != null) st.players[m.id].pet = m.pet;
         broadcastRoomState();
+      } else if(m.type === 'ready' && st.players[m.id]){
+        st.players[m.id].ready = !!m.ready; broadcastRoomState();
       } else if(m.type === 'input' && m.slot != null && m.startb){
         // 게스트가 자기 화면에서 성공한 출발 부스터 (GO 직후 0.7초 안에만 인정)
         const R = G.R, k = R && !G.demo ? R.karts[m.slot] : null;
@@ -3461,6 +3804,7 @@ const NET = (() => {
 
         if(m.swap) cur.swapQ = (cur.swapQ || 0) + 1;
         if(m.exceed) cur.exQ = (cur.exQ || 0) + 1;
+        if(m.jump) cur.jpQ = Math.min(2, (cur.jpQ || 0) + 1);
         cur.at = performance.now();
         st.remoteInputs[m.slot] = cur;
         // 잠깐 끊겼던(탭 전환 등) 게스트가 돌아오면 다시 직접 조종
@@ -3520,11 +3864,12 @@ const NET = (() => {
     if(!r) return { up:true, down:false, left:false, right:false, drift:false, use:false, swap:false };
     const out = {
       up: r.up, down: r.down, left: r.left, right: r.right, drift: r.drift, touch: !!r.touch,
-      use: r.useQ > 0, swap: r.swapQ > 0, exceed: r.exQ > 0
+      use: r.useQ > 0, swap: r.swapQ > 0, exceed: r.exQ > 0, jump: r.jpQ > 0
     };
     // ↑ 재입력 재현: 한 프레임 떼었다가 다음 프레임 누름 → 방장 쪽에서도 순간 부스터 상승 에지가 생김
     if(r.upQ > 0){ if(!r.upPh){ out.up = false; r.upPh = 1; } else { out.up = true; r.upPh = 0; r.upQ--; } }
     if(r.exQ > 0) r.exQ--;
+    if(r.jpQ > 0) r.jpQ--;
     if(r.useQ > 0) r.useQ--;
     if(r.swapQ > 0) r.swapQ--;
     return out;
@@ -3533,11 +3878,11 @@ const NET = (() => {
   function onLocalInput(pinp){
     if(!st.active || st.role !== 'guest' || !G.R) return;
     const upEdge = !!pinp.up && !st.lastUp; st.lastUp = !!pinp.up;
-    if(pinp.use || pinp.swap || pinp.exceed || (upEdge && G.R.player.ibWin > 0)){
+    if(pinp.use || pinp.swap || pinp.exceed || pinp.jump || (upEdge && G.R.player.ibWin > 0)){
       sendToHost({
         type: 'input', slot: st.mySlot,
         up: pinp.up, down: pinp.down, left: pinp.left, right: pinp.right, drift: pinp.drift,
-        use: pinp.use, swap: pinp.swap, exceed: !!pinp.exceed, upEdge: upEdge && G.R.player.ibWin > 0, touch: !!pinp.touch, t: performance.now()
+        use: pinp.use, swap: pinp.swap, exceed: !!pinp.exceed, jump: !!pinp.jump, upEdge: upEdge && G.R.player.ibWin > 0, touch: !!pinp.touch, t: performance.now()
       });
     }
   }
@@ -3547,7 +3892,7 @@ const NET = (() => {
 
   function recordEvents(evs){
     for(const e of evs){
-      if(['go','hit','block','warn','cut','osmo','rev','boom','splash','storm','finish','done','exceed','pet'].includes(e.t)){
+      if(['go','hit','block','warn','cut','osmo','rev','boom','splash','storm','finish','done','exceed','pet','wbc','repair'].includes(e.t)){
         st.pendingEvs.push({ t: e.t, ki: e.k ? e.k.i : -1, a: e.a && typeof e.a === 'object' ? { x: Math.round(e.a.x), y: Math.round(e.a.y) } : e.a });
       }
     }
@@ -3730,10 +4075,14 @@ const NET = (() => {
       slotEl.innerHTML = slots.slice().reverse().map((p, idx) => {
         const isMe = st.active ? (p.id === myId) : (p.slot === 7);
         const cls = isMe ? 'nslot me' : (!p.isAI ? 'nslot human' : 'nslot');
-        const tag = p.isHost ? '👑 방장' : (!p.isAI ? '👤 플레이어' : (p.isIdle ? '⚪ 비어 있음' : '🤖 AI 자동'));
-        return `<div class="${cls}"><b style="background:${RCOL[p.slot]}">${8-p.slot}</b><div><div>${p.name}</div><div style="font-size:.75em;color:var(--teal)">${CHARS[p.ci].name} · ${KARTS[p.ki].name}</div></div><small>${tag}</small></div>`;
+        const tag = p.isHost ? '👑 방장' : (!p.isAI ? (p.ready ? '✅ 준비 완료' : '⏳ 준비 중') : (p.isIdle ? '⚪ 비어 있음' : '🤖 AI 자동'));
+        return `<div class="${cls}"><b style="background:${RCOL[p.slot]}">${8-p.slot}</b><div><div>${p.name}</div><div style="font-size:.75em;color:var(--teal)">${CHARS[p.ci].name} · ${p.kc?`<span style="display:inline-block;width:.8em;height:.8em;border-radius:50%;background:${p.kc};vertical-align:middle"></span> `:''}${KARTS[p.ki].name}</div></div><small>${tag}</small></div>`;
       }).join('');
     }
+    const rdBtn = $('#btnNetReady'), rdInfo = $('#netReadyInfo');
+    if(rdBtn){ const me = st.players[myId]; rdBtn.style.display = st.active && st.role === 'guest' ? '' : 'none'; rdBtn.textContent = me && me.ready ? '↩ 준비 취소' : '✋ 준비 완료'; }
+    if(rdInfo){ const hs = Object.values(st.players).filter(p => !p.isHost); rdInfo.textContent = st.active && hs.length ? `준비 ${hs.filter(p => p.ready).length}/${hs.length}명` : ''; }
+    const pvChk = $('#netPrivate'); if(pvChk){ pvChk.checked = !!st.priv; pvChk.disabled = st.role !== 'host'; }
     const startBtn = $('#btnNetStart');
     if(startBtn){
       startBtn.disabled = !(st.active && st.role === 'host');
@@ -3751,7 +4100,7 @@ const NET = (() => {
         SAVE.nick = st.nick; persist();
         if(st.active){
           if(st.role === 'host' && st.players[myId]){ st.players[myId].name = st.nick; broadcastRoomState(); }
-          else if(st.role === 'guest') sendToHost({ type: 'update_pick', id: myId, name: st.nick, ci: S.ci, ki: S.ki });
+          else if(st.role === 'guest') sendToHost({ type: 'update_pick', id: myId, name: st.nick, ci: S.ci, ki: S.ki, kc: S.kc || null });
         } else renderLobby();
       });
     }
@@ -3781,6 +4130,17 @@ const NET = (() => {
       if(st.role !== 'host') return;
       st.aiFill = e.target.checked; broadcastRoomState();
     });
+    // 비공개 방: 교실 서버의 '열린 방' 목록에 보이지 않게 (방 코드로만 참가)
+    $('#netPrivate')?.addEventListener('change', e => {
+      if(st.role !== 'host') return;
+      st.priv = e.target.checked; publishRoomInfo(); sfx('sel'); renderLobby();
+    });
+    // 준비 완료 (참가자)
+    $('#btnNetReady')?.addEventListener('click', () => {
+      if(!st.active || st.role !== 'guest') return;
+      const me = st.players[myId], nv = !(me && me.ready);
+      if(me) me.ready = nv; sendToHost({ type: 'ready', id: myId, ready: nv }); sfx(nv ? 'get' : 'sel'); renderLobby();
+    });
     $('#btnSingleFromNet')?.addEventListener('click', () => {
       cleanup(); show('mode');
     });
@@ -3801,8 +4161,8 @@ const NET = (() => {
     renderLobby, consumeRemoteInput, onLocalInput, recordEvents, tick, stepGuest, sendStartBoost,
     syncMyGaragePick(){
       if(!st.active) return;
-      if(st.role === 'host' && st.players[myId]){ st.players[myId].ci = S.ci; st.players[myId].ki = S.ki; st.players[myId].parts = S.parts.slice(); st.players[myId].pet = S.pet; broadcastRoomState(); }
-      else if(st.role === 'guest') sendToHost({ type: 'update_pick', id: myId, name: st.nick, ci: S.ci, ki: S.ki, parts: S.parts.slice(), pet: S.pet });
+      if(st.role === 'host' && st.players[myId]){ st.players[myId].ci = S.ci; st.players[myId].ki = S.ki; st.players[myId].kc = S.kc || null; st.players[myId].parts = S.parts.slice(); st.players[myId].pet = S.pet; broadcastRoomState(); }
+      else if(st.role === 'guest') sendToHost({ type: 'update_pick', id: myId, name: st.nick, ci: S.ci, ki: S.ki, kc: S.kc || null, parts: S.parts.slice(), pet: S.pet });
     }
   };
 })();

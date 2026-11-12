@@ -269,7 +269,7 @@
       if (document.hidden || !box.offsetParent) return;
       rooms(o.prefix).then(function (rs) {
         if (rs == null) { list.innerHTML = '<span class="be">교실 서버에 닿지 않아요. 선생님 컴퓨터의 서버 창이 켜져 있는지 확인하세요.</span>'; last = ''; return; }
-        rs = rs.filter(function (r) { return !(o.hide && o.hide(r.code)); });
+        rs = rs.filter(function (r) { return !(o.hide && o.hide(r.code)) && !(r.info && r.info.private); });   // 비공개 방은 목록에서 숨김
         var key = JSON.stringify(rs); if (key === last) return; last = key;
         if (!rs.length) { list.innerHTML = '<span class="be">지금 열린 방이 없어요. 방을 만들면 다른 사람 화면에 여기 보여요.</span>'; return; }
         list.innerHTML = rs.map(function (r) {
