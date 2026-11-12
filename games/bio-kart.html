@@ -3404,7 +3404,8 @@ const STEP=1/60;
    그릴 때만 카트 위치를 '직전 계산 → 이번 계산' 사이로 이어 붙여 끊김 없이 부드럽게 보이게 하고, 그린 뒤 원래 값으로 되돌림 */
 const LERPF=['x','y','ang','mvAng','prog','z'];
 function snapKarts(R){for(const k of R.karts){const p=k._pv||(k._pv={});for(const f of LERPF)p[f]=k[f]||0;}}
-function lerpKarts(R,a){if(a>=1)return;const len=R.tr.len;for(const k of R.karts){const p=k._pv;if(!p)continue;const c=k._cv||(k._cv={});
+function lerpKarts(R,a){lerpKarts0(R,a);for(const k of R.karts){if(!(k._rox||k._roy||k._roa))continue;if(!k._lerped){const c=k._cv||(k._cv={});for(const f of LERPF)c[f]=k[f];k._lerped=true;}k.x+=k._rox||0;k.y+=k._roy||0;k.ang+=k._roa||0;}}
+function lerpKarts0(R,a){if(a>=1)return;const len=R.tr.len;for(const k of R.karts){const p=k._pv;if(!p)continue;const c=k._cv||(k._cv={});
   for(const f of LERPF){const cur=k[f]||0;c[f]=k[f];let d=cur-p[f];if(f==='ang'||f==='mvAng')d=wrapA(d);else if(f==='prog'){if(d>len/2)d-=len;else if(d<-len/2)d+=len;}
     if(Math.abs(d)>(f==='x'||f==='y'?60:f==='prog'?60:f==='z'?40:1.2)){continue;}   // 순간이동(다시 출발 등)은 이어 붙이지 않음
     let v=p[f]+d*a;if(f==='prog')v=((v%len)+len)%len;k[f]=v;}k._lerped=true;}}
@@ -3748,6 +3749,7 @@ const NET = (() => {
     const meEntry = pkt.netPlayers.find(p => p && p.id === myId);
     st.mySlot = meEntry ? meEntry.slot : 7;
     st.remoteInputs = {}; st.pendingEvs = []; st.lastState = performance.now(); st.lastUp = false;
+    st.seq = 0; st.outQ = []; st.hist = []; st.recon = false; st.lastClk = null; st.rt = null; st.mvBits = 0;
     if(st.role === 'host') for(const p of pkt.netPlayers) if(p && !p.isAI && p.id !== myId) st.remoteInputs[p.slot] = { up:false, down:false, left:false, right:false, drift:false, useQ:0, swapQ:0, exQ:0, at: performance.now() + 4000 };
     auInit(); G.demo = false; G.paused = false; G.acc = 0; PARTS.length = 0; FX.length = 0; lastItems = 'x'; lastOrder = '';
     G.R = makeRace({ map: S.map, mode: S.mode, ci: S.ci, ki: S.ki, diff: S.diff, mySlot: st.mySlot, netPlayers: pkt.netPlayers });
@@ -3799,6 +3801,16 @@ const NET = (() => {
       } else if(m.type === 'input' && m.slot != null){
         const cur = st.remoteInputs[m.slot] || { up:false, down:false, left:false, right:false, drift:false, useQ:0, swapQ:0, exQ:0 };
         cur.up = !!m.up; cur.down = !!m.down; cur.left = !!m.left; cur.right = !!m.right; cur.drift = !!m.drift; cur.touch = !!m.touch;
+        if(Array.isArray(m.q)){
+          // 입력 번호 방식: 받은 순서대로 쌓고, 계산 한 번에 하나씩 꺼내 씀 (이미 받은 번호는 무시)
+          const q = cur.q || (cur.q = []);
+          for(const e of m.q){
+            if(!Array.isArray(e) || typeof e[0] !== 'number') continue;
+            if(cur.lastQ != null && e[0] <= cur.lastQ) continue;
+            cur.lastQ = e[0]; q.push([e[0], e[1] | 0]);
+          }
+          if(q.length > 30) q.splice(0, q.length - 30);
+        }
         if(m.use) cur.useQ = (cur.useQ || 0) + 1;
         if(m.upEdge) cur.upQ = Math.min(2, (cur.upQ || 0) + 1); // 순간 부스터용 ↑ 재입력 (30Hz 샘플링에 놓치지 않도록 따로 전달)
 
@@ -3866,6 +3878,25 @@ const NET = (() => {
       up: r.up, down: r.down, left: r.left, right: r.right, drift: r.drift, touch: !!r.touch,
       use: r.useQ > 0, swap: r.swapQ > 0, exceed: r.exQ > 0, jump: r.jpQ > 0
     };
+    if(r.q && r.lastQ != null){
+      // 지터 버퍼: 입력을 3개(0.05초)쯤 미리 모아 두고 '번호 순서대로' 계산 한 번에 하나씩 재생.
+      // 와이파이가 흔들려 입력이 몰리거나 늦게 와도 방장 계산 횟수와 입력 번호가 어긋나지 않음
+      const TGT = 3, newest = r.lastQ;
+      if(r.play == null){ r.play = newest - TGT + 1; r.lag = 0; r.hi = 0; }
+      let depth = newest - r.play + 1, hold = false;
+      if(depth < -30 || depth > 40 || Math.abs(r.lag) > 60){ r.play = newest - TGT + 1; r.lag = 0; depth = TGT; }  // 오래 끊겼다 돌아옴: 다시 맞춤
+      else if(r.lag > 0 && depth > TGT + 1){ r.play++; r.lag--; depth--; }   // 기다렸던 만큼 여유가 생기면 하나 건너뛰어 따라잡음
+      else { r.hi = depth > TGT + 3 ? r.hi + 1 : 0; if(r.hi >= 20){ r.play++; r.lag--; depth--; r.hi = 0; } }  // 계속 너무 많이 쌓임
+      while(r.q.length && r.q[0][0] < r.play) r.q.shift();
+      if(depth <= 0) hold = true;   // 이번 번호가 아직 안 옴: 버리지 않고 기다림 (그동안 마지막 입력 유지)
+      if(hold) r.lag++;
+      else {
+        if(r.q.length && r.q[0][0] === r.play) r.mv = r.q.shift()[1];
+        r.ack = r.play; r.play++;
+      }
+      r.lag = clamp(r.lag, -60, 60);
+      if(r.mv != null){ const b = r.mv; out.up = !!(b&1); out.down = !!(b&2); out.left = !!(b&4); out.right = !!(b&8); out.drift = !!(b&16); out.touch = !!(b&32); }
+    }
     // ↑ 재입력 재현: 한 프레임 떼었다가 다음 프레임 누름 → 방장 쪽에서도 순간 부스터 상승 에지가 생김
     if(r.upQ > 0){ if(!r.upPh){ out.up = false; r.upPh = 1; } else { out.up = true; r.upPh = 0; r.upQ--; } }
     if(r.exQ > 0) r.exQ--;
@@ -3875,8 +3906,16 @@ const NET = (() => {
     return out;
   }
 
+  // 입력 비트: ↑ ↓ ← → 드리프트 터치
+  const inBits = p => (p.up?1:0)|(p.down?2:0)|(p.left?4:0)|(p.right?8:0)|(p.drift?16:0)|(p.touch?32:0);
   function onLocalInput(pinp){
     if(!st.active || st.role !== 'guest' || !G.R) return;
+    // 계산 한 번(1/60초)마다 입력 번호를 붙여 모아 두었다가 방장에게 순서대로 보냄
+    if(G.R.state === 'race' && !G.R.player.finished){
+      st.seq = (st.seq || 0) + 1; st.mvBits = inBits(pinp);
+      (st.outQ || (st.outQ = [])).push([st.seq, st.mvBits]);
+      if(st.outQ.length > 30) st.outQ.splice(0, st.outQ.length - 30);
+    }
     const upEdge = !!pinp.up && !st.lastUp; st.lastUp = !!pinp.up;
     if(pinp.use || pinp.swap || pinp.exceed || pinp.jump || (upEdge && G.R.player.ibWin > 0)){
       sendToHost({
@@ -3932,7 +3971,9 @@ const NET = (() => {
           bx: R.boxes.map(b => b.act?1:0),
           gi: R.gi.map(g => [g.type, Math.round(g.x), Math.round(g.y), g.r]),
           pj: R.proj.map(p => [p.type, Math.round(p.x), Math.round(p.y), +(p.ang||0).toFixed(2), Math.round(p.alt||0), p.tgt?p.tgt.i:-1]),
-          ev: st.pendingEvs.splice(0, st.pendingEvs.length)
+          ev: st.pendingEvs.splice(0, st.pendingEvs.length),
+          // 사람 카트마다 [마지막으로 반영한 입력 번호, 계산 횟수와의 차이]
+          ak: R.karts.map(k => { const r = st.remoteInputs[k.i]; return r && r.ack != null ? [r.ack, r.lag || 0] : 0; })
         };
         sendAll(pkt);
       }
@@ -3940,8 +3981,9 @@ const NET = (() => {
       if(st.netTickAcc >= 0.033){ // 30Hz 게스트 입력 전송
         st.netTickAcc = 0;
         const inp = G.paused ? {} : readInput(false);
+        const q = st.outQ && st.outQ.length ? st.outQ.splice(0) : [];
         sendToHost({
-          type: 'input', slot: st.mySlot,
+          type: 'input', slot: st.mySlot, q,
           up: inp.up, down: inp.down, left: inp.left, right: inp.right, drift: inp.drift, touch: !!inp.touch,
           use: false, swap: false, t: performance.now()
         });
@@ -3949,10 +3991,38 @@ const NET = (() => {
     }
   }
 
+  // 입력 번호 보정: 방장이 '내 입력 N번까지 반영한 결과'와 내 기기의 'N번 직후 예측'을 같은 시점끼리 비교해
+  // 그 차이만큼만 지금 위치를 옮김. 예전처럼 '지난 위치'로 당기지 않으므로 고무줄처럼 뒤로 끌리지 않음
+  function reconcileMine(R, k, seq){
+    const h = st.hist || [];
+    if(!h.length) return;
+    let j = 0; while(j < h.length && h[j].s < seq) j++;
+    if(j >= h.length) j = h.length - 1;          // 방장이 더 앞서 있음(내 기기가 잠깐 느렸음): 가장 최근 예측과 비교
+    else if(h[j].s !== seq && j > 0) j--;
+    const e = h[j];
+    const dx = k._netTx - e.x, dy = k._netTy - e.y, err = Math.hypot(dx, dy);
+    if(err > 95){ // 크게 어긋남(다시 출발 등): 방장 위치로 바로 이동
+      k.x = k._netTx; k.y = k._netTy; k.ang = k._netTang; k.mvAng = k._netTmv; k.spd = k._netTspd;
+      k._rox = k._roy = k._roa = 0; if(k._pv){ k._pv.x = k.x; k._pv.y = k.y; k._pv.ang = k.ang; k._pv.mvAng = k.mvAng; }
+      h.length = 0; st.reconSnap = (st.reconSnap || 0) + 1; return;
+    }
+    h.splice(0, j + 1);
+    const dsp = k._netTspd - e.spd, da = wrapA(k._netTang - e.ang), dmv = wrapA(k._netTmv - e.mv);
+    st.reconErr = err; st.reconN = (st.reconN || 0) + 1; st.reconSum = (st.reconSum || 0) + err;
+    if(err < 0.3 && Math.abs(dsp) < 0.5 && Math.abs(da) < 0.002) return;
+    k.x += dx; k.y += dy; k.spd += dsp; k.ang += da; k.mvAng += dmv;
+    for(const r of h){ r.x += dx; r.y += dy; r.spd += dsp; r.ang += da; r.mv += dmv; }
+    if(k._pv){ k._pv.x += dx; k._pv.y += dy; k._pv.ang += da; k._pv.mvAng += dmv; }
+    // 화면에는 바로 옮기지 않고 차이를 조금씩 줄여 가며 보여 줌
+    k._rox = clamp((k._rox || 0) - dx, -40, 40); k._roy = clamp((k._roy || 0) - dy, -40, 40); k._roa = clamp((k._roa || 0) - da, -0.6, 0.6);
+  }
+
   function applyHostSnapshot(R, m){
     if(R.state === 'count' && m.st === 'race'){ showMsg('GO!','go',0.9); sfx('go'); }
     if(m.st === 'done' && !R._guestDoneShown){ R._guestDoneShown = true; setTimeout(() => showResult(R), 1600); }
     R.state = m.st; R.countT = m.ct; R.t = m.t; R.clock = m.clk; R.firstT = m.ft;
+    // 방장 시계와 내 시계의 차이 (와이파이 흔들림은 평균으로 눌러 줌)
+    if(st.lastClk == null || m.clk > st.lastClk) st.lastClk = m.clk;   // 받은 것 중 가장 최근 방장 계산 시각
     if(m.bx && R.boxes.length === m.bx.length){
       for(let i=0;i<m.bx.length;i++) R.boxes[i].act = !!m.bx[i];
     }
@@ -3982,8 +4052,15 @@ const NET = (() => {
             else if(!(k.exT > 0 && R.clock - (k.exAt||-9) < 0.8)){ k.exT = 0; k.exG = d[26]; }
             k.exShield = d[28] || 0;
           }
-          const err = Math.hypot(k._netTx - k.x, k._netTy - k.y);
-          if(err > 95){ k.x = k._netTx; k.y = k._netTy; k.ang = k._netTang; k.mvAng = k._netTmv; k.spd = k._netTspd; }
+          { const sb = k._sb || (k._sb = []); if(!sb.length || m.clk > sb[sb.length-1].t){ sb.push({ t: m.clk, x: d[0], y: d[1], ang: d[2], mv: d[3], spd: d[4] }); if(sb.length > 24) sb.shift(); } }  // 완주 뒤 따라가기용
+          const ak = m.ak && m.ak[i];
+          if(Array.isArray(ak) && !k.finished && R.state === 'race'){
+            st.recon = true;
+            reconcileMine(R, k, ak[0] + ak[1]);
+          } else {
+            const err = Math.hypot(k._netTx - k.x, k._netTy - k.y);
+            if(err > 95){ k.x = k._netTx; k.y = k._netTy; k.ang = k._netTang; k.mvAng = k._netTmv; k.spd = k._netTspd; }
+          }
         } else {
           k.drifting = !!d[5]; k.driftDir = d[6]; k.boostT = d[7]; k.boostMul = d[8];
           k.spinT = d[9]; k.stunT = d[10]; k.shieldT = d[11]; k.invT = d[12];
@@ -3992,6 +4069,8 @@ const NET = (() => {
           k.lapsDone = d[22]; k.finished = !!d[23]; k.finishT = d[24]; k.rank = d[25];
           if(d[26] != null){ k.exG = d[26]; k.exT = d[27]; k.exShield = d[28] || 0; k.exMax = d[29] || 1; }
           if(k._netInit !== true){ k.x = k._netTx; k.y = k._netTy; k.ang = k._netTang; k.mvAng = k._netTmv; k._netInit = true; }
+          const sb = k._sb || (k._sb = []);
+          if(!sb.length || m.clk > sb[sb.length-1].t){ sb.push({ t: m.clk, x: d[0], y: d[1], ang: d[2], mv: d[3], spd: d[4] }); if(sb.length > 24) sb.shift(); }
         }
       }
       rankUpdate(R);
@@ -4003,12 +4082,38 @@ const NET = (() => {
     }
   }
 
+  // 다른 카트를 그릴 시점: 방장 시계보다 0.1초 앞 (스냅샷 두 개 사이를 이어 그려 끊김·순간이동 없이)
+  const INTERP_DELAY = 0.1;
+  function remoteAt(k, rt){
+    const b = k._sb; if(!b || !b.length) return null;
+    if(rt <= b[0].t) return b[0];
+    for(let i = b.length - 1; i >= 1; i--){
+      const p0 = b[i-1], p1 = b[i];
+      if(rt >= p0.t){
+        if(rt > p1.t){ // 다음 스냅샷이 늦음: 최대 0.15초까지만 앞으로 짐작
+          const e = Math.min(rt - p1.t, 0.15);
+          return { x: p1.x + Math.cos(p1.mv) * p1.spd * e, y: p1.y + Math.sin(p1.mv) * p1.spd * e, ang: p1.ang, mv: p1.mv, spd: p1.spd };
+        }
+        if(Math.hypot(p1.x - p0.x, p1.y - p0.y) > 95) return p1;   // 다시 출발 등 순간이동은 잇지 않음
+        const a = (rt - p0.t) / Math.max(1e-4, p1.t - p0.t);
+        return { x: p0.x + (p1.x - p0.x) * a, y: p0.y + (p1.y - p0.y) * a, ang: p0.ang + wrapA(p1.ang - p0.ang) * a,
+                 mv: p0.mv + wrapA(p1.mv - p0.mv) * a, spd: p0.spd + (p1.spd - p0.spd) * a };
+      }
+    }
+    return b[b.length - 1];
+  }
   function stepGuest(R, pinp, dt){
     const P = R.player;
-    // 1. 내 카트 클라이언트 사이드 예측 (즉각적인 핸들링 & 드리프트 물리)
+    // 1. 내 카트: 내 기기에서 먼저 계산(예측). 방장 정답과의 차이는 스냅샷이 올 때 입력 번호로 맞춤
     if(!P.finished && R.state === 'race'){
       updKart(R, P, pinp, dt);
-      if(P._netTx != null){
+      if(st.seq){
+        const h = st.hist || (st.hist = []);
+        h.push({ s: st.seq, x: P.x, y: P.y, spd: P.spd, ang: P.ang, mv: P.mvAng });
+        if(h.length > 240) h.splice(0, h.length - 240);
+      }
+      if(!st.recon && P._netTx != null){
+        // (예전 방장 버전과 연결된 경우만) 위치 차이를 조금씩 당겨 맞춤
         const err = Math.hypot(P._netTx - P.x, P._netTy - P.y);
         if(err > 6 && err <= 95){
           P.x += (P._netTx - P.x) * 0.22;
@@ -4017,10 +4122,27 @@ const NET = (() => {
         }
       }
     }
-    // 2. 원격 카트 데드레커닝 + 부드러운 위치·각도 보간 (Interpolation). 완주한 내 카트도 방장 위치를 따라감
+    // 보정으로 생긴 화면상의 차이는 약 0.1초에 걸쳐 부드럽게 없앰
+    if(P._rox || P._roy || P._roa){
+      P._rox *= 0.85; P._roy *= 0.85; P._roa *= 0.85;
+      if(Math.abs(P._rox) + Math.abs(P._roy) < 0.05 && Math.abs(P._roa) < 0.001){ P._rox = P._roy = P._roa = 0; }
+    }
+    // 2. 다른 카트: 방장 스냅샷 기록을 0.1초 늦게 따라가며 이어 그림. 완주한 내 카트도 방장 위치를 따라감
+    // 재생 위치: '가장 최근 스냅샷 - 0.1초'를 목표로 매 계산 dt씩 나아가되, 차이는 몇 %씩만 당겨 맞춤 (와이파이가 흔들려도 화면 속도는 일정)
+    let rt = null;
+    if(st.lastClk != null){
+      const target = st.lastClk - INTERP_DELAY;
+      if(st.rt == null || Math.abs(target - st.rt) > 0.5) st.rt = target;
+      else st.rt += dt + clamp((target - st.rt) * 0.05, -dt * 0.25, dt * 0.25);
+      rt = st.rt;
+    }
     for(const k of R.karts){
       if((k === P && !P.finished) || k.isIdleSlot) continue;
-      if(k._netTx != null){
+      const q = rt != null ? remoteAt(k, rt) : null;
+      if(q){
+        k.x = q.x; k.y = q.y; k.ang = q.ang; k.mvAng = q.mv; k.spd = q.spd;
+        k.wheelRot = ((k.wheelRot||0) + k.spd * dt * 0.18) % TAU;
+      } else if(k._netTx != null){
         k.spd += ((k._netTspd||0) - k.spd) * 0.3;
         k.x += Math.cos(k.mvAng) * k.spd * dt + (k._netTx - k.x) * 0.32;
         k.y += Math.sin(k.mvAng) * k.spd * dt + (k._netTy - k.y) * 0.32;
