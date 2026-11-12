@@ -3821,7 +3821,7 @@ const NET = (() => {
       const fin = e => { if (done) return; done = true; clearTimeout(to); p.off('open', ok); p.off('error', bad); if (e){ try { p.destroy(); } catch(_){} rej(e); } else res(p); };
       const ok = () => fin(null);
       const bad = e => fin(err(e && e.type === 'unavailable-id' ? 'taken' : e && e.type === 'browser-incompatible' ? 'webrtc' : 'server'));
-      const to = setTimeout(() => fin(err('server')), 10000);
+      const to = setTimeout(() => fin(err('server')), (window.BioRelay&&BioRelay.wait?BioRelay.wait(10000):10000));
       p.on('open', ok); p.on('error', bad);
     }));
   }
@@ -3963,7 +3963,7 @@ const NET = (() => {
     let free = null;
     for (const c of QUICK){
       log(`🔎 빠른 매칭 방 [${c}] 확인 중...`);
-      const r = await join(c, { internal: true, quiet: true, keepPeer: true, timeout: 2600 });
+      const r = await join(c, { internal: true, quiet: true, keepPeer: true, timeout: 6000 });
       if (r === 'ok'){ st.busy = false; renderLobby(); return; }
       if (r === 'notfound' && !free) free = c;
     }
@@ -4214,5 +4214,6 @@ init();
 <script src="../goal.js"></script>
 <script src="../rank.js"></script>
 <script src="../ilog.js"></script>
+<script>/* 서버에 열린 방 목록 (net.js) */addEventListener('load',function(){try{window.BioRelay&&BioRelay.roomPanel({prefix:'biostrike-v1-',input:'#codeIn',join:'#btnJoin'});}catch(e){}});</script>
 </body>
 </html>

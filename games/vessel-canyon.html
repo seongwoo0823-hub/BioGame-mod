@@ -5758,7 +5758,7 @@ const NET={
       if(this.role==='guest'&&this.players.length===0){
         advanceQuick('notfound');
       }
-    },isQuick?2400:10000);
+    },isQuick?6000:(window.BioRelay&&BioRelay.wait?BioRelay.wait(10000):10000));
   },
 
   quickMatch(){
@@ -6237,4 +6237,5 @@ if(window.BIO_P2P&&window.BIO_P2P.onBackgroundTick){window.BIO_P2P.onBackgroundT
 if(!window.__HEADLESS)boot();
 </script>
 <script src="../ilog.js"></script>
+<script>/* 서버에 열린 방 목록 (net.js) */addEventListener('load',function(){try{window.BioRelay&&BioRelay.roomPanel({prefix:'biocanyon-room-',input:'#netCodeInp',join:'#btnJoinRoom'});}catch(e){}});</script>
 </body></html>

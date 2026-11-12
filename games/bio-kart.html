@@ -3290,7 +3290,7 @@ const NET = (() => {
       if(st.active && st.role === 'guest' && Object.keys(st.players).length === 0){
         advanceQuick('notfound');
       }
-    }, isQuick ? 2400 : 10000);
+    }, isQuick ? 6000 : (window.BioRelay&&BioRelay.wait?BioRelay.wait(10000):10000));
     log(isQuick ? `🔎 빠른 매칭 방 [${code}] 확인 중...` : `방 [${code}] 연결 요청 중... (방장이 수락하면 슬롯에 표시됩니다)`);
     renderLobby();
   }
@@ -3770,5 +3770,6 @@ newDemo();show('title');requestAnimationFrame(loop);
 <script src="../goal.js"></script>
 <script src="../rank.js"></script>
 <script src="../ilog.js"></script>
+<script>/* 서버에 열린 방 목록 (net.js) */addEventListener('load',function(){try{window.BioRelay&&BioRelay.roomPanel({prefix:'biokart-p2p-v1-',input:'#netCodeInp',join:'#btnJoinRoom'});}catch(e){}});</script>
 </body>
 </html>

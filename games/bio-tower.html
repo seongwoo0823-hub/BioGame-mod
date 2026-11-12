@@ -618,7 +618,7 @@ const NET = (() => {
   let peerLoad = null;
   const loadPeer = () => window.Peer ? Promise.resolve() : peerLoad || (peerLoad = new Promise((ok, no) => { const s = document.createElement('script'); s.src = '../vendor/peerjs.min.js'; s.onload = ok; s.onerror = () => { peerLoad = null; no(new Error('load')); }; document.head.appendChild(s); }));
   const openPeer = id => loadPeer().then(() => new Promise((ok, no) => { let p; try { p = id ? new Peer(id, peerOpts()) : new Peer(peerOpts()); } catch (e) { no(e); return; }
-    const to = setTimeout(() => { try { p.destroy(); } catch (e) {} no(new Error('server')); }, 12000);
+    const to = setTimeout(() => { try { p.destroy(); } catch (e) {} no(new Error('server')); }, (window.BioRelay&&BioRelay.wait?BioRelay.wait(12000):12000));
     p.on('open', () => { clearTimeout(to); ok(p); }); p.on('error', e => { clearTimeout(to); no(e); }); }));
   const genCode = () => { const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 4; i++) s += c[Math.floor(Math.random() * c.length)]; return s; };
   const openBc = c => { try { bc = new BroadcastChannel(BC_PREFIX + c); bc.onmessage = e => { const m = e.data; if (!m) return; if (role === 'host' && m.from && m.from !== myId) onHost(m, null); else if (role === 'guest' && !m.from && (!m.to || m.to === myId)) onGuest(m); }; } catch (e) { bc = null; } };
@@ -761,5 +761,6 @@ addEventListener('pagehide', () => NET.leave());
 window.ILOG_WATCH = () => G.mode === 'play' ? {단계: G.phase, 차례: (curP() || {}).name, 조각: G.piece ? PM[G.piece.k].name : '', x: G.piece ? Math.round(G.piece.x) : undefined, 높이: +(Math.max(0, -(G.role === 'guest' ? G.viewTop : towerTop())) / 50).toFixed(2)} : {화면: G.mode};
 </script>
 <script src="../ilog.js"></script>
+<script>/* 서버에 열린 방 목록 (net.js) */addEventListener('load',function(){try{window.BioRelay&&BioRelay.roomPanel({prefix:'biotower-v1-',input:'#joinCode',join:'#bJoin'});}catch(e){}});</script>
 </body>
 </html>

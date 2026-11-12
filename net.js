@@ -3,7 +3,10 @@
  *   해외 중계를 돌아 느려지므로, 우리 서버(server/server.js)에 웹소켓으로 접속해 서버가 메시지를 전달하게 합니다.
  *   게임 코드는 그대로: vendor/peerjs.min.js가 new Peer()를 만들 때 BioRelay가 켜져 있으면 이 파일의 RelayPeer를 대신 돌려줍니다.
  *   (RelayPeer는 PeerJS와 같은 모양: on('open'|'connection'|'error'|'disconnected'), connect(), destroy(), conn.send/close/on('open'|'data'|'close'))
- *   서버에 8초 안에 닿지 않으면 자동으로 원래 P2P 방식으로 돌아갑니다.
+ *   서버가 잠들어 있으면(무료 서버는 15분 동안 안 쓰면 잠듦) 깨어날 때까지 최대 75초 다시 시도합니다.
+ *   한 기기만 몰래 P2P로 바뀌면 방장과 참가자가 서로 다른 곳에 있게 되어 방을 못 찾으므로,
+ *   서버가 정말 꺼져 있을 때만 P2P로 돌아갑니다.
+ *   방 목록: BioRelay.rooms(접두어) · BioRelay.roomPanel({...}) — 서버에 열린 방을 보여 주고 눌러서 참가
  *
  *   ▶ 설정: RELAY_URL 에 서버 주소 (예: 'wss://biogame.duckdns.org'). 비어 있으면 꺼짐(지금처럼 P2P).
  *     시험용: 주소창에 ?relay=wss://… 를 붙이거나 localStorage 'bioRelayUrl', 끄기 ?relay=off
@@ -21,7 +24,8 @@
     else if (localStorage.getItem('bioRelayUrl')) url = localStorage.getItem('bioRelayUrl');
   } catch (e) {}
 
-  var downAt = 0;
+  var WAKE_MAX = 75000;     // 잠든 서버가 깨어나길 기다리는 최대 시간
+  var srv = {ok: false, t: 0}; // 마지막으로 확인한 서버 상태
   function rid(n) { var s = 'abcdefghijkmnpqrstuvwxyz23456789', o = ''; for (var i = 0; i < n; i++) o += s[Math.random() * s.length | 0]; return o; }
   function perr(type, msg) { var e = new Error(msg || type); e.type = type; return e; }
 
@@ -48,7 +52,8 @@
     clearTimeout(hideT);
     if (!mode) { badgeEl.style.opacity = '0'; return; }
     var col = mode === 'server' ? '#34d399' : mode === 'p2p' ? '#fbbf24' : '#94a3b8';
-    var txt = mode === 'server' ? '서버 연결' + (ms != null ? ' · ' + ms + 'ms' : '') : mode === 'p2p' ? 'P2P 직접 연결' : '서버 연결 중…';
+    var txt = mode === 'server' ? '서버 연결' + (ms != null ? ' · ' + ms + 'ms' : '') : mode === 'p2p' ? 'P2P 직접 연결' : mode === 'wake' ? '서버 깨우는 중… (최대 1분)' : '서버 연결 중…';
+    if (mode === 'wake') col = '#60a5fa';
     badgeEl.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:' + col + ';box-shadow:0 0 6px ' + col + '"></span>' + txt;
     badgeEl.title = mode === 'server' ? '우리 중계 서버를 거쳐 연결됨' : mode === 'p2p' ? '서버 대신 기기끼리 직접 연결됨' : '';
     badgeEl.style.opacity = '1';
@@ -108,31 +113,48 @@
     this.id = null; this.open = false; this.destroyed = false; this.disconnected = false;
     this.connections = {}; this.options = opts || {};
     this._conns = {}; this._want = id; this._fallbackFn = fallback; this._inner = null;
+    this._key = rid(20); this._t0 = Date.now(); this._tries = 0;
     this.relay = true; live++; badge('wait');
     this._start();
   }
   RelayPeer.prototype = Object.create(Emitter.prototype);
   RelayPeer.prototype._start = function () {
-    var self = this, ws, ok = false;
-    try { ws = new WebSocket(url); } catch (e) { setTimeout(function () { self._fallback(); }, 0); return; }
+    var self = this, ws, ok = false, failed = false;
+    if (this.destroyed) return;
+    this._tries++;
+    try { ws = new WebSocket(url); } catch (e) { setTimeout(function () { self._retry(); }, 0); return; }
     this._ws = ws;
-    var timer = setTimeout(function () { if (!ok) { try { ws.close(); } catch (e) {} self._fallback(); } }, BioRelay.waitMs || 8000);
-    ws.onopen = function () { ok = true; clearTimeout(timer); self._ctl({t: 'open', id: self._want == null ? undefined : self._want}); };
+    var fail = function () { if (ok || failed) return; failed = true; clearTimeout(timer); try { ws.close(); } catch (e) {} if (self._ws === ws) self._retry(); };
+    var timer = setTimeout(fail, BioRelay.waitMs || 7000);
+    ws.onopen = function () { ok = true; clearTimeout(timer); srv = {ok: true, t: Date.now()}; self._ctl({t: 'open', id: self._want == null ? undefined : self._want, key: self._key}); };
     ws.onmessage = function (e) { self._msg(e.data); };
-    ws.onerror = function () { if (!ok) { clearTimeout(timer); self._fallback(); } };
+    ws.onerror = fail;
     ws.onclose = function () {
-      if (!ok || self.destroyed || self._ws !== ws) return;
+      if (!ok) { fail(); return; }
+      if (self.destroyed || self._ws !== ws) return;
+      clearInterval(self._pingT);
+      var was = self.open;
       self.open = false; self.disconnected = true;
       for (var k in self._conns) self._conns[k]._end();
-      self.emit('disconnected', self.id);
-      self.emit('error', perr('network', 'Lost connection to relay server'));
-      // 잠깐 끊긴 거면 같은 아이디로 다시 접속
-      setTimeout(function () { if (!self.destroyed && self.disconnected) self.reconnect(); }, 1500);
+      if (was) { self.emit('disconnected', self.id); self.emit('error', perr('network', 'Lost connection to relay server')); }
+      // 잠깐 끊긴 거면 같은 아이디·열쇠로 다시 접속 (서버가 예전 연결을 밀어내고 방을 돌려줌)
+      setTimeout(function () { if (!self.destroyed && self.disconnected) self.reconnect(); }, 1000);
     };
+  };
+  // 서버에 닿지 않을 때: 서버가 깨어나는 중이면 계속 다시 시도, 정말 꺼져 있으면 P2P로
+  RelayPeer.prototype._retry = function () {
+    var self = this;
+    if (this.destroyed || this._inner) return;
+    if (Date.now() - this._t0 > WAKE_MAX) { this._fallback(); return; }
+    badge('wake'); wake();
+    var wait = Math.min(4000, 600 * this._tries);
+    setTimeout(function () { if (!self.destroyed && !self._inner && !self.open) self._start(); }, wait);
   };
   RelayPeer.prototype._fallback = function () {
     if (this._inner || this.destroyed) return;
-    downAt = Date.now();
+    srv = {ok: false, t: Date.now()};
+    try { this._ws && this._ws.close(); } catch (e) {}
+    this._ws = null;
     console.warn('[BioRelay] 서버에 연결하지 못해 P2P 방식으로 바꿉니다');
     if (!this._fallbackFn) { this.emit('error', perr('server-error', 'Relay server unavailable')); return; }
     var self = this, inner = this._fallbackFn();
@@ -165,13 +187,15 @@
     var m; try { m = JSON.parse(s); } catch (e) { return; }
     var c2;
     switch (m.t) {
-      case 'open': this.id = m.id; this.open = true; this.disconnected = false; this._multi = (m.v || 1) >= 2; peerUp('server');
+      case 'open': this.id = m.id; this.open = true; this.disconnected = false; this._multi = (m.v || 1) >= 2; this._tries = 0; peerUp('server');
+        if (this._info) this._ctl({t: 'info', info: this._info});
         var me = this; clearInterval(this._pingT); this._ping = function () { me._ctl({t: 'ping', ts: performance.now()}); }; this._ping(); this._pingT = setInterval(this._ping, 3000);
         this.emit('open', m.id); break;
       case 'pong': if (typeof m.ts === 'number') { this.rtt = Math.round(performance.now() - m.ts); peerUp('server', this.rtt); } break;
       case 'error':
         if (m.cid && (c2 = this._conns[m.cid])) { c2.emit('error', perr(m.type, m.message)); c2._closed = true; delete this._conns[m.cid]; }
         this.emit('error', perr(m.type, m.message || m.type));
+        if (m.type === 'unavailable-id' || m.type === 'invalid-id') { this._dead = true; try { this._ws.close(); } catch (e) {} }
         break;
       case 'conn':
         c2 = new RelayConn(this, m.cid, m.from, m.meta);
@@ -202,19 +226,80 @@
   RelayPeer.prototype.disconnect = function () { this.destroy(); };
   RelayPeer.prototype.reconnect = function () {
     if (this._inner) return this._inner.reconnect();
-    if (this.destroyed || !this.disconnected) return;
-    this._want = this.id; this._start();
+    if (this.destroyed || !this.disconnected || this._dead) return;
+    this._want = this.id; this._t0 = Date.now(); this._tries = 0; this._start();
   };
 
   // 무료 서버(Render)는 15분 동안 아무도 안 쓰면 잠들고 깨어나는 데 1분쯤 걸림 →
   // 페이지를 열자마자 미리 깨우고, 페이지가 열려 있는 동안 4분마다 살짝 두드려 잠들지 않게 함
-  function wake() { if (!url || document.hidden) return; try { fetch(url.replace(/^ws/, 'http') + '/?wake=' + Date.now(), {mode: 'no-cors', cache: 'no-store'}).catch(function () {}); } catch (e) {} }
+  var httpBase = url ? url.replace(/^ws/, 'http').replace(/\/+$/, '') : '';
+  function wake() { if (!url || document.hidden) return; try { fetch(httpBase + '/?wake=' + Date.now(), {cache: 'no-store'}).then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok) srv = {ok: true, t: Date.now()}; }).catch(function () {}); } catch (e) {} }
+
+  // ---------- 열린 방 목록 ----------
+  function rooms(prefix) {
+    if (!url) return Promise.resolve(null);
+    return fetch(httpBase + '/rooms?p=' + encodeURIComponent(prefix) + '&t=' + Date.now(), {cache: 'no-store'})
+      .then(function (r) { return r.json(); }).then(function (j) { return j && j.ok ? j.rooms : null; }).catch(function () { return null; });
+  }
+  //  opts: {prefix: 'biostrike-v1-', input: '#codeIn', join: 버튼 선택자 또는 함수(code), after: 목록을 붙일 요소(기본: 입력칸이 든 줄),
+  //         hide: 숨길 코드 판별 함수(code) 선택, title: 제목}
+  var panelCss = false;
+  function roomPanel(o) {
+    if (!url || !o || !o.prefix) return null;
+    var input = typeof o.input === 'string' ? document.querySelector(o.input) : o.input;
+    var anchor = o.after ? (typeof o.after === 'string' ? document.querySelector(o.after) : o.after) : input && (input.closest('.row,.netrow,div') || input.parentNode);
+    if (!anchor || !anchor.parentNode) return null;
+    if (!panelCss) {
+      panelCss = true;
+      var st = document.createElement('style');
+      st.textContent = '.bio-rooms{margin:8px 0;padding:8px 10px;border-radius:12px;background:rgba(10,16,32,.55);border:1px solid rgba(255,255,255,.18);color:#fff;font:600 12.5px/1.35 "Noto Sans KR",system-ui,sans-serif;text-align:left;max-width:520px}' +
+        '.bio-rooms .bh{display:flex;align-items:center;gap:6px;margin-bottom:6px;opacity:.9}.bio-rooms .bh i{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 6px #34d399}' +
+        '.bio-rooms .bl{display:flex;flex-wrap:wrap;gap:6px}.bio-rooms .bl button{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font:700 12.5px "Noto Sans KR",system-ui,sans-serif;cursor:pointer}' +
+        '.bio-rooms .bl button:hover{background:rgba(255,255,255,.24)}.bio-rooms .bl button small{font-weight:500;opacity:.75}.bio-rooms .be{opacity:.65;font-weight:500}';
+      document.head.appendChild(st);
+    }
+    var box = document.createElement('div'); box.className = 'bio-rooms';
+    box.innerHTML = '<div class="bh"><i></i>' + (o.title || '서버에 열린 방') + ' <small style="opacity:.6;font-weight:500">· 눌러서 참가</small></div><div class="bl"><span class="be">찾는 중…</span></div>';
+    anchor.parentNode.insertBefore(box, anchor.nextSibling);
+    var list = box.querySelector('.bl'), timer = null, last = '';
+    function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]; }); }
+    function pick(code) {
+      var inp = typeof o.input === 'string' ? document.querySelector(o.input) : o.input;
+      if (inp) { inp.value = code; inp.dispatchEvent(new Event('input', {bubbles: true})); }
+      if (typeof o.join === 'function') o.join(code);
+      else { var b = document.querySelector(o.join); if (b) b.click(); }
+    }
+    function tick() {
+      if (!box.isConnected) { clearInterval(timer); return; }
+      if (document.hidden || !box.offsetParent) return;
+      rooms(o.prefix).then(function (rs) {
+        if (rs == null) { list.innerHTML = '<span class="be">서버에 닿지 않아요 (서버 깨우는 중일 수 있어요)</span>'; last = ''; return; }
+        rs = rs.filter(function (r) { return !(o.hide && o.hide(r.code)); });
+        var key = JSON.stringify(rs); if (key === last) return; last = key;
+        if (!rs.length) { list.innerHTML = '<span class="be">지금 열린 방이 없어요. 방을 만들면 다른 사람 화면에 여기 보여요.</span>'; return; }
+        list.innerHTML = rs.map(function (r) {
+          var nm = r.info && r.info.name ? esc(r.info.name) + ' · ' : '', play = r.info && r.info.playing ? ' · 경기 중' : '';
+          return '<button type="button" data-c="' + esc(r.code) + '">🔑 ' + esc(r.code) + ' <small>' + nm + r.players + '명' + play + '</small></button>';
+        }).join('');
+        [].forEach.call(list.querySelectorAll('button'), function (b) { b.onclick = function () { pick(b.getAttribute('data-c')); }; });
+      });
+    }
+    tick(); timer = setInterval(tick, 3000);
+    return box;
+  }
   if (url) { wake(); setInterval(wake, 4 * 60 * 1000); document.addEventListener('visibilitychange', function () { if (!document.hidden) wake(); }); }
 
   var BioRelay = window.BioRelay = {
     url: url,
-    // 서버를 쓸지: 주소가 있고, 최근 1분 안에 연결 실패가 없을 때
-    enabled: function () { return !!url && typeof WebSocket !== 'undefined' && Date.now() - downAt > 60000; },
+    // 서버를 쓸지: 주소가 있으면 항상 서버부터 (안 되면 RelayPeer가 알아서 기다리거나 P2P로 돌아감)
+    enabled: function () { return !!url && typeof WebSocket !== 'undefined'; },
+    rooms: rooms,
+    roomPanel: roomPanel,
+    // 방장이 방 정보(이름·진행 중 여부)를 방 목록에 보여 줄 때: BioRelay.setInfo(peer, {name, playing})
+    setInfo: function (peer, info) { if (peer && peer.relay) { peer._info = info; peer._ctl({t: 'info', info: info}); } },
+    status: function () { return srv; },
+    // 게임이 '서버 연결 대기' 시간을 정할 때: 서버가 깨어 있으면 원래 시간, 잠들어 있을 수 있으면 깨어날 때까지(80초)
+    wait: function (ms) { return !url || (srv.ok && Date.now() - srv.t < 120000) ? ms : Math.max(ms, WAKE_MAX + 5000); },
     wake: wake,
     check: check,
     // 서버를 쓰지 않는 P2P 연결(vendor/peerjs.min.js)도 배지를 띄움

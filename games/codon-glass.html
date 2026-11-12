@@ -1864,7 +1864,7 @@
       let peerLoad = null;
       const loadPeer = () => window.Peer ? Promise.resolve() : peerLoad || (peerLoad = new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = '../vendor/peerjs.min.js'; sc.onload = ok; sc.onerror = () => { peerLoad = null; no(new Error('load')); }; document.head.appendChild(sc); }));
       const openPeer = id => loadPeer().then(() => new Promise((ok, no) => { let p; try { p = id ? new Peer(id, peerOpts()) : new Peer(peerOpts()); } catch (e) { no(e); return; }
-        const to = setTimeout(() => { try { p.destroy(); } catch (e) {} no(new Error('server')); }, 12000);
+        const to = setTimeout(() => { try { p.destroy(); } catch (e) {} no(new Error('server')); }, (window.BioRelay&&BioRelay.wait?BioRelay.wait(12000):12000));
         p.on('open', () => { clearTimeout(to); ok(p); }); p.on('error', e => { clearTimeout(to); no(e); }); }));
       const genCode = () => { const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r = ''; for (let i = 0; i < 4; i++) r += c[Math.floor(Math.random() * c.length)]; return r; };
       const openBc = c => { try { bc = new BroadcastChannel(BC_PREFIX + c); bc.onmessage = e => { const m = e.data; if (!m) return; if (st.role === 'host' && m.from && m.from !== myId) onHost(m, null); else if (st.role === 'guest' && !m.from && (!m.to || m.to === myId)) onGuest(m); }; } catch (e) { bc = null; } };
@@ -2189,5 +2189,6 @@
 <script src="../goal.js"></script>
 <script src="../rank.js"></script>
 <script src="../ilog.js"></script>
+<script>/* 서버에 열린 방 목록 (net.js) */addEventListener('load',function(){try{window.BioRelay&&BioRelay.roomPanel({prefix:'codonglass-v1-',input:'#netCode',join:'#netJoin'});}catch(e){}});</script>
 </body>
 </html>
