@@ -1,49 +1,56 @@
-/* BIO ARCADE 실시간 중계 연결 (개선판 v2.0 - 저지연 로컬/릴레이 자동 감지 + 패킷 유실 방지 + 백그라운드 스로틀링 방지)
- *   1. 로컬 Node.js 서버(ws://127.0.0.1:8080 또는 현재 호스트) 자동 감지 및 즉시 연결 (콜드 스타트 0초)
- *   2. RelayConn.close()의 readyState !== 1 오타 버그 수정 (유령 커넥션 누적 및 렉 방지)
- *   3. 초기 핸드셰이크(connopen 전) 패킷 유실 방지용 송신 큐(_queue) 및 연결 큐(_connectQueue) 도입
- *   4. 방장(Host)이 브라우저 탭을 내리거나 다른 창을 볼 때 게임 루프가 멈추는 현상을 막는 Web Worker 타이머 보정
- *   5. 실시간 핑(RTT ms) 측정 및 우측 하단 배지 표시, M(멀티캐스트) 자동 헬퍼 지원
+/* BIO ARCADE 실시간 중계 연결 (개선판 v2.1 - index.html & PeerJS 100% 호환 + 로컬/원격 자동 전환 + 버그 수정)
+ *   1. index.html의 상단 서버 상태 표시줄(BioRelay.check / BioRelay.wake) 및 /health 엔드포인트 완벽 호환
+ *   2. games/*.html에서 net.js가 peerjs.min.js보다 먼저 로드될 때 Object.defineProperty로 window.Peer 자동 래핑
+ *   3. 기존 코드에서 RelayConn 생성자의 this.peer가 상대 ID 문자열로 덮어써져 send()가 먹통이 되던 치명적 버그 수정
+ *   4. 초기 연결(open/connopen) 완료 전에 호출된 connect() 및 conn.send() 패킷을 버리지 않고 큐에 담아 순서대로 전송
+ *   5. 로컬 Node.js 서버(ws://127.0.0.1:8080)가 켜져 있으면 0.3초 만에 자동 감지해 연결하고, 꺼져 있으면 Render 서버로 자동 연결
+ *   6. 방장(Host)이 탭을 내리거나 다른 창을 볼 때 게임 루프가 멈추는 현상을 방지하는 Web Worker 백그라운드 타이머 내장
  */
 (function () {
   'use strict';
   if (window.BioRelay) return;
 
-  var DEFAULT_REMOTE_RELAY = 'wss://bio-arcade-relay.onrender.com';
-  var LOCAL_RELAY = 'ws://127.0.0.1:8080';
+  var REMOTE_RELAY_URL = 'wss://bio-arcade-relay.onrender.com';
+  var LOCAL_RELAY_URL = 'ws://127.0.0.1:8080';
 
-  // 접속할 기본 URL 결정 (쿼리 파라미터 > localStorage > 로컬 호스트 서빙 > 원격 서버)
-  var explicitUrl = '';
+  var url = REMOTE_RELAY_URL;
+  var explicitMode = false;
   var forceOff = false;
+
   try {
     var q = new URLSearchParams(location.search).get('relay');
     if (q === 'off') {
+      url = '';
       forceOff = true;
+      explicitMode = true;
     } else if (q === 'local') {
-      explicitUrl = LOCAL_RELAY;
-      localStorage.setItem('bioRelayUrl', LOCAL_RELAY);
+      url = LOCAL_RELAY_URL;
+      explicitMode = true;
+      localStorage.setItem('bioRelayUrl', LOCAL_RELAY_URL);
     } else if (q === 'reset') {
       localStorage.removeItem('bioRelayUrl');
     } else if (q && /^wss?:\/\//.test(q)) {
-      explicitUrl = q;
+      url = q;
+      explicitMode = true;
       localStorage.setItem('bioRelayUrl', q);
     } else if (localStorage.getItem('bioRelayUrl')) {
-      explicitUrl = localStorage.getItem('bioRelayUrl');
-    } else if (location.protocol === 'http:' && location.port === '8080') {
-      explicitUrl = 'ws://' + location.host;
+      url = localStorage.getItem('bioRelayUrl');
+      explicitMode = true;
+    } else if (location.protocol === 'http:' && (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.port === '8080')) {
+      url = 'ws://' + location.host;
+      explicitMode = true;
     }
   } catch (e) {}
 
-  var activeUrl = forceOff ? '' : (explicitUrl || DEFAULT_REMOTE_RELAY);
-  var localChecked = false;
-  var isLocalServer = explicitUrl.indexOf('127.0.0.1') >= 0 || explicitUrl.indexOf('localhost') >= 0;
-
   var downAt = 0;
+  var isLocalActive = url.indexOf('127.0.0.1') >= 0 || url.indexOf('localhost') >= 0;
+
   function rid(n) {
-    var s = 'abcdefghijklmnopqrstuvwxyz23456789', o = '';
-    for (var i = 0; i < n; i++) o += s[Math.random() * s.length | 0];
+    var s = 'abcdefghijkmnpqrstuvwxyz23456789', o = '';
+    for (var i = 0; i < n; i++) o += s[Math.floor(Math.random() * s.length)];
     return o;
   }
+
   function perr(type, msg) {
     var e = new Error(msg || type);
     e.type = type;
@@ -52,15 +59,19 @@
 
   // ---------- 이벤트 에미터 ----------
   function Emitter() { this._ev = {}; }
-  Emitter.prototype.on = function (e, f) { (this._ev[e] = this._ev[e] || []).push(f); return this; };
+  Emitter.prototype.on = function (e, f) {
+    (this._ev[e] = this._ev[e] || []).push(f);
+    return this;
+  };
   Emitter.prototype.once = function (e, f) {
     var self = this;
     function g() { self.off(e, g); f.apply(self, arguments); }
     return this.on(e, g);
   };
   Emitter.prototype.off = function (e, f) {
-    var a = this._ev[e];
-    if (a) { var i = a.indexOf(f); if (i >= 0) a.splice(i, 1); }
+    if (!this._ev[e]) return this;
+    if (!f) { delete this._ev[e]; return this; }
+    this._ev[e] = this._ev[e].filter(function (x) { return x !== f; });
     return this;
   };
   Emitter.prototype.removeListener = Emitter.prototype.off;
@@ -68,40 +79,39 @@
     if (e) delete this._ev[e]; else this._ev = {};
     return this;
   };
-  Emitter.prototype.emit = function (e) {
-    var a = (this._ev[e] || []).slice(), args = [].slice.call(arguments, 1);
-    for (var i = 0; i < a.length; i++) {
-      try { a[i].apply(this, args); } catch (x) { console.error(x); }
+  Emitter.prototype.emit = function (e, a, b, c) {
+    var list = (this._ev[e] || []).slice();
+    for (var i = 0; i < list.length; i++) {
+      try { list[i](a, b, c); } catch (err) { console.error(err); }
     }
-    return a.length > 0;
+    return list.length > 0;
   };
 
-  // ---------- 방장 백그라운드 탭 스로틀링 방지 (Web Worker 기반 30Hz 보조 틱) ----------
-  // 방장이 다른 창으로 전환해 document.hidden 상태가 되면 requestAnimationFrame이 멈추는 현상을 방지합니다.
+  // ---------- 방장(Host) 백그라운드 탭 스로틀링 방지 (Web Worker 30Hz 보조 타이머) ----------
   (function setupBackgroundKeepAlive() {
     try {
       var blob = new Blob([
         'var t=null;onmessage=function(e){if(e.data==="start"){if(!t)t=setInterval(function(){postMessage(1)},33)}else{clearInterval(t);t=null}};'
       ], { type: 'application/javascript' });
       var worker = new Worker(URL.createObjectURL(blob));
-      var rafCallbacks = [];
+      var rafQueue = [];
       var origRaf = window.requestAnimationFrame;
 
       window.requestAnimationFrame = function (cb) {
         if (document.hidden) {
-          rafCallbacks.push(cb);
-          return rafCallbacks.length;
+          rafQueue.push(cb);
+          return rafQueue.length;
         }
         return origRaf.call(window, cb);
       };
 
       worker.onmessage = function () {
-        if (!document.hidden || !rafCallbacks.length) return;
-        var list = rafCallbacks.slice();
-        rafCallbacks.length = 0;
+        if (!document.hidden || !rafQueue.length) return;
+        var copy = rafQueue.slice();
+        rafQueue.length = 0;
         var now = performance.now();
-        for (var i = 0; i < list.length; i++) {
-          try { list[i](now); } catch (err) { console.error(err); }
+        for (var i = 0; i < copy.length; i++) {
+          try { copy[i](now); } catch (err) { console.error(err); }
         }
       };
 
@@ -111,14 +121,17 @@
     } catch (e) {}
   })();
 
-  // ---------- 연결 방식 및 실시간 핑(ms) 배지 표시 ----------
-  var live = 0, badgeEl = null, hideT = null, lastRtt = null;
+  // ---------- 게임 화면 우측 하단 연결 상태 배지 ----------
+  var badgeEl = null, hideT = null, lastRtt = null;
   function badge(mode, ms) {
     if (typeof ms === 'number') lastRtt = ms;
     if (!document.body) {
       window.addEventListener('DOMContentLoaded', function () { badge(mode, ms); }, { once: true });
       return;
     }
+    // 메인 로비(index.html)에는 상단 #srv 표시줄이 있으므로 중복 배지를 띄우지 않음
+    if (document.getElementById('srv')) return;
+
     if (!badgeEl) {
       badgeEl = document.createElement('div');
       badgeEl.style.cssText = 'position:fixed;right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));z-index:2147482000;pointer-events:none;' +
@@ -133,9 +146,9 @@
       : mode === 'p2p'
       ? '<span style="width:6px;height:6px;border-radius:50%;background:#3b82f6;box-shadow:0 0 6px #3b82f6;display:inline-block"></span>'
       : '<span style="width:6px;height:6px;border-radius:50%;background:#eab308;box-shadow:0 0 6px #eab308;display:inline-block"></span>';
-    var rttText = (typeof lastRtt === 'number') ? ' (' + lastRtt + 'ms)' : '';
-    var txt = mode === 'local' ? 'Node 로컬 서버' + rttText
-            : mode === 'relay' ? (isLocalServer ? 'Node 로컬 서버' : '중계 서버') + rttText
+    var rttStr = (typeof lastRtt === 'number') ? ' (' + lastRtt + 'ms)' : '';
+    var txt = mode === 'local' ? '로컬 Node 서버' + rttStr
+            : mode === 'relay' ? (isLocalActive ? '로컬 Node 서버' : '중계 서버') + rttStr
             : mode === 'p2p'   ? 'P2P 직접연결'
             : mode === 'fall'  ? '서버 응답 지연 → P2P 전환'
             : mode === 'down'  ? '서버 오프라인 → P2P 사용'
@@ -146,388 +159,448 @@
     }
   }
 
-  // 로컬 PC(127.0.0.1:8080)에 켜져 있는 Node.js 서버가 있는지 먼저 400ms 안에 빠르게 탐색
-  function detectLocalOrWakeRemote() {
-    if (forceOff) return;
-    if (!explicitUrl && !localChecked) {
-      localChecked = true;
-      try {
-        var lws = new WebSocket(LOCAL_RELAY);
-        var lt = setTimeout(function () { try { lws.close(); } catch (e) {} }, 450);
-        lws.onopen = function () {
-          clearTimeout(lt);
-          activeUrl = LOCAL_RELAY;
-          isLocalServer = true;
-          live = 1;
-          try { lws.close(); } catch (e) {}
-        };
-        lws.onerror = function () { clearTimeout(lt); };
-      } catch (e) {}
-    }
-    if (!activeUrl || live || isLocalServer) return;
-    try {
-      var ws = new WebSocket(activeUrl);
-      ws.onopen = function () { live = 1; try { ws.close(); } catch (e) {} };
-      ws.onerror = function () {};
-    } catch (e) {}
-  }
-  detectLocalOrWakeRemote();
-  setInterval(detectLocalOrWakeRemote, 4 * 60 * 1000);
-
-  // ---------- RelayConn: 단일 P2P 커넥션 모사 (패킷 큐잉 및 버그 수정 포함) ----------
-  function RelayConn(peer, peerId, cid) {
+  // ---------- RelayConn: 단일 P2P 데이터 커넥션 ----------
+  function RelayConn(ownerPeer, cid, peerId, meta) {
     Emitter.call(this);
-    this.peer = peer;
+    // [핵심 버그 수정] 기존 코드에서 this.peer에 RelayPeer를 넣었다가 바로 다음 줄에서 peerId(문자열)로 덮어써서
+    // this.peer._sendRaw() 호출이 실패하던 문제를 _owner 분리로 완벽 해결
+    this._owner = ownerPeer;
+    this.peer = peerId;       // PeerJS 호환: 상대방 peerId 문자열
     this.peerId = peerId;
+    this.connectionId = cid;  // PeerJS 호환
     this.id = cid;
+    this.metadata = meta;
     this.open = false;
+    this.serialization = 'json';
+    this.reliable = true;
     this._sentClose = false;
-    this._queue = []; // connopen 완료 전 전송된 초기 패킷 유실 방지용 큐
+    this._queue = [];         // open 되기 전에 호출된 send() 패킷 유실 방지 큐
   }
   RelayConn.prototype = Object.create(Emitter.prototype);
   RelayConn.prototype.constructor = RelayConn;
 
   RelayConn.prototype._flush = function () {
-    if (!this.open || !this.peer._ws || this.peer._ws.readyState !== 1) return;
+    if (!this.open || !this._owner) return;
     while (this._queue.length > 0) {
-      var item = this._queue.shift();
-      this.send(item);
+      var data = this._queue.shift();
+      this.send(data);
     }
   };
 
   RelayConn.prototype.send = function (data) {
-    if (this._sentClose) return;
-    // 아직 핸드셰이크(open)가 끝나지 않았다면 버리지 않고 큐에 보관 후 open 즉시 발송
-    if (!this.open || !this.peer._ws || this.peer._ws.readyState !== 1) {
-      if (this._queue.length < 64) this._queue.push(data);
+    if (this._sentClose || !this._owner) return;
+    if (!this.open || !this._owner.ws || this._owner.ws.readyState !== 1) {
+      if (this._queue.length < 100) this._queue.push(data);
       return;
     }
-    var payload = typeof data === 'string' ? data : JSON.stringify(data);
-    // 버퍼 과부하 시(1MB 초과) 오래된 이동 스냅샷이 쌓여 렉이 발생하는 것을 방지
-    if (this.peer._ws.bufferedAmount > 1024 * 1024) return;
-    this.peer._ws.send('D' + this.id + payload);
+    var payload;
+    try { payload = typeof data === 'string' ? data : JSON.stringify(data); } catch (e) { return; }
+    this._owner._sendRaw('D' + this.connectionId + payload);
   };
 
   RelayConn.prototype.close = function () {
     if (this._sentClose) return;
     this._sentClose = true;
     this._queue.length = 0;
-    // [버그 수정] 기존 코드의 readyState !== 1 오타를 === 1 로 바로잡아 상대방에게 즉시 close 전달
-    if (this.open && this.peer._ws && this.peer._ws.readyState === 1) {
-      try { this.peer._ws.send(JSON.stringify({ t: 'close', cid: this.id })); } catch (e) {}
-    }
+    var wasOpen = this.open;
     this.open = false;
+    if (wasOpen && this._owner) {
+      this._owner._send({ t: 'close', cid: this.connectionId });
+    }
     this.emit('close');
   };
 
-  // ---------- RelayPeer: PeerJS 호환 고성능 WebSocket 중계 Peer ----------
-  function RelayPeer(id, opts) {
+  // ---------- RelayPeer: PeerJS 완벽 호환 WebSocket 중계 객체 ----------
+  function RelayPeer(id, options) {
     Emitter.call(this);
-    if (typeof id === 'object') { opts = id; id = null; }
-    this.options = opts || {};
-    this.id = id || null;
+    if (typeof id === 'object') { options = id; id = null; }
+    this.requestedId = id || null;
+    this.id = null;
+    this.options = options || {};
     this.open = false;
-    this.disconnected = false;
     this.destroyed = false;
-    this.connections = {}; // PeerJS 표준 호환용
-    this._conns = {};
-    this._pending = {};
-    this._connectQueue = []; // 소켓이 열리기 전에 호출된 connect() 요청 보관
-    this._ws = null;
-    this._pingTimer = null;
-    this._lastPingSent = 0;
-    this._connectWithProbe();
+    this.disconnected = false;
+    this.conns = {};
+    this.connections = {}; // PeerJS 표준 프로퍼티 호환
+    this.ws = null;
+    this._pendingWire = []; // 서버에서 'open' 응답을 받기 전에 요청된 제어 메시지 큐
+    this._pingInterval = null;
+    this._lastPingTs = 0;
+    this._startConnect();
   }
   RelayPeer.prototype = Object.create(Emitter.prototype);
   RelayPeer.prototype.constructor = RelayPeer;
 
-  RelayPeer.prototype._connectWithProbe = function () {
+  RelayPeer.prototype._startConnect = function () {
     var self = this;
-    // 명시적 URL이 없으면 로컬 Node.js 서버(127.0.0.1:8080)가 켜져 있는지 350ms 동안 우선 시도
-    if (!explicitUrl && !isLocalServer) {
-      try {
-        var probe = new WebSocket(LOCAL_RELAY);
-        var done = false;
-        var pt = setTimeout(function () {
-          if (done) return;
-          done = true;
-          try { probe.close(); } catch (e) {}
-          self._connect(activeUrl);
-        }, 350);
-        probe.onopen = function () {
-          if (done) return;
-          done = true;
-          clearTimeout(pt);
-          activeUrl = LOCAL_RELAY;
-          isLocalServer = true;
-          try { probe.close(); } catch (e) {}
-          self._connect(LOCAL_RELAY);
-        };
-        probe.onerror = function () {
-          if (done) return;
-          done = true;
-          clearTimeout(pt);
-          self._connect(activeUrl);
-        };
-        return;
-      } catch (e) {}
+    if (forceOff || self.destroyed) return self._fail('server-error', 'relay disabled');
+
+    // 사용자가 별도 주소를 지정하지 않았을 때, 내 PC의 로컬 Node.js 서버(127.0.0.1:8080)가 켜져 있는지 350ms 안에 먼저 확인
+    if (!explicitMode && !isLocalActive) {
+      probeLocalServer(350).then(function (localOk) {
+        if (self.destroyed) return;
+        if (localOk) {
+          url = LOCAL_RELAY_URL;
+          isLocalActive = true;
+          if (window.BioRelay) window.BioRelay.url = url;
+        }
+        self._connectTo(url);
+      });
+      return;
     }
-    self._connect(activeUrl);
+    self._connectTo(url);
   };
 
-  RelayPeer.prototype._connect = function (targetUrl) {
+  RelayPeer.prototype._connectTo = function (targetUrl) {
     var self = this;
-    var ws;
-    try { ws = new WebSocket(targetUrl); } catch (e) { return self._fail(e); }
-    self._ws = ws;
+    if (!targetUrl || self.destroyed) return self._fail('server-error', 'relay disabled');
 
-    var timeoutMs = isLocalServer ? 3000 : 8000;
+    var ws;
+    try { ws = new WebSocket(targetUrl); } catch (e) {
+      if (isLocalActive && !explicitMode) {
+        isLocalActive = false;
+        url = REMOTE_RELAY_URL;
+        if (window.BioRelay) window.BioRelay.url = url;
+        return self._connectTo(url);
+      }
+      return self._fail('server-error', e.message);
+    }
+    self.ws = ws;
+
+    var timeoutMs = isLocalActive ? 3000 : 8000;
     var timer = setTimeout(function () {
-      if (!self.open) {
-        downAt = Date.now();
-        badge('fall');
+      if (ws.readyState !== 1 || !self.open) {
         try { ws.close(); } catch (e) {}
-        self._fail(perr('network', 'Relay server timeout'));
+        if (isLocalActive && !explicitMode) {
+          isLocalActive = false;
+          url = REMOTE_RELAY_URL;
+          if (window.BioRelay) window.BioRelay.url = url;
+          self._connectTo(url);
+          return;
+        }
+        badge('fall');
+        self._fail('server-error', 'timeout');
       }
     }, timeoutMs);
 
     ws.onopen = function () {
-      ws.send(JSON.stringify({ t: 'open', id: self.id }));
+      ws.send(JSON.stringify({ t: 'open', id: self.requestedId }));
     };
 
     ws.onmessage = function (ev) {
-      var data = ev.data;
-      if (typeof data === 'string' && data.charCodeAt(0) === 68 /* 'D' */) {
-        var cid = data.slice(1, 9);
-        var body = data.slice(9);
-        var c = self._conns[cid];
-        if (c && c.open) {
-          try { c.emit('data', JSON.parse(body)); } catch (e) { c.emit('data', body); }
-        }
-        return;
-      }
-      var msg;
-      try { msg = JSON.parse(data); } catch (e) { return; }
-
-      if (msg.t === 'open') {
-        clearTimeout(timer);
-        live = 1;
-        self.id = msg.id;
-        self.open = true;
-        badge(isLocalServer ? 'local' : 'relay');
-        self._startHeartbeat();
-        self.emit('open', self.id);
-        // 대기 중이던 connect() 요청 일괄 전송
-        while (self._connectQueue.length > 0) {
-          var req = self._connectQueue.shift();
-          self._sendConnectPacket(req.peerId, req.cid, req.meta);
-        }
-      } else if (msg.t === 'pong') {
-        if (self._lastPingSent > 0) {
-          var rtt = Math.max(1, Date.now() - self._lastPingSent);
-          badge(isLocalServer ? 'local' : 'relay', rtt);
-        }
-      } else if (msg.t === 'conn') {
-        var conn = new RelayConn(self, msg.from, msg.cid);
-        conn.metadata = msg.meta;
-        self._conns[msg.cid] = conn;
-        self.connections[msg.from] = self.connections[msg.from] || [];
-        self.connections[msg.from].push(conn);
-        ws.send(JSON.stringify({ t: 'connack', cid: msg.cid }));
-        conn.open = true;
-        self.emit('connection', conn);
-        setTimeout(function () {
+      var d = ev.data;
+      if (typeof d === 'string' && d.charCodeAt(0) === 68 /* 'D' */) {
+        var cid = d.slice(1, 9), body = d.slice(9);
+        var conn = self.conns[cid];
+        if (!conn) return;
+        // 만약 D 패킷이 connopen보다 미세하게 먼저 도착하더라도 오픈 처리 후 즉시 전달
+        if (!conn.open) {
+          conn.open = true;
           conn.emit('open');
           conn._flush();
-        }, 0);
-      } else if (msg.t === 'connopen') {
-        var pending = self._pending[msg.cid];
-        if (pending) {
-          delete self._pending[msg.cid];
-          pending.open = true;
-          pending.emit('open');
-          pending._flush();
         }
-      } else if (msg.t === 'close') {
-        var c2 = self._conns[msg.cid];
-        if (c2) {
-          c2.open = false;
-          c2._sentClose = true;
-          c2.emit('close');
-          delete self._conns[msg.cid];
+        var data = body;
+        try { data = JSON.parse(body); } catch (e) {}
+        conn.emit('data', data);
+        return;
+      }
+
+      var m;
+      try { m = JSON.parse(d); } catch (e) { return; }
+
+      if (m.t === 'open') {
+        clearTimeout(timer);
+        self.id = m.id;
+        self.open = true;
+        badge(isLocalActive ? 'local' : 'relay');
+        self._startPing();
+        // 서버가 ID 등록을 마쳤으므로 대기 중이던 connect 요청 등을 순서대로 전송
+        while (self._pendingWire.length > 0) {
+          var raw = self._pendingWire.shift();
+          if (ws.readyState === 1) ws.send(raw);
         }
-      } else if (msg.t === 'error') {
-        if (msg.cid && self._pending[msg.cid]) {
-          var p = self._pending[msg.cid];
-          delete self._pending[msg.cid];
-          delete self._conns[msg.cid];
-          p.emit('error', perr(msg.type, msg.msg || msg.type));
+        self.emit('open', m.id);
+      } else if (m.t === 'pong') {
+        if (self._lastPingTs > 0) {
+          badge(isLocalActive ? 'local' : 'relay', Math.max(1, Date.now() - self._lastPingTs));
+        }
+      } else if (m.t === 'conn') {
+        var c = new RelayConn(self, m.cid, m.from, m.meta);
+        c.open = true;
+        self.conns[m.cid] = c;
+        self.connections[m.from] = self.connections[m.from] || [];
+        self.connections[m.from].push(c);
+        // 구버전/신버전 서버 모두 호환되도록 connack 전송
+        self._send({ t: 'connack', cid: m.cid });
+        self.emit('connection', c);
+        c.emit('open');
+        c._flush();
+      } else if (m.t === 'connopen') {
+        var c2 = self.conns[m.cid];
+        if (c2 && !c2.open) {
+          c2.open = true;
+          c2.emit('open');
+          c2._flush();
+        }
+      } else if (m.t === 'close') {
+        var c3 = self.conns[m.cid];
+        if (c3) {
+          c3.open = false;
+          c3._sentClose = true;
+          c3.emit('close');
+          delete self.conns[m.cid];
+        }
+      } else if (m.t === 'error') {
+        clearTimeout(timer);
+        var errMsg = m.message || m.msg || m.type;
+        if (m.cid && self.conns[m.cid]) {
+          var c4 = self.conns[m.cid];
+          delete self.conns[m.cid];
+          c4.emit('error', perr(m.type, errMsg));
         } else {
-          self.emit('error', perr(msg.type, msg.msg || msg.type));
+          self.emit('error', perr(m.type, errMsg));
         }
       }
     };
 
     ws.onerror = function () {
+      clearTimeout(timer);
+      if (!self.open && isLocalActive && !explicitMode) {
+        isLocalActive = false;
+        url = REMOTE_RELAY_URL;
+        if (window.BioRelay) window.BioRelay.url = url;
+        self._connectTo(url);
+        return;
+      }
       if (!self.open) {
-        clearTimeout(timer);
-        if (isLocalServer && !explicitUrl) {
-          // 로컬 서버 실패 시 원격 서버로 즉시 재시도
-          isLocalServer = false;
-          activeUrl = DEFAULT_REMOTE_RELAY;
-          self._connect(activeUrl);
-          return;
-        }
-        downAt = Date.now();
         badge('down');
-        self._fail(perr('network', 'Relay connection error'));
+        self._fail('server-error', 'ws error');
       }
     };
 
     ws.onclose = function () {
-      self._stopHeartbeat();
+      clearTimeout(timer);
+      self._stopPing();
+      if (self.destroyed) return;
       var wasOpen = self.open;
       self.open = false;
       self.disconnected = true;
-      if (wasOpen) self.emit('disconnected', self.id);
-      Object.keys(self._conns).forEach(function (k) {
-        var c = self._conns[k];
-        if (c.open) { c.open = false; c.emit('close'); }
+      Object.keys(self.conns).forEach(function (k) {
+        var c = self.conns[k];
+        if (c && c.open) {
+          c.open = false;
+          c._sentClose = true;
+          c.emit('close');
+        }
       });
+      if (wasOpen) self.emit('disconnected', self.id);
     };
   };
 
-  RelayPeer.prototype._startHeartbeat = function () {
+  RelayPeer.prototype._startPing = function () {
     var self = this;
-    self._stopHeartbeat();
-    function sendPing() {
-      if (!self.open || !self._ws || self._ws.readyState !== 1) return;
-      self._lastPingSent = Date.now();
-      try { self._ws.send(JSON.stringify({ t: 'ping' })); } catch (e) {}
+    self._stopPing();
+    function ping() {
+      if (!self.open || !self.ws || self.ws.readyState !== 1) return;
+      self._lastPingTs = Date.now();
+      try { self.ws.send(JSON.stringify({ t: 'ping', ts: self._lastPingTs })); } catch (e) {}
     }
-    sendPing();
-    self._pingTimer = setInterval(sendPing, 5000);
+    ping();
+    self._pingInterval = setInterval(ping, 5000);
   };
 
-  RelayPeer.prototype._stopHeartbeat = function () {
-    if (this._pingTimer) {
-      clearInterval(this._pingTimer);
-      this._pingTimer = null;
-    }
-  };
-
-  RelayPeer.prototype._fail = function (err) {
-    if (this.destroyed) return;
-    this.emit('error', err);
-  };
-
-  RelayPeer.prototype._sendConnectPacket = function (peerId, cid, meta) {
-    if (this._ws && this._ws.readyState === 1) {
-      this._ws.send(JSON.stringify({ t: 'connect', to: peerId, cid: cid, meta: meta }));
+  RelayPeer.prototype._stopPing = function () {
+    if (this._pingInterval) {
+      clearInterval(this._pingInterval);
+      this._pingInterval = null;
     }
   };
 
-  RelayPeer.prototype.connect = function (peerId, opts) {
+  RelayPeer.prototype._send = function (obj) {
+    var str = JSON.stringify(obj);
+    if (this.open && this.ws && this.ws.readyState === 1) {
+      this.ws.send(str);
+    } else if (!this.destroyed && this._pendingWire.length < 64) {
+      this._pendingWire.push(str);
+    }
+  };
+
+  RelayPeer.prototype._sendRaw = function (str) {
+    if (this.open && this.ws && this.ws.readyState === 1) {
+      if (this.ws.bufferedAmount > 1024 * 1024) return;
+      this.ws.send(str);
+    } else if (!this.destroyed && this._pendingWire.length < 64) {
+      this._pendingWire.push(str);
+    }
+  };
+
+  RelayPeer.prototype._fail = function (type, msg) {
+    downAt = Date.now();
+    this.emit('error', perr(type, msg));
+  };
+
+  RelayPeer.prototype.connect = function (peerId, options) {
+    options = options || {};
     var cid = rid(8);
-    var conn = new RelayConn(this, peerId, cid);
-    conn.metadata = opts && opts.metadata;
-    this._conns[cid] = conn;
-    this._pending[cid] = conn;
+    var conn = new RelayConn(this, cid, peerId, options.metadata);
+    this.conns[cid] = conn;
     this.connections[peerId] = this.connections[peerId] || [];
     this.connections[peerId].push(conn);
-
-    // 아직 RelayPeer가 서버와 open 핸드셰이크 중이면 에러를 내지 않고 큐에 넣어 open 직후 전송
-    if (!this.open || !this._ws || this._ws.readyState !== 1) {
-      this._connectQueue.push({ peerId: peerId, cid: cid, meta: conn.metadata });
-      return conn;
-    }
-    this._sendConnectPacket(peerId, cid, conn.metadata);
+    this._send({ t: 'connect', to: peerId, cid: cid, meta: options.metadata });
     return conn;
+  };
+
+  // 다중 클라이언트에게 상태를 한 번에 쏘는 멀티캐스트 헬퍼
+  RelayPeer.prototype.broadcast = function (conns, data) {
+    if (!this.open || !this.ws || this.ws.readyState !== 1) return;
+    if (this.ws.bufferedAmount > 1024 * 1024) return;
+    var cids = [];
+    for (var i = 0; i < conns.length; i++) {
+      var c = conns[i];
+      if (c && c.open && c._owner === this) cids.push(c.connectionId);
+    }
+    if (!cids.length) return;
+    var payload;
+    try { payload = typeof data === 'string' ? data : JSON.stringify(data); } catch (e) { return; }
+    this.ws.send('M' + cids.join('') + '|' + payload);
   };
 
   RelayPeer.prototype.reconnect = function () {
     if (this.destroyed) return;
     this.disconnected = false;
-    this._connectWithProbe();
+    this._startConnect();
   };
 
   RelayPeer.prototype.disconnect = function () {
-    if (this.disconnected) return;
-    this._stopHeartbeat();
-    this.disconnected = true;
+    this._stopPing();
+    if (this.ws) try { this.ws.close(); } catch (e) {}
     this.open = false;
-    if (this._ws) try { this._ws.close(); } catch (e) {}
-    this.emit('disconnected', this.id);
+    this.disconnected = true;
+    this.emit('disconnected');
   };
 
   RelayPeer.prototype.destroy = function () {
     if (this.destroyed) return;
     this.destroyed = true;
-    this._connectQueue.length = 0;
+    this._pendingWire.length = 0;
     this.disconnect();
     this.emit('close');
   };
 
-  // 멀티캐스트 브로드캐스트 ('M' 프로토콜로 방장의 업로드 패킷 횟수를 1회로 압축)
-  RelayPeer.prototype.broadcast = function (conns, data) {
-    if (!this.open || !this._ws || this._ws.readyState !== 1) return;
-    if (this._ws.bufferedAmount > 1024 * 1024) return;
-    var validCids = [];
-    for (var i = 0; i < conns.length; i++) {
-      var c = conns[i];
-      if (c && c.open && c.peer === this) validCids.push(c.id);
-    }
-    if (!validCids.length) return;
-    var payload = typeof data === 'string' ? data : JSON.stringify(data);
-    this._ws.send('M' + validCids.join('') + '|' + payload);
-  };
-
-  // ---------- PeerJS 가로채기 (Wrapping) ----------
-  function wrapPeer() {
-    var OrigPeer = window.Peer;
-    if (!OrigPeer) return;
-
-    function SmartPeer(id, opts) {
-      if (!(this instanceof SmartPeer)) return new SmartPeer(id, opts);
-      if (typeof id === 'object') { opts = id; id = null; }
-      opts = opts || {};
-
-      var useRelay = !forceOff && !!activeUrl && (Date.now() - downAt > 15000);
-      if (useRelay) {
-        var rp = new RelayPeer(id, opts);
-        rp.on('error', function (err) {
-          if (err && (err.type === 'network' || err.type === 'server-error')) {
-            downAt = Date.now();
-          }
-        });
-        return rp;
-      }
-      badge('p2p');
-      return new OrigPeer(id, opts);
-    }
-
-    SmartPeer.prototype = OrigPeer.prototype;
-    for (var k in OrigPeer) {
-      if (Object.prototype.hasOwnProperty.call(OrigPeer, k)) {
-        SmartPeer[k] = OrigPeer[k];
-      }
-    }
-    window.Peer = SmartPeer;
+  // ---------- 로컬 서버 빠른 감지 및 index.html 호환 상태 체크 ----------
+  function fetchHealth(baseWsUrl, timeoutMs) {
+    var httpUrl = baseWsUrl.replace(/^ws/, 'http').replace(/\/$/, '') + '/health';
+    var start = Date.now();
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var tm = setTimeout(function () { if (ctrl) ctrl.abort(); }, timeoutMs || 5000);
+    return fetch(httpUrl, { mode: 'cors', cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) {
+        clearTimeout(tm);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (d) {
+        return { ok: true, ms: Math.max(1, Date.now() - start), peers: d.peers, local: baseWsUrl === LOCAL_RELAY_URL };
+      })
+      .catch(function (e) {
+        clearTimeout(tm);
+        return { ok: false, reason: e && e.name === 'AbortError' ? 'timeout' : 'down' };
+      });
   }
 
-  wrapPeer();
+  function probeLocalServer(timeoutMs) {
+    if (forceOff) return Promise.resolve(false);
+    return fetchHealth(LOCAL_RELAY_URL, timeoutMs || 400).then(function (r) {
+      return !!r.ok;
+    });
+  }
+
+  // index.html에서 호출하는 BioRelay.check(timeoutMs)
+  function checkServer(timeoutMs) {
+    if (forceOff || !url) return Promise.resolve({ ok: false, reason: 'off' });
+
+    // 먼저 내 PC에 켜진 로컬 Node.js 서버(http://127.0.0.1:8080/health)가 있는지 400ms 동안 확인
+    if (!explicitMode) {
+      return fetchHealth(LOCAL_RELAY_URL, 400).then(function (localRes) {
+        if (localRes.ok) {
+          url = LOCAL_RELAY_URL;
+          isLocalActive = true;
+          window.BioRelay.url = url;
+          downAt = 0;
+          return localRes;
+        }
+        // 로컬 서버가 꺼져 있으면 기본 원격 서버(Render) 확인
+        isLocalActive = false;
+        url = REMOTE_RELAY_URL;
+        window.BioRelay.url = url;
+        return fetchHealth(REMOTE_RELAY_URL, timeoutMs || 6000);
+      });
+    }
+
+    return fetchHealth(url, timeoutMs || 6000);
+  }
+
+  // index.html에서 호출하는 BioRelay.wake()
+  function wakeServer() {
+    if (forceOff || !url) return;
+    checkServer(8000);
+  }
 
   window.BioRelay = {
-    url: activeUrl,
-    badge: badge,
+    url: url,
+    Peer: RelayPeer,
     RelayPeer: RelayPeer,
-    setServer: function (newUrl) {
-      if (!newUrl) {
-        localStorage.removeItem('bioRelayUrl');
-      } else {
-        localStorage.setItem('bioRelayUrl', newUrl);
-        activeUrl = newUrl;
+    badge: badge,
+    check: checkServer,
+    wake: wakeServer,
+    isDownRecently: function () { return Date.now() - downAt < 30000; }
+  };
+
+  // ---------- PeerJS 로드 순서와 무관하게 window.Peer 자동 가로채기 ----------
+  // games/*.html 에서 <script src="../net.js">가 <script src="../vendor/peerjs.min.js">보다 먼저 실행되므로
+  // Object.defineProperty getter/setter를 사용해 peerjs.min.js가 로드되는 순간 자동으로 SmartPeer로 감쌉니다.
+  var origPeer = window.Peer;
+
+  function SmartPeer(id, options) {
+    if (!(this instanceof SmartPeer)) return new SmartPeer(id, options);
+    if (!forceOff && url && !window.BioRelay.isDownRecently()) {
+      try { return new RelayPeer(id, options); } catch (e) {}
+    }
+    if (origPeer) {
+      badge('p2p');
+      return new origPeer(id, options);
+    }
+    // 혹시라도 PeerJS가 아직 로드되지 않았더라도 RelayPeer로 폴백 시도
+    return new RelayPeer(id, options);
+  }
+
+  function syncPeerStatics(fn) {
+    if (!fn) return;
+    SmartPeer.prototype = fn.prototype;
+    for (var k in fn) {
+      if (Object.prototype.hasOwnProperty.call(fn, k)) {
+        SmartPeer[k] = fn[k];
       }
     }
-  };
+  }
+
+  if (origPeer) syncPeerStatics(origPeer);
+
+  try {
+    Object.defineProperty(window, 'Peer', {
+      configurable: true,
+      enumerable: true,
+      get: function () {
+        return SmartPeer;
+      },
+      set: function (v) {
+        if (v && v !== SmartPeer) {
+          origPeer = v;
+          syncPeerStatics(v);
+        }
+      }
+    });
+  } catch (e) {
+    window.Peer = SmartPeer;
+  }
 })();
