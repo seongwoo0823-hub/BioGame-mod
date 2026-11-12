@@ -1,8 +1,8 @@
-// BIO ARCADE 실시간 중계 및 로컬 웹 서버 (개선판 v2.0)
-//   1. TCP_NODELAY(Nagle 알고리즘 비활성화) 적용으로 소형 게임 패킷 지연(40~200ms) 즉시 제거
-//   2. 정적 웹 서버 내장: http://localhost:8080 접속 시 BioGame-mod 전체 게임을 바로 실행 가능
-//   3. 방장이 새로고침할 때 기존 좀비 피어 ID가 방 코드 생성을 막는 현상(unavailable-id) 자동 교체 해결
-//   4. 실시간 핑(ping/pong) 응답 및 바탕화면 컨트롤러용 상태/종료 API(/api/status, /api/stop) 제공
+// BIO ARCADE 실시간 중계 및 로컬 제어 서버 (개선판 v2.1)
+//   1. /health 엔드포인트 지원으로 index.html 상단 서버 표시줄 및 Render 헬스체크 100% 호환
+//   2. connect 요청 시 즉시 connopen 응답을 내려 핸드셰이크 대기 시간(RTT) 절반 단축 + 구버전/신버전 net.js 모두 호환
+//   3. TCP_NODELAY(Nagle 알고리즘 비활성화) 적용으로 소형 게임 패킷 지연(40~200ms) 제거
+//   4. http://localhost:8080/admin 웹 컨트롤 패널 및 정적 게임 서버 내장
 'use strict';
 
 const http = require('http');
@@ -14,10 +14,9 @@ const { WebSocketServer } = require('ws');
 const PORT = +process.env.PORT || 8080;
 const MAX_MSG = 256 * 1024;
 const MAX_PEERS = 2000;
-const MAX_BUFFER = 1024 * 1024; // 1MB 백프레셔 임계값 (오래된 패킷 누적 방지)
+const MAX_BUFFER = 2 * 1024 * 1024;
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
-// server/ 폴더 안에서 실행되든 루트에서 실행되든 BioGame-mod 루트 폴더를 자동 탐색
 const ROOT_DIR = fs.existsSync(path.join(__dirname, 'index.html'))
   ? __dirname
   : path.resolve(__dirname, '..');
@@ -26,6 +25,7 @@ const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
@@ -48,7 +48,7 @@ const startedAt = Date.now();
 const rid = n => {
   const s = 'abcdefghijkmnpqrstuvwxyz23456789';
   let o = '';
-  for (let i = 0; i < n; i++) o += s[Math.random() * s.length | 0];
+  for (let i = 0; i < n; i++) o += s[Math.floor(Math.random() * s.length)];
   return o;
 };
 
@@ -62,7 +62,7 @@ function getLanIps() {
   const nets = os.networkInterfaces();
   const results = [];
   for (const name of Object.keys(nets)) {
-    for (const net of nets[name]) {
+    for (const net of nets[name] || []) {
       if (net.family === 'IPv4' && !net.internal) {
         results.push(net.address);
       }
@@ -72,16 +72,26 @@ function getLanIps() {
 }
 
 const server = http.createServer((req, res) => {
-  const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  // Chrome Private Network Access(HTTPS -> 127.0.0.1 요청) 허용 헤더
+  res.setHeader('Access-Control-Allow-Private-Network', 'true');
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const pathname = decodeURIComponent(parsedUrl.pathname);
 
-  // 1. 서버 상태 확인 API (바탕화면 런처 및 헬스체크용)
-  if (pathname === '/api/status' || pathname === '/ping') {
-    res.writeHead(200, {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Access-Control-Allow-Origin': '*'
-    });
+  // 1. index.html의 BioRelay.check() 및 바탕화면 컨트롤러가 호출하는 상태 확인 엔드포인트
+  if (pathname === '/health' || pathname === '/api/status' || pathname === '/ping') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({
+      status: 'ok',
       ok: true,
       name: 'bio-arcade-relay-v2',
       port: PORT,
@@ -94,13 +104,12 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 2. 로컬 바탕화면 컨트롤러에서 안전하게 서버를 종료하는 API (로컬호스트 요청만 허용)
-  if (pathname === '/api/stop' && req.method === 'POST') {
+  // 2. 로컬 바탕화면 컨트롤러에서 안전하게 서버를 종료하는 엔드포인트
+  if (pathname === '/api/stop' && (req.method === 'POST' || req.method === 'GET')) {
     const remote = req.socket.remoteAddress || '';
     if (remote === '127.0.0.1' || remote === '::1' || remote === '::ffff:127.0.0.1') {
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ ok: true, msg: '서버를 종료합니다.' }));
-      console.log('[종료 요청 수신] 서버를 안전하게 닫습니다...');
+      res.end(JSON.stringify({ ok: true, msg: 'Server stopping' }));
       setTimeout(() => process.exit(0), 150);
       return;
     }
@@ -109,7 +118,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 3. BioGame-mod 정적 파일 서빙 (브라우저에서 http://localhost:8080 으로 즉시 플레이 가능)
+  // 3. BioGame-mod 정적 파일 서빙 (로컬에서 http://localhost:8080 접속 시 게임 실행)
   let safePath = path.normalize(pathname).replace(/^(\.\.[/\\])+/, '');
   if (safePath === '/' || safePath === '\\') safePath = '/index.html';
   const filePath = path.join(ROOT_DIR, safePath);
@@ -122,15 +131,12 @@ const server = http.createServer((req, res) => {
 
   fs.stat(filePath, (err, stat) => {
     if (err || !stat.isFile()) {
-      // 루트에 index.html이 없을 때는 상태 JSON 반환 (기존 서버 동작 호환)
+      // Render 서버처럼 server/ 폴더만 단독 배포된 경우 '/' 요청에도 상태 JSON을 반환해 기존 동작 완벽 호환
       if (safePath === '/index.html') {
-        res.writeHead(200, {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Access-Control-Allow-Origin': '*'
-        });
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({
+          status: 'ok',
           ok: true,
-          name: 'bio-arcade-relay-v2',
           peers: peers.size,
           links: links.size,
           served
@@ -152,7 +158,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-// TCP_NODELAY 활성화: 소형 실시간 좌표 패킷이 OS 커널 버퍼에서 묶여 지연되는 현상(Nagle 알고리즘) 제거
+// TCP_NODELAY 활성화: Nagle 알고리즘으로 인한 40~200ms 패킷 묶임 지연 제거
 server.on('connection', socket => {
   try { socket.setNoDelay(true); } catch (e) {}
 });
@@ -183,10 +189,10 @@ wss.on('connection', (ws, req) => {
     const s = isBin ? null : buf.toString();
     if (!s) return;
 
-    const firstChar = s.charCodeAt(0);
+    const code = s.charCodeAt(0);
 
-    // 1. 멀티캐스트 브로드캐스트 ('M' + 8자리 cid 묶음 + '|' + payload)
-    if (firstChar === 77 /* 'M' */) {
+    // 1. 다중 전송 ('M' + 8자리 cid 목록 + '|' + payload)
+    if (code === 77 /* 'M' */) {
       const bar = s.indexOf('|');
       if (bar < 9) return;
       const ids = s.slice(1, bar);
@@ -204,11 +210,11 @@ wss.on('connection', (ws, req) => {
       return;
     }
 
-    // 2. 단일 다이렉트 패킷 ('D' + 8자리 cid + payload)
-    if (firstChar === 68 /* 'D' */) {
+    // 2. 단일 전송 ('D' + 8자리 cid + payload)
+    if (code === 68 /* 'D' */) {
       const cid = s.slice(1, 9);
       const L = links.get(cid);
-      if (!L || (L[0] !== ws && L[1] !== ws)) return;
+      if (!L) return;
       const other = L[0] === ws ? L[1] : L[0];
       if (other && other.readyState === 1 && other.bufferedAmount < MAX_BUFFER) {
         other.send(s);
@@ -217,50 +223,46 @@ wss.on('connection', (ws, req) => {
       return;
     }
 
-    // 3. 제어 명령 (JSON)
+    // 3. 제어 메시지 (JSON)
     let m;
     try { m = JSON.parse(s); } catch (e) { return; }
 
-    if (m.t === 'ping') {
-      send(ws, { t: 'pong' });
-      return;
-    }
-
     if (m.t === 'open') {
-      let id = m.id && typeof m.id === 'string' ? m.id.trim() : '';
+      if (ws.id) return;
+      let id = m.id != null ? String(m.id).trim() : '';
       if (id) {
         if (!ID_RE.test(id)) {
-          send(ws, { t: 'error', type: 'unavailable-id', msg: 'Invalid ID format' });
-          return;
+          return send(ws, { t: 'error', type: 'invalid-id', message: '유효하지 않은 방 코드입니다' });
         }
-        const existing = peers.get(id);
-        if (existing && existing !== ws) {
-          // 기존 소켓이 이미 닫혔거나 활성 연결이 없는 좀비 소켓이면 즉시 교체 허용
-          if (existing.readyState !== 1 || existing.cids.size === 0) {
-            try { existing.terminate(); } catch (e) {}
+        const prev = peers.get(id);
+        if (prev && prev !== ws) {
+          // 방장이 새로고침했을 때 이전 좀비 소켓이 남아있다면 즉시 정리 후 방 코드 재사용 허용
+          if (prev.readyState !== 1 || prev.cids.size === 0) {
+            for (const cid of [...prev.cids]) drop(cid, prev);
+            try { prev.terminate(); } catch (e) {}
             peers.delete(id);
           } else {
-            send(ws, { t: 'error', type: 'unavailable-id', msg: 'ID already taken' });
-            return;
+            return send(ws, { t: 'error', type: 'unavailable-id', message: '이미 사용 중인 방 코드입니다' });
           }
         }
       } else {
-        do { id = rid(12); } while (peers.has(id));
+        do { id = rid(16); } while (peers.has(id));
       }
       ws.id = id;
       peers.set(id, ws);
-      send(ws, { t: 'open', id });
+      send(ws, { t: 'open', id, v: 2 });
     } else if (m.t === 'connect') {
+      if (!ws.id || typeof m.cid !== 'string' || m.cid.length !== 8 || links.has(m.cid)) return;
       const target = peers.get(m.to);
-      const cid = m.cid || rid(8);
       if (!target || target === ws || target.readyState !== 1) {
-        send(ws, { t: 'error', type: 'peer-unavailable', cid, msg: 'Target peer not found' });
-        return;
+        return send(ws, { t: 'error', type: 'peer-unavailable', cid: m.cid, message: '상대를 찾을 수 없습니다' });
       }
-      links.set(cid, [ws, target]);
-      ws.cids.add(cid);
-      target.cids.add(cid);
-      send(target, { t: 'conn', from: ws.id, cid, meta: m.meta });
+      links.set(m.cid, [ws, target]);
+      ws.cids.add(m.cid);
+      target.cids.add(m.cid);
+      send(target, { t: 'conn', from: ws.id, cid: m.cid, meta: m.meta === undefined ? null : m.meta });
+      // 구버전/신버전 클라이언트 모두 대기 없이 즉시 열린 상태로 전환되도록 connopen 즉시 발송
+      send(ws, { t: 'connopen', cid: m.cid });
     } else if (m.t === 'connack') {
       const L = links.get(m.cid);
       if (L) {
@@ -268,51 +270,42 @@ wss.on('connection', (ws, req) => {
         send(initiator, { t: 'connopen', cid: m.cid });
       }
     } else if (m.t === 'close') {
-      cleanupCid(m.cid, ws);
+      drop(m.cid, ws);
+    } else if (m.t === 'ping') {
+      send(ws, { t: 'pong', ts: m.ts });
     }
   });
 
   ws.on('close', () => {
+    for (const cid of [...ws.cids]) drop(cid, ws);
     if (ws.id && peers.get(ws.id) === ws) peers.delete(ws.id);
-    for (const cid of Array.from(ws.cids)) cleanupCid(cid, ws);
   });
 
   ws.on('error', () => {});
 });
 
-function cleanupCid(cid, fromWs) {
+function drop(cid, from) {
   const L = links.get(cid);
   if (!L) return;
   links.delete(cid);
-  const other = L[0] === fromWs ? L[1] : L[0];
-  if (other) {
-    other.cids.delete(cid);
-    send(other, { t: 'close', cid });
+  for (const s of L) {
+    s.cids.delete(cid);
+    if (s !== from) send(s, { t: 'close', cid });
   }
-  if (fromWs) fromWs.cids.delete(cid);
 }
 
-// 15초마다 죽은 소켓 빠르게 정리
+// 20초마다 끊긴 연결 정리
 setInterval(() => {
-  for (const [id, ws] of peers) {
+  for (const ws of wss.clients) {
     if (!ws.alive) {
       ws.terminate();
-      peers.delete(id);
       continue;
     }
     ws.alive = false;
     try { ws.ping(); } catch (e) {}
   }
-}, 15000);
+}, 20000);
 
 server.listen(PORT, '0.0.0.0', () => {
-  const lanIps = getLanIps();
-  console.log('====================================================');
-  console.log(' [BIO ARCADE 로컬 Node.js 서버 가동 완료]');
-  console.log(` - 내 PC 접속 주소 : http://localhost:${PORT}`);
-  if (lanIps.length > 0) {
-    console.log(` - 같은 와이파이(LAN) 친구 접속 주소 : http://${lanIps[0]}:${PORT}`);
-    console.log(` - 릴레이 전용 주소 : ws://${lanIps[0]}:${PORT}`);
-  }
-  console.log('====================================================');
+  console.log('bio-arcade-relay v2.1 on :' + PORT);
 });
