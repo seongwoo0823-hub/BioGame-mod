@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BIO ARCADE · 생명과학 게임 아케이드</title>
-<meta name="description" content="리듬게임, 카트 레이싱, 5대5 대전, 로그라이크, 3D 난투, 타이쿤, 육성 원정, FPS, 액션 RPG, 퍼즐까지 생명과학을 주제로 한 웹 게임 14종. PC·태블릿·휴대폰에서 설치 없이 바로 플레이.">
+<meta name="description" content="리듬게임, 카트 레이싱, 5대5 대전, 로그라이크, 3D 난투, 타이쿤, 육성 원정, FPS, 액션 RPG, 퍼즐까지 생명과학을 주제로 한 웹 게임 15종. PC·태블릿·휴대폰에서 설치 없이 바로 플레이.">
 <meta name="theme-color" content="#0b1020">
 <link rel="manifest" href="manifest.webmanifest?v=2">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-v2-32.png">
@@ -357,7 +357,8 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     ['bio-tower','바이오 타워','생물 조각 쌓기 대결','online casual','4','쌓기 타워 동물 물리 bio tower'],
     ['codon-glass','코돈 글래스','mRNA 코돈 번역 퍼즐','online casual','4','퍼즐 코돈 mRNA 번역 아미노산 리보솜 codon glass'],
     ['bio-pyramid','바이오 피라미드 타이쿤','양분을 모아 생명의 피라미드 쌓기 3D','casual','','타이쿤 방치 피라미드 펫 뽑기 양분 bio pyramid'],
-    ['cell-expedition','세포 원정대 3D','면역 세포 요원 육성 원정 전투','casual','','면역 세포 요원 원정 전투 육성 뽑기 cell expedition']
+    ['cell-expedition','세포 원정대 3D','면역 세포 요원 육성 원정 전투','casual','','면역 세포 요원 원정 전투 육성 뽑기 cell expedition'],
+    ['cell-raid','세포 레이드','인체 6구역 방 탐험 로그라이크 슈터','action','','세포 레이드 로그라이크 슈터 병원체 보스 인체 cell raid']
   ];
   const ic=n=>window.BioIcon?BioIcon.svg(n):'';
   const get=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}};
@@ -417,6 +418,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     'codon-glass'(){const s=get('codonGlass');return s&&s.plays?`<b>${s.plays}</b>판`:'';},
     'bio-tower'(){const s=get('bioTower');return s&&s.rounds?`<b>${s.wins||0}</b>승 · 최고 <b>${s.best||0}m</b>`:'';},
     'bio-pyramid'(){const s=get('bioPyramidSave');return s&&s.highestPyramidStage?`최고 <b>${s.highestPyramidStage}</b>단계 피라미드`:'';},
+    'cell-raid'(){const s=get('cellRaidStats');if(!s||!s.runs)return '';return s.wins?`완주 <b>${s.wins}</b>회`:`최고 <b>${s.bestStage||1}</b>구역`;},
     'cell-expedition'(){const s=get('cellExpeditionSave');const b=s&&s.st&&s.st.bestStage;return b?`최고 STAGE <b>${Math.floor((b-1)/10)+1}-${(b-1)%10+1}</b>`:'';},
     'cell-frontier'(){const s=get('cellFrontier');if(!s||!s.clear)return '';const c=Object.values(s.clear);return c.length?`정복 <b>${c.length}</b>/16곳`:'';},
     'vessel-canyon'(){const s=get('vesselCanyonStats');return s&&(s.w||s.l)?`<b>${s.w||0}승 ${s.l||0}패</b>`:'';}

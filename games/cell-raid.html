@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0b0714">
+<title>세포 레이드 · 인체 6구역</title>
+<link rel="manifest" href="../manifest.webmanifest?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-v2-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon-v2.png">
+<style>
+:root{--s:2}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#06040c;color:#fff;font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none}
+#box{position:fixed;background:#0b0714;box-shadow:0 0 0 1px #2a1d44,0 20px 60px rgba(0,0,0,.6)}
+#game{width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+.ovl{position:absolute;pointer-events:none;text-align:center}
+#stageName{left:0;right:0;top:calc(var(--s)*20px);font-size:calc(var(--s)*4.2px);font-weight:800;color:rgba(255,255,255,.55);display:none}
+#toast{left:50%;top:calc(var(--s)*40px);transform:translate(-50%,-8px);opacity:0;transition:.25s;background:rgba(12,8,24,.86);border:1px solid rgba(255,255,255,.18);border-radius:calc(var(--s)*4px);padding:calc(var(--s)*3px) calc(var(--s)*7px);max-width:calc(var(--s)*230px)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast b{display:block;font-size:calc(var(--s)*7px);font-weight:900;letter-spacing:-.02em}
+#toast span{display:block;font-size:calc(var(--s)*4.4px);color:#d8d0f0;margin-top:calc(var(--s)*1px);line-height:1.35}
+#banner{left:0;right:0;top:38%;opacity:0;transition:.4s;text-shadow:0 2px 0 #000}
+#banner.on{opacity:1}
+#banner small{display:block;font-size:calc(var(--s)*5px);color:#ffd76a;font-weight:800;letter-spacing:.2em}
+#banner b{display:block;font-size:calc(var(--s)*12px);font-weight:900}
+#bossIntro{inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(90deg,rgba(60,0,20,.0),rgba(40,0,16,.88) 25%,rgba(40,0,16,.88) 75%,rgba(60,0,20,0));opacity:0;transition:.3s}
+#bossIntro.on{opacity:1}
+#bossIntro img{width:calc(var(--s)*64px);height:calc(var(--s)*64px);image-rendering:pixelated;animation:bob 1s ease-in-out infinite}
+#bossIntro .vs{font-size:calc(var(--s)*10px);font-weight:900;color:#ff3d5a;letter-spacing:.2em;text-shadow:0 0 calc(var(--s)*6px) #ff3d5a}
+#bossIntro b{font-size:calc(var(--s)*11px);font-weight:900}
+#bossIntro span{font-size:calc(var(--s)*4.6px);color:#ffd0d8;max-width:70%;margin-top:calc(var(--s)*2px)}
+@keyframes bob{50%{transform:translateY(calc(var(--s)*-3px))}}
+#actName{left:calc(var(--s)*2px);top:calc(var(--s)*33px);width:calc(var(--s)*36px);font-size:calc(var(--s)*3.4px);color:#bfe7ff;text-align:left;line-height:1.2;word-break:keep-all}
+#toolName{left:calc(var(--s)*2px);top:calc(var(--s)*176px);width:calc(var(--s)*36px);font-size:calc(var(--s)*3.4px);color:#cfe0f0;text-align:left;line-height:1.2;word-break:keep-all}
+#consName{right:calc(var(--s)*2px);top:calc(var(--s)*176px);width:calc(var(--s)*36px);font-size:calc(var(--s)*3.4px);color:#ffd0f0;text-align:right;line-height:1.2;word-break:keep-all}
+/* 화면 */
+.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:20;background:rgba(6,4,12,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);padding:12px}
+.screen.on{display:flex}
+.card0{background:linear-gradient(180deg,#1c1234,#120b22);border:2px solid #3e2b66;border-radius:18px;padding:22px 22px 18px;width:min(460px,94vw);max-height:94vh;overflow:auto;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.logo{font-size:clamp(30px,7vw,46px);font-weight:900;letter-spacing:-.03em;line-height:1.05;background:linear-gradient(180deg,#fff,#9fd2ff 55%,#c486ff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #2a1650)}
+.sub{color:#ffd76a;font-weight:800;letter-spacing:.3em;font-size:12px;margin:4px 0 10px}
+.rec{font-size:13px;color:#cfc6ea;margin:8px 0 14px;line-height:1.5}
+.btns{display:flex;flex-direction:column;gap:8px}
+.btn{border:0;border-radius:12px;padding:12px 14px;font-weight:800;font-size:16px;font-family:inherit;color:#1a0f2e;background:linear-gradient(180deg,#9fffe0,#5ad1b0);box-shadow:0 4px 0 #2a7a66;cursor:pointer}
+.btn.alt{background:linear-gradient(180deg,#3a2a60,#2a1d48);color:#e8e0ff;box-shadow:0 4px 0 #160e2a}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #160e2a}
+a.btn{text-decoration:none;display:block}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;text-align:left;font-size:14px;margin:10px 0 16px}
+.keys b{background:#2a1d48;border:1px solid #4a3a78;border-radius:6px;padding:2px 8px;font-size:12px;white-space:nowrap;text-align:center}
+#overTitle{font-size:30px;font-weight:900;margin:2px 0 12px}
+#overTitle.win{color:#ffd76a}#overTitle.lose{color:#ff8a9a}
+#overStats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+#overStats div{background:#1a1030;border:1px solid #3a2a60;border-radius:10px;padding:8px}
+#overStats small{display:block;color:#a99cc8;font-size:12px}#overStats b{font-size:18px}
+#overStats .sb{grid-column:1/3;color:#ff9ad5;font-size:13px;margin:0}
+/* 도감 */
+#codex .card0{width:min(980px,98vw);height:min(94vh,760px);display:flex;flex-direction:column;text-align:left;padding:14px}
+.chead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.chead h3{margin:0;font-size:20px;font-weight:900;flex:1}
+#codexTabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+#codexTabs button{border:1px solid #4a3a78;background:#1d1434;color:#d8ccff;border-radius:999px;padding:6px 11px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer}
+#codexTabs button.on{background:#9fffe0;color:#140c24;border-color:#9fffe0}
+#codexList{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;align-content:start;padding-right:4px}
+.card{display:flex;gap:10px;align-items:flex-start;background:#160f2a;border:1px solid #33255a;border-radius:12px;padding:8px}
+.card.legend{border-color:#ffd75e;background:linear-gradient(180deg,#2a2010,#160f2a);box-shadow:0 0 0 1px rgba(255,215,94,.25) inset}
+.card.unseen{opacity:.72}
+.card img{width:48px;height:48px;image-rendering:pixelated;flex:none;background:#0c0818;border-radius:8px}
+.card .tx{flex:1;min-width:0}
+.card b{font-size:14px;display:block}
+.card small{font-size:11px;color:#9a8cc0}
+.card i{font-style:normal;margin-left:4px;padding:0 5px;border-radius:5px;background:#2a1d48;color:#cfe0ff}
+.card i.op{background:#ffd75e;color:#2a1a00;font-weight:900}
+.card i.bad{background:#5a1a2a;color:#ffb0c0}
+.card p{margin:3px 0 0;font-size:12px;color:#d8d0f0;line-height:1.4}
+.card button{flex:none;align-self:center;border:0;border-radius:8px;padding:7px 10px;font-weight:800;font-size:12px;font-family:inherit;background:#9fffe0;color:#140c24;cursor:pointer}
+#codexNote{font-size:12px;color:#a99cc8;margin-top:8px;transition:color .2s}
+#codexNote.hi{color:#9fffe0}
+.mvwrap{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+.mvwrap h4{width:100%;margin:8px 0 2px;font-size:14px;color:#ffd76a}
+.mv{border:1px solid #4a3a78;background:#1d1434;color:#e8e0ff;border-radius:10px;padding:9px 12px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer}
+/* 터치 */
+#touch{display:none}
+#touch.on{display:block}
+#touchLayer{position:fixed;inset:0;z-index:5}
+.stick{position:fixed;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);display:none;z-index:6;pointer-events:none}
+.stick i{position:absolute;left:50%;top:50%;width:50px;height:50px;border-radius:50%;background:rgba(159,255,224,.45);border:2px solid rgba(255,255,255,.5);transform:translate(-50%,-50%)}
+#stickR i{background:rgba(255,140,180,.45)}
+.tbtn{position:fixed;z-index:7;width:58px;height:58px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(30,20,60,.55);color:#fff;font-weight:800;font-size:13px;font-family:inherit;display:flex;align-items:center;justify-content:center;flex-direction:column;line-height:1.1}
+.tbtn small{font-size:10px;opacity:.75}
+#tbAct{right:calc(18px + env(safe-area-inset-right));bottom:calc(150px + env(safe-area-inset-bottom));background:rgba(40,120,110,.6)}
+#tbBomb{right:calc(84px + env(safe-area-inset-right));bottom:calc(150px + env(safe-area-inset-bottom));background:rgba(110,60,180,.6)}
+#tbQ{right:calc(150px + env(safe-area-inset-right));bottom:calc(150px + env(safe-area-inset-bottom));background:rgba(160,60,120,.6)}
+#tbPause{right:calc(10px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));width:44px;height:44px}
+#tbCodex{right:calc(60px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));width:44px;height:44px;font-size:11px}
+body:not(.portrait) .tbtn{opacity:.8}
+body:not(.portrait) #tbAct,body:not(.portrait) #tbBomb,body:not(.portrait) #tbQ{bottom:calc(16px + env(safe-area-inset-bottom));width:52px;height:52px}
+body:not(.portrait) #tbAct{right:calc(14px + env(safe-area-inset-right))}
+body:not(.portrait) #tbBomb{right:calc(72px + env(safe-area-inset-right))}
+body:not(.portrait) #tbQ{right:calc(130px + env(safe-area-inset-right))}
+.hint{position:fixed;left:0;right:0;bottom:calc(30px + env(safe-area-inset-bottom));text-align:center;font-size:12px;color:rgba(255,255,255,.45);pointer-events:none;z-index:6}
+body:not(.portrait) .hint{display:none}
+body:not(.portrait) #tbPause{top:38%}
+body:not(.portrait) #tbCodex{top:calc(38% + 52px);right:calc(10px + env(safe-area-inset-right))}
+.tbtn{font-size:12px;letter-spacing:-.03em}
+</style>
+</head>
+<body>
+<div id="box">
+  <canvas id="game" width="384" height="216"></canvas>
+  <div class="ovl" id="stageName"></div>
+  <div class="ovl" id="actName"></div>
+  <div class="ovl" id="toolName"></div>
+  <div class="ovl" id="consName"></div>
+  <div class="ovl" id="toast"><b></b><span></span></div>
+  <div class="ovl" id="banner"></div>
+  <div class="ovl" id="bossIntro"><img alt=""><div class="vs">VS</div><b></b><span></span></div>
+</div>
+
+<div id="touch">
+  <div id="touchLayer"></div>
+  <div class="stick" id="stickL"><i></i></div>
+  <div class="stick" id="stickR"><i></i></div>
+  <button class="tbtn" id="tbAct" data-act=" " type="button">액티브<small>Space</small></button>
+  <button class="tbtn" id="tbBomb" data-act="e" type="button">폭탄<small>E</small></button>
+  <button class="tbtn" id="tbQ" data-act="q" type="button">사용<small>Q</small></button>
+  <button class="tbtn" id="tbPause" data-act="pause" type="button">Ⅱ</button>
+  <button class="tbtn" id="tbCodex" data-act="codex" type="button">도감</button>
+  <div class="hint">왼손: 이동 · 오른손: 조준·발사 (손가락을 댄 곳에 스틱이 생겨요)</div>
+</div>
+
+<div class="screen" id="title"><div class="card0">
+  <div class="logo">세포 레이드</div>
+  <div class="sub">CELL RAID · 인체 6구역</div>
+  <div class="rec" id="titleRec"></div>
+  <div class="btns">
+    <button class="btn" id="btnStart" type="button">원정 시작</button>
+    <button class="btn alt" id="btnCodexT" type="button">바이오 도감 · 샌드박스</button>
+    <button class="btn alt" id="btnHelpT" type="button">조작 방법</button>
+    <a class="btn alt" href="../index.html">게임 목록</a>
+  </div>
+</div></div>
+
+<div class="screen" id="help"><div class="card0">
+  <h3 style="margin:0 0 6px">조작 방법</h3>
+  <div class="keys">
+    <b>W A S D</b><span>이동</span>
+    <b>← ↑ → ↓</b><span>그 방향으로 쏘기 (마우스 왼쪽 버튼을 누른 채 조준해도 돼요)</span>
+    <b>Space</b><span>액티브 아이템 사용 (방을 비울 때마다 1칸 충전)</span>
+    <b>E</b><span>리소좀 폭탄 놓기 — 바위를 부수고 숨은 방 벽을 엶</span>
+    <b>Q</b><span>진단서·호르몬 사용</span>
+    <b>Tab / I</b><span>바이오 도감 · 샌드박스</span>
+    <b>Esc / P</b><span>일시정지</span>
+    <b>M</b><span>배경 음악 켜기/끄기</span>
+    <b>터치</b><span>왼손 스틱 이동, 오른손 스틱 조준·발사, 오른쪽 아래 버튼</span>
+  </div>
+  <p style="font-size:13px;color:#cfc6ea;text-align:left;line-height:1.55;margin:0 0 14px">방의 병원체를 모두 물리치면 문이 열려요. 구역마다 보스를 쓰러뜨리고 구멍으로 내려가세요. 층의 일반 방을 모두 비운 뒤 보스를 잡으면 <b style="color:#ff6b8a">변이 연구실</b>이 열리고, 2구역부터는 가끔 <b style="color:#fff3b0">면역 성소</b>도 나타나요.</p>
+  <button class="btn" id="helpBack" type="button">돌아가기</button>
+</div></div>
+
+<div class="screen" id="pause"><div class="card0">
+  <h3 style="margin:0 0 12px;font-size:24px">일시정지</h3>
+  <div class="btns">
+    <button class="btn" id="btnResume" type="button">계속하기</button>
+    <button class="btn alt" id="btnCodexP" type="button">바이오 도감 · 샌드박스</button>
+    <button class="btn alt" id="btnHelpP" type="button">조작 방법</button>
+    <button class="btn alt" id="btnMusic" type="button">배경 음악</button>
+    <button class="btn alt" id="btnSfx" type="button">모든 소리</button>
+    <button class="btn alt" id="btnRestart" type="button">처음부터</button>
+    <a class="btn alt" href="../index.html">게임 목록</a>
+  </div>
+</div></div>
+
+<div class="screen" id="over"><div class="card0">
+  <div id="overTitle"></div>
+  <div id="overStats"></div>
+  <div class="btns">
+    <button class="btn" id="btnAgain" type="button">다시 도전</button>
+    <button class="btn alt" id="btnOverTitle" type="button">처음 화면</button>
+    <a class="btn alt" href="../index.html">게임 목록</a>
+  </div>
+</div></div>
+
+<div class="screen" id="codex"><div class="card0">
+  <div class="chead"><h3>바이오 도감 · 샌드박스</h3><button class="btn alt" id="codexClose" type="button" style="padding:8px 14px;font-size:14px">닫기</button></div>
+  <div id="codexTabs"></div>
+  <div id="codexList"></div>
+  <div id="codexNote"></div>
+</div></div>
+
+<script src="cell-raid/engine.js"></script>
+<script src="cell-raid/data.js"></script>
+<script src="cell-raid/world.js"></script>
+<script src="cell-raid/game.js"></script>
+<script src="cell-raid/ui.js"></script>
+<script src="../goal.js"></script>
+<script src="../rank.js"></script>
+<script src="../ilog.js"></script>
+</body>
+</html>

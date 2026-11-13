@@ -1,6 +1,6 @@
 # BIO ARCADE · 생명과학 게임 아케이드
 
-생명과학을 소재로 한 게임 14종을 한곳에 모은 정적 웹사이트입니다.
+생명과학을 소재로 한 게임 15종을 한곳에 모은 정적 웹사이트입니다.
 빌드 과정 없이 `index.html`을 열거나 GitHub Pages로 배포하면 바로 실행됩니다.
 
 | 게임 | 장르 | 파일 |
@@ -22,7 +22,7 @@
 index.html        메인 화면 (휴대폰은 목록형, 태블릿·PC는 바둑판형으로 자동 구성 · 분류/검색 · 이어하기 · 목표 달성)
 rank.js           공용 랭킹·성공 기준 (Firebase Firestore). 맨 위 FIREBASE에 apiKey·projectId를 넣으면 켜짐
 icons.js          픽토그램: 사이트와 모든 게임의 이모지를 단순한 선 그림(SVG)으로 바꿈 (HTML 글자와 캔버스 글자 모두, 각 게임 <head>에서 불러옴)
-games/            게임 14종 (각각 하나의 HTML 파일)
+games/            게임 15종 (각각 하나의 HTML 파일)
 assets/           메인 화면 썸네일
 games/bio-tower/  바이오 타워 조각·섬·배경 그림과 충돌 형태(pieces.json). tools/bio-tower/art/ 원화(Glif로 새로 그린 그림)에서 tools/bio-tower/from_art.py로 다시 만듦
 games/cell-frontier/  세포 개척단 그림(숨은 그림 16장·덮개·지도·스프라이트). tools/cell-frontier/build.py로 다시 만듦 (숨은 그림·적·아이템은 tools/cell-frontier/art/ 원화(Glif로 새로 그린 그림)에서 from_art.py가 만듦)
@@ -58,7 +58,7 @@ GitHub Pages처럼 `https`로 배포된 주소에서 열면 앱으로 설치할 
 - **안드로이드 · PC 크롬/엣지**: 메인 화면 오른쪽 위의 **설치(아래 화살표)** 버튼, 또는 주소창의 설치 아이콘
 - **아이폰 · 아이패드**: Safari 공유 버튼 → **홈 화면에 추가**
 
-처음 접속할 때 게임 14종이 모두 기기에 저장되므로, 설치한 뒤에는 인터넷 없이도 실행됩니다.
+처음 접속할 때 게임 15종이 모두 기기에 저장되므로, 설치한 뒤에는 인터넷 없이도 실행됩니다.
 파일을 수정하면 다음 실행 때 자동으로 새 버전이 반영됩니다. 파일을 추가하거나 지웠다면 `sw.js`의 `CORE` 목록과 `VERSION`도 함께 바꿔 주세요.
 
 ## 목표 점수 (성공 / 실패)
