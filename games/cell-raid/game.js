@@ -987,6 +987,7 @@
       else if (f.cone) { c.globalAlpha = 1 - k; c.fillStyle = 'rgba(200,220,255,0.35)'; c.beginPath(); c.moveTo(f.x, f.y); c.arc(f.x, f.y, 120, f.a - 0.8, f.a + 0.8); c.fill(); c.globalAlpha = 1; }
       else if (f.vx != null && !f.splat && !f.warn) { c.globalAlpha = f.pop ? 1 - k : 1; c.fillStyle = f.col; c.fillRect(Math.round(f.x), Math.round(f.y), f.s || 1, f.s || 1); c.globalAlpha = 1; }
     }
+    if (CR.roomOverlay) CR.roomOverlay(c, t, st);
     c.restore();
     if (G.fade > 0) { c.fillStyle = 'rgba(5,3,10,' + Math.min(1, G.fade * 3) + ')'; c.fillRect(RX, RY, RW, RH); }
     drawHUD(c);
