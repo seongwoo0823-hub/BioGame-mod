@@ -61,7 +61,7 @@
       s.dmg += st.dmg || 0; s.rate += st.rate || 0; s.range += st.range || 0; s.sspd += st.sspd || 0; s.speed += st.speed || 0; s.crit += st.crit || 0;
       if (st.dmgMul) dmgMul *= st.dmgMul; if (st.rateMul) rateMul *= st.rateMul; if (st.size) sizeMul *= st.size; }
     s.dmg += P.bonus.dmg + toolFx('dmg') + (P.room.dmg || 0) + P.rage * 2; s.rate += P.bonus.rate + toolFx('rate') + (P.room.rate || 0);
-    s.range += P.bonus.range + toolFx('range'); s.sspd += P.bonus.sspd + toolFx('sspd'); s.speed += P.bonus.speed + (P.room.speed || 0); s.crit += toolFx('crit');
+    s.range += P.bonus.range + toolFx('range'); s.sspd += P.bonus.sspd + toolFx('sspd'); s.speed += P.bonus.speed + (P.room.speed || 0); s.crit += toolFx('crit') + (P.bonus.crit || 0); if (P.cmul) dmgMul *= P.cmul;
     sizeMul *= 1 + toolFx('size');
     if (has('lowHp') && P.hp <= 2) { dmgMul *= 1.5; rateMul *= 1.5; }
     if (has('fullHp') && P.hp >= P.maxHp) { s.dmg += 2; sizeMul *= 2; }
@@ -69,7 +69,7 @@
     if (has('giant')) sizeMul *= 1.15;
     s.dmg = Math.max(0.5, s.dmg * dmgMul); s.rate = clamp(s.rate * rateMul, 0.7, 14); s.range = Math.max(70, s.range); s.speed = clamp(s.speed, 0.5, 2.2); s.sspd = clamp(s.sspd, 0.6, 2.6); s.crit = clamp(s.crit, 0, 90); s.size = clamp(sizeMul, 0.5, 3.2);
     if (has('statLock')) { if (!P.peak) P.peak = Object.assign({}, s); for (const k in s) { s[k] = Math.max(s[k], P.peak[k]); P.peak[k] = s[k]; } }
-    P.st = s; P.r = has('giant') ? 6 : has('tiny') ? 2.8 : 4;
+    P.st = s; P.r = (has('giant') ? 6 : has('tiny') ? 2.8 : 4) * ((P.char && P.char.look.scale) || 1);
   }
   CR.calcStats = calcStats;
   const flagList = () => Object.keys(G.P.flags).concat(G.P.room.flag ? [G.P.room.flag] : []);
@@ -131,7 +131,16 @@
   function startRun(opts) {
     opts = opts || {};
     G.P = newPlayer(); G.time = 0; G.kills = 0; G.cleared = 0; G.killedTypes = new Set(); G.sandbox = !!opts.sandbox; G.god = false; G.over = null; G.bonusNext = false;
-    resetPools(); calcStats(); startStage(opts.stage || 1); G.mode = 'play';
+    resetPools();
+    // 선택한 캐릭터 적용
+    const ch = G.P.char = CR.charById(opts.char || 'neut'), P = G.P;
+    P.maxHp = ch.hp * 2; P.hp = P.maxHp; P.shield = ch.shield || 0; P.cmul = ch.cmul || 1;
+    P.bombs = ch.bombs != null ? ch.bombs : 1; P.keys = ch.keys != null ? ch.keys : 1; P.coins = ch.coins || 0;
+    ['dmg', 'rate', 'range', 'sspd', 'speed', 'crit'].forEach(k => (P.bonus[k] = ch[k] || 0));
+    (ch.flags || []).forEach(f => (P.flags[f] = 1));
+    calcStats(); startStage(opts.stage || 1);
+    (ch.items || []).forEach(id => applyItem(id, { quiet: true })); if (ch.active) applyItem(ch.active, { quiet: true });
+    calcStats(); G.mode = 'play';
     if (CR.ui) CR.ui.onStart();
   }
   CR.startRun = startRun;
@@ -205,6 +214,7 @@
     AU.sfx('door');
     if (P.active && P.active.charge < P.active.max) { P.active.charge = Math.min(P.active.max, P.active.charge + 1 + (Math.random() < toolFx('extraCharge') ? 1 : 0)); }
     if (has('regen')) heal(1);
+    if (has('clearShield') && P.shield < 6 && P.maxHp + P.shield < 24) { P.shield++; AU.sfx('shield'); }
     if (Math.random() < toolFx('clearHeal')) heal(1);
     if (has('famHelper')) { P.helperN = (P.helperN || 0) + 1; if (P.helperN % 3 === 0) spawnReward(true); }
     if (room.type === 'normal') spawnReward(false);
@@ -295,7 +305,7 @@
         if (e.state === 'dash') { const h = moveEnt(e, e.vx * dt, e.vy * dt, mode); if (h || e.st <= 0) { e.state = 'rest'; e.st = 0.7; } e.st -= dt; }
         else if (e.state === 'rest') { e.st -= dt; if (e.st <= 0) e.state = 'idle'; }
         else { e.dir += rand(-1, 1) * dt; if (moveEnt(e, Math.cos(e.dir) * sp * 0.5 * dt, Math.sin(e.dir) * sp * 0.5 * dt, mode)) e.dir += 2;
-          const ax = Math.abs(P.x - e.x) < 10, ay = Math.abs(P.y - e.y) < 10, f = (d.fast ? 182 : 133) * slow;
+          const ax = Math.abs(P.x - e.x) < 10, ay = Math.abs(P.y - e.y) < 10, f = (d.fast ? 91 : 67) * slow;
           if ((ax || ay || dd < 50) && e.t > 0.8) { e.state = 'dash'; e.st = 1.4; if (dd < 50) { e.vx = Math.cos(a) * f; e.vy = Math.sin(a) * f; } else if (ax) { e.vx = 0; e.vy = Math.sign(P.y - e.y) * f; } else { e.vy = 0; e.vx = Math.sign(P.x - e.x) * f; } } }
         break; }
       case 'burrow': {
@@ -398,7 +408,7 @@
     aim: { u(b) { const n = +b.c.a[0] || 3, k = Math.floor(b.c.t / 0.35); if (k > b.c.k) { b.c.k = k; const A = ang(b, G.P); for (let i = 0; i < n; i++) eShot(b.x, b.y, A + (i - (n - 1) / 2) * 0.2, 95); AU.sfx('eshot'); } return b.c.t > 1.1; } },
     ring: { u(b) { const n = +b.c.a[0] || 10, k = Math.floor(b.c.t / 0.5); if (k > b.c.k && k < 3) { b.c.k = k; ring(b.x, b.y, n, 78, k * Math.PI / n); if (b.def.segs) b.trail.forEach((p, i) => { if (i % 16 === 8) { eShot(p.x, p.y, ang(p, G.P), 80); } }); } return b.c.t > 1.2; } },
     spiral: { u(b) { b.c.e = (b.c.e || 0) + 1; const arms = b.phase ? 3 : 2; if (b.c.e % 5 === 0) for (let i = 0; i < arms; i++) eShot(b.x, b.y, b.c.t * 2.6 + i * TAU / arms, 85, { col: '#ff8ad0' }); if (b.c.e % 15 === 0) AU.sfx('eshot'); return b.c.t > 2.6; } },
-    charge: { s(b) { b.c.n = b.phase ? 2 : 1; b.c.w = 0.5; }, u(b, dt) { if (b.c.w > 0) { b.c.w -= dt; b.flash = 0.05; if (b.c.w <= 0) { const A = ang(b, G.P); b.c.vx = Math.cos(A) * 161; b.c.vy = Math.sin(A) * 161; } return false; } const h = moveEnt(b, b.c.vx * dt, b.c.vy * dt, 'walk'); if (h) { ring(b.x, b.y, 8, 70); G.shake = 5; AU.sfx('boom'); b.c.n--; if (b.c.n <= 0) return true; b.c.w = 0.4; } return b.c.t > 4; } },
+    charge: { s(b) { b.c.n = b.phase ? 2 : 1; b.c.w = 0.5; }, u(b, dt) { if (b.c.w > 0) { b.c.w -= dt; b.flash = 0.05; if (b.c.w <= 0) { const A = ang(b, G.P); b.c.vx = Math.cos(A) * 80; b.c.vy = Math.sin(A) * 80; } return false; } const h = moveEnt(b, b.c.vx * dt, b.c.vy * dt, 'walk'); if (h) { ring(b.x, b.y, 8, 70); G.shake = 5; AU.sfx('boom'); b.c.n--; if (b.c.n <= 0) return true; b.c.w = 0.4; } return b.c.t > 4; } },
     summon: { s(b) { const id = b.c.a[0], n = +b.c.a[1] || 1, alive = G.room.ents.filter(e => !e.boss && !e.dead && !e.ally).length; for (let i = 0; i < n && alive + i < 7; i++) { const e = mkEnemy(CR.ALL[id], b.x + rand(-20, 20), b.y + rand(-14, 20)); G.room.ents.push(e); burstFx(e.x, e.y, e.def.col, 8); } }, u(b) { return b.c.t > 0.6; } },
     teleport: { u(b) { const t = b.c.t; if (t < 0.4) { b.fade = 1 - t / 0.4; return false; } if (!b.c.m) { b.c.m = 1; const p = freeSpot(80); b.x = p.x; b.y = p.y; } if (t < 0.7) { b.fade = (t - 0.4) / 0.3; return false; } b.fade = 1; if (!b.c.s) { b.c.s = 1; const A = ang(b, G.P); for (let i = -1; i <= 1; i++) eShot(b.x, b.y, A + i * 0.25, 100); AU.sfx('eshot'); } return t > 0.9; } },
     laser8: { s(b) { const n = b.phase || b.def.phases3 ? 8 : 4, off = ang(b, G.P); for (let i = 0; i < n; i++) laser(b.x, b.y, off + i * TAU / n, { follow: b, w: 6 }); AU.sfx('charge'); }, u(b) { return b.c.t > 1.6; } },
@@ -921,12 +931,13 @@
   }
   function drawPlayer(c, ox, oy) {
     const P = G.P, t = G.time; if (P.invuln > 0 && Math.floor(t * 20) % 2 && !P.room.vaccine) return;
-    const sc = has('giant') ? 1.35 : has('tiny') ? 0.7 : 1, x = ox + P.x, y = oy + P.y;
+    const sc = (has('giant') ? 1.35 : has('tiny') ? 0.7 : 1) * ((P.char && P.char.look.scale) || 1), x = ox + P.x, y = oy + P.y;
     shadow(c, x, y + 4 * sc, 6 * sc);
     P.costumes.filter(k => k === 'aura' || k === 'wings' || k === 'tail').forEach(k => drawCostume(c, k, x, y, P.dir, t));
     const moving = Math.hypot(P.vx, P.vy) > 15, fr = moving ? Math.floor(P.walkT * 8) % 2 : 0, tint = P.room.vaccine ? '#c8ffd8' : null;
-    drawSpr(c, CR.playerBody(P.dir, fr, tint), x, y + 2 * sc, { s: sc });
-    drawSpr(c, CR.playerHead(P.dir, P.shootT > 0, tint), x, y - 5 * sc, { s: sc });
+    const ch = P.char || CR.CHARS[0];
+    drawSpr(c, CR.charBody(ch, P.dir, fr, tint), x, y + 2 * sc, { s: sc });
+    drawSpr(c, CR.charHead(ch, P.dir, P.shootT > 0, tint), x, y - 5 * sc, { s: sc });
     P.costumes.filter(k => !['aura', 'wings', 'tail'].includes(k)).forEach(k => drawCostume(c, k, x, y, P.dir, t));
     if (P.room.vaccine) { c.strokeStyle = 'rgba(160,255,190,0.7)'; c.beginPath(); c.arc(x, y - 3, 11, 0, TAU); c.stroke(); }
   }
@@ -1019,7 +1030,7 @@
   function hexA(hex, a) { const [r, g, b] = CR.rgb(hex); return `rgba(${r},${g},${b},${a})`; }
   function drawFam(c, f, t) {
     if (f.kind === 'ring') return;
-    const img = { shooter: () => CR.mob('phage', 12, '#ffd36b', {}, Math.floor(t * 5) % 2), guard: () => CR.mob('cell', 16, '#e8d6ff', {}, Math.floor(t * 4) % 2), seeker: () => CR.mob('protein', 12, '#ffb0e0', {}, Math.floor(t * 5) % 2), creepy: () => CR.mob('coccus', 12, '#a0d8ff', {}, Math.floor(t * 5) % 2), microbe: () => CR.mob('rod', 12, '#7cf07c', {}, Math.floor(t * 5) % 2), clone: () => CR.playerHead(G.P.dir, G.P.shootT > 0, '#ffe0ff') }[f.kind];
+    const img = { shooter: () => CR.mob('phage', 12, '#ffd36b', {}, Math.floor(t * 5) % 2), guard: () => CR.mob('cell', 16, '#e8d6ff', {}, Math.floor(t * 4) % 2), seeker: () => CR.mob('protein', 12, '#ffb0e0', {}, Math.floor(t * 5) % 2), creepy: () => CR.mob('coccus', 12, '#a0d8ff', {}, Math.floor(t * 5) % 2), microbe: () => CR.mob('rod', 12, '#7cf07c', {}, Math.floor(t * 5) % 2), clone: () => CR.charHead(G.P.char || CR.CHARS[0], G.P.dir, G.P.shootT > 0, '#ffe0ff') }[f.kind];
     if (img) drawSpr(c, img(), f.x, f.y - 4, { alpha: f.kind === 'clone' ? 0.75 : 1 });
   }
   // HUD: 왼쪽 패널(액티브·물건·능력치·수술도구) · 위(체력·타이머) · 오른쪽(미니맵·진단서/호르몬)

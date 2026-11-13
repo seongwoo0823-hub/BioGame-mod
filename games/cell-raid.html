@@ -66,6 +66,24 @@ a.btn{text-decoration:none;display:block}
 #overStats div{background:#1a1030;border:1px solid #3a2a60;border-radius:10px;padding:8px}
 #overStats small{display:block;color:#a99cc8;font-size:12px}#overStats b{font-size:18px}
 #overStats .sb{grid-column:1/3;color:#ff9ad5;font-size:13px;margin:0}
+/* 캐릭터 선택 */
+.charwrap{width:min(1000px,98vw);max-height:96vh;display:flex;flex-direction:column;text-align:left;padding:14px;gap:10px}
+.charbody{display:flex;gap:12px;min-height:0;flex:1;overflow:hidden}
+#charGrid{flex:1.5;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;overflow:auto;align-content:start;padding:2px}
+.cc{background:#160f2a;border:2px solid #33255a;border-radius:12px;padding:6px 4px 8px;text-align:center;cursor:pointer;color:#e8e0ff;font-family:inherit}
+.cc img{width:72px;height:96px;image-rendering:pixelated;display:block;margin:0 auto}
+.cc b{display:block;font-size:13px;margin-top:2px;word-break:keep-all}.cc small{font-size:11px;color:#a99cc8}
+.cc.on{border-color:#9fffe0;background:#1f1640;box-shadow:0 0 0 2px rgba(159,255,224,.25)}
+#charInfo{flex:1;background:#140d26;border:1px solid #33255a;border-radius:12px;padding:12px;overflow:auto;min-width:0}
+#charInfo h4{margin:0;font-size:20px}#charInfo .role{display:inline-block;font-size:12px;background:#9fffe0;color:#140c24;border-radius:6px;padding:1px 8px;font-weight:800;margin:4px 0}
+#charInfo p{font-size:13px;color:#d8d0f0;line-height:1.5;margin:6px 0}
+#charInfo .ab{background:#1f1640;border-radius:8px;padding:8px;font-size:13px;color:#ffe9a8;line-height:1.5}
+.bars{display:grid;grid-template-columns:44px 1fr 38px;gap:4px 8px;align-items:center;font-size:12px;margin:10px 0}
+.bars i{height:8px;border-radius:4px;background:#2a1d48;position:relative;overflow:hidden}.bars i::after{content:'';position:absolute;inset:0;width:var(--w);background:linear-gradient(90deg,#5ad1b0,#9fffe0)}
+.bars em{font-style:normal;color:#fff;text-align:right}
+.sitems{display:flex;flex-wrap:wrap;gap:6px}.sitems span{display:flex;align-items:center;gap:4px;background:#1f1640;border-radius:8px;padding:3px 7px 3px 3px;font-size:12px}.sitems img{width:24px;height:24px;image-rendering:pixelated}
+@media (max-width:760px){.charbody{flex-direction:column;overflow:auto}#charGrid{grid-template-columns:repeat(4,1fr);flex:none;overflow:visible}.cc img{width:54px;height:72px}#charInfo{flex:none}}
+@media (max-width:420px){#charGrid{grid-template-columns:repeat(3,1fr)}}
 /* 도감 */
 #codex .card0{width:min(980px,98vw);height:min(94vh,760px);display:flex;flex-direction:column;text-align:left;padding:14px}
 .chead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
@@ -158,6 +176,15 @@ body:not(.portrait) #tbCodex{top:calc(38% + 52px);right:calc(10px + env(safe-are
   </div>
 </div></div>
 
+<div class="screen" id="chars"><div class="card0 charwrap">
+  <div class="chead"><h3>세포 고르기</h3><button class="btn alt" id="charBack" type="button" style="padding:8px 14px;font-size:14px">뒤로</button></div>
+  <div class="charbody">
+    <div id="charGrid"></div>
+    <div id="charInfo"></div>
+  </div>
+  <button class="btn" id="charGo" type="button">이 세포로 원정 시작</button>
+</div></div>
+
 <div class="screen" id="help"><div class="card0">
   <h3 style="margin:0 0 6px">조작 방법</h3>
   <div class="keys">
@@ -212,6 +239,7 @@ body:not(.portrait) #tbCodex{top:calc(38% + 52px);right:calc(10px + env(safe-are
 <script src="cell-raid/world.js"></script>
 <script src="cell-raid/art.js"></script>
 <script src="cell-raid/props.js"></script>
+<script src="cell-raid/chars.js"></script>
 <script src="cell-raid/game.js"></script>
 <script src="cell-raid/ui.js"></script>
 <script src="../goal.js"></script>

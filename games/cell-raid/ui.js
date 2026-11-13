@@ -49,7 +49,7 @@
   ui.bossBar = () => {};
 
   /* ───────── 화면 전환 ───────── */
-  const screens = ['#title', '#pause', '#over', '#codex', '#help'];
+  const screens = ['#title', '#pause', '#over', '#codex', '#help', '#chars'];
   function show(id) { screens.forEach(s => $(s).classList.toggle('on', s === id)); }
   ui.show = show;
   function titleInfo() {
@@ -57,8 +57,27 @@
   }
   titleInfo(); show('#title');
   ui.onStart = () => { G.mapToggle = false; show(null); $('#touch').classList.toggle('on', IN.touch || matchMedia('(pointer: coarse)').matches); resize(); };
-  function begin(o) { AU.init(); AU.sfx('menu'); CR.startRun(o); }
-  $('#btnStart').onclick = () => begin({});
+  // 캐릭터 선택
+  let pick = (() => { try { return localStorage.getItem('cellRaidChar') || 'neut'; } catch (e) { return 'neut'; } })();
+  function begin(o) { AU.init(); AU.sfx('menu'); CR.startRun(Object.assign({ char: pick }, o || {})); }
+  const portraits = {};
+  function openChars() {
+    AU.init(); AU.sfx('menu'); show('#chars');
+    $('#charGrid').innerHTML = CR.CHARS.map(ch => { if (!portraits[ch.id]) portraits[ch.id] = CR.charPortrait(ch, 4).toDataURL(); return `<button type="button" class="cc ${ch.id === pick ? 'on' : ''}" data-ch="${ch.id}"><img src="${portraits[ch.id]}" alt=""><b>${ch.name}</b><small>${ch.role}</small></button>`; }).join('');
+    $('#charGrid').querySelectorAll('.cc').forEach(b => b.onclick = () => { pick = b.dataset.ch; try { localStorage.setItem('cellRaidChar', pick); } catch (e) {} AU.sfx('menu'); $('#charGrid').querySelectorAll('.cc').forEach(x => x.classList.toggle('on', x === b)); charInfo(); });
+    charInfo();
+  }
+  function charInfo() {
+    const ch = CR.charById(pick), dmg = (3.5 + (ch.dmg || 0)) * (ch.cmul || 1), rate = 2.6 + (ch.rate || 0), spd = 1 + (ch.speed || 0), life = ch.hp + (ch.shield || 0) / 2;
+    const bar = (lab, v, max, txt) => `<span>${lab}</span><i style="--w:${Math.max(6, Math.min(100, v / max * 100))}%"></i><em>${txt}</em>`;
+    const its = (ch.items || []).concat(ch.active ? [ch.active] : []).map(id => { const x = CR.ALL[id]; return `<span><img src="${CR.url(CR.icon(x.glyph, x.col))}" alt="">${x.name}</span>`; }).join('') || '<span style="padding:3px 7px">없음</span>';
+    $('#charInfo').innerHTML = `<h4>${ch.name}</h4><span class="role">${ch.role}</span><p>${ch.desc}</p><div class="ab">${ch.ability}</div>
+      <div class="bars">${bar('체력', life, 5, ch.hp + '칸' + (ch.shield ? '+실드' + ch.shield / 2 : ''))}${bar('공격', dmg, 6, dmg.toFixed(1))}${bar('연사', rate, 3.8, rate.toFixed(1))}${bar('이동', spd, 1.4, spd.toFixed(2))}</div>
+      <b style="font-size:13px">시작 아이템</b><div class="sitems" style="margin-top:6px">${its}</div>`;
+  }
+  $('#btnStart').onclick = openChars;
+  $('#charBack').onclick = () => { AU.sfx('menu'); show('#title'); };
+  $('#charGo').onclick = () => begin({});
   $('#btnCodexT').onclick = () => openCodex();
   $('#btnHelpT').onclick = () => { AU.sfx('menu'); show('#help'); };
   $('#helpBack').onclick = () => { AU.sfx('menu'); show(G.mode === 'title' ? '#title' : (G.mode === 'pause' ? '#pause' : null)); };
@@ -83,12 +102,12 @@
     saveJ('cellRaidStats', stats); titleInfo();
     $('#overTitle').textContent = o.win ? '인체 정화 완료!' : '백혈구가 쓰러졌어요';
     $('#overTitle').className = o.win ? 'win' : 'lose';
-    $('#overStats').innerHTML = `<div><small>진행 시간</small><b>${CR.fmtTime(o.time)}</b></div><div><small>도달 구역</small><b>${o.win ? '완주' : o.stage + '구역'}</b></div><div><small>처치한 병원체</small><b>${o.kills}</b></div><div><small>모은 아이템</small><b>${o.items}개</b></div>` + (sb ? '<p class="sb">샌드박스를 쓴 판이라 랭킹에는 기록되지 않아요</p>' : '');
+    $('#overStats').innerHTML = `<div><small>진행 시간</small><b>${CR.fmtTime(o.time)}</b></div><div><small>도달 구역</small><b>${o.win ? '완주' : o.stage + '구역'}</b></div><div><small>처치한 병원체</small><b>${o.kills}</b></div><div><small>모은 아이템</small><b>${o.items}개</b></div><div style="grid-column:1/3"><small>세포</small><b>${(G.P && G.P.char ? G.P.char.name : '')}</b></div>` + (sb ? '<p class="sb">샌드박스를 쓴 판이라 랭킹에는 기록되지 않아요</p>' : '');
     setTimeout(() => {
       show('#over');
       if (!sb && window.BioGoal) {
         const v = o.win ? 7 : o.stage, sec = Math.round(o.time);
-        BioGoal.result(RANK_ID, v, { text: (o.win ? '완주' : '구역 ' + o.stage) + ' · ' + CR.fmtTime(o.time).slice(0, 8), rank: { v: BioGoal.key([[v, 10, 1], [Math.min(sec, 35999), 36000, -1]]), f: { stage: o.win ? '완주' : o.stage, time: sec } } });
+        BioGoal.result(RANK_ID, v, { text: (o.win ? '완주' : '구역 ' + o.stage) + ' · ' + CR.fmtTime(o.time).slice(0, 8), rank: { v: BioGoal.key([[v, 10, 1], [Math.min(sec, 35999), 36000, -1]]), f: { stage: o.win ? '완주' : o.stage, time: sec, char: G.P && G.P.char ? G.P.char.name : '' } } });
       }
     }, o.win ? 1200 : 900);
   };
