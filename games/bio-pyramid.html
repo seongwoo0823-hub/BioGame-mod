@@ -830,7 +830,7 @@
                     </div>
                     <div>
                         <h2 class="text-lg font-black text-slate-900">생명과학 피라미드 학급 랭킹전</h2>
-                        <p class="text-xs text-slate-500 font-medium">불사의 우주물곰을 얻은 사람이 1등 (빨리 얻을수록 위) &rarr; 그다음 총 연구 점수 순 · BIO ARCADE 공용 랭킹 (메인 화면 → 랭킹에서도 볼 수 있어요)</p>
+                        <p class="text-xs text-slate-500 font-medium">불사의 우주물곰을 얻은 사람이 1등 (더 낮은 점수에서 빨리 얻을수록 위) &rarr; 못 얻은 사람은 총 연구 점수 순 · BIO ARCADE 공용 랭킹 (메인 화면 → 랭킹에서도 볼 수 있어요)</p>
                     </div>
                 </div>
                 <button onclick="closeModal('ranking-modal')" class="w-8 h-8 rounded-full bg-slate-200/80 text-slate-700 font-bold hover:bg-slate-300 flex items-center justify-center">
@@ -856,8 +856,8 @@
             <div class="grid grid-cols-12 px-3 py-2 text-[11px] font-extrabold text-slate-500 border-b border-slate-200">
                 <div class="col-span-2">순위</div>
                 <div class="col-span-4">학급 / 학생 이름</div>
-                <div class="col-span-3 text-center">우주물곰 획득</div>
-                <div class="col-span-3 text-right">총 연구 점수</div>
+                <div class="col-span-3 text-center">우주물곰</div>
+                <div class="col-span-3 text-right">점수 <span class="font-medium normal-case">(물곰은 얻을 때 점수)</span></div>
             </div>
 
             <div id="full-leaderboard-list" class="overflow-y-auto divide-y divide-slate-200/60 flex-1 pr-1 min-h-[240px]"></div>
@@ -1226,8 +1226,7 @@
 
             soundEnabled: true,
             endingPending: false,
-            playTime: 0,
-            tardiTime: 0
+            tardiScore: 0   // 우주물곰을 얻었을 때의 총점 (0 = 아직 못 얻음)
         };
         window.gameState = gameState;
 
@@ -2110,7 +2109,7 @@
 
                         const anyHigh = finalResults.some(k => k === 'mito' || k === 'chloroplast' || k === 'magbact' || k === 'tardigrade');
                         const anyLegend = finalResults.some(k => k === 'tardigrade');
-                        if (anyLegend) { if (!gameState.tardiTime) gameState.tardiTime = Math.max(1, gameState.playTime); try { const b = +localStorage.getItem('bioPyramidTardiBest'); if (!(b > 0) || gameState.tardiTime < b) localStorage.setItem('bioPyramidTardiBest', String(Math.round(gameState.tardiTime))); } catch (e) {} gameState.endingPending = true; saveGame(); setTimeout(showEnding, 3600); }
+                        if (anyLegend) { if (!gameState.tardiScore) gameState.tardiScore = Math.max(1, Math.floor(gameState.totalScore)); try { const b = +localStorage.getItem('bioPyramidTardiScore'); if (!(b > 0) || gameState.tardiScore < b) localStorage.setItem('bioPyramidTardiScore', String(gameState.tardiScore)); } catch (e) {} gameState.endingPending = true; saveGame(); setTimeout(showEnding, 3600); }
                         if (anyHigh) {
                             playSfx('jackpot');
                             triggerHighTierImpact(anyLegend);
@@ -2477,30 +2476,32 @@
         // ---- BIO ARCADE 공용 랭킹 연결 ----
         const RANK_ID = 'bio-pyramid';
         function myWho() { return /^\d{5}$/.test(gameState.studentClass) && /^[가-힣]{2,5}$/.test(gameState.studentName) ? gameState.studentClass + ' ' + gameState.studentName : ''; }
-        // 랭킹 기준: ① 불사의 우주물곰을 얻었는가 → ② 얼마나 빨리 얻었는가(플레이 시간) → ③ 총점
-        const TARDI_UNKNOWN = 999998;   // 획득 시간 측정 전 버전에서 엔딩을 본 기록
-        function tardiLabel(sec) { return sec >= TARDI_UNKNOWN ? '획득 (시간 기록 전)' : fmtPlay(sec); }
-        function fmtPlay(sec) { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, s2 = sec % 60; return h ? `${h}시간 ${m}분 ${s2}초` : `${m}분 ${s2}초`; }
-        function tardiBest() { try { const v = +localStorage.getItem('bioPyramidTardiBest'); return v > 0 ? v : 0; } catch (e) { return 0; } }
-        function myTardiSec() { const a = gameState.tardiTime > 0 ? gameState.tardiTime : 0, b = tardiBest(); const t = a && b ? Math.min(a, b) : (a || b); return t || (endingCount() > 0 ? TARDI_UNKNOWN : 0); }
+        // 랭킹 기준: ① 불사의 우주물곰을 얻었는가 → ② 얻은 사람끼리는 더 낮은 총점에서 얻을수록 위 → ③ 못 얻은 사람은 총점이 높은 순
+        const TARDI_UNKNOWN = 9e15;   // 예전 버전에서 엔딩을 봐서 획득 당시 점수를 모르는 경우
+        function myTardiScore() {   // 우주물곰을 얻었을 때의 총점 (가장 낮았던 값), 못 얻었으면 0
+            let b = 0; try { b = +localStorage.getItem('bioPyramidTardiScore') || 0; } catch (e) {}
+            const a = gameState.tardiScore > 0 ? gameState.tardiScore : 0, t = a && b ? Math.min(a, b) : (a || b);
+            return t || (endingCount() > 0 ? TARDI_UNKNOWN : 0);
+        }
+        function rankScoreText(sc) { return sc >= TARDI_UNKNOWN ? '-' : korNum(sc); }
         function rankPayload() {
-            const st = gameState.highestPyramidStage, sc = Math.floor(gameState.totalScore), t = myTardiSec(), got = t > 0 ? 1 : 0;
-            const scoreKey = Math.min(999999, Math.round(Math.log10(sc + 1) * 10000));   // 아주 큰 점수도 순서가 맞게 (크기 단위)
-            // 1e13을 더해 예전 방식(단계×1조+점수, 최대 약 6조) 기록보다 항상 위에 오게 함
-            return { v: window.BioGoal ? 1e13 + BioGoal.key([[got, 2, 1], [got ? Math.min(TARDI_UNKNOWN, Math.round(t)) : 999999, 1000000, -1], [scoreKey, 1000000, 1]]) : st,
-                     f: { tardi: got ? tardiLabel(t) : '미획득', tardiSec: got ? Math.round(t) : 0, score: sc, stage: st, skin: 'T' + (gameState.equippedSkin + 1) } };
+            const st = gameState.highestPyramidStage, t = myTardiScore(), got = t > 0 ? 1 : 0;
+            const sc = got ? t : Math.floor(gameState.totalScore);   // 얻은 사람은 '얻었을 때 점수'로 겨룸
+            const scoreKey = Math.min(999999, Math.round(Math.log10(Math.min(sc, 1e300) + 1) * 1000));   // 아주 큰 점수도 순서가 맞게 (크기 단위)
+            // 1e13을 더해 예전 방식(단계×1조+점수) 기록보다 항상 위에 오게 함
+            return { v: window.BioGoal ? 1e13 + BioGoal.key([[got, 2, 1], [got ? 999999 - scoreKey : scoreKey, 1000000, 1]]) : st,
+                     f: { tardi: got ? '획득' : '미획득', got: got, score: sc >= TARDI_UNKNOWN ? 0 : sc, stage: st, skin: 'T' + (gameState.equippedSkin + 1) } };
         }
         function rankCmp(a, b) {   // 게임 안 랭킹 정렬도 같은 기준
-            const ga = a.tardiSec > 0 ? 1 : 0, gb = b.tardiSec > 0 ? 1 : 0;
+            const ga = a.got ? 1 : 0, gb = b.got ? 1 : 0;
             if (ga !== gb) return gb - ga;
-            if (ga && a.tardiSec !== b.tardiSec) return a.tardiSec - b.tardiSec;
-            return b.totalScore - a.totalScore;
+            return ga ? a.totalScore - b.totalScore : b.totalScore - a.totalScore;
         }
         function fetchCloudRanking() {
             if (!window.BioRank || !BioRank.ready()) return;
             BioRank.top(RANK_ID).then(r => {
                 cloudRankings = (r.list || []).map(x => ({ uid: x.sid + x.name, studentClass: x.sid, studentName: x.name,
-                    pyramidStage: (x.f && x.f.stage) || 1, skinTier: +(String((x.f && x.f.skin) || 'T1').replace(/\D/g, '')) || 1, totalScore: (x.f && x.f.score) || 0, tardiSec: (x.f && +x.f.tardiSec) || 0 }));
+                    pyramidStage: (x.f && x.f.stage) || 1, skinTier: +(String((x.f && x.f.skin) || 'T1').replace(/\D/g, '')) || 1, totalScore: (x.f && +x.f.score) || 0, got: !!(x.f && +x.f.got) }));
                 renderLeaderboards();
             }).catch(() => {});
         }
@@ -2524,15 +2525,15 @@
                 pyramidStage: gameState.highestPyramidStage,
                 pyramidPct: pct,
                 skinTier: gameState.equippedSkin + 1,
-                totalScore: Math.floor(gameState.totalScore),
-                tardiSec: myTardiSec()
+                got: myTardiScore() > 0,
+                totalScore: myTardiScore() > 0 ? myTardiScore() : Math.floor(gameState.totalScore)
             };
 
             const map = new Map();
             rivalBots.forEach(b => map.set(b.uid, { ...b }));
             cloudRankings.forEach(c => {
                 if (c.studentName === myEntry.studentName && c.studentClass === myEntry.studentClass) {   // 서버의 내 기록이 더 좋으면 그 값을 보여 줌
-                    if (rankCmp(c, myEntry) < 0) Object.assign(myEntry, { pyramidStage: c.pyramidStage, totalScore: c.totalScore, tardiSec: c.tardiSec });
+                    if (rankCmp(c, myEntry) < 0) Object.assign(myEntry, { pyramidStage: c.pyramidStage, totalScore: c.totalScore, got: c.got });
                     return;
                 }
                 map.set(c.uid, c);
@@ -2562,7 +2563,7 @@
                         <span class="truncate text-[10px]">${entry.studentName}</span>
                     </div>
                     <div class="text-[9px] font-extrabold shrink-0 ml-1">
-                        ${entry.tardiSec > 0 ? '물곰 ' + tardiLabel(entry.tardiSec) : korNum(Number(entry.totalScore))}
+                        ${entry.got ? '물곰 ' : ''}${rankScoreText(Number(entry.totalScore))}
                     </div>
                 `;
                 miniEl.appendChild(row);
@@ -2577,7 +2578,7 @@
                         <span class="text-[9px] font-black w-3.5">#${myRank}</span>
                         <span class="truncate text-[10px]">${me.studentName}</span>
                     </div>
-                    <div class="text-[9px] font-extrabold shrink-0 ml-1">${me.tardiSec > 0 ? '물곰 ' + tardiLabel(me.tardiSec) : korNum(Number(me.totalScore))}</div>
+                    <div class="text-[9px] font-extrabold shrink-0 ml-1">${me.got ? '물곰 ' : ''}${rankScoreText(Number(me.totalScore))}</div>
                 `;
                 miniEl.appendChild(myRow);
             }
@@ -2587,7 +2588,7 @@
             document.getElementById('rank-modal-my-badge').innerText = `#${myRank}`;
             document.getElementById('rank-modal-my-name').innerText = myWho() || '학번·이름을 등록하면 랭킹에 올릴 수 있어요';
             document.getElementById('rank-modal-my-stats').innerText =
-                `${myTardiSec() >= TARDI_UNKNOWN ? '우주물곰 획득 (시간 기록 전 엔딩)' : myTardiSec() ? '우주물곰 ' + fmtPlay(myTardiSec()) + ' 만에 획득' : '우주물곰 미획득'} | 총점 ${korNum(Math.floor(gameState.totalScore))} | 플레이 ${fmtPlay(gameState.playTime)}`;
+                `${myTardiScore() >= TARDI_UNKNOWN ? '우주물곰 획득' : myTardiScore() ? '우주물곰 획득 (총점 ' + korNum(myTardiScore()) + '에서)' : '우주물곰 미획득'} | 현재 총점 ${korNum(Math.floor(gameState.totalScore))}`;
 
             fullEl.innerHTML = '';
             list.forEach((entry, idx) => {
@@ -2602,8 +2603,8 @@
                         ${entry.studentName}
                     </div>
                     <div class="col-span-3 text-center">
-                        <span class="${entry.tardiSec > 0 ? 'bg-amber-300 text-amber-950' : 'bg-slate-100 text-slate-500'} px-2 py-0.5 rounded font-extrabold text-[10px]">
-                            ${entry.tardiSec > 0 ? '물곰 ' + tardiLabel(entry.tardiSec) : '물곰 미획득'}
+                        <span class="${entry.got ? 'bg-amber-300 text-amber-950' : 'bg-slate-100 text-slate-500'} px-2 py-0.5 rounded font-extrabold text-[10px]">
+                            ${entry.got ? '물곰 획득' : '물곰 미획득'}
                         </span>
                     </div>
                     <div class="col-span-3 text-right font-black tabular-nums text-slate-900">
@@ -2666,7 +2667,7 @@
                     <div style="font-size:13px;line-height:1.65;color:#e0e7ff;word-break:keep-all">0.005%의 기적! 어떤 극한 환경에서도 살아남는<br><b style="color:#fde047">불사의 우주물곰</b>이 연구소에 찾아왔어요.<br>당신이 쌓아 올린 생명의 피라미드는 이제 기록으로 남고,<br>새로운 연구가 처음부터 다시 시작돼요.</div>
                     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0">
                         ${statBox('최고 피라미드', st + '단계')}${statBox('최종 총점', korNum(score))}
-                        ${statBox('우주물곰 획득', fmtPlay(gameState.tardiTime || gameState.playTime))}${statBox('모은 펫', pets + '마리')}
+                        ${statBox('물곰 얻은 점수', korNum(gameState.tardiScore || score))}${statBox('모은 펫', pets + '마리')}
                     </div>
                     <div id="end-who" style="display:${who ? 'none' : 'grid'};grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;text-align:left">
                         <label style="font-size:11px;font-weight:800;color:#c7d2fe">학번 5자리<input id="end-sid" inputmode="numeric" maxlength="5" placeholder="20800" style="${inp}"></label>
@@ -2697,7 +2698,7 @@
                 }
                 if (!window.BioRank || !BioRank.ready()) { msg.style.color = '#fca5a5'; msg.textContent = '랭킹 서버에 연결할 수 없어요. 아래 [기록 없이 처음부터]를 눌러 주세요'; return; }
                 go.disabled = true; go.style.opacity = '.6'; msg.style.color = '#a5b4fc'; msg.textContent = '최종 기록을 보내는 중…';
-                BioRank.submit(RANK_ID, { who: w, value: st, text: `🏆 우주물곰 ${fmtPlay(gameState.tardiTime || gameState.playTime)} · 총점 ${korNum(score)}`, ok: !!(BioGoal && BioGoal.GOALS[RANK_ID] && st >= BioGoal.GOALS[RANK_ID].t), rank: rankPayload() })
+                BioRank.submit(RANK_ID, { who: w, value: st, text: `🏆 우주물곰 획득 · 총점 ${korNum(gameState.tardiScore || score)}에서`, ok: !!(BioGoal && BioGoal.GOALS[RANK_ID] && st >= BioGoal.GOALS[RANK_ID].t), rank: rankPayload() })
                     .then(() => { playSfx('upgrade'); msg.style.color = '#86efac'; msg.textContent = '랭킹에 남겼어요! 처음부터 다시 시작해요…'; setTimeout(restart, 1600); })
                     .catch(() => { go.disabled = false; go.style.opacity = '1'; msg.style.color = '#fca5a5'; msg.textContent = '보내지 못했어요. 다시 누르거나 [기록 없이 처음부터]를 눌러 주세요'; });
             };
@@ -2859,7 +2860,6 @@
             requestAnimationFrame(animate);
             const dt = Math.min((now - lastTime) / 1000, 0.1);
             lastTime = now;
-            if (!document.hidden && !gameState.endingPending) gameState.playTime += dt;
 
             // 1. Movement across 1.5x Larger Map (-36 to +36)
             let mx = joyVec.x;

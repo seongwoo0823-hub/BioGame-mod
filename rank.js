@@ -63,7 +63,7 @@
     'codon-glass':   {how: '모드마다 점수가 높은 순', cat: '모드', cols: [['score', '점수', 'n']]},
     'bio-tower':     {how: '연속 승리 수가 많은 순', cols: [['streak', '연속 승리', 'n'], ['height', '최고 탑 높이', 's']]},
     'cell-raid':     {how: '도달 구역이 깊은 순 → 같으면 걸린 시간이 짧은 순', cols: [['stage', '도달 구역', 's'], ['time', '시간', 't'], ['char', '세포', 's']]},
-    'bio-pyramid':   {how: '불사의 우주물곰을 얻은 사람이 먼저(빨리 얻을수록 위) → 그다음은 총점이 높은 순', cols: [['tardi', '우주물곰 획득', 's'], ['score', '총점', 'k'], ['stage', '최고 단계', 'n']]},
+    'bio-pyramid':   {how: '불사의 우주물곰을 얻은 사람이 먼저(더 낮은 점수에서 얻을수록 위) → 못 얻은 사람은 총점이 높은 순', cols: [['tardi', '우주물곰', 's'], ['score', '점수', 'k'], ['stage', '최고 단계', 'n']]},
     'cell-expedition': {how: '깬 원정 스테이지가 높은 순 → 같으면 전투력이 높은 순', cols: [['stage', '스테이지', 'n'], ['power', '전투력', 'n']]}
   };
   function fmtCol(v, f) {
@@ -111,20 +111,18 @@
   // 게임별 기록 보정 (예전 방식으로 저장된 기록을 새 기준에 맞춤)
   var FIX = {
     'bio-pyramid': function (all) {
-      var UNK = 999998;
+      // 우주물곰을 얻은 사람이 먼저(더 낮은 점수에서 얻을수록 위) → 못 얻은 사람은 점수가 높은 순
       all.forEach(function (x) {
-        var f = x.f, ts = +f.tardiSec || 0;
-        // 획득 시간 측정 전 버전에서 엔딩(=우주물곰 획득)을 본 기록
-        if (!(ts > 0) && /엔딩 달성|우주물곰/.test(x.text || '')) { ts = UNK; f.tardi = '획득 (시간 기록 전)'; }
-        f.tardiSec = ts; if (!f.tardi) f.tardi = ts > 0 ? '' : '미획득';
+        var f = x.f;
         if (f.score == null) f.score = x.value % 1e12;
         if (f.stage == null) f.stage = Math.floor(x.value / 1e12) || 1;
+        // 예전 버전 기록: 엔딩(=우주물곰 획득)을 본 기록은 그때 점수로 인정
+        var got = +f.got > 0 || +f.tardiSec > 0 || /엔딩 달성|우주물곰/.test(x.text || '');
+        f.got = got ? 1 : 0; f.tardi = got ? '획득' : '미획득'; f.score = +f.score || 0;
       });
       return all.sort(function (a, b) {
-        var ta = a.f.tardiSec, tb = b.f.tardiSec, ga = ta > 0 ? 1 : 0, gb = tb > 0 ? 1 : 0;
-        if (ga !== gb) return gb - ga;
-        if (ga && ta !== tb) return ta - tb;
-        return (+b.f.score || 0) - (+a.f.score || 0);
+        if (a.f.got !== b.f.got) return b.f.got - a.f.got;
+        return a.f.got ? a.f.score - b.f.score : b.f.score - a.f.score;
       });
     }
   };
