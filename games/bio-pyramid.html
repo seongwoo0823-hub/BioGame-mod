@@ -1320,7 +1320,8 @@
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        const LOW_POWER = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, LOW_POWER ? 1.5 : 2));
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(renderer.domElement);
@@ -1331,8 +1332,8 @@
         const dirLight = new THREE.DirectionalLight(0xfffbeb, 0.88);
         dirLight.position.set(36, 56, 32);
         dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.mapSize.width = LOW_POWER ? 1024 : 2048;
+        dirLight.shadow.mapSize.height = LOW_POWER ? 1024 : 2048;
         dirLight.shadow.camera.left = -60;
         dirLight.shadow.camera.right = 60;
         dirLight.shadow.camera.top = 60;
@@ -1347,6 +1348,15 @@
             mesh.position.set(x, y, z);
             mesh.castShadow = castShadow;
             mesh.receiveShadow = true;
+            return mesh;
+        }
+
+        // 자원·블록처럼 수가 많은 것은 색별 재질을 함께 씀 (만들 때마다 새 재질 → 끊김 방지)
+        const sharedMats = new Map();
+        function voxelShared(w, h, d, color, x = 0, y = 0, z = 0, castShadow = true) {
+            if (!sharedMats.has(color)) sharedMats.set(color, new THREE.MeshLambertMaterial({ color }));
+            const mesh = new THREE.Mesh(sharedBoxGeo, sharedMats.get(color));
+            mesh.scale.set(w, h, d); mesh.position.set(x, y, z); mesh.castShadow = castShadow; mesh.receiveShadow = true;
             return mesh;
         }
 
@@ -1652,30 +1662,50 @@
             { kind: 'enz',  name: '효소 크리스탈 결정', color: 0xfacc15, baseVal: 5 }
         ];
 
-        function spawnFieldNutrient() {
+        // 자원이 생길 수 없는 자리: 피라미드·놓는 자리·온천·뽑기 기계 주변, 플레이어 바로 옆, 다른 자원과 겹치는 곳
+        function nutrientSpotOk(x, z, nearPlayerOk) {
+            if (Math.abs(x - pyramidCenter.x) < 9 && Math.abs(z - pyramidCenter.z) < 9) return false;
+            if (Math.hypot(x - dropPadPos.x, z - dropPadPos.z) < 4) return false;
+            if (Math.hypot(x - springPos.x, z - springPos.z) < 6.2) return false;
+            if (Math.hypot(x - gachaPos.x, z - gachaPos.z) < 5.5) return false;
+            if (!nearPlayerOk && typeof playerGroup !== 'undefined' && Math.hypot(x - playerGroup.position.x, z - playerGroup.position.z) < 7) return false;
+            for (const f of fieldNutrients) if (Math.hypot(x - f.mesh.position.x, z - f.mesh.position.z) < 1.8) return false;
+            return true;
+        }
+        const NUTRIENT_TARGET = 40;
+        function spawnFieldNutrient(initial) {
             if (fieldNutrients.length >= 44) return;
-            let rx = (Math.random() - 0.5) * 66;
-            let rz = (Math.random() - 0.5) * 64;
-            if (Math.abs(rx) < 10 && Math.abs(rz + 8) < 10) rx += (rx > 0 ? 13 : -13);
+            let rx = 0, rz = 0, ok = false;
+            for (let t = 0; t < 30 && !ok; t++) { rx = (Math.random() - 0.5) * 66; rz = (Math.random() - 0.5) * 64; ok = nutrientSpotOk(rx, rz, initial); }
+            if (!ok) return;
 
             const nType = NODE_TYPES[Math.floor(Math.random() * NODE_TYPES.length)];
-            const mesh = createVoxel(0.88, 0.88, 0.88, nType.color, rx, 0.65, rz);
+            const mesh = voxelShared(0.88, 0.88, 0.88, nType.color, rx, 0.65, rz);
+            if (!initial) mesh.scale.setScalar(0.01);
             nutrientGroup.add(mesh);
             fieldNutrients.push({
                 mesh,
                 kind: nType.kind,
                 color: nType.color,
                 baseVal: nType.baseVal,
-                phase: Math.random() * Math.PI * 2
+                phase: Math.random() * Math.PI * 2,
+                grow: initial ? 1 : 0
             });
         }
-        for (let i = 0; i < 40; i++) spawnFieldNutrient();
+        for (let i = 0; i < NUTRIENT_TARGET; i++) spawnFieldNutrient(true);
+        // 빈자리는 게임 루프에서 꾸준히 채움 (타이머는 탭이 가려지면 멈추거나 몰려서 나오므로 쓰지 않음)
+        let nutrientRespawnAcc = 0;
+        function tickNutrientRespawn(dt) {
+            if (fieldNutrients.length >= NUTRIENT_TARGET) { nutrientRespawnAcc = 0; return; }
+            nutrientRespawnAcc += dt;
+            while (nutrientRespawnAcc >= 0.25 && fieldNutrients.length < NUTRIENT_TARGET) { nutrientRespawnAcc -= 0.25; spawnFieldNutrient(false); }
+        }
 
         const flyingBlocks = [];
         function launchBlockToPyramid(item) {
             const targetIdx = Math.min(gameState.pyramidBlocksBuilt, pyramidSlots.length - 1);
             const slot = pyramidSlots[targetIdx];
-            const mesh = createVoxel(0.82, 0.82, 0.82, item.color, playerGroup.position.x, 2.2, playerGroup.position.z);
+            const mesh = voxelShared(0.82, 0.82, 0.82, item.color, playerGroup.position.x, 2.2, playerGroup.position.z);
             scene.add(mesh);
             flyingBlocks.push({
                 mesh,
@@ -2108,45 +2138,38 @@
                 return pb - pa;
             });
 
-            sorted.forEach(pet => {
-                const info = PET_TYPES[pet.typeId];
-                const multPct = Math.round(info.mult * (pet.enhanced ? 2.8 : 1) * 100);
-                const magDist = ((info.magnet || 0) * (pet.enhanced ? 1.65 : 1)).toFixed(1);
+            // 같은 종류(각성 여부까지 같은 것)는 한 칸으로 묶어 개수로 표시
+            const groups = [];
+            sorted.forEach(pet => { const k = pet.typeId + (pet.enhanced ? '*' : ''); let g = groups.find(x => x.k === k); if (!g) { g = { k, typeId: pet.typeId, enhanced: pet.enhanced, list: [] }; groups.push(g); } g.list.push(pet); });
+            groups.forEach(g => {
+                const info = PET_TYPES[g.typeId], n = g.list.length, eq = g.list.filter(p => p.equipped), un = g.list.filter(p => !p.equipped);
+                const multPct = Math.round(info.mult * (g.enhanced ? 2.8 : 1) * 100);
+                const magDist = ((info.magnet || 0) * (g.enhanced ? 1.65 : 1)).toFixed(1);
                 const card = document.createElement('div');
-                card.className = `p-3 rounded-2xl border transition flex flex-col justify-between ${
-                    pet.equipped
-                        ? 'bg-indigo-50/95 border-indigo-500 ring-2 ring-indigo-400/50'
-                        : 'bg-white/85 border-slate-200'
-                }`;
+                card.className = `p-3 rounded-2xl border transition flex flex-col justify-between ${eq.length ? 'bg-indigo-50/95 border-indigo-500 ring-2 ring-indigo-400/50' : 'bg-white/85 border-slate-200'}`;
                 card.innerHTML = `
                     <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-black px-2 py-0.5 rounded ${
-                            pet.enhanced ? 'bg-amber-400 text-slate-950' : 'bg-slate-200 text-slate-700'
-                        }">${pet.enhanced ? '오오라 각성' : info.rarity}</span>
-                        <span class="text-[10px] font-bold text-indigo-600">${pet.equipped ? '장착중' : ''}</span>
+                        <span class="text-[10px] font-black px-2 py-0.5 rounded ${g.enhanced ? 'bg-amber-400 text-slate-950' : 'bg-slate-200 text-slate-700'}">${g.enhanced ? '오오라 각성' : info.rarity}</span>
+                        <span class="text-[10px] font-bold text-indigo-600">${eq.length ? '장착 ' + eq.length : ''}</span>
                     </div>
                     <div class="flex items-center gap-2.5 my-2">
-                        <div class="w-12 h-12 shrink-0 bg-slate-900/5 rounded-xl p-1">
-                            ${getPetIllustrationSVG(pet.typeId, pet.enhanced)}
+                        <div class="w-12 h-12 shrink-0 bg-slate-900/5 rounded-xl p-1 relative">
+                            ${getPetIllustrationSVG(g.typeId, g.enhanced)}
+                            <span class="absolute -bottom-1 -right-1 text-[11px] font-black px-1.5 rounded-lg bg-slate-900 text-white">×${n}</span>
                         </div>
                         <div>
-                            <div class="text-xs font-black text-slate-900">${pet.enhanced ? '[각성] ' : ''}${info.name}</div>
-                            <div class="text-[11px] font-extrabold text-emerald-600">재화 획득 +${multPct}%</div>
+                            <div class="text-xs font-black text-slate-900">${g.enhanced ? '[각성] ' : ''}${info.name}</div>
+                            <div class="text-[11px] font-extrabold text-emerald-600">한 마리당 재화 +${multPct}%</div>
                             <div class="text-[10px] text-cyan-700 font-black">자력 흡수 반경 +${magDist}m</div>
-                            <div class="text-[10px] text-slate-500 font-semibold">이동속도 +${Math.round(info.speed * (pet.enhanced ? 1.5 : 1) * 100)}%</div>
+                            <div class="text-[10px] text-slate-500 font-semibold">이동속도 +${Math.round(info.speed * (g.enhanced ? 1.5 : 1) * 100)}%</div>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-1.5 mt-1">
-                        <button onclick="toggleEquipPet('${pet.id}')" class="py-1.5 rounded-lg text-[10px] font-black ${
-                            pet.equipped ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'
-                        }">
-                            ${pet.equipped ? '장착해제' : '장착하기'}
-                        </button>
-                        ${
-                            !pet.enhanced
-                                ? `<button onclick="enhanceSinglePetWithEnz('${pet.id}')" class="py-1.5 rounded-lg text-[10px] font-black bg-amber-400 text-slate-950">3,000 ENZ 각성</button>`
-                                : `<span class="py-1.5 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-800 text-center">3D 오오라 활성</span>`
-                        }
+                        <button ${un.length ? `onclick="toggleEquipPet('${un.length ? un[0].id : ''}')"` : 'disabled'} class="py-1.5 rounded-lg text-[10px] font-black ${un.length ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}">장착 +</button>
+                        <button ${eq.length ? `onclick="toggleEquipPet('${eq.length ? eq[0].id : ''}')"` : 'disabled'} class="py-1.5 rounded-lg text-[10px] font-black ${eq.length ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-400'}">해제 −</button>
+                        ${!g.enhanced
+                            ? `<button onclick="enhanceSinglePetWithEnz('${(un[0] || g.list[0]).id}')" class="col-span-2 py-1.5 rounded-lg text-[10px] font-black bg-amber-400 text-slate-950">3,000 ENZ로 1마리 각성</button>`
+                            : `<span class="col-span-2 py-1.5 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-800 text-center">3D 오오라 활성</span>`}
                     </div>
                 `;
                 grid.appendChild(card);
@@ -2703,7 +2726,11 @@
             setTimeout(() => el.remove(), 1150);
         }
 
-        function updateHUD() {
+        // HUD는 0.1초에 한 번만 다시 그리고, 바뀐 글자만 바꿈
+        let hudDirty = true, hudAcc = 1;
+        function updateHUD() { hudDirty = true; }
+        function flushHUD(dt) { hudAcc += dt; if (hudDirty && hudAcc >= 0.1) { hudAcc = 0; hudDirty = false; updateHUDNow(); } }
+        function updateHUDNow() {
             document.getElementById('hud-ribo').innerText = korNum(Math.floor(gameState.ribo));
             document.getElementById('hud-stem').innerText = korNum(Math.floor(gameState.stem));
             document.getElementById('hud-enz').innerText  = korNum(Math.floor(gameState.enz));
@@ -2760,16 +2787,15 @@
         }
 
         function updateWorldLabels3D() {
-            const items = [
+            if (!updateWorldLabels3D.items) updateWorldLabels3D.items = [
                 { id: 'label-pyramid', pos: new THREE.Vector3(pyramidCenter.x, 7.4, pyramidCenter.z) },
                 { id: 'label-spring',  pos: new THREE.Vector3(springPos.x, 3.6, springPos.z) },
                 { id: 'label-gacha',   pos: new THREE.Vector3(gachaPos.x, 6.6, gachaPos.z) }
-            ];
-            items.forEach(it => {
-                const el = document.getElementById(it.id);
-                const v = it.pos.clone().project(camera);
-                el.style.left = `${(v.x * 0.5 + 0.5) * window.innerWidth}px`;
-                el.style.top  = `${(-v.y * 0.5 + 0.5) * window.innerHeight}px`;
+            ].map(it => Object.assign(it, { el: document.getElementById(it.id), v: new THREE.Vector3(), lx: -1, ly: -1 }));
+            updateWorldLabels3D.items.forEach(it => {
+                const v = it.v.copy(it.pos).project(camera);
+                const x = Math.round((v.x * 0.5 + 0.5) * window.innerWidth), y = Math.round((-v.y * 0.5 + 0.5) * window.innerHeight);
+                if (x !== it.lx || y !== it.ly) { it.lx = x; it.ly = y; it.el.style.left = x + 'px'; it.el.style.top = y + 'px'; }
             });
         }
 
@@ -2872,6 +2898,7 @@
                 const fn = fieldNutrients[i];
                 fn.mesh.rotation.y += dt * 2.0;
                 fn.mesh.position.y = 0.65 + Math.sin(now * 0.004 + fn.phase) * 0.2;
+                if (fn.grow < 1) { fn.grow = Math.min(1, fn.grow + dt * 3.2); const k = fn.grow, e = 1 + 0.25 * Math.sin(k * Math.PI); fn.mesh.scale.setScalar(Math.max(0.01, 0.88 * k * e)); continue; }
 
                 if (gameState.bagItems.length < gameState.maxBag) {
                     const dist = playerGroup.position.distanceTo(fn.mesh.position);
@@ -2891,7 +2918,6 @@
                             updateBackpackStackVisual();
                             playSfx('pickup');
                             updateHUD();
-                            setTimeout(spawnFieldNutrient, 1600);
                         }
                     }
                 }
@@ -2932,7 +2958,7 @@
                         const slot = pyramidSlots[gameState.pyramidBlocksBuilt];
                         const theme = PYRAMID_THEMES[gameState.pyramidStage - 1];
                         const col = theme.tierColors[slot.tierIdx];
-                        pyramidGroup.add(createVoxel(1.06, 1.06, 1.06, col, slot.pos.x, slot.pos.y, slot.pos.z));
+                        pyramidGroup.add(voxelShared(1.06, 1.06, 1.06, col, slot.pos.x, slot.pos.y, slot.pos.z));
                         gameState.pyramidBlocksBuilt++;
 
                         if (gameState.pyramidBlocksBuilt >= gameState.pyramidTotalBlocks) {
@@ -2998,6 +3024,8 @@
                 gameState.isInsideSpring = false;
             }
 
+            tickNutrientRespawn(dt);
+            flushHUD(dt);
             updateWorldLabels3D();
             renderer.render(scene, camera);
         }

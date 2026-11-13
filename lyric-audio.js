@@ -220,7 +220,7 @@ window.LyricAudio = (function () {
   function tick() {
     if (!ctx || !cur) return;
     if (mode !== 'all' || ctx.state !== 'running') { nextT = ctx.currentTime + 0.1; return; }
-    const T = THEMES[cur], sd = 60 / T.bpm / 2, ahead = ctx.currentTime + 0.35;
+    const T = THEMES[cur], sd = 60 / T.bpm / 2, ahead = ctx.currentTime + 0.7;   // 화면이 잠깐 버벅여도 음악이 끊기지 않게 넉넉히 미리 예약
     if (nextT < ctx.currentTime) nextT = ctx.currentTime + 0.05;
     while (nextT < ahead) {
       const barAbs = Math.floor(step / T.spb), b = barAbs % T.bars, p = Math.floor(barAbs / T.bars) % T.passes, s = step % T.spb;
@@ -258,7 +258,9 @@ window.LyricAudio = (function () {
   });
 
   /* ───────────── 효과음 ───────────── */
-  const last = {}, GAP = { pickup: 0.035, slash: 0.045, hit: 0.09, slotTick: 0.02, coin: 0.04, pop: 0.03, down: 0.12 };
+  const last = {}, GAP = { pickup: 0.05, slash: 0.045, hit: 0.09, slotTick: 0.03, coin: 0.04, pop: 0.03, down: 0.12, build: 0.055, upgrade: 0.06, open: 0.08, levelup: 0.1 };
+  // 한꺼번에 너무 많은 효과음이 겹치면 소리가 뭉개지고 끊기므로 0.12초 안에 최대 6개까지만
+  let burstT = 0, burstN = 0;
   const PENTA = [0, 2, 4, 7, 9];
   let pickIdx = 0;
   const S = {
@@ -348,6 +350,7 @@ window.LyricAudio = (function () {
     const fn = S[name]; if (!fn) return;
     const now = ctx.currentTime;
     if (GAP[name] && last[name] && now - last[name] < GAP[name]) return;
+    if (now - burstT > 0.12) { burstT = now; burstN = 0; } if (++burstN > 6) return;
     last[name] = now;
     try { fn(now + 0.005, o, sfxBus); } catch (e) {}
   }
@@ -379,7 +382,7 @@ window.LyricAudio = (function () {
   }
   function init(key) {
     gameKey = key || gameKey; loadMode();
-    if (!timer) timer = setInterval(tick, 90);
+    if (!timer) timer = setInterval(tick, 70);
   }
   // 진단용(시험 도구가 사용): 상태와 출력 크기
   let an = null;
