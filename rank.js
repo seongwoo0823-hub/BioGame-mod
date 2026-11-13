@@ -62,7 +62,9 @@
     'helix':         {how: '정리한 방(층) 수가 많은 순 → 같으면 걸린 시간이 짧은 순', cols: [['rooms', '정리한 방', 'n'], ['time', '걸린 시간', 't']]},
     'cell-frontier': {how: '지역마다 점유 면적이 넓은 순 → 점수가 높은 순 → 걸린 시간이 짧은 순', cat: '지역', cols: [['area', '점유 면적', 'p'], ['score', '점수', 'n'], ['time', '걸린 시간', 't']]},
     'codon-glass':   {how: '모드마다 점수가 높은 순', cat: '모드', cols: [['score', '점수', 'n']]},
-    'bio-tower':     {how: '연속 승리 수가 많은 순', cols: [['streak', '연속 승리', 'n'], ['height', '최고 탑 높이', 's']]}
+    'bio-tower':     {how: '연속 승리 수가 많은 순', cols: [['streak', '연속 승리', 'n'], ['height', '최고 탑 높이', 's']]},
+    'bio-pyramid':   {how: '최고 피라미드 단계가 높은 순 → 같으면 총점이 높은 순', cols: [['stage', '최고 단계', 'n'], ['score', '총점', 'n'], ['skin', '스킨', 's']]},
+    'cell-expedition': {how: '깬 원정 스테이지가 높은 순 → 같으면 전투력이 높은 순', cols: [['stage', '스테이지', 'n'], ['power', '전투력', 'n']]}
   };
   function fmtCol(v, f) {
     if (v == null || v === '') return '-';

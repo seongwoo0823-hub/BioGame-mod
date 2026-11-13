@@ -1,0 +1,3019 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#7dd3fc">
+    <link rel="icon" type="image/png" href="../icons/favicon-v2-32.png">
+    <title>바이오 피라미드 타이쿤 3D · BIO ARCADE</title>
+    <!-- Tailwind CSS (미리 만들어 둔 파일: 인터넷 없이도 화면이 깨지지 않음) -->
+    <link rel="stylesheet" href="bio-pyramid/tw.css">
+    <!-- Three.js -->
+    <script src="../vendor/three.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Noto Sans KR', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #7dd3fc;
+        }
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        /* iOS Glassmorphism UI */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            box-shadow: 0 12px 32px -6px rgba(15, 23, 42, 0.16), inset 0 1px 1px rgba(255, 255, 255, 0.95);
+        }
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+        }
+        .voxel-btn {
+            transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+        .voxel-btn:active:not(:disabled) {
+            transform: translateY(3px) scale(0.97);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+        }
+        .voxel-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        /* Floating 3D Labels */
+        .world-label {
+            position: absolute;
+            pointer-events: none;
+            transform: translate(-50%, -100%);
+            transition: opacity 0.2s;
+            z-index: 5;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 99px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(15, 23, 42, 0.25);
+            border-radius: 99px;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translate(-50%, 0) scale(0.92); }
+            100% { opacity: 0; transform: translate(-50%, -48px) scale(1.08); }
+        }
+        .floating-text {
+            position: absolute;
+            pointer-events: none;
+            animation: floatUp 1.15s ease-out forwards;
+            z-index: 25;
+            font-weight: 900;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.35);
+        }
+        .svg-icon {
+            display: inline-block;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+        /* Slot Machine & High-Tier Impact Animations */
+        @keyframes slotSpinBlur {
+            0% { transform: translateY(-6px); filter: blur(1px); }
+            50% { transform: translateY(6px); filter: blur(2.5px); }
+            100% { transform: translateY(-6px); filter: blur(1px); }
+        }
+        .slot-spinning {
+            animation: slotSpinBlur 0.12s infinite linear;
+        }
+        @keyframes modalShake {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            15% { transform: translate(-7px, 5px) scale(1.015); }
+            30% { transform: translate(7px, -5px) scale(1.02); }
+            45% { transform: translate(-6px, -4px) scale(1.015); }
+            60% { transform: translate(6px, 5px) scale(1.01); }
+            75% { transform: translate(-4px, 3px) scale(1.005); }
+        }
+        .impact-shake {
+            animation: modalShake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+        @keyframes raySpin {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        .radiant-rays {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 240%;
+            height: 240%;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg 15deg,
+                rgba(250, 204, 21, 0.28) 15deg 30deg,
+                transparent 30deg 45deg,
+                rgba(244, 114, 182, 0.25) 45deg 60deg,
+                transparent 60deg 75deg,
+                rgba(56, 189, 248, 0.28) 75deg 90deg,
+                transparent 90deg 105deg,
+                rgba(250, 204, 21, 0.28) 105deg 120deg,
+                transparent 120deg 135deg,
+                rgba(168, 85, 247, 0.25) 135deg 150deg,
+                transparent 150deg 165deg,
+                rgba(250, 204, 21, 0.28) 165deg 180deg,
+                transparent 180deg 195deg,
+                rgba(244, 114, 182, 0.25) 195deg 210deg,
+                transparent 210deg 225deg,
+                rgba(56, 189, 248, 0.28) 225deg 240deg,
+                transparent 240deg 255deg,
+                rgba(250, 204, 21, 0.28) 255deg 270deg,
+                transparent 270deg 285deg,
+                rgba(168, 85, 247, 0.25) 285deg 300deg,
+                transparent 300deg 315deg,
+                rgba(250, 204, 21, 0.28) 315deg 330deg,
+                transparent 330deg 345deg,
+                rgba(56, 189, 248, 0.28) 345deg 360deg
+            );
+            animation: raySpin 7s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes shockwaveExpand {
+            0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.95; }
+            100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
+        }
+        .shockwave-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 120px;
+            height: 120px;
+            border-radius: 9999px;
+            border: 4px solid #facc15;
+            box-shadow: 0 0 24px #facc15, inset 0 0 18px #f472b6;
+            animation: shockwaveExpand 0.75s ease-out forwards;
+            pointer-events: none;
+            z-index: 20;
+        }
+        @keyframes confettiBurst {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(0.2); opacity: 0; }
+        }
+        .confetti-piece {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 9px;
+            height: 9px;
+            border-radius: 2px;
+            pointer-events: none;
+            z-index: 30;
+            animation: confettiBurst 0.95s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        /* ---- 휴대폰·작은 화면: 정보 판을 줄여 게임 화면을 넓게 ---- */
+        #top-hud{top:max(.75rem,env(safe-area-inset-top));left:max(.75rem,env(safe-area-inset-left));right:max(.75rem,env(safe-area-inset-right))}
+        #dock{bottom:max(.875rem,env(safe-area-inset-bottom))}
+        @media (max-height: 560px), (max-width: 640px) {
+            #top-hud{top:max(.4rem,env(safe-area-inset-top));gap:.35rem}
+            #top-hud .glass-panel{padding:.3rem .45rem;border-radius:.9rem}
+            #top-hud .text-\[9px\]{display:none}
+            #top-hud .w-7.h-7{width:1.4rem;height:1.4rem}
+            #top-hud .gap-2{gap:.3rem}
+            #hud-pyr-extra{display:none}
+            #mini-rank-box{display:none}
+            #dock{bottom:max(.35rem,env(safe-area-inset-bottom))}
+            #dock > div{padding:.3rem;border-radius:1rem;gap:.3rem}
+            #dock button{padding-top:.3rem;padding-bottom:.3rem}
+            #dock button .text-\[9px\]{display:none}
+            #dock button svg{width:1rem;height:1rem;margin-bottom:0}
+            #joystick-zone{width:5.5rem;height:5.5rem;bottom:4.2rem;left:max(.6rem,env(safe-area-inset-left))}
+            #joystick-zone > .text-\[9px\]{display:none}
+            .world-label{transform-origin:center bottom;scale:.78}
+            .world-label > div{white-space:nowrap}
+        }
+        @media (max-width: 640px) and (min-height: 561px) {   /* 세로 휴대폰 */
+            #top-hud > div:first-child{width:100%}
+            #joystick-zone{bottom:5rem}
+        }
+    </style>
+</head>
+<body class="relative w-full h-full overflow-hidden">
+
+    <!-- 3D Canvas Container -->
+    <div id="game-canvas"></div>
+
+    <!-- 3D World Floating Zone Labels -->
+    <div id="world-labels" class="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+        <!-- Pyramid Label -->
+        <div id="label-pyramid" class="world-label">
+            <div class="glass-dark text-white px-3.5 py-2 rounded-2xl text-center shadow-lg border border-amber-400/40">
+                <div id="label-pyramid-type" class="text-[10px] font-bold text-amber-300 tracking-wider uppercase flex items-center justify-center gap-1">
+                    <span>제1세대 · 고대 원시 수프 피라미드</span>
+                </div>
+                <div id="label-pyramid-progress" class="text-xs font-extrabold mt-0.5">완공도: 0% (온천 개방 대기)</div>
+            </div>
+        </div>
+
+        <!-- Hot Spring Label -->
+        <div id="label-spring" class="world-label">
+            <div id="label-spring-box" class="glass-dark text-white px-3.5 py-2 rounded-2xl text-center shadow-lg border border-slate-400/40">
+                <div id="label-spring-title" class="text-[10px] font-bold text-emerald-300 tracking-wider uppercase">심해 열수구 온천 [봉인됨]</div>
+                <div id="label-spring-timer" class="text-xs font-extrabold mt-0.5">피라미드 100% 완공 시 출현</div>
+            </div>
+        </div>
+
+        <!-- Gacha Machine Label -->
+        <div id="label-gacha" class="world-label">
+            <div class="glass-dark text-white px-3 py-1.5 rounded-2xl text-center shadow-lg border border-pink-400/40">
+                <div class="text-[10px] font-bold text-pink-300 tracking-wider uppercase">리보솜 멀티 합성기</div>
+                <div id="label-gacha-pack" class="text-xs font-extrabold">1연속 추출 모드</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Gain Texts Container -->
+    <div id="floating-texts" class="absolute inset-0 pointer-events-none z-20 overflow-hidden"></div>
+
+    <!-- TOP HUD -->
+    <header id="top-hud" class="absolute top-3 left-3 right-3 z-30 flex flex-wrap items-start justify-between gap-2 pointer-events-none">
+        
+        <!-- Left: Profile, 3 Currencies & Pyramid/Hot Spring Controller -->
+        <div class="flex flex-col gap-2 pointer-events-auto max-w-full">
+            <!-- Currency Bar -->
+            <div class="glass-panel rounded-2xl p-2 flex flex-wrap items-center gap-2 sm:gap-3.5">
+                <!-- Student Profile Badge -->
+                <button onclick="openModal('profile-modal')" class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-xl voxel-btn">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <div class="text-left">
+                        <div id="hud-student-class" class="text-[10px] text-slate-300 font-semibold leading-none">눌러서 학번 등록</div>
+                        <div id="hud-student-name" class="text-xs font-extrabold leading-tight">연구원 등록</div>
+                    </div>
+                    <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </button>
+
+                <!-- Currency 1: Gacha Currency (리보솜 캡슐 RIBO) -->
+                <div class="flex items-center gap-2 bg-pink-500/10 border border-pink-500/25 px-2.5 py-1 rounded-xl">
+                    <div class="w-7 h-7 rounded-lg bg-pink-500 text-white flex items-center justify-center shadow-sm">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="8" width="16" height="8" rx="4" transform="rotate(-35 12 12)"/><line x1="9.5" y1="9.5" x2="14.5" y2="14.5"/></svg>
+                    </div>
+                    <div>
+                        <div class="text-[9px] font-extrabold text-pink-700 uppercase leading-none">뽑기용 · 리보솜(RIBO)</div>
+                        <div id="hud-ribo" class="text-xs sm:text-sm font-black text-slate-900 tabular-nums">0</div>
+                    </div>
+                </div>
+
+                <!-- Currency 2: Skin Currency (줄기세포 코어 STEM) -->
+                <div class="flex items-center gap-2 bg-violet-500/10 border border-violet-500/25 px-2.5 py-1 rounded-xl">
+                    <div class="w-7 h-7 rounded-lg bg-violet-600 text-white flex items-center justify-center shadow-sm">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 19 7 19 17 12 22 5 17 5 7"/><circle cx="12" cy="12" r="3"/></svg>
+                    </div>
+                    <div>
+                        <div class="text-[9px] font-extrabold text-violet-700 uppercase leading-none">스킨용 · 줄기세포(STEM)</div>
+                        <div id="hud-stem" class="text-xs sm:text-sm font-black text-violet-950 tabular-nums">0</div>
+                    </div>
+                </div>
+
+                <!-- Currency 3: Upgrade Currency (효소 결정 ENZ) -->
+                <div class="flex items-center gap-2 bg-amber-500/10 border border-amber-500/25 px-2.5 py-1 rounded-xl">
+                    <div class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center shadow-sm">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    </div>
+                    <div>
+                        <div class="text-[9px] font-extrabold text-amber-800 uppercase leading-none">강화용 · 효소결정(ENZ)</div>
+                        <div id="hud-enz" class="text-xs sm:text-sm font-black text-slate-900 tabular-nums">0</div>
+                    </div>
+                </div>
+
+                <!-- Backpack Status -->
+                <div class="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 rounded-xl">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-sm">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    </div>
+                    <div>
+                        <div class="text-[9px] font-extrabold text-emerald-800 uppercase leading-none">리소좀 가방 (돌 드는 힘)</div>
+                        <div id="hud-bag" class="text-xs sm:text-sm font-black text-emerald-950 tabular-nums">0 / 12</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pyramid Progress & Active Hot Spring Timer Panel -->
+            <div class="glass-panel rounded-2xl px-3.5 py-2.5 flex flex-col gap-2 max-w-xl">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center text-xs font-bold mb-1">
+                            <span class="text-slate-800 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 2 20 22 20"/><line x1="12" y1="2" x2="12" y2="20"/></svg>
+                                <span id="hud-pyramid-badge" class="bg-slate-900 text-white text-[10px] px-2 py-0.5 rounded-md font-black">1단계</span>
+                                <span id="hud-pyramid-name" class="font-black text-slate-900">고대 원시 수프 피라미드</span>
+                            </span>
+                            <span id="hud-pyramid-pct" class="text-indigo-600 font-black">0%</span>
+                        </div>
+                        <div class="w-full h-2.5 bg-slate-200/90 rounded-full overflow-hidden p-0.5">
+                            <div id="hud-pyramid-bar" class="h-full bg-gradient-to-r from-teal-400 via-emerald-500 to-indigo-600 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pyramid Theme Selector Button -->
+                    <button onclick="openModal('pyramid-modal')" class="voxel-btn bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-extrabold px-3 py-2 rounded-xl shrink-0 flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                        <span>피라미드 도감</span>
+                    </button>
+                </div>
+
+                <!-- Dynamic Hot Spring Countdown & Time Extension Banner (Revealed at 100%) -->
+                <div id="hud-spring-active-bar" class="hidden bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white rounded-xl px-3 py-2 items-center justify-between gap-2 border border-emerald-400/40">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                        <div>
+                            <div id="hud-spring-active-title" class="text-[11px] font-black text-emerald-300">심해 열수구 온천 개방중! (입수 시 이동속도 & 돌 드는 힘 대폭 상승!)</div>
+                            <div class="text-xs font-black">
+                                남은 제한시간: <span id="hud-spring-countdown" class="text-amber-300 tabular-nums">01:00</span>
+                                <span class="text-[10px] text-slate-300 ml-1">(최대 05:00)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="extendHotSpringTime()" id="btn-hud-extend-spring" class="voxel-btn bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[11px] font-black px-2.5 py-1.5 rounded-lg">
+                            +1분 시간연장
+                        </button>
+                        <button onclick="advanceToNextPyramid()" class="voxel-btn bg-amber-400 hover:bg-amber-300 text-slate-950 text-[11px] font-black px-2.5 py-1.5 rounded-lg">
+                            다음 피라미드 진화
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats, Magnet Radius & Skin Multipliers Summary Row -->
+                <div id="hud-pyr-extra" class="flex flex-wrap items-center justify-between gap-2 pt-0.5 border-t border-slate-200/70 text-[11px]">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-600">장착 스킨:</span>
+                        <span id="hud-skin-badge" class="font-black text-violet-700 bg-violet-100 px-2 py-0.5 rounded-md">인턴 학부생 (x1.0)</span>
+                        <span id="hud-magnet-badge" class="font-extrabold text-cyan-700 bg-cyan-100 px-2 py-0.5 rounded-md">자력 반경 2.3m</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="hud-buff-status" class="font-extrabold text-emerald-700">온천 버프 대기</span>
+                        <span id="hud-total-mult" class="font-black bg-indigo-600 text-white px-2 py-0.5 rounded-md">종합 재화 효율 x1.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Compact Half-Size Live Student Ranking Widget & Sound Button -->
+        <div class="flex flex-col items-end gap-1.5 pointer-events-auto">
+            <div id="mini-rank-box" onclick="openModal('ranking-modal')" class="glass-panel rounded-xl px-2.5 py-1.5 w-36 sm:w-40 cursor-pointer hover:bg-white/90 transition shadow-sm" title="클릭하여 전체 학급 랭킹전 보기">
+                <div class="flex items-center justify-between mb-1 pb-0.5 border-b border-slate-300/60">
+                    <div class="flex items-center gap-1">
+                        <svg class="w-3 h-3 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                        <h3 class="text-[10px] font-black text-slate-800 tracking-tight">학급 랭킹</h3>
+                    </div>
+                    <span class="text-[9px] font-extrabold text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded">더보기</span>
+                </div>
+                <div id="mini-leaderboard" class="space-y-0.5 text-[10px]"></div>
+            </div>
+
+            <!-- Utility Row -->
+            <div class="flex gap-1">
+                <button onclick="toggleSound()" id="btn-sound" class="glass-panel w-8 h-8 rounded-xl flex items-center justify-center text-slate-700 hover:bg-white voxel-btn" title="사운드 전환">
+                    <svg id="icon-sound-on" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MOBILE VIRTUAL JOYSTICK (Bottom Left) -->
+    <div id="joystick-zone" class="fixed bottom-24 left-6 z-20 w-28 h-28 rounded-full glass-panel flex items-center justify-center touch-none select-none opacity-85 hover:opacity-100">
+        <div class="text-[9px] font-bold text-slate-500 absolute top-2">이동 제어</div>
+        <div id="joystick-knob" class="w-11 h-11 rounded-full bg-slate-900/85 shadow-lg border-2 border-white/80 flex items-center justify-center text-white pointer-events-none transition-transform duration-75">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/></svg>
+        </div>
+    </div>
+
+    <!-- BOTTOM 5-TAB ACTION DOCK -->
+    <nav id="dock" class="fixed bottom-3.5 left-1/2 -translate-x-1/2 z-30 pointer-events-auto w-[96%] max-w-2xl">
+        <div class="glass-panel rounded-3xl p-2 grid grid-cols-5 gap-1.5 sm:gap-2">
+            <!-- 1. Gacha Modal -->
+            <button onclick="openModal('gacha-modal')" class="voxel-btn bg-gradient-to-b from-pink-500 to-rose-600 text-white rounded-2xl py-2 px-1.5 flex flex-col items-center justify-center">
+                <svg class="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="8" width="16" height="8" rx="4" transform="rotate(-35 12 12)"/><line x1="9.5" y1="9.5" x2="14.5" y2="14.5"/></svg>
+                <span class="text-[11px] sm:text-xs font-extrabold tracking-tight">멀티 펫 뽑기</span>
+                <span id="dock-gacha-pack" class="text-[9px] text-pink-100 font-semibold">1연속 추출</span>
+            </button>
+
+            <!-- 2. Pet Inventory & Aura Enhancement -->
+            <button onclick="openModal('pet-modal')" class="voxel-btn bg-gradient-to-b from-indigo-500 to-blue-600 text-white rounded-2xl py-2 px-1.5 flex flex-col items-center justify-center">
+                <svg class="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12"/></svg>
+                <span class="text-[11px] sm:text-xs font-extrabold tracking-tight">강화 펫 도감</span>
+                <span id="dock-pet-count" class="text-[9px] text-indigo-100 font-semibold">1/6 장착중</span>
+            </button>
+
+            <!-- 3. Character Skin Pack Store (5 Tiers, Log Scale) -->
+            <button onclick="openModal('skin-modal')" class="voxel-btn bg-gradient-to-b from-violet-600 to-purple-700 text-white rounded-2xl py-2 px-1.5 flex flex-col items-center justify-center">
+                <svg class="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                <span class="text-[11px] sm:text-xs font-extrabold tracking-tight">스킨 팩 상점</span>
+                <span id="dock-skin-tier" class="text-[9px] text-violet-200 font-semibold">티어 1 스킨</span>
+            </button>
+
+            <!-- 4. Pyramid & Timed Hot Spring Upgrades -->
+            <button onclick="openModal('upgrade-modal')" class="voxel-btn bg-gradient-to-b from-emerald-500 to-teal-600 text-white rounded-2xl py-2 px-1.5 flex flex-col items-center justify-center">
+                <svg class="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 2c0 4-4 6-4 10a8 8 0 0 0 16 0c0-4-4-6-4-10"/><path d="M12 6c0 3-2 4-2 7a4 4 0 0 0 8 0"/></svg>
+                <span class="text-[11px] sm:text-xs font-extrabold tracking-tight">온천 & 연구</span>
+                <span id="dock-spring-lv" class="text-[9px] text-emerald-100 font-semibold">온천 Lv.1</span>
+            </button>
+
+            <!-- 5. Student Leaderboard -->
+            <button onclick="openModal('ranking-modal')" class="voxel-btn bg-gradient-to-b from-amber-400 to-orange-500 text-slate-950 rounded-2xl py-2 px-1.5 flex flex-col items-center justify-center">
+                <svg class="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                <span class="text-[11px] sm:text-xs font-black tracking-tight">학급 랭킹전</span>
+                <span id="dock-my-rank" class="text-[9px] text-slate-900 font-extrabold">순위 확인</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 1. STUDENT PROFILE MODAL -->
+    <div id="profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
+        <div class="glass-panel rounded-3xl max-w-md w-full p-6 relative">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-black text-slate-900">학번 · 이름 (랭킹용)</h2>
+                <button onclick="closeModal('profile-modal')" class="w-8 h-8 rounded-full bg-slate-200/80 text-slate-700 font-bold hover:bg-slate-300 flex items-center justify-center">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="space-y-3 mb-5">
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">학번 (숫자 5자리)</label>
+                    <input id="input-student-class" type="text" inputmode="numeric" maxlength="5" value="" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="예: 2학년 G1반">
+                </div>
+                <div>
+                    <label class="block text-xs font-extrabold text-slate-700 mb-1">이름 (한글 2~5자)</label>
+                    <input id="input-student-name" type="text" maxlength="5" value="" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="이름을 입력하세요">
+                </div>
+            </div>
+            <div id="profile-msg" class="text-xs font-bold text-rose-600 min-h-[1rem] mb-2"></div>
+            <button onclick="saveStudentProfile()" class="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm voxel-btn">
+                저장하기
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. MULTI-GACHA & SLOT MACHINE MODAL (1 / 2 / 3 Simultaneous Reels + Magnet Pet + 0.5% Legendary) -->
+    <div id="gacha-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
+        <div id="gacha-modal-box" class="glass-panel rounded-3xl max-w-2xl w-full p-6 relative max-h-[92vh] overflow-y-auto overflow-x-hidden">
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-pink-600 text-white flex items-center justify-center shadow-md">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="8" width="16" height="8" rx="4" transform="rotate(-35 12 12)"/><line x1="9.5" y1="9.5" x2="14.5" y2="14.5"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-black text-slate-900">리보솜 슬롯머신 펫 합성 센터</h2>
+                        <p class="text-xs text-slate-500 font-medium">슬롯 릴을 가동하여 자력 흡수 능력을 지닌 생명과학 펫을 추출하세요! <span class="text-amber-600 font-extrabold">영웅·전설 당첨 시 스페셜 임팩트 발동</span></p>
+                    </div>
+                </div>
+                <button onclick="closeModal('gacha-modal')" class="w-8 h-8 rounded-full bg-slate-200/80 text-slate-700 font-bold hover:bg-slate-300 flex items-center justify-center">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <!-- Interactive Slot Machine Cabinet -->
+            <div id="gacha-slot-cabinet" class="relative bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-4 text-white mb-4 border-2 border-pink-500/40 shadow-2xl overflow-hidden">
+                <!-- Top Marquee Lights -->
+                <div class="flex items-center justify-between px-3 py-1.5 bg-slate-950/70 rounded-xl border border-white/10 mb-3 relative z-10">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-pink-400 animate-ping"></span>
+                        <span class="text-[11px] font-black tracking-wider text-pink-300 uppercase">RIBOSOME BIO-SLOT MACHINE</span>
+                    </div>
+                    <div id="gacha-stage-subtitle" class="text-[11px] font-extrabold text-amber-300">
+                        물곰 0.005% · 엽록체 0.02%(2%) · 미토콘드리아 0.05% · 자석박테리아 5% · 파지 30% · 적혈구 55%+
+                    </div>
+                </div>
+
+                <!-- 3 Slot Reels Window -->
+                <div id="gacha-cards-container" class="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-3 min-h-[168px] items-stretch">
+                    <!-- Populated with 3D Voxel SVG Slot Reels -->
+                </div>
+
+                <!-- Particle & Shockwave Overlay Container -->
+                <div id="gacha-impact-layer" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
+            </div>
+
+            <!-- Pet Probability & Visual Preview Strip (6 Pets including Chloroplast & Magnetotactic Bacteria) -->
+            <div class="grid grid-cols-2 sm:grid-cols-6 gap-1.5 mb-4">
+                <div class="bg-white/80 border border-slate-200 rounded-xl p-1.5 flex items-center gap-1.5">
+                    <div id="mini-preview-rbc" class="w-7 h-7 shrink-0"></div>
+                    <div>
+                        <div class="text-[10px] font-black text-slate-800">적혈구 슬라임</div>
+                        <div class="text-[9px] font-bold text-slate-500">일반 (55%+)</div>
+                    </div>
+                </div>
+                <div class="bg-white/80 border border-sky-200 rounded-xl p-1.5 flex items-center gap-1.5">
+                    <div id="mini-preview-phage" class="w-7 h-7 shrink-0"></div>
+                    <div>
+                        <div class="text-[10px] font-black text-sky-900">박테리오파지</div>
+                        <div class="text-[9px] font-bold text-sky-600">희귀 (30%)</div>
+                    </div>
+                </div>
+                <div class="bg-cyan-50/90 border border-cyan-300 rounded-xl p-1.5 flex items-center gap-1.5">
+                    <div id="mini-preview-magbact" class="w-7 h-7 shrink-0"></div>
+                    <div>
+                        <div class="text-[10px] font-black text-cyan-950">자석박테리아</div>
+                        <div class="text-[9px] font-extrabold text-cyan-700">영웅 (5%)</div>
+                    </div>
+                </div>
+                <div class="bg-emerald-50/90 border border-emerald-400 rounded-xl p-1.5 flex items-center gap-1.5">
+                    <div id="mini-preview-chloroplast" class="w-7 h-7 shrink-0"></div>
+                    <div>
+                        <div class="text-[10px] font-black text-emerald-950">광합성 엽록체</div>
+                        <div class="text-[9px] font-extrabold text-emerald-700">신화 (0.02)</div>
+                    </div>
+                </div>
+                <div class="bg-amber-50/80 border border-orange-300 rounded-xl p-1.5 flex items-center gap-1.5">
+                    <div id="mini-preview-mito" class="w-7 h-7 shrink-0"></div>
+                    <div>
+                        <div class="text-[10px] font-black text-orange-900">미토콘드리아</div>
+                        <div class="text-[9px] font-extrabold text-orange-600">영웅 (0.05%)</div>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-r from-amber-100/90 to-yellow-50/90 border border-amber-400 rounded-xl p-1.5 flex items-center gap-1.5">
+                    <div id="mini-preview-tardigrade" class="w-7 h-7 shrink-0"></div>
+                    <div>
+                        <div class="text-[10px] font-black text-amber-950">불사의 우주물곰</div>
+                        <div class="text-[9px] font-black text-rose-600">전설 (0.005%)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Multi-Gacha Upgrade Packs Section (100x Cost Increase) -->
+            <div class="mb-4">
+                <div class="text-xs font-black text-slate-800 mb-2 flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-pink-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <span>멀티 슬롯 확장 팩 (동시 추출 릴 개수 업그레이드 · 100배 강화 비용)</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <!-- Pack 1: Dual Ribosome Pack (2x Pull) -->
+                    <div class="bg-white/85 rounded-2xl p-3 border border-pink-200 flex items-center justify-between gap-2">
+                        <div>
+                            <div class="text-xs font-black text-slate-900">듀얼 리보솜 팩 [2개 슬롯 동시 가동]</div>
+                            <div class="text-[11px] text-slate-500 font-medium">한 번에 2개 릴 동시 스핀 + 뽑기 비용 할인</div>
+                        </div>
+                        <button id="btn-buy-pack2" onclick="buyMultiGachaPack(2)" class="voxel-btn bg-pink-600 hover:bg-pink-700 text-white text-xs font-black px-3 py-2 rounded-xl shrink-0">
+                            80,000 RIBO + 40,000 ENZ
+                        </button>
+                    </div>
+
+                    <!-- Pack 2: Triple Polysome Pack (3x Pull) -->
+                    <div class="bg-gradient-to-r from-amber-50 to-fuchsia-50 rounded-2xl p-3 border border-fuchsia-300 flex items-center justify-between gap-2">
+                        <div>
+                            <div class="text-xs font-black text-fuchsia-950">트리플 폴리솜 팩 [3개 슬롯 동시 가동]</div>
+                            <div class="text-[11px] text-fuchsia-700 font-semibold">한 번에 3개 릴 동시 스핀 + 희귀/전설 행운 1.5배!</div>
+                        </div>
+                        <button id="btn-buy-pack3" onclick="buyMultiGachaPack(3)" class="voxel-btn bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-xs font-black px-3 py-2 rounded-xl shrink-0">
+                            350,000 RIBO + 180,000 ENZ
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pull Action Buttons (1x, 2x, 3x) -->
+            <div class="grid grid-cols-3 gap-2.5">
+                <button id="btn-pull-1" onclick="pullGacha(1)" class="voxel-btn bg-slate-900 hover:bg-slate-800 text-white py-3 px-3 rounded-2xl font-black text-xs flex flex-col items-center">
+                    <span>1릴 슬롯 스핀</span>
+                    <span class="text-[11px] text-pink-300 mt-0.5">1,200 RIBO</span>
+                </button>
+                <button id="btn-pull-2" onclick="pullGacha(2)" disabled class="voxel-btn bg-pink-600 hover:bg-pink-700 text-white py-3 px-3 rounded-2xl font-black text-xs flex flex-col items-center">
+                    <span>2릴 동시 스핀</span>
+                    <span class="text-[11px] text-pink-100 mt-0.5">2,100 RIBO (듀얼 팩 필요)</span>
+                </button>
+                <button id="btn-pull-3" onclick="pullGacha(3)" disabled class="voxel-btn bg-gradient-to-r from-fuchsia-600 to-indigo-600 text-white py-3 px-3 rounded-2xl font-black text-xs flex flex-col items-center">
+                    <span>3릴 잭팟 스핀 [행운↑]</span>
+                    <span class="text-[11px] text-amber-200 mt-0.5">3,000 RIBO (트리플 팩 필요)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. CHARACTER SKIN PACK SHOP MODAL (5 Skins, Logarithmic Price Scaling & God-Tier Final Skin) -->
+    <div id="skin-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/55 backdrop-blur-sm p-4">
+        <div class="glass-panel rounded-3xl max-w-2xl w-full p-6 relative max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-violet-600 text-white flex items-center justify-center shadow-md">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-black text-slate-900">유전자 캐릭터 스킨 팩 상점 (총 5단계)</h2>
+                        <p class="text-xs text-slate-500 font-medium">스킨 전용 재화 <span class="text-violet-700 font-bold">[줄기세포 코어 STEM]</span>로 구매하며 상위 스킨일수록 화려한 3D 오오라와 압도적 효율을 부여합니다</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('skin-modal')" class="w-8 h-8 rounded-full bg-slate-200/80 text-slate-700 font-bold hover:bg-slate-300 flex items-center justify-center">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <div id="skin-pack-list" class="space-y-2.5 overflow-y-auto pr-1 flex-1">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. PET INVENTORY & ENHANCED 3D AURA MERGE MODAL -->
+    <div id="pet-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/55 backdrop-blur-sm p-4">
+        <div class="glass-panel rounded-3xl max-w-xl w-full p-6 relative max-h-[88vh] flex flex-col">
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-black text-slate-900">강화 세포 펫 연구소 (최대 6마리 장착 & 3D 오오라)</h2>
+                        <p class="text-xs text-slate-500 font-medium">최대 <strong>6마리</strong>까지 동시 장착 가능! 동일 펫 3마리 합성 또는 <span class="text-amber-700 font-bold">[3,000 ENZ]</span> 강화 시 <strong>자력 반경 증가 & 3D 오오라</strong>가 발현됩니다!</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('pet-modal')" class="w-8 h-8 rounded-full bg-slate-200/80 text-slate-700 font-bold hover:bg-slate-300 flex items-center justify-center">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <div class="flex flex-wrap justify-between items-center gap-2 bg-slate-900/5 rounded-2xl p-2.5 mb-3">
+                <div class="text-xs font-extrabold text-slate-700">
+                    장착 펫(최대 6마리) 재화 증폭: <span id="pet-total-bonus" class="text-indigo-600 font-black">+35%</span>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="equipBestPets()" class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-extrabold voxel-btn">최강 6마리 자동장착</button>
+                    <button onclick="mergeAllPets()" class="px-3 py-1.5 rounded-xl bg-amber-500 text-slate-950 text-xs font-black voxel-btn">동일 펫 3합성 오오라 각성</button>
+                </div>
+            </div>
+
+            <div id="pet-inventory-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 overflow-y-auto pr-1 flex-1 min-h-[220px]"></div>
+        </div>
+    </div>
+
+    <!-- 5. PYRAMID THEME CODEX & HOT SPRING MATCHING MODAL -->
+    <div id="pyramid-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/55 backdrop-blur-sm p-4">
+        <div class="glass-panel rounded-3xl max-w-2xl w-full p-6 relative max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center shadow-md">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 2 20 22 20"/><line x1="12" y1="2" x2="12" y2="20"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-black text-slate-900">5대 생명과학 피라미드 & 전용 온천 도감</h2>
+                        <p class="text-xs text-slate-500 font-medium">피라미드 종류마다 100% 완공 시 출현하는 온천의 이동속도·돌 드는 힘 버프 수치와 재화 배율이 달라집니다</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('pyramid-modal')" class="w-8 h-8 rounded-full bg-slate-200/80 text-slate-700 font-bold hover:bg-slate-300 flex items-center justify-center">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <div id="pyramid-theme-list" class="space-y-2.5 overflow-y-auto pr-1 flex-1"></div>
+        </div>
+    </div>
+
+    <!-- 6. HOT SPRING TIME EXTENSION, PROPORTIONAL SPEED SLIDER & ENZYME UPGRADE MODAL -->
+    <div id="upgrade-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/55 backdrop-blur-sm p-4">
+        <div class="glass-panel rounded-3xl max-w-lg w-full p-6 relative max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 2c0 4-4 6-4 10a8 8 0 0 0 16 0c0-4-4-6-4-10"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-black text-slate-900">제한시간 온천 & 이동속도·효소 연구소</h2>
+                        <p class="text-xs text-slate-500 font-medium">온천 괴력 버프(속도·돌 드는 힘)와 이동속도 비율 조절, 신체 스탯 강화를 관리합니다</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('upgrade-modal')" class="w-8 h-8 rounded-full bg-slate-200/80 text-slate-700 font-bold hover:bg-slate-300 flex items-center justify-center">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <!-- Timed Hot Spring Control Card (Per-Second Stacking Speed & Stone-Carrying Power) -->
+            <div class="bg-gradient-to-br from-emerald-950 via-teal-900 to-slate-900 text-white rounded-2xl p-4 mb-4 border border-emerald-400/30">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <span class="text-[10px] font-black uppercase bg-emerald-500 text-slate-950 px-2 py-0.5 rounded">완공 보상 제한시간 온천 (초당 버프 무제한 중첩!)</span>
+                        <h3 id="modal-spring-type-name" class="text-sm font-black mt-1">심해 열수구 온천</h3>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[10px] text-emerald-300 font-bold">현재 남은 입수 시간</div>
+                        <div id="modal-spring-timer" class="text-base font-black text-amber-300 tabular-nums">피라미드 완공 필요</div>
+                    </div>
+                </div>
+                <p class="text-[11px] text-slate-300 leading-relaxed mb-2">
+                    온천에 들어가 있는 동안 <strong>매초마다 버프가 1스택씩 중첩</strong>되어 이동속도와 돌 드는 힘(리소좀 가방 적재량)이 끝없이 복리로 폭증합니다!
+                </p>
+                <div id="modal-spring-buff-detail" class="text-[11px] font-extrabold text-amber-300 bg-slate-950/60 px-3 py-1.5 rounded-xl mb-3 border border-emerald-400/20">
+                    초당 1스택 중첩당 효과: 이동속도 +4%p · 돌 드는 힘 +2개씩 누적 증가
+                </div>
+                <button onclick="extendHotSpringTime()" id="btn-modal-extend-spring" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs voxel-btn">
+                    온천 이용 시간 +1분 연장하기 (최대 5분) — 비용: 250,000 ENZ + 150,000 RIBO
+                </button>
+            </div>
+
+            <!-- Proportional Movement Speed Ratio Slider Control -->
+            <div class="bg-indigo-950 text-white rounded-2xl p-3.5 mb-4 border border-indigo-400/40 shadow">
+                <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        <span class="text-xs font-black text-amber-300">신경 반응 속도 비율 조절기 (이동속도 조절)</span>
+                    </div>
+                    <span id="speed-ratio-label" class="text-xs font-black bg-indigo-700 px-2 py-0.5 rounded-lg text-white">100%</span>
+                </div>
+                <p class="text-[11px] text-indigo-200 mb-2">업그레이드·스킨·온천 중첩으로 빨라진 최대 이동속도를 원하는 비율(20%~100%)로 부드럽게 조절합니다.</p>
+                <input id="slider-speed-ratio" type="range" min="20" max="100" step="5" value="100" oninput="changeSpeedRatio(this.value)" class="w-full accent-amber-400 cursor-pointer h-2 bg-indigo-800 rounded-lg">
+                <div class="flex justify-between text-[10px] text-indigo-300 font-bold mt-1">
+                    <span>정밀 제어 (20%)</span>
+                    <span>균형 (60%)</span>
+                    <span>최대 가속 (100%)</span>
+                </div>
+            </div>
+
+            <!-- Upgrades List (100x Research Cost & Instant Bulk Deposit Unlock) -->
+            <div class="space-y-2.5">
+                <!-- Special Upgrade: Instant All-At-Once Pyramid Deposit (Same Price as 3rd Skin: 10,000,000 STEM) -->
+                <div class="bg-gradient-to-r from-violet-950 via-indigo-950 to-slate-900 text-white border-2 border-amber-400/70 rounded-2xl p-3.5 flex items-center justify-between gap-2 shadow-lg">
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-black bg-amber-400 text-slate-950 px-2 py-0.5 rounded">궁극 편의 연구</span>
+                            <span class="text-xs font-black text-amber-300">초고속 일괄 투하 (재료 한 번에 피라미드에 놓기)</span>
+                        </div>
+                        <p class="text-[11px] text-indigo-200 font-medium mt-0.5">발판에 닿는 즉시 가방 안의 모든 재료를 단 1초 만에 피라미드에 한꺼번에 놓습니다! (3번째 스킨 가격과 동일)</p>
+                    </div>
+                    <button onclick="buyInstantDepositUpgrade()" id="btn-upg-instant-deposit" class="voxel-btn bg-amber-400 hover:bg-amber-300 text-slate-950 px-3.5 py-2.5 rounded-xl text-xs font-black shrink-0">
+                        10,000,000 STEM
+                    </button>
+                </div>
+
+                <div class="bg-white/85 border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-2">
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-black text-slate-900">온천 수압 & 미네랄 강화 (초당 중첩 효율 업)</span>
+                            <span id="upg-spring-lv" class="text-[10px] font-black bg-emerald-600 text-white px-2 py-0.5 rounded">Lv.1</span>
+                        </div>
+                        <p id="upg-spring-desc" class="text-[11px] text-slate-600 font-medium mt-0.5">온천 입수 시 초당 중첩되는 속도·돌 드는 힘 상승폭 강화</p>
+                    </div>
+                    <button onclick="buyUpgrade('spring')" id="btn-upg-spring" class="voxel-btn bg-emerald-600 text-white px-3.5 py-2 rounded-xl text-xs font-black shrink-0">
+                        15,000 ENZ
+                    </button>
+                </div>
+
+                <div class="bg-white/85 border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-2">
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-black text-slate-900">근원섬유 & 리소좀 가방 증설 (기본 돌 드는 힘)</span>
+                            <span id="upg-bag-lv" class="text-[10px] font-black bg-indigo-600 text-white px-2 py-0.5 rounded">Lv.1</span>
+                        </div>
+                        <p id="upg-bag-desc" class="text-[11px] text-slate-600 font-medium mt-0.5">상시 최대 블록 적재량(돌 드는 힘) +6개 증가</p>
+                    </div>
+                    <button onclick="buyUpgrade('bag')" id="btn-upg-bag" class="voxel-btn bg-indigo-600 text-white px-3.5 py-2 rounded-xl text-xs font-black shrink-0">
+                        10,000 ENZ
+                    </button>
+                </div>
+
+                <div class="bg-white/85 border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-2">
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-black text-slate-900">도약전도 신경 가속 (기본 이동속도)</span>
+                            <span id="upg-speed-lv" class="text-[10px] font-black bg-amber-600 text-white px-2 py-0.5 rounded">Lv.1</span>
+                        </div>
+                        <p class="text-[11px] text-slate-600 font-medium mt-0.5">캐릭터 기본 최대 이동속도 +12% 증가</p>
+                    </div>
+                    <button onclick="buyUpgrade('speed')" id="btn-upg-speed" class="voxel-btn bg-amber-500 text-slate-950 px-3.5 py-2 rounded-xl text-xs font-black shrink-0">
+                        12,000 ENZ
+                    </button>
+                </div>
+
+                <div class="bg-white/85 border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-2">
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-black text-slate-900">피라미드 효소 합성 증폭</span>
+                            <span id="upg-yield-lv" class="text-[10px] font-black bg-rose-600 text-white px-2 py-0.5 rounded">Lv.1</span>
+                        </div>
+                        <p class="text-[11px] text-slate-600 font-medium mt-0.5">피라미드 건설 시 3종 재화 획득량 +35% 증가</p>
+                    </div>
+                    <button onclick="buyUpgrade('yield')" id="btn-upg-yield" class="voxel-btn bg-rose-600 text-white px-3.5 py-2 rounded-xl text-xs font-black shrink-0">
+                        16,000 ENZ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. STUDENT COMPETITION LEADERBOARD MODAL -->
+    <div id="ranking-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/55 backdrop-blur-sm p-4">
+        <div class="glass-panel rounded-3xl max-w-2xl w-full p-6 relative max-h-[88vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center shadow-md">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-black text-slate-900">생명과학 피라미드 학급 랭킹전</h2>
+                        <p class="text-xs text-slate-500 font-medium">최고 피라미드 단계 &rarr; 총 연구 점수 순 · BIO ARCADE 공용 랭킹 (메인 화면 → 랭킹에서도 볼 수 있어요)</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('ranking-modal')" class="w-8 h-8 rounded-full bg-slate-200/80 text-slate-700 font-bold hover:bg-slate-300 flex items-center justify-center">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-4 mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div id="rank-modal-my-badge" class="w-11 h-11 rounded-2xl bg-amber-400 text-slate-950 font-black text-base flex items-center justify-center shadow">
+                        #1
+                    </div>
+                    <div>
+                        <div id="rank-modal-my-name" class="text-sm font-black">학번 미등록</div>
+                        <div id="rank-modal-my-stats" class="text-xs text-indigo-200 font-semibold">1단계 피라미드 | 스킨 티어 1 | 총점 0</div>
+                    </div>
+                </div>
+                <button onclick="syncScoreNow()" class="voxel-btn bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl">
+                    내 기록 랭킹에 보내기
+                </button>
+            </div>
+
+            <div class="grid grid-cols-12 px-3 py-2 text-[11px] font-extrabold text-slate-500 border-b border-slate-200">
+                <div class="col-span-2">순위</div>
+                <div class="col-span-4">학급 / 학생 이름</div>
+                <div class="col-span-3 text-center">피라미드 & 스킨</div>
+                <div class="col-span-3 text-right">총 연구 점수</div>
+            </div>
+
+            <div id="full-leaderboard-list" class="overflow-y-auto divide-y divide-slate-200/60 flex-1 pr-1 min-h-[240px]"></div>
+        </div>
+    </div>
+
+    <!-- FIREBASE REALTIME LEADERBOARD MODULE -->
+    <!-- 랭킹: 사이트 공용 랭킹(rank.js / goal.js)을 씀 -->
+
+    <!-- MAIN GAME ENGINE & 3D VOXEL LOGIC -->
+    <script>
+        /*************************************************************************
+         * 1. DATA DEFINITIONS & CUSTOM 3D ISOMETRIC VOXEL SVG ILLUSTRATIONS
+         *************************************************************************/
+        function getPetIllustrationSVG(typeId, enhanced = false) {
+            const auraRing = enhanced
+                ? `<circle cx="40" cy="42" r="32" fill="none" stroke="#facc15" stroke-width="2.5" stroke-dasharray="5 3"/>
+                   <polygon points="40,4 45,12 35,12" fill="#facc15"/>
+                   <circle cx="14" cy="22" r="3.5" fill="#fef08a"/><circle cx="66" cy="22" r="3.5" fill="#38bdf8"/>`
+                : '';
+            if (typeId === 'rbc') {
+                return `<svg viewBox="0 0 80 80" class="w-full h-full drop-shadow">
+                    ${auraRing}
+                    <polygon points="40,22 66,35 40,48 14,35" fill="#f87171"/>
+                    <polygon points="14,35 40,48 40,64 14,51" fill="#dc2626"/>
+                    <polygon points="66,35 40,48 40,64 66,51" fill="#991b1b"/>
+                    <polygon points="40,28 54,35 40,42 26,35" fill="#7f1d1d"/>
+                    <rect x="28" y="42" width="5" height="6" rx="1" fill="#ffffff"/>
+                    <rect x="47" y="42" width="5" height="6" rx="1" fill="#ffffff"/>
+                </svg>`;
+            }
+            if (typeId === 'phage') {
+                return `<svg viewBox="0 0 80 80" class="w-full h-full drop-shadow">
+                    ${auraRing}
+                    <polygon points="40,10 58,20 40,30 22,20" fill="#7dd3fc"/>
+                    <polygon points="22,20 40,30 40,46 22,36" fill="#0284c7"/>
+                    <polygon points="58,20 40,30 40,46 58,36" fill="#0369a1"/>
+                    <rect x="36" y="45" width="8" height="14" fill="#cbd5e1"/>
+                    <path d="M36,56 L18,68 M44,56 L62,68 M40,56 L28,72 M40,56 L52,72" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>`;
+            }
+            if (typeId === 'magbact') {
+                return `<svg viewBox="0 0 80 80" class="w-full h-full drop-shadow">
+                    ${auraRing}
+                    <!-- Isometric Magnetotactic Bacteria Voxel with N/S Magnetic Poles -->
+                    <polygon points="40,18 64,30 40,42 16,30" fill="#22d3ee"/>
+                    <polygon points="16,30 40,42 40,60 16,48" fill="#0891b2"/>
+                    <polygon points="64,30 40,42 40,60 64,48" fill="#0e7490"/>
+                    <rect x="20" y="12" width="10" height="16" rx="2" fill="#ef4444"/>
+                    <rect x="50" y="12" width="10" height="16" rx="2" fill="#3b82f6"/>
+                    <path d="M25,10 Q40,2 55,10" stroke="#facc15" stroke-width="2.5" stroke-dasharray="3 2" fill="none"/>
+                </svg>`;
+            }
+            if (typeId === 'chloroplast') {
+                return `<svg viewBox="0 0 80 80" class="w-full h-full drop-shadow">
+                    ${auraRing}
+                    <!-- Isometric Chloroplast Voxel with Thylakoid Grana Stacks -->
+                    <polygon points="40,14 68,28 40,42 12,28" fill="#4ade80"/>
+                    <polygon points="12,28 40,42 40,62 12,48" fill="#16a34a"/>
+                    <polygon points="68,28 40,42 40,62 68,48" fill="#15803d"/>
+                    <ellipse cx="32" cy="28" rx="6" ry="3.5" fill="#bbf7d0"/>
+                    <ellipse cx="48" cy="28" rx="6" ry="3.5" fill="#bbf7d0"/>
+                    <ellipse cx="40" cy="34" rx="7" ry="4" fill="#fef08a"/>
+                </svg>`;
+            }
+            if (typeId === 'mito') {
+                return `<svg viewBox="0 0 80 80" class="w-full h-full drop-shadow">
+                    ${auraRing}
+                    <polygon points="40,16 68,30 40,44 12,30" fill="#fb923c"/>
+                    <polygon points="12,30 40,44 40,64 12,50" fill="#ea580c"/>
+                    <polygon points="68,30 40,44 40,64 68,50" fill="#9a3412"/>
+                    <polyline points="24,30 34,26 30,35 44,29 40,38 54,32" fill="none" stroke="#fef08a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>`;
+            }
+            // Tardigrade (Water Bear)
+            return `<svg viewBox="0 0 80 80" class="w-full h-full drop-shadow">
+                ${auraRing}
+                <polygon points="40,14 68,28 40,42 12,28" fill="#fef08a"/>
+                <polygon points="12,28 40,42 40,62 12,48" fill="#facc15"/>
+                <polygon points="68,28 40,42 40,62 68,48" fill="#ca8a04"/>
+                <polygon points="48,38 64,46 54,56 42,48" fill="#fde047"/>
+                <circle cx="55" cy="49" r="3.5" fill="#713f12"/>
+                <rect x="18" y="54" width="6" height="10" rx="2" fill="#eab308"/>
+                <rect x="28" y="58" width="6" height="10" rx="2" fill="#eab308"/>
+                <rect x="44" y="58" width="6" height="10" rx="2" fill="#a16207"/>
+            </svg>`;
+        }
+
+        function getPyramidThemeSVG(stage) {
+            const theme = PYRAMID_THEMES[stage - 1];
+            const c = theme.tierColors.map(hex => '#' + hex.toString(16).padStart(6, '0'));
+            const wCol = '#' + theme.springWaterColor.toString(16).padStart(6, '0');
+            return `<svg viewBox="0 0 110 76" class="w-full h-full drop-shadow">
+                <rect x="8" y="56" width="52" height="10" rx="2" fill="${c[0]}"/>
+                <rect x="14" y="45" width="40" height="10" rx="2" fill="${c[1]}"/>
+                <rect x="20" y="34" width="28" height="10" rx="2" fill="${c[2]}"/>
+                <rect x="26" y="23" width="16" height="10" rx="2" fill="${c[3]}"/>
+                <polygon points="34,10 42,22 26,22" fill="${c[4]}"/>
+                <ellipse cx="84" cy="54" rx="20" ry="11" fill="#334155"/>
+                <ellipse cx="84" cy="52" rx="16" ry="8" fill="${wCol}"/>
+                <path d="M78,44 Q75,36 80,30 M86,46 Q83,38 88,32 M92,43 Q90,36 94,30" stroke="${wCol}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            </svg>`;
+        }
+
+        function getSkinIllustrationSVG(skin) {
+            const coat = '#' + skin.coatColor.toString(16).padStart(6, '0');
+            const visor = '#' + skin.visorColor.toString(16).padStart(6, '0');
+            let auraSVG = '';
+            if (skin.id === 1) {
+                auraSVG = `<ellipse cx="40" cy="64" rx="26" ry="8" fill="none" stroke="#10b981" stroke-width="3"/>`;
+            } else if (skin.id === 2) {
+                auraSVG = `<polygon points="40,8 68,24 68,56 40,72 12,56 12,24" fill="none" stroke="#06b6d4" stroke-width="2.5" stroke-dasharray="4 3"/>`;
+            } else if (skin.id === 3) {
+                auraSVG = `<circle cx="40" cy="40" r="32" fill="none" stroke="#facc15" stroke-width="2.5"/>
+                           <polygon points="32,12 40,4 48,12" fill="#facc15"/>`;
+            } else if (skin.id === 4) {
+                auraSVG = `<circle cx="40" cy="40" r="34" fill="none" stroke="#f472b6" stroke-width="3" stroke-dasharray="6 2"/>
+                           <polygon points="8,24 24,32 24,52 8,44" fill="#fef08a" opacity="0.85"/>
+                           <polygon points="72,24 56,32 56,52 72,44" fill="#fef08a" opacity="0.85"/>
+                           <ellipse cx="40" cy="9" rx="12" ry="4" fill="none" stroke="#facc15" stroke-width="3"/>`;
+            }
+            return `<svg viewBox="0 0 80 80" class="w-full h-full drop-shadow">
+                ${auraSVG}
+                <rect x="26" y="16" width="28" height="6" rx="2" fill="#1e293b"/>
+                <rect x="27" y="21" width="26" height="18" rx="3" fill="#ffedd5"/>
+                <rect x="29" y="25" width="22" height="7" rx="2" fill="${visor}"/>
+                <rect x="24" y="39" width="32" height="22" rx="4" fill="${coat}" stroke="#475569" stroke-width="1.5"/>
+                <rect x="28" y="61" width="9" height="9" rx="2" fill="#334155"/>
+                <rect x="43" y="61" width="9" height="9" rx="2" fill="#334155"/>
+            </svg>`;
+        }
+
+        const PYRAMID_THEMES = [
+            {
+                stage: 1,
+                name: '고대 원시 수프 피라미드',
+                springName: '심해 열수구 온천',
+                desc: '생명이 탄생한 원시 해양 열수구 테마. 온천 입수 시 수압 적응으로 이동속도와 돌 드는 힘이 상승합니다.',
+                baseMult: 1.0,
+                riboWeight: 1.6,
+                stemWeight: 0.8,
+                enzWeight: 1.1,
+                springSpeedBonus: 0.35,
+                springLiftBonus: 15,
+                tierColors: [0x0f766e, 0x14b8a6, 0x2dd4bf, 0x38bdf8, 0xf43f5e],
+                springWaterColor: 0x2dd4bf,
+                springRimColor: 0x334155
+            },
+            {
+                stage: 2,
+                name: '엽록체 광합성 피라미드',
+                springName: '광합성 수액 온천',
+                desc: '태양 에너지를 화학 에너지로 전환하는 엽록체 테마. 온천 입수 시 고농도 수액으로 속도와 힘 버프가 강화됩니다.',
+                baseMult: 2.8,
+                riboWeight: 1.2,
+                stemWeight: 1.2,
+                enzWeight: 2.2,
+                springSpeedBonus: 0.50,
+                springLiftBonus: 28,
+                tierColors: [0x15803d, 0x22c55e, 0x84cc16, 0xfacc15, 0xfef08a],
+                springWaterColor: 0x84cc16,
+                springRimColor: 0x166534
+            },
+            {
+                stage: 3,
+                name: '미토콘드리아 발전 피라미드',
+                springName: 'ATP 고에너지 플라즈마 온천',
+                desc: '세포 호흡의 발전소 미토콘드리아 테마. 온천 입수 시 폭발적인 ATP가 근육에 공급되어 이동속도와 돌 드는 힘이 급증합니다.',
+                baseMult: 7.5,
+                riboWeight: 2.5,
+                stemWeight: 1.8,
+                enzWeight: 2.5,
+                springSpeedBonus: 0.70,
+                springLiftBonus: 45,
+                tierColors: [0x7c2d12, 0xc2410c, 0xf97316, 0xf59e0b, 0xfef3c7],
+                springWaterColor: 0xf97316,
+                springRimColor: 0x7c2d12
+            },
+            {
+                stage: 4,
+                name: '신경망 시냅스 피라미드',
+                springName: '뇌척수액 시냅스 온천',
+                desc: '생체 전기 신호가 교차하는 시냅스 테마. 온천 입수 시 신경 반응 속도와 근력 한계가 극대화됩니다!',
+                baseMult: 22.0,
+                riboWeight: 2.5,
+                stemWeight: 4.5,
+                enzWeight: 3.0,
+                springSpeedBonus: 0.95,
+                springLiftBonus: 70,
+                tierColors: [0x1e1b4b, 0x4338ca, 0x6366f1, 0x38bdf8, 0xe879f9],
+                springWaterColor: 0x818cf8,
+                springRimColor: 0x312e81
+            },
+            {
+                stage: 5,
+                name: '태초의 이중나선 신전',
+                springName: '텔로미어 불로초 온천',
+                desc: '생명과학의 정점에 도달한 궁극의 유전자 신전. 온천 입수 시 초월적인 이동속도와 거대 적재량을 발휘합니다!',
+                baseMult: 75.0,
+                riboWeight: 6.0,
+                stemWeight: 6.0,
+                enzWeight: 6.0,
+                springSpeedBonus: 1.30,
+                springLiftBonus: 110,
+                tierColors: [0x581c87, 0xa855f7, 0xf472b6, 0xfacc15, 0xffffff],
+                springWaterColor: 0xfacc15,
+                springRimColor: 0x581c87
+            }
+        ];
+
+        const SKIN_PACKS = [
+            {
+                id: 0,
+                name: '인턴 학부생',
+                tierLabel: '티어 1 · 기본',
+                costStem: 0,
+                mult: 1.0,
+                speedBonus: 0,
+                bagBonus: 0,
+                coatColor: 0xffffff,
+                visorColor: 0x38bdf8,
+                auraType: 'none',
+                desc: '생명과학 연구실에 갓 입학한 학부생 실험복입니다.'
+            },
+            {
+                id: 1,
+                name: '생체공학 방호 슈트',
+                tierLabel: '티어 2 · 희귀',
+                costStem: 500000,
+                mult: 2.5,
+                speedBonus: 0.15,
+                bagBonus: 10,
+                coatColor: 0x10b981,
+                visorColor: 0xfef08a,
+                auraType: 'emerald_ring',
+                desc: '전 재화 효율 x2.5배 | 이동속도 +15% | 가방 +10 | 에메랄드 바이오 오오라 링 발현'
+            },
+            {
+                id: 2,
+                name: '나노 크롬 사이보그',
+                tierLabel: '티어 3 · 영웅',
+                costStem: 10000000,
+                mult: 7.0,
+                speedBonus: 0.35,
+                bagBonus: 30,
+                coatColor: 0x06b6d4,
+                visorColor: 0xf43f5e,
+                auraType: 'cyber_hex',
+                desc: '전 재화 효율 x7.0배 | 이동속도 +35% | 가방 +30 | 회전 사이버 홀로그램 큐브 오오라'
+            },
+            {
+                id: 3,
+                name: '유전자 아콘 마스터',
+                tierLabel: '티어 4 · 전설',
+                costStem: 250000000,
+                mult: 25.0,
+                speedBonus: 0.55,
+                bagBonus: 80,
+                coatColor: 0x7c3aed,
+                visorColor: 0xfacc15,
+                auraType: 'archon_helix',
+                desc: '전 재화 효율 x25.0배 | 이동속도 +55% | 가방 +80 | 이중나선 황금-바이올렛 스타 오오라'
+            },
+            {
+                id: 4,
+                name: '게놈 마스터 아키텍트 [초월]',
+                tierLabel: '티어 5 · 최종 초월',
+                costStem: 5000000000,
+                mult: 150.0,
+                speedBonus: 0.90,
+                bagBonus: 250,
+                coatColor: 0xfef08a,
+                visorColor: 0xec4899,
+                auraType: 'omega_sovereign',
+                desc: '전 재화 효율 x150.0배! | 이동속도 +90% | 가방 +250 | 주변 자원 자동 자석 흡수 & 플라즈마 윙·이중나선 궤도 오오라!'
+            }
+        ];
+
+        // 6 Pets including Chloroplast (광합성 엽록체 = 1.5x Mitochondria stats) & Magnetotactic Bacteria
+        const PET_TYPES = {
+            rbc: {
+                id: 'rbc', name: '적혈구 슬라임', rarity: '일반',
+                mult: 0.35, speed: 0.04, magnet: 0.4, color: 0xef4444, auraColor: 0xf87171
+            },
+            phage: {
+                id: 'phage', name: '박테리오파지', rarity: '희귀',
+                mult: 0.90, speed: 0.12, magnet: 1.5, color: 0x38bdf8, auraColor: 0x7dd3fc
+            },
+            magbact: {
+                id: 'magbact', name: '자석주성 박테리아', rarity: '영웅',
+                mult: 1.80, speed: 0.18, magnet: 5.5, color: 0x06b6d4, auraColor: 0x22d3ee
+            },
+            mito: {
+                id: 'mito', name: '파워 미토콘드리아', rarity: '영웅',
+                mult: 2.50, speed: 0.20, magnet: 2.2, color: 0xf97316, auraColor: 0xfdba74
+            },
+            chloroplast: {
+                id: 'chloroplast', name: '광합성 엽록체', rarity: '신화',
+                mult: 3.75, speed: 0.30, magnet: 3.3, color: 0x22c55e, auraColor: 0x86efac
+            },
+            tardigrade: {
+                id: 'tardigrade', name: '불사의 우주물곰', rarity: '전설',
+                mult: 6.50, speed: 0.35, magnet: 7.0, color: 0xfacc15, auraColor: 0xfef08a
+            }
+        };
+
+        /*************************************************************************
+         * 2. CENTRAL GAME STATE
+         *************************************************************************/
+        const gameState = {
+            studentClass: '',
+            studentName: '신입연구원',
+
+            // 3 Distinct Currencies (Balanced so upgrades require genuine effort)
+            ribo: 0,     // 뽑기용 재화 (리보솜 캡슐)
+            stem: 0,     // 스킨용 재화 (줄기세포 코어)
+            enz: 0,      // 강화용 재화 (효소 결정)
+            totalScore: 0,
+
+            // Multi-Gacha Unlock Level (1, 2, or 3)
+            maxGachaPull: 1,
+
+            // Skins
+            unlockedSkins: [0],
+            equippedSkin: 0,
+
+            // Instant Bulk Pyramid Deposit Upgrade (Cost: 3rd Skin Price = 10,000,000 STEM)
+            instantDepositUnlocked: false,
+
+            // Pyramid & Conditional Timed Hot Spring
+            pyramidStage: 1,         // 1 to 5
+            highestPyramidStage: 1,
+            pyramidBlocksBuilt: 0,
+            pyramidTotalBlocks: 165,
+
+            springUnlocked: false,   // True ONLY when pyramid reaches 100%
+            springTimeLeft: 0,       // Base 60s when unlocked, extendable up to 300s (5m)
+            isInsideSpring: false,
+            springBuffTimer: 0,      // Lingering Speed & Lifting Power Buff Duration
+            springStacks: 0,         // Per-second cumulative Hot Spring buff stacks!
+
+            // Proportional Speed Slider (0.20 to 1.00)
+            speedRatio: 1.0,
+
+            // Backpack & Upgrades
+            bagItems: [],
+            bagLv: 1,
+            springLv: 1,
+            speedLv: 1,
+            yieldLv: 1,
+
+            get maxBag() {
+                const skinBag = SKIN_PACKS[this.equippedSkin].bagBonus;
+                const theme = PYRAMID_THEMES[this.pyramidStage - 1];
+                const stackLiftPerSec = Math.max(2, Math.round(theme.springLiftBonus * 0.15) + (this.springLv - 1) * 2);
+                const springLift = (this.isInsideSpring || this.springBuffTimer > 0)
+                    ? this.springStacks * stackLiftPerSec
+                    : 0;
+                return 12 + (this.bagLv - 1) * 6 + skinBag + springLift;
+            },
+
+            // Pets (Up to 6 equipped)
+            pets: [
+                { id: 'pet_starter', typeId: 'rbc', enhanced: false, equipped: true }
+            ],
+
+            soundEnabled: true
+        };
+        window.gameState = gameState;
+
+        // ---- 진행 저장 (새로고침해도 이어서) ----
+        const SAVE_KEY = 'bioPyramidSave';
+        const SAVE_SKIP = new Set(['maxBag', 'isInsideSpring']);
+        function saveGame() {
+            try {
+                const o = {};
+                for (const k of Object.keys(gameState)) { if (!SAVE_SKIP.has(k)) o[k] = gameState[k]; }
+                o.savedAt = Date.now();
+                localStorage.setItem(SAVE_KEY, JSON.stringify(o));
+            } catch (e) {}
+        }
+        (function loadGame() {
+            try {
+                const o = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+                if (!o || typeof o !== 'object') return;
+                for (const k of Object.keys(gameState)) {
+                    if (SAVE_SKIP.has(k) || !(k in o)) continue;
+                    const d = gameState[k], v = o[k];
+                    if (typeof d === 'number' && typeof v === 'number' && isFinite(v)) gameState[k] = v;
+                    else if (typeof d === 'boolean' && typeof v === 'boolean') gameState[k] = v;
+                    else if (typeof d === 'string' && typeof v === 'string') gameState[k] = v.slice(0, 20);
+                    else if (Array.isArray(d) && Array.isArray(v)) gameState[k] = v;
+                }
+                if (!Array.isArray(gameState.pets) || !gameState.pets.length) gameState.pets = [{ id: 'pet_starter', typeId: 'rbc', enhanced: false, equipped: true }];
+                gameState.pyramidStage = Math.max(1, Math.min(5, gameState.pyramidStage | 0));
+                gameState.highestPyramidStage = Math.max(gameState.pyramidStage, Math.min(5, gameState.highestPyramidStage | 0));
+                gameState.isInsideSpring = false;
+            } catch (e) {}
+        })();
+        // 학번·이름: 사이트 랭킹에 쓰는 '20800 홍길동' 형식과 같이 씀
+        try {
+            const who = (localStorage.getItem('bioRankWho') || '').match(/^(\d{5})\s+(\S+)$/);
+            if (who) { gameState.studentClass = who[1]; gameState.studentName = who[2]; }
+        } catch (e) {}
+        setInterval(saveGame, 5000);
+        addEventListener('pagehide', saveGame);
+        document.addEventListener('visibilitychange', () => { if (document.hidden) saveGame(); });
+
+        // 랭킹: BIO ARCADE 공용 랭킹(학번+이름)에서 실제 기록을 불러옴 (가짜 친구 없음)
+        const rivalBots = [];
+        let cloudRankings = [];
+
+        /*************************************************************************
+         * 3. WEB AUDIO SYNTHESIZER
+         *************************************************************************/
+        let audioCtx = null;
+        function playSfx(type) {
+            if (!gameState.soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'pickup') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(540, now);
+                    osc.frequency.exponentialRampToValueAtTime(920, now + 0.08);
+                    gain.gain.setValueAtTime(0.11, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'slotTick') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(720 + Math.random() * 180, now);
+                    gain.gain.setValueAtTime(0.06, now);
+                    gain.gain.linearRampToValueAtTime(0.005, now + 0.035);
+                    osc.start(now);
+                    osc.stop(now + 0.035);
+                } else if (type === 'slotStop') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.setValueAtTime(780, now + 0.05);
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'jackpot') {
+                    osc.type = 'triangle';
+                    [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((freq, idx) => {
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.085);
+                    });
+                    gain.gain.setValueAtTime(0.24, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.65);
+                    osc.start(now);
+                    osc.stop(now + 0.65);
+                } else if (type === 'build') {
+                    osc.type = 'triangle';
+                    const pitch = 320 + (gameState.pyramidBlocksBuilt % 30) * 20;
+                    osc.frequency.setValueAtTime(pitch, now);
+                    osc.frequency.exponentialRampToValueAtTime(pitch * 1.35, now + 0.1);
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'springUnlock') {
+                    osc.type = 'triangle';
+                    [440, 554, 659, 880, 1108].forEach((freq, idx) => {
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    });
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                } else if (type === 'upgrade') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587, now);
+                    osc.frequency.setValueAtTime(880, now + 0.09);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.24);
+                    osc.start(now);
+                    osc.stop(now + 0.24);
+                }
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            document.getElementById('btn-sound').style.opacity = gameState.soundEnabled ? '1' : '0.45';
+        }
+
+        /*************************************************************************
+         * 4. THREE.JS 3D VOXEL SCENE & 1.5x EXPANDED MAP ARCHITECTURE
+         *************************************************************************/
+        const container = document.getElementById('game-canvas');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x8be9fd);
+
+        const aspect = window.innerWidth / window.innerHeight;
+        const BASE_VIEW = 23;
+        // 세로 화면(휴대폰)에서는 더 넓게 보이도록 카메라 범위를 키움
+        const viewFor = asp => asp < 1 ? BASE_VIEW * Math.min(1.9, Math.pow(1 / asp, 0.65)) : BASE_VIEW;
+        let viewSize = viewFor(window.innerWidth / window.innerHeight);
+        const camera = new THREE.OrthographicCamera(
+            -viewSize * aspect, viewSize * aspect,
+            viewSize, -viewSize,
+            1, 200
+        );
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.74);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xfffbeb, 0.88);
+        dirLight.position.set(36, 56, 32);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.left = -60;
+        dirLight.shadow.camera.right = 60;
+        dirLight.shadow.camera.top = 60;
+        dirLight.shadow.camera.bottom = -60;
+        scene.add(dirLight);
+
+        const sharedBoxGeo = new THREE.BoxGeometry(1, 1, 1);
+        function createVoxel(w, h, d, color, x = 0, y = 0, z = 0, castShadow = true) {
+            const mat = new THREE.MeshLambertMaterial({ color });
+            const mesh = new THREE.Mesh(sharedBoxGeo, mat);
+            mesh.scale.set(w, h, d);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = castShadow;
+            mesh.receiveShadow = true;
+            return mesh;
+        }
+
+        const worldGroup = new THREE.Group();
+        scene.add(worldGroup);
+
+        // 1.5x Expanded Crossy Road Striped Voxel Ground (82x82 Map Size)
+        for (let z = -40; z <= 40; z += 2) {
+            const stripeCol = (Math.abs(z / 2) % 2 === 0) ? 0x74d66a : 0x68c95e;
+            worldGroup.add(createVoxel(82, 2, 2, stripeCol, 0, -1, z, false));
+        }
+        worldGroup.add(createVoxel(82, 6, 82, 0x784b27, 0, -5, 0, false));
+
+        // Trees placed across the 1.5x larger map
+        function addVoxelTree(tx, tz) {
+            const g = new THREE.Group();
+            g.add(createVoxel(1.1, 2.2, 1.1, 0x8d5524, 0, 1.1, 0));
+            g.add(createVoxel(2.8, 1.6, 2.8, 0x2ecc71, 0, 2.8, 0));
+            g.add(createVoxel(2.1, 1.3, 2.1, 0x58d68d, 0, 4.1, 0));
+            g.position.set(tx, 0, tz);
+            worldGroup.add(g);
+        }
+        [
+            [-34, -32], [-35, -14], [-34, 25], [34, -28], [35, 22],
+            [28, 34], [-24, 34], [0, -34], [32, -5], [-30, 8],
+            [-18, -30], [20, -32], [-28, -22], [28, 12]
+        ].forEach(([x, z]) => addVoxelTree(x, z));
+
+        // --- PYRAMID & DROP ZONE ---
+        const pyramidCenter = new THREE.Vector3(0, 0, -8.5);
+        const dropPadPos = new THREE.Vector3(0, 0, 5.0);
+
+        worldGroup.add(createVoxel(14.5, 0.45, 14.5, 0xe2e8f0, pyramidCenter.x, 0.22, pyramidCenter.z, false));
+        worldGroup.add(createVoxel(4.6, 0.25, 4.6, 0xf59e0b, dropPadPos.x, 0.12, dropPadPos.z, false));
+        worldGroup.add(createVoxel(3.6, 0.32, 3.6, 0xfef08a, dropPadPos.x, 0.16, dropPadPos.z, false));
+
+        const pyramidSlots = [];
+        const layerSizes = [9, 7, 5, 3, 1];
+        layerSizes.forEach((size, layerIdx) => {
+            const half = (size - 1) / 2;
+            for (let gx = -half; gx <= half; gx++) {
+                for (let gz = -half; gz <= half; gz++) {
+                    pyramidSlots.push({
+                        pos: new THREE.Vector3(pyramidCenter.x + gx * 1.15, 0.9 + layerIdx * 1.15, pyramidCenter.z + gz * 1.15),
+                        tierIdx: layerIdx
+                    });
+                }
+            }
+        });
+        gameState.pyramidTotalBlocks = pyramidSlots.length;
+
+        const pyramidGroup = new THREE.Group();
+        scene.add(pyramidGroup);
+
+        function rebuildPyramidVisuals() {
+            while (pyramidGroup.children.length > 0) pyramidGroup.remove(pyramidGroup.children[0]);
+            const theme = PYRAMID_THEMES[gameState.pyramidStage - 1];
+            const count = Math.min(gameState.pyramidBlocksBuilt, pyramidSlots.length);
+            for (let i = 0; i < count; i++) {
+                const slot = pyramidSlots[i];
+                const col = theme.tierColors[slot.tierIdx];
+                pyramidGroup.add(createVoxel(1.06, 1.06, 1.06, col, slot.pos.x, slot.pos.y, slot.pos.z));
+            }
+        }
+
+        // --- CONDITIONAL TIMED HOT SPRING ZONE (Spawns ONLY when Pyramid is 100%) ---
+        const springPos = new THREE.Vector3(-21.5, 0, 6);
+        const springGroup = new THREE.Group();
+        springGroup.position.copy(springPos);
+        worldGroup.add(springGroup);
+
+        const springRimOuter = createVoxel(8.6, 0.9, 8.6, 0x334155, 0, 0.45, 0);
+        const springRimInner = createVoxel(7.6, 1.15, 7.6, 0x475569, 0, 0.55, 0);
+        const springWaterMat = new THREE.MeshLambertMaterial({ color: 0x2dd4bf, transparent: true, opacity: 0.88 });
+        const springWaterMesh = new THREE.Mesh(sharedBoxGeo, springWaterMat);
+        springWaterMesh.scale.set(6.7, 0.95, 6.7);
+        springWaterMesh.position.set(0, 0.72, 0);
+
+        const sealedCoverGroup = new THREE.Group();
+        const coverPlate = createVoxel(7.0, 0.4, 7.0, 0x1e293b, 0, 1.15, 0);
+        const coverBar1 = createVoxel(7.2, 0.25, 0.6, 0xf59e0b, 0, 1.38, 0);
+        const coverBar2 = createVoxel(0.6, 0.25, 7.2, 0xf59e0b, 0, 1.38, 0);
+        sealedCoverGroup.add(coverPlate, coverBar1, coverBar2);
+
+        springGroup.add(springRimOuter, springRimInner, springWaterMesh, sealedCoverGroup);
+
+        const steamParticles = [];
+        for (let i = 0; i < 14; i++) {
+            const p = createVoxel(0.45, 0.45, 0.45, 0x99f6e4,
+                (Math.random() - 0.5) * 5.2,
+                1.2 + Math.random() * 3.2,
+                (Math.random() - 0.5) * 5.2,
+                false
+            );
+            p.material.transparent = true;
+            p.material.opacity = 0.75;
+            springGroup.add(p);
+            steamParticles.push({ mesh: p, speed: 0.9 + Math.random() * 0.9 });
+        }
+
+        function refreshHotSpringTheme3D() {
+            const theme = PYRAMID_THEMES[gameState.pyramidStage - 1];
+            springRimOuter.material.color.setHex(theme.springRimColor);
+            springWaterMat.color.setHex(theme.springWaterColor);
+
+            const active = gameState.springUnlocked && gameState.springTimeLeft > 0;
+            springWaterMesh.visible = active;
+            sealedCoverGroup.visible = !active;
+            steamParticles.forEach(sp => {
+                sp.mesh.visible = active;
+                sp.mesh.material.color.setHex(theme.springWaterColor);
+            });
+        }
+
+        // --- RIBOSOME GACHA MACHINE ZONE ---
+        const gachaPos = new THREE.Vector3(21.5, 0, -3);
+        const gachaGroup = new THREE.Group();
+        gachaGroup.position.copy(gachaPos);
+        worldGroup.add(gachaGroup);
+        gachaGroup.add(createVoxel(4.2, 2.2, 4.2, 0xdb2777, 0, 1.1, 0));
+        const domeMat = new THREE.MeshLambertMaterial({ color: 0xfce7f3, transparent: true, opacity: 0.6 });
+        const dome = new THREE.Mesh(sharedBoxGeo, domeMat);
+        dome.scale.set(3.5, 2.8, 3.5);
+        dome.position.set(0, 3.6, 0);
+        gachaGroup.add(dome);
+        [0xfacc15, 0x38bdf8, 0xa855f7, 0x4ade80].forEach((c, idx) => {
+            gachaGroup.add(createVoxel(0.85, 0.85, 0.85, c, (idx % 2 - 0.5) * 1.2, 2.9 + Math.floor(idx / 2), (idx % 2 - 0.5) * 1.1));
+        });
+
+        /*************************************************************************
+         * 5. PLAYER CHARACTER + 5 SKIN 3D AURAS + ENHANCED PET 3D AURAS
+         *************************************************************************/
+        const playerGroup = new THREE.Group();
+        playerGroup.position.set(0, 0, 11);
+        scene.add(playerGroup);
+
+        const playerVisual = new THREE.Group();
+        playerGroup.add(playerVisual);
+
+        const coatMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+        const visorMat = new THREE.MeshLambertMaterial({ color: 0x38bdf8 });
+
+        const playerBody = new THREE.Mesh(sharedBoxGeo, coatMat);
+        playerBody.scale.set(1.25, 1.45, 0.95);
+        playerBody.position.set(0, 1.1, 0);
+        playerBody.castShadow = true;
+
+        const playerHead = createVoxel(1.35, 1.25, 1.25, 0xffedd5, 0, 2.45, 0);
+        const hairMesh = createVoxel(1.42, 0.45, 1.32, 0x1e293b, 0, 2.95, 0);
+        const visorMesh = new THREE.Mesh(sharedBoxGeo, visorMat);
+        visorMesh.scale.set(1.42, 0.36, 0.36);
+        visorMesh.position.set(0, 2.5, 0.56);
+
+        const legL = createVoxel(0.45, 0.5, 0.45, 0x334155, -0.32, 0.25, 0);
+        const legR = createVoxel(0.45, 0.5, 0.45, 0x334155, 0.32, 0.25, 0);
+        const backpackMesh = createVoxel(1.0, 1.1, 0.55, 0x10b981, 0, 1.25, -0.65);
+
+        playerVisual.add(playerBody, playerHead, hairMesh, visorMesh, legL, legR, backpackMesh);
+
+        const backStackGroup = new THREE.Group();
+        backStackGroup.position.set(0, 1.9, -0.65);
+        playerVisual.add(backStackGroup);
+
+        const playerAuraGroup = new THREE.Group();
+        playerGroup.add(playerAuraGroup);
+
+        function rebuildPlayerSkinAndAura3D() {
+            const skin = SKIN_PACKS[gameState.equippedSkin];
+            coatMat.color.setHex(skin.coatColor);
+            visorMat.color.setHex(skin.visorColor);
+
+            while (playerAuraGroup.children.length > 0) {
+                playerAuraGroup.remove(playerAuraGroup.children[0]);
+            }
+
+            if (skin.auraType === 'emerald_ring') {
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const node = createVoxel(0.38, 0.18, 0.38, 0x10b981, Math.cos(angle) * 1.6, 0.2, Math.sin(angle) * 1.6, false);
+                    playerAuraGroup.add(node);
+                }
+            } else if (skin.auraType === 'cyber_hex') {
+                for (let i = 0; i < 10; i++) {
+                    const angle = (i / 10) * Math.PI * 2;
+                    const col = i % 2 === 0 ? 0x06b6d4 : 0xf43f5e;
+                    const node = createVoxel(0.42, 0.42, 0.42, col, Math.cos(angle) * 1.95, 0.6 + (i % 2) * 0.6, Math.sin(angle) * 1.95, false);
+                    playerAuraGroup.add(node);
+                }
+            } else if (skin.auraType === 'archon_helix') {
+                for (let i = 0; i < 14; i++) {
+                    const angle = (i / 14) * Math.PI * 2;
+                    const col = i % 2 === 0 ? 0xfacc15 : 0xa855f7;
+                    const node = createVoxel(0.45, 0.45, 0.45, col, Math.cos(angle) * 2.2, 0.35 + (i % 3) * 0.65, Math.sin(angle) * 2.2, false);
+                    playerAuraGroup.add(node);
+                }
+                const crown = createVoxel(0.9, 0.4, 0.9, 0xfacc15, 0, 3.6, 0, false);
+                playerAuraGroup.add(crown);
+            } else if (skin.auraType === 'omega_sovereign') {
+                for (let i = 0; i < 20; i++) {
+                    const angle = (i / 20) * Math.PI * 2;
+                    const colors = [0xfef08a, 0xec4899, 0x38bdf8, 0xa855f7];
+                    const node = createVoxel(0.5, 0.5, 0.5, colors[i % 4], Math.cos(angle) * 2.6, 0.3 + (i % 4) * 0.55, Math.sin(angle) * 2.6, false);
+                    playerAuraGroup.add(node);
+                }
+                const wingL = createVoxel(1.6, 1.8, 0.25, 0xfef08a, -1.4, 2.1, -0.5, false);
+                const wingR = createVoxel(1.6, 1.8, 0.25, 0xfef08a, 1.4, 2.1, -0.5, false);
+                const halo = createVoxel(1.2, 0.35, 1.2, 0xfacc15, 0, 3.9, 0, false);
+                playerAuraGroup.add(wingL, wingR, halo);
+            }
+        }
+
+        function updateBackpackStackVisual() {
+            while (backStackGroup.children.length > 0) backStackGroup.remove(backStackGroup.children[0]);
+            gameState.bagItems.slice(0, 22).forEach((item, idx) => {
+                backStackGroup.add(createVoxel(0.68, 0.4, 0.68, item.color, 0, idx * 0.42, 0));
+            });
+        }
+
+        // --- EQUIPPED PETS + SPECTACULAR ENHANCED PET 3D AURAS ---
+        const petsWorldGroup = new THREE.Group();
+        scene.add(petsWorldGroup);
+        let petMeshes = [];
+
+        function createVoxelPetMesh(typeId, enhanced) {
+            const root = new THREE.Group();
+            const info = PET_TYPES[typeId];
+            const baseCol = info.color;
+
+            const bodyGroup = new THREE.Group();
+            root.add(bodyGroup);
+
+            if (typeId === 'rbc') {
+                bodyGroup.add(createVoxel(0.95, 0.45, 0.95, baseCol, 0, 0.5, 0));
+                bodyGroup.add(createVoxel(0.55, 0.32, 0.55, 0x991b1b, 0, 0.62, 0));
+            } else if (typeId === 'phage') {
+                bodyGroup.add(createVoxel(0.75, 0.85, 0.75, baseCol, 0, 1.1, 0));
+                bodyGroup.add(createVoxel(0.28, 0.5, 0.28, 0xe2e8f0, 0, 0.55, 0));
+                bodyGroup.add(createVoxel(0.95, 0.2, 0.95, 0x94a3b8, 0, 0.3, 0));
+            } else if (typeId === 'magbact') {
+                // Magnetotactic Bacteria with Red/Blue Magnetic Poles
+                bodyGroup.add(createVoxel(1.15, 0.65, 0.75, baseCol, 0, 0.68, 0));
+                bodyGroup.add(createVoxel(0.32, 0.55, 0.32, 0xef4444, -0.38, 1.15, 0));
+                bodyGroup.add(createVoxel(0.32, 0.55, 0.32, 0x3b82f6, 0.38, 1.15, 0));
+            } else if (typeId === 'chloroplast') {
+                // Chloroplast Voxel with Bright Green Thylakoid Stacks
+                bodyGroup.add(createVoxel(1.18, 0.68, 0.85, baseCol, 0, 0.68, 0));
+                bodyGroup.add(createVoxel(0.42, 0.35, 0.42, 0xbbf7d0, -0.28, 1.1, 0));
+                bodyGroup.add(createVoxel(0.42, 0.35, 0.42, 0xfef08a, 0.28, 1.1, 0));
+            } else if (typeId === 'mito') {
+                bodyGroup.add(createVoxel(1.1, 0.7, 0.75, baseCol, 0, 0.7, 0));
+                bodyGroup.add(createVoxel(0.85, 0.78, 0.45, 0xfef08a, 0, 0.74, 0));
+            } else {
+                bodyGroup.add(createVoxel(1.2, 0.78, 0.88, baseCol, 0, 0.65, 0));
+                bodyGroup.add(createVoxel(0.58, 0.58, 0.6, 0xfef08a, 0, 0.65, 0.55));
+            }
+
+            const auraOrbitGroup = new THREE.Group();
+            root.add(auraOrbitGroup);
+
+            if (enhanced) {
+                const crown = createVoxel(0.5, 0.35, 0.5, 0xfacc15, 0, 1.75, 0, false);
+                root.add(crown);
+
+                for (let i = 0; i < 6; i++) {
+                    const ang = (i / 6) * Math.PI * 2;
+                    const crystal = createVoxel(
+                        0.28, 0.28, 0.28,
+                        i % 2 === 0 ? 0xfef08a : info.auraColor,
+                        Math.cos(ang) * 1.15,
+                        0.55 + (i % 2) * 0.35,
+                        Math.sin(ang) * 1.15,
+                        false
+                    );
+                    auraOrbitGroup.add(crystal);
+                }
+            }
+
+            return { root, auraOrbitGroup };
+        }
+
+        function rebuildEquippedPets3D() {
+            while (petsWorldGroup.children.length > 0) petsWorldGroup.remove(petsWorldGroup.children[0]);
+            petMeshes = [];
+            const equipped = gameState.pets.filter(p => p.equipped).slice(0, 6);
+            equipped.forEach((pet, idx) => {
+                const built = createVoxelPetMesh(pet.typeId, pet.enhanced);
+                built.root.position.copy(playerGroup.position);
+                petsWorldGroup.add(built.root);
+                petMeshes.push({ root: built.root, auraOrbitGroup: built.auraOrbitGroup, idx });
+            });
+        }
+
+        /*************************************************************************
+         * 6. FIELD NUTRIENTS SPAWNER (BALANCED ECONOMY EARNINGS)
+         *************************************************************************/
+        const fieldNutrients = [];
+        const nutrientGroup = new THREE.Group();
+        scene.add(nutrientGroup);
+
+        const NODE_TYPES = [
+            { kind: 'ribo', name: '리보솜 캡슐 결정', color: 0xf43f5e, baseVal: 5 },
+            { kind: 'stem', name: '줄기세포 코어 결정', color: 0xa855f7, baseVal: 4 },
+            { kind: 'enz',  name: '효소 크리스탈 결정', color: 0xfacc15, baseVal: 5 }
+        ];
+
+        function spawnFieldNutrient() {
+            if (fieldNutrients.length >= 44) return;
+            let rx = (Math.random() - 0.5) * 66;
+            let rz = (Math.random() - 0.5) * 64;
+            if (Math.abs(rx) < 10 && Math.abs(rz + 8) < 10) rx += (rx > 0 ? 13 : -13);
+
+            const nType = NODE_TYPES[Math.floor(Math.random() * NODE_TYPES.length)];
+            const mesh = createVoxel(0.88, 0.88, 0.88, nType.color, rx, 0.65, rz);
+            nutrientGroup.add(mesh);
+            fieldNutrients.push({
+                mesh,
+                kind: nType.kind,
+                color: nType.color,
+                baseVal: nType.baseVal,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+        for (let i = 0; i < 40; i++) spawnFieldNutrient();
+
+        const flyingBlocks = [];
+        function launchBlockToPyramid(item) {
+            const targetIdx = Math.min(gameState.pyramidBlocksBuilt, pyramidSlots.length - 1);
+            const slot = pyramidSlots[targetIdx];
+            const mesh = createVoxel(0.82, 0.82, 0.82, item.color, playerGroup.position.x, 2.2, playerGroup.position.z);
+            scene.add(mesh);
+            flyingBlocks.push({
+                mesh,
+                startPos: mesh.position.clone(),
+                targetPos: slot.pos.clone(),
+                progress: 0,
+                kind: item.kind,
+                baseVal: item.baseVal
+            });
+        }
+
+        /*************************************************************************
+         * 7. MULTIPLIERS, MAGNET RADIUS, PROPORTIONAL SPEED & HOT SPRING LOGIC
+         *************************************************************************/
+        function getGlobalMultiplier() {
+            const themeMult = PYRAMID_THEMES[gameState.pyramidStage - 1].baseMult;
+            const skinMult = SKIN_PACKS[gameState.equippedSkin].mult;
+            const yieldMult = 1 + (gameState.yieldLv - 1) * 0.40;
+            const petBonus = gameState.pets
+                .filter(p => p.equipped)
+                .reduce((sum, p) => sum + PET_TYPES[p.typeId].mult * (p.enhanced ? 2.8 : 1), 0);
+
+            // Hot Spring no longer multiplies currencies; it exclusively boosts speed & stone-carrying capacity
+            return themeMult * skinMult * yieldMult * (1 + petBonus);
+        }
+
+        function getMaxMoveSpeed() {
+            const base = 11.0;
+            const upg = (gameState.speedLv - 1) * 1.35;
+            const skinSpeed = SKIN_PACKS[gameState.equippedSkin].speedBonus;
+            const petSpeed = gameState.pets
+                .filter(p => p.equipped)
+                .reduce((sum, p) => sum + PET_TYPES[p.typeId].speed * (p.enhanced ? 1.5 : 1), 0);
+
+            const theme = PYRAMID_THEMES[gameState.pyramidStage - 1];
+            const stackSpeedPerSec = (theme.springSpeedBonus * 0.12) + (gameState.springLv - 1) * 0.015;
+            const springSpeedBonus = (gameState.isInsideSpring || gameState.springBuffTimer > 0)
+                ? gameState.springStacks * stackSpeedPerSec
+                : 0;
+
+            return (base + upg) * (1 + skinSpeed + petSpeed + springSpeedBonus);
+        }
+
+        function getMoveSpeed() {
+            return getMaxMoveSpeed() * gameState.speedRatio;
+        }
+
+        function getMagnetRadius() {
+            const baseRadius = gameState.equippedSkin === 4 ? 5.8 : 2.3;
+            const petMagnet = gameState.pets
+                .filter(p => p.equipped)
+                .reduce((sum, p) => sum + (PET_TYPES[p.typeId].magnet || 0) * (p.enhanced ? 1.65 : 1.0), 0);
+            return baseRadius + petMagnet;
+        }
+
+        function changeSpeedRatio(val) {
+            const pct = Math.max(20, Math.min(100, Number(val)));
+            gameState.speedRatio = pct / 100;
+            const label = document.getElementById('speed-ratio-label');
+            if (label) {
+                label.innerText = `${pct}% (실제 속도: ${getMoveSpeed().toFixed(1)})`;
+            }
+        }
+
+        function grantCurrenciesFromBlock(kind, baseVal) {
+            const theme = PYRAMID_THEMES[gameState.pyramidStage - 1];
+            const mult = getGlobalMultiplier();
+
+            const riboGain = Math.max(1, Math.round(baseVal * mult * theme.riboWeight * (kind === 'ribo' ? 1.35 : 0.45)));
+            const stemGain = Math.max(1, Math.round(baseVal * mult * theme.stemWeight * (kind === 'stem' ? 1.35 : 0.40)));
+            const enzGain  = Math.max(1, Math.round(baseVal * mult * theme.enzWeight  * (kind === 'enz'  ? 1.35 : 0.45)));
+
+            gameState.ribo += riboGain;
+            gameState.stem += stemGain;
+            gameState.enz  += enzGain;
+            gameState.totalScore += (riboGain + stemGain * 2 + enzGain);
+
+            spawnFloatingText(
+                pyramidCenter,
+                `+${riboGain.toLocaleString()} RIBO  +${stemGain.toLocaleString()} STEM  +${enzGain.toLocaleString()} ENZ`,
+                'text-amber-300'
+            );
+        }
+
+        // Triggered automatically when Pyramid reaches 100%
+        function unlockTimedHotSpring() {
+            if (gameState.springUnlocked) return;
+            gameState.springUnlocked = true;
+            gameState.springTimeLeft = 60; // Base 1 Minute (60 seconds)
+            playSfx('springUnlock');
+            refreshHotSpringTheme3D();
+            updateHUD();
+
+            const theme = PYRAMID_THEMES[gameState.pyramidStage - 1];
+            spawnFloatingText(
+                springPos,
+                `${theme.springName} 개방! (입수 시 초당 속도·돌 드는 힘 무제한 중첩!)`,
+                'text-emerald-300'
+            );
+        }
+
+        // Extend Hot Spring Time (+1 Minute per purchase, up to Max 5 Minutes / 300s, Cost increased 1000x)
+        function extendHotSpringTime() {
+            if (!gameState.springUnlocked) {
+                spawnFloatingText(playerGroup.position, '먼저 피라미드를 100% 완공해야 온천이 열립니다!', 'text-rose-300');
+                return;
+            }
+            if (gameState.springTimeLeft >= 300) {
+                spawnFloatingText(playerGroup.position, '이미 최대 제한시간(5분)에 도달했습니다!', 'text-amber-300');
+                return;
+            }
+
+            const costEnz = 250000 * gameState.pyramidStage;
+            const costRibo = 150000 * gameState.pyramidStage;
+
+            if (gameState.enz < costEnz || gameState.ribo < costRibo) {
+                spawnFloatingText(playerGroup.position, `연장 재화 부족 (${costEnz.toLocaleString()} ENZ + ${costRibo.toLocaleString()} RIBO 필요)`, 'text-rose-400');
+                return;
+            }
+
+            gameState.enz -= costEnz;
+            gameState.ribo -= costRibo;
+            gameState.springTimeLeft = Math.min(300, gameState.springTimeLeft + 60);
+
+            playSfx('upgrade');
+            spawnFloatingText(springPos, '온천 제한시간 +1분 연장 완료! (최대 5분)', 'text-emerald-300');
+            updateHUD();
+            renderUpgradeModal();
+        }
+
+        function advanceToNextPyramid() {
+            if (gameState.pyramidBlocksBuilt < gameState.pyramidTotalBlocks) return;
+            if (gameState.pyramidStage < 5) {
+                gameState.pyramidStage++;
+                if (gameState.pyramidStage > gameState.highestPyramidStage) {
+                    gameState.highestPyramidStage = gameState.pyramidStage;
+                }
+            }
+            gameState.pyramidBlocksBuilt = 0;
+            gameState.springUnlocked = false;
+            gameState.springTimeLeft = 0;
+
+            rebuildPyramidVisuals();
+            refreshHotSpringTheme3D();
+            playSfx('springUnlock');
+            saveGame(); setTimeout(reportStage, 1200);
+
+            const nextTheme = PYRAMID_THEMES[gameState.pyramidStage - 1];
+            spawnFloatingText(playerGroup.position, `${nextTheme.name} 착공 시작!`, 'text-amber-300');
+            updateHUD();
+            if (window.pushCloudScore) window.pushCloudScore();
+        }
+
+        /*************************************************************************
+         * 8. SLOT MACHINE GACHA (0.5% LEGENDARY RATE & MAGNET PETS)
+         *************************************************************************/
+        let isSlotSpinning = false;
+
+        function renderIdleSlotReels() {
+            const stageContainer = document.getElementById('gacha-cards-container');
+            if (!stageContainer || isSlotSpinning) return;
+
+            ['rbc', 'phage', 'magbact', 'chloroplast', 'mito', 'tardigrade'].forEach(k => {
+                const el = document.getElementById('mini-preview-' + k);
+                if (el && !el.innerHTML) el.innerHTML = getPetIllustrationSVG(k, false);
+            });
+
+            stageContainer.innerHTML = '';
+            const previewOrder = ['rbc', 'chloroplast', 'tardigrade'];
+            for (let i = 0; i < 3; i++) {
+                const locked = (i + 1) > gameState.maxGachaPull;
+                const pKey = previewOrder[i];
+                const info = PET_TYPES[pKey];
+                const reel = document.createElement('div');
+                reel.className = `rounded-2xl p-3 flex flex-col items-center justify-between border-2 transition ${
+                    locked
+                        ? 'bg-slate-950/60 border-slate-800 opacity-50'
+                        : 'bg-slate-900/90 border-indigo-400/40 shadow-inner'
+                }`;
+                reel.innerHTML = `
+                    <div class="text-[10px] font-black uppercase tracking-wider ${locked ? 'text-slate-500' : 'text-indigo-300'}">
+                        SLOT REEL #${i + 1} ${locked ? '[잠김]' : '[대기]'}
+                    </div>
+                    <div class="w-16 h-16 my-1">
+                        ${getPetIllustrationSVG(pKey, false)}
+                    </div>
+                    <div class="text-xs font-extrabold ${locked ? 'text-slate-500' : 'text-white'}">
+                        ${locked ? (i === 1 ? '듀얼 팩 해금 필요' : '트리플 팩 해금 필요') : `${info.name} 등 출현`}
+                    </div>
+                `;
+                stageContainer.appendChild(reel);
+            }
+        }
+
+        function triggerHighTierImpact(hasLegendary) {
+            const modalBox = document.getElementById('gacha-modal-box');
+            const impactLayer = document.getElementById('gacha-impact-layer');
+            if (!modalBox || !impactLayer) return;
+
+            modalBox.classList.remove('impact-shake');
+            void modalBox.offsetWidth;
+            modalBox.classList.add('impact-shake');
+
+            impactLayer.innerHTML = '';
+            const ring = document.createElement('div');
+            ring.className = 'shockwave-ring';
+            impactLayer.appendChild(ring);
+
+            const colors = hasLegendary
+                ? ['#facc15', '#fef08a', '#f472b6', '#38bdf8', '#a855f7']
+                : ['#fb923c', '#22d3ee', '#facc15', '#4ade80'];
+
+            for (let i = 0; i < 34; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 60 + Math.random() * 190;
+                piece.style.setProperty('--tx', `${Math.cos(angle) * dist}px`);
+                piece.style.setProperty('--ty', `${Math.sin(angle) * dist}px`);
+                piece.style.setProperty('--rot', `${Math.random() * 720 - 360}deg`);
+                piece.style.background = colors[i % colors.length];
+                impactLayer.appendChild(piece);
+            }
+
+            setTimeout(() => {
+                if (impactLayer) impactLayer.innerHTML = '';
+            }, 1200);
+        }
+        // Slot Upgrade Pack Costs Increased 100x
+        function buyMultiGachaPack(targetPack) {
+            if (targetPack === 2 && gameState.maxGachaPull < 2) {
+                if (gameState.ribo < 80000 || gameState.enz < 40000) {
+                    spawnFloatingText(playerGroup.position, '듀얼 팩 구매 재화가 부족합니다! (80,000 RIBO + 40,000 ENZ 필요)', 'text-rose-400');
+                    return;
+                }
+                gameState.ribo -= 80000;
+                gameState.enz -= 40000;
+                gameState.maxGachaPull = 2;
+                playSfx('upgrade');
+            } else if (targetPack === 3 && gameState.maxGachaPull < 3) {
+                if (gameState.ribo < 350000 || gameState.enz < 180000) {
+                    spawnFloatingText(playerGroup.position, '트리플 팩 구매 재화가 부족합니다! (350,000 RIBO + 180,000 ENZ 필요)', 'text-rose-400');
+                    return;
+                }
+                gameState.ribo -= 350000;
+                gameState.enz -= 180000;
+                gameState.maxGachaPull = 3;
+                playSfx('upgrade');
+            }
+            updateGachaModalUI();
+            renderIdleSlotReels();
+            updateHUD();
+        }
+
+        function updateGachaModalUI() {
+            const btnPack2 = document.getElementById('btn-buy-pack2');
+            const btnPack3 = document.getElementById('btn-buy-pack3');
+            const btnPull1 = document.getElementById('btn-pull-1');
+            const btnPull2 = document.getElementById('btn-pull-2');
+            const btnPull3 = document.getElementById('btn-pull-3');
+
+            if (gameState.maxGachaPull >= 2) {
+                btnPack2.innerText = '해금 완료';
+                btnPack2.disabled = true;
+            }
+            if (gameState.maxGachaPull >= 3) {
+                btnPack3.innerText = '해금 완료';
+                btnPack3.disabled = true;
+            }
+            btnPull1.disabled = isSlotSpinning;
+            btnPull2.disabled = isSlotSpinning || gameState.maxGachaPull < 2;
+            btnPull3.disabled = isSlotSpinning || gameState.maxGachaPull < 3;
+        }
+
+        function pullGacha(count) {
+            if (isSlotSpinning || count > gameState.maxGachaPull) return;
+            const costs = { 1: 1200, 2: 2100, 3: 3000 };
+            const cost = costs[count];
+
+            if (gameState.ribo < cost) {
+                spawnFloatingText(playerGroup.position, `리보솜 캡슐(${cost.toLocaleString()} RIBO) 재화가 부족합니다!`, 'text-rose-400');
+                return;
+            }
+            gameState.ribo -= cost;
+            updateHUD();
+
+            isSlotSpinning = true;
+            updateGachaModalUI();
+
+            const subtitle = document.getElementById('gacha-stage-subtitle');
+            subtitle.innerText = `${count}개의 리보솜 슬롯 릴이 고속 회전 중입니다...`;
+
+            const stageContainer = document.getElementById('gacha-cards-container');
+            stageContainer.innerHTML = '';
+
+            const petKeys = ['rbc', 'phage', 'magbact', 'chloroplast', 'mito', 'tardigrade'];
+            const finalResults = [];
+            const reelDomElements = [];
+
+            for (let i = 0; i < count; i++) {
+                const luckBoost = count === 3 ? 1.5 : 1.0;
+                const r = Math.random() * 100; // 0.0000 to 100.0000%
+                let chosen = 'rbc';
+                // Exact user-specified probability table:
+                // Tardigrade: 0.005%, Mitochondria: 0.05%, Chloroplast: 2% (0.02 probability), Magnetotactic Bacteria: 5%, Bacteriophage: 30%, Red Blood Cell Slime: remaining (~62.945%, base >=55%)
+                const pTardi = 0.005 * luckBoost;
+                const pMito  = pTardi + 0.05 * luckBoost;
+                const pChloro = pMito + 2.0 * luckBoost;
+                const pMag   = pChloro + 5.0 * luckBoost;
+                const pPhage = pMag + 30.0;
+
+                if (r < pTardi) chosen = 'tardigrade';
+                else if (r < pMito) chosen = 'mito';
+                else if (r < pChloro) chosen = 'chloroplast';
+                else if (r < pMag) chosen = 'magbact';
+                else if (r < pPhage) chosen = 'phage';
+                else chosen = 'rbc';
+
+                finalResults.push(chosen);
+
+                const reelWrapper = document.createElement('div');
+                reelWrapper.className = 'relative overflow-hidden rounded-2xl bg-slate-950 border-2 border-pink-400/60 p-3 flex flex-col items-center justify-between min-h-[160px] shadow-lg';
+                reelWrapper.innerHTML = `
+                    <div class="text-[10px] font-black text-pink-300 uppercase tracking-wider z-10">SLOT REEL #${i + 1}</div>
+                    <div id="slot-reel-inner-${i}" class="slot-spinning flex flex-col items-center my-1 z-10">
+                        <div class="w-16 h-16">${getPetIllustrationSVG(petKeys[i % petKeys.length], false)}</div>
+                        <div class="text-xs font-black text-slate-300 mt-1">추출 중...</div>
+                    </div>
+                    <div id="slot-reel-badge-${i}" class="text-[10px] font-bold text-slate-400 z-10">회전 가속 중</div>
+                `;
+                stageContainer.appendChild(reelWrapper);
+                reelDomElements.push(reelWrapper);
+            }
+
+            let stoppedCount = 0;
+            finalResults.forEach((chosenKey, idx) => {
+                let tickCount = 0;
+                const spinInterval = setInterval(() => {
+                    tickCount++;
+                    const tempKey = petKeys[tickCount % petKeys.length];
+                    const innerEl = document.getElementById(`slot-reel-inner-${idx}`);
+                    if (innerEl) {
+                        innerEl.innerHTML = `
+                            <div class="w-16 h-16">${getPetIllustrationSVG(tempKey, false)}</div>
+                            <div class="text-xs font-black text-white mt-1">${PET_TYPES[tempKey].name}</div>
+                        `;
+                    }
+                    playSfx('slotTick');
+                }, 85);
+
+                const stopDelay = 650 + idx * 420;
+                setTimeout(() => {
+                    clearInterval(spinInterval);
+                    const info = PET_TYPES[chosenKey];
+                    const isHighTier = (chosenKey === 'mito' || chosenKey === 'chloroplast' || chosenKey === 'magbact' || chosenKey === 'tardigrade');
+                    const isLegend = (chosenKey === 'tardigrade' || chosenKey === 'chloroplast');
+
+                    const wrapper = reelDomElements[idx];
+                    const innerEl = document.getElementById(`slot-reel-inner-${idx}`);
+                    const badgeEl = document.getElementById(`slot-reel-badge-${idx}`);
+
+                    if (innerEl) {
+                        innerEl.classList.remove('slot-spinning');
+                        innerEl.innerHTML = `
+                            <div class="w-16 h-16 transform scale-110 transition">${getPetIllustrationSVG(chosenKey, isLegend)}</div>
+                            <div class="text-sm font-black text-white mt-1">${info.name}</div>
+                        `;
+                    }
+                    if (badgeEl) {
+                        badgeEl.className = `text-xs font-black px-2.5 py-0.5 rounded-full z-10 ${
+                            isLegend ? 'bg-amber-400 text-slate-950' : isHighTier ? 'bg-cyan-500 text-slate-950' : 'bg-emerald-500/20 text-emerald-300'
+                        }`;
+                        badgeEl.innerText = `${info.rarity} · 자력 +${info.magnet}m · 효율 +${Math.round(info.mult * 100)}%`;
+                    }
+
+                    if (isHighTier && wrapper) {
+                        wrapper.className = `relative overflow-hidden rounded-2xl p-3 flex flex-col items-center justify-between min-h-[160px] shadow-2xl border-2 ${
+                            isLegend ? 'bg-gradient-to-b from-amber-900/90 via-yellow-950 to-slate-950 border-amber-300 ring-2 ring-amber-400' : 'bg-gradient-to-b from-cyan-950 via-slate-900 to-slate-950 border-cyan-400'
+                        }`;
+                        const rays = document.createElement('div');
+                        rays.className = 'radiant-rays';
+                        wrapper.prepend(rays);
+                    }
+
+                    gameState.pets.push({
+                        id: 'pet_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 5),
+                        typeId: chosenKey,
+                        enhanced: false,
+                        equipped: gameState.pets.filter(p => p.equipped).length < 6
+                    });
+
+                    playSfx('slotStop');
+                    stoppedCount++;
+
+                    if (stoppedCount === count) {
+                        isSlotSpinning = false;
+                        updateGachaModalUI();
+                        rebuildEquippedPets3D();
+                        updateHUD();
+
+                        const anyHigh = finalResults.some(k => k === 'mito' || k === 'chloroplast' || k === 'magbact' || k === 'tardigrade');
+                        const anyLegend = finalResults.some(k => k === 'tardigrade');
+                        if (anyHigh) {
+                            playSfx('jackpot');
+                            triggerHighTierImpact(anyLegend);
+                            subtitle.innerText = anyLegend
+                                ? '기적의 0.005% 확률!! 전설 등급 [불사의 우주물곰] 잭팟 당첨!!'
+                                : '대성공! 상위 등급 세포소기관 펫 추출 완료!';
+                        } else {
+                            subtitle.innerText = '리보솜 캡슐 추출 완료! 최대 6마리까지 장착 및 3합성 각성이 가능합니다.';
+                        }
+                    }
+                }, stopDelay);
+            });
+        }
+
+        function renderPetInventory() {
+            const grid = document.getElementById('pet-inventory-grid');
+            grid.innerHTML = '';
+
+            const bonus = gameState.pets
+                .filter(p => p.equipped)
+                .reduce((sum, p) => sum + PET_TYPES[p.typeId].mult * (p.enhanced ? 2.8 : 1), 0);
+            document.getElementById('pet-total-bonus').innerText = `+${Math.round(bonus * 100)}%`;
+
+            const sorted = [...gameState.pets].sort((a, b) => {
+                const pa = PET_TYPES[a.typeId].mult * (a.enhanced ? 2.8 : 1);
+                const pb = PET_TYPES[b.typeId].mult * (b.enhanced ? 2.8 : 1);
+                return pb - pa;
+            });
+
+            sorted.forEach(pet => {
+                const info = PET_TYPES[pet.typeId];
+                const multPct = Math.round(info.mult * (pet.enhanced ? 2.8 : 1) * 100);
+                const magDist = ((info.magnet || 0) * (pet.enhanced ? 1.65 : 1)).toFixed(1);
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border transition flex flex-col justify-between ${
+                    pet.equipped
+                        ? 'bg-indigo-50/95 border-indigo-500 ring-2 ring-indigo-400/50'
+                        : 'bg-white/85 border-slate-200'
+                }`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black px-2 py-0.5 rounded ${
+                            pet.enhanced ? 'bg-amber-400 text-slate-950' : 'bg-slate-200 text-slate-700'
+                        }">${pet.enhanced ? '오오라 각성' : info.rarity}</span>
+                        <span class="text-[10px] font-bold text-indigo-600">${pet.equipped ? '장착중' : ''}</span>
+                    </div>
+                    <div class="flex items-center gap-2.5 my-2">
+                        <div class="w-12 h-12 shrink-0 bg-slate-900/5 rounded-xl p-1">
+                            ${getPetIllustrationSVG(pet.typeId, pet.enhanced)}
+                        </div>
+                        <div>
+                            <div class="text-xs font-black text-slate-900">${pet.enhanced ? '[각성] ' : ''}${info.name}</div>
+                            <div class="text-[11px] font-extrabold text-emerald-600">재화 획득 +${multPct}%</div>
+                            <div class="text-[10px] text-cyan-700 font-black">자력 흡수 반경 +${magDist}m</div>
+                            <div class="text-[10px] text-slate-500 font-semibold">이동속도 +${Math.round(info.speed * (pet.enhanced ? 1.5 : 1) * 100)}%</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5 mt-1">
+                        <button onclick="toggleEquipPet('${pet.id}')" class="py-1.5 rounded-lg text-[10px] font-black ${
+                            pet.equipped ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'
+                        }">
+                            ${pet.equipped ? '장착해제' : '장착하기'}
+                        </button>
+                        ${
+                            !pet.enhanced
+                                ? `<button onclick="enhanceSinglePetWithEnz('${pet.id}')" class="py-1.5 rounded-lg text-[10px] font-black bg-amber-400 text-slate-950">3,000 ENZ 각성</button>`
+                                : `<span class="py-1.5 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-800 text-center">3D 오오라 활성</span>`
+                        }
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleEquipPet(petId) {
+            const pet = gameState.pets.find(p => p.id === petId);
+            if (!pet) return;
+            if (pet.equipped) {
+                pet.equipped = false;
+            } else {
+                const eq = gameState.pets.filter(p => p.equipped);
+                if (eq.length >= 6) eq[0].equipped = false;
+                pet.equipped = true;
+            }
+            rebuildEquippedPets3D();
+            renderPetInventory();
+            updateHUD();
+        }
+
+        // Pet Awakening Cost Increased 10x (300 -> 3,000 ENZ)
+        function enhanceSinglePetWithEnz(petId) {
+            const pet = gameState.pets.find(p => p.id === petId);
+            if (!pet || pet.enhanced) return;
+            if (gameState.enz < 3000) {
+                spawnFloatingText(playerGroup.position, '펫 오오라 각성용 효소 결정(3,000 ENZ)이 부족합니다!', 'text-rose-400');
+                return;
+            }
+            gameState.enz -= 3000;
+            pet.enhanced = true;
+            playSfx('upgrade');
+            rebuildEquippedPets3D();
+            renderPetInventory();
+            updateHUD();
+        }
+
+        function equipBestPets() {
+            gameState.pets.forEach(p => p.equipped = false);
+            const sorted = [...gameState.pets].sort((a, b) => {
+                const pa = PET_TYPES[a.typeId].mult * (a.enhanced ? 2.8 : 1);
+                const pb = PET_TYPES[b.typeId].mult * (b.enhanced ? 2.8 : 1);
+                return pb - pa;
+            });
+            sorted.slice(0, 6).forEach(p => p.equipped = true);
+            rebuildEquippedPets3D();
+            renderPetInventory();
+            updateHUD();
+        }
+
+        function mergeAllPets() {
+            let merged = 0;
+            ['rbc', 'phage', 'magbact', 'chloroplast', 'mito', 'tardigrade'].forEach(typeId => {
+                const normals = gameState.pets.filter(p => p.typeId === typeId && !p.enhanced);
+                while (normals.length >= 3) {
+                    const rem = normals.splice(0, 3);
+                    rem.forEach(r => {
+                        const idx = gameState.pets.findIndex(p => p.id === r.id);
+                        if (idx !== -1) gameState.pets.splice(idx, 1);
+                    });
+                    gameState.pets.push({
+                        id: 'awk_' + Date.now() + '_' + Math.random(),
+                        typeId,
+                        enhanced: true,
+                        equipped: false
+                    });
+                    merged++;
+                }
+            });
+            if (merged > 0) {
+                equipBestPets();
+                playSfx('upgrade');
+                spawnFloatingText(playerGroup.position, `${merged}마리 펫 3D 오오라 각성 완료!`, 'text-amber-300');
+            } else {
+                spawnFloatingText(playerGroup.position, '합성할 동일 일반 펫 3마리가 부족합니다', 'text-rose-300');
+            }
+        }
+
+        /*************************************************************************
+         * 9. SKIN PACK STORE & PYRAMID CODEX
+         *************************************************************************/
+        function renderSkinPackModal() {
+            const list = document.getElementById('skin-pack-list');
+            list.innerHTML = '';
+
+            SKIN_PACKS.forEach(skin => {
+                const unlocked = gameState.unlockedSkins.includes(skin.id);
+                const equipped = gameState.equippedSkin === skin.id;
+
+                const row = document.createElement('div');
+                row.className = `p-3.5 rounded-2xl border flex flex-wrap items-center justify-between gap-3 ${
+                    equipped
+                        ? 'bg-violet-950 text-white border-amber-400 ring-2 ring-amber-400/50'
+                        : 'bg-white/90 text-slate-900 border-slate-200'
+                }`;
+
+                row.innerHTML = `
+                    <div class="flex items-center gap-3.5 flex-1 min-w-[230px]">
+                        <div class="w-14 h-14 rounded-2xl bg-slate-900/15 border border-white/25 p-1 shrink-0 flex items-center justify-center shadow-inner">
+                            ${getSkinIllustrationSVG(skin)}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-black">${skin.name}</span>
+                                <span class="text-[10px] font-black px-2 py-0.5 rounded bg-violet-500/20 text-violet-400">${skin.tierLabel}</span>
+                            </div>
+                            <div class="text-[11px] opacity-85 font-semibold mt-0.5">${skin.desc}</div>
+                        </div>
+                    </div>
+                    <div>
+                        ${
+                            equipped
+                                ? `<span class="px-4 py-2 rounded-xl bg-amber-400 text-slate-950 font-black text-xs inline-block">현재 장착중</span>`
+                                : unlocked
+                                    ? `<button onclick="buyOrEquipSkin(${skin.id})" class="voxel-btn px-4 py-2 rounded-xl bg-indigo-600 text-white font-black text-xs">스킨 장착하기</button>`
+                                    : `<button onclick="buyOrEquipSkin(${skin.id})" class="voxel-btn px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-black text-xs">
+                                        ${skin.costStem.toLocaleString()} STEM 구매
+                                       </button>`
+                        }
+                    </div>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        function buyOrEquipSkin(skinId) {
+            const skin = SKIN_PACKS[skinId];
+            if (!gameState.unlockedSkins.includes(skinId)) {
+                if (gameState.stem < skin.costStem) {
+                    spawnFloatingText(playerGroup.position, `줄기세포 코어(STEM)가 부족합니다! (${skin.costStem.toLocaleString()} STEM 필요)`, 'text-rose-400');
+                    return;
+                }
+                gameState.stem -= skin.costStem;
+                gameState.unlockedSkins.push(skinId);
+            }
+            gameState.equippedSkin = skinId;
+            playSfx('springUnlock');
+            rebuildPlayerSkinAndAura3D();
+            renderSkinPackModal();
+            updateHUD();
+            if (window.pushCloudScore) window.pushCloudScore();
+        }
+
+        function renderPyramidThemeModal() {
+            const list = document.getElementById('pyramid-theme-list');
+            list.innerHTML = '';
+
+            PYRAMID_THEMES.forEach(t => {
+                const isCurrent = gameState.pyramidStage === t.stage;
+                const unlocked = t.stage <= gameState.highestPyramidStage;
+
+                const card = document.createElement('div');
+                card.className = `p-3.5 rounded-2xl border flex flex-wrap items-center justify-between gap-3 ${
+                    isCurrent ? 'bg-slate-900 text-white border-amber-400' : 'bg-white/90 text-slate-900 border-slate-200'
+                }`;
+                card.innerHTML = `
+                    <div class="flex items-center gap-3.5 flex-1 min-w-[240px]">
+                        <div class="w-20 h-14 rounded-xl bg-slate-950/15 border border-slate-300/30 p-1 shrink-0 flex items-center justify-center">
+                            ${getPyramidThemeSVG(t.stage)}
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <span class="text-[10px] font-black bg-amber-400 text-slate-950 px-2 py-0.5 rounded">제${t.stage}단계</span>
+                                <span class="text-sm font-black">${t.name}</span>
+                                <span class="text-xs font-extrabold text-emerald-400">[온천: ${t.springName}]</span>
+                            </div>
+                            <p class="text-[11px] opacity-80 font-medium mt-0.5">${t.desc}</p>
+                            <div class="text-[11px] font-extrabold text-amber-500 mt-0.5">
+                                기본 배율 x${t.baseMult} | 온천 버프: 이동속도 +${Math.round(t.springSpeedBonus * 100)}% · 돌 드는 힘 +${t.springLiftBonus}개
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        ${
+                            isCurrent
+                                ? `<span class="px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs">현재 건설중</span>`
+                                : unlocked
+                                    ? `<button onclick="switchPyramidStage(${t.stage})" class="voxel-btn px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-black text-xs">이 피라미드로 전환</button>`
+                                    : `<span class="px-3 py-1.5 rounded-xl bg-slate-200 text-slate-500 font-bold text-xs">이전 단계 완공 시 해금</span>`
+                        }
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function switchPyramidStage(stage) {
+            if (stage > gameState.highestPyramidStage) return;
+            gameState.pyramidStage = stage;
+            gameState.pyramidBlocksBuilt = 0;
+            gameState.springUnlocked = false;
+            gameState.springTimeLeft = 0;
+            rebuildPyramidVisuals();
+            refreshHotSpringTheme3D();
+            renderPyramidThemeModal();
+            updateHUD();
+        }
+
+        /*************************************************************************
+         * 10. UPGRADES (100x RESEARCH COST) & INSTANT BULK DEPOSIT FEATURE
+         *************************************************************************/
+        function getUpgradeCost(type) {
+            const stageFactor = Math.pow(1.5, gameState.pyramidStage - 1);
+            if (type === 'spring') return Math.floor(15000 * Math.pow(1.65, gameState.springLv - 1) * stageFactor);
+            if (type === 'bag')    return Math.floor(10000 * Math.pow(1.60, gameState.bagLv - 1) * stageFactor);
+            if (type === 'speed')  return Math.floor(12000 * Math.pow(1.65, gameState.speedLv - 1) * stageFactor);
+            if (type === 'yield')  return Math.floor(16000 * Math.pow(1.70, gameState.yieldLv - 1) * stageFactor);
+            return 15000;
+        }
+
+        function buyInstantDepositUpgrade() {
+            if (gameState.instantDepositUnlocked) return;
+            const costStem = SKIN_PACKS[2].costStem; // Same price as 3rd Skin (10,000,000 STEM)
+            if (gameState.stem < costStem) {
+                spawnFloatingText(playerGroup.position, `초고속 일괄 투하 연구에는 ${costStem.toLocaleString()} STEM이 필요합니다!`, 'text-rose-400');
+                return;
+            }
+            gameState.stem -= costStem;
+            gameState.instantDepositUnlocked = true;
+            playSfx('springUnlock');
+            spawnFloatingText(playerGroup.position, '초고속 일괄 투하 해금! 이제 재료를 한 번에 피라미드에 놓습니다!', 'text-amber-300');
+            renderUpgradeModal();
+            updateHUD();
+        }
+
+        function buyUpgrade(type) {
+            const cost = getUpgradeCost(type);
+            if (gameState.enz < cost) {
+                spawnFloatingText(playerGroup.position, `강화용 효소 결정(${cost.toLocaleString()} ENZ)이 부족합니다!`, 'text-rose-400');
+                return;
+            }
+            gameState.enz -= cost;
+            if (type === 'spring') gameState.springLv++;
+            if (type === 'bag')    gameState.bagLv++;
+            if (type === 'speed')  gameState.speedLv++;
+            if (type === 'yield')  gameState.yieldLv++;
+
+            playSfx('upgrade');
+            renderUpgradeModal();
+            updateHUD();
+        }
+
+        function renderUpgradeModal() {
+            const theme = PYRAMID_THEMES[gameState.pyramidStage - 1];
+            document.getElementById('modal-spring-type-name').innerText = `${theme.springName} (Lv.${gameState.springLv})`;
+            document.getElementById('modal-spring-timer').innerText =
+                gameState.springUnlocked && gameState.springTimeLeft > 0
+                    ? `${ formatTime(gameState.springTimeLeft) } 남음`
+                    : '피라미드 100% 완공 시 개방';
+
+            const stackSpeedPct = Math.round(((theme.springSpeedBonus * 0.12) + (gameState.springLv - 1) * 0.015) * 100);
+            const stackLiftAmt = Math.max(2, Math.round(theme.springLiftBonus * 0.15) + (gameState.springLv - 1) * 2);
+            const buffDetailEl = document.getElementById('modal-spring-buff-detail');
+            if (buffDetailEl) {
+                buffDetailEl.innerText = `초당 1스택 중첩 효과: 이동속도 +${stackSpeedPct}%p · 돌 드는 힘 +${stackLiftAmt}개씩 누적 (현재 ${gameState.springStacks}스택 중첩중)`;
+            }
+
+            const btnInstant = document.getElementById('btn-upg-instant-deposit');
+            if (btnInstant) {
+                if (gameState.instantDepositUnlocked) {
+                    btnInstant.innerText = '일괄 투하 활성화됨';
+                    btnInstant.disabled = true;
+                } else {
+                    btnInstant.innerText = `${SKIN_PACKS[2].costStem.toLocaleString()} STEM`;
+                    btnInstant.disabled = false;
+                }
+            }
+
+            const pct = Math.round(gameState.speedRatio * 100);
+            const sliderEl = document.getElementById('slider-speed-ratio');
+            if (sliderEl) sliderEl.value = pct;
+            const ratioLabel = document.getElementById('speed-ratio-label');
+            if (ratioLabel) ratioLabel.innerText = `${pct}% (실제 속도: ${getMoveSpeed().toFixed(1)})`;
+
+            const costEnz = 250000 * gameState.pyramidStage;
+            const costRibo = 150000 * gameState.pyramidStage;
+            document.getElementById('btn-modal-extend-spring').innerText =
+                `온천 이용 시간 +1분 연장하기 (최대 5분) — 비용: ${costEnz.toLocaleString()} ENZ + ${costRibo.toLocaleString()} RIBO`;
+
+            document.getElementById('upg-spring-lv').innerText = `Lv.${gameState.springLv}`;
+            document.getElementById('btn-upg-spring').innerText = `${getUpgradeCost('spring').toLocaleString()} ENZ`;
+
+            document.getElementById('upg-bag-lv').innerText = `Lv.${gameState.bagLv}`;
+            document.getElementById('btn-upg-bag').innerText = `${getUpgradeCost('bag').toLocaleString()} ENZ`;
+
+            document.getElementById('upg-speed-lv').innerText = `Lv.${gameState.speedLv}`;
+            document.getElementById('btn-upg-speed').innerText = `${getUpgradeCost('speed').toLocaleString()} ENZ`;
+
+            document.getElementById('upg-yield-lv').innerText = `Lv.${gameState.yieldLv}`;
+            document.getElementById('btn-upg-yield').innerText = `${getUpgradeCost('yield').toLocaleString()} ENZ`;
+        }
+
+        /*************************************************************************
+         * 11. LEADERBOARD & UI HELPERS
+         *************************************************************************/
+        function formatTime(sec) {
+            const s = Math.max(0, Math.ceil(sec));
+            const m = Math.floor(s / 60);
+            const rem = s % 60;
+            return `${String(m).padStart(2, '0')}:${String(rem).padStart(2, '0')}`;
+        }
+
+        // ---- BIO ARCADE 공용 랭킹 연결 ----
+        const RANK_ID = 'bio-pyramid';
+        function myWho() { return /^\d{5}$/.test(gameState.studentClass) && /^[가-힣]{2,5}$/.test(gameState.studentName) ? gameState.studentClass + ' ' + gameState.studentName : ''; }
+        function rankPayload() {
+            const st = gameState.highestPyramidStage, sc = Math.floor(gameState.totalScore);
+            return { v: window.BioGoal ? BioGoal.key([[st, 10, 1], [Math.min(sc, 1e12 - 1), 1e12, 1]]) : st, f: { stage: st, score: sc, skin: 'T' + (gameState.equippedSkin + 1) } };
+        }
+        function fetchCloudRanking() {
+            if (!window.BioRank || !BioRank.ready()) return;
+            BioRank.top(RANK_ID).then(r => {
+                cloudRankings = (r.list || []).map(x => ({ uid: x.sid + x.name, studentClass: x.sid, studentName: x.name,
+                    pyramidStage: (x.f && x.f.stage) || 1, skinTier: +(String((x.f && x.f.skin) || 'T1').replace(/\D/g, '')) || 1, totalScore: (x.f && x.f.score) || 0 }));
+                renderLeaderboards();
+            }).catch(() => {});
+        }
+        setTimeout(fetchCloudRanking, 1500); setInterval(fetchCloudRanking, 90000);
+        // 피라미드를 완공하면 결과 창(목표 성공/실패 + 랭킹 보내기)을 띄움
+        window.pushCloudScore = function () {};
+        function reportStage() {
+            if (!window.BioGoal) return;
+            const st = gameState.highestPyramidStage;
+            const g = BioGoal.GOALS[RANK_ID], reached = g && st >= g.t;   // 계속 이어지는 게임이라 목표 전에는 '실패' 대신 '기록'으로
+            BioGoal.result(RANK_ID, st, { text: `피라미드 ${st}단계 · 총점 ${Math.floor(gameState.totalScore).toLocaleString()}`, rank: rankPayload(), rankOnly: !reached, title: '피라미드 완공!' });
+        }
+
+        function getCombinedLeaderboard() {
+            const pct = Math.floor((gameState.pyramidBlocksBuilt / gameState.pyramidTotalBlocks) * 100);
+            const myEntry = {
+                uid: 'me',
+                isMe: true,
+                studentClass: gameState.studentClass,
+                studentName: gameState.studentName,
+                pyramidStage: gameState.highestPyramidStage,
+                pyramidPct: pct,
+                skinTier: gameState.equippedSkin + 1,
+                totalScore: Math.floor(gameState.totalScore)
+            };
+
+            const map = new Map();
+            rivalBots.forEach(b => map.set(b.uid, { ...b }));
+            cloudRankings.forEach(c => {
+                if (c.studentName === myEntry.studentName && c.studentClass === myEntry.studentClass) {   // 서버의 내 기록이 더 좋으면 그 값을 보여 줌
+                    if (c.pyramidStage > myEntry.pyramidStage || (c.pyramidStage === myEntry.pyramidStage && c.totalScore > myEntry.totalScore)) Object.assign(myEntry, { pyramidStage: c.pyramidStage, totalScore: c.totalScore });
+                    return;
+                }
+                map.set(c.uid, c);
+            });
+            map.set('me', myEntry);
+
+            const arr = Array.from(map.values());
+            arr.sort((a, b) => {
+                if (b.pyramidStage !== a.pyramidStage) return b.pyramidStage - a.pyramidStage;
+                if (b.skinTier !== a.skinTier) return b.skinTier - a.skinTier;
+                return b.totalScore - a.totalScore;
+            });
+            return arr;
+        }
+
+        function renderLeaderboards() {
+            const list = getCombinedLeaderboard();
+            const myRank = list.findIndex(x => x.isMe) + 1;
+            document.getElementById('dock-my-rank').innerText = `현재 #${myRank}위`;
+
+            const miniEl = document.getElementById('mini-leaderboard');
+            miniEl.innerHTML = '';
+            list.slice(0, 3).forEach((entry, idx) => {
+                const row = document.createElement('div');
+                row.className = `flex items-center justify-between px-1.5 py-0.5 rounded-lg ${
+                    entry.isMe ? 'bg-indigo-600 text-white font-black' : 'bg-white/60 text-slate-800 font-semibold'
+                }`;
+                row.innerHTML = `
+                    <div class="flex items-center gap-1 truncate">
+                        <span class="text-[9px] font-black w-3.5">#${idx + 1}</span>
+                        <span class="truncate text-[10px]">${entry.studentName}</span>
+                    </div>
+                    <div class="text-[9px] font-extrabold shrink-0 ml-1">
+                        ${entry.pyramidStage}층·T${entry.skinTier}
+                    </div>
+                `;
+                miniEl.appendChild(row);
+            });
+
+            if (myRank > 3) {
+                const me = list[myRank - 1];
+                const myRow = document.createElement('div');
+                myRow.className = 'flex items-center justify-between px-1.5 py-0.5 rounded-lg bg-indigo-600 text-white font-black mt-0.5';
+                myRow.innerHTML = `
+                    <div class="flex items-center gap-1 truncate">
+                        <span class="text-[9px] font-black w-3.5">#${myRank}</span>
+                        <span class="truncate text-[10px]">${me.studentName}</span>
+                    </div>
+                    <div class="text-[9px] font-extrabold shrink-0 ml-1">${me.pyramidStage}층·T${me.skinTier}</div>
+                `;
+                miniEl.appendChild(myRow);
+            }
+
+            const fullEl = document.getElementById('full-leaderboard-list');
+            if (!fullEl) return;
+            document.getElementById('rank-modal-my-badge').innerText = `#${myRank}`;
+            document.getElementById('rank-modal-my-name').innerText = myWho() || '학번·이름을 등록하면 랭킹에 올릴 수 있어요';
+            document.getElementById('rank-modal-my-stats').innerText =
+                `최고 ${gameState.highestPyramidStage}단계 피라미드 | 장착 스킨 T${gameState.equippedSkin + 1} | 총점 ${Math.floor(gameState.totalScore).toLocaleString()}`;
+
+            fullEl.innerHTML = '';
+            list.forEach((entry, idx) => {
+                const row = document.createElement('div');
+                row.className = `grid grid-cols-12 items-center px-3 py-2.5 text-xs rounded-xl ${
+                    entry.isMe ? 'bg-indigo-50 font-black text-indigo-950 border border-indigo-300' : 'text-slate-700 font-semibold'
+                }`;
+                row.innerHTML = `
+                    <div class="col-span-2 font-black">#${idx + 1}위</div>
+                    <div class="col-span-4 truncate">
+                        <span class="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded mr-1">${entry.studentClass}</span>
+                        ${entry.studentName}
+                    </div>
+                    <div class="col-span-3 text-center">
+                        <span class="bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-extrabold text-[10px]">
+                            ${entry.pyramidStage}단계 · 스킨 T${entry.skinTier}
+                        </span>
+                    </div>
+                    <div class="col-span-3 text-right font-black tabular-nums text-slate-900">
+                        ${Number(entry.totalScore).toLocaleString()} pt
+                    </div>
+                `;
+                fullEl.appendChild(row);
+            });
+        }
+
+        function saveStudentProfile() {
+            const sid = document.getElementById('input-student-class').value.trim(), nm = document.getElementById('input-student-name').value.trim();
+            const msg = document.getElementById('profile-msg');
+            if (!/^\d{5}$/.test(sid) || !/^[가-힣]{2,5}$/.test(nm)) { if (msg) msg.textContent = '학번은 숫자 5자리, 이름은 한글 2~5자로 적어 주세요 (예: 20800 / 홍길동)'; return; }
+            if (msg) msg.textContent = '';
+            gameState.studentClass = sid; gameState.studentName = nm;
+            try { localStorage.setItem('bioRankWho', sid + ' ' + nm); } catch (e) {}
+            saveGame();
+            refreshProfileHud();
+            closeModal('profile-modal');
+            playSfx('upgrade');
+            renderLeaderboards();
+            if (window.pushCloudScore) window.pushCloudScore();
+        }
+
+        // '내 기록 랭킹에 보내기': 학번·이름이 있으면 바로 보내고, 없으면 결과 창에서 적고 보냄
+        function syncScoreNow() {
+            playSfx('upgrade');
+            const who = myWho(), st = gameState.highestPyramidStage, text = `피라미드 ${st}단계 · 총점 ${Math.floor(gameState.totalScore).toLocaleString()}`;
+            if (!window.BioRank || !BioRank.ready()) { spawnFloatingText(playerGroup.position, '랭킹 서버에 연결할 수 없어요', 'text-rose-300'); return; }
+            if (!who) { closeModal('ranking-modal'); if (window.BioGoal) BioGoal.result(RANK_ID, st, { rankOnly: true, title: '지금 내 기록', text, rank: rankPayload() }); return; }
+            BioRank.submit(RANK_ID, { who, value: st, text, ok: false, rank: rankPayload() })
+                .then(() => { spawnFloatingText(playerGroup.position, '랭킹에 올렸어요!', 'text-emerald-300'); setTimeout(fetchCloudRanking, 800); })
+                .catch(e => spawnFloatingText(playerGroup.position, '보내지 못했어요', 'text-rose-300'));
+        }
+
+        function openModal(id) {
+            if (id === 'gacha-modal') {
+                updateGachaModalUI();
+                renderIdleSlotReels();
+            }
+            if (id === 'pet-modal') renderPetInventory();
+            if (id === 'skin-modal') renderSkinPackModal();
+            if (id === 'pyramid-modal') renderPyramidThemeModal();
+            if (id === 'upgrade-modal') renderUpgradeModal();
+            if (id === 'ranking-modal') { renderLeaderboards(); fetchCloudRanking(); }
+            if (id === 'profile-modal') { document.getElementById('input-student-class').value = /^\d{5}$/.test(gameState.studentClass) ? gameState.studentClass : ''; document.getElementById('input-student-name').value = gameState.studentName === '신입연구원' ? '' : gameState.studentName; }
+            const m = document.getElementById(id);
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function spawnFloatingText(worldPos, text, colorClass = 'text-amber-300') {
+            const vec = worldPos.clone().project(camera);
+            const x = (vec.x * 0.5 + 0.5) * window.innerWidth;
+            const y = (-vec.y * 0.5 + 0.5) * window.innerHeight;
+            const el = document.createElement('div');
+            el.className = `floating-text text-xs sm:text-sm ${colorClass}`;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            el.innerText = text;
+            document.getElementById('floating-texts').appendChild(el);
+            setTimeout(() => el.remove(), 1150);
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-ribo').innerText = Math.floor(gameState.ribo).toLocaleString();
+            document.getElementById('hud-stem').innerText = Math.floor(gameState.stem).toLocaleString();
+            document.getElementById('hud-enz').innerText  = Math.floor(gameState.enz).toLocaleString();
+            document.getElementById('hud-bag').innerText  = `${gameState.bagItems.length} / ${gameState.maxBag}`;
+
+            const theme = PYRAMID_THEMES[gameState.pyramidStage - 1];
+            const pct = Math.min(100, Math.floor((gameState.pyramidBlocksBuilt / gameState.pyramidTotalBlocks) * 100));
+
+            document.getElementById('hud-pyramid-badge').innerText = `${gameState.pyramidStage}단계`;
+            document.getElementById('hud-pyramid-name').innerText = theme.name;
+            document.getElementById('hud-pyramid-pct').innerText = `${pct}%`;
+            document.getElementById('hud-pyramid-bar').style.width = `${pct}%`;
+
+            document.getElementById('label-pyramid-type').innerText = `제${gameState.pyramidStage}단계 · ${theme.name}`;
+            document.getElementById('label-pyramid-progress').innerText =
+                pct >= 100 ? '100% 완공! (맞춤형 온천 개방중)' : `완공도: ${pct}% (100% 달성 시 온천 개방)`;
+
+            const springActiveBar = document.getElementById('hud-spring-active-bar');
+            document.getElementById('label-spring-title').innerText =
+                gameState.springUnlocked && gameState.springTimeLeft > 0
+                    ? `${theme.springName} [개방중]`
+                    : `${theme.springName} [봉인됨]`;
+
+            if (gameState.springUnlocked && gameState.springTimeLeft > 0) {
+                springActiveBar.classList.remove('hidden');
+                springActiveBar.classList.add('flex');
+                document.getElementById('hud-spring-active-title').innerText = `${theme.springName} 개방중! (입수 시 이동속도 & 돌 드는 힘 대폭 상승)`;
+                document.getElementById('hud-spring-countdown').innerText = formatTime(gameState.springTimeLeft);
+                document.getElementById('label-spring-timer').innerText = `남은 시간: ${formatTime(gameState.springTimeLeft)} (최대 05:00)`;
+            } else {
+                springActiveBar.classList.add('hidden');
+                springActiveBar.classList.remove('flex');
+                document.getElementById('label-spring-timer').innerText = '피라미드 100% 완공 시 1분간 개방';
+            }
+
+            const skin = SKIN_PACKS[gameState.equippedSkin];
+            document.getElementById('hud-skin-badge').innerText = `${skin.name} (x${skin.mult})`;
+            const magEl = document.getElementById('hud-magnet-badge');
+            if (magEl) magEl.innerText = `자력 반경 ${getMagnetRadius().toFixed(1)}m`;
+
+            const buffActive = (gameState.isInsideSpring || gameState.springBuffTimer > 0) && gameState.springStacks > 0;
+            const stackSpeedPct = Math.round(((theme.springSpeedBonus * 0.12) + (gameState.springLv - 1) * 0.015) * gameState.springStacks * 100);
+            const stackLiftAmt = (Math.max(2, Math.round(theme.springLiftBonus * 0.15) + (gameState.springLv - 1) * 2)) * gameState.springStacks;
+            document.getElementById('hud-buff-status').innerText = buffActive
+                ? `온천 ${gameState.springStacks}스택 중첩! (속도+${stackSpeedPct}% · 힘+${stackLiftAmt}개 · ${Math.ceil(gameState.springBuffTimer)}s)`
+                : '온천 버프 대기';
+            document.getElementById('hud-total-mult').innerText = `종합 재화 효율 x${getGlobalMultiplier().toFixed(1)}`;
+
+            document.getElementById('dock-gacha-pack').innerText = `${gameState.maxGachaPull}연속 추출`;
+            document.getElementById('label-gacha-pack').innerText = `${gameState.maxGachaPull}연속 추출 모드`;
+            document.getElementById('dock-pet-count').innerText = `${gameState.pets.filter(p => p.equipped).length}/6 장착중`;
+            document.getElementById('dock-skin-tier').innerText = `티어 ${gameState.equippedSkin + 1} 장착`;
+            document.getElementById('dock-spring-lv').innerText = `온천 Lv.${gameState.springLv}`;
+        }
+
+        function updateWorldLabels3D() {
+            const items = [
+                { id: 'label-pyramid', pos: new THREE.Vector3(pyramidCenter.x, 7.4, pyramidCenter.z) },
+                { id: 'label-spring',  pos: new THREE.Vector3(springPos.x, 3.6, springPos.z) },
+                { id: 'label-gacha',   pos: new THREE.Vector3(gachaPos.x, 6.6, gachaPos.z) }
+            ];
+            items.forEach(it => {
+                const el = document.getElementById(it.id);
+                const v = it.pos.clone().project(camera);
+                el.style.left = `${(v.x * 0.5 + 0.5) * window.innerWidth}px`;
+                el.style.top  = `${(-v.y * 0.5 + 0.5) * window.innerHeight}px`;
+            });
+        }
+
+        /*************************************************************************
+         * 12. INPUTS & MAIN ANIMATION LOOP
+         *************************************************************************/
+        const keys = {};
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
+
+        const joyZone = document.getElementById('joystick-zone');
+        const joyKnob = document.getElementById('joystick-knob');
+        let joyActive = false;
+        let joyVec = { x: 0, z: 0 };
+
+        function handleJoy(cxClient, cyClient) {
+            const rect = joyZone.getBoundingClientRect();
+            let dx = cxClient - (rect.left + rect.width / 2);
+            let dy = cyClient - (rect.top + rect.height / 2);
+            const dist = Math.hypot(dx, dy);
+            const maxR = 36;
+            if (dist > maxR) {
+                dx = (dx / dist) * maxR;
+                dy = (dy / dist) * maxR;
+            }
+            joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+            joyVec.x = dx / maxR;
+            joyVec.z = dy / maxR;
+        }
+
+        joyZone.addEventListener('pointerdown', e => { joyActive = true; handleJoy(e.clientX, e.clientY); });
+        window.addEventListener('pointermove', e => { if (joyActive) handleJoy(e.clientX, e.clientY); });
+        window.addEventListener('pointerup', () => {
+            joyActive = false;
+            joyVec.x = 0;
+            joyVec.z = 0;
+            joyKnob.style.transform = 'translate(0px, 0px)';
+        });
+
+        let lastTime = performance.now();
+        let hopPhase = 0;
+        let depositCooldown = 0;
+        let springRewardTick = 0;
+        let botTick = 0;
+
+        function animate(now) {
+            requestAnimationFrame(animate);
+            const dt = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+
+            // 1. Movement across 1.5x Larger Map (-36 to +36)
+            let mx = joyVec.x;
+            let mz = joyVec.z;
+            if (keys['KeyW'] || keys['ArrowUp']) mz -= 1;
+            if (keys['KeyS'] || keys['ArrowDown']) mz += 1;
+            if (keys['KeyA'] || keys['ArrowLeft']) mx -= 1;
+            if (keys['KeyD'] || keys['ArrowRight']) mx += 1;
+
+            const len = Math.hypot(mx, mz);
+            if (len > 0.05) {
+                const nx = mx / Math.max(1, len);
+                const nz = mz / Math.max(1, len);
+                const spd = getMoveSpeed();
+                playerGroup.position.x = Math.max(-36, Math.min(36, playerGroup.position.x + nx * spd * dt));
+                playerGroup.position.z = Math.max(-36, Math.min(36, playerGroup.position.z + nz * spd * dt));
+                playerVisual.rotation.y = Math.atan2(nx, nz);
+
+                hopPhase += dt * 16;
+                playerVisual.position.y = Math.abs(Math.sin(hopPhase)) * 0.62;
+            } else {
+                playerVisual.position.y = THREE.MathUtils.lerp(playerVisual.position.y, 0, dt * 12);
+            }
+
+            playerAuraGroup.rotation.y += dt * 2.2;
+
+            // 2. Smooth Isometric Camera Follow across 1.5x Map
+            camera.position.x = THREE.MathUtils.lerp(camera.position.x, playerGroup.position.x * 0.65 + 24, dt * 5);
+            camera.position.y = 30;
+            camera.position.z = THREE.MathUtils.lerp(camera.position.z, playerGroup.position.z * 0.65 + 24, dt * 5);
+            camera.lookAt(playerGroup.position.x * 0.65, 0, playerGroup.position.z * 0.65);
+
+            // 3. Pet Follow & Enhanced Pet 3D Orbiting Aura Animation (Up to 6 Pets in 2 Arcs)
+            petMeshes.forEach((pObj, idx) => {
+                const row = Math.floor(idx / 3);
+                const col = idx % 3;
+                const angOff = (col - 1) * 0.85;
+                const distBack = 2.4 + row * 1.65;
+                const tx = playerGroup.position.x - Math.sin(playerVisual.rotation.y + angOff) * distBack;
+                const tz = playerGroup.position.z - Math.cos(playerVisual.rotation.y + angOff) * distBack;
+                pObj.root.position.x = THREE.MathUtils.lerp(pObj.root.position.x, tx, dt * 6);
+                pObj.root.position.z = THREE.MathUtils.lerp(pObj.root.position.z, tz, dt * 6);
+                pObj.root.position.y = 0.25 + Math.abs(Math.sin(now * 0.005 + idx)) * 0.55;
+                pObj.root.rotation.y = playerVisual.rotation.y;
+                pObj.auraOrbitGroup.rotation.y += dt * 3.8;
+            });
+
+            // 4. Field Crystal Collection with Pet Magnetic Pull Effect!
+            const magnetRadius = getMagnetRadius();
+            for (let i = fieldNutrients.length - 1; i >= 0; i--) {
+                const fn = fieldNutrients[i];
+                fn.mesh.rotation.y += dt * 2.0;
+                fn.mesh.position.y = 0.65 + Math.sin(now * 0.004 + fn.phase) * 0.2;
+
+                if (gameState.bagItems.length < gameState.maxBag) {
+                    const dist = playerGroup.position.distanceTo(fn.mesh.position);
+                    if (dist < magnetRadius) {
+                        if (dist > 1.75) {
+                            const pullSpeed = Math.min(28, 12 + magnetRadius * 1.8) * dt;
+                            fn.mesh.position.x = THREE.MathUtils.lerp(fn.mesh.position.x, playerGroup.position.x, pullSpeed * 0.35);
+                            fn.mesh.position.z = THREE.MathUtils.lerp(fn.mesh.position.z, playerGroup.position.z, pullSpeed * 0.35);
+                        } else {
+                            gameState.bagItems.push({
+                                kind: fn.kind,
+                                color: fn.color,
+                                baseVal: fn.baseVal
+                            });
+                            nutrientGroup.remove(fn.mesh);
+                            fieldNutrients.splice(i, 1);
+                            updateBackpackStackVisual();
+                            playSfx('pickup');
+                            updateHUD();
+                            setTimeout(spawnFieldNutrient, 1600);
+                        }
+                    }
+                }
+            }
+
+            // 5. Pyramid Deposit (Supports Instant Bulk Deposit if Unlocked!) & 100% Completion Check
+            const distToDrop = playerGroup.position.distanceTo(dropPadPos);
+            depositCooldown -= dt;
+            if (distToDrop < 2.9 && gameState.bagItems.length > 0 && depositCooldown <= 0) {
+                if (gameState.pyramidBlocksBuilt < gameState.pyramidTotalBlocks) {
+                    if (gameState.instantDepositUnlocked) {
+                        // Place ALL materials in the bag onto the pyramid at once!
+                        const remainingNeeded = gameState.pyramidTotalBlocks - (gameState.pyramidBlocksBuilt + flyingBlocks.length);
+                        const batchCount = Math.min(gameState.bagItems.length, Math.max(1, remainingNeeded));
+                        for (let b = 0; b < batchCount; b++) {
+                            const item = gameState.bagItems.pop();
+                            if (item) launchBlockToPyramid(item);
+                        }
+                        updateBackpackStackVisual();
+                        depositCooldown = 0.12;
+                    } else {
+                        const item = gameState.bagItems.pop();
+                        updateBackpackStackVisual();
+                        launchBlockToPyramid(item);
+                        depositCooldown = 0.09;
+                    }
+                }
+            }
+
+            for (let i = flyingBlocks.length - 1; i >= 0; i--) {
+                const fb = flyingBlocks[i];
+                fb.progress += dt * 3.6;
+                if (fb.progress >= 1) {
+                    scene.remove(fb.mesh);
+                    flyingBlocks.splice(i, 1);
+
+                    if (gameState.pyramidBlocksBuilt < gameState.pyramidTotalBlocks) {
+                        const slot = pyramidSlots[gameState.pyramidBlocksBuilt];
+                        const theme = PYRAMID_THEMES[gameState.pyramidStage - 1];
+                        const col = theme.tierColors[slot.tierIdx];
+                        pyramidGroup.add(createVoxel(1.06, 1.06, 1.06, col, slot.pos.x, slot.pos.y, slot.pos.z));
+                        gameState.pyramidBlocksBuilt++;
+
+                        if (gameState.pyramidBlocksBuilt >= gameState.pyramidTotalBlocks) {
+                            unlockTimedHotSpring();
+                        }
+                    }
+
+                    grantCurrenciesFromBlock(fb.kind, fb.baseVal);
+                    playSfx('build');
+                    updateHUD();
+                } else {
+                    fb.mesh.position.lerpVectors(fb.startPos, fb.targetPos, fb.progress);
+                    fb.mesh.position.y += Math.sin(fb.progress * Math.PI) * 4.5;
+                    fb.mesh.rotation.x += dt * 8;
+                    fb.mesh.rotation.y += dt * 8;
+                }
+            }
+
+            // 6. Conditional Timed Hot Spring Logic (Per-Second Cumulative Buff Stacking!)
+            if (gameState.springBuffTimer > 0 && !gameState.isInsideSpring) {
+                gameState.springBuffTimer = Math.max(0, gameState.springBuffTimer - dt);
+                if (gameState.springBuffTimer <= 0) {
+                    gameState.springStacks = 0;
+                }
+            }
+
+            if (gameState.springUnlocked && gameState.springTimeLeft > 0) {
+                gameState.springTimeLeft = Math.max(0, gameState.springTimeLeft - dt);
+
+                steamParticles.forEach(sp => {
+                    sp.mesh.position.y += sp.speed * dt;
+                    if (sp.mesh.position.y > 4.6) sp.mesh.position.y = 1.1;
+                });
+
+                const distToSpring = playerGroup.position.distanceTo(springPos);
+                gameState.isInsideSpring = distToSpring < 3.9;
+
+                if (gameState.isInsideSpring) {
+                    springRewardTick += dt;
+                    if (springRewardTick >= 1.0) {
+                        springRewardTick -= 1.0;
+                        gameState.springStacks++;
+                        gameState.springBuffTimer = 60; // Keep stacked buff active for 60s after leaving spring
+
+                        const theme = PYRAMID_THEMES[gameState.pyramidStage - 1];
+                        const totalSpdPct = Math.round(((theme.springSpeedBonus * 0.12) + (gameState.springLv - 1) * 0.015) * gameState.springStacks * 100);
+                        const totalLiftAmt = (Math.max(2, Math.round(theme.springLiftBonus * 0.15) + (gameState.springLv - 1) * 2)) * gameState.springStacks;
+
+                        spawnFloatingText(
+                            springPos,
+                            `온천 ${gameState.springStacks}스택 중첩! 속도 +${totalSpdPct}% · 돌 드는 힘 +${totalLiftAmt}개`,
+                            'text-emerald-300'
+                        );
+                    }
+                }
+
+                if (gameState.springTimeLeft <= 0) {
+                    gameState.isInsideSpring = false;
+                    advanceToNextPyramid();
+                }
+                updateHUD();
+            } else {
+                gameState.isInsideSpring = false;
+            }
+
+            updateWorldLabels3D();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            const asp = window.innerWidth / window.innerHeight;
+            viewSize = viewFor(asp);
+            camera.left = -viewSize * asp;
+            camera.right = viewSize * asp;
+            camera.top = viewSize;
+            camera.bottom = -viewSize;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function refreshProfileHud() {
+            document.getElementById('hud-student-class').innerText = gameState.studentClass || '눌러서 학번 등록';
+            document.getElementById('hud-student-name').innerText = myWho() ? gameState.studentName : '연구원 등록';
+        }
+        window.onload = function() {
+            refreshProfileHud();
+            rebuildPlayerSkinAndAura3D();
+            rebuildEquippedPets3D();
+            rebuildPyramidVisuals();
+            refreshHotSpringTheme3D();
+            updateHUD();
+            renderLeaderboards();
+            animate(performance.now());
+        };
+    </script>
+<script src="../goal.js"></script>
+<script src="../rank.js"></script>
+<script src="../ilog.js"></script>
+</body>
+</html>

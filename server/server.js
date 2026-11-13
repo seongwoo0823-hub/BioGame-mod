@@ -118,6 +118,22 @@ function sendFile(req, res, urlPath) {
     if (err || !st.isFile()) { res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'}); res.end('파일이 없어요: ' + rel); return; }
     const type = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream';
     const head = {'Content-Type': type, 'Cache-Control': /\.(html|js|json|webmanifest)$/i.test(file) ? 'no-cache' : 'public, max-age=3600', 'Accept-Ranges': 'bytes'};
+    // 교실 서버로 설치하면 초록색 '온라인' 아이콘·이름 (GitHub Pages로 설치하면 파란색 기본 아이콘)
+    const relp = path.relative(ROOT, file).split(path.sep).join('/');
+    if (relp === 'manifest.webmanifest') {
+      fs.readFile(file, 'utf8', (e, txt) => {
+        if (e) { res.writeHead(500); res.end(); return; }
+        let m; try { m = JSON.parse(txt); } catch (x) { res.writeHead(500); res.end(); return; }
+        m.id = './?pwa=online'; m.name = 'BIO ARCADE 교실 서버'; m.short_name = 'BIO 교실';
+        m.start_url = './index.html?pwa=online'; m.theme_color = m.background_color = '#06140c';
+        m.icons = (m.icons || []).map(ic => Object.assign({}, ic, {src: String(ic.src).replace('icon-v2-', 'icon-online-')}));
+        const body = Buffer.from(JSON.stringify(m, null, 2));
+        res.writeHead(200, Object.assign(head, {'Content-Length': body.length, 'Cache-Control': 'no-cache'})); res.end(req.method === 'HEAD' ? undefined : body);
+      });
+      return;
+    }
+    const alt = {'icons/apple-touch-icon-v2.png': 'icons/apple-touch-icon-online.png', 'icons/favicon-v2-32.png': 'icons/favicon-online-32.png'}[relp];
+    if (alt) { sendFile(req, res, '/' + alt); return; }
     if (path.relative(ROOT, file) === 'net.js') {
       fs.readFile(file, (e, buf) => {
         if (e) { res.writeHead(500); res.end(); return; }
