@@ -126,8 +126,8 @@
             #k-left > *:nth-child(n+4){display:none}   /* 낮은 화면: 왼쪽 메뉴는 3개만 */
         }
         @media (max-width: 640px) {
-            #k-left{top:7.2rem;gap:.35rem}
-            #k-right{top:7.2rem}
+            #k-left{top:10.2rem;gap:.35rem}
+            #k-right{top:10.2rem}
             #k-left .w-14,#k-right .w-14{width:2.6rem;height:2.6rem}
             #k-bottom{gap:.4rem}
             #k-bottom > div:first-child{width:100%;justify-content:flex-start}
@@ -232,6 +232,7 @@
                     </div>
 
                     <!-- Sound & Menu Hamburger -->
+                    <button onclick="goHub()" id="btn-hub" class="bk-pill h-9 px-3 rounded-xl flex items-center gap-1.5 text-white bk-btn text-xs font-black" title="게임 목록으로 나가기 (자동 저장)"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>게임 목록</span></button>
                     <button onclick="toggleSound()" id="btn-sound" class="bk-pill w-9 h-9 rounded-xl flex items-center justify-center text-white bk-btn" title="사운드 전환">
                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                     </button>
@@ -920,6 +921,8 @@
         })();
         setInterval(saveGame, 5000);
         addEventListener('pagehide', saveGame);
+        // 게임 목록으로: 진행 상황을 저장한 뒤 사이트 목록으로 이동
+        function goHub() { try { saveGame(); } catch (e) {} location.href = '../index.html'; }
         document.addEventListener('visibilitychange', () => { if (document.hidden) saveGame(); });
 
         const stageIndex = () => (state.stageWorld - 1) * 10 + state.stageSub;

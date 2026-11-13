@@ -394,6 +394,7 @@
 
             <!-- Utility Row -->
             <div class="flex gap-1">
+                <button onclick="goHub()" id="btn-hub" class="glass-panel h-8 px-2.5 rounded-xl flex items-center gap-1 text-slate-700 hover:bg-white voxel-btn text-[11px] font-black" title="게임 목록으로 나가기 (자동 저장)"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>게임 목록</span></button>
                 <button onclick="toggleSound()" id="btn-sound" class="glass-panel w-8 h-8 rounded-xl flex items-center justify-center text-slate-700 hover:bg-white voxel-btn" title="사운드 전환">
                     <svg id="icon-sound-on" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
                 </button>
@@ -1262,6 +1263,8 @@
         } catch (e) {}
         setInterval(saveGame, 5000);
         addEventListener('pagehide', saveGame);
+        // 게임 목록으로: 진행 상황을 저장한 뒤 사이트 목록으로 이동
+        function goHub() { try { saveGame(); } catch (e) {} location.href = '../index.html'; }
         document.addEventListener('visibilitychange', () => { if (document.hidden) saveGame(); });
 
         // 랭킹: BIO ARCADE 공용 랭킹(학번+이름)에서 실제 기록을 불러옴 (가짜 친구 없음)
