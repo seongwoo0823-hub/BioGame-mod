@@ -112,12 +112,12 @@
       if (!opts.quiet) { toast(it.name, it.desc + '  (Space)', '#7fd4ff'); AU.sfx('item'); }
     } else if (it.kind === 'tool') {
       const max = has('tools2') ? 2 : 1;
-      while (P.tools.length >= max) { const old = P.tools.shift(); dropPickup('tool', P.x + rand(-10, 10), P.y + 12, old); }
+      while (P.tools.length >= max) { const old = P.tools.shift(); dropPickup('tool', P.x + rand(-10, 10), P.y + 12, old).lock = true; }
       P.tools.push(id); calcStats();
       if (!opts.quiet) { toast(it.name, it.desc, '#cfe0f0'); AU.sfx('item'); }
     } else if (it.kind === 'chart' || it.kind === 'hormone') {
       const max = has('slots2') ? 2 : 1;
-      while (P.cons.length >= max) { const old = P.cons.shift(); dropPickup(CR.ALL[old].kind, P.x + rand(-10, 10), P.y + 12, old); }
+      while (P.cons.length >= max) { const old = P.cons.shift(); dropPickup(CR.ALL[old].kind, P.x + rand(-10, 10), P.y + 12, old).lock = true; }
       P.cons.push(id); if (!opts.quiet) { toast(it.name, it.desc + '  (Q)', it.col); AU.sfx('key'); }
     }
   }
@@ -763,6 +763,7 @@
       const p = G.room.pickups[i]; p.t += dt;
       const tmp = { x: p.x, y: p.y, r: 4 }; moveEnt(tmp, p.vx * dt, p.vy * dt, 'walk'); p.x = tmp.x; p.y = tmp.y; p.vx *= 0.9; p.vy *= 0.9;
       const dd = Math.hypot(P.x - p.x, P.y - p.y);
+      if (p.lock) { if (dd > 20) p.lock = false; else continue; }
       if (mag && dd < 90 && dd > 4) { p.x += (P.x - p.x) / dd * 90 * dt; p.y += (P.y - p.y) / dd * 90 * dt; }
       if (dd > P.r + 6 || p.t < 0.3) continue;
       if (collect(p)) G.room.pickups.splice(i, 1);
@@ -779,6 +780,17 @@
       it.taken = true; applyItem(it.id);
       if (it.group) G.room.items.forEach(o => { if (o !== it && o.group === it.group) { o.taken = true; burstFx(o.x, o.y, '#ff3d6e', 10); } });
     }
+  }
+  // 버리기: F = 진단서·호르몬, G = 수술도구 (터치 [버리기]는 진단서·호르몬 먼저)
+  function dropCons() { const P = G.P; if (!P.cons.length) return false; const id = P.cons.shift(); const pk = dropPickup(CR.ALL[id].kind, P.x, P.y + 10, id); pk.lock = true; pk.vx = pk.vy = 0; toast('버렸어요: ' + CR.ALL[id].name, '다시 가까이 가면 주울 수 있어요', '#cfc6ea'); AU.sfx('door'); return true; }
+  function dropTool() { const P = G.P; if (!P.tools.length) return false; const id = P.tools.pop(); const pk = dropPickup('tool', P.x, P.y + 10, id); pk.lock = true; pk.vx = pk.vy = 0; calcStats(); toast('버렸어요: ' + CR.ALL[id].name, '다시 가까이 가면 주울 수 있어요', '#cfc6ea'); AU.sfx('door'); return true; }
+  CR.dropCons = dropCons; CR.dropTool = dropTool;
+  // 먹기 전 미리보기: 가까운 받침대 아이템·장신구·알약·카드
+  function findPeek() {
+    const P = G.P; let best = null, bd = 1e9;
+    for (const it of G.room.items) { if (it.taken) continue; const d = Math.hypot(P.x - it.x, P.y - it.y); if (d < 38 && d < bd) { bd = d; best = { x: it.x, y: it.y - 14, id: it.id, pk: it.pk, price: it.price, hpCost: it.hpCost }; } }
+    for (const p of G.room.pickups) { if (!['tool', 'chart', 'hormone'].includes(p.kind)) continue; const d = Math.hypot(P.x - p.x, P.y - p.y); if (d < 30 && d < bd) { bd = d; best = { x: p.x, y: p.y - 10, id: p.id, floor: 1 }; } }
+    return best;
   }
   function collect(p) {
     const P = G.P;
@@ -844,6 +856,9 @@
     // 버튼
     if (IN.take(' ')) useActive();
     if (IN.take('q')) useCons();
+    if (IN.take('f')) dropCons();
+    if (IN.take('g')) dropTool();
+    if (IN.take('x')) { if (!dropCons()) dropTool(); }
     if (IN.take('e') && P.bombs > 0) { P.bombs--; G.bombs.push({ x: P.x, y: P.y + 2, t: 1.5 }); AU.sfx('bombpick'); }
     // 던진 폭탄 이동
     for (const b of G.bombs) if (b.vx) { const tmp = { x: b.x, y: b.y, r: 4 }; if (moveEnt(tmp, b.vx * dt, b.vy * dt, 'walk')) { b.vx = 0; b.vy = 0; } b.x = tmp.x; b.y = tmp.y; b.vx *= 0.97; b.vy *= 0.97; }
@@ -852,6 +867,7 @@
     // 폐렴구균 쌍둥이 피막 광선
     for (const e of G.room.ents) if (e.mate && !e.dead && !e.mate.dead && e.def.tether && segDist(P.x, P.y, e.x, e.y, e.mate.x, e.mate.y) < 3 + P.r) hurtPlayer(1);
     G.room.ents = G.room.ents.filter(e => !e.dead || e.dormant);
+    G.peek = findPeek();
     updateFams(dt); updatePlayerBullets(dt); updateEnemyBullets(dt); updateLasers(dt); updateCreeps(dt); updateBombs(dt); updatePickups(dt);
     for (const f of G.fx) if (f.ring && f.hurt) { const r = f.r0 + (f.r1 - f.r0) * (f.t / f.life), dd = dist(f, P); if (Math.abs(dd - r) < 5) hurtPlayer(1); }
     // 방 정리

@@ -20,6 +20,14 @@ html,body{margin:0;height:100%;background:#06040c;color:#fff;font-family:"Noto S
 #toast.on{opacity:1;transform:translate(-50%,0)}
 #toast b{display:block;font-size:calc(var(--s)*7px);font-weight:900;letter-spacing:-.02em}
 #toast span{display:block;font-size:calc(var(--s)*4.4px);color:#d8d0f0;margin-top:calc(var(--s)*1px);line-height:1.35}
+#peek{left:0;top:0;transform:translate(-50%,-100%);opacity:0;transition:opacity .15s;background:rgba(10,6,22,.9);border:1px solid rgba(255,255,255,.22);border-radius:calc(var(--s)*3px);padding:calc(var(--s)*2.2px) calc(var(--s)*4px);width:max-content;max-width:calc(var(--s)*120px);text-align:left;z-index:3}
+#peek.on{opacity:1}
+#peek b{display:block;font-size:calc(var(--s)*5px);font-weight:900}
+#peek i{display:inline-block;font-style:normal;font-size:calc(var(--s)*3.4px);padding:0 calc(var(--s)*1.4px);border-radius:calc(var(--s)*1.2px);background:#2a1d48;color:#cfe0ff;margin:calc(var(--s)*.6px) 0}
+#peek i.op{background:#ffd75e;color:#2a1a00;font-weight:900}#peek i.bad{background:#5a1a2a;color:#ffb0c0}
+#peek span{display:block;font-size:calc(var(--s)*3.8px);color:#e2dcf6;line-height:1.35}
+#peek em{display:block;font-style:normal;font-size:calc(var(--s)*3.6px);color:#ffe066;margin-top:calc(var(--s)*.6px)}
+#peek em:empty{display:none}
 #banner{left:0;right:0;top:38%;opacity:0;transition:.4s;text-shadow:0 2px 0 #000}
 #banner.on{opacity:1}
 #banner small{display:block;font-size:calc(var(--s)*5px);color:#ffd76a;font-weight:800;letter-spacing:.2em}
@@ -91,6 +99,7 @@ a.btn{text-decoration:none;display:block}
 #tbAct{right:calc(18px + env(safe-area-inset-right));bottom:calc(150px + env(safe-area-inset-bottom));background:rgba(40,120,110,.6)}
 #tbBomb{right:calc(84px + env(safe-area-inset-right));bottom:calc(150px + env(safe-area-inset-bottom));background:rgba(110,60,180,.6)}
 #tbQ{right:calc(150px + env(safe-area-inset-right));bottom:calc(150px + env(safe-area-inset-bottom));background:rgba(160,60,120,.6)}
+#tbDrop{right:calc(216px + env(safe-area-inset-right));bottom:calc(150px + env(safe-area-inset-bottom));background:rgba(90,90,110,.6);width:50px;height:50px;font-size:11px}
 #tbPause{right:calc(10px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));width:44px;height:44px}
 #tbCodex{right:calc(60px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));width:44px;height:44px;font-size:11px}
 body:not(.portrait) .tbtn{opacity:.8}
@@ -98,6 +107,7 @@ body:not(.portrait) #tbAct,body:not(.portrait) #tbBomb,body:not(.portrait) #tbQ{
 body:not(.portrait) #tbAct{right:calc(14px + env(safe-area-inset-right))}
 body:not(.portrait) #tbBomb{right:calc(72px + env(safe-area-inset-right))}
 body:not(.portrait) #tbQ{right:calc(130px + env(safe-area-inset-right))}
+body:not(.portrait) #tbDrop{right:calc(188px + env(safe-area-inset-right));bottom:calc(16px + env(safe-area-inset-bottom));width:46px;height:46px}
 .hint{position:fixed;left:0;right:0;bottom:calc(30px + env(safe-area-inset-bottom));text-align:center;font-size:12px;color:rgba(255,255,255,.45);pointer-events:none;z-index:6}
 body:not(.portrait) .hint{display:none}
 body:not(.portrait) #tbPause{top:38%}
@@ -113,6 +123,7 @@ body:not(.portrait) #tbCodex{top:calc(38% + 52px);right:calc(10px + env(safe-are
   <div class="ovl" id="toolName"></div>
   <div class="ovl" id="consName"></div>
   <div class="ovl" id="toast"><b></b><span></span></div>
+  <div class="ovl" id="peek"><b></b><i></i><span></span><em></em></div>
   <div class="ovl" id="banner"></div>
   <div class="ovl" id="bossIntro"><img alt=""><div class="vs">VS</div><b></b><span></span></div>
 </div>
@@ -124,6 +135,7 @@ body:not(.portrait) #tbCodex{top:calc(38% + 52px);right:calc(10px + env(safe-are
   <button class="tbtn" id="tbAct" data-act=" " type="button">액티브<small>Space</small></button>
   <button class="tbtn" id="tbBomb" data-act="e" type="button">폭탄<small>E</small></button>
   <button class="tbtn" id="tbQ" data-act="q" type="button">사용<small>Q</small></button>
+  <button class="tbtn" id="tbDrop" data-act="x" type="button">버리기<small>F·G</small></button>
   <button class="tbtn" id="tbPause" data-act="pause" type="button">Ⅱ</button>
   <button class="tbtn" id="tbCodex" data-act="codex" type="button">도감</button>
   <div class="hint">왼손: 이동 · 오른손: 조준·발사 (손가락을 댄 곳에 스틱이 생겨요)</div>
@@ -149,6 +161,8 @@ body:not(.portrait) #tbCodex{top:calc(38% + 52px);right:calc(10px + env(safe-are
     <b>Space</b><span>액티브 아이템 사용 (방을 비울 때마다 1칸 충전)</span>
     <b>E</b><span>리소좀 폭탄 놓기 — 바위를 부수고 숨은 방 벽을 엶</span>
     <b>Q</b><span>진단서·호르몬 사용</span>
+    <b>F / G</b><span>진단서·호르몬 버리기 / 수술도구 버리기 (버린 자리에서 멀어졌다 돌아오면 다시 주울 수 있어요)</span>
+    <b>아이템</b><span>가까이 가면 먹기 전에 효과가 보여요. 닿지 않고 지나가면 먹지 않아요</span>
     <b>Tab / I</b><span>바이오 도감 · 샌드박스</span>
     <b>Esc / P</b><span>일시정지</span>
     <b>M</b><span>배경 음악 켜기/끄기</span>

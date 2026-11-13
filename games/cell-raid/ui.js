@@ -167,12 +167,39 @@
   }
 
   /* ───────── 키 · 터치 버튼 ───────── */
+  // 먹기 전 미리보기 말풍선
+  const peekEl = $('#peek'); let peekKey = '';
+  const PKN = { heart: ['ATP 하트', '체력 1칸 회복'], bomb: ['리소좀 폭탄', '폭탄 +1'], key: ['제한효소 열쇠', '열쇠 +1'] };
+  function updatePeek() {
+    const pk = G.mode === 'play' && !G.intro && G.peek;
+    if (!pk) { if (peekKey) { peekEl.classList.remove('on'); peekKey = ''; } return; }
+    const k = (pk.id || pk.pk) + '|' + (pk.price || '') + '|' + (pk.hpCost || '');
+    if (k !== peekKey) {
+      peekKey = k; let name, desc, tag = '', cls = '';
+      if (pk.pk) { [name, desc] = PKN[pk.pk] || [pk.pk, '']; }
+      else { const x = CR.ALL[pk.id]; name = x.name; desc = x.desc;
+        if (x.kind === 'passive') { tag = x.tier === 4 ? '사기템' : '패시브 · 등급 ' + x.tier; cls = x.tier === 4 ? 'op' : ''; }
+        else if (x.kind === 'active') tag = '액티브 · 충전 ' + x.charge + '칸 (Space)';
+        else if (x.kind === 'tool') tag = '수술도구 (G로 버리기)';
+        else if (x.kind === 'chart') tag = '진단서 (Q 사용 · F 버리기)';
+        else if (x.kind === 'hormone') { tag = (x.good ? '호르몬' : '호르몬 · 나쁜 효과') + ' (Q 사용 · F 버리기)'; cls = x.good ? '' : 'bad'; }
+        peekEl.querySelector('b').style.color = x.tier === 4 ? '#ffd75e' : '#fff'; }
+      if (pk.pk) peekEl.querySelector('b').style.color = '#fff';
+      peekEl.querySelector('b').textContent = name; const ti = peekEl.querySelector('i'); ti.textContent = tag; ti.className = cls; ti.style.display = tag ? '' : 'none';
+      peekEl.querySelector('span').textContent = desc;
+      peekEl.querySelector('em').textContent = pk.price ? '가격 ' + pk.price + ' ATP 코인 — 닿으면 구매' : pk.hpCost ? '최대 체력 1칸을 내고 가져가요 — 닿으면 거래' : '닿으면 먹어요 · 그냥 지나가도 돼요';
+      peekEl.classList.add('on');
+    }
+    const s = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--s')) || 2;
+    peekEl.style.left = ((CR.RX + pk.x) * s) + 'px'; peekEl.style.top = ((CR.RY + pk.y) * s) + 'px';
+  }
   ui.frame = () => {
+    updatePeek();
     if (IN.take('Escape') || IN.take('p')) { if (G.mode === 'play') pause(true); else if (G.mode === 'pause') pause(false); else if (G.mode === 'codex') closeCodex(); }
     if (IN.take('Tab') || IN.take('i')) { if (G.mode === 'codex') closeCodex(); else if (G.mode === 'play' || G.mode === 'pause' || G.mode === 'title') openCodex(); }
     if (IN.take('m')) { AU.music = !AU.music; AU.apply(); CR.toast('배경 음악 ' + (AU.music ? '켜짐' : '꺼짐'), 'M 키로 바꿀 수 있어요', '#cfe0f0'); }
     if (G.mode === 'over' && (IN.take('Enter') || IN.take('r'))) begin({});
-    if (G.mode !== 'play') { IN.take(' '); IN.take('q'); IN.take('e'); }
+    if (G.mode !== 'play') { IN.take(' '); IN.take('q'); IN.take('e'); IN.take('f'); IN.take('g'); IN.take('x'); }
     // 아래 이름표
     if (G.P && (G.tick % 15 === 0)) {
       const tn = G.P.tools.map(id => CR.ALL[id].name).join(' · '), cn = G.P.cons.map(id => CR.ALL[id].name).join(' · ');

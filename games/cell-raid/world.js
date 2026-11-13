@@ -148,8 +148,7 @@
     // 장애물
     for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
       const v = room.tiles[y * COLS + x];
-      if (v === 2) c.drawImage(rockSpr(st), x * T, y * T);
-      else if (v === 3) c.drawImage(metalSpr(st), x * T, y * T);
+      if (v === 2 || v === 3) { const spr = v === 2 ? rockSpr(st) : metalSpr(st); c.fillStyle = 'rgba(10,4,12,0.45)'; c.beginPath(); c.ellipse(x * T + 9.5, y * T + 14, 8, 3.2, 0, 0, 7); c.fill(); if (CR.darkOf) c.drawImage(CR.darkOf(spr), x * T, y * T + 2); c.drawImage(spr, x * T, y * T - 1); }
       else if (v === 4) c.drawImage(spikeSpr(st), x * T, y * T);
       else if (v === 7) { c.fillStyle = st === 3 ? 'rgba(200,230,80,0.35)' : st === 2 ? 'rgba(120,10,30,0.4)' : 'rgba(255,255,255,0.12)'; c.beginPath(); c.ellipse(x * T + 8, y * T + 8, 9, 6, 0, 0, 7); c.fill(); }
     }

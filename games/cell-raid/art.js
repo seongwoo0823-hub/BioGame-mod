@@ -103,9 +103,15 @@
     // 땀구멍 (벽)
     for (let k = 0; k < 7; k++) { const side = k % 3, x = side === 0 ? T + r() * (RW - 2 * T) : side === 1 ? 4 + r() * 6 : RW - 10 + r() * 6, y = side === 0 ? 4 + r() * 6 : T + r() * (RH - 2 * T);
       put(d, w, Math.round(x), Math.round(y), p.wallDark); put(d, w, Math.round(x) + 1, Math.round(y), p.wallDark); put(d, w, Math.round(x), Math.round(y) + 1, sh(p.wallDark, 0.2)); put(d, w, Math.round(x) - 1, Math.round(y) - 1, sh(p.wallTop, 0.2)); }
+    // 입체 벽면: 위쪽 벽 안쪽은 세로로 선 면(아래로 갈수록 어둡게), 양옆은 좁은 옆면
+    const face = (x, y, k, stripe) => { const col = mix(p.wallDeep, p.wallDark, k); put(d, w, x, y, stripe ? sh(col, -0.12) : col); };
+    for (let x = 0; x < RW; x++) for (let y = T - 7; y < T; y++) { if (x < T - 4 || x >= RW - T + 4) continue; face(x, y, (y - (T - 7)) / 7 * 0.8, (x * 7 + Math.floor(y / 3)) % 9 === 0); }
+    for (let x = T - 4; x < RW - T + 4; x++) { put(d, w, x, T - 8, sh(p.wallTop, 0.2)); put(d, w, x, T - 9, sh(p.wallTop, 0.05)); }
+    for (let y = T - 8; y < RH - T + 2; y++) { for (let k = 0; k < 4; k++) { put(d, w, T - 4 + k, y, mix(p.wallMid, p.wallDark, 0.25 + k * 0.15)); put(d, w, RW - T + 3 - k, y, mix(p.wallMid, p.wallDark, 0.35 + k * 0.15)); } put(d, w, T - 5, y, sh(p.wallTop, 0.15)); put(d, w, RW - T + 4, y, sh(p.wallTop, 0.05)); }
+    for (let x = T - 4; x < RW - T + 4; x++) { put(d, w, x, RH - T, sh(p.wallTop, 0.25)); put(d, w, x, RH - T + 1, sh(p.wallTop, 0.1)); }
     // 벽이 바닥에 드리우는 그림자 (위·왼쪽)
-    for (let x = T; x < RW - T; x++) for (let k = 0; k < 5; k++) darken(d, w, x, T + k, 0.55 + k * 0.09);
-    for (let y = T; y < RH - T; y++) for (let k = 0; k < 3; k++) darken(d, w, T + k, y, 0.7 + k * 0.1);
+    for (let x = T; x < RW - T; x++) for (let k = 0; k < 8; k++) darken(d, w, x, T + k, 0.42 + k * 0.072);
+    for (let y = T; y < RH - T; y++) for (let k = 0; k < 5; k++) darken(d, w, T + k, y, 0.6 + k * 0.08);
   }
 
   /* ───────── 털 (모낭에서 방 안으로 자란 털) ───────── */
@@ -132,7 +138,7 @@
     return CR.spr('crust' + st + '_' + v, 16, 16, g => {
       const r = CR.rng(st * 991 + v * 37);
       // 바닥 그림자 쪽 덩어리 → 위에 겹친 각질 판들
-      const look = [[p.wallMid, mix(p.wallTop, p.wallMid, 0.4), sh(p.scab, -0.1)], [sh(p.scab, 0.15), sh(p.scab, 0.32), sh(p.scab, -0.2)], [mix(p.pus, p.wallMid, 0.45), mix(p.pus, p.wallTop, 0.3), sh(p.scab, -0.05)], [mix(p.wallTop, p.wallMid, 0.2), p.wallTop, sh(p.wallDeep, -0.1)]][v];
+      const look = [['#9a5638', '#b8714c', '#5e2a1c'], [sh(p.scab, 0.1), sh(p.scab, 0.3), sh(p.scab, -0.3)], ['#a8803a', '#c49a4a', '#5e3a1c'], ['#8c4a34', '#a8624a', '#4a2018']][v];
       if (v === 3) { for (let k = 0; k < 6; k++) { const cx = 3.5 + r() * 9, cy = 5 + r() * 7; g.blob(cx, cy + 1, 2.4 + r(), 1.8 + r() * 0.6, sh(look[2], 0.05)); g.blob(cx - 0.3, cy, 2.1 + r() * 0.8, 1.5, k % 2 ? look[0] : look[1]); } }
       else {
         g.blob(8, 10, 6.8, 4.8, look[2]);
@@ -161,6 +167,10 @@
     return CR.spr('kspike' + st, 16, 16, g => { for (const [x, y] of [[3, 5], [10, 4], [6, 11], [12, 11]]) { for (let i = 0; i < 5; i++) for (let j = -Math.floor(i / 2); j <= Math.floor(i / 2); j++) g.set(x + j + 1, y + i - 2, i === 0 ? '#ffffff' : sh(p.wallTop, -i * 0.08)); g.set(x, y + 3, sh(p.wallDark, 0.2)); } });
   }
 
+  // 장애물 옆면용 어두운 사본
+  const darkCache = new Map();
+  function darkOf(cv) { if (darkCache.has(cv)) return darkCache.get(cv); const o = document.createElement('canvas'); o.width = cv.width; o.height = cv.height; const x = o.getContext('2d'); x.drawImage(cv, 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(40,10,8,0.72)'; x.fillRect(0, 0, o.width, o.height); darkCache.set(cv, o); return o; }
+  CR.darkOf = darkOf;
   /* ───────── 방 배경 (기존 CR.roomBg를 1구역에서 대체) ───────── */
   const baseBg = CR.roomBg;
   CR.roomBg = function (room, st) {
@@ -174,8 +184,8 @@
     const r = CR.rng(CR.hashStr(room.key + 'o'));
     for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
       const v = room.tiles[y * COLS + x], px = x * T, py = y * T;
-      if (v === 2) { c.fillStyle = 'rgba(40,10,10,0.28)'; c.beginPath(); c.ellipse(px + 9, py + 13, 7, 3, 0, 0, 7); c.fill(); c.drawImage(crustSpr(st, (x * 7 + y * 13) % 4), px, py); }
-      else if (v === 3) { c.fillStyle = 'rgba(40,10,10,0.3)'; c.fillRect(px + 2, py + 14, 14, 2); c.drawImage(stapleSpr(st), px, py); }
+      if (v === 2) { const spr = crustSpr(st, (x * 7 + y * 13) % 4); c.fillStyle = 'rgba(25,5,5,0.5)'; c.beginPath(); c.ellipse(px + 9.5, py + 14, 8, 3.2, 0, 0, 7); c.fill(); c.drawImage(darkOf(spr), px, py + 2); c.drawImage(spr, px, py - 1); }
+      else if (v === 3) { c.fillStyle = 'rgba(25,5,5,0.5)'; c.fillRect(px + 2, py + 13, 15, 4); c.drawImage(darkOf(stapleSpr(st)), px, py + 2); c.drawImage(stapleSpr(st), px, py - 1); }
       else if (v === 4) c.drawImage(spikeSpr(st), px, py);
       else if (v === 7) { const P1 = P(st); c.fillStyle = 'rgba(232,210,122,0.55)'; c.beginPath(); c.ellipse(px + 8, py + 9, 8, 5, 0, 0, 7); c.fill(); c.fillStyle = 'rgba(255,245,200,0.6)'; c.fillRect(px + 4, py + 7, 3, 1); c.fillStyle = P1.pus; c.fillRect(px + 10, py + 10, 2, 1); }
       else if (v === 0 && r() < 0.012) { /* 잔해 */ c.fillStyle = 'rgba(90,30,25,0.5)'; c.fillRect(px + 5 + Math.floor(r() * 6), py + 6 + Math.floor(r() * 6), 2, 1); }
