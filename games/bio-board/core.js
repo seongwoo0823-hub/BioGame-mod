@@ -121,7 +121,7 @@ const BB = window.BB = {};
   document.addEventListener('pointerout', e => { const el = e.target.closest && e.target.closest('[data-info]'); if (el) hideTip(); });
   let toastT = 0;
   BB.toast = (title, sub, ms) => { const t = $('toast'); t.querySelector('b').textContent = title; t.querySelector('span').textContent = sub || ''; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms || 1900); };
-  BB.modal = (html, opt) => { const s = $('scrim'), m = $('modal'); m.innerHTML = html; s.hidden = false; s.onclick = e => { if (e.target === s && !(opt && opt.lock)) BB.closeModal(); }; return m; };
+  BB.modal = (html, opt) => { hideTip(); const s = $('scrim'), m = $('modal'); m.innerHTML = html; s.hidden = false; s.onclick = e => { if (e.target === s && !(opt && opt.lock)) BB.closeModal(); }; return m; };
   BB.closeModal = () => { $('scrim').hidden = true; $('modal').innerHTML = ''; };
   BB.msg = t => { $('msg').innerHTML = t || ''; };
   BB.acts = (list) => { // [{t, cls, fn, dis, info}]
@@ -310,13 +310,17 @@ const BB = window.BB = {};
     capture() { this.noise(0.35, 300, 0.7, 0.35); this.tone(160, 0.4, 'sawtooth', 0.12, 0, 60); this.tone(880, 0.15, 'square', 0.05, 0.12); },
     bonus() { [523, 659, 784, 1047, 1319].forEach((f, i) => this.tone(f, 0.18, 'triangle', 0.12, i * 0.06)); },
     fanfare() { const n = [523, 659, 784, 1047, 784, 1047, 1319]; n.forEach((f, i) => { this.tone(f, 0.25, 'square', 0.07, i * 0.12); this.tone(f / 2, 0.25, 'triangle', 0.08, i * 0.12); }); },
-    turn() { this.tone(740, 0.08, 'sine', 0.1); this.tone(988, 0.12, 'sine', 0.1, 0.07); }
+    turn() { const g = BB.match && BB.match.game; const J = {rummi: [587, 784], cell: [659, 880, 1047], code: [494, 740], yut: [587, 659, 880]}[g] || [740, 988]; J.forEach((f, i) => this.tone(f, 0.1, g === 'code' ? 'square' : 'sine', g === 'code' ? 0.05 : 0.1, i * 0.07)); },
+    select() { const g = BB.match && BB.match.game; if (g === 'rummi') { this.noise(0.03, 3200, 3, 0.18); this.tone(1100, 0.04, 'triangle', 0.05); } else this.tone(1200, 0.05, 'triangle', 0.07); },   // 타일 고르기
+    flip() { this.noise(0.08, 1400, 1.5, 0.2); this.tone(520, 0.08, 'triangle', 0.08, 0.04, 880); },     // 타일 뒤집기
+    invalid() { this.tone(180, 0.18, 'square', 0.06); this.tone(150, 0.2, 'square', 0.05, 0.1); },
+    wood() { this.tone(330 + Math.random() * 80, 0.07, 'triangle', 0.16); this.noise(0.04, 1200, 5, 0.15); }   // 나무 윷가락
   };
   try { A.muted = localStorage.getItem('bioBoardMute') === '1'; } catch (e) {}
 
   /* ---------------- 장면 관리 · 루프 ---------------- */
   BB.root = null; // 현재 장면의 물체 묶음
-  BB.newRoot = function () { if (BB.root) { scene.remove(BB.root); BB.root.traverse(o => { if (o.geometry && o.geometry !== pGeo && o.geometry !== boxCache) o.geometry.dispose(); }); } BB.root = new THREE.Group(); scene.add(BB.root); BB.pickables = []; BB.onPick = null; BB.ticks = []; return BB.root; };
+  BB.newRoot = function () { hideTip(); hoverObj = null; if (BB.root) { scene.remove(BB.root); BB.root.traverse(o => { if (o.geometry && o.geometry !== pGeo && o.geometry !== boxCache) o.geometry.dispose(); }); } BB.root = new THREE.Group(); scene.add(BB.root); BB.pickables = []; BB.onPick = null; BB.ticks = []; return BB.root; };
   BB.ticks = [];
   let last = performance.now(), elapsed = 0;
   function loop(now) {

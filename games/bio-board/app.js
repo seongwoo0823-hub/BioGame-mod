@@ -35,7 +35,7 @@
     M.mySeat = opt && opt.mySeat != null ? opt.mySeat : seats.findIndex(s => s.type === 'human');
     M.viewer = M.mySeat >= 0 ? M.mySeat : 0;
     showGameUI(true);
-    BB.newRoot();
+    BB.newRoot(); BB.music(gameId);
     M.state = opt && opt.state ? opt.state : M.G.init(seats.map(s => ({name: s.name, char: s.char})));
     M.view = M.G.createView(ctx);
     renderPlayers();
@@ -105,27 +105,85 @@
     BB.audio.fanfare();
     const w = M.seats[res.winner];
     if (w) { try { const k = 'bioBoardStats'; const st = JSON.parse(localStorage.getItem(k) || '{}') || {}; st.played = (st.played || 0) + 1; if (w.type === 'human') st.wins = (st.wins || 0) + 1; st[M.game] = (st[M.game] || 0) + 1; localStorage.setItem(k, JSON.stringify(st)); } catch (e) {} }
+    const rk = rankResult(res);
     setTimeout(() => {
-      BB.modal(`<h2>🏆 ${w ? esc(w.name) + ' 승리!' : '경기 끝'}</h2><p class="sub">${esc(res.text || '')}</p>
+      BB.modal(`<h2>🏆 ${w ? esc(w.name) + ' 승리!' : '경기 끝'}</h2>${rk ? `<p class="sub" style="color:#9ff5dc">랭킹 점수 +${rk.gain} · ${esc(M.G.name)} 누적 <b>${rk.pts}점</b> (${rk.wins}승)</p>` : ''}<p class="sub">${esc(res.text || '')}</p>
         <div class="list">${(res.rank || []).map((r, i) => `<div><b style="width:22px">${i + 1}</b><span style="flex:1">${esc(M.seats[r.seat].name)}</span><small>${esc(r.note || '')}</small></div>`).join('')}</div>
-        <div class="row">${M.mode !== 'online' || M.host ? '<button class="btn pri" id="again">한 판 더</button>' : ''}<button class="btn" id="toLobby">로비로</button></div>`, {lock: true});
+        <div class="row">${M.mode !== 'online' || M.host ? '<button class="btn pri" id="again">한 판 더</button>' : ''}${rk && window.BioRank && BioRank.ready() ? '<button class="btn warn" id="sendRk">🏆 랭킹에 보내기</button>' : ''}<button class="btn" id="toLobby">로비로</button><button class="btn" id="toList">게임 목록</button></div>`, {lock: true});
+      const sr = $('sendRk'); if (sr) sr.onclick = () => { BB.closeModal(); sendRank(rk); };
+      $('toList').onclick = () => { location.href = '../index.html'; };
       const ag = $('again'); if (ag) ag.onclick = () => { BB.closeModal(); const seats = M.seats; if (M.mode === 'online') { net.startGame(); } else startMatch(M.game, seats, M.mode); };
       $('toLobby').onclick = () => { BB.closeModal(); toLobby(); };
     }, 900);
   }
 
+  /* ---------- 랭킹: 게임마다 이긴 점수 누적 (AI 대결·온라인만) ---------- */
+  const RANK_KEY = 'bioBoardRank';
+  const rankLoad = () => { try { return JSON.parse(localStorage.getItem(RANK_KEY) || '{}') || {}; } catch (e) { return {}; } };
+  function rankResult(res) {
+    if (M.mode === 'local') return null;
+    const me = M.mySeat, w = M.seats[res.winner]; if (me < 0 || res.winner !== me || !w) return null;
+    // 점수 = 이긴 상대마다 (AI: 난이도 1~3점, 사람: 3점)
+    let gain = 0, best = -1;
+    M.seats.forEach((s, i) => { if (i === me) return; if (s.type === 'ai') { gain += (s.level || 0) + 1; best = Math.max(best, s.level || 0); } else { gain += 3; best = Math.max(best, 2); } });
+    const d = rankLoad(), g = d[M.game] || {wins: 0, pts: 0, best: -1};
+    g.wins++; g.pts += gain; g.best = Math.max(g.best, best); d[M.game] = g;
+    try { localStorage.setItem(RANK_KEY, JSON.stringify(d)); } catch (e) {}
+    return {gain, pts: g.pts, wins: g.wins, best: g.best, game: M.game};
+  }
+  function sendRank(rk) {
+    if (!window.BioGoal) return;
+    const G = BB.GAMES[rk.game];
+    BioGoal.result('bio-board', rk.wins, {ok: true, title: G.name + ' 랭킹', text: `${G.name} · ${rk.pts}점 (${rk.wins}승)`,
+      rank: {cat: G.name, v: BioGoal.key([[rk.pts, 1e6, 1], [rk.wins, 1e5, 1]]), f: {pts: rk.pts, wins: rk.wins, best: rk.best >= 0 ? LEVELS[rk.best].name : '-'}}});
+  }
+  BB.rankLoad = rankLoad;
+  // 로비의 랭킹 창: 게임별 탭
+  function rankModal(id) {
+    id = id || ORDER[0];
+    const mine = rankLoad()[id];
+    const m = BB.modal(`<h2>🏆 보드게임 랭킹</h2><p class="sub">AI 대결·온라인에서 이기면 점수가 쌓여요 (이긴 상대마다 초급 1 · 중급 2 · 고급 3 · 사람 3점). 결과 창의 [랭킹에 보내기]로 올려요.</p>
+      <div class="seg">${ORDER.map(g => `<button type="button" data-g="${g}" class="${g === id ? 'on' : ''}">${esc(BB.GAMES[g].short)}</button>`).join('')}</div>
+      <div class="lbl">내 기록 (이 기기)</div><div class="list"><div><span style="flex:1">${mine ? `${mine.pts}점 · ${mine.wins}승 · 최고 난이도 ${mine.best >= 0 ? LEVELS[mine.best].name : '-'}` : '아직 기록이 없어요'}</span></div></div>
+      <div class="lbl">공용 랭킹</div><div class="list" id="rkList"><div>${window.BioRank && BioRank.ready() ? '불러오는 중…' : '랭킹 서버가 설정되지 않았어요'}</div></div>
+      <div class="row"><button class="btn" id="rkClose">닫기</button></div>`);
+    m.querySelectorAll('[data-g]').forEach(b => b.onclick = () => rankModal(b.dataset.g));
+    $('rkClose').onclick = BB.closeModal;
+    if (window.BioRank && BioRank.ready()) BioRank.top('bio-board', BB.GAMES[id].name, 30).then(r => {
+      const L = $('rkList'); if (!L) return;
+      L.innerHTML = r.list.length ? r.list.map((x, i) => `<div><b style="width:24px">${i + 1}</b><span style="flex:1">${esc(x.sid)} ${esc(x.name)}</span><small>${esc((x.f && x.f.pts) || 0)}점 · ${esc((x.f && x.f.wins) || 0)}승</small></div>`).join('') : '<div>아직 아무도 올리지 않았어요. 첫 번째가 되어 보세요!</div>';
+    }).catch(() => { const L = $('rkList'); if (L) L.innerHTML = '<div>랭킹을 불러오지 못했어요</div>'; });
+  }
+  BB.rankModal = rankModal;
+  // 게임 중 메뉴: 계속 · 규칙 · 소리 · 다른 보드게임(로비) · 게임 목록
+  function menuModal() {
+    BB.modal(`<h2>메뉴</h2><p class="sub">${esc(M.G ? M.G.name : '')}</p><div class="list" style="gap:8px">
+      <button class="btn pri" id="mResume">▶ 계속하기</button><button class="btn" id="mRules">📖 규칙 보기</button><button class="btn" id="mRank">🏆 랭킹</button>
+      <button class="btn" id="mSound">${BB.soundLabel()}</button><button class="btn warn" id="mLobby">🎲 다른 보드게임 고르기 (로비)</button><button class="btn" id="mList">🏠 게임 목록으로</button></div>`);
+    $('mResume').onclick = BB.closeModal; $('mRules').onclick = () => rulesModal(M.game); $('mRank').onclick = () => rankModal(M.game);
+    $('mSound').onclick = () => { BB.cycleSound(); $('mSound').textContent = BB.soundLabel(); };
+    $('mLobby').onclick = () => { BB.closeModal(); toLobby(); };
+    $('mList').onclick = () => { location.href = '../index.html'; };
+  }
+  BB.menuModal = menuModal;
+  // 소리: 음악+효과음 → 효과음만 → 끔
+  BB.soundLabel = () => window.LyricAudio ? LyricAudio.label : (BB.audio.muted ? '🔇 소리 끔' : '🔔 소리 켬');
+  BB.cycleSound = () => { BB.audio.unlock(); if (window.LyricAudio) { const m = LyricAudio.cycle(); BB.audio.setMuted(m === 'off'); } else BB.audio.setMuted(!BB.audio.muted); };
+  BB.music = name => { if (window.LyricAudio) LyricAudio.theme(name); };
+  addEventListener('keydown', e => { if (e.key === 'Escape' && M.G && !M.over) { if (BB.$('scrim').hidden) menuModal(); else BB.closeModal(); } });
+
   function showGameUI(on) {
-    $('top').hidden = !on; $('bar').hidden = !on;
+    $('top').hidden = !on; $('bar').hidden = !on; document.body.classList.toggle('ingame', !!on);
     $('dock').hidden = on; $('lobbyHead').hidden = on;
     BB.msg(''); BB.acts([]);
-    $('homeBtns').innerHTML = on ? '<button class="btn sm" id="bRules" type="button">규칙</button><button class="btn sm" id="bSound" type="button"></button><button class="btn sm" id="bExit" type="button">로비로</button>'
-      : '<button class="btn sm" id="bHelp" type="button">도움말</button><button class="btn sm" id="bSound" type="button"></button><button class="btn sm" type="button" onclick="location.href=\'../index.html\'">🏠 게임 목록</button>';
-    const snd = $('bSound'); snd.textContent = BB.audio.muted ? '소리 끔' : '소리 켬';
-    snd.onclick = () => { BB.audio.unlock(); BB.audio.setMuted(!BB.audio.muted); snd.textContent = BB.audio.muted ? '소리 끔' : '소리 켬'; };
+    $('homeBtns').innerHTML = on ? '<button class="btn sm" id="bMenu" type="button">☰ 메뉴</button><button class="btn sm" id="bRules" type="button">규칙</button><button class="btn sm" id="bSound" type="button"></button><button class="btn sm" id="bExit" type="button">로비로</button><button class="btn sm" type="button" onclick="location.href=\'../index.html\'">🏠 게임 목록</button>'
+      : '<button class="btn sm" id="bHelp" type="button">도움말</button><button class="btn sm" id="bRank" type="button">🏆 랭킹</button><button class="btn sm" id="bSound" type="button"></button><button class="btn sm" type="button" onclick="location.href=\'../index.html\'">🏠 게임 목록</button>';
+    const snd = $('bSound'); snd.textContent = BB.soundLabel();
+    snd.onclick = () => { BB.cycleSound(); snd.textContent = BB.soundLabel(); };
     if (on) {
-      $('bRules').onclick = () => rulesModal(M.game);
+      $('bRules').onclick = () => rulesModal(M.game); $('bMenu').onclick = menuModal;
       $('bExit').onclick = () => { BB.modal('<h2>로비로 나갈까요?</h2><p class="sub">지금 경기는 끝나요.</p><div class="row"><button class="btn warn" id="yx">나가기</button><button class="btn" id="nx">계속하기</button></div>'); $('yx').onclick = () => { BB.closeModal(); toLobby(); }; $('nx').onclick = BB.closeModal; };
-    } else $('bHelp').onclick = helpModal;
+    } else { $('bHelp').onclick = helpModal; $('bRank').onclick = () => rankModal(); }
   }
   function toLobby() {
     clearTimeout(M.aiTimer); M.over = true;
@@ -154,7 +212,7 @@
 
   /* ================= 로비 (3D 아케이드) ================= */
   function buildLobby() {
-    const root = BB.newRoot();
+    const root = BB.newRoot(); BB.music('boardLobby');
     BB.scene.background.set(0x7cc6e0);
     BB.setView({tx: 0, ty: 1.5, tz: 0, az: Math.PI / 4, el: 0.6, zoom: innerWidth < innerHeight ? 15.5 : 13});
     const g = BB.ground(30, 0x4fa866, 0x6cc584); root.add(g);
@@ -355,6 +413,7 @@
   addEventListener('beforeunload', () => { if (net.role === 'guest') net.toHost({t: 'bye'}); });
 
   // 시작
+  if (window.LyricAudio) { LyricAudio.init('bioBoard'); BB.audio.muted = LyricAudio.mode === 'off'; }
   showGameUI(false);
   buildLobby();
   BB.start();

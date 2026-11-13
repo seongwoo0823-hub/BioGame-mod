@@ -1,11 +1,11 @@
 /* BIO ARCADE 서비스 워커: 처음 접속할 때 전체 게임을 저장해 두고, 이후에는 오프라인에서도 실행. */
-const VERSION = 'biogame-hub-v95-bioboard';
+const VERSION = 'biogame-hub-v96-device';
 const FONT_CACHE = 'bio-arcade-fonts';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './games/bio-beat.html', './games/bio-kart.html',
   './games/vessel-canyon.html', './games/biotro.html',
-  './games/cell-brawl.html', './games/only-up.html', './games/bio-strike.html', './ilog.js', './goal.js', './icons.js', './rank.js', './net.js', './lyric-audio.js', './games/cell-frontier.html', './games/bio-tower.html', './games/codon-glass.html', './games/bio-pyramid.html', './games/bio-pyramid/tw.css', './games/cell-raid.html', './games/bio-board.html', './games/bio-board/core.js', './games/bio-board/app.js', './games/bio-board/rummi.js', './games/bio-board/cell.js', './games/bio-board/code.js', './games/bio-board/yut.js', './vendor/peerjs.min.js', './games/cell-raid/engine.js', './games/cell-raid/data.js', './games/cell-raid/world.js', './games/cell-raid/art.js', './games/cell-raid/props.js', './games/cell-raid/chars.js', './games/cell-raid/game.js', './games/cell-raid/ui.js', './games/codon-glass/tw.css', './vendor/matter.min.js',
+  './games/cell-brawl.html', './games/only-up.html', './games/bio-strike.html', './ilog.js', './goal.js', './icons.js', './device.js', './rank.js', './net.js', './lyric-audio.js', './games/cell-frontier.html', './games/bio-tower.html', './games/codon-glass.html', './games/bio-pyramid.html', './games/bio-pyramid/tw.css', './games/cell-raid.html', './games/bio-board.html', './games/bio-board/core.js', './games/bio-board/app.js', './games/bio-board/rummi.js', './games/bio-board/cell.js', './games/bio-board/code.js', './games/bio-board/yut.js', './vendor/peerjs.min.js', './games/cell-raid/engine.js', './games/cell-raid/data.js', './games/cell-raid/world.js', './games/cell-raid/art.js', './games/cell-raid/props.js', './games/cell-raid/chars.js', './games/cell-raid/game.js', './games/cell-raid/ui.js', './games/codon-glass/tw.css', './vendor/matter.min.js',
   './assets/bio-beat.jpg', './assets/bio-kart.jpg',
   './assets/vessel-canyon.jpg', './assets/biotro.jpg',
   './assets/cell-brawl.jpg', './assets/only-up.jpg', './assets/bio-board.jpg', './assets/bio-strike.jpg', './assets/cell-frontier.jpg', './assets/bio-tower.jpg', './assets/codon-glass.jpg', './assets/bio-pyramid.jpg', './assets/cell-raid.jpg', './icons/icon-online-192.png', './icons/icon-online-512.png', './icons/icon-lan-192.png', './icons/icon-wifi-192.png',

@@ -217,6 +217,56 @@ window.LyricAudio = (function () {
     },
   };
 
+
+  /* ───────── 보드게임 천국: 게임별 배경 음악 (같은 틀로 만든 짧은 곡) ───────── */
+  const PENT = [0, 2, 4, 7, 9];
+  const dgp = (root, d) => root + 12 * Math.floor(d / 5) + PENT[((d % 5) + 5) % 5];
+  // 마디마다 화음 근음(r)에 붙는 짧은 동기들 [박, 음 간격, 길이]
+  const MOT = {
+    bounce: [[[0, 4, 2], [2, 2, 1], [3, 4, 1], [4, 7, 3], [7, 6, 1]], [[0, 7, 2], [2, 6, 2], [4, 4, 2], [6, 2, 2]], [[0, 2, 1], [1, 4, 1], [2, 7, 2], [4, 9, 2], [6, 7, 2]], [[0, 4, 6], [6, 2, 2]]],
+    jazz: [[[1, 4, 2], [3, 6, 1], [4, 7, 3], [7, 9, 1]], [[0, 8, 3], [3, 7, 1], [4, 4, 4]], [[1, 2, 1], [2, 4, 1], [3, 6, 2], [6, 7, 2]], [[0, 4, 5], [6, 2, 2]]],
+    march: [[[0, 7, 1], [1, 7, 1], [2, 9, 2], [4, 7, 2], [6, 4, 2]], [[0, 2, 2], [2, 4, 2], [4, 7, 4]], [[0, 9, 1], [1, 9, 1], [2, 11, 2], [4, 9, 2], [6, 7, 2]], [[0, 4, 2], [2, 2, 2], [4, 0, 4]]],
+    myst: [[[0, 4, 4], [4, 6, 2], [6, 7, 2]], [[0, 9, 6], [6, 7, 2]], [[0, 7, 2], [2, 6, 2], [4, 4, 4]], [[0, 2, 8]]],
+    gugak: [[[0, 2, 3], [3, 3, 1], [4, 4, 2], [6, 3, 2]], [[0, 2, 4], [4, 0, 4]], [[0, 4, 2], [2, 5, 2], [4, 6, 3], [7, 5, 1]], [[0, 4, 6], [6, 3, 2]]]
+  };
+  function boardTheme(o) {
+    return {
+      bpm: o.bpm, spb: 8, bars: o.prog.length, passes: 3, root: o.root,
+      play(t, b, s, p, sd) {
+        const M = musicBus, R = this.root, r = o.prog[b], bar = sd * 8;
+        const n = o.pent ? (d => dgp(R, d)) : (d => dg(R, o.minor ? MIN : MAJ, d));
+        const mot = MOT[o.mot][b % 4], note = mot.find(x => x[0] === s);
+        o.beat(t, b, s, p, sd, n, r, M, bar);
+        if (note && (p !== 2 || o.mot === 'myst')) { const len = note[2] * sd; o.lead(t, n(r + note[1]), len, p, M); }
+      }
+    };
+  }
+  Object.assign(THEMES, {
+    boardLobby: boardTheme({bpm: 100, root: 60, prog: [0, 4, 5, 3, 0, 4, 3, 4], mot: 'bounce',
+      beat(t, b, s, p, sd, n, r, M, bar) { if (s === 0) { I.pad(t, [n(r) - 12, n(r + 2) - 12, n(r + 4) - 12], bar, 0.024, M, 0.5); I.bass(t, n(r) - 24, sd * 3, 0.22, M, 0.1); } if (s === 4) I.bass(t, n(r + 4) - 24, sd * 3, 0.18, M, 0.1);
+        I.harp(hz(t), n(r + [0, 2, 4, 7, 4, 2, 4, 7][s]) - 12, sd * 1.4, s % 2 ? 0.06 : 0.09, M, 0.35); if (p === 1) { if (s === 0 || s === 4) I.kick(t, 0.12, M); if (s % 2) I.shaker(t, 0.02, M); } },
+      lead(t, m, len, p, M) { if (p === 0) I.bell(t, m, len * 1.2, 0.07, M, 0.5); else I.flute(t, m, len * 0.95, 0.1, M, 0.5); }}),
+    rummi: boardTheme({bpm: 88, root: 67, prog: [0, 5, 1, 4, 0, 5, 1, 4, 3, 3, 0, 5, 1, 4, 0, 4], mot: 'jazz',
+      beat(t, b, s, p, sd, n, r, M, bar) { if (s % 2 === 0) I.bass(t, n(r + [0, 2, 4, 5][s / 2]) - 24, sd * 1.8, 0.2, M, 0.1);
+        if (s === 2 || s === 6 || (p === 1 && s === 5)) [n(r + 2) - 12, n(r + 4) - 12, n(r + 6) - 12].forEach((m, i) => I.piano(hz(t) + i * 0.01, m, sd * 1.2, 0.06, M, 0.35));
+        if (s % 2 === 1) I.shaker(t, 0.012, M); },
+      lead(t, m, len, p, M) { if (p === 1) I.flute(t, m, len * 0.9, 0.1, M, 0.45); else I.piano(hz(t), m, len, 0.18, M, 0.4); }}),
+    cell: boardTheme({bpm: 116, root: 69, prog: [0, 3, 4, 0, 5, 3, 1, 4], mot: 'march',
+      beat(t, b, s, p, sd, n, r, M, bar) { if (s === 0 || s === 4) I.kick(t, 0.15, M); I.shaker(t, s % 2 ? 0.018 : 0.026, M);
+        if (s === 0 || s === 3 || s === 6) I.bass(t, n(r) - 24, sd * 1.6, 0.22, M, 0.1); if (s === 0) I.pad(t, [n(r) - 12, n(r + 2) - 12, n(r + 4) - 12], bar, 0.02, M, 0.4);
+        if (s === 2 || s === 6) I.harp(hz(t), n(r + 4), sd, 0.07, M, 0.3); },
+      lead(t, m, len, p, M) { if (p === 1) I.flute(t, m, len * 0.9, 0.1, M, 0.4); else I.bell(t, m, len, 0.08, M, 0.45); }}),
+    code: boardTheme({bpm: 82, root: 64, minor: true, prog: [0, 5, 3, 4, 0, 5, 6, 4], mot: 'myst',
+      beat(t, b, s, p, sd, n, r, M, bar) { if (s === 0) { I.pad(t, [n(r) - 12, n(r + 2) - 12, n(r + 4) - 12], bar, 0.034, M, 0.6); I.bass(t, n(r) - 24, bar * 0.9, 0.2, M, 0.2); }
+        I.bell(t, n(r + [0, 4, 7, 9, 7, 4, 2, 4][s]) + (p === 1 ? 12 : 0), sd * 1.5, 0.035, M, 0.6); if (p === 2 && s === 4 && b % 2) I.timpani(t, n(r) - 24, 0.1, M, 0.3); },
+      lead(t, m, len, p, M) { I.piano(hz(t), m, len * 1.1, p === 2 ? 0.12 : 0.16, M, 0.5); }}),
+    yut: boardTheme({bpm: 96, root: 62, pent: true, prog: [0, 0, 3, 2, 0, 0, 3, 4], mot: 'gugak',
+      beat(t, b, s, p, sd, n, r, M, bar) { // 장구 장단 (덩 · 기덕 · 쿵 · 더러러)
+        if (s === 0) { I.timpani(t, n(r) - 24, 0.2, M, 0.25); I.kick(t, 0.12, M); } if (s === 3 || s === 6) I.kick(t, 0.08, M); if (s === 2 || s === 5 || s === 7) I.shaker(t, 0.03, M);
+        if (s === 0) I.pad(t, [n(r) - 12, n(r + 2) - 12], bar, 0.02, M, 0.4); if (s === 0 || s === 4) I.bass(t, n(r) - 12 - 12, sd * 3, 0.16, M, 0.1); },
+      lead(t, m, len, p, M) { I.harp(hz(t), m, len * 1.4, 0.13, M, 0.45); if (p === 1 && len > 0.6) I.flute(t, m, len, 0.07, M, 0.55); }})
+  });
+
   function tick() {
     if (!ctx || !cur) return;
     if (mode !== 'all' || ctx.state !== 'running') { nextT = ctx.currentTime + 0.1; return; }

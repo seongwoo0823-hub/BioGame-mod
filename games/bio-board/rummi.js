@@ -241,9 +241,9 @@ BB.GAMES = BB.GAMES || {};
       if (!work || workFor !== state.turnNo) resetWork();
       const inRack = work.rack.includes(id), onTable = work.table.some(set => set.includes(id));
       if (!inRack && !onTable) return;
-      if (onTable && !state.melded[state.cur] && state.table.flat().includes(id)) { BB.toast('첫 등록(합 30) 전에는 판의 타일을 움직일 수 없어요'); return; }
+      if (onTable && !state.melded[state.cur] && state.table.flat().includes(id)) { BB.audio.invalid(); BB.toast('첫 등록(합 30) 전에는 판의 타일을 움직일 수 없어요'); return; }
       const i = sel.indexOf(id); if (i >= 0) sel.splice(i, 1); else sel.push(id);
-      BB.audio.click(); render(false);
+      BB.audio.select(); render(false);
     }
     function moveSelTo(target) { // target: 세트 인덱스 또는 -1(새 세트)
       if (!sel.length) return;

@@ -332,7 +332,7 @@ BB.GAMES = BB.GAMES || {};
         return BB.tween(0.9 + i * 0.05, k => {
           g.position.set(x0 + (endX - x0) * k, 0.25 + Math.sin(k * Math.PI) * 4.2, TZc + (endZ - TZc) * k);
           g.rotation.z = endRot * k; g.rotation.y = yaw0 + (yaw1 - yaw0) * k; g.rotation.x = Math.sin(k * Math.PI) * 0.8;
-        }, 'lin').then(() => { g.rotation.z = up ? 0 : Math.PI; g.rotation.x = 0; BB.ring(g.position.x, 0.1, g.position.z, 0xffd88a); });
+        }, 'lin').then(() => { g.rotation.z = up ? 0 : Math.PI; g.rotation.x = 0; BB.ring(g.position.x, 0.1, g.position.z, 0xffd88a); BB.audio.wood(); });
       }));
       const [nm, sub] = RES[e.r];
       BB.toast(nm + '!', sub, 1400);

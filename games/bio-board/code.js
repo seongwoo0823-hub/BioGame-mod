@@ -294,10 +294,10 @@ BB.GAMES = BB.GAMES || {};
         const first = !state; state = st;
         if (first) { layout(st, true); }
         for (const e of evs) {
-          if (e.t === 'draw') { BB.audio.tile(); }
+          if (e.t === 'draw') { BB.audio.flip(); }
           else if (e.t === 'hit') {
             layout(st, false); await animateAll(0.5);
-            const m = meshes[e.tid]; BB.audio.decode(); BB.burst(m.position.x, m.position.y + 0.4, m.position.z, ['#5ef2c8', '#ffffff', '#9ad0ff'], 30, 0.6);
+            const m = meshes[e.tid]; BB.audio.flip(); BB.audio.decode(); BB.burst(m.position.x, m.position.y + 0.4, m.position.z, ['#5ef2c8', '#ffffff', '#9ad0ff'], 30, 0.6);
             BB.toast('해독 성공!', st.players[e.target].name + '의 ' + COLN[st.tiles[e.tid].c] + ' = ' + vname(st.tiles[e.tid]), 1500); await BB.wait(700);
           } else if (e.t === 'miss') { BB.audio.wrong(); BB.toast('해독 실패', `${e.v === J ? '조커' : e.v + '번'}이(가) 아니에요`, 1400); await BB.wait(500); }
           else if (e.t === 'place') { if (e.revealed) BB.toast('뽑은 타일 공개', COLN[st.tiles[e.tid].c] + ' ' + vname(st.tiles[e.tid]), 1100); BB.audio.tile(); }

@@ -19,7 +19,8 @@
     'codon-glass':   {tpl: '혼자 하기 점수 {t}점 넘기기', t: 50, unit: '점'},
     'bio-tower':     {tpl: '연속 {t}승 하기', t: 2, unit: '연승'},
     'bio-pyramid':   {tpl: '피라미드 {t}단계까지 짓기', t: 3, unit: '단계'},
-    'cell-raid':     {tpl: '{t}구역까지 도달하기', t: 3, unit: '구역', pre: true}
+    'cell-raid':     {tpl: '{t}구역까지 도달하기', t: 3, unit: '구역', pre: true},
+    'bio-board':     {tpl: '보드게임에서 AI를 {t}번 이기기', t: 1, unit: '승'}
   };
   var DEF = {};
   function applyCfg(cfg) {
