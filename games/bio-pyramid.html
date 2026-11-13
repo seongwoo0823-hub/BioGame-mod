@@ -2478,15 +2478,17 @@
         const RANK_ID = 'bio-pyramid';
         function myWho() { return /^\d{5}$/.test(gameState.studentClass) && /^[가-힣]{2,5}$/.test(gameState.studentName) ? gameState.studentClass + ' ' + gameState.studentName : ''; }
         // 랭킹 기준: ① 불사의 우주물곰을 얻었는가 → ② 얼마나 빨리 얻었는가(플레이 시간) → ③ 총점
+        const TARDI_UNKNOWN = 999998;   // 획득 시간 측정 전 버전에서 엔딩을 본 기록
+        function tardiLabel(sec) { return sec >= TARDI_UNKNOWN ? '획득 (시간 기록 전)' : fmtPlay(sec); }
         function fmtPlay(sec) { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, s2 = sec % 60; return h ? `${h}시간 ${m}분 ${s2}초` : `${m}분 ${s2}초`; }
         function tardiBest() { try { const v = +localStorage.getItem('bioPyramidTardiBest'); return v > 0 ? v : 0; } catch (e) { return 0; } }
-        function myTardiSec() { const a = gameState.tardiTime > 0 ? gameState.tardiTime : 0, b = tardiBest(); return a && b ? Math.min(a, b) : (a || b); }
+        function myTardiSec() { const a = gameState.tardiTime > 0 ? gameState.tardiTime : 0, b = tardiBest(); const t = a && b ? Math.min(a, b) : (a || b); return t || (endingCount() > 0 ? TARDI_UNKNOWN : 0); }
         function rankPayload() {
             const st = gameState.highestPyramidStage, sc = Math.floor(gameState.totalScore), t = myTardiSec(), got = t > 0 ? 1 : 0;
             const scoreKey = Math.min(999999, Math.round(Math.log10(sc + 1) * 10000));   // 아주 큰 점수도 순서가 맞게 (크기 단위)
             // 1e13을 더해 예전 방식(단계×1조+점수, 최대 약 6조) 기록보다 항상 위에 오게 함
-            return { v: window.BioGoal ? 1e13 + BioGoal.key([[got, 2, 1], [got ? Math.min(999998, Math.round(t)) : 999999, 1000000, -1], [scoreKey, 1000000, 1]]) : st,
-                     f: { tardi: got ? fmtPlay(t) : '미획득', tardiSec: got ? Math.round(t) : 0, score: sc, stage: st, skin: 'T' + (gameState.equippedSkin + 1) } };
+            return { v: window.BioGoal ? 1e13 + BioGoal.key([[got, 2, 1], [got ? Math.min(TARDI_UNKNOWN, Math.round(t)) : 999999, 1000000, -1], [scoreKey, 1000000, 1]]) : st,
+                     f: { tardi: got ? tardiLabel(t) : '미획득', tardiSec: got ? Math.round(t) : 0, score: sc, stage: st, skin: 'T' + (gameState.equippedSkin + 1) } };
         }
         function rankCmp(a, b) {   // 게임 안 랭킹 정렬도 같은 기준
             const ga = a.tardiSec > 0 ? 1 : 0, gb = b.tardiSec > 0 ? 1 : 0;
@@ -2560,7 +2562,7 @@
                         <span class="truncate text-[10px]">${entry.studentName}</span>
                     </div>
                     <div class="text-[9px] font-extrabold shrink-0 ml-1">
-                        ${entry.tardiSec > 0 ? '물곰 ' + fmtPlay(entry.tardiSec) : korNum(Number(entry.totalScore))}
+                        ${entry.tardiSec > 0 ? '물곰 ' + tardiLabel(entry.tardiSec) : korNum(Number(entry.totalScore))}
                     </div>
                 `;
                 miniEl.appendChild(row);
@@ -2575,7 +2577,7 @@
                         <span class="text-[9px] font-black w-3.5">#${myRank}</span>
                         <span class="truncate text-[10px]">${me.studentName}</span>
                     </div>
-                    <div class="text-[9px] font-extrabold shrink-0 ml-1">${me.tardiSec > 0 ? '물곰 ' + fmtPlay(me.tardiSec) : korNum(Number(me.totalScore))}</div>
+                    <div class="text-[9px] font-extrabold shrink-0 ml-1">${me.tardiSec > 0 ? '물곰 ' + tardiLabel(me.tardiSec) : korNum(Number(me.totalScore))}</div>
                 `;
                 miniEl.appendChild(myRow);
             }
@@ -2585,7 +2587,7 @@
             document.getElementById('rank-modal-my-badge').innerText = `#${myRank}`;
             document.getElementById('rank-modal-my-name').innerText = myWho() || '학번·이름을 등록하면 랭킹에 올릴 수 있어요';
             document.getElementById('rank-modal-my-stats').innerText =
-                `${myTardiSec() ? '우주물곰 ' + fmtPlay(myTardiSec()) + ' 만에 획득' : '우주물곰 미획득'} | 총점 ${korNum(Math.floor(gameState.totalScore))} | 플레이 ${fmtPlay(gameState.playTime)}`;
+                `${myTardiSec() >= TARDI_UNKNOWN ? '우주물곰 획득 (시간 기록 전 엔딩)' : myTardiSec() ? '우주물곰 ' + fmtPlay(myTardiSec()) + ' 만에 획득' : '우주물곰 미획득'} | 총점 ${korNum(Math.floor(gameState.totalScore))} | 플레이 ${fmtPlay(gameState.playTime)}`;
 
             fullEl.innerHTML = '';
             list.forEach((entry, idx) => {
@@ -2601,7 +2603,7 @@
                     </div>
                     <div class="col-span-3 text-center">
                         <span class="${entry.tardiSec > 0 ? 'bg-amber-300 text-amber-950' : 'bg-slate-100 text-slate-500'} px-2 py-0.5 rounded font-extrabold text-[10px]">
-                            ${entry.tardiSec > 0 ? '물곰 ' + fmtPlay(entry.tardiSec) : '물곰 미획득'}
+                            ${entry.tardiSec > 0 ? '물곰 ' + tardiLabel(entry.tardiSec) : '물곰 미획득'}
                         </span>
                     </div>
                     <div class="col-span-3 text-right font-black tabular-nums text-slate-900">

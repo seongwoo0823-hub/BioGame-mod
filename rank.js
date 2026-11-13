@@ -108,11 +108,32 @@
       return (rows || []).filter(function (r) { return r.document; }).map(function (r) { return norm(fromFields(r.document.fields)); }).filter(function (x) { return x.r === 2; });
     });
   }
+  // 게임별 기록 보정 (예전 방식으로 저장된 기록을 새 기준에 맞춤)
+  var FIX = {
+    'bio-pyramid': function (all) {
+      var UNK = 999998;
+      all.forEach(function (x) {
+        var f = x.f, ts = +f.tardiSec || 0;
+        // 획득 시간 측정 전 버전에서 엔딩(=우주물곰 획득)을 본 기록
+        if (!(ts > 0) && /엔딩 달성|우주물곰/.test(x.text || '')) { ts = UNK; f.tardi = '획득 (시간 기록 전)'; }
+        f.tardiSec = ts; if (!f.tardi) f.tardi = ts > 0 ? '' : '미획득';
+        if (f.score == null) f.score = x.value % 1e12;
+        if (f.stage == null) f.stage = Math.floor(x.value / 1e12) || 1;
+      });
+      return all.sort(function (a, b) {
+        var ta = a.f.tardiSec, tb = b.f.tardiSec, ga = ta > 0 ? 1 : 0, gb = tb > 0 ? 1 : 0;
+        if (ga !== gb) return gb - ga;
+        if (ga && ta !== tb) return ta - tb;
+        return (+b.f.score || 0) - (+a.f.score || 0);
+      });
+    }
+  };
   // 랭킹 읽기: {list, cats}. cat을 주면 그 분류만. 같은 학번은 가장 좋은 기록 하나만
   function top(game, cat, limit) {
     if (!ready()) return Promise.resolve({list: [], cats: []});
     var q = {structuredQuery: {from: [{collectionId: 'scores'}], orderBy: [{field: {fieldPath: 'value'}, direction: 'DESCENDING'}], limit: 600}};
     return run(game, q).then(function (all) {
+      if (FIX[game]) all = FIX[game](all);
       var cats = []; all.forEach(function (x) { if (x.cat && cats.indexOf(x.cat) < 0) cats.push(x.cat); }); cats.sort();
       var list = cat ? all.filter(function (x) { return x.cat === cat; }) : all;
       var seen = {}, out = [];
