@@ -1,14 +1,14 @@
 /* BIO ARCADE 서비스 워커: 처음 접속할 때 전체 게임을 저장해 두고, 이후에는 오프라인에서도 실행. */
-const VERSION = 'biogame-hub-v75-netseq';
+const VERSION = 'biogame-hub-v76-srv';
 const FONT_CACHE = 'bio-arcade-fonts';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
-  './games/bio-beat.html', './games/immune-strike.html', './games/bio-kart.html',
+  './games/bio-beat.html', './games/bio-kart.html',
   './games/vessel-canyon.html', './games/biotro.html', './games/cell-bound.html',
-  './games/cell-pinball.html', './games/cell-brawl.html', './games/only-up.html', './games/bio-strike.html', './ilog.js', './goal.js', './icons.js', './rank.js', './net.js', './games/cell-frontier.html', './games/bio-tower.html', './games/codon-glass.html', './games/codon-glass/tw.css', './vendor/matter.min.js', './games/helix.html', './games/helix/js/audio.js', './games/helix/js/data.js', './games/helix/js/engine.js', './games/helix/js/world.js', './games/helix/js/game.js', './games/helix/js/weapons.js', './games/helix/js/foes2.js', './games/helix/js/run.js', './games/helix/js/ui.js',
-  './assets/bio-beat.jpg', './assets/immune-strike.jpg', './assets/bio-kart.jpg',
+  './games/cell-brawl.html', './games/only-up.html', './games/bio-strike.html', './ilog.js', './goal.js', './icons.js', './rank.js', './net.js', './games/cell-frontier.html', './games/bio-tower.html', './games/codon-glass.html', './games/codon-glass/tw.css', './vendor/matter.min.js', './games/helix.html', './games/helix/js/audio.js', './games/helix/js/data.js', './games/helix/js/engine.js', './games/helix/js/world.js', './games/helix/js/game.js', './games/helix/js/weapons.js', './games/helix/js/foes2.js', './games/helix/js/run.js', './games/helix/js/ui.js',
+  './assets/bio-beat.jpg', './assets/bio-kart.jpg',
   './assets/vessel-canyon.jpg', './assets/biotro.jpg', './assets/cell-bound.jpg',
-  './assets/cell-pinball.jpg', './assets/cell-brawl.jpg', './assets/only-up.jpg', './assets/bio-strike.jpg', './assets/helix.jpg', './assets/cell-frontier.jpg', './assets/bio-tower.jpg', './assets/codon-glass.jpg',
+  './assets/cell-brawl.jpg', './assets/only-up.jpg', './assets/bio-strike.jpg', './assets/helix.jpg', './assets/cell-frontier.jpg', './assets/bio-tower.jpg', './assets/codon-glass.jpg',
   './icons/icon-v2-192.png', './icons/icon-v2-512.png', './icons/icon-v2-maskable-512.png',
   './icons/apple-touch-icon-v2.png', './icons/favicon-v2-32.png',
   './vendor/three.min.js', './vendor/peerjs.min.js',
@@ -40,6 +40,8 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (url.origin !== location.origin) return;
+  // 교실 서버의 실시간 주소(서버 상태·방 목록·방 만들기 등)는 절대 저장본을 쓰지 않음
+  if (url.pathname.includes('/__') || url.pathname.startsWith('/api/') || url.pathname === '/health' || url.pathname === '/ping' || url.pathname === '/hello') return;
 
   // manifest 및 아이콘 파일은 항상 네트워크 우선(Network-First)으로 최신 아이콘 보장
   if (url.pathname.endsWith('.webmanifest') || url.pathname.includes('/icons/')) {

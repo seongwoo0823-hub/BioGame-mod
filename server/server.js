@@ -20,6 +20,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
+const { execFile } = require('child_process');
+const { Worker } = require('worker_threads');
 
 const PORT = +process.env.PORT || 8080;
 const ROOT = path.resolve(__dirname, '..');           // 저장소 폴더 (index.html이 있는 곳)
@@ -30,6 +32,19 @@ const BUF_LIMIT = 4 * 1024 * 1024;                    // 받는 쪽이 이만큼
 const started = Date.now();
 
 // ---------------------------------------------------------------- 학생 접속 주소
+function lanList() {
+  const out = [];
+  for (const [name, list] of Object.entries(os.networkInterfaces())) {
+    for (const a of list || []) {
+      if (a.family !== 'IPv4' && a.family !== 4) continue;
+      if (a.internal || a.address.startsWith('169.254.')) continue;
+      if (/vmware|virtualbox|vEthernet|docker|hyper-v|loopback|tailscale|zerotier/i.test(name)) continue;
+      const kind = /wi-?fi|wlan|wireless|무선|^en0$/i.test(name) ? '와이파이' : /ethernet|이더넷|^eth|^en\d|lan/i.test(name) ? '유선(랜선)' : name;
+      out.push({name, kind, ip: a.address, url: 'http://' + a.address + (PORT === 80 ? '' : ':' + PORT)});
+    }
+  }
+  return out;
+}
 function lanUrls() {
   const out = [];
   for (const [name, list] of Object.entries(os.networkInterfaces())) {
@@ -42,6 +57,39 @@ function lanUrls() {
   }
   // 학교·집 와이파이에서 흔한 주소(192.168, 10, 172.16~31)를 앞에
   return out.sort((x, y) => (/\/\/(192\.168|10\.|172\.(1[6-9]|2\d|3[01]))/.test(y) ? 1 : 0) - (/\/\/(192\.168|10\.|172\.(1[6-9]|2\d|3[01]))/.test(x) ? 1 : 0));
+}
+
+// ---------------------------------------------------------------- 접속 문제 진단 (윈도우)
+//   랜선으로 연결된 노트북은 네트워크가 '공용'으로 잡히는 경우가 많은데, 방화벽 창에서 '개인 네트워크'만 허용하면
+//   휴대폰·태블릿의 접속이 조용히 막혀 빈 화면에서 멈춤 → 직접 확인해서 알려 줌
+const RULE = 'BIO ARCADE Classroom Server';
+const diag = { warnings: [], publicNets: [], ruleOk: null, checked: false };
+function runDiag(cb) {
+  if (process.platform !== 'win32') { diag.checked = true; cb && cb(); return; }
+  let left = 2; const done = () => { if (--left) return; diag.checked = true;
+    diag.warnings = [];
+    if (diag.publicNets.length && !diag.ruleOk)
+      diag.warnings.push('이 컴퓨터의 네트워크(' + diag.publicNets.join(', ') + ')가 \'공용\'으로 설정되어 있어 휴대폰·태블릿이 접속하지 못할 수 있어요. ' +
+        '폴더의 \'방화벽 허용.vbs\'를 한 번 실행해 주세요 (관리자 확인 창에서 \'예\').');
+    cb && cb(); };
+  execFile('powershell', ['-NoProfile', '-NonInteractive', '-Command', 'Get-NetConnectionProfile | ForEach-Object { $_.InterfaceAlias + \'|\' + $_.NetworkCategory }'],
+    { timeout: 6000, windowsHide: true }, (e, out) => {
+      if (!e) diag.publicNets = String(out).split(/\r?\n/).map(l => l.trim().split('|')).filter(x => x[1] === 'Public').map(x => x[0]);
+      done();
+    });
+  execFile('netsh', ['advfirewall', 'firewall', 'show', 'rule', 'name=' + RULE], { timeout: 6000, windowsHide: true }, (e) => { diag.ruleOk = !e; done(); });
+}
+
+// 새 기기가 처음 접속하면 창에 한 줄 남김 → 휴대폰에서 열었는데 이 줄이 안 나오면 '네트워크/방화벽에서 막힘'
+const seen = new Map();
+function noteDevice(req) {
+  let ip = (req.socket.remoteAddress || '').replace(/^::ffff:/, '');
+  if (!ip || ip === '127.0.0.1' || ip === '::1' || seen.has(ip)) return;
+  const ua = String(req.headers['user-agent'] || '');
+  const dev = /iPhone/.test(ua) ? '아이폰' : /iPad|Macintosh.*Mobile/.test(ua) ? '아이패드' : /Android/.test(ua) ? (/Mobile/.test(ua) ? '안드로이드 폰' : '안드로이드 태블릿') : /Windows/.test(ua) ? '윈도우 PC' : /Mac OS X/.test(ua) ? '맥' : /CrOS/.test(ua) ? '크롬북' : '기기';
+  seen.set(ip, { dev, t: Date.now() });
+  if (seen.size > 2000) seen.delete(seen.keys().next().value);
+  console.log(`\n  📱 새 기기 접속: ${dev} (${ip})`);
 }
 
 // ---------------------------------------------------------------- 파일 보내기
@@ -108,7 +156,7 @@ function roomsOf(prefix) {
     if (!c.named || !id.startsWith(prefix) || !c.open) continue;
     const guests = new Set();
     for (const cid of c.cids) { const L = links.get(cid); if (L && L[1] === c && L[0].open) guests.add(L[0]); }
-    out.push({code: id.slice(prefix.length), players: guests.size + 1, age: Math.round((Date.now() - c.since) / 1000), info: c.info || null});
+    out.push({code: id.slice(prefix.length), players: guests.size + (c.virtual ? 0 : 1), age: Math.round((Date.now() - c.since) / 1000), info: c.info || null});
   }
   out.sort((a, b) => a.age - b.age);
   return out.slice(0, 50);
@@ -117,9 +165,21 @@ function roomsOf(prefix) {
 const json = (res, o) => { res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store'}); res.end(JSON.stringify(o)); };
 const server = http.createServer((req, res) => {
   let u; try { u = new URL(req.url, 'http://x'); } catch (e) { res.writeHead(400); res.end(); return; }
-  if (u.pathname === '/__status') { let rooms = 0; for (const c of peers.values()) if (c.named) rooms++; return json(res, {ok: true, name: 'bio-arcade-classroom', v: 4, peers: peers.size, clients: clients.size, links: links.size, rooms, served, up: Math.round((Date.now() - started) / 1000)}); }
+  if (u.pathname === '/__status') { let rooms = 0; for (const c of peers.values()) if (c.named) rooms++; return json(res, {ok: true, name: 'bio-arcade-classroom', v: 5, peers: peers.size, clients: clients.size, links: links.size, rooms, kartRooms: kartRooms.size, served, up: Math.round((Date.now() - started) / 1000)}); }
   if (u.pathname === '/__rooms') return json(res, {ok: true, rooms: roomsOf(u.searchParams.get('p') || '')});
-  if (u.pathname === '/__info') return json(res, {ok: true, urls: lanUrls(), port: PORT, clients: clients.size});
+  noteDevice(req);
+  if (u.pathname === '/__kart/new') return kartNew(req, res, u.searchParams);
+  if (u.pathname === '/__kart/list') return json(res, {ok: true, max: MAX_KART_ROOMS, rooms: [...kartRooms].map(([code, r]) => ({code, name: r.name, players: r.players, playing: r.playing, mem: r.mem, age: Math.round((Date.now() - r.since) / 1000),
+    screen: r.stat && r.stat.scr, map: r.stat && r.stat.map, mode: r.stat && r.stat.mode, ready: r.stat && r.stat.names}))});
+  if (u.pathname === '/__info') return json(res, {ok: true, urls: lanUrls(), nets: lanList(), port: PORT, clients: clients.size, devices: seen.size, warnings: diag.warnings, diagReady: diag.checked});
+  // 휴대폰 연결 확인용 아주 가벼운 페이지 (이게 열리면 네트워크는 정상)
+  if (u.pathname === '/__hello' || u.pathname === '/hello') {
+    res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store'});
+    res.end('<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>연결 확인</title>' +
+      '<body style="font-family:sans-serif;text-align:center;padding:40px 16px;background:#0b1020;color:#e8f0ff"><div style="font-size:64px">✅</div>' +
+      '<h2>교실 서버에 연결됐어요!</h2><p>네트워크는 정상이에요.</p><p><a style="color:#7cf" href="/">게임 사이트 열기 →</a></p>');
+    return;
+  }
   // 바탕화면 컨트롤러 등 예전 도구와 호환되는 주소
   if (u.pathname === '/health' || u.pathname === '/api/status' || u.pathname === '/ping') return json(res, {status: 'ok', ok: true, name: 'bio-arcade-classroom', port: PORT, uptimeSec: Math.round((Date.now() - started) / 1000), peers: peers.size, clients: clients.size, links: links.size, served, lanIps: lanUrls().map(x => x.replace(/^http:\/\/|:\d+$/g, ''))});
   if (u.pathname === '/api/stop') {
@@ -250,6 +310,65 @@ function drop(cid, from) {
   for (const s of L) { s.cids.delete(cid); if (s !== from) s.send({t: 'close', cid}); }
 }
 
+// ---------------------------------------------------------------- 바이오 카트 서버 방장 (2단계: 서버가 판을 계산)
+//   학생이 '방 만들기'를 누르면 /__kart/new 로 요청 → 이 컴퓨터가 방마다 일꾼(server/kart-room.js)을 띄워 방장 역할을 맡음.
+//   일꾼은 게임 코드를 그대로 돌리고, 중계에는 보통 접속자와 똑같은 모양(VirtualClient)으로 붙음.
+const KART_PREFIX = 'biokart-p2p-v1-';
+const MAX_KART_ROOMS = +process.env.KART_ROOMS || 16;   // 측정 결과(i7-1255U: 여유 22개)보다 낮게 잡음
+const kartRooms = new Map();   // code → {worker, vc, players, playing, since}
+class VirtualClient {
+  constructor(worker) {
+    this.worker = worker; this.open = true; this.alive = true; this.virtual = true;
+    this.id = null; this.key = ''; this.named = false; this.cids = new Set(); this.since = Date.now(); this.info = null;
+  }
+  get backlog() { return 0; }
+  send(s) { if (this.open) this.worker.postMessage({t: 'ws', s: typeof s === 'string' ? s : JSON.stringify(s)}); }
+  ping() { }
+  close() { this.onClose(); }
+  onClose() {
+    if (this.dead) return; this.dead = true; this.open = false;
+    for (const cid of [...this.cids]) drop(cid, this);
+    if (this.id && peers.get(this.id) === this) peers.delete(this.id);
+  }
+}
+function kartCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  for (let n = 0; n < 200; n++) {
+    let c = ''; for (let i = 0; i < 4; i++) c += chars[Math.random() * chars.length | 0];
+    if (!peers.has(KART_PREFIX + c) && !kartRooms.has(c)) return c;
+  }
+  return null;
+}
+function kartNew(req, res, q) {
+  if (kartRooms.size >= MAX_KART_ROOMS) return json(res, {ok: false, reason: 'full'});
+  let code = String(q.get('code') || '').toUpperCase();
+  if (code) { if (!/^[A-Z0-9]{2,8}$/.test(code)) return json(res, {ok: false, reason: 'bad'}); if (peers.has(KART_PREFIX + code) || kartRooms.has(code)) return json(res, {ok: false, reason: 'taken'}); }
+  else code = kartCode();
+  if (!code) return json(res, {ok: false, reason: 'full'});
+  const opts = {name: String(q.get('name') || '교실').replace(/[<>]/g, '').slice(0, 20), map: +q.get('map') || 0, mode: q.get('mode') === 'item' ? 'item' : 'speed',
+    diff: Math.max(0, Math.min(2, +(q.get('diff') ?? 1))), ai: q.get('ai') !== '0', priv: q.get('priv') === '1'};
+  let worker;
+  try { worker = new Worker(path.join(__dirname, 'kart-room.js'), {workerData: {code, opts}, resourceLimits: {maxOldGenerationSizeMb: 256}}); }
+  catch (e) { return json(res, {ok: false, reason: 'error'}); }
+  const vc = new VirtualClient(worker);
+  const room = {worker, vc, players: 0, playing: false, since: Date.now(), name: opts.name};
+  kartRooms.set(code, room);
+  let answered = false;
+  const answer = o => { if (answered) return; answered = true; clearTimeout(tm); json(res, o); };
+  const tm = setTimeout(() => answer({ok: false, reason: 'timeout'}), 15000);
+  worker.on('message', m => {
+    if (!m) return;
+    if (m.t === 'ws') { onMessage(vc, m.s); if (!answered && vc.id === KART_PREFIX + code) { answer({ok: true, code}); console.log(`\n  🏁 바이오 카트 서버 방 [${code}] 열림 (${opts.name})`); } }
+    else if (m.t === 'wsclose') vc.onClose();
+    else if (m.t === 'stat') { room.players = m.players; room.playing = m.playing; room.mem = m.mem; room.stat = m; }
+    else if (m.t === 'log') { if (process.env.KART_DEBUG) console.log(`\n  [방 ${code}] ${m.msg}`); }
+    else if (m.t === 'error') console.log(`\n  ⚠ 바이오 카트 방 [${code}] 오류로 닫힘: ${String(m.msg).split('\n')[0]}`);
+  });
+  const end = () => { vc.onClose(); if (kartRooms.get(code) === room) { kartRooms.delete(code); } answer({ok: false, reason: 'error'}); };
+  worker.on('error', e => { console.log(`\n  ⚠ 바이오 카트 방 [${code}] 오류: ${e && e.message}`); end(); });
+  worker.on('exit', end);
+}
+
 // 끊긴 연결 정리: 15초마다 확인, 응답이 없으면 끊음
 setInterval(() => {
   for (const c of clients) { if (!c.alive) { c.sock.destroy(); c.onClose(); continue; } c.alive = false; c.ping(); }
@@ -268,16 +387,19 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('  🧬 BIO ARCADE 교실 서버가 켜졌어요!');
   console.log(line);
   console.log('  이 컴퓨터에서:   http://localhost' + (PORT === 80 ? '' : ':' + PORT));
+  const nets = lanList();
   if (urls.length) {
-    console.log('  학생 접속 주소 (같은 와이파이에서 주소창에 입력):');
-    for (const u of urls) console.log('     ▶ ' + u);
+    console.log('  학생 접속 주소 (같은 네트워크에서 주소창에 입력):');
+    for (const u of urls) { const n = nets.find(x => x.url === u); console.log('     ▶ ' + u + (n ? '   (' + n.kind + ')' : '')); }
+    console.log('  휴대폰 연결 확인: 위 주소 뒤에 /hello 를 붙여 열어 보세요 (예: ' + urls[0] + '/hello)');
   } else console.log('  ⚠ 네트워크 주소를 찾지 못했어요. 와이파이(또는 유선) 연결을 확인하세요.');
   console.log(line);
   console.log('  · 이 창을 닫으면 서버가 꺼져요. 수업이 끝날 때까지 열어 두세요.');
-  console.log('  · 윈도우에서 "방화벽 허용" 창이 뜨면 [개인 네트워크]에 체크하고 [허용]을 눌러 주세요.');
+  console.log('  · 윈도우에서 "방화벽 허용" 창이 뜨면 [개인]과 [공용] 네트워크를 모두 체크하고 [허용]을 눌러 주세요.');
   console.log(line + '\n');
+  runDiag(() => { for (const w of diag.warnings) console.log('  ⚠ ' + w + '\n'); });
 });
 setInterval(() => {
   let rooms = 0; for (const c of peers.values()) if (c.named) rooms++;
-  process.stdout.write(`\r  접속 ${clients.size}명 · 열린 방 ${rooms}개 · 전달한 메시지 ${served.toLocaleString()}개     `);
+  process.stdout.write(`\r  접속 ${clients.size}명 · 열린 방 ${rooms}개 (서버 계산 ${kartRooms.size}개) · 전달한 메시지 ${served.toLocaleString()}개     `);
 }, 5000).unref();

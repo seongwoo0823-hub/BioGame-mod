@@ -3523,6 +3523,7 @@ const NET = (() => {
     // 방장은 7번 슬롯, 게스트들은 6, 5, 4... 슬롯 배정
     pList.forEach((p, idx) => { p.slot = Math.max(0, 7 - idx); });
     if(st.players[myId]) st.mySlot = st.players[myId].slot;
+    if(st.srv){ const o = pList.find(p => !p.isHost); st.ownerId = o ? o.id : null; }
   }
 
   function broadcastRoomState(){
@@ -3530,7 +3531,7 @@ const NET = (() => {
     assignSlots();
     sendAll({
       type: 'room_state', code: st.code, mode: S.mode, map: S.map, diff: S.diff,
-      aiFill: st.aiFill, players: st.players
+      aiFill: st.aiFill, players: st.players, srv: !!st.srv, owner: st.ownerId || null, priv: !!st.priv
     });
     renderLobby();
   }
@@ -3559,8 +3560,9 @@ const NET = (() => {
   function createRoom(customCode, isQuick){
     cleanup();
     st.code = (customCode || genCode()).toUpperCase();
-    st.role = 'host'; st.active = true; st.mySlot = 7;
-    st.players[myId] = { id: myId, name: st.nick, ci: S.ci, ki: S.ki, kc: S.kc || null, parts: S.parts.slice(), pet: S.pet, isHost: true, ready: true, joinT: Date.now(), slot: 7, rtt: 0 };
+    st.role = 'host'; st.active = true; st.mySlot = st.srv ? -1 : 7;
+    // 서버 방장(교실 서버가 판을 계산)은 자기 카트가 없음: 학생은 모두 참가자, 처음 들어온 학생이 방 관리자
+    if(!st.srv) st.players[myId] = { id: myId, name: st.nick, ci: S.ci, ki: S.ki, kc: S.kc || null, parts: S.parts.slice(), pet: S.pet, isHost: true, ready: true, joinT: Date.now(), slot: 7, rtt: 0 };
     setupChannel(st.code);
     if(window.Peer){
       try{
@@ -3600,6 +3602,21 @@ const NET = (() => {
     }
     log(isQuick ? `⚡ 빠른 매칭 방 [${st.code}]의 방장이 되었습니다! AI와 바로 출발하거나 다른 레이서를 기다리세요.` : `방 [${st.code}] 생성 완료! 친구에게 방 코드를 공유하거나 다른 탭에서 참가하세요.`);
     broadcastRoomState();
+  }
+
+  // 교실 서버에 방 만들기: 서버가 방장(판 계산)을 맡고, 나는 첫 참가자(방 관리자)로 들어감. 안 되면 예전처럼 내 기기가 방장
+  async function createServerRoom(custom){
+    log('🖥 교실 서버에 방을 만드는 중...');
+    try{
+      const q = new URLSearchParams({ name: st.nick, map: S.map, mode: S.mode, diff: S.diff, ai: st.aiFill ? 1 : 0, priv: $('#netPrivate')?.checked ? 1 : 0 });
+      if(custom) q.set('code', String(custom).toUpperCase());
+      const r = await fetch('/__kart/new?' + q, { cache: 'no-store' });
+      const j = await r.json();
+      if(j && j.ok && j.code){ joinRoom(j.code); return; }
+      if(j && j.reason === 'taken'){ log(`⚠️ 방 코드 [${String(custom).toUpperCase()}]는 이미 사용 중이에요. 다른 코드를 쓰거나 비워 두세요.`); return; }
+      if(j && j.reason === 'full') log('⚠️ 교실 서버의 방이 가득 찼어요. 내 기기를 방장으로 방을 만듭니다.');
+    }catch(e){}
+    createRoom(custom);
   }
 
   let _joinTimer = null;
@@ -3726,12 +3743,13 @@ const NET = (() => {
     return arr;
   }
 
-  function publishRoomInfo(playing){ try{ if(peer && window.BioRelay && BioRelay.setInfo) BioRelay.setInfo(peer, { name: st.nick + '의 방', private: !!st.priv, playing: !!playing }); }catch(e){} }
+  function publishRoomInfo(playing){ try{ if(peer && window.BioRelay && BioRelay.setInfo) BioRelay.setInfo(peer, { name: st.nick + '의 방' + (st.srv ? ' · 서버' : ''), private: !!st.priv, playing: !!playing, srv: !!st.srv }); }catch(e){} }
   let _forceT = 0;
   function startOnlineMatch(){
     if(!st.active || st.role !== 'host') return;
     const notReady = Object.values(st.players).filter(p => !p.isHost && !p.ready);
-    if(notReady.length && performance.now() - _forceT > 3000){ _forceT = performance.now(); log(`⏳ 아직 준비하지 않은 플레이어: ${notReady.map(p => p.name).join(', ')} · 3초 안에 한 번 더 누르면 그대로 출발해요.`); return; }
+    if(notReady.length && performance.now() - _forceT > 3000){ _forceT = performance.now(); const t = `⏳ 아직 준비하지 않은 플레이어: ${notReady.map(p => p.name).join(', ')} · 3초 안에 한 번 더 누르면 그대로 출발해요.`; log(t); if(st.srv) sendAll({ type: 'notice', text: t }); return; }
+    if(st.srv && !Object.keys(st.players).length) return;
     _forceT = 0;
     for(const p of Object.values(st.players)) if(!p.isHost) p.ready = false;   // 다음 경기에서는 다시 준비
     const netPlayers = buildSlotArray();
@@ -3747,9 +3765,10 @@ const NET = (() => {
   function launchOnlineRace(pkt){
     S.mode = pkt.mode; S.map = pkt.map; S.diff = pkt.diff; st.aiFill = pkt.aiFill;
     const meEntry = pkt.netPlayers.find(p => p && p.id === myId);
-    st.mySlot = meEntry ? meEntry.slot : 7;
+    st.mySlot = meEntry ? meEntry.slot : (st.srv ? -1 : 7);
     st.remoteInputs = {}; st.pendingEvs = []; st.lastState = performance.now(); st.lastUp = false;
     st.seq = 0; st.outQ = []; st.hist = []; st.recon = false; st.lastClk = null; st.rt = null; st.mvBits = 0;
+    for(const p of Object.values(st.players)) if(!p.isHost) p.ready = false;   // 다음 경기 대기실에서는 다시 '준비 완료'를 눌러야 함 (참가자 화면도 같이 초기화)
     if(st.role === 'host') for(const p of pkt.netPlayers) if(p && !p.isAI && p.id !== myId) st.remoteInputs[p.slot] = { up:false, down:false, left:false, right:false, drift:false, useQ:0, swapQ:0, exQ:0, at: performance.now() + 4000 };
     auInit(); G.demo = false; G.paused = false; G.acc = 0; PARTS.length = 0; FX.length = 0; lastItems = 'x'; lastOrder = '';
     G.R = makeRace({ map: S.map, mode: S.mode, ci: S.ci, ki: S.ki, diff: S.diff, mySlot: st.mySlot, netPlayers: pkt.netPlayers });
@@ -3769,6 +3788,16 @@ const NET = (() => {
   function onMessage(m, conn){
     if(!m || !st.active || isDupMsg(m)) return;
     if(st.role === 'host'){
+      if(m.type === 'owner_cmd' && st.srv && m.id && m.id === st.ownerId){
+        const inLobby = !(G.screen === 'race' && G.R && !G.demo);
+        if(m.act === 'start' && inLobby){ if(st.players[m.id]) st.players[m.id].ready = true; startOnlineMatch(); }
+        else if(m.act === 'map' && inLobby && MAPS[+m.v]){ S.map = +m.v; broadcastRoomState(); }
+        else if(m.act === 'mode' && inLobby){ S.mode = m.v === 'item' ? 'item' : 'speed'; broadcastRoomState(); }
+        else if(m.act === 'diff' && inLobby){ S.diff = clamp(+m.v || 0, 0, 2); broadcastRoomState(); }
+        else if(m.act === 'aifill' && inLobby){ st.aiFill = !!m.v; broadcastRoomState(); }
+        else if(m.act === 'private'){ st.priv = !!m.v; publishRoomInfo(!inLobby); broadcastRoomState(); }
+        return;
+      }
       if(m.type === 'join_req' && m.id !== myId){
         const inRace = G.screen === 'race' && G.R && !G.demo;
         if(inRace && !st.players[m.id]){
@@ -3832,10 +3861,12 @@ const NET = (() => {
       if(m.type === 'room_state' && m.code === st.code){
         clearTimeout(_joinTimer);
         S.mode = m.mode; S.map = m.map; S.diff = m.diff; st.aiFill = m.aiFill;
-        st.players = m.players || {};
+        st.players = m.players || {}; st.srvRoom = !!m.srv; st.ownerId = m.owner || null; st.priv = !!m.priv;
         if(st.players[myId]) st.mySlot = st.players[myId].slot;
         log(`✅ 방 [${st.code}]에 연결되었습니다. 방장이 레이스를 시작하면 자동 출발합니다!`);
         renderLobby();
+      } else if(m.type === 'notice' && typeof m.text === 'string'){
+        log(m.text);
       } else if(m.type === 'match_start' && m.code === st.code){
         launchOnlineRace(m);
       } else if(m.type === 'state' && G.R && !G.demo){
@@ -4154,6 +4185,7 @@ const NET = (() => {
   }
 
   function renderLobby(){
+    const isOwner = st.active && st.role === 'guest' && st.srvRoom && st.ownerId === myId, canEdit = st.role === 'host' || isOwner;
     const myPick = $('#netMyPick');
     if(myPick){
       const C = CHARS[S.ci], K = KARTS[S.ki];
@@ -4179,12 +4211,12 @@ const NET = (() => {
     const cDisp = $('#netCodeDisp');
     if(cDisp) cDisp.textContent = st.code || '----';
     const hOpts = $('#netHostOpts');
-    if(hOpts) hOpts.style.opacity = st.role === 'host' ? '1' : '0.6';
+    if(hOpts) hOpts.style.opacity = canEdit ? '1' : '0.6';
 
     const tBadge = $('#netTransBadge');
     if(tBadge){
       tBadge.textContent = st.active
-        ? (st.role === 'host' ? `🟢 방장 호스팅 중 (코드: ${st.code})` : `🟢 게스트 연결됨 (코드: ${st.code})`)
+        ? (st.role === 'host' ? `🟢 방장 호스팅 중 (코드: ${st.code})` : st.srvRoom ? `🖥 교실 서버가 판을 계산하는 방 (코드: ${st.code})${isOwner ? ' · 👑 내가 방 관리자' : ''}` : `🟢 게스트 연결됨 (코드: ${st.code})`)
         : '⚪ 오프라인 (방을 만들거나 참가하세요)';
     }
 
@@ -4197,18 +4229,18 @@ const NET = (() => {
       slotEl.innerHTML = slots.slice().reverse().map((p, idx) => {
         const isMe = st.active ? (p.id === myId) : (p.slot === 7);
         const cls = isMe ? 'nslot me' : (!p.isAI ? 'nslot human' : 'nslot');
-        const tag = p.isHost ? '👑 방장' : (!p.isAI ? (p.ready ? '✅ 준비 완료' : '⏳ 준비 중') : (p.isIdle ? '⚪ 비어 있음' : '🤖 AI 자동'));
+        const tag = p.isHost ? '👑 방장' : (!p.isAI ? (st.srvRoom && p.id === st.ownerId ? '👑 방 관리자' : p.ready ? '✅ 준비 완료' : '⏳ 준비 중') : (p.isIdle ? '⚪ 비어 있음' : '🤖 AI 자동'));
         return `<div class="${cls}"><b style="background:${RCOL[p.slot]}">${8-p.slot}</b><div><div>${p.name}</div><div style="font-size:.75em;color:var(--teal)">${CHARS[p.ci].name} · ${p.kc?`<span style="display:inline-block;width:.8em;height:.8em;border-radius:50%;background:${p.kc};vertical-align:middle"></span> `:''}${KARTS[p.ki].name}</div></div><small>${tag}</small></div>`;
       }).join('');
     }
     const rdBtn = $('#btnNetReady'), rdInfo = $('#netReadyInfo');
-    if(rdBtn){ const me = st.players[myId]; rdBtn.style.display = st.active && st.role === 'guest' ? '' : 'none'; rdBtn.textContent = me && me.ready ? '↩ 준비 취소' : '✋ 준비 완료'; }
-    if(rdInfo){ const hs = Object.values(st.players).filter(p => !p.isHost); rdInfo.textContent = st.active && hs.length ? `준비 ${hs.filter(p => p.ready).length}/${hs.length}명` : ''; }
-    const pvChk = $('#netPrivate'); if(pvChk){ pvChk.checked = !!st.priv; pvChk.disabled = st.role !== 'host'; }
+    if(rdBtn){ const me = st.players[myId]; rdBtn.style.display = st.active && st.role === 'guest' && !isOwner ? '' : 'none'; rdBtn.textContent = me && me.ready ? '↩ 준비 취소' : '✋ 준비 완료'; }
+    if(rdInfo){ const hs = Object.values(st.players).filter(p => !p.isHost && !(st.srvRoom && p.id === st.ownerId)); rdInfo.textContent = st.active && hs.length ? `준비 ${hs.filter(p => p.ready).length}/${hs.length}명` : ''; }
+    const pvChk = $('#netPrivate'); if(pvChk){ pvChk.checked = !!st.priv; pvChk.disabled = !canEdit; }
     const startBtn = $('#btnNetStart');
     if(startBtn){
-      startBtn.disabled = !(st.active && st.role === 'host');
-      startBtn.textContent = st.active && st.role === 'guest' ? '⏳ 방장의 출발을 기다리는 중...' : '🚀 온라인 레이스 출발! (방장)';
+      startBtn.disabled = !(st.active && canEdit);
+      startBtn.textContent = isOwner ? '🚀 온라인 레이스 출발! (방 관리자)' : st.active && st.role === 'guest' ? (st.srvRoom ? '⏳ 방 관리자의 출발을 기다리는 중...' : '⏳ 방장의 출발을 기다리는 중...') : '🚀 온라인 레이스 출발! (방장)';
     }
   }
 
@@ -4227,7 +4259,7 @@ const NET = (() => {
       });
     }
     $('#btnNetGarage')?.addEventListener('click', () => { st.returnToOnline = true; show('garage'); });
-    $('#btnCreateRoom')?.addEventListener('click', () => { sfx('sel'); createRoom($('#netCodeInp')?.value.trim()); });
+    $('#btnCreateRoom')?.addEventListener('click', () => { sfx('sel'); const c = $('#netCodeInp')?.value.trim(); if(window.BIO_LOCAL_RELAY && window.BioRelay && BioRelay.url) createServerRoom(c); else createRoom(c); });
     $('#btnQuickMatch')?.addEventListener('click', () => { sfx('sel'); quickMatch(); });
     $('#btnJoinRoom')?.addEventListener('click', () => { sfx('sel'); joinRoom($('#netCodeInp')?.value); });
     $('#btnLeaveRoom')?.addEventListener('click', () => { sfx('back'); cleanup(); log('방에서 나왔습니다.'); });
@@ -4239,21 +4271,26 @@ const NET = (() => {
       log(`📋 방 코드 [${st.code}]가 복사되었습니다!`);
       sfx('get');
     });
+    const ownerCmd = (act, v) => { if(st.active && st.role === 'guest' && st.srvRoom && st.ownerId === myId){ sendToHost({ type: 'owner_cmd', id: myId, act, v }); return true; } return false; };
     $('#btnNetMode')?.addEventListener('click', () => {
+      if(ownerCmd('mode', S.mode === 'speed' ? 'item' : 'speed')){ sfx('sel'); return; }
       if(st.role !== 'host') return;
       S.mode = S.mode === 'speed' ? 'item' : 'speed';
       sfx('sel'); persist(); broadcastRoomState();
     });
     $('#netMapSel')?.addEventListener('change', e => {
+      if(ownerCmd('map', +e.target.value)){ sfx('sel'); return; }
       if(st.role !== 'host') return;
       S.map = +e.target.value; sfx('sel'); persist(); broadcastRoomState();
     });
     $('#netAiFill')?.addEventListener('change', e => {
+      if(ownerCmd('aifill', e.target.checked)) return;
       if(st.role !== 'host') return;
       st.aiFill = e.target.checked; broadcastRoomState();
     });
     // 비공개 방: 교실 서버의 '열린 방' 목록에 보이지 않게 (방 코드로만 참가)
     $('#netPrivate')?.addEventListener('change', e => {
+      if(ownerCmd('private', e.target.checked)){ sfx('sel'); return; }
       if(st.role !== 'host') return;
       st.priv = e.target.checked; publishRoomInfo(); sfx('sel'); renderLobby();
     });
@@ -4267,6 +4304,7 @@ const NET = (() => {
       cleanup(); show('mode');
     });
     $('#btnNetStart')?.addEventListener('click', () => {
+      if(ownerCmd('start')){ sfx('start'); return; }
       if(st.active && st.role === 'host'){ sfx('start'); startOnlineMatch(); }
     });
   }, 0);
@@ -4276,6 +4314,12 @@ const NET = (() => {
     get state(){ return st; },
     leave: cleanup,
     startOnlineMatch,
+    // 교실 서버 전용: 서버가 이 코드로 방장 역할을 맡음 (server/kart-room.js)
+    serverHost(code, o){
+      o = o || {}; st.srv = true; st.nick = String(o.name || '교실').slice(0, 20); st.priv = !!o.priv;
+      if(MAPS[+o.map]) S.map = +o.map; S.mode = o.mode === 'item' ? 'item' : 'speed'; S.diff = clamp(o.diff == null ? 1 : +o.diff, 0, 2); st.aiFill = o.ai !== false;
+      createRoom(code); return st;
+    },
     get role(){ return st.role; },
     get mySlot(){ return st.mySlot; },
     get returnToOnline(){ return st.returnToOnline; },

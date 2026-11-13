@@ -10,11 +10,9 @@
   // tpl의 {t} 자리에 기준 값이 들어감. 기준 값은 메인 화면 '기준 수정'(비밀번호)으로 바꿀 수 있음 → localStorage 'bioGoalCfg'
   var GOALS = {
     'bio-beat':      {tpl: '아무 곡이나 점수 {t}점 넘기기', t: 650000, unit: '점'},
-    'immune-strike': {tpl: '점수 {t}점 넘기기', t: 15000, unit: '점'},
     'bio-kart':      {tpl: '레이스 {t}위 안으로 완주하기', t: 5, low: true, unit: '위'},
     'biotro':        {tpl: '앤티 {t}까지 도달하기', t: 3, unit: '앤티', pre: true},
     'cell-bound':    {tpl: '{t}층까지 내려가기', t: 3, unit: '층'},
-    'cell-pinball':  {tpl: '한 판 점수 {t}점 넘기기', t: 500000, unit: '점'},
     'cell-brawl':    {tpl: 'ATP 그랩 승리 또는 쇼다운 {t}등 안에 들기', t: 3, unit: '등', low: true, rankOnly: true},
     'only-up':       {tpl: '구간 {t}까지 올라가기', t: 3, unit: '구간', pre: true},
     'bio-strike':    {tpl: '생존 모드 점수 {t}점 넘기기', t: 3000, unit: '점'},

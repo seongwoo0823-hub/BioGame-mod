@@ -29,8 +29,6 @@
     'biotro': () => ({점수: G && G.score, 남은손: G && G.hands, 손패: G && G.hand && G.hand.length}),
     'cell-bound': () => ({화면: G.mode, 체력: G.player && G.player.hp, x: G.player && r1(G.player.x), y: G.player && r1(G.player.y)}),
     'cell-brawl': () => ({화면: state, 체력: G && G.player && r1(G.player.hp), x: G && G.player && G.player.pos && r1(G.player.pos.x), z: G && G.player && G.player.pos && r1(G.player.pos.z)}),
-    'cell-pinball': () => ({화면: G.mode, 점수: G.players && G.players[G.cur] && G.players[G.cur].score, 공: G.balls && G.balls.length}),
-    'immune-strike': () => ({화면: state, 점수: score, x: pl && r1(pl.x), y: pl && r1(pl.y), 체력: pl && pl.hp, 목숨: pl && pl.lives}),
     'vessel-canyon': () => ({화면: STATE, 체력: G && G.player && r1(G.player.hp), x: G && G.player && r1(G.player.x), y: G && G.player && r1(G.player.y)}),
     'helix': () => ({화면: G.state, 동작: G.player && G.player.act, x: G.player && Math.round(G.player.x), z: G.player && Math.round(G.player.z), 체력: G.player && G.player.hp, 방: G.run ? G.run.ch + '-' + G.run.room : ''}),
   };

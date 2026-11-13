@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BIO ARCADE · 생명과학 게임 아케이드</title>
-<meta name="description" content="리듬게임, 런앤건, 카트 레이싱, 5대5 대전, 로그라이크, 핀볼, 3D 난투, FPS, 액션 RPG, 퍼즐까지 생명과학을 주제로 한 웹 게임 15종. PC·태블릿·휴대폰에서 설치 없이 바로 플레이.">
+<meta name="description" content="리듬게임, 카트 레이싱, 5대5 대전, 로그라이크, 3D 난투, FPS, 액션 RPG, 퍼즐까지 생명과학을 주제로 한 웹 게임 12종. PC·태블릿·휴대폰에서 설치 없이 바로 플레이.">
 <meta name="theme-color" content="#0b1020">
 <link rel="manifest" href="manifest.webmanifest?v=2">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-v2-32.png">
@@ -265,7 +265,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
 
   <div class="tools">
     <nav class="seg" role="tablist" aria-label="분류">
-      <button class="on" type="button" role="tab" data-filter="all">전체 <b id="nAll">15</b></button>
+      <button class="on" type="button" role="tab" data-filter="all">전체 <b id="nAll"></b></button>
       <button type="button" role="tab" data-filter="online">온라인 <b id="nOnline"></b></button>
       <button type="button" role="tab" data-filter="action">액션 <b id="nAction"></b></button>
       <button type="button" role="tab" data-filter="casual">캐주얼 <b id="nCasual"></b></button>
@@ -335,12 +335,10 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
   // 게임 목록: id, 제목, 한 줄 소개, 분류, 온라인 인원, 검색어
   const GAMES=[
     ['bio-beat','바이오 비트','생명과학 노래 43곡 리듬게임','online casual','2~4','리듬 음악 노래 퀴즈 세포 유전 생태 bio beat'],
-    ['immune-strike','면역 특공대','면역세포로 돌파하는 런앤건 액션','action','','런앤건 면역 호중구 대식세포 T세포 NK세포 immune strike'],
     ['bio-kart','바이오 카트','5개 월드 20개 트랙 블록 카트 레이싱','online casual','8','카트 레이싱 레이스 혈관 소화 bio kart'],
     ['vessel-canyon','혈관 협곡','세포와 감염원의 5:5 대전','online action','10','모바 MOBA 5대5 대전 면역 감염 vessel canyon'],
     ['biotro','바이오트로','세포 포커 덱빌딩 로그라이크','casual','','포커 카드 덱빌딩 로그라이크 조커 소기관 biotro'],
     ['cell-bound','셀 바운드','세포 던전을 탐험하는 슈터','action','','로그라이크 던전 슈터 세포질 핵 cell bound'],
-    ['cell-pinball','세포 탐사대 핀볼','세포 속 핀볼 테이블','casual','','핀볼 세포 미션 cell cadet pinball'],
     ['cell-brawl','셀 브롤','면역세포 3D 난투','online action','6','난투 브롤 3D 면역 병원체 트로피 cell brawl'],
     ['only-up','온리 업','소화관을 거슬러 오르는 점프','casual','','플랫포머 점프 소화관 나노봇 only up'],
     ['bio-strike','바이오 스트라이크','면역 요원 1인칭 슈팅','online action','8','FPS 슈팅 총 백신 바이러스 암세포 bio strike'],
@@ -363,6 +361,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     <i class="go">${ic('chevron')}</i></a>`).join('')+'<p class="empty" id="empty" hidden><i>'+ic('search')+'</i>찾는 게임이 없어요</p>';
   const cards=[...box.querySelectorAll('.card')];
   const cnt=c=>cards.filter(a=>a.dataset.cat.split(' ').includes(c)).length;
+  document.getElementById('nAll').textContent=cards.length;
   document.getElementById('nOnline').textContent=cnt('online');
   document.getElementById('nAction').textContent=cnt('action');
   document.getElementById('nCasual').textContent=cnt('casual');
@@ -393,12 +392,10 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     'bio-beat'(){const r=get('biobeat_rec_v1');if(!r||typeof r!=='object')return '';
       const songs=new Set(Object.keys(r).filter(k=>k[0]!=='_'&&r[k]&&r[k].score>0).map(k=>k.replace(/_\d$/,'')));
       const out=[];if(songs.size)out.push(`클리어 <b>${songs.size}</b>곡`);const q=r._quiz;if(q&&q.t)out.push(`퀴즈 <b>${q.r}/${q.t}</b>`);return out.join(' · ');},
-    'immune-strike'(){const hs=get('immuneStrikeHS');if(!Array.isArray(hs)||!hs.length||!hs[0])return '';return `최고 <b>${Number(hs[0].s||0).toLocaleString()}</b>점`;},
     'bio-kart'(){const s=get('biokart');const b=s&&s.best;if(!b||typeof b!=='object')return '';
       const v=Object.values(b).filter(x=>typeof x==='number'&&isFinite(x));if(!v.length)return '';return `최단 <b>${fmtT(Math.min(...v))}</b>`;},
     'biotro'(){const s=get('biotroStats');if(!s||!s.runs)return '';return `최고 앤티 <b>${s.bestAnte||1}</b>`;},
     'cell-bound'(){const s=get('cellBoundStats');if(!s||!s.runs)return '';return s.wins?`승리 <b>${s.wins}</b>회`:`최고 <b>${s.bestFloor||1}</b>층`;},
-    'cell-pinball'(){const hs=get('cellCadetHS');if(!Array.isArray(hs)||!hs.length||!hs[0])return '';return `최고 <b>${Number(hs[0].score||0).toLocaleString()}</b>점`;},
     'cell-brawl'(){const t=get('cellbrawl:trophies');if(!t||typeof t!=='object')return '';const v=Object.values(t).filter(x=>typeof x==='number'&&x>0);
       return v.length?`트로피 <b>${v.reduce((a,b)=>a+b,0)}</b>`:'';},
     'only-up'(){const s=get('onlyupBioStats');if(s&&s.clears)return `탈출 <b>${s.clears}</b>회`+(s.best>0?` · 최고 <b>${Math.floor(s.best/60)}분 ${(s.best%60).toFixed(1)}초</b>`:'');const p=get('onlyupBio');return p&&p.cp>0?`<b>${p.cp+1}</b>/7 구간`:'';},
@@ -558,13 +555,16 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     run();
     // 선생님 컴퓨터(localhost)에서 열면 학생 접속 주소를 크게 보여 줌
     if(/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)){
-      fetch('/__info',{cache:'no-store'}).then(r=>r.json()).then(j=>{
-        if(!j||!j.urls||!j.urls.length)return;
-        const b=document.createElement('div');b.className='lanbox';
-        b.innerHTML=`<b>🧑‍🏫 학생 접속 주소</b><span>같은 와이파이에서 주소창에 입력하세요</span>${j.urls.map(u=>`<code>${u.replace(/^http:\/\//,'')}</code>`).join('')}<button type="button" aria-label="닫기">✕</button>`;
-        b.querySelector('button').onclick=()=>b.remove();
-        document.body.appendChild(b);
+      let box=null,closed=false;
+      const show=()=>fetch('/__info',{cache:'no-store'}).then(r=>r.json()).then(j=>{
+        if(closed||!j||!j.urls||!j.urls.length)return;
+        if(!box){box=document.createElement('div');box.className='lanbox';document.body.appendChild(box);}
+        const kind=u=>{const n=(j.nets||[]).find(x=>x.url===u);return n?` <small style="opacity:.7">${n.kind}</small>`:'';};
+        const warn=(j.warnings||[]).map(w=>`<span style="color:#ffb703;font-size:12px;line-height:1.4">⚠ ${w.replace(/</g,'&lt;')}</span>`).join('');
+        box.innerHTML=`<b>🧑‍🏫 학생 접속 주소</b><span>휴대폰·태블릿이 같은 네트워크에서 주소창에 입력</span>${j.urls.map(u=>`<code>${u.replace(/^http:\/\//,'')}</code>${kind(u)}`).join('')}<span style="font-size:12px;opacity:.8">연결 확인: 주소 뒤에 <b>/hello</b> · 접속한 기기 ${j.devices||0}대</span>${warn}<button type="button" aria-label="닫기">✕</button>`;
+        box.querySelector('button').onclick=()=>{closed=true;box.remove();};
       }).catch(()=>{});
+      show();setTimeout(show,8000);setInterval(show,30000);
     }
   })();
 
