@@ -63,7 +63,7 @@
     'codon-glass':   {how: '모드마다 점수가 높은 순', cat: '모드', cols: [['score', '점수', 'n']]},
     'bio-tower':     {how: '연속 승리 수가 많은 순', cols: [['streak', '연속 승리', 'n'], ['height', '최고 탑 높이', 's']]},
     'cell-raid':     {how: '도달 구역이 깊은 순 → 같으면 걸린 시간이 짧은 순', cols: [['stage', '도달 구역', 's'], ['time', '시간', 't'], ['char', '세포', 's']]},
-    'bio-pyramid':   {how: '최고 피라미드 단계가 높은 순 → 같으면 총점이 높은 순', cols: [['stage', '최고 단계', 'n'], ['score', '총점', 'k'], ['skin', '스킨', 's']]},
+    'bio-pyramid':   {how: '불사의 우주물곰을 얻은 사람이 먼저(빨리 얻을수록 위) → 그다음은 총점이 높은 순', cols: [['tardi', '우주물곰 획득', 's'], ['score', '총점', 'k'], ['stage', '최고 단계', 'n']]},
     'cell-expedition': {how: '깬 원정 스테이지가 높은 순 → 같으면 전투력이 높은 순', cols: [['stage', '스테이지', 'n'], ['power', '전투력', 'n']]}
   };
   function fmtCol(v, f) {
