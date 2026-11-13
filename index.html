@@ -290,6 +290,15 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     <header><img src="icons/icon-v2-192.png" alt=""><span id="pwaTitle">앱으로 설치하기</span><button class="ib" type="button" data-close aria-label="닫기"><i data-ic="x"></i></button></header>
     <div class="bd">
       <div class="direct" id="pwaDirect" hidden><span>이 브라우저는 바로 설치할 수 있어요</span><button class="btn" id="pwaNow" type="button">지금 설치</button></div>
+      <div id="pwaNet" hidden style="border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:10px 12px;margin-bottom:10px">
+        <div style="font-weight:800;font-size:14px;margin-bottom:2px">교실 서버 앱 종류 고르기</div>
+        <div style="font-size:12px;opacity:.75;margin-bottom:8px">고른 색의 아이콘·이름으로 설치돼요. 고른 뒤 아래 순서대로 설치하세요</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button type="button" class="netpick" data-net="lan" style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:12px;border:2px solid transparent;background:rgba(22,163,74,.15);color:inherit;font:inherit;font-weight:800;cursor:pointer"><img src="icons/icon-lan-192.png" alt="" width="40" height="40" style="border-radius:10px">랜선용<br>(초록)</button>
+          <button type="button" class="netpick" data-net="wifi" style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:12px;border:2px solid transparent;background:rgba(220,38,38,.15);color:inherit;font:inherit;font-weight:800;cursor:pointer"><img src="icons/icon-wifi-192.png" alt="" width="40" height="40" style="border-radius:10px">와이파이용<br>(빨강)</button>
+        </div>
+        <div id="pwaNetTxt" style="font-size:12px;opacity:.8;margin-top:6px"></div>
+      </div>
       <div id="pwaSteps" style="display:flex;flex-direction:column;gap:8px"></div>
       <div class="sw"><span id="swTxt">오프라인 저장 확인 중…</span><button class="btn ghost" type="button" data-close>닫기</button></div>
     </div>
@@ -596,15 +605,32 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
       :['주소창 오른쪽의 <b>설치</b> 아이콘을 누르세요.','또는 <b>메뉴(⋮) → 저장 및 공유 → 페이지를 앱으로 설치</b>를 고르세요.','바탕화면과 작업 표시줄에 앱이 생기고 오프라인에서도 열려요.'];
     steps.innerHTML=S.map((s,i)=>`<div class="step"><span class="n">${i+1}</span><div>${s}</div></div>`).join('');
   }
+  // 교실 서버로 열었을 때: 랜선용(초록)·와이파이용(빨강) 앱 종류를 직접 고름 → 아이콘·이름이 그 색으로 설치됨
+  const netBox=document.getElementById('pwaNet'),netTxt=document.getElementById('pwaNetTxt');
+  let onServer=false;
+  function showNet(j){
+    onServer=true;netBox.hidden=false;
+    netBox.querySelectorAll('.netpick').forEach(b=>{const on=b.dataset.net===j.net;b.style.borderColor=on?(j.net==='wifi'?'#f87171':'#4ade80'):'transparent';b.style.opacity=on?'1':'.7';});
+    netTxt.textContent=(j.net==='wifi'?'🔴 지금: 와이파이용':'🟢 지금: 랜선용')+(j.picked?' (직접 고름)':' (주소로 자동 판단)');
+  }
+  if(location.protocol.startsWith('http'))fetch('/__info',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&j.ok&&j.net)showNet(j);}).catch(()=>{});
+  netBox.querySelectorAll('.netpick').forEach(b=>b.addEventListener('click',()=>{
+    tone('tap');netTxt.textContent='바꾸는 중…';
+    fetch('/__net?set='+b.dataset.net,{cache:'no-store',credentials:'same-origin'}).then(r=>r.json()).then(()=>{
+      try{sessionStorage.setItem('bioOpenInstall','1');}catch(e){}
+      location.reload();
+    }).catch(()=>{netTxt.textContent='바꾸지 못했어요. 서버가 켜져 있는지 확인해 주세요';});
+  }));
   async function install(){
     tone('tap');
-    if(deferred){try{deferred.prompt();const c=await deferred.userChoice;if(c&&c.outcome==='accepted'){deferred=null;btnI.hidden=true;}syncI();return;}catch(e){}}
+    if(deferred&&!onServer){try{deferred.prompt();const c=await deferred.userChoice;if(c&&c.outcome==='accepted'){deferred=null;btnI.hidden=true;}syncI();return;}catch(e){}}
     renderSteps();modal.hidden=false;
   }
   addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;syncI();});
   addEventListener('appinstalled',()=>{deferred=null;btnI.hidden=true;modal.hidden=true;});
   btnI.addEventListener('click',install);
-  document.getElementById('pwaNow').addEventListener('click',install);
+  try{if(sessionStorage.getItem('bioOpenInstall')){sessionStorage.removeItem('bioOpenInstall');setTimeout(()=>{renderSteps();modal.hidden=false;syncI();},400);}}catch(e){}
+  document.getElementById('pwaNow').addEventListener('click',async()=>{tone('tap');if(!deferred)return;try{deferred.prompt();const c=await deferred.userChoice;if(c&&c.outcome==='accepted'){deferred=null;btnI.hidden=true;modal.hidden=true;}syncI();}catch(e){}});
   modal.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>{modal.hidden=true;tone('tap');}));
   modal.addEventListener('click',e=>{if(e.target===modal)modal.hidden=true;});
   addEventListener('keydown',e=>{if(e.key==='Escape')modal.hidden=true;});

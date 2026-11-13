@@ -20,7 +20,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
-const { execFile } = require('child_process');
+const { execFile, execFileSync } = require('child_process');
 const { Worker } = require('worker_threads');
 
 const PORT = +process.env.PORT || 8080;
@@ -32,6 +32,21 @@ const BUF_LIMIT = 4 * 1024 * 1024;                    // 받는 쪽이 이만큼
 const started = Date.now();
 
 // ---------------------------------------------------------------- 학생 접속 주소
+// 와이파이 장치 이름을 운영체제에 직접 물어봄 (이름만 보고 짐작하면 맥 en1·USB 와이파이 등을 랜선으로 착각함)
+const WIFI_IF = new Set();
+(function findWifi() {
+  try {
+    if (process.platform === 'win32') {
+      const out = execFileSync('netsh', ['wlan', 'show', 'interfaces'], { timeout: 5000, windowsHide: true, encoding: 'utf8' });
+      String(out || '').split(/\r?\n/).forEach(l => { const m = /^\s*(?:Name|이름)\s*:\s*(.+?)\s*$/.exec(l); if (m) WIFI_IF.add(m[1]); });
+    } else if (process.platform === 'darwin') {
+      const out = execFileSync('networksetup', ['-listallhardwareports'], { timeout: 5000, encoding: 'utf8' });
+      String(out || '').split(/\n\s*\n/).forEach(b => { if (/Hardware Port:\s*(Wi-?Fi|AirPort)/i.test(b)) { const m = /Device:\s*(\S+)/.exec(b); if (m) WIFI_IF.add(m[1]); } });
+    } else {
+      for (const n of Object.keys(os.networkInterfaces())) if (fs.existsSync('/sys/class/net/' + n + '/wireless')) WIFI_IF.add(n);
+    }
+  } catch (e) {}
+})();
 function lanList() {
   const out = [];
   for (const [name, list] of Object.entries(os.networkInterfaces())) {
@@ -39,7 +54,7 @@ function lanList() {
       if (a.family !== 'IPv4' && a.family !== 4) continue;
       if (a.internal || a.address.startsWith('169.254.')) continue;
       if (/vmware|virtualbox|vEthernet|docker|hyper-v|loopback|tailscale|zerotier/i.test(name)) continue;
-      const kind = /wi-?fi|wlan|wireless|무선|^en0$/i.test(name) ? '와이파이' : /ethernet|이더넷|^eth|^en\d|lan/i.test(name) ? '유선(랜선)' : name;
+      const kind = WIFI_IF.has(name) || /wi-?fi|wlan|wireless|무선|airport|802\.11/i.test(name) || (!WIFI_IF.size && /^en0$/.test(name)) ? '와이파이' : /ethernet|이더넷|^eth|^en\d|lan/i.test(name) ? '유선(랜선)' : name;
       out.push({name, kind, ip: a.address, url: 'http://' + a.address + (PORT === 80 ? '' : ':' + PORT)});
     }
   }
@@ -47,11 +62,16 @@ function lanList() {
 }
 // 요청이 이 컴퓨터의 어느 네트워크로 들어왔는지 → 'wifi'(빨강 아이콘) 또는 'lan'(초록 아이콘)
 //   학생이 와이파이 주소로 접속하면 와이파이용, 랜선 주소로 접속하면 랜선용 앱 아이콘·이름으로 설치됨
-function netVariant(req) {
-  const ip = String((req.socket && req.socket.localAddress) || '').replace(/^::ffff:/, '');
-  const n = lanList().find(x => x.ip === ip);
+function netPick(req) { const m = /(?:^|;\s*)bionet=(wifi|lan)\b/.exec(String(req.headers.cookie || '')); return m ? m[1] : ''; }
+function netAuto(req) {
+  const list = lanList();
+  const host = String(req.headers.host || '').replace(/:\d+$/, '').replace(/^\[|\]$/g, '');
+  const loc = String((req.socket && req.socket.localAddress) || '').replace(/^::ffff:/, '');
+  const n = list.find(x => x.ip === host) || list.find(x => x.ip === loc);
   return n && n.kind === '와이파이' ? 'wifi' : 'lan';
 }
+function netVariant(req) { return netPick(req) || netAuto(req); }
+const installLog = new Map();
 const VARIANT = {
   lan:  {id: './?pwa=lan',  name: 'BIO ARCADE 교실 서버 (랜선)',    short: 'BIO 랜선',    color: '#06140c'},
   wifi: {id: './?pwa=wifi', name: 'BIO ARCADE 교실 서버 (와이파이)', short: 'BIO 와이파이', color: '#170607'},
@@ -128,7 +148,7 @@ function sendFile(req, res, urlPath) {
     if (!err && st.isDirectory()) { res.writeHead(301, {Location: urlPath.replace(/\/?$/, '/')}); res.end(); return; }
     if (err || !st.isFile()) { res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'}); res.end('파일이 없어요: ' + rel); return; }
     const type = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream';
-    const head = {'Content-Type': type, 'Cache-Control': /\.(html|js|json|webmanifest)$/i.test(file) ? 'no-cache' : 'public, max-age=3600', 'Accept-Ranges': 'bytes'};
+    const head = {'Content-Type': type, 'Cache-Control': /\.(html|js|json|webmanifest)$/i.test(file) || /[\\/]icons[\\/]/.test(file) ? 'no-cache' : 'public, max-age=3600', 'Accept-Ranges': 'bytes'};
     // 설치 아이콘 3종: GitHub Pages = 파랑(기본 파일 그대로) · 교실 서버 랜선 주소 = 초록 · 와이파이 주소 = 빨강
     const relp = path.relative(ROOT, file).split(path.sep).join('/');
     const vk = netVariant(req), V = VARIANT[vk];
@@ -136,6 +156,8 @@ function sendFile(req, res, urlPath) {
       fs.readFile(file, 'utf8', (e, txt) => {
         if (e) { res.writeHead(500); res.end(); return; }
         let m; try { m = JSON.parse(txt); } catch (x) { res.writeHead(500); res.end(); return; }
+        const who = String(req.socket.remoteAddress || '').replace(/^::ffff:/, '');
+        const lk = who + vk; if (Date.now() - (installLog.get(lk) || 0) > 60000) { installLog.set(lk, Date.now()); console.log('  📲 앱 설치 정보: ' + who + ' → ' + (vk === 'wifi' ? '🔴 와이파이용(빨간 아이콘)' : '🟢 랜선용(초록 아이콘)') + (netPick(req) ? '  [직접 고름]' : '  [주소로 자동 판단: ' + String(req.headers.host || '') + ']')); }
         m.id = V.id; m.name = V.name; m.short_name = V.short;
         m.start_url = './index.html?pwa=' + vk; m.theme_color = m.background_color = V.color;
         const sw = ic => Object.assign({}, ic, {src: String(ic.src).replace('icon-v2-', 'icon-' + vk + '-')});
@@ -206,7 +228,14 @@ const server = http.createServer((req, res) => {
   if (u.pathname === '/__kart/list') return json(res, {ok: true, max: MAX_SRV_ROOMS, rooms: roomList().filter(r => r.game === 'bio-kart')});
   if (u.pathname === '/__room/new') return roomNew(String(u.searchParams.get('game') || ''), req, res, u.searchParams);
   if (u.pathname === '/__room/list') return json(res, {ok: true, max: MAX_SRV_ROOMS, games: Object.keys(SRV_GAMES), rooms: roomList()});
-  if (u.pathname === '/__info') return json(res, {ok: true, net: netVariant(req), urls: lanUrls(), nets: lanList(), port: PORT, clients: clients.size, devices: seen.size, warnings: diag.warnings, diagReady: diag.checked});
+  if (u.pathname === '/__net') {
+    const v = u.searchParams.get('set');
+    const ck = v === 'wifi' || v === 'lan' ? 'bionet=' + v + '; Path=/; Max-Age=31536000; SameSite=Lax' : 'bionet=; Path=/; Max-Age=0; SameSite=Lax';
+    const now = v === 'wifi' || v === 'lan' ? v : netAuto(req);
+    res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Set-Cookie': ck});
+    return res.end(JSON.stringify({ok: true, net: now, picked: v === 'wifi' || v === 'lan' ? v : '', auto: netAuto(req)}));
+  }
+  if (u.pathname === '/__info') return json(res, {ok: true, net: netVariant(req), picked: netPick(req), auto: netAuto(req), urls: lanUrls(), nets: lanList(), port: PORT, clients: clients.size, devices: seen.size, warnings: diag.warnings, diagReady: diag.checked});
   // 휴대폰 연결 확인용 아주 가벼운 페이지 (이게 열리면 네트워크는 정상)
   if (u.pathname === '/__hello' || u.pathname === '/hello') {
     res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store'});
