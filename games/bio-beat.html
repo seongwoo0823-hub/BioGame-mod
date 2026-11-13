@@ -2449,6 +2449,12 @@ const ONLINE=(()=>{
   };
   const errMsg=(c,code)=>(ERR[c]||ERR.conn)(code);
   function log(t){const el=$('#netLog');if(el)el.textContent=t;}
+  // 서버 방장: 교실 서버가 방장(자기 자리 없음, 곡을 직접 치지 않음), 처음 들어온 학생이 방 관리자
+  const SRV=window.BIO_SRV||null;
+  let srvRoom=false,ownerId=null,pickSentT=0;
+  const calcOwner=()=>{if(SRV){const o=Object.values(N.players).filter(p=>!p.host).sort((a,b)=>(a.joinT||0)-(b.joinT||0))[0];ownerId=o?o.id:null;}return ownerId;};
+  const isOwner=()=>N.role==='guest'&&srvRoom&&ownerId===myId;
+  const own=(act,v)=>toHost(Object.assign({type:'own',act},v||{}));
 
   /* ---------- PeerJS ---------- */
   let peerLoad=null;
@@ -2515,7 +2521,7 @@ const ONLINE=(()=>{
     N.busy=false;
     if(!p){if(!fixed||!err||err.code!=='taken')log(errMsg(err?err.code:'server',code));render();return false;}
     peer=p;N.active=true;N.role='host';N.code=code;N.mid=0;N.board={};
-    N.players={};N.players[myId]={id:myId,name:N.nick,host:true,synced:true,joinT:Date.now()};
+    N.players={};if(!SRV)N.players[myId]={id:myId,name:N.nick,host:true,synced:true,joinT:Date.now()};
     N.pick={i:SEL.i,d:SEL.d};
     p.on('connection',conn=>{
       conn.on('data',d=>{if(peer===p)onHost(d,conn);});
@@ -2528,7 +2534,7 @@ const ONLINE=(()=>{
   }
   function roomMsg(){
     const pl=Object.values(N.players).sort((a,b)=>(b.host?1:0)-(a.host?1:0)||a.joinT-b.joinT).map(p=>({id:p.id,name:p.name,host:!!p.host,synced:!!p.synced,ping:p.ping||0}));
-    return {type:'room',code:N.code,players:pl,pick:N.pick,inGame:!!N.match&&!matchDone()};
+    return {type:'room',code:N.code,players:pl,pick:N.pick,inGame:!!N.match&&!matchDone(),srv:!!SRV,owner:calcOwner()};
   }
   function broadcastRoom(){if(N.role!=='host')return;sendAll(roomMsg());render();}
   function onHost(m,conn){
@@ -2555,6 +2561,11 @@ const ONLINE=(()=>{
       case'live':if(N.match&&m.mid===N.match.mid)setEntry(pid,m);break;
       case'final':if(N.match&&m.mid===N.match.mid){setEntry(pid,m);sendBoard();}break;
       case'leave':removePlayer(pid,'left');break;
+      case'own':if(SRV&&pid===calcOwner()){   // 방 관리자 명령 (서버 방장일 때만)
+        if(m.act==='pick'&&matchDone()){SEL.i=clamp(m.i|0,0,SONGS.length-1);SEL.d=clamp(m.d|0,0,2);N.pick={i:SEL.i,d:SEL.d};broadcastRoom();}
+        else if(m.act==='start'){if(m.i!=null){SEL.i=clamp(m.i|0,0,SONGS.length-1);SEL.d=clamp(m.d|0,0,2);}hostStart();}
+        else if(m.act==='again'&&matchDone()&&N.match){SEL.i=N.match.i;SEL.d=N.match.d;hostStart();}
+      }break;
     }
   }
   function setEntry(pid,m){
@@ -2576,6 +2587,7 @@ const ONLINE=(()=>{
   function matchDone(){if(!N.match)return true;return Object.values(N.board).every(e=>e.st&&e.st!=='play');}
   function canStart(){
     const pl=Object.values(N.players);
+    if(isOwner())return pl.length>=2&&pl.every(p=>p.synced)&&!N.roomInGame;
     return N.role==='host'&&pl.length>=2&&pl.every(p=>p.synced)&&matchDone()&&!!DATA[SONGS[N.pick.i].id];
   }
   function hostStart(){
@@ -2584,6 +2596,13 @@ const ONLINE=(()=>{
     if(pl.length<2){log('👥 2명 이상 모이면 시작할 수 있어요. 친구에게 방 코드를 알려 주세요.');openModal();return;}
     if(!pl.every(p=>p.synced)){log('⏳ 친구의 시계를 맞추는 중이에요. 잠시 후 다시 눌러 주세요.');openModal();return;}
     if(!matchDone()){toast('아직 플레이 중인 친구가 있어요');return;}
+    if(SRV){   // 서버 방장: 곡은 직접 치지 않고 시작 신호와 순위만 맡음
+      N.pick={i:SEL.i,d:SEL.d};
+      const mid=(N.mid=N.mid+1+Math.floor(Math.random()*1000)*1000),zero=now()+LEAD;
+      N.board={};for(const p of pl)N.board[p.id]={id:p.id,n:p.name,s:0,c:0,r:0,j:'',pr:0,st:'play'};
+      const msg={type:'start',mid,i:N.pick.i,d:N.pick.d,zero,hn:now()};
+      sendAll(msg);N.match={mid,i:N.pick.i,d:N.pick.d,zero,lost:false,quit:false};broadcastRoom();return;
+    }
     N.pick={i:SEL.i,d:SEL.d};
     const mid=(N.mid=N.mid+1+Math.floor(Math.random()*1000)*1000);
     const zero=now()+LEAD;
@@ -2671,7 +2690,8 @@ const ONLINE=(()=>{
         const b=bestSample();N.offset=b.off;if(N.samples.length===4)ping();break;}
       case'room':{
         N.players={};(m.players||[]).forEach(p=>{N.players[p.id]=p;});
-        if(m.pick){
+        if(m.srv!=null){srvRoom=!!m.srv;ownerId=m.owner||null;}N.roomInGame=!!m.inGame;
+        if(m.pick&&!(isOwner()&&now()-pickSentT<1500)){
           N.pick={i:clamp(m.pick.i|0,0,SONGS.length-1),d:clamp(m.pick.d|0,0,2)};
           if(screen==='select'&&ready&&(SEL.i!==N.pick.i||SEL.d!==N.pick.d)){SEL.i=N.pick.i;SEL.d=N.pick.d;updateSelect();}
         }
@@ -2734,7 +2754,7 @@ const ONLINE=(()=>{
   },LIVE_MS);
   function sendBoard(){
     if(N.role!=='host'||!N.match)return;
-    N.board[myId]=Object.assign(N.board[myId]||{},myEntry());
+    if(!SRV)N.board[myId]=Object.assign(N.board[myId]||{},myEntry());
     const list=Object.values(N.board).map(e=>({id:e.id,n:e.n,s:e.s,c:e.c,m:e.m,r:e.r,j:e.j,pr:e.pr,st:e.st,g:e.g,fc:e.fc,au:e.au,k:e.k,cg:e.cg,gd:e.gd,ms:e.ms,f:e.f}));
     sendAll({type:'board',mid:N.match.mid,list});
     refreshResult();
@@ -2800,7 +2820,7 @@ const ONLINE=(()=>{
       const stt=e.st==='left'?'연결 끊김':e.st==='quit'?'중도 포기':e.st==='fail'?'STAGE FAILED':e.st==='play'?`플레이 중 ${e.pr||0}%`:`${e.g||'-'} · ${(+e.r||0).toFixed(2)}% · MAX ${e.m||0}${e.fc?' · FC':''}`;
       return `<li class="${e.id===myId?'me':''}"><b>${k+1}</b><div>${esc(e.n)}${e.au?' <small style="display:inline">AUTO</small>':''}<small>${esc(stt)}</small></div><span class="sc">${String(e.s||0).padStart(7,'0')}</span></li>`;
     }).join('');
-    const host=N.role==='host';
+    const host=N.role==='host'||isOwner();
     $('#netResBtns').hidden=!host;
     $('#netAgainBtn').disabled=!done||Object.keys(N.players).length<2;
     $('#netResHint').textContent=N.match.lost?'방장과의 연결이 끊겨 순위가 더 이상 갱신되지 않아요.':host?(done?(Object.keys(N.players).length<2?'다른 플레이어가 모두 나갔어요.':'같은 곡으로 재대결하거나 다른 곡을 고르세요.'):'모두 끝나면 재대결할 수 있어요.'):(N.active?'방장이 다음 곡을 고르면 자동으로 시작돼요.':'');
@@ -2811,12 +2831,14 @@ const ONLINE=(()=>{
   /* ---------- 가로채기 ---------- */
   function interceptStart(){
     if(!N.active)return false;
+    if(isOwner()){own('start',{i:SEL.i,d:SEL.d});pickSentT=now();return true;}
     if(N.role==='host')hostStart();
-    else{toast('방장이 곡을 고르고 시작해요');log('⏳ 방장이 곡과 난이도를 고르고 시작하면 자동으로 시작돼요.');openModal();}
+    else{toast(srvRoom?'방 관리자가 곡을 고르고 시작해요':'방장이 곡을 고르고 시작해요');log('⏳ 방장이 곡과 난이도를 고르고 시작하면 자동으로 시작돼요.');openModal();}
     return true;
   }
   function interceptRetry(){
     if(!N.active)return false;
+    if(isOwner()){own('again');return true;}
     if(N.role==='host'){if(matchDone()){N.pick={i:N.match?N.match.i:SEL.i,d:N.match?N.match.d:SEL.d};SEL.i=N.pick.i;SEL.d=N.pick.d;hostStart();}else toast('아직 플레이 중인 친구가 있어요');}
     else toast('방장이 다시 시작하면 자동으로 시작돼요');
     return true;
@@ -2830,21 +2852,21 @@ const ONLINE=(()=>{
   /* ---------- 대기실 UI ---------- */
   function openModal(){render();$('#mNet').classList.add('on');}
   function render(){
-    const host=N.role==='host';
+    const host=N.role==='host'||isOwner();
     $('#netJoinBox').hidden=N.active;$('#netRoomBox').hidden=!N.active;
     $('#netCreateBtn').disabled=N.busy;$('#netJoinBtn').disabled=N.busy;if($('#netQuickBtn'))$('#netQuickBtn').disabled=N.busy;
     $('#netCodeDisp').textContent=N.code||'----';
     const pl=Object.values(N.players).sort((a,b)=>(b.host?1:0)-(a.host?1:0)||(a.joinT||0)-(b.joinT||0));
-    $('#netPlayers').innerHTML=pl.map(p=>`<li class="${p.id===myId?'me':''}"><span>${p.host?'👑 ':'🎧 '}${esc(p.name)}${p.id===myId?' (나)':''}</span><small>${p.host?'방장':p.synced?`준비 완료${p.ping?' · '+p.ping+'ms':''}`:'시계 맞추는 중…'}</small></li>`).join('')+
+    $('#netPlayers').innerHTML=pl.map(p=>`<li class="${p.id===myId?'me':''}"><span>${p.host||(srvRoom&&p.id===ownerId)?'👑 ':'🎧 '}${esc(p.name)}${p.id===myId?' (나)':''}</span><small>${p.host?'방장':(srvRoom&&p.id===ownerId?'방 관리자 · ':'')+(p.synced?`준비 완료${p.ping?' · '+p.ping+'ms':''}`:'시계 맞추는 중…')}</small></li>`).join('')+
       (N.active?Array.from({length:Math.max(0,MAX-pl.length)},()=>'<li><span style="color:var(--mute)">빈자리</span><small>대기</small></li>').join(''):'');
     const s=SONGS[N.pick.i],d=DATA[s.id];
-    $('#netSong').textContent=N.active?`🎵 ${host?'고른 곡':'방장이 고른 곡'}: ${s.ko} · ${DIFF[N.pick.d].en} ${d?'LV '+d.charts[N.pick.d].level:''}`:'';
+    $('#netSong').textContent=N.active?`🎵 ${host?'고른 곡':srvRoom?'방 관리자가 고른 곡':'방장이 고른 곡'}: ${s.ko} · ${DIFF[N.pick.d].en} ${d?'LV '+d.charts[N.pick.d].level:''}`:'';
     const sb=$('#netStartBtn');sb.hidden=!host;sb.disabled=!canStart();
     sb.textContent=pl.length<2?'▶ 대결 시작 (2명부터)':'▶ 대결 시작';
     $('#netLeaveBtn').hidden=!N.active;
     const pill=$('#netPill');pill.hidden=!N.active;
-    if(N.active)pill.textContent=`🌐 ${N.code} · ${pl.length}명 · ${host?'방장':'게스트'}`;
-    const sub=$('#startSub');if(sub)sub.textContent=N.active?(host?'온라인 대결 시작 (ENTER)':'방장이 시작해요'):'ENTER 로 시작';
+    if(N.active)pill.textContent=`🌐 ${N.code} · ${pl.length}명 · ${N.role==='host'?'방장':isOwner()?'방 관리자':srvRoom?'참가자':'게스트'}`;
+    const sub=$('#startSub');if(sub)sub.textContent=N.active?(host?'온라인 대결 시작 (ENTER)':srvRoom?'방 관리자가 시작해요':'방장이 시작해요'):'ENTER 로 시작';
   }
   // 방장이 곡·난이도를 바꾸면 바로 알려 준다
   setInterval(()=>{
@@ -2855,6 +2877,7 @@ const ONLINE=(()=>{
       for(const id in N.players){const p=N.players[id];if(!p.host&&t-(p.seen||t)>TIMEOUT)removePlayer(id,'lost');}
       if(++N.hb%8===0)broadcastRoom();
     }else if(N.role==='guest'){
+      if(isOwner()&&screen==='select'&&(N.pick.i!==SEL.i||N.pick.d!==SEL.d)&&!N.roomInGame){N.pick={i:SEL.i,d:SEL.d};pickSentT=now();own('pick',{i:SEL.i,d:SEL.d});}
       if(N.hb++%4===0)ping();
       if(t-N.lastHost>TIMEOUT)hostLost('lost');
     }
@@ -2866,11 +2889,16 @@ const ONLINE=(()=>{
     switch(b.dataset.net){
       case'open':openModal();break;
       case'close':$('#mNet').classList.remove('on');break;
-      case'create':create();break;
+      case'create':(async()=>{
+        if(window.BioRelay&&BioRelay.canServerRoom&&BioRelay.canServerRoom()){   // 교실 서버: 서버가 방장인 방을 만들고 내가 첫 참가자(방 관리자)로
+          log('🖥 교실 서버에 방을 만드는 중...');const c=await BioRelay.serverRoom('bio-beat',{name:N.nick});
+          if(c){join(c);return;}
+        }
+        create();})();break;
       case'quick':quickMatch();break;
       case'join':join($('#netCode').value);break;
       case'leave':{const was=N.active;leave();log(was?'방에서 나왔어요.':'');break;}
-      case'start':hostStart();break;
+      case'start':if(isOwner()){own('start',{i:SEL.i,d:SEL.d});pickSentT=now();}else hostStart();break;
       case'again':interceptRetry();break;
       case'copy':{const c=N.code;if(!c)break;const fb=()=>{const ta=document.createElement('textarea');ta.value=c;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(_){}ta.remove();};
         try{const pr=navigator.clipboard&&navigator.clipboard.writeText(c);if(pr&&pr.catch)pr.catch(fb);else if(!pr)fb();}catch(_){fb();}log(`📋 방 코드 [${c}]를 복사했어요.`);break;}
@@ -2894,6 +2922,10 @@ const ONLINE=(()=>{
     get startedAt(){return N.startedAt;},get board(){return ranked();},get screen(){return screen;},
     songNow(){return PLAY?songNow():null;},get playing(){return !!(PLAY&&PLAY.online&&!PLAY.ended);}};
 
+  // 교실 서버 안: 바로 방장으로 방을 엶
+  if(SRV){window.BIO_SRV_STAT=()=>({players:Object.keys(N.players).length,playing:!!N.match&&!matchDone()});
+    setInterval(()=>{if(N.role==='host'&&N.match&&!matchDone())sendBoard();},LIVE_MS);   // 실시간 순위를 주기적으로 보냄
+    setTimeout(()=>create(SRV.code).then(ok=>{if(ok&&SRV.ready)SRV.ready();}),0);}
   return {interceptStart,interceptRetry,ctxTimeAt,onFinish,onQuit,decorateResult,drawBoard,togglePauseMenu};
 })();
 resize();updateOpts();boot();requestAnimationFrame(frame);

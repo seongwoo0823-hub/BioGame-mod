@@ -5527,6 +5527,10 @@ function setTouch(on){OPT.touch=on;document.body.classList.toggle('touch',on);co
    ========================================================= */
 const NET={
   active:false, role:null, code:'', myId:'vc_'+Math.random().toString(36).slice(2,9),
+  // 서버 방장: 교실 서버가 방장(자기 챔피언 없음), 처음 들어온 학생이 방 관리자
+  srv:window.BIO_SRV||null, srvRoom:false, ownerId:null,
+  isOwner(){return this.role==='guest'&&this.srvRoom&&this.ownerId===this.myId;},
+  own(act,v){this.sendToHost({type:'own',act,v});},
   nick:(()=>{try{return localStorage.getItem('vc_nick')||'';}catch(e){return '';}})()||('사령관'+Math.floor(100+Math.random()*900)),
   myTeam:0, myPos:null, posMode:'free', aiFill:true, peer:null, conns:new Map(), hostConn:null, bc:null,
   players:[], remoteCmds:{}, pendingEv:[], snapAcc:0, rtt:18, pingT:0, _replaying:false,
@@ -5546,14 +5550,20 @@ const NET={
     const pn=$('pauseNick');
     if(pn){pn.oninput=()=>{this.setNick(pn.value);};}
     const af=$('netAiFill');
-    if(af){af.checked=this.aiFill;af.onchange=()=>{if(this.role==='guest'){af.checked=this.aiFill;return;}this.aiFill=af.checked;this.aiCache=[null,null];if(this.role==='host')this.rebuildLobby();else this.renderPreviewSlots();};}
+    if(af){af.checked=this.aiFill;af.onchange=()=>{if(this.isOwner()){this.own('aifill',af.checked);return;}if(this.role==='guest'){af.checked=this.aiFill;return;}this.aiFill=af.checked;this.aiCache=[null,null];if(this.role==='host')this.rebuildLobby();else this.renderPreviewSlots();};}
     if($('btnModeFree'))$('btnModeFree').onclick=()=>this.setPosMode('free');
     if($('btnModeRand'))$('btnModeRand').onclick=()=>this.setPosMode('random');
     if($('bOnlineTitle'))$('bOnlineTitle').onclick=()=>{auInit();auResume();musicStart(false);if(!SEL.champ)SEL.champ=CHAMPS[0].id;this.openModal();sfx('ui');};
     if($('bOnlineSel'))$('bOnlineSel').onclick=()=>{auInit();auResume();if(!SEL.champ)SEL.champ=CHAMPS[0].id;this.openModal();sfx('ui');};
     if($('bCloseOnline'))$('bCloseOnline').onclick=()=>{this.closeModal();sfx('ui');};
     if($('btnNetPickChamp'))$('btnNetPickChamp').onclick=()=>{this.pickingForOnline=true;this.closeModal();show('select');buildSelect();toast('챔피언과 주문을 고른 뒤 [🌐 온라인 대기실]을 눌러 돌아오세요');};
-    if($('btnCreateRoom'))$('btnCreateRoom').onclick=()=>this.createRoom();
+    if($('btnCreateRoom'))$('btnCreateRoom').onclick=async()=>{
+      if(window.BioRelay&&BioRelay.canServerRoom&&BioRelay.canServerRoom()){   // 교실 서버: 서버가 방장인 방을 만들고 내가 첫 참가자(방 관리자)로
+        this.setStatus('🖥 교실 서버에 방을 만드는 중...','#ffe066');
+        const c=await BioRelay.serverRoom('vessel-canyon',{name:this.nick});
+        if(c){this.joinRoom(c);return;}
+      }
+      this.createRoom();};
     if($('btnQuickMatch'))$('btnQuickMatch').onclick=()=>this.quickMatch();
     if($('btnJoinRoom'))$('btnJoinRoom').onclick=()=>{const c=($('netCodeInp').value||'').trim().toUpperCase();if(c.length<3){this.setStatus('4자리 방 코드를 입력해 주세요.','#ff8a9a');return;}this.joinRoom(c);};
     if($('btnCopyCode'))$('btnCopyCode').onclick=()=>{try{if(navigator.clipboard&&this.code)navigator.clipboard.writeText(this.code);}catch(e){}this.setStatus('방 코드('+this.code+')가 복사되었습니다!','#ffe066');};
@@ -5561,7 +5571,7 @@ const NET={
     if($('btnTeam0'))$('btnTeam0').onclick=()=>{this.myTeam=0;$('btnTeam0').classList.add('on');$('btnTeam1').classList.remove('on');this.syncMyProfile();};
     if($('btnTeam1'))$('btnTeam1').onclick=()=>{this.myTeam=1;$('btnTeam1').classList.add('on');$('btnTeam0').classList.remove('on');this.syncMyProfile();};
     if($('btnSingleFromModal'))$('btnSingleFromModal').onclick=()=>{this.leaveRoom();this.closeModal();if(!SEL.champ)SEL.champ=CHAMPS[0].id;startGame();};
-    if($('btnNetStart'))$('btnNetStart').onclick=()=>this.hostStartMatch();
+    if($('btnNetStart'))$('btnNetStart').onclick=()=>{if(this.isOwner()){this.own('start');return;}this.hostStartMatch();};
     this.renderPosRow();this.renderModeRow();
   },
   setNick(v){
@@ -5577,15 +5587,16 @@ const NET={
     this.syncMyProfile();
   },
   setPosMode(m){
-    if(this.role==='guest'){this.setStatus('배정 방식은 방장만 바꿀 수 있습니다.','#ffb070');return;}
+    if(this.isOwner()){this.own('posmode',m==='random'?'random':'free');sfx('ui');return;}
+    if(this.role==='guest'){this.setStatus(this.srvRoom?'배정 방식은 방 관리자만 바꿀 수 있습니다.':'배정 방식은 방장만 바꿀 수 있습니다.','#ffb070');return;}
     this.posMode=m==='random'?'random':'free';this.aiCache=[null,null];this.renderModeRow();this.renderPosRow();
     if(this.role==='host')this.rebuildLobby();else this.renderPreviewSlots();sfx('ui');
   },
   renderModeRow(){
     const f=$('btnModeFree'),r=$('btnModeRand'),n=$('netModeNote');if(!f)return;
     f.classList.toggle('on',this.posMode!=='random');r.classList.toggle('on',this.posMode==='random');
-    const guest=this.role==='guest';f.disabled=r.disabled=guest;
-    if(n)n.textContent=(this.posMode==='random'?'랜덤 배정: 시작할 때 각 참가자의 포지션과 챔피언을 무작위로 정합니다.':'자율 배정: 각자 고른 포지션·챔피언으로 참가합니다.')+(guest?' (방장이 설정)':'');
+    const guest=this.role==='guest'&&!this.isOwner();f.disabled=r.disabled=guest;
+    if(n)n.textContent=(this.posMode==='random'?'랜덤 배정: 시작할 때 각 참가자의 포지션과 챔피언을 무작위로 정합니다.':'자율 배정: 각자 고른 포지션·챔피언으로 참가합니다.')+(guest?(this.srvRoom?' (방 관리자가 설정)':' (방장이 설정)'):'');
   },
   renderPosRow(){
     const row=$('netPosRow');if(!row)return;
@@ -5657,7 +5668,7 @@ const NET={
     this.role='host';
     const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     this.code=(customCode||Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('')).toUpperCase();
-    this.players=[{id:this.myId,name:this.nick,champ:SEL.champ||CHAMPS[0].id,sums:SEL.sums.slice(),team:this.myTeam,pos:this.myPos,isHost:true,isAI:false}];
+    this.players=this.srv?[]:[{id:this.myId,name:this.nick,champ:SEL.champ||CHAMPS[0].id,sums:SEL.sums.slice(),team:this.myTeam,pos:this.myPos,isHost:true,isAI:false}];
     this.aiCache=[null,null];
     this.openBC(this.code);
     $('netRoomBox').classList.remove('hidden');
@@ -5672,6 +5683,7 @@ const NET={
         const o=this.peerOpts();
         const p=o?new Peer('biocanyon-room-'+this.code,o):new Peer('biocanyon-room-'+this.code);
         this.peer=p;
+        if(this.srv)p.on('open',()=>{if(this.srv.ready)this.srv.ready();});   // 교실 서버에 '참가 받을 준비 끝' 알림
         p.on('connection',conn=>{
           conn.on('data',data=>{if(data&&data.from)this.conns.set(data.from,conn);this.onMessage(data,conn);});
           conn.on('close',()=>{for(const [k,v] of this.conns)if(v===conn){this.conns.delete(k);this.dropPlayer(k);}});
@@ -5777,7 +5789,7 @@ const NET={
     const pr=this.peer;this.peer=null;
     if(pr)setTimeout(()=>{try{pr.destroy();}catch(e){}},150);
     if(this.bc){try{this.bc.close();}catch(e){}this.bc=null;}
-    this.conns.clear();this.hostConn=null;this.role=null;this.active=false;this.code='';this.players=[];
+    this.conns.clear();this.hostConn=null;this.role=null;this.active=false;this.code='';this.players=[];this.srvRoom=false;this.ownerId=null;
     if($('netRoomBox'))$('netRoomBox').classList.add('hidden');
     if($('btnNetStart')){$('btnNetStart').disabled=true;$('btnNetStart').textContent='🚀 온라인 5:5 전투 시작!';}
     if($('netTopBadge'))$('netTopBadge').style.display='none';
@@ -5845,7 +5857,8 @@ const NET={
     if(this.role!=='host')return;
     this.fullRoster=this.buildFullRoster();
     this.renderSlotList(this.fullRoster);
-    this.broadcast({type:'lobby',code:this.code,aiFill:this.aiFill,posMode:this.posMode,roster:this.fullRoster,humans:this.players});
+    if(this.srv)this.ownerId=this.players[0]?this.players[0].id:null;
+    this.broadcast({type:'lobby',code:this.code,aiFill:this.aiFill,posMode:this.posMode,roster:this.fullRoster,humans:this.players,srv:!!this.srv,owner:this.ownerId});
   },
 
   renderPreviewSlots(){
@@ -5861,7 +5874,7 @@ const NET={
     const renderItem=p=>{
       const c=CH[p.champ]||CHAMPS[0];
       const isMe=p.id===this.myId,hidden=p.rand&&!p.isAI&&!p.pos;
-      const tag=p.isHost?'👑 방장':(p.isAI?(p.isIdle?'⬜ 빈 자리':'🤖 AI 채움'):'👤 참가자');
+      const tag=p.isHost?'👑 방장':(p.isAI?(p.isIdle?'⬜ 빈 자리':'🤖 AI 채움'):(this.srvRoom&&p.id===this.ownerId?'👑 방 관리자':'👤 참가자'));
       const pos=p.pos?`${POS_ICON[p.pos]} ${POS_NAME[p.pos]}`:'🎲 랜덤';
       const champ=hidden?'시작 시 무작위 챔피언':`${c.name} · ${c.roleName||ROLE_NAME[c.role]}`;
       return `<div class="net-slot ${p.isAI?'':'human'} ${isMe?'me':''}" data-pos="${p.pos||''}">
@@ -5879,7 +5892,7 @@ const NET={
     const roster=this.buildFullRoster(true);
     this.fullRoster=roster;
     this.active=true;this.remoteCmds={};this.pendingEv=[];this.snapAcc=0;this.namesDirty=true;
-    const mySlot=Math.max(0,roster.findIndex(p=>p.id===this.myId));this.mySlot=mySlot;
+    const mySlot=this.srv?-1:Math.max(0,roster.findIndex(p=>p.id===this.myId));this.mySlot=mySlot;   // 서버 방장은 자기 챔피언 없음
     this.broadcast({type:'start',roster,diff:SEL.diff});
     this.closeModal();
     startGame({netPlayers:roster,mySlot,diff:SEL.diff});
@@ -5924,6 +5937,10 @@ const NET={
         if(isNew)this.setStatus(entry.name+' 님이 대기실에 참가했습니다! ('+this.players.length+'명 접속 중)','#5dff7a');
       }else if(data.type==='leave'){
         this.dropPlayer(data.id);
+      }else if(data.type==='own'&&this.srv&&data.from===this.ownerId&&!this.active){   // 방 관리자 명령 (서버 방장일 때만)
+        if(data.act==='start')this.hostStartMatch();
+        else if(data.act==='aifill'){this.aiFill=!!data.v;this.aiCache=[null,null];this.rebuildLobby();}
+        else if(data.act==='posmode'){this.posMode=data.v==='random'?'random':'free';this.aiCache=[null,null];this.rebuildLobby();}
       }else if(data.type==='cmd'&&this.active&&G){
         let slot=this.fullRoster?this.fullRoster.findIndex(r=>r.id===data.from):-1;if(slot<0)slot=data.slot;
         if(slot==null||!G.champs[slot]||!G.champs[slot].isNetHuman)return;
@@ -5940,11 +5957,13 @@ const NET={
         clearTimeout(this._joinWatch);
         this.players=data.humans||[];
         this.fullRoster=data.roster||[];
+        if(data.srv!=null){this.srvRoom=!!data.srv;this.ownerId=data.owner||null;}
+        if($('btnNetStart')){const o=this.isOwner();$('btnNetStart').disabled=!o;$('btnNetStart').textContent=o?'🚀 온라인 5:5 전투 시작! (방 관리자)':this.srvRoom?'⏳ 방 관리자가 시작해요':'⏳ 방장이 시작해요';}
         this.aiFill=data.aiFill!==false;const af=$('netAiFill');if(af)af.checked=this.aiFill;
         if(data.posMode&&data.posMode!==this.posMode){this.posMode=data.posMode;this.renderPosRow();}
         this.renderModeRow();
         this.renderSlotList(this.fullRoster);
-        this.setStatus('방 ['+data.code+'] 연결 완료! 방장이 곧 전투를 시작합니다. ('+this.players.length+'명 접속)','#5dff7a');
+        this.setStatus('방 ['+data.code+'] 연결 완료! '+(this.isOwner()?'🖥 교실 서버 방이에요. 내가 방 관리자 — 준비되면 시작하세요.':this.srvRoom?'방 관리자가 곧 전투를 시작합니다.':'방장이 곧 전투를 시작합니다.')+' ('+this.players.length+'명 접속)','#5dff7a');
       }else if(data.type==='hostLeft'){
         if(this.active&&G&&!G.over)this.onHostGone();
         this.leaveRoom(true);
@@ -6228,6 +6247,7 @@ function tickBuffsOnly(u,dt){
 
 function boot(){
   initAssets();initInput();NET.initUI();
+  if(window.BIO_SRV){window.BIO_SRV_STAT=()=>({players:NET.players.length,playing:!!NET.active});setTimeout(()=>NET.createRoom(window.BIO_SRV.code),0);}   // 교실 서버 안: 바로 방장으로 방을 엶
   const touchDev=('ontouchstart' in window)||(navigator.maxTouchPoints>0&&window.matchMedia&&window.matchMedia('(pointer:coarse)').matches);
   setTouch(!!touchDev);
   show('title');requestAnimationFrame(titleLoop);

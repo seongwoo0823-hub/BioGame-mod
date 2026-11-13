@@ -165,12 +165,13 @@ function roomsOf(prefix) {
 const json = (res, o) => { res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store'}); res.end(JSON.stringify(o)); };
 const server = http.createServer((req, res) => {
   let u; try { u = new URL(req.url, 'http://x'); } catch (e) { res.writeHead(400); res.end(); return; }
-  if (u.pathname === '/__status') { let rooms = 0; for (const c of peers.values()) if (c.named) rooms++; return json(res, {ok: true, name: 'bio-arcade-classroom', v: 5, peers: peers.size, clients: clients.size, links: links.size, rooms, kartRooms: kartRooms.size, served, up: Math.round((Date.now() - started) / 1000)}); }
+  if (u.pathname === '/__status') { let rooms = 0; for (const c of peers.values()) if (c.named) rooms++; return json(res, {ok: true, name: 'bio-arcade-classroom', v: 5, peers: peers.size, clients: clients.size, links: links.size, rooms, srvRooms: srvRooms.size, kartRooms: kartRooms.size, srvGames: Object.keys(SRV_GAMES), served, up: Math.round((Date.now() - started) / 1000)}); }
   if (u.pathname === '/__rooms') return json(res, {ok: true, rooms: roomsOf(u.searchParams.get('p') || '')});
   noteDevice(req);
-  if (u.pathname === '/__kart/new') return kartNew(req, res, u.searchParams);
-  if (u.pathname === '/__kart/list') return json(res, {ok: true, max: MAX_KART_ROOMS, rooms: [...kartRooms].map(([code, r]) => ({code, name: r.name, players: r.players, playing: r.playing, mem: r.mem, age: Math.round((Date.now() - r.since) / 1000),
-    screen: r.stat && r.stat.scr, map: r.stat && r.stat.map, mode: r.stat && r.stat.mode, ready: r.stat && r.stat.names}))});
+  if (u.pathname === '/__kart/new') return roomNew('bio-kart', req, res, u.searchParams);
+  if (u.pathname === '/__kart/list') return json(res, {ok: true, max: MAX_SRV_ROOMS, rooms: roomList().filter(r => r.game === 'bio-kart')});
+  if (u.pathname === '/__room/new') return roomNew(String(u.searchParams.get('game') || ''), req, res, u.searchParams);
+  if (u.pathname === '/__room/list') return json(res, {ok: true, max: MAX_SRV_ROOMS, games: Object.keys(SRV_GAMES), rooms: roomList()});
   if (u.pathname === '/__info') return json(res, {ok: true, urls: lanUrls(), nets: lanList(), port: PORT, clients: clients.size, devices: seen.size, warnings: diag.warnings, diagReady: diag.checked});
   // 휴대폰 연결 확인용 아주 가벼운 페이지 (이게 열리면 네트워크는 정상)
   if (u.pathname === '/__hello' || u.pathname === '/hello') {
@@ -310,12 +311,21 @@ function drop(cid, from) {
   for (const s of L) { s.cids.delete(cid); if (s !== from) s.send({t: 'close', cid}); }
 }
 
-// ---------------------------------------------------------------- 바이오 카트 서버 방장 (2단계: 서버가 판을 계산)
-//   학생이 '방 만들기'를 누르면 /__kart/new 로 요청 → 이 컴퓨터가 방마다 일꾼(server/kart-room.js)을 띄워 방장 역할을 맡음.
-//   일꾼은 게임 코드를 그대로 돌리고, 중계에는 보통 접속자와 똑같은 모양(VirtualClient)으로 붙음.
-const KART_PREFIX = 'biokart-p2p-v1-';
-const MAX_KART_ROOMS = +process.env.KART_ROOMS || 16;   // 측정 결과(i7-1255U: 여유 22개)보다 낮게 잡음
-const kartRooms = new Map();   // code → {worker, vc, players, playing, since}
+// ---------------------------------------------------------------- 서버 방장 (온라인 게임 7종: 서버가 판을 계산)
+//   학생이 '방 만들기'를 누르면 /__room/new?game=… 로 요청 → 이 컴퓨터가 방마다 일꾼을 띄워 방장 역할을 맡음.
+//   일꾼은 게임 코드를 그대로 돌리고(바이오 카트: kart-room.js, 나머지: game-room.js), 중계에는 보통 접속자와 같은 모양(VirtualClient)으로 붙음.
+const SRV_GAMES = {
+  'bio-kart':      {file: 'games/bio-kart.html',      prefix: 'biokart-p2p-v1-', worker: 'kart-room.js'},
+  'bio-beat':      {file: 'games/bio-beat.html',      prefix: 'biobeat-v1-'},
+  'vessel-canyon': {file: 'games/vessel-canyon.html', prefix: 'biocanyon-room-'},
+  'cell-brawl':    {file: 'games/cell-brawl.html',    prefix: 'cellbrawl-v2-'},
+  'bio-strike':    {file: 'games/bio-strike.html',    prefix: 'biostrike-v1-'},
+  'bio-tower':     {file: 'games/bio-tower.html',     prefix: 'biotower-v1-'},
+  'codon-glass':   {file: 'games/codon-glass.html',   prefix: 'codonglass-v1-'},
+};
+const MAX_SRV_ROOMS = +process.env.SRV_ROOMS || +process.env.KART_ROOMS || 16;   // 측정 결과(i7-1255U: 카트 방 여유 22개)보다 낮게 잡음
+const srvRooms = new Map();   // 'game:code' → {game, code, worker, vc, players, playing, since}
+const kartRooms = {get size() { let n = 0; for (const r of srvRooms.values()) if (r.game === 'bio-kart') n++; return n; }};
 class VirtualClient {
   constructor(worker) {
     this.worker = worker; this.open = true; this.alive = true; this.virtual = true;
@@ -331,42 +341,53 @@ class VirtualClient {
     if (this.id && peers.get(this.id) === this) peers.delete(this.id);
   }
 }
-function kartCode() {
+function srvCode(prefix) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   for (let n = 0; n < 200; n++) {
     let c = ''; for (let i = 0; i < 4; i++) c += chars[Math.random() * chars.length | 0];
-    if (!peers.has(KART_PREFIX + c) && !kartRooms.has(c)) return c;
+    if (!peers.has(prefix + c)) return c;
   }
   return null;
 }
-function kartNew(req, res, q) {
-  if (kartRooms.size >= MAX_KART_ROOMS) return json(res, {ok: false, reason: 'full'});
+function roomNew(game, req, res, q) {
+  const G = SRV_GAMES[game];
+  if (!G) return json(res, {ok: false, reason: 'game'});
+  if (srvRooms.size >= MAX_SRV_ROOMS) return json(res, {ok: false, reason: 'full'});
   let code = String(q.get('code') || '').toUpperCase();
-  if (code) { if (!/^[A-Z0-9]{2,8}$/.test(code)) return json(res, {ok: false, reason: 'bad'}); if (peers.has(KART_PREFIX + code) || kartRooms.has(code)) return json(res, {ok: false, reason: 'taken'}); }
-  else code = kartCode();
+  if (code) { if (!/^[A-Z0-9]{2,8}$/.test(code)) return json(res, {ok: false, reason: 'bad'}); if (peers.has(G.prefix + code) || srvRooms.has(game + ':' + code)) return json(res, {ok: false, reason: 'taken'}); }
+  else code = srvCode(G.prefix);
   if (!code) return json(res, {ok: false, reason: 'full'});
-  const opts = {name: String(q.get('name') || '교실').replace(/[<>]/g, '').slice(0, 20), map: +q.get('map') || 0, mode: q.get('mode') === 'item' ? 'item' : 'speed',
-    diff: Math.max(0, Math.min(2, +(q.get('diff') ?? 1))), ai: q.get('ai') !== '0', priv: q.get('priv') === '1'};
+  const opts = {};
+  for (const [k, v] of q) if (k !== 'game' && k !== 'code' && Object.keys(opts).length < 20) opts[k] = String(v).replace(/[<>]/g, '').slice(0, 40);
+  opts.name = String(opts.name || '교실').slice(0, 20);
+  if (game === 'bio-kart') Object.assign(opts, {map: +opts.map || 0, mode: opts.mode === 'item' ? 'item' : 'speed', diff: Math.max(0, Math.min(2, +(opts.diff ?? 1))), ai: opts.ai !== '0', priv: opts.priv === '1'});
   let worker;
-  try { worker = new Worker(path.join(__dirname, 'kart-room.js'), {workerData: {code, opts}, resourceLimits: {maxOldGenerationSizeMb: 256}}); }
+  try { worker = new Worker(path.join(__dirname, G.worker || 'game-room.js'), {workerData: {code, opts, file: G.file, game}, resourceLimits: {maxOldGenerationSizeMb: 384}}); }
   catch (e) { return json(res, {ok: false, reason: 'error'}); }
-  const vc = new VirtualClient(worker);
-  const room = {worker, vc, players: 0, playing: false, since: Date.now(), name: opts.name};
-  kartRooms.set(code, room);
+  const vc = new VirtualClient(worker), key = game + ':' + code;
+  const room = {game, code, worker, vc, players: 0, playing: false, since: Date.now(), name: opts.name};
+  srvRooms.set(key, room);
   let answered = false;
   const answer = o => { if (answered) return; answered = true; clearTimeout(tm); json(res, o); };
-  const tm = setTimeout(() => answer({ok: false, reason: 'timeout'}), 15000);
+  const tm = setTimeout(() => answer({ok: false, reason: 'timeout'}), 20000);
   worker.on('message', m => {
     if (!m) return;
-    if (m.t === 'ws') { onMessage(vc, m.s); if (!answered && vc.id === KART_PREFIX + code) { answer({ok: true, code}); console.log(`\n  🏁 바이오 카트 서버 방 [${code}] 열림 (${opts.name})`); } }
+    // 바이오 카트는 아이디를 받는 즉시, 나머지는 게임이 '준비 끝'(ready)을 알리면 방 코드를 돌려줌
+    const opened = () => { if (answered) return; answer({ok: true, code}); console.log(`\n  🏁 서버 방 열림: ${game} [${code}] (${opts.name})`); };
+    if (m.t === 'ws') { onMessage(vc, m.s); if (!answered && vc.id === G.prefix + code && G.worker) opened(); }
+    else if (m.t === 'ready') { if (vc.id === G.prefix + code) opened(); else setTimeout(() => { if (vc.id === G.prefix + code) opened(); }, 500); }
     else if (m.t === 'wsclose') vc.onClose();
     else if (m.t === 'stat') { room.players = m.players; room.playing = m.playing; room.mem = m.mem; room.stat = m; }
-    else if (m.t === 'log') { if (process.env.KART_DEBUG) console.log(`\n  [방 ${code}] ${m.msg}`); }
-    else if (m.t === 'error') console.log(`\n  ⚠ 바이오 카트 방 [${code}] 오류로 닫힘: ${String(m.msg).split('\n')[0]}`);
+    else if (m.t === 'log') { if (process.env.KART_DEBUG || process.env.GAME_DEBUG) console.log(`\n  [${game} ${code}] ${m.msg}`); }
+    else if (m.t === 'error') console.log(`\n  ⚠ 서버 방 ${game} [${code}] 오류로 닫힘: ${String(m.msg).split('\n')[0]}`);
   });
-  const end = () => { vc.onClose(); if (kartRooms.get(code) === room) { kartRooms.delete(code); } answer({ok: false, reason: 'error'}); };
-  worker.on('error', e => { console.log(`\n  ⚠ 바이오 카트 방 [${code}] 오류: ${e && e.message}`); end(); });
+  const end = () => { vc.onClose(); if (srvRooms.get(key) === room) srvRooms.delete(key); answer({ok: false, reason: 'error'}); };
+  worker.on('error', e => { console.log(`\n  ⚠ 서버 방 ${game} [${code}] 오류: ${e && e.message}`); end(); });
   worker.on('exit', end);
+}
+function roomList() {
+  return [...srvRooms.values()].map(r => ({game: r.game, code: r.code, name: r.name, players: r.players, playing: r.playing, mem: r.mem, age: Math.round((Date.now() - r.since) / 1000),
+    screen: r.stat && r.stat.scr, map: r.stat && r.stat.map, mode: r.stat && r.stat.mode, ready: r.stat && r.stat.names, info: r.stat && r.stat.info}));
 }
 
 // 끊긴 연결 정리: 15초마다 확인, 응답이 없으면 끊음
@@ -401,5 +422,5 @@ server.listen(PORT, '0.0.0.0', () => {
 });
 setInterval(() => {
   let rooms = 0; for (const c of peers.values()) if (c.named) rooms++;
-  process.stdout.write(`\r  접속 ${clients.size}명 · 열린 방 ${rooms}개 (서버 계산 ${kartRooms.size}개) · 전달한 메시지 ${served.toLocaleString()}개     `);
+  process.stdout.write(`\r  접속 ${clients.size}명 · 열린 방 ${rooms}개 (서버 방장 ${srvRooms.size}개) · 전달한 메시지 ${served.toLocaleString()}개     `);
 }, 5000).unref();

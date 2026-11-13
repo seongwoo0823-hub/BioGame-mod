@@ -2951,8 +2951,9 @@ function startArena(cfg){
   clearGame(); loadWorld(cfg.map, cfg.seed || 7);
   const A = G.arena = { mode: cfg.mode, players: new Map(), me: cfg.me, timeLeft: cfg.dur, dur: cfg.dur, killLimit: cfg.killLimit, net: cfg.net, teamScore: [0, 0],
     over: false, snapT: 0, stT: 0, botSkill: BOT_SKILL[cfg.botDiff == null ? 1 : cfg.botDiff], map: cfg.map, streak: 0 };
-  const meCfg = cfg.players.find(p => p.id === cfg.me);
+  const meCfg = cfg.players.find(p => p.id === cfg.me) || { ch: 'tcell', spectator: true };
   G.player = makePlayer(meCfg.ch, WEAPON_IDS);
+  if (meCfg.spectator){ G.player.alive = false; G.player.deadT = 0; G.player.spectator = true; }   // 교실 서버 방장: 판정만 하고 직접 뛰지 않음
   buildViewmodels(meCfg.ch);
   for (const pl of cfg.players) addArenaPlayer(pl);
   for (const [x, z, y] of G.W.pickSpots) spawnPickup(x, (y || 0) + 0.6, z, true);
@@ -2962,6 +2963,7 @@ function startArena(cfg){
   setupHud('arena');
   beginPlay();
   const me = A.players.get(A.me);
+  if (!me) return;
   if (A.mode === 'tdm') banner('AUTO BALANCE', `당신은 ${me.team ? '레드' : '블루'} 팀입니다.`, me.team ? 'red' : '', 3);
   else banner('DEATHMATCH', `${A.killLimit}킬을 먼저 달성하면 승리!`, 'gold', 3);
 }
@@ -3083,7 +3085,7 @@ function updateArena(dt){
     } else { H.root.rotation.x = 0; H.root.visible = true; animHuman(H, dt, P.mv, rpitch, P.air); }
     // 이름표
     const tg = P.tag; const hp = new V3(P.dpos.x, P.dpos.y + 2.15, P.dpos.z);
-    const ally = A.mode === 'tdm' && P.team === me.team;
+    const ally = A.mode === 'tdm' && !!me && P.team === me.team;
     const s = P.alive && toScreen(hp);
     const dist = cam.position.distanceTo(hp);
     let show = !!s && (ally || dist < 40);
@@ -3287,6 +3289,7 @@ function endArena(fromNet){
   if (fromNet && fromNet.ts) A.teamScore = fromNet.ts;
   const list = [...A.players.values()].sort((a, b) => b.k - a.k || a.d - b.d);
   const me = A.players.get(A.me);
+  if (!me){ G.state = 'result'; G.frozen = true; setTimeout(() => { if (G.arena === A){ toMenu('online'); NET.afterMatch(); } }, 4000); return; }   // 교실 서버 방장: 결과 화면 없이 잠시 뒤 대기실로
   let win;
   if (A.mode === 'tdm') win = A.teamScore[me.team] > A.teamScore[1 - me.team];
   else win = list[0] === me;
@@ -3752,14 +3755,20 @@ function bindMenus(){
   // 온라인
   $('#nickIn').value = SET.nick;
   $('#nickIn').addEventListener('change', e => { SET.nick = String(e.target.value || '').replace(/[<>]/g, '').trim().slice(0, 10) || SET.nick; e.target.value = SET.nick; store.save(); refreshTitle(); NET.profile(); });
-  $('#btnCreate').onclick = () => { SFX.init(); NET.create(); };
+  $('#btnCreate').onclick = async () => { SFX.init();
+    if (window.BioRelay && BioRelay.canServerRoom && BioRelay.canServerRoom()){   // 교실 서버: 서버가 방장인 방을 만들고 내가 첫 참가자(방 관리자)로
+      $('#netLog').textContent = '🖥 교실 서버에 방을 만드는 중...';
+      const c = await BioRelay.serverRoom('bio-strike', { name: SET.nick });
+      if (c){ NET.join(c); return; }
+    }
+    NET.create(); };
   $('#btnJoin').onclick = () => { SFX.init(); NET.join($('#codeIn').value); };
   $('#codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') NET.join(e.target.value); });
   $('#btnQuick').onclick = () => { SFX.init(); NET.quick(); };
   $('#btnLeave').onclick = () => { NET.leave(); renderLobby(); };
   $('#btnStart').onclick = () => { SFX.init(); NET.start(); };
   $('#btnOnlineBack').onclick = () => { if (NET.st.active && !confirm('방에서 나갈까요?')) return; NET.leave(); toMenu('title'); };
-  $('#netBots').onchange = e => { NET.st.bots = e.target.checked; NET.broadcastRoom(); };
+  $('#netBots').onchange = e => { NET.setBots(e.target.checked); };
   $('#lobbyChatIn').addEventListener('keydown', e => { if (e.key === 'Enter'){ const v = e.target.value.trim(); if (v) NET.chat(v); e.target.value = ''; } });
 }
 function renderSettings(){ syncSliders(); chipRow($('#sQual'), [['low', '낮음'], ['mid', '중간'], ['high', '높음']], SET.q, v => { SET.q = v; store.save(); applyQuality(); renderSettings(); }); $('#sInv').checked = !!SET.inv; }
@@ -3879,7 +3888,13 @@ const NET = (() => {
     if (st.transport === 'bc'){ if (bc) try { bc.postMessage({ from: myId, to: 'host', m }); } catch(e){} }
     else if (hostConn && hostConn.open){ if (fast && fastSend(hostConn, m)) return; try { hostConn.send(m); } catch(e){} }
   }
-  function roomMsg(){ return { t: 'room', code: st.code, mode: st.mode, map: st.map, bots: st.bots, players: Object.values(st.players), inGame: st.inGame }; }
+  // 서버 방장: 교실 서버가 방장(자기 자리 없음), 처음 들어온 학생이 방 관리자
+  const SRV = window.BIO_SRV || null;
+  let srvRoom = false, ownerId = null;
+  const calcOwner = () => { if (SRV){ const o = Object.values(st.players).find(p => !p.host); ownerId = o ? o.id : null; } return ownerId; };
+  const isOwner = () => st.active && st.role === 'guest' && srvRoom && ownerId === myId;
+  const own = (act, v) => toHost({ t: 'own', act, v });
+  function roomMsg(){ return { t: 'room', code: st.code, mode: st.mode, map: st.map, bots: st.bots, players: Object.values(st.players), inGame: st.inGame, srv: !!SRV, owner: calcOwner() }; }
   function broadcastRoom(){ if (st.role !== 'host') return; sendAll(roomMsg()); renderLobby(); }
   function sysChat(t){ chatLine('📢', t, '#ffd23f'); }
 
@@ -3895,7 +3910,7 @@ const NET = (() => {
     if (!p && last && last.code === 'taken'){ log(ERR.taken(code)); renderLobby(); return false; }
     if (!code) code = genCode();
     st.code = code; st.role = 'host'; st.active = true; st.inGame = false;
-    st.players = {}; st.players[myId] = { id: myId, name: SET.nick, ch: SET.ch, host: true };
+    st.players = {}; if (!SRV) st.players[myId] = { id: myId, name: SET.nick, ch: SET.ch, host: true };
     openBc(code);
     if (p){
       peer = p;
@@ -3906,6 +3921,7 @@ const NET = (() => {
         conn.on('close', gone); conn.on('error', gone);
       });
       p.on('disconnected', () => setTimeout(() => { if (peer === p && !p.destroyed && p.disconnected) try { p.reconnect(); } catch(_){} }, 1500));
+      if (SRV && SRV.ready) setTimeout(() => SRV.ready(), 0);   // 교실 서버에 '참가 받을 준비 끝' 알림
       if (!quiet) log(`✅ 방 [${code}] 생성 완료! 친구에게 방 코드를 알려 주세요. (최대 8명)`);
     } else log((last ? (ERR[last.code] || ERR.server)(code) : ERR.server()) + ' 지금은 이 브라우저의 다른 탭에서만 참가할 수 있어요.');
     startHb(); broadcastRoom(); SFX.play('ui');
@@ -4011,6 +4027,13 @@ const NET = (() => {
       case 'pi': sendTo(id, { t: 'po', c: m.c }); break;
       case 'po': if (typeof m.c === 'number') c.ping = Math.round(performance.now() - m.c); break;
       case 'prop': if (G.W && G.W.props[m.i] && P && P.alive) damageProp(G.W.props[m.i], clamp(+m.d || 0, 0, 300), id); break;
+      case 'own':   // 방 관리자 명령 (서버 방장일 때만)
+        if (!SRV || id !== calcOwner() || st.inGame) break;
+        if (m.act === 'start') start();
+        else if (m.act === 'mode' && (m.v === 'ffa' || m.v === 'tdm')){ st.mode = m.v; broadcastRoom(); }
+        else if (m.act === 'map' && MAPS[m.v]){ st.map = m.v; broadcastRoom(); }
+        else if (m.act === 'bots'){ st.bots = !!m.v; broadcastRoom(); }
+        break;
     }
   }
   function lateJoin(id){
@@ -4050,7 +4073,7 @@ const NET = (() => {
     if (st.role !== 'guest') return;
     st.lastHost = performance.now();
     switch (m.t){
-      case 'room': st.mode = m.mode; st.map = m.map; st.bots = m.bots; st.players = {}; (m.players || []).forEach(p => st.players[p.id] = p); st.inGame = m.inGame; if (G.mode === 'menu') renderLobby(); break;
+      case 'room': st.mode = m.mode; st.map = m.map; st.bots = m.bots; st.players = {}; (m.players || []).forEach(p => st.players[p.id] = p); st.inGame = m.inGame; if (m.srv != null){ srvRoom = !!m.srv; ownerId = m.owner || null; } if (G.mode === 'menu') renderLobby(); break;
       case 'start': {
         const c = m.cfg; st.inGame = true;
         startArena({ mode: c.mode, map: c.map, seed: c.seed, dur: c.dur, killLimit: c.killLimit, net: 'guest', me: myId, players: c.players, botDiff: 1 });
@@ -4127,7 +4150,12 @@ const NET = (() => {
   function afterMatch(){ st.inGame = false; if (st.role === 'host') broadcastRoom(); renderLobby(); }
   addEventListener('pagehide', () => { if (st.active) leave(); });
   function pings(){ const o = {}; for (const [id, c] of conns) if (c.ping) o[id] = c.ping; return o; }
-  return { st, myId, pings, create, join, quick, start, leave, chat, profile, sendTo, sendAll, toHost, broadcastRoom, afterMatch, setMode(v){ st.mode = v; broadcastRoom(); }, setMap(v){ st.map = v; broadcastRoom(); } };
+  // 교실 서버 안: 바로 방장으로 방을 엶
+  if (SRV){ window.BIO_SRV_STAT = () => ({ players: Object.keys(st.players).length, playing: !!st.inGame }); setTimeout(() => create(SRV.code, true), 0); }
+  return { st, myId, pings, create, join, quick, leave, chat, profile, sendTo, sendAll, toHost, broadcastRoom, afterMatch, isOwner, get srvRoom(){ return srvRoom; }, get ownerId(){ return ownerId; },
+    start(){ if (isOwner()){ own('start'); return; } start(); },
+    setBots(v){ if (isOwner()){ own('bots', v); return; } st.bots = v; broadcastRoom(); },
+    setMode(v){ if (isOwner()){ own('mode', v); return; } st.mode = v; broadcastRoom(); }, setMap(v){ if (isOwner()){ own('map', v); return; } st.map = v; broadcastRoom(); } };
 })();
 function renderLobby(){
   const st = NET.st;
@@ -4138,7 +4166,7 @@ function renderLobby(){
   ['#btnQuick', '#btnCreate', '#btnJoin'].forEach(s => $(s).disabled = st.busy);
   if (!st.active) return;
   $('#roomCode').textContent = st.code;
-  const host = st.role === 'host';
+  const host = st.role === 'host' || NET.isOwner();
   $('#hostOpts').classList.toggle('hidden', !host);
   $('#btnStart').classList.toggle('hidden', !host);
   $('#btnStart').disabled = st.inGame;
@@ -4149,7 +4177,7 @@ function renderLobby(){
   }
   $('#guestOpts').innerHTML = host ? '' : `규칙: <b>${st.mode === 'tdm' ? '팀 데스매치' : '개인전'}</b> · 전장: <b>${(MAPS[st.map] || MAPS.lab).name}</b> · 봇 ${st.bots ? '채움' : '없음'}${st.inGame ? ' · <b style="color:var(--gold)">경기 진행 중 (곧 합류)</b>' : ' · 방장이 시작하기를 기다리는 중...'}`;
   const pl = Object.values(st.players);
-  $('#plist').innerHTML = pl.map(p => `<div class="pl"><span class="em">${(CHARS[p.ch] || CHARS.tcell).em}</span>${esc(p.name)}${p.id === NET.myId ? ' (나)' : ''}<span class="tagh">${p.host ? '👑 방장' : ''}</span></div>`).join('') + `<div class="hint">${pl.length} / 8명${st.bots ? ' · 빈자리는 봇이 채워요 (최소 6인)' : ''}</div>`;
+  $('#plist').innerHTML = pl.map(p => `<div class="pl"><span class="em">${(CHARS[p.ch] || CHARS.tcell).em}</span>${esc(p.name)}${p.id === NET.myId ? ' (나)' : ''}<span class="tagh">${p.host ? '👑 방장' : NET.srvRoom && p.id === NET.ownerId ? '👑 방 관리자' : ''}</span></div>`).join('') + `<div class="hint">${pl.length} / 8명${st.bots ? ' · 빈자리는 봇이 채워요 (최소 6인)' : ''}</div>`;
 }
 
 /* ===================== 메인 루프 ===================== */
@@ -4175,7 +4203,7 @@ function frame(){
   if (G.mode === 'menu') menuCam(dt);
   else if (G.player){
     simStep(dt);
-    updateCamera(dt); updateViewmodel(dt); updateHud(dt);
+    if (!G.player.spectator){ updateCamera(dt); updateViewmodel(dt); updateHud(dt); }   // 교실 서버 방장(관전자)은 화면을 그리지 않음
   }
   updateDialog(dt);
   updateWorldFx(dt); FX.update(dt); updateNums(dt);

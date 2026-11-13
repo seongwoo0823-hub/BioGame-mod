@@ -1823,6 +1823,7 @@ function startMatch(netCfg){
     }
   }
   buildWorld(rows);
+  const srvSpectator = () => { if (netCfg && netCfg.netPlayers && netCfg.mySlot < 0){ const d = new Unit('macro', 0, false, '', 0, -99); d.alive = false; d.root.visible = false; if (d.el) d.el.style.display = 'none'; G.player = d; } };
   if (mode==='gem'){
     const gemSpawns = [[24,8],[24,5],[24,11],[0,5],[0,8],[0,11]];
     if (netCfg && netCfg.netPlayers){
@@ -1837,6 +1838,7 @@ function startMatch(netCfg){
         if (i===mySlot) G.player = u;
         G.units.push(u);
       });
+      srvSpectator();
     } else {
       const allies = pick(myPool.filter(k=>k!==selKit), 2), foes = pick(theirPool, 3);
       const [px,pz] = tileCenter(24,8);
@@ -1865,6 +1867,7 @@ function startMatch(netCfg){
         if (i===mySlot) G.player = u;
         G.units.push(u);
       });
+      srvSpectator();
     } else {
       const foes = pick(ALL_KITS.filter(k=>k!==selKit), 5);
       G.sdSpawns.forEach(([r,c],i) => {
@@ -2804,6 +2807,12 @@ const NET = (() => {
   }
   addEventListener('pagehide', () => { if (st.active){ if (st.role === 'host') sendAll({ type: 'room_closed' }); else sendToHost({ type: 'leave' }); } });
 
+  // 서버 방장: 교실 서버가 방장(자기 자리 없음), 처음 들어온 학생이 방 관리자
+  const SRV = window.BIO_SRV || null;
+  let srvRoom = false, ownerId = null;
+  const isOwner = () => st.active && st.role === 'guest' && srvRoom && ownerId === myId;
+  const own = (act, v) => sendToHost({ type: 'own', act, v });
+
   /* ---------- 슬롯 ---------- */
   function assignSlots(){
     const list = Object.values(st.players).sort((a,b) => (b.isHost?1:0)-(a.isHost?1:0) || a.joinT-b.joinT);
@@ -2820,6 +2829,7 @@ const NET = (() => {
       list.slice(0, 6).forEach((p, i) => { p.slot = i; p.team = i; });
     }
     if (st.players[myId]) st.mySlot = st.players[myId].slot;
+    if (SRV){ const o = list.find(p => !p.isHost); ownerId = o ? o.id : null; }
   }
   function publicPlayers(){
     const o = {};
@@ -2829,7 +2839,7 @@ const NET = (() => {
   function broadcastRoom(){
     if (st.role !== 'host') return;
     assignSlots();
-    sendAll({ type: 'room_state', code: st.code, mode, aiFill: st.aiFill, players: publicPlayers(), inGame: !!inMatch() });
+    sendAll({ type: 'room_state', code: st.code, mode, aiFill: st.aiFill, players: publicPlayers(), inGame: !!inMatch(), srv: !!SRV, owner: ownerId });
     renderModal();
   }
   function buildSlots(){
@@ -2879,8 +2889,8 @@ const NET = (() => {
     st.busy = false;
     if (!p && lastErr && lastErr.code === 'taken'){ st.phase = 'idle'; renderModal(); log(errMsg('taken', code)); return false; }
     if (!code) code = genCode();
-    st.code = code; st.role = 'host'; st.active = true; st.phase = 'room'; st.mySlot = 0; st.bcOnly = !p;
-    st.players = {}; st.players[myId] = { id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam, team: 0, isHost: true, joinT: Date.now(), slot: 0, via: 'self' };
+    st.code = code; st.role = 'host'; st.active = true; st.phase = 'room'; st.mySlot = SRV ? -1 : 0; st.bcOnly = !p;
+    st.players = {}; if (!SRV) st.players[myId] = { id: myId, name: st.nick, kitId: selKit, prefTeam: st.myTeam, team: 0, isHost: true, joinT: Date.now(), slot: 0, via: 'self' };
     openBc(code);
     if (p){
       peer = p; watchPeer(p);
@@ -2889,6 +2899,7 @@ const NET = (() => {
         conn.on('close', () => { if (conn._pid && conns.get(conn._pid) === conn) removePlayer(conn._pid, 'lost'); });
         conn.on('error', () => { if (conn._pid && conns.get(conn._pid) === conn) removePlayer(conn._pid, 'lost'); });
       });
+      if (SRV && SRV.ready) setTimeout(() => SRV.ready(), 0);   // 교실 서버에 '참가 받을 준비 끝' 알림
       log(`✅ 방 [${code}] 생성 완료! 친구에게 방 코드를 알려 주세요. (최대 6명)`);
     } else {
       log(errMsg(lastErr ? lastErr.code : 'server') + (bc ? ' 지금은 이 기기의 다른 탭에서만 참가할 수 있어요.' : ''));
@@ -3054,6 +3065,12 @@ const NET = (() => {
       }
       case 'ping': sendTo(pid, { type: 'pong', t: m.t }); break;
       case 'leave': removePlayer(pid, 'left'); break;
+      case 'own':   // 방 관리자 명령 (서버 방장일 때만)
+        if (!SRV || pid !== ownerId || inMatch()) break;
+        if (m.act === 'start') startOnlineMatch();
+        else if (m.act === 'mode' && MODES[m.v]){ mode = m.v; broadcastRoom(); }
+        else if (m.act === 'aifill'){ st.aiFill = !!m.v; broadcastRoom(); }
+        break;
     }
   }
   function removePlayer(pid, why){
@@ -3092,7 +3109,7 @@ const NET = (() => {
     switch (m.type){
       case 'room_state':
         if (m.code !== st.code) break;
-        st.aiFill = !!m.aiFill; st.players = m.players || {};
+        st.aiFill = !!m.aiFill; st.players = m.players || {}; if (m.srv != null){ srvRoom = !!m.srv; ownerId = m.owner || null; }
         if (MODES[m.mode] && m.mode !== mode){ mode = m.mode; if (state === 'lobby') renderLobby(); }
         assignSlots();
         renderModal();
@@ -3149,7 +3166,7 @@ const NET = (() => {
     for (const id of ['onlineModal','resultModal','pauseModal','dexModal','helpModal']){ const el = $('#'+id); if (el) el.classList.add('hidden'); }
     paused = false;
     const me = pkt.netPlayers.find(p => p && p.id === myId);
-    st.mySlot = me ? me.slot : 0;
+    st.mySlot = me ? me.slot : (SRV ? -1 : 0);
     st.mid = pkt.mid; st.remoteInputs = {}; st.pendingActs = []; st.endSent = false; st.netAcc = 0; st.pkt = 0; st.lastIn = null;
     if (st.role === 'guest') st.slotOf = {};
     const rows = pkt.rows.map(r => typeof r === 'string' ? r.split('') : r.slice());
@@ -3414,7 +3431,7 @@ const NET = (() => {
   function decorateResult(){
     if (!st.active){ $('#resAgain').textContent = '다시 하기'; return; }
     if (st.role === 'host'){ $('#resAgain').textContent = '🔁 재대결 (모두)'; $('#resLobby').textContent = '대기실로'; }
-    else { $('#resAgain').textContent = '대기실로 (방장 대기)'; $('#resLobby').textContent = '로비로'; }
+    else { $('#resAgain').textContent = isOwner() ? '대기실로 (내가 다시 시작)' : srvRoom ? '대기실로 (관리자 대기)' : '대기실로 (방장 대기)'; $('#resLobby').textContent = '로비로'; }
   }
 
   /* ---------- 대기실 UI ---------- */
@@ -3426,7 +3443,7 @@ const NET = (() => {
     if (rp) rp.style.display = st.active ? 'block' : 'none';
     const cd = $('#netCodeDisp');
     if (cd) cd.textContent = st.code || '----';
-    const host = st.active && st.role === 'host';
+    const host = (st.active && st.role === 'host') || isOwner();
     const bm = $('#btnNetMode');
     if (bm){ bm.textContent = '모드: ' + MODES[mode].name; bm.disabled = !host; bm.style.opacity = host ? '' : '0.6'; }
     const bt = $('#btnNetTeam');
@@ -3441,7 +3458,7 @@ const NET = (() => {
     if (stTxt){
       const n = Object.keys(st.players).length;
       stTxt.textContent = busy ? '🟡 연결 중...' : st.active
-        ? (st.role === 'host' ? `👑 방장 (${st.code}) · ${n}/${MAX_PLAYERS}명${st.bcOnly ? ' · 이 기기 전용' : ''}` : `🟢 게스트 (${st.code}) · ${n}/${MAX_PLAYERS}명`)
+        ? (st.role === 'host' ? `👑 방장 (${st.code}) · ${n}/${MAX_PLAYERS}명${st.bcOnly ? ' · 이 기기 전용' : ''}` : srvRoom ? `🖥 교실 서버 방 (${st.code}) · ${n}/${MAX_PLAYERS}명${isOwner() ? ' · 👑 내가 방 관리자' : ''}` : `🟢 게스트 (${st.code}) · ${n}/${MAX_PLAYERS}명`)
         : '⚪ 대기 중';
     }
     const sl = $('#netSlotList');
@@ -3455,14 +3472,14 @@ const NET = (() => {
         const isMe = p.id === myId;
         const cls = isMe ? 'net-slot me' : (!p.isAI ? 'net-slot human' : 'net-slot');
         const tTag = mode === 'gem' ? (p.team === 0 ? '🔵 블루' : '🔴 레드') : `솔로 #${p.slot+1}`;
-        const rTag = p.isHost ? '👑 방장' : (!p.isAI ? '👤 유저' : (p.isIdle ? '⚪ 빈자리' : '🤖 AI'));
+        const rTag = p.isHost ? '👑 방장' : (!p.isAI ? (srvRoom && p.id === ownerId ? '👑 방 관리자' : '👤 유저') : (p.isIdle ? '⚪ 빈자리' : '🤖 AI'));
         return `<div class="${cls}"><div class="fc" style="background:${hexCss(kit.color)}">${kit.icon}</div><div><div><b>${escHtml(p.name)}</b>${isMe ? ' (나)' : ''}</div><div style="font-size:11.5px;opacity:.85">${kit.name} · ${tTag} · ${rTag}</div></div></div>`;
       }).join('');
     }
     const sb = $('#btnNetStart');
     if (sb){
       sb.disabled = !host || st.busy;
-      sb.textContent = st.active && st.role === 'guest' ? '⏳ 방장 시작 대기 중...' : '🚀 온라인 대전 시작!';
+      sb.textContent = isOwner() ? '🚀 온라인 대전 시작! (방 관리자)' : st.active && st.role === 'guest' ? (srvRoom ? '⏳ 방 관리자 시작 대기 중...' : '⏳ 방장 시작 대기 중...') : '🚀 온라인 대전 시작!';
     }
   }
 
@@ -3482,7 +3499,14 @@ const NET = (() => {
         } else renderModal();
       });
     }
-    $('#btnCreateRoom')?.addEventListener('click', () => { SND.init(); SND.play('select'); createRoom($('#netCodeInp')?.value.trim()); });
+    $('#btnCreateRoom')?.addEventListener('click', async () => { SND.init(); SND.play('select');
+      const cc = $('#netCodeInp')?.value.trim();
+      if (window.BioRelay && BioRelay.canServerRoom && BioRelay.canServerRoom()){   // 교실 서버: 서버가 방장인 방을 만들고 내가 첫 참가자(방 관리자)로
+        log('🖥 교실 서버에 방을 만드는 중...');
+        const c = await BioRelay.serverRoom('cell-brawl', { name: st.nick });
+        if (c){ joinRoom(c); return; }
+      }
+      createRoom(cc); });
     $('#btnQuickMatch')?.addEventListener('click', () => { SND.init(); SND.play('select'); quickMatch(); });
     $('#btnJoinRoom')?.addEventListener('click', () => { SND.init(); SND.play('select'); joinRoom($('#netCodeInp')?.value); });
     $('#netCodeInp')?.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); joinRoom(e.target.value); } });
@@ -3494,6 +3518,7 @@ const NET = (() => {
       log(`📋 방 코드 [${st.code}] 복사 완료!`); SND.play('gem');
     });
     $('#btnNetMode')?.addEventListener('click', () => {
+      if (isOwner()){ own('mode', mode === 'gem' ? 'sd' : 'gem'); SND.play('ui'); return; }
       if (st.role !== 'host') return;
       mode = mode === 'gem' ? 'sd' : 'gem'; store.set('mode', mode); SND.play('ui'); renderLobby(); broadcastRoom();
     });
@@ -3506,6 +3531,7 @@ const NET = (() => {
       renderModal();
     });
     $('#netAiFill')?.addEventListener('change', e => {
+      if (isOwner()){ own('aifill', e.target.checked); return; }
       if (st.role !== 'host'){ e.target.checked = st.aiFill; return; }
       st.aiFill = e.target.checked; broadcastRoom();
     });
@@ -3513,9 +3539,12 @@ const NET = (() => {
       leave(); $('#onlineModal').classList.add('hidden'); startMatch();
     });
     $('#btnNetStart')?.addEventListener('click', () => {
+      if (isOwner()){ own('start'); return; }
       if (st.active && st.role === 'host') startOnlineMatch();
     });
   }, 0);
+  // 교실 서버 안: 바로 방장으로 방을 엶
+  if (SRV){ window.BIO_SRV_STAT = () => ({ players: Object.keys(st.players).length, playing: !!inMatch() }); setTimeout(() => createRoom(SRV.code), 0); }
 
   return {
     get active(){ return st.active; },

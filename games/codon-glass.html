@@ -1875,15 +1875,22 @@
       const packBoard = () => board.map(c => c.cleared ? '.' : c.base + c.num).join(',');
       const unpackBoard = s2 => { s2.split(',').forEach((v, i) => { const c = board[i]; if (!c) return; if (v === '.') c.cleared = true; else { c.cleared = false; c.base = v[0]; c.num = +v.slice(1); } }); };
       const pub = () => st.players.map(p => ({id: p.id, name: p.name, color: p.color, score: p.score || 0, syn: p.syn || 0, prot: p.prot || 0, gone: !!p.gone}));
+      // 서버 방장: 교실 서버가 방장(자기 자리 없음), 처음 들어온 학생이 방 관리자
+      const SRV = window.BIO_SRV || null;
+      let srvRoom = false, ownerId = null;
+      const calcOwner = () => { if (SRV) { const o = st.players.find(p => !p.gone); ownerId = o ? o.id : null; } return ownerId; };
+      const isOwner = () => st.role === 'guest' && srvRoom && ownerId === myId;
+      const own = (act, v) => toHost({t: 'own', act, v});
+      const lobbyMsg = () => ({t: 'lobby', players: pub(), mode: st.mode, srv: !!SRV, owner: calcOwner()});
 
       function renderLobby() {
         const L = $id('netPlayers'); L.innerHTML = '';
         for (let i = 0; i < MAXP; i++) {
           const p = st.players[i], d = document.createElement('div'); d.className = 'net-slot ' + (p ? 'ios-glass-pill' : 'border border-dashed border-slate-300 text-slate-400');
-          d.innerHTML = p ? `<span class="net-dot" style="background:${p.color}">${i + 1}P</span><span class="flex-1 truncate">${esc(p.name)}</span><span class="text-[10px] text-slate-500">${p.id === myId ? '나' : i === 0 ? '방장' : ''}</span>` : '빈자리';
+          d.innerHTML = p ? `<span class="net-dot" style="background:${p.color}">${i + 1}P</span><span class="flex-1 truncate">${esc(p.name)}</span><span class="text-[10px] text-slate-500">${(p.id === myId ? '나' : '') + (srvRoom ? (p.id === ownerId ? ' 👑관리자' : '') : (i === 0 && p.id !== myId ? '방장' : ''))}</span>` : '빈자리';
           L.appendChild(d);
         }
-        const host = st.role === 'host';
+        const host = st.role === 'host' || isOwner();
         $id('netModeRow').classList.toggle('hidden', !st.role); $id('netStart').classList.toggle('hidden', !host);
         $id('netStart').disabled = st.players.length < 2; $id('netStart').style.opacity = st.players.length < 2 ? .5 : 1;
         $id('netStart').textContent = st.players.length < 2 ? '친구를 기다리는 중… (2명부터)' : '경기 시작 (2분)';
@@ -1899,11 +1906,12 @@
       // ---- 방장
       async function host() {
         SAVE.opt.nick = ($id('netNick').value.trim() || nick()).slice(0, 8); persist();
-        st.role = 'host'; st.players = [{id: myId, name: SAVE.opt.nick, color: COLORS[0], score: 0}]; log('방을 만드는 중…');
-        for (let k = 0; k < 4 && !peer; k++) { code = genCode(); try { peer = await openPeer(PREFIX + code); } catch (e) { if (!(e && e.type === 'unavailable-id')) break; } }
+        st.role = 'host'; st.players = SRV ? [] : [{id: myId, name: SAVE.opt.nick, color: COLORS[0], score: 0}]; log('방을 만드는 중…');
+        for (let k = 0; k < (SRV ? 1 : 4) && !peer; k++) { code = SRV ? SRV.code : genCode(); try { peer = await openPeer(PREFIX + code); } catch (e) { if (!(e && e.type === 'unavailable-id')) break; } }
         if (!code) code = genCode();
         openBc(code);
         if (peer) peer.on('connection', c => { c.on('data', m => onHost(m, c)); c.on('close', () => { if (c.pid) gone(c.pid); }); });
+        if (SRV && SRV.ready) SRV.ready();   // 교실 서버에 '참가 받을 준비 끝' 알림
         $id('netJoinRow').classList.add('hidden'); $id('netCodeRow').classList.remove('hidden'); $id('netCodeShow').textContent = code;
         log(peer ? '친구에게 방 코드를 알려 주세요. 2~4명이 모이면 시작할 수 있어요.' : '온라인 서버에 연결하지 못했어요. 이 기기의 다른 탭에서만 참가할 수 있어요.');
         renderLobby();
@@ -1917,14 +1925,19 @@
           let p = st.players.find(x => x.id === pid);
           if (!p) { if (st.players.length >= MAXP) return deny('방이 가득 찼어요 (최대 4명).'); p = {id: pid, name: String(m.name || '친구').slice(0, 8), color: COLORS[st.players.length], score: 0}; st.players.push(p); playTone('special'); }
           if (c) { c.pid = pid; conns.set(pid, c); }
-          sendTo(pid, {t: 'welcome', code}); broadcast({t: 'lobby', players: pub(), mode: st.mode}); renderLobby();
+          sendTo(pid, {t: 'welcome', code, srv: !!SRV}); broadcast(lobbyMsg()); renderLobby();
         } else if (m.t === 'take') hostTake(pid, m.idx);
         else if (m.t === 'bye') gone(pid);
+        else if (m.t === 'own' && SRV && pid && pid === calcOwner()) {   // 방 관리자 명령 (서버 방장일 때만)
+          if (m.act === 'start' && !st.inMatch) start();
+          else if (m.act === 'mode' && !st.inMatch && ['target', 'ribosome', 'sum10'].includes(m.v)) { st.mode = m.v; broadcast(lobbyMsg()); }
+        }
       }
       function gone(pid) {
         const p = st.players.find(x => x.id === pid); if (!p) return; conns.delete(pid);
         if (st.inMatch) { p.gone = true; broadcast({t: 'scores', players: pub()}); }
-        else { st.players = st.players.filter(x => x !== p); st.players.forEach((x, i) => x.color = COLORS[i]); broadcast({t: 'lobby', players: pub(), mode: st.mode}); renderLobby(); }
+        else { st.players = st.players.filter(x => x !== p); st.players.forEach((x, i) => x.color = COLORS[i]); broadcast(lobbyMsg()); renderLobby(); }
+        if (SRV && st.inMatch) broadcast(lobbyMsg());
       }
       function start() {
         if (st.role !== 'host' || st.players.length < 2) return;
@@ -1983,8 +1996,8 @@
       function onGuest(m, self) {
         if (!m || !m.t) return; if (!self) lastMsg = performance.now();
         if (m.t === 'deny') { log('❌ ' + m.why); if (st.role === 'guest') { st.role = null; if (st.inMatch) { st.inMatch = false; showTitle(); alert(m.why); } } return; }
-        if (m.t === 'welcome' && st.role === 'guest') { log('참가했어요! 방장이 시작하길 기다려요.'); $id('netJoinRow').classList.add('hidden'); $id('netCodeRow').classList.remove('hidden'); $id('netCodeShow').textContent = code; playTone('special'); }
-        if (m.t === 'lobby' && st.role === 'guest') { st.players = m.players; st.mode = m.mode; renderLobby(); }
+        if (m.t === 'welcome' && st.role === 'guest') { log(m.srv ? '참가했어요! 🖥 교실 서버가 방장인 방이에요. 방 관리자가 시작해요.' : '참가했어요! 방장이 시작하길 기다려요.'); $id('netJoinRow').classList.add('hidden'); $id('netCodeRow').classList.remove('hidden'); $id('netCodeShow').textContent = code; playTone('special'); }
+        if (m.t === 'lobby' && st.role === 'guest') { st.players = m.players; st.mode = m.mode; if (m.srv != null) { srvRoom = !!m.srv; ownerId = m.owner || null; } if (!st.inMatch) renderLobby(); }
         if (m.t === 'start') {
           st.inMatch = true; st.players = m.players; st.mode = m.mode;
           if (st.role === 'guest') { gameMode = m.mode; setGameModeUI(m.mode); startNewGame(); unpackBoard(m.board); activeTargets = m.targets.map(c2 => AMINO_ACIDS.find(a => a.code === c2)); }
@@ -2027,7 +2040,7 @@
           const tie = meP && m.players.filter(y => y.score === meP.score).length > 1;
           $id('finalScoreSummary').textContent = win ? (tie ? `🤝 공동 1등! · ${score}점` : `🏆 1등! 축하해요! · ${score}점`) : `${meP ? place(meP) : '-'}등${tie ? ' (공동)' : ''} · ${score}점`;
           $id('finalProteinList').innerHTML = '<div class="font-bold text-slate-800 mb-1.5">온라인 대전 순위</div>' + rank.map((x, i) => `<div class="py-1 border-b border-slate-900/5 flex justify-between"><span><b style="color:${x.color}">${place(x)}. ${esc(x.name)}</b>${x.id === myId ? ' (나)' : ''}${x.gone ? ' · 나감' : ''}</span><span class="tabular-nums font-bold">${x.score}점 · 아미노산 ${x.syn} · 단백질 ${x.prot}</span></div>`).join('');
-          $id('playAgainBtn').querySelector('span').textContent = st.role === 'host' ? '같은 친구들과 한 판 더' : '방장이 다시 시작하길 기다려요';
+          $id('playAgainBtn').querySelector('span').textContent = st.role === 'host' || isOwner() ? '같은 친구들과 한 판 더' : (srvRoom ? '방 관리자가 다시 시작하길 기다려요' : '방장이 다시 시작하길 기다려요');
           playTone('special');
         }
       }
@@ -2036,16 +2049,18 @@
         if (st.role === 'guest') toHost({t: 'bye'});
         if (st.role === 'host') broadcast({t: 'deny', why: '방장이 방을 닫았어요.'});
         try { if (peer) peer.destroy(); } catch (e) {} try { if (bc) bc.close(); } catch (e) {}
-        peer = null; hostConn = null; bc = null; conns.clear(); st.role = null; st.inMatch = false; st.players = []; code = ''; lastMsg = 0;
+        peer = null; hostConn = null; bc = null; conns.clear(); st.role = null; st.inMatch = false; st.players = []; code = ''; lastMsg = 0; srvRoom = false; ownerId = null;
         $id('onlineBoard').classList.add('hidden'); $id('netJoinRow').classList.remove('hidden'); $id('netCodeRow').classList.add('hidden');
         $id('playAgainBtn').querySelector('span').textContent = '새 보드로 다시 시작';
       }
       setInterval(() => { if (st.role === 'guest') toHost({t: 'ping'}); }, 4000);
+      if (SRV) window.BIO_SRV_STAT = () => ({players: st.players.filter(p => !p.gone).length, playing: st.inMatch});
       addEventListener('pagehide', leave);
       return {
-        get role() { return st.role; }, get inMatch() { return st.inMatch; }, get code() { return code; },
-        host, join, leave, start, take, tick, sendBoard, renderLobby,
-        setMode(m) { if (st.role !== 'host') return; st.mode = m; broadcast({t: 'lobby', players: pub(), mode: st.mode}); renderLobby(); },
+        get role() { return st.role; }, get inMatch() { return st.inMatch; }, get code() { return code; }, get srvRoom() { return srvRoom; },
+        host, join, leave, take, tick, sendBoard, renderLobby, isOwner,
+        start() { if (isOwner()) { own('start'); return; } start(); },
+        setMode(m) { if (isOwner()) { own('mode', m); return; } if (st.role !== 'host') return; st.mode = m; broadcast({t: 'lobby', players: pub(), mode: st.mode}); renderLobby(); },
         open() { $id('netNick').value = SAVE.opt.nick || nick(); const q = new URLSearchParams(location.search).get('room'); if (q && !st.role) $id('netCode').value = q.toUpperCase(); renderLobby(); $id('onlineModal').classList.remove('hidden'); },
       };
     })();
@@ -2085,12 +2100,20 @@
       // 온라인
       $id('openOnlineBtn').addEventListener('click', () => NET.open());
       $id('netClose').addEventListener('click', () => { $id('onlineModal').classList.add('hidden'); if (!NET.inMatch) NET.leave(); });
-      $id('netHost').addEventListener('click', () => NET.host());
+      $id('netHost').addEventListener('click', async () => {
+        if (window.BioRelay && BioRelay.canServerRoom && BioRelay.canServerRoom()) {   // 교실 서버: 서버가 방장인 방을 만들고 내가 첫 참가자(방 관리자)로
+          $id('netLog').textContent = '🖥 교실 서버에 방을 만드는 중…';
+          const c = await BioRelay.serverRoom('codon-glass', {name: ($id('netNick').value.trim() || '친구').slice(0, 8)});
+          if (c) { $id('netCode').value = c; NET.join(); return; }
+        }
+        NET.host();
+      });
       $id('netJoin').addEventListener('click', () => NET.join());
       $id('netStart').addEventListener('click', () => NET.start());
       $id('netModes').querySelectorAll('button').forEach(b => b.addEventListener('click', () => NET.setMode(b.dataset.mode)));
       $id('netCopy').addEventListener('click', () => { const u = new URL(location.href); u.searchParams.set('room', NET.code); try { navigator.clipboard.writeText(u.toString()); } catch (e) {} $id('netLog').textContent = '참가 링크를 복사했어요!'; });
-      if (new URLSearchParams(location.search).get('room')) NET.open();
+      if (window.BIO_SRV) NET.host();   // 교실 서버 안: 바로 방장으로 방을 엶
+      else if (new URLSearchParams(location.search).get('room')) NET.open();
       // 다른 탭으로 가면 자동 일시정지 (혼자 할 때)
       document.addEventListener('visibilitychange', () => { if (document.hidden && !isPaused && !isGameOver && !onTitle && !NET.inMatch) togglePause(); });
 
@@ -2147,7 +2170,7 @@
       document.getElementById('resumeGameBtn').addEventListener('click', togglePause);
       document.getElementById('newBoardBtn').addEventListener('click', offlineOnly(startNewGame));
       document.getElementById('playAgainBtn').addEventListener('click', () => {
-        if (NET.role === 'host') NET.start();
+        if (NET.role === 'host' || NET.isOwner()) NET.start();
         else if (NET.role === 'guest') return;
         else startNewGame();
       });

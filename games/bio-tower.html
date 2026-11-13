@@ -344,9 +344,9 @@ function showResult() {
     <p>탑 높이 <b>${(G.height / 50).toFixed(2)}m</b> · ${G.round}라운드</p>
     <ol class="res">${rank.map(({p, i}) => `<li>${faceTag(p.face)} <b>${esc(p.name)}</b> — ${p.wins}승 ${i === G.loser ? '😵' : '👍'}</li>`).join('')}</ol>
     <p style="font-size:13px;color:var(--dim)">${G.lastFact || ''}</p>
-    <div class="row">${G.role !== 'guest' ? '<button class="btn go" id="rAgain">다음 라운드</button>' : '<span>방장이 다음 라운드를 시작하길 기다려요…</span>'}<button class="btn" id="rQuit">나가기</button></div>`;
+    <div class="row">${G.role !== 'guest' || NET.isOwner() ? '<button class="btn go" id="rAgain">다음 라운드</button>' : `<span>${NET.srvRoom ? '방 관리자' : '방장'}가 다음 라운드를 시작하길 기다려요…</span>`}<button class="btn" id="rQuit">나가기</button></div>`;
   showScr('sRes');
-  if ($('#rAgain')) $('#rAgain').onclick = () => { AU.play('ui'); if (G.role === 'host') NET.startGame(); else startRound(); };
+  if ($('#rAgain')) $('#rAgain').onclick = () => { AU.play('ui'); if (NET.isOwner()) NET.own('next'); else if (G.role === 'host') NET.startGame(); else startRound(); };
   $('#rQuit').onclick = quitToTitle;
   if (G.role === 'host') NET.broadcast({t: 'end', loser: G.loser, players: NET.pubPlayers(), h: G.height});
   if (window.ILOG) ILOG.runEnd(`라운드 끝 · 높이 ${(G.height / 50).toFixed(2)}m`);
@@ -565,7 +565,7 @@ document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { AU.init(
   if (g === 'hub') { location.href = '../index.html'; return; } if (g === 'how') { showScr('sHow'); return; } openLobby(g); });
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => { AU.play('ui'); showScr(G.mode === 'play' ? (G.paused ? 'sPause' : null) : 'sTitle'); });
 $('#lBack').onclick = () => { AU.play('ui'); NET.leave(); showScr('sTitle'); };
-$('#cpuLv').querySelectorAll('button').forEach(b => b.onclick = () => { G.cpuLv = +b.dataset.v; store.set('cpuLv', G.cpuLv); renderLobby(); });
+$('#cpuLv').querySelectorAll('button').forEach(b => b.onclick = () => { if (NET.isOwner()) { NET.own('lv', +b.dataset.v); return; } G.cpuLv = +b.dataset.v; store.set('cpuLv', G.cpuLv); renderLobby(); NET.syncLobby(); });
 function openLobby(m) {
   lobbyMode = m; G.role = 'solo'; G.players = [];
   const nick = store.get('nick', '연구원' + (10 + Math.floor(Math.random() * 89)));
@@ -580,29 +580,30 @@ function openLobby(m) {
 function renderLobby() {
   $('#cpuLv').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.v === G.cpuLv));
   const S = $('#slots'); S.innerHTML = '';
-  const canEdit = G.role !== 'guest' && (lobbyMode !== 'online' || G.role === 'host');
+  const own = NET.isOwner(), canEdit = own || (G.role !== 'guest' && (lobbyMode !== 'online' || G.role === 'host'));
   for (let i = 0; i < 4; i++) {
     const p = G.players[i], d = document.createElement('div'); d.className = 'slot' + (p ? '' : ' empty');
     if (p) {
       d.appendChild(faceCanvas(p.face));
       const t = document.createElement('b'); t.textContent = p.name; d.appendChild(t);
-      const s = document.createElement('small'); s.textContent = p.type === 'me' || p.id === NET.myId ? '나' : {local: '이 기기', cpu: 'CPU', remote: '온라인'}[p.type]; d.appendChild(s);
-      if (canEdit && i > 0 && p.type !== 'me' && !(G.role === 'host' && p.id === NET.myId)) { const x = document.createElement('button'); x.className = 'x'; x.textContent = '✕'; x.onclick = () => { if (p.type === 'remote') NET.kick(p.id); G.players.splice(i, 1); fixFaces(); renderLobby(); NET.syncLobby(); }; d.appendChild(x); }
+      const s = document.createElement('small'); s.textContent = (p.type === 'me' || p.id === NET.myId ? '나' : {local: '이 기기', cpu: 'CPU', remote: '온라인'}[p.type]) + (NET.srvRoom && p.id === NET.ownerId ? ' · 👑관리자' : ''); d.appendChild(s);
+      if (own && p.type === 'cpu') { const x = document.createElement('button'); x.className = 'x'; x.textContent = '✕'; x.onclick = () => NET.own('cpu-', p.id); d.appendChild(x); }
+      else if (!own && canEdit && i > 0 && p.type !== 'me' && !(G.role === 'host' && p.id === NET.myId)) { const x = document.createElement('button'); x.className = 'x'; x.textContent = '✕'; x.onclick = () => { if (p.type === 'remote') NET.kick(p.id); G.players.splice(i, 1); fixFaces(); renderLobby(); NET.syncLobby(); }; d.appendChild(x); }
     } else if (canEdit) {
-      const add = (label, type) => { const b = document.createElement('button'); b.className = 'btn sm'; b.textContent = label; b.onclick = () => { AU.play('ui'); const f = freeFace(); G.players.push({id: type + Math.random().toString(36).slice(2, 7), name: type === 'cpu' ? 'CPU ' + FACE_NAMES[f] : (G.players.length + 1) + 'P', face: f, type, wins: 0}); renderLobby(); NET.syncLobby(); }; d.appendChild(b); };
+      const add = (label, type) => { const b = document.createElement('button'); b.className = 'btn sm'; b.textContent = label; b.onclick = () => { AU.play('ui'); if (own) { NET.own('cpu+'); return; } const f = freeFace(); G.players.push({id: type + Math.random().toString(36).slice(2, 7), name: type === 'cpu' ? 'CPU ' + FACE_NAMES[f] : (G.players.length + 1) + 'P', face: f, type, wins: 0}); renderLobby(); NET.syncLobby(); }; d.appendChild(b); };
       if (lobbyMode === 'local') add('+ 사람', 'local');
       add('+ CPU', 'cpu');
     } else { d.innerHTML = '<small>빈자리</small>'; }
     S.appendChild(d);
   }
   const n = G.players.length;
-  $('#lStart').disabled = n < 2 || G.role === 'guest' || (lobbyMode === 'online' && G.role !== 'host');
-  $('#lStart').textContent = G.role === 'guest' ? '방장이 시작해요' : n < 2 ? '2명 이상 필요' : '시작!';
+  $('#lStart').disabled = n < 2 || (!own && (G.role === 'guest' || (lobbyMode === 'online' && G.role !== 'host')));
+  $('#lStart').textContent = G.role === 'guest' && !own ? (NET.srvRoom ? '방 관리자가 시작해요' : '방장이 시작해요') : n < 2 ? '2명 이상 필요' : '시작!';
   $('#lOpts').style.display = G.players.some(p => p.type === 'cpu') || (canEdit && n < 4) ? 'flex' : 'none';
 }
 const freeFace = () => [0, 1, 2, 3].find(f => !G.players.some(p => p.face === f)) ?? 0;
 function fixFaces() { const used = new Set(); for (const p of G.players) { if (used.has(p.face)) p.face = [0, 1, 2, 3].find(f => !used.has(f)); used.add(p.face); } }
-$('#lStart').onclick = () => { AU.play('ui'); if (G.players.length < 2) return; G.players.forEach(p => p.wins = 0); G.round = 0; STATS.games++; saveStats();
+$('#lStart').onclick = () => { AU.play('ui'); if (G.players.length < 2) return; if (NET.isOwner()) { NET.own('start'); return; } G.players.forEach(p => p.wins = 0); G.round = 0; STATS.games++; saveStats();
   if (lobbyMode === 'online') NET.startGame(); else { G.mode = 'play'; startRound(); } };
 $('#nick').onchange = () => { const v = $('#nick').value.trim().slice(0, 8) || '연구원'; store.set('nick', v); NET.rename(v); };
 
@@ -627,19 +628,27 @@ const NET = (() => {
   const sendTo = (pid, m) => { const c = conns.get(pid); if (c) send(c, m); else if (bc) try { bc.postMessage(Object.assign({to: pid}, m)); } catch (e) {} };
   const toHost = m => { m.from = myId; if (hostConn) send(hostConn, m); else if (bc) try { bc.postMessage(m); } catch (e) {} };
   const pubPlayers = () => G.players.map(p => ({id: p.id, name: p.name, face: p.face, type: p.type === 'me' ? 'remote' : p.type, wins: p.wins, host: p.id === myId}));
+  // 서버 방장: 교실 서버가 방장(자기 자리 없음), 처음 들어온 학생이 방 관리자
+  const SRV = window.BIO_SRV || null;
+  let srvRoom = false, ownerId = null;
+  const calcOwner = () => { if (SRV) { const o = G.players.find(p => p.type === 'remote'); ownerId = o ? o.id : null; } return ownerId; };
+  const isOwner = () => role === 'guest' && srvRoom && ownerId === myId;
+  const own = (act, v) => toHost({t: 'own', act, v});
 
   // ---- 방장
   async function host() {
-    const nick = ($('#nick').value.trim() || '방장').slice(0, 8); store.set('nick', nick);
+    const nick = SRV ? String(SRV.name || '교실').slice(0, 8) : ($('#nick').value.trim() || '방장').slice(0, 8); if (!SRV) store.set('nick', nick);
     log('방을 만드는 중…'); role = 'host'; G.role = 'host';
-    G.players = [{id: myId, name: nick, face: 0, type: 'me', wins: 0}];
-    for (let k = 0; k < 4 && !peer; k++) {
-      code = genCode();
+    G.players = SRV ? [] : [{id: myId, name: nick, face: 0, type: 'me', wins: 0}];
+    if (SRV) { lobbyMode = 'online'; G.cpuLv = 1; }
+    for (let k = 0; k < (SRV ? 1 : 4) && !peer; k++) {
+      code = SRV ? SRV.code : genCode();
       try { peer = await openPeer(PREFIX + code); } catch (e) { if (!(e && e.type === 'unavailable-id')) { log('온라인 서버에 연결하지 못했어요. 같은 브라우저의 다른 탭에서는 계속 참가할 수 있어요.'); break; } }
     }
     if (!code) code = genCode();
     openBc(code);
     if (peer) peer.on('connection', c => { c.on('data', m => onHost(m, c)); c.on('close', () => { if (c.pid) dropPlayer(c.pid); }); });
+    if (SRV && SRV.ready) SRV.ready();   // 교실 서버에 '참가 받을 준비 끝' 알림
     $('#lJoinRow').style.display = 'none'; $('#lCodeRow').style.display = 'flex'; $('#code').textContent = code;
     log(peer ? '친구에게 방 코드를 알려 주세요. 빈자리는 CPU로 채울 수 있어요.' : '이 기기의 다른 탭에서만 참가할 수 있어요.');
     renderLobby();
@@ -659,7 +668,7 @@ const NET = (() => {
         p = {id: pid, name: String(m.name || '친구').slice(0, 8), face: freeFace(), type: 'remote', wins: 0}; G.players.push(p); AU.play('join');
       }
       if (c) { c.pid = pid; conns.set(pid, c); }
-      sendTo(pid, {t: 'welcome', code}); syncLobby(); renderLobby();
+      sendTo(pid, {t: 'welcome', code, srv: !!SRV}); syncLobby(); renderLobby();
     } else if (m.t === 'in') {
       const i = G.players.findIndex(x => x.id === pid);
       if (i !== G.turn || G.phase !== 'aim' || !G.piece) return;
@@ -667,6 +676,15 @@ const NET = (() => {
       if (m.drop) dropPiece();
     } else if (m.t === 'name') { const p = G.players.find(x => x.id === pid); if (p) { p.name = String(m.name).slice(0, 8); syncLobby(); renderLobby(); } }
     else if (m.t === 'bye') dropPlayer(pid);
+    else if (m.t === 'own' && SRV && pid && pid === calcOwner()) {
+      // 방 관리자 명령 (서버 방장일 때만)
+      const lobby = G.mode !== 'play';
+      if (m.act === 'start' && lobby && G.players.length >= 2) { G.players.forEach(p => p.wins = 0); G.round = 0; startGame(); }
+      else if (m.act === 'next' && G.mode === 'play' && G.phase === 'over') startGame();
+      else if (m.act === 'cpu+' && lobby && G.players.length < 4) { const f = freeFace(); G.players.push({id: 'cpu' + Math.random().toString(36).slice(2, 7), name: 'CPU ' + FACE_NAMES[f], face: f, type: 'cpu', wins: 0}); syncLobby(); }
+      else if (m.act === 'cpu-' && lobby) { const i = G.players.findIndex(p => p.id === m.v && p.type === 'cpu'); if (i >= 0) { G.players.splice(i, 1); fixFaces(); syncLobby(); } }
+      else if (m.act === 'lv' && lobby) { G.cpuLv = Math.max(0, Math.min(2, +m.v || 0)); syncLobby(); }
+    }
   }
   function dropPlayer(pid) {
     const i = G.players.findIndex(x => x.id === pid); if (i < 0) return;
@@ -674,7 +692,7 @@ const NET = (() => {
     if (G.mode === 'play') { G.players[i].type = 'cpu'; G.players[i].name += '(CPU)'; banner('연결 끊김', `${G.players[i].name}을(를) CPU가 이어받아요`); }
     else { G.players.splice(i, 1); fixFaces(); renderLobby(); syncLobby(); }
   }
-  const syncLobby = () => { if (role === 'host') broadcast({t: 'lobby', players: pubPlayers(), lv: G.cpuLv}); };
+  const syncLobby = () => { if (role === 'host') broadcast({t: 'lobby', players: pubPlayers(), lv: G.cpuLv, srv: !!SRV, owner: calcOwner()}); };
   function startGame() { if (role !== 'host') return; G.mode = 'play'; broadcast({t: 'start', players: pubPlayers()}); startRound(); }
   function hostTick(dt) {
     snapAcc += dt; pingAcc += dt;
@@ -684,7 +702,7 @@ const NET = (() => {
       const P = G.piece;
       broadcast({t: 's', b, h: P ? [P.k, Math.round(P.x * 10) / 10, Math.round(P.y * 10) / 10, P.rot] : null, ph: G.phase, tu: G.turn, tm: Math.round(G.timer * 10) / 10, nx: G.nextK, top: Math.round(towerTop()), hg: Math.round(G.height), ev: G.events.splice(0), ro: G.round, lo: G.loser, fact: G.lastFact});
     }
-    if (pingAcc >= 1) { pingAcc = 0; broadcast({t: 'pl', players: pubPlayers()}); const now = performance.now(); for (const p of G.players) if (p.type === 'remote' && now - (seen.get(p.id) || now) > 12000) dropPlayer(p.id); }
+    if (pingAcc >= 1) { pingAcc = 0; broadcast({t: 'pl', players: pubPlayers(), srv: !!SRV, owner: calcOwner()}); const now = performance.now(); for (const p of G.players) if (p.type === 'remote' && now - (seen.get(p.id) || now) > 12000) dropPlayer(p.id); }
   }
   // ---- 참가자
   async function join() {
@@ -705,8 +723,8 @@ const NET = (() => {
   function onGuest(m) {
     if (!m || !m.t) return; lastHostMsg = performance.now();
     if (m.t === 'deny') { log('❌ ' + m.why); role = null; G.role = 'solo'; return; }
-    if (m.t === 'welcome') { log('참가했어요! 방장이 시작하길 기다려요.'); $('#lJoinRow').style.display = 'none'; $('#lCodeRow').style.display = 'flex'; $('#code').textContent = code; AU.play('join'); }
-    if (m.t === 'lobby' || m.t === 'pl' || m.t === 'start') { G.players = m.players.map(p => Object.assign({}, p, {type: p.id === myId ? 'me' : p.type})); if (m.lv != null) G.cpuLv = m.lv; if (G.mode !== 'play') renderLobby(); }
+    if (m.t === 'welcome') { log(m.srv ? '참가했어요! 🖥 교실 서버가 방장인 방이에요. 방 관리자가 시작하면 출발해요.' : '참가했어요! 방장이 시작하길 기다려요.'); $('#lJoinRow').style.display = 'none'; $('#lCodeRow').style.display = 'flex'; $('#code').textContent = code; AU.play('join'); }
+    if (m.t === 'lobby' || m.t === 'pl' || m.t === 'start') { G.players = m.players.map(p => Object.assign({}, p, {type: p.id === myId ? 'me' : p.type})); if (m.lv != null) G.cpuLv = m.lv; if (m.srv != null) { srvRoom = !!m.srv; ownerId = m.owner || null; } if (G.mode !== 'play') renderLobby(); }
     if (m.t === 'start') { G.mode = 'play'; G.view = []; G.viewTop = 0; G.round = 0; G.phase = 'aim'; showScr(null); $('#hud').classList.add('on'); $('#pauseB').style.display = 'block'; $('#tbtns').classList.add('on'); AU.music(true); G.snapB = null; }
     if (m.t === 's') {
       G.snapA = G.snapB; G.snapB = {t: performance.now(), m};
@@ -735,12 +753,19 @@ const NET = (() => {
     if (role === 'guest') toHost({t: 'bye'});
     if (role === 'host') broadcast({t: 'deny', why: '방장이 방을 닫았어요.'});
     try { if (peer) peer.destroy(); } catch (e) {} try { if (bc) bc.close(); } catch (e) {}
-    peer = null; hostConn = null; bc = null; conns.clear(); role = null; code = ''; G.role = 'solo'; lastHostMsg = 0;
+    peer = null; hostConn = null; bc = null; conns.clear(); role = null; code = ''; G.role = 'solo'; lastHostMsg = 0; srvRoom = false; ownerId = null;
   }
-  return {myId, host, join, leave, broadcast, toHost, pubPlayers, syncLobby, startGame, hostTick, guestStep, kick: pid => { sendTo(pid, {t: 'deny', why: '방장이 내보냈어요.'}); conns.delete(pid); }, rename: n => { if (role === 'guest') toHost({t: 'name', name: n}); else { const p = G.players.find(x => x.id === myId); if (p) { p.name = n; syncLobby(); renderLobby(); } } }, get code() { return code; }};
+  if (SRV) window.BIO_SRV_STAT = () => ({players: G.players.filter(p => p.type === 'remote').length, playing: G.mode === 'play'});
+  return {myId, host, join, leave, broadcast, toHost, pubPlayers, syncLobby, startGame, hostTick, guestStep, isOwner, own, get srvRoom() { return srvRoom; }, get ownerId() { return ownerId; }, kick: pid => { sendTo(pid, {t: 'deny', why: '방장이 내보냈어요.'}); conns.delete(pid); }, rename: n => { if (role === 'guest') toHost({t: 'name', name: n}); else { const p = G.players.find(x => x.id === myId); if (p) { p.name = n; syncLobby(); renderLobby(); } } }, get code() { return code; }};
 })();
 function guestStep(dt) { NET.guestStep(dt); }
-$('#bHost').onclick = () => { AU.play('ui'); NET.host(); };
+$('#bHost').onclick = async () => { AU.play('ui');
+  if (window.BioRelay && BioRelay.canServerRoom && BioRelay.canServerRoom()) {   // 교실 서버: 서버가 방장인 방을 만들고 내가 첫 참가자(방 관리자)로
+    $('#netlog').textContent = '🖥 교실 서버에 방을 만드는 중…';
+    const c = await BioRelay.serverRoom('bio-tower', {name: ($('#nick').value.trim() || '친구').slice(0, 8)});
+    if (c) { $('#joinCode').value = c; NET.join(); return; }
+  }
+  NET.host(); };
 $('#bJoin').onclick = () => { AU.play('ui'); NET.join(); };
 $('#bCopy').onclick = () => { const u = new URL(location.href); u.searchParams.set('room', NET.code); navigator.clipboard && navigator.clipboard.writeText(u.toString()); $('#netlog').textContent = '참가 링크를 복사했어요!'; };
 addEventListener('pagehide', () => NET.leave());
@@ -756,6 +781,7 @@ addEventListener('pagehide', () => NET.leave());
     g.globalCompositeOperation = 'destination-in'; g.fillStyle = f; g.fillRect(0, 0, 960, 200); g.fillStyle = '#000'; g.fillRect(0, 200, 960, 340);
     IMG.land = c; }
   $('#loading').style.display = 'none'; fit(); requestAnimationFrame(frame);
+  if (window.BIO_SRV) { NET.host(); return; }
   if (new URLSearchParams(location.search).get('room')) openLobby('online');
 })();
 window.ILOG_WATCH = () => G.mode === 'play' ? {단계: G.phase, 차례: (curP() || {}).name, 조각: G.piece ? PM[G.piece.k].name : '', x: G.piece ? Math.round(G.piece.x) : undefined, 높이: +(Math.max(0, -(G.role === 'guest' ? G.viewTop : towerTop())) / 50).toFixed(2)} : {화면: G.mode};

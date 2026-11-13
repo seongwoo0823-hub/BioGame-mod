@@ -178,6 +178,7 @@
     if (typeof s !== 'string') return;
     if (s.charCodeAt(0) === 68) {
       var c = this._conns[s.slice(1, 9)];
+      if (c && !c.open && !c._closed) { c.open = true; c.emit('open'); }   // 연결이 열리기 직전에 온 첫 메시지도 버리지 않음
       if (c && c.open) { var d; try { d = JSON.parse(s.slice(9)); } catch (e) { return; } c.emit('data', d); }
       return;
     }
@@ -304,6 +305,19 @@
     mode: function () { return curMode; },
     label: function () { return curMode === 'server' ? '서버' : 'P2P'; },
     droppable: null,
-    RelayPeer: RelayPeer
+    RelayPeer: RelayPeer,
+    // ---- 서버 방장 (교실 서버가 게임 판을 직접 계산하는 방)
+    // 서버 안에서 방장 역할을 하는 중이면 이 값이 있음 (server/game-room.js가 넣어 줌): {code, name, opts}
+    srv: window.BIO_SRV || null,
+    // 교실 서버에서 연 페이지인지 (서버 방을 만들 수 있는지)
+    canServerRoom: function () { return !!url && !window.BIO_SRV && /^https?:$/.test(location.protocol); },
+    // 서버 방 만들기 → 성공하면 방 코드, 아니면 null (실패 이유는 .reason)
+    serverRoom: function (game, params) {
+      if (!BioRelay.canServerRoom()) return Promise.resolve(null);
+      var q = new URLSearchParams(params || {}); q.set('game', game);
+      return fetch(httpBase + '/__room/new?' + q.toString(), {cache: 'no-store'}).then(function (r) { return r.json(); })
+        .then(function (j) { BioRelay.lastReason = j && j.reason || ''; return j && j.ok ? j.code : null; })
+        .catch(function () { BioRelay.lastReason = 'network'; return null; });
+    }
   };
 })();
