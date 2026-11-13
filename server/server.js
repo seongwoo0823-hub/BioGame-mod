@@ -45,6 +45,17 @@ function lanList() {
   }
   return out;
 }
+// 요청이 이 컴퓨터의 어느 네트워크로 들어왔는지 → 'wifi'(빨강 아이콘) 또는 'lan'(초록 아이콘)
+//   학생이 와이파이 주소로 접속하면 와이파이용, 랜선 주소로 접속하면 랜선용 앱 아이콘·이름으로 설치됨
+function netVariant(req) {
+  const ip = String((req.socket && req.socket.localAddress) || '').replace(/^::ffff:/, '');
+  const n = lanList().find(x => x.ip === ip);
+  return n && n.kind === '와이파이' ? 'wifi' : 'lan';
+}
+const VARIANT = {
+  lan:  {id: './?pwa=lan',  name: 'BIO ARCADE 교실 서버 (랜선)',    short: 'BIO 랜선',    color: '#06140c'},
+  wifi: {id: './?pwa=wifi', name: 'BIO ARCADE 교실 서버 (와이파이)', short: 'BIO 와이파이', color: '#170607'},
+};
 function lanUrls() {
   const out = [];
   for (const [name, list] of Object.entries(os.networkInterfaces())) {
@@ -118,22 +129,29 @@ function sendFile(req, res, urlPath) {
     if (err || !st.isFile()) { res.writeHead(404, {'Content-Type': 'text/plain; charset=utf-8'}); res.end('파일이 없어요: ' + rel); return; }
     const type = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream';
     const head = {'Content-Type': type, 'Cache-Control': /\.(html|js|json|webmanifest)$/i.test(file) ? 'no-cache' : 'public, max-age=3600', 'Accept-Ranges': 'bytes'};
-    // 교실 서버로 설치하면 초록색 '온라인' 아이콘·이름 (GitHub Pages로 설치하면 파란색 기본 아이콘)
+    // 설치 아이콘 3종: GitHub Pages = 파랑(기본 파일 그대로) · 교실 서버 랜선 주소 = 초록 · 와이파이 주소 = 빨강
     const relp = path.relative(ROOT, file).split(path.sep).join('/');
+    const vk = netVariant(req), V = VARIANT[vk];
     if (relp === 'manifest.webmanifest') {
       fs.readFile(file, 'utf8', (e, txt) => {
         if (e) { res.writeHead(500); res.end(); return; }
         let m; try { m = JSON.parse(txt); } catch (x) { res.writeHead(500); res.end(); return; }
-        m.id = './?pwa=online'; m.name = 'BIO ARCADE 교실 서버'; m.short_name = 'BIO 교실';
-        m.start_url = './index.html?pwa=online'; m.theme_color = m.background_color = '#06140c';
-        m.icons = (m.icons || []).map(ic => Object.assign({}, ic, {src: String(ic.src).replace('icon-v2-', 'icon-online-')}));
+        m.id = V.id; m.name = V.name; m.short_name = V.short;
+        m.start_url = './index.html?pwa=' + vk; m.theme_color = m.background_color = V.color;
+        const sw = ic => Object.assign({}, ic, {src: String(ic.src).replace('icon-v2-', 'icon-' + vk + '-')});
+        m.icons = (m.icons || []).map(sw);
+        (m.shortcuts || []).forEach(sc => { if (sc.icons) sc.icons = sc.icons.map(sw); });
         const body = Buffer.from(JSON.stringify(m, null, 2));
         res.writeHead(200, Object.assign(head, {'Content-Length': body.length, 'Cache-Control': 'no-cache'})); res.end(req.method === 'HEAD' ? undefined : body);
       });
       return;
     }
-    const alt = {'icons/apple-touch-icon-v2.png': 'icons/apple-touch-icon-online.png', 'icons/favicon-v2-32.png': 'icons/favicon-online-32.png'}[relp];
-    if (alt) { sendFile(req, res, '/' + alt); return; }
+    // 페이지가 쓰는 파란 아이콘 파일(로고·즐겨찾기·홈 화면 아이콘)을 접속한 네트워크 색으로 바꿔 보냄
+    const am = /^icons\/(icon-v2-(192|512|maskable-512)|apple-touch-icon-v2|favicon-v2-32)\.png$/.exec(relp);
+    if (am) {
+      const alt = 'icons/' + am[1].replace('-v2', '-' + vk) + '.png';
+      if (fs.existsSync(path.join(ROOT, alt))) { sendFile(req, res, '/' + alt); return; }
+    }
     if (path.relative(ROOT, file) === 'net.js') {
       fs.readFile(file, (e, buf) => {
         if (e) { res.writeHead(500); res.end(); return; }
@@ -188,7 +206,7 @@ const server = http.createServer((req, res) => {
   if (u.pathname === '/__kart/list') return json(res, {ok: true, max: MAX_SRV_ROOMS, rooms: roomList().filter(r => r.game === 'bio-kart')});
   if (u.pathname === '/__room/new') return roomNew(String(u.searchParams.get('game') || ''), req, res, u.searchParams);
   if (u.pathname === '/__room/list') return json(res, {ok: true, max: MAX_SRV_ROOMS, games: Object.keys(SRV_GAMES), rooms: roomList()});
-  if (u.pathname === '/__info') return json(res, {ok: true, urls: lanUrls(), nets: lanList(), port: PORT, clients: clients.size, devices: seen.size, warnings: diag.warnings, diagReady: diag.checked});
+  if (u.pathname === '/__info') return json(res, {ok: true, net: netVariant(req), urls: lanUrls(), nets: lanList(), port: PORT, clients: clients.size, devices: seen.size, warnings: diag.warnings, diagReady: diag.checked});
   // 휴대폰 연결 확인용 아주 가벼운 페이지 (이게 열리면 네트워크는 정상)
   if (u.pathname === '/__hello' || u.pathname === '/hello') {
     res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store'});

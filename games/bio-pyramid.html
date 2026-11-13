@@ -1224,14 +1224,27 @@
                 { id: 'pet_starter', typeId: 'rbc', enhanced: false, equipped: true }
             ],
 
-            soundEnabled: true
+            soundEnabled: true,
+            endingPending: false
         };
         window.gameState = gameState;
 
         // ---- 진행 저장 (새로고침해도 이어서) ----
         const SAVE_KEY = 'bioPyramidSave';
+        // 10억 이상은 한국식 단위(만·억·조·경·해…, 4자리마다)로 표시: 1,234,567,890 → '12억 3456만'
+        const KOR_UNITS = ['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정', '재', '극', '항하사', '아승기', '나유타', '불가사의', '무량대수'];
+        function korNum(v) {
+            v = Math.floor(Number(v) || 0);
+            if (Math.abs(v) < 1e9) return v.toLocaleString('ko-KR');
+            const neg = v < 0; v = Math.abs(v);
+            const e = Math.min(KOR_UNITS.length - 1, Math.floor(Math.log10(v) / 4 + 1e-9));
+            const big = Math.floor(v / Math.pow(10, e * 4)), rest = Math.floor(v / Math.pow(10, (e - 1) * 4)) % 10000;
+            return (neg ? '-' : '') + big.toLocaleString('ko-KR') + KOR_UNITS[e] + (rest > 0 && e < KOR_UNITS.length - 1 ? ' ' + rest + KOR_UNITS[e - 1] : '');
+        }
         const SAVE_SKIP = new Set(['maxBag', 'isInsideSpring']);
+        let resettingGame = false;
         function saveGame() {
+            if (resettingGame) return;
             try {
                 const o = {};
                 for (const k of Object.keys(gameState)) { if (!SAVE_SKIP.has(k)) o[k] = gameState[k]; }
@@ -1742,7 +1755,7 @@
 
             spawnFloatingText(
                 pyramidCenter,
-                `+${riboGain.toLocaleString()} RIBO  +${stemGain.toLocaleString()} STEM  +${enzGain.toLocaleString()} ENZ`,
+                `+${korNum(riboGain)} RIBO  +${korNum(stemGain)} STEM  +${korNum(enzGain)} ENZ`,
                 'text-amber-300'
             );
         }
@@ -1779,7 +1792,7 @@
             const costRibo = 150000 * gameState.pyramidStage;
 
             if (gameState.enz < costEnz || gameState.ribo < costRibo) {
-                spawnFloatingText(playerGroup.position, `연장 재화 부족 (${costEnz.toLocaleString()} ENZ + ${costRibo.toLocaleString()} RIBO 필요)`, 'text-rose-400');
+                spawnFloatingText(playerGroup.position, `연장 재화 부족 (${korNum(costEnz)} ENZ + ${korNum(costRibo)} RIBO 필요)`, 'text-rose-400');
                 return;
             }
 
@@ -1943,7 +1956,7 @@
             const cost = costs[count];
 
             if (gameState.ribo < cost) {
-                spawnFloatingText(playerGroup.position, `리보솜 캡슐(${cost.toLocaleString()} RIBO) 재화가 부족합니다!`, 'text-rose-400');
+                spawnFloatingText(playerGroup.position, `리보솜 캡슐(${korNum(cost)} RIBO) 재화가 부족합니다!`, 'text-rose-400');
                 return;
             }
             gameState.ribo -= cost;
@@ -2065,6 +2078,7 @@
 
                         const anyHigh = finalResults.some(k => k === 'mito' || k === 'chloroplast' || k === 'magbact' || k === 'tardigrade');
                         const anyLegend = finalResults.some(k => k === 'tardigrade');
+                        if (anyLegend) { gameState.endingPending = true; saveGame(); setTimeout(showEnding, 3600); }
                         if (anyHigh) {
                             playSfx('jackpot');
                             triggerHighTierImpact(anyLegend);
@@ -2249,7 +2263,7 @@
                                 : unlocked
                                     ? `<button onclick="buyOrEquipSkin(${skin.id})" class="voxel-btn px-4 py-2 rounded-xl bg-indigo-600 text-white font-black text-xs">스킨 장착하기</button>`
                                     : `<button onclick="buyOrEquipSkin(${skin.id})" class="voxel-btn px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-black text-xs">
-                                        ${skin.costStem.toLocaleString()} STEM 구매
+                                        ${korNum(skin.costStem)} STEM 구매
                                        </button>`
                         }
                     </div>
@@ -2262,7 +2276,7 @@
             const skin = SKIN_PACKS[skinId];
             if (!gameState.unlockedSkins.includes(skinId)) {
                 if (gameState.stem < skin.costStem) {
-                    spawnFloatingText(playerGroup.position, `줄기세포 코어(STEM)가 부족합니다! (${skin.costStem.toLocaleString()} STEM 필요)`, 'text-rose-400');
+                    spawnFloatingText(playerGroup.position, `줄기세포 코어(STEM)가 부족합니다! (${korNum(skin.costStem)} STEM 필요)`, 'text-rose-400');
                     return;
                 }
                 gameState.stem -= skin.costStem;
@@ -2347,7 +2361,7 @@
             if (gameState.instantDepositUnlocked) return;
             const costStem = SKIN_PACKS[2].costStem; // Same price as 3rd Skin (10,000,000 STEM)
             if (gameState.stem < costStem) {
-                spawnFloatingText(playerGroup.position, `초고속 일괄 투하 연구에는 ${costStem.toLocaleString()} STEM이 필요합니다!`, 'text-rose-400');
+                spawnFloatingText(playerGroup.position, `초고속 일괄 투하 연구에는 ${korNum(costStem)} STEM이 필요합니다!`, 'text-rose-400');
                 return;
             }
             gameState.stem -= costStem;
@@ -2361,7 +2375,7 @@
         function buyUpgrade(type) {
             const cost = getUpgradeCost(type);
             if (gameState.enz < cost) {
-                spawnFloatingText(playerGroup.position, `강화용 효소 결정(${cost.toLocaleString()} ENZ)이 부족합니다!`, 'text-rose-400');
+                spawnFloatingText(playerGroup.position, `강화용 효소 결정(${korNum(cost)} ENZ)이 부족합니다!`, 'text-rose-400');
                 return;
             }
             gameState.enz -= cost;
@@ -2396,7 +2410,7 @@
                     btnInstant.innerText = '일괄 투하 활성화됨';
                     btnInstant.disabled = true;
                 } else {
-                    btnInstant.innerText = `${SKIN_PACKS[2].costStem.toLocaleString()} STEM`;
+                    btnInstant.innerText = `${korNum(SKIN_PACKS[2].costStem)} STEM`;
                     btnInstant.disabled = false;
                 }
             }
@@ -2410,19 +2424,19 @@
             const costEnz = 250000 * gameState.pyramidStage;
             const costRibo = 150000 * gameState.pyramidStage;
             document.getElementById('btn-modal-extend-spring').innerText =
-                `온천 이용 시간 +1분 연장하기 (최대 5분) — 비용: ${costEnz.toLocaleString()} ENZ + ${costRibo.toLocaleString()} RIBO`;
+                `온천 이용 시간 +1분 연장하기 (최대 5분) — 비용: ${korNum(costEnz)} ENZ + ${korNum(costRibo)} RIBO`;
 
             document.getElementById('upg-spring-lv').innerText = `Lv.${gameState.springLv}`;
-            document.getElementById('btn-upg-spring').innerText = `${getUpgradeCost('spring').toLocaleString()} ENZ`;
+            document.getElementById('btn-upg-spring').innerText = `${korNum(getUpgradeCost('spring'))} ENZ`;
 
             document.getElementById('upg-bag-lv').innerText = `Lv.${gameState.bagLv}`;
-            document.getElementById('btn-upg-bag').innerText = `${getUpgradeCost('bag').toLocaleString()} ENZ`;
+            document.getElementById('btn-upg-bag').innerText = `${korNum(getUpgradeCost('bag'))} ENZ`;
 
             document.getElementById('upg-speed-lv').innerText = `Lv.${gameState.speedLv}`;
-            document.getElementById('btn-upg-speed').innerText = `${getUpgradeCost('speed').toLocaleString()} ENZ`;
+            document.getElementById('btn-upg-speed').innerText = `${korNum(getUpgradeCost('speed'))} ENZ`;
 
             document.getElementById('upg-yield-lv').innerText = `Lv.${gameState.yieldLv}`;
-            document.getElementById('btn-upg-yield').innerText = `${getUpgradeCost('yield').toLocaleString()} ENZ`;
+            document.getElementById('btn-upg-yield').innerText = `${korNum(getUpgradeCost('yield'))} ENZ`;
         }
 
         /*************************************************************************
@@ -2457,7 +2471,7 @@
             if (!window.BioGoal) return;
             const st = gameState.highestPyramidStage;
             const g = BioGoal.GOALS[RANK_ID], reached = g && st >= g.t;   // 계속 이어지는 게임이라 목표 전에는 '실패' 대신 '기록'으로
-            BioGoal.result(RANK_ID, st, { text: `피라미드 ${st}단계 · 총점 ${Math.floor(gameState.totalScore).toLocaleString()}`, rank: rankPayload(), rankOnly: !reached, title: '피라미드 완공!' });
+            BioGoal.result(RANK_ID, st, { text: `피라미드 ${st}단계 · 총점 ${korNum(Math.floor(gameState.totalScore))}`, rank: rankPayload(), rankOnly: !reached, title: '피라미드 완공!' });
         }
 
         function getCombinedLeaderboard() {
@@ -2536,7 +2550,7 @@
             document.getElementById('rank-modal-my-badge').innerText = `#${myRank}`;
             document.getElementById('rank-modal-my-name').innerText = myWho() || '학번·이름을 등록하면 랭킹에 올릴 수 있어요';
             document.getElementById('rank-modal-my-stats').innerText =
-                `최고 ${gameState.highestPyramidStage}단계 피라미드 | 장착 스킨 T${gameState.equippedSkin + 1} | 총점 ${Math.floor(gameState.totalScore).toLocaleString()}`;
+                `최고 ${gameState.highestPyramidStage}단계 피라미드 | 장착 스킨 T${gameState.equippedSkin + 1} | 총점 ${korNum(Math.floor(gameState.totalScore))}`;
 
             fullEl.innerHTML = '';
             list.forEach((entry, idx) => {
@@ -2556,7 +2570,7 @@
                         </span>
                     </div>
                     <div class="col-span-3 text-right font-black tabular-nums text-slate-900">
-                        ${Number(entry.totalScore).toLocaleString()} pt
+                        ${korNum(Number(entry.totalScore))} pt
                     </div>
                 `;
                 fullEl.appendChild(row);
@@ -2581,13 +2595,77 @@
         // '내 기록 랭킹에 보내기': 학번·이름이 있으면 바로 보내고, 없으면 결과 창에서 적고 보냄
         function syncScoreNow() {
             playSfx('upgrade');
-            const who = myWho(), st = gameState.highestPyramidStage, text = `피라미드 ${st}단계 · 총점 ${Math.floor(gameState.totalScore).toLocaleString()}`;
+            const who = myWho(), st = gameState.highestPyramidStage, text = `피라미드 ${st}단계 · 총점 ${korNum(Math.floor(gameState.totalScore))}`;
             if (!window.BioRank || !BioRank.ready()) { spawnFloatingText(playerGroup.position, '랭킹 서버에 연결할 수 없어요', 'text-rose-300'); return; }
             if (!who) { closeModal('ranking-modal'); if (window.BioGoal) BioGoal.result(RANK_ID, st, { rankOnly: true, title: '지금 내 기록', text, rank: rankPayload() }); return; }
             BioRank.submit(RANK_ID, { who, value: st, text, ok: false, rank: rankPayload() })
                 .then(() => { spawnFloatingText(playerGroup.position, '랭킹에 올렸어요!', 'text-emerald-300'); setTimeout(fetchCloudRanking, 800); })
                 .catch(e => spawnFloatingText(playerGroup.position, '보내지 못했어요', 'text-rose-300'));
         }
+
+        /*************************************************************************
+         * 엔딩: 최종 펫 [불사의 우주물곰]을 얻으면 → 최종 기록을 랭킹에 남기고 모두 처음부터
+         *************************************************************************/
+        function endingCount() { try { return +localStorage.getItem('bioPyramidEndings') || 0; } catch (e) { return 0; } }
+        function showEnding() {
+            if (document.getElementById('ending-overlay')) return;
+            ['gacha-modal', 'pet-modal', 'skin-modal', 'pyramid-modal', 'ranking-modal', 'profile-modal'].forEach(id => { try { closeModal(id); } catch (e) {} });
+            saveGame();
+            const st = gameState.highestPyramidStage, score = Math.floor(gameState.totalScore);
+            const pets = gameState.pets.length, awake = gameState.pets.filter(p => p.enhanced).length, nth = endingCount() + 1;
+            const who = myWho();
+            const ov = document.createElement('div'); ov.id = 'ending-overlay';
+            ov.style.cssText = 'position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto;background:radial-gradient(ellipse at 50% 30%,#3b2a8c 0%,#1a1040 45%,#07051a 100%);font-family:inherit;animation:endFade 1.2s ease';
+            const statBox = (label, val) => `<div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:8px 6px;text-align:center"><div style="font-size:11px;font-weight:800;color:#c7d2fe">${label}</div><div style="font-size:17px;font-weight:900;color:#fff;margin-top:2px;word-break:keep-all">${val}</div></div>`;
+            const inp = 'width:100%;box-sizing:border-box;padding:10px 12px;border-radius:12px;border:2px solid #6366f1;background:#0f0b2e;color:#fff;font-size:15px;font-weight:800;outline:none';
+            ov.innerHTML = `
+                <style>@keyframes endFade{from{opacity:0}to{opacity:1}}@keyframes endFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}@keyframes endTw{0%,100%{opacity:.25}50%{opacity:1}}
+                #ending-overlay .star{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;animation:endTw 2.4s infinite}</style>
+                ${Array.from({ length: 40 }, () => `<span class="star" style="left:${Math.random() * 100}%;top:${Math.random() * 100}%;animation-delay:${(Math.random() * 2.4).toFixed(2)}s"></span>`).join('')}
+                <div style="position:relative;width:100%;max-width:440px;margin:auto;background:rgba(15,10,46,.82);border:2px solid #fbbf24;border-radius:24px;padding:20px 18px;box-shadow:0 0 60px rgba(251,191,36,.35);color:#fff;text-align:center">
+                    <div style="display:inline-block;font-size:12px;font-weight:900;letter-spacing:4px;color:#1e1b4b;background:linear-gradient(90deg,#fde047,#f59e0b);padding:4px 14px;border-radius:999px">ENDING · ${nth}번째</div>
+                    <div style="font-size:26px;font-weight:900;margin:10px 0 2px;background:linear-gradient(180deg,#fff7c2,#fbbf24);-webkit-background-clip:text;background-clip:text;color:transparent">생명의 피라미드 완성</div>
+                    <div style="width:132px;height:132px;margin:6px auto;animation:endFloat 3s ease-in-out infinite;filter:drop-shadow(0 0 22px rgba(251,191,36,.7))">${getPetIllustrationSVG('tardigrade', true)}</div>
+                    <div style="font-size:13px;line-height:1.65;color:#e0e7ff;word-break:keep-all">0.005%의 기적! 어떤 극한 환경에서도 살아남는<br><b style="color:#fde047">불사의 우주물곰</b>이 연구소에 찾아왔어요.<br>당신이 쌓아 올린 생명의 피라미드는 이제 기록으로 남고,<br>새로운 연구가 처음부터 다시 시작돼요.</div>
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0">
+                        ${statBox('최고 피라미드', st + '단계')}${statBox('최종 총점', korNum(score))}
+                        ${statBox('모은 펫', pets + '마리')}${statBox('각성한 펫', awake + '마리')}
+                    </div>
+                    <div id="end-who" style="display:${who ? 'none' : 'grid'};grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;text-align:left">
+                        <label style="font-size:11px;font-weight:800;color:#c7d2fe">학번 5자리<input id="end-sid" inputmode="numeric" maxlength="5" placeholder="20800" style="${inp}"></label>
+                        <label style="font-size:11px;font-weight:800;color:#c7d2fe">이름<input id="end-name" maxlength="5" placeholder="홍길동" style="${inp}"></label>
+                    </div>
+                    <div id="end-msg" style="min-height:18px;font-size:12px;font-weight:800;color:#a5b4fc;margin-bottom:8px">${who ? who + ' 이름으로 최종 기록을 남겨요' : '학번과 이름을 적으면 최종 기록이 랭킹에 남아요'}</div>
+                    <button id="end-go" type="button" style="width:100%;padding:13px;border:0;border-radius:14px;font-size:16px;font-weight:900;color:#1e1b4b;background:linear-gradient(90deg,#fde047,#f59e0b);box-shadow:0 5px 0 #92400e;cursor:pointer">🏆 기록 남기고 처음부터 시작</button>
+                    <button id="end-skip" type="button" style="width:100%;margin-top:10px;padding:10px;border:1px solid rgba(255,255,255,.3);border-radius:12px;font-size:13px;font-weight:800;color:#e0e7ff;background:transparent;cursor:pointer">기록 없이 처음부터 시작</button>
+                    <div style="font-size:11px;color:#94a3b8;margin-top:10px">처음부터 시작하면 피라미드·재화·펫·스킨이 모두 초기화돼요 (학번·이름은 그대로)</div>
+                </div>`;
+            document.body.appendChild(ov);
+            ov.querySelectorAll('input').forEach(el => ['keydown', 'keyup', 'keypress'].forEach(k => el.addEventListener(k, e => e.stopPropagation())));
+            playSfx('victory');
+            const msg = ov.querySelector('#end-msg'), go = ov.querySelector('#end-go'), skip = ov.querySelector('#end-skip');
+            const restart = () => {
+                resettingGame = true;
+                try { localStorage.removeItem(SAVE_KEY); localStorage.setItem('bioPyramidEndings', String(nth)); } catch (e) {}
+                location.reload();
+            };
+            skip.onclick = () => { playSfx('pop'); restart(); };
+            go.onclick = () => {
+                let w = myWho();
+                if (!w) {
+                    const sid = ov.querySelector('#end-sid').value.trim(), nm = ov.querySelector('#end-name').value.trim();
+                    if (!/^\d{5}$/.test(sid) || !/^[가-힣]{2,5}$/.test(nm)) { msg.style.color = '#fca5a5'; msg.textContent = '학번 5자리와 한글 이름(2~5자)을 적어 주세요'; return; }
+                    gameState.studentClass = sid; gameState.studentName = nm; w = sid + ' ' + nm;
+                    try { localStorage.setItem('bioRankWho', w); } catch (e) {}
+                }
+                if (!window.BioRank || !BioRank.ready()) { msg.style.color = '#fca5a5'; msg.textContent = '랭킹 서버에 연결할 수 없어요. 아래 [기록 없이 처음부터]를 눌러 주세요'; return; }
+                go.disabled = true; go.style.opacity = '.6'; msg.style.color = '#a5b4fc'; msg.textContent = '최종 기록을 보내는 중…';
+                BioRank.submit(RANK_ID, { who: w, value: st, text: `🏆 엔딩 달성 · 피라미드 ${st}단계 · 총점 ${korNum(score)}`, ok: !!(BioGoal && BioGoal.GOALS[RANK_ID] && st >= BioGoal.GOALS[RANK_ID].t), rank: rankPayload() })
+                    .then(() => { playSfx('upgrade'); msg.style.color = '#86efac'; msg.textContent = '랭킹에 남겼어요! 처음부터 다시 시작해요…'; setTimeout(restart, 1600); })
+                    .catch(() => { go.disabled = false; go.style.opacity = '1'; msg.style.color = '#fca5a5'; msg.textContent = '보내지 못했어요. 다시 누르거나 [기록 없이 처음부터]를 눌러 주세요'; });
+            };
+        }
+        if (gameState.endingPending) setTimeout(showEnding, 1500);   // 엔딩 도중 창을 닫았어도 다시 열면 엔딩부터
 
         function openModal(id) {
             playSfx('open');
@@ -2626,9 +2704,9 @@
         }
 
         function updateHUD() {
-            document.getElementById('hud-ribo').innerText = Math.floor(gameState.ribo).toLocaleString();
-            document.getElementById('hud-stem').innerText = Math.floor(gameState.stem).toLocaleString();
-            document.getElementById('hud-enz').innerText  = Math.floor(gameState.enz).toLocaleString();
+            document.getElementById('hud-ribo').innerText = korNum(Math.floor(gameState.ribo));
+            document.getElementById('hud-stem').innerText = korNum(Math.floor(gameState.stem));
+            document.getElementById('hud-enz').innerText  = korNum(Math.floor(gameState.enz));
             document.getElementById('hud-bag').innerText  = `${gameState.bagItems.length} / ${gameState.maxBag}`;
 
             const theme = PYRAMID_THEMES[gameState.pyramidStage - 1];

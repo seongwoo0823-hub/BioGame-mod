@@ -63,7 +63,7 @@
     'cell-frontier': {how: '지역마다 점유 면적이 넓은 순 → 점수가 높은 순 → 걸린 시간이 짧은 순', cat: '지역', cols: [['area', '점유 면적', 'p'], ['score', '점수', 'n'], ['time', '걸린 시간', 't']]},
     'codon-glass':   {how: '모드마다 점수가 높은 순', cat: '모드', cols: [['score', '점수', 'n']]},
     'bio-tower':     {how: '연속 승리 수가 많은 순', cols: [['streak', '연속 승리', 'n'], ['height', '최고 탑 높이', 's']]},
-    'bio-pyramid':   {how: '최고 피라미드 단계가 높은 순 → 같으면 총점이 높은 순', cols: [['stage', '최고 단계', 'n'], ['score', '총점', 'n'], ['skin', '스킨', 's']]},
+    'bio-pyramid':   {how: '최고 피라미드 단계가 높은 순 → 같으면 총점이 높은 순', cols: [['stage', '최고 단계', 'n'], ['score', '총점', 'k'], ['skin', '스킨', 's']]},
     'cell-expedition': {how: '깬 원정 스테이지가 높은 순 → 같으면 전투력이 높은 순', cols: [['stage', '스테이지', 'n'], ['power', '전투력', 'n']]}
   };
   function fmtCol(v, f) {
@@ -71,7 +71,17 @@
     if (f === 't') { v = +v; var m = Math.floor(v / 60), s = v - m * 60; return (m ? m + '분 ' : '') + s.toFixed(1) + '초'; }
     if (f === 'p') return (+v).toFixed(1) + '%';
     if (f === 'n') return typeof v === 'number' ? v.toLocaleString('ko-KR') : String(v);
+    if (f === 'k') return typeof v === 'number' ? korNum(v) : String(v);
     return String(v);
+  }
+  // 10억 이상은 한국식 단위(만·억·조·경·해…)로: 1,234,567,890 → '12억 3456만'
+  var KOR_U = ['', '만', '억', '조', '경', '해', '자', '양', '구', '간', '정', '재', '극', '항하사', '아승기', '나유타', '불가사의', '무량대수'];
+  function korNum(v) {
+    v = Math.floor(+v || 0); if (Math.abs(v) < 1e9) return v.toLocaleString('ko-KR');
+    var neg = v < 0; v = Math.abs(v);
+    var e = Math.min(KOR_U.length - 1, Math.floor(Math.log10(v) / 4 + 1e-9));
+    var big = Math.floor(v / Math.pow(10, e * 4)), rest = Math.floor(v / Math.pow(10, (e - 1) * 4)) % 10000;
+    return (neg ? '-' : '') + big.toLocaleString('ko-KR') + KOR_U[e] + (rest > 0 && e < KOR_U.length - 1 ? ' ' + rest + KOR_U[e - 1] : '');
   }
   // 기록 보내기: entry = {who, value, text, ok, rank: {v, cat, f}}
   function submit(game, entry) {
@@ -125,7 +135,7 @@
     if (!ready()) return Promise.resolve();
     return req('PATCH', base() + '/config/goals' + key(), {fields: toFields({cfg: cfg || {}, t: Date.now()})});
   }
-  window.BioRank = {SPEC: SPEC, fmtCol: fmtCol, ready: ready, submit: submit, top: top, mine: mine, parseName: parseName, loadGoalConfig: loadGoalConfig, saveGoalConfig: saveGoalConfig};
+  window.BioRank = {SPEC: SPEC, fmtCol: fmtCol, korNum: korNum, ready: ready, submit: submit, top: top, mine: mine, parseName: parseName, loadGoalConfig: loadGoalConfig, saveGoalConfig: saveGoalConfig};
   // 시작할 때 공용 성공 기준을 받아 적용
   if (ready()) loadGoalConfig().then(function (cfg) { if (cfg && window.BioGoal) BioGoal.setConfig(cfg); if (window.onBioGoalCfg) window.onBioGoalCfg(); });
 })();
