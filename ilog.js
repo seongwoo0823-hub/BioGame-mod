@@ -27,7 +27,6 @@
     'bio-kart': () => { const P = G.R && G.R.player; return {화면: G.screen, 바퀴: P && P.lap, 순위: P && P.rank, x: P && r1(P.x), y: P && r1(P.y)}; },
     'bio-strike': () => ({모드: G.mode, 체력: G.player && r1(G.player.hp), x: G.player && r1(G.player.pos.x), y: G.player && r1(G.player.pos.y), z: G.player && r1(G.player.pos.z), 점수: G.score}),
     'biotro': () => ({점수: G && G.score, 남은손: G && G.hands, 손패: G && G.hand && G.hand.length}),
-    'cell-bound': () => ({화면: G.mode, 체력: G.player && G.player.hp, x: G.player && r1(G.player.x), y: G.player && r1(G.player.y)}),
     'cell-brawl': () => ({화면: state, 체력: G && G.player && r1(G.player.hp), x: G && G.player && G.player.pos && r1(G.player.pos.x), z: G && G.player && G.player.pos && r1(G.player.pos.z)}),
     'vessel-canyon': () => ({화면: STATE, 체력: G && G.player && r1(G.player.hp), x: G && G.player && r1(G.player.x), y: G && G.player && r1(G.player.y)}),
     'helix': () => ({화면: G.state, 동작: G.player && G.player.act, x: G.player && Math.round(G.player.x), z: G.player && Math.round(G.player.z), 체력: G.player && G.player.hp, 방: G.run ? G.run.ch + '-' + G.run.room : ''}),

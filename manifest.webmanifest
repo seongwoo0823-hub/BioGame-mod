@@ -2,7 +2,7 @@
   "id": "./?pwa=v2",
   "name": "BIO ARCADE",
   "short_name": "BIO ARCADE",
-  "description": "리듬게임, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터, 3D 난투, 플랫포머, 1인칭 슈팅, 액션 RPG, 퍼즐, 쌓기 대결, 타이쿤, 육성 원정, 방 탐험 로그라이크까지 생명과학으로 만든 게임 15종",
+  "description": "리듬게임, 카트 레이싱, 5대5 대전, 포커 로그라이크, 탐험 슈터, 3D 난투, 플랫포머, 1인칭 슈팅, 액션 RPG, 퍼즐, 쌓기 대결, 타이쿤, 육성 원정, 방 탐험 로그라이크까지 생명과학으로 만든 게임 14종",
   "lang": "ko",
   "start_url": "./index.html?pwa=v2",
   "scope": "./",
@@ -91,18 +91,6 @@
       "name": "BIOTRO",
       "short_name": "세포 포커",
       "url": "./games/biotro.html",
-      "icons": [
-        {
-          "src": "icons/icon-v2-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "CELL BOUND",
-      "short_name": "세포의 속박",
-      "url": "./games/cell-bound.html",
       "icons": [
         {
           "src": "icons/icon-v2-192.png",

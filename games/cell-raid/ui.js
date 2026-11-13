@@ -1,4 +1,4 @@
-// 세포 레이드 — 화면 UI: 화면 맞춤 · 메뉴 · 알림 · 보스 등장 · 결과 · 도감/샌드박스 · 터치 버튼 · 기록
+// 세포 레이드 — 화면 UI: 화면 맞춤 · 메뉴 · 알림 · 보스 등장 · 결과 · 도감 · 터치 버튼 · 기록
 (function () {
   'use strict';
   const CR = window.CR, G = CR.G, AU = CR.audio, IN = CR.input, W = CR.W, H = CR.H;
@@ -56,7 +56,7 @@
     $('#titleRec').innerHTML = stats.runs ? `도전 <b>${stats.runs}</b>회 · 최고 <b>${stats.wins ? '완주 ' + stats.wins + '회' : '구역 ' + (stats.bestStage || 1)}</b>${stats.bestTime ? ' · 최고 기록 <b>' + CR.fmtTime(stats.bestTime) + '</b>' : ''}` : '면역 백혈구가 되어 인체 6구역에 침입한 병원체를 물리치세요';
   }
   titleInfo(); show('#title');
-  ui.onStart = () => { show(null); $('#touch').classList.toggle('on', IN.touch || matchMedia('(pointer: coarse)').matches); resize(); };
+  ui.onStart = () => { G.mapToggle = false; show(null); $('#touch').classList.toggle('on', IN.touch || matchMedia('(pointer: coarse)').matches); resize(); };
   function begin(o) { AU.init(); AU.sfx('menu'); CR.startRun(o); }
   $('#btnStart').onclick = () => begin({});
   $('#btnCodexT').onclick = () => openCodex();
@@ -95,10 +95,10 @@
   $('#btnAgain').onclick = () => begin({});
   $('#btnOverTitle').onclick = () => { G.mode = 'title'; AU.play(null); show('#title'); $('#touch').classList.remove('on'); };
 
-  /* ───────── 도감 · 샌드박스 ───────── */
+  /* ───────── 바이오 도감 (열람 전용) ───────── */
   const TABS = [
     ['passive', '패시브 70', () => CR.PASSIVES], ['active', '액티브 30', () => CR.ACTIVES], ['tool', '수술도구 20', () => CR.TOOLS], ['chart', '진단서 10', () => CR.CHARTS],
-    ['hormone', '호르몬 8', () => CR.HORMONES], ['enemy', '병원체 40', () => CR.ENEMIES], ['boss', '보스 21', () => CR.BOSSES], ['move', '이동 · 치트', null],
+    ['hormone', '호르몬 8', () => CR.HORMONES], ['enemy', '병원체 40', () => CR.ENEMIES], ['boss', '보스 21', () => CR.BOSSES],
   ];
   let tab = 'passive', codexFrom = 'title';
   function iconOf(x) {
@@ -107,65 +107,27 @@
     if (x.kind === 'hormone') return CR.url(CR.icon('pill', x.col, x.col2));
     return CR.url(CR.icon(x.glyph, x.col, x.col2));
   }
+  // 도감: 시작 화면·일시정지 메뉴에서 들어가 열람만 함
   function openCodex() {
     AU.init(); AU.sfx('menu');
-    codexFrom = G.mode; if (G.mode === 'play' || G.mode === 'pause') G.mode = 'codex';
+    codexFrom = G.mode === 'pause' ? 'pause' : 'title';
     show('#codex'); renderCodex();
   }
   ui.openCodex = openCodex;
-  function closeCodex() {
-    AU.sfx('menu');
-    if (codexFrom === 'title' || !G.P) { G.mode = G.P && G.mode === 'codex' ? 'play' : G.mode; if (G.mode === 'codex') G.mode = 'play'; }
-    if (G.mode === 'codex') G.mode = 'play';
-    show(G.mode === 'title' ? '#title' : null);
-  }
+  function closeCodex() { AU.sfx('menu'); show(codexFrom === 'pause' ? '#pause' : '#title'); }
   $('#codexClose').onclick = closeCodex;
-  function ensureRun() {
-    if (!G.P || G.mode === 'title' || G.mode === 'over') { CR.startRun({ sandbox: true }); G.mode = 'codex'; codexFrom = 'play'; $('#touch').classList.toggle('on', IN.touch || matchMedia('(pointer: coarse)').matches); }
-    G.sandbox = true;
-  }
   function renderCodex() {
     $('#codexTabs').innerHTML = TABS.map(([k, n]) => `<button type="button" data-tab="${k}" class="${k === tab ? 'on' : ''}">${n}</button>`).join('');
     $('#codexTabs').querySelectorAll('button').forEach(b => b.onclick = () => { tab = b.dataset.tab; AU.sfx('menu'); renderCodex(); });
-    const list = $('#codexList');
-    if (tab === 'move') { renderMove(list); return; }
-    const L = TABS.find(t => t[0] === tab)[2]();
-    const verb = tab === 'enemy' ? '소환' : tab === 'boss' ? '보스전' : '받기';
+    const L = TABS.find(t => t[0] === tab)[2](), list = $('#codexList');
+    let n = 0;
     list.innerHTML = L.map(x => {
+      const met = seen.has(x.id); if (met) n++;
       const tier = x.tier === 4 ? '<i class="op">사기템</i>' : x.tier ? `<i>등급 ${x.tier}</i>` : x.charge != null ? `<i>충전 ${x.charge}칸</i>` : x.kind === 'enemy' ? `<i>${x.st}구역 · 체력 ${x.hp}</i>` : x.kind === 'boss' ? `<i>${x.st}구역 보스 · 체력 ${x.hp}</i>` : x.kind === 'hormone' ? `<i class="${x.good ? '' : 'bad'}">${x.good ? '좋은 효과' : '나쁜 효과'}</i>` : '';
-      return `<div class="card ${x.tier === 4 ? 'legend' : ''} ${seen.has(x.id) ? '' : 'unseen'}" data-id="${x.id}"><img src="${iconOf(x)}" alt=""><div class="tx"><b>${x.name}</b><small>${x.id} ${tier}</small><p>${x.desc}</p></div><button type="button" data-give="${x.id}">${verb}</button></div>`;
+      return `<div class="card ${x.tier === 4 ? 'legend' : ''} ${met ? '' : 'unseen'}"><img src="${iconOf(x)}" alt=""><div class="tx"><b>${x.name}${met ? '' : ' <small class="new">미발견</small>'}</b><small>${x.id} ${tier}</small><p>${x.desc}</p></div></div>`;
     }).join('');
-    list.querySelectorAll('[data-give]').forEach(b => b.onclick = () => give(b.dataset.give));
-    $('#codexNote').textContent = '선생님용: [' + verb + ']을 누르면 바로 지급·소환돼요. 샌드박스를 쓴 판은 랭킹에 기록되지 않아요. (밝게 보이는 칸은 이 기기에서 이미 만나 본 것)';
+    $('#codexNote').textContent = `이 기기에서 만나 본 것 ${n} / ${L.length} — 게임에서 만나면 밝게 표시돼요`;
   }
-  function give(id) {
-    ensureRun(); const x = CR.ALL[id];
-    if (x.kind === 'enemy') CR.spawnEnemyHere(id);
-    else if (x.kind === 'boss') { G.forceBoss = null; G.room.ents = G.room.ents.filter(e => !e.boss); CR.spawnBossHere(id); }
-    else CR.applyItem(id);
-    AU.sfx('item'); flash('지급: ' + x.name + (x.kind === 'enemy' || x.kind === 'boss' ? ' (도감을 닫으면 시작)' : ''));
-  }
-  function flash(t) { const n = $('#codexNote'); n.textContent = t; n.classList.add('hi'); setTimeout(() => n.classList.remove('hi'), 500); }
-  function renderMove(list) {
-    const btn = (k, label) => `<button type="button" class="mv" data-mv="${k}">${label}</button>`;
-    list.innerHTML = `<div class="mvwrap"><h4>구역으로 바로 가기</h4>${CR.STAGES.map(s => btn('st' + s.n, s.n + '구역 · ' + s.name)).join('')}
-      <h4>이 층의 특수 방</h4>${btn('boss', '보스 방')}${btn('treasure', '보물 방')}${btn('shop', '상점')}${btn('lab', '변이 연구실')}${btn('sanct', '면역 성소')}${btn('secret', '숨은 방')}
-      <h4>치트</h4>${btn('god', '무적 켜기/끄기')}${btn('heal', '체력 완전 회복 + 최대 체력 +1')}${btn('res', '코인·폭탄·열쇠 +10')}${btn('charge', '액티브 완전 충전')}${btn('kill', '이 방 병원체 모두 처치')}${btn('map', '지도 전체 공개')}</div>`;
-    list.querySelectorAll('[data-mv]').forEach(b => b.onclick = () => move(b.dataset.mv));
-    $('#codexNote').textContent = '샌드박스 기능 — 쓴 판은 랭킹에 기록되지 않아요';
-  }
-  function move(k) {
-    ensureRun(); const P = G.P; AU.sfx('menu');
-    if (k.startsWith('st')) { CR.startStage(+k.slice(2)); flash(k.slice(2) + '구역으로 이동'); return; }
-    if (['boss', 'treasure', 'shop', 'lab', 'sanct', 'secret'].includes(k)) { if (k === 'sanct' && ![...G.floor.rooms.values()].some(r => r.type === 'sanct')) { flash('이 층에는 면역 성소가 없어요 (2구역부터 45% 확률)'); return; } if (CR.teleportTo(k)) flash('이동했어요'); return; }
-    if (k === 'god') { G.god = !G.god; flash('무적 ' + (G.god ? '켜짐' : '꺼짐')); }
-    if (k === 'heal') { P.maxHp = Math.min(24, P.maxHp + 2); P.hp = P.maxHp; CR.calcStats(); flash('회복했어요'); }
-    if (k === 'res') { P.coins = Math.min(99, P.coins + 10); P.bombs = Math.min(99, P.bombs + 10); P.keys = Math.min(99, P.keys + 10); flash('+10'); }
-    if (k === 'charge') { if (P.active) P.active.charge = P.active.max; flash(P.active ? '충전했어요' : '액티브 아이템이 없어요'); }
-    if (k === 'kill') { G.room.ents.forEach(e => { if (!e.ally && !e.dead) { e.revived = true; CR.hurtEnemy(e, 99999, { dot: 1 }); } }); flash('처치했어요'); }
-    if (k === 'map') { for (const r of G.floor.rooms.values()) { r.seen = true; r.revealed = true; } flash('지도를 공개했어요'); }
-  }
-
   /* ───────── 키 · 터치 버튼 ───────── */
   // 먹기 전 미리보기 말풍선
   const peekEl = $('#peek'); let peekKey = '';
@@ -195,8 +157,10 @@
   }
   ui.frame = () => {
     updatePeek();
-    if (IN.take('Escape') || IN.take('p')) { if (G.mode === 'play') pause(true); else if (G.mode === 'pause') pause(false); else if (G.mode === 'codex') closeCodex(); }
-    if (IN.take('Tab') || IN.take('i')) { if (G.mode === 'codex') closeCodex(); else if (G.mode === 'play' || G.mode === 'pause' || G.mode === 'title') openCodex(); }
+    if (IN.take('Escape') || IN.take('p')) { if ($('#codex').classList.contains('on')) closeCodex(); else if (G.mode === 'play') pause(true); else if (G.mode === 'pause') pause(false); }
+    IN.take('Tab');
+    G.bigMap = G.mode === 'play' && (IN.keys.Tab || G.mapToggle);
+    $('#mapLegend').classList.toggle('on', !!G.bigMap);
     if (IN.take('m')) { AU.music = !AU.music; AU.apply(); CR.toast('배경 음악 ' + (AU.music ? '켜짐' : '꺼짐'), 'M 키로 바꿀 수 있어요', '#cfe0f0'); }
     if (G.mode === 'over' && (IN.take('Enter') || IN.take('r'))) begin({});
     if (G.mode !== 'play') { IN.take(' '); IN.take('q'); IN.take('e'); IN.take('f'); IN.take('g'); IN.take('x'); }
@@ -209,7 +173,7 @@
   };
   document.querySelectorAll('#touch [data-act]').forEach(b => {
     const k = b.dataset.act;
-    b.addEventListener('touchstart', e => { e.preventDefault(); AU.init(); if (k === 'pause') { pause(G.mode === 'play'); return; } if (k === 'codex') { openCodex(); return; } IN.pressed[k] = true; }, { passive: false });
+    b.addEventListener('touchstart', e => { e.preventDefault(); AU.init(); if (k === 'pause') { pause(G.mode === 'play'); return; } if (k === 'map') { G.mapToggle = !G.mapToggle; return; } IN.pressed[k] = true; }, { passive: false });
   });
   CR.bindTouch($('#touchLayer'), { L: { base: $('#stickL'), knob: $('#stickL i') }, R: { base: $('#stickR'), knob: $('#stickR i') } });
   addEventListener('touchstart', () => { if (!IN.touch) { IN.touch = true; resize(); if (G.mode === 'play') $('#touch').classList.add('on'); } }, { passive: true });

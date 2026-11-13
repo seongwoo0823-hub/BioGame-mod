@@ -1007,6 +1007,7 @@
     c.restore();
     if (G.fade > 0) { c.fillStyle = 'rgba(5,3,10,' + Math.min(1, G.fade * 3) + ')'; c.fillRect(RX, RY, RW, RH); }
     drawHUD(c);
+    if (G.bigMap) drawBigMap(c);
   }
   CR.render = render;
   function hexA(hex, a) { const [r, g, b] = CR.rgb(hex); return `rgba(${r},${g},${b},${a})`; }
@@ -1045,8 +1046,6 @@
     // 타이머
     const tm = 'TIME ' + fmtTime(G.time); CR.text(c, tm, W / 2 - CR.textW(tm) / 2 + 40, 4, '#ffffff');
     CR.text(c, 'STAGE ' + G.stage + ' ' + S.en, W / 2 - CR.textW('STAGE ' + G.stage + ' ' + S.en) / 2 + 40, 12, S.acc);
-    if (G.sandbox) CR.text(c, 'SANDBOX', W / 2 + 40 - 13, 20, '#ff9ad5');
-    if (G.god) CR.text(c, 'GOD', W / 2 + 40 + 20, 20, '#ffe066');
     if (P.room.flag) CR.text(c, P.room.flag.slice(0, 8), RX + 2, 22, '#ffb8e8', 1, false);
     // 미니맵
     CR.drawMinimap(c, G.floor, G.room.key, W - RX + 4, 3, 3, 3, has('mapReveal'), toolFx('showSecret'));
@@ -1057,6 +1056,30 @@
     const bs = G.room.ents.filter(e => e.boss && !e.dead);
     if (bs.length) { let hp = 0, mx = 0; bs.forEach(b => { hp += Math.max(0, b.hp); mx += b.maxHp; }); const w = 180, x = W / 2 - w / 2, y = RY + RH - 9;
       c.fillStyle = '#1a0a10'; c.fillRect(x - 1, y - 1, w + 2, 6); c.fillStyle = '#5a1020'; c.fillRect(x, y, w, 4); c.fillStyle = '#ff3d5a'; c.fillRect(x, y, Math.round(w * clamp(hp / mx, 0, 1)), 4); c.fillStyle = '#ffb0c0'; c.fillRect(x, y, Math.round(w * clamp(hp / mx, 0, 1)), 1); }
+  }
+  // Tab: 큰 층 지도
+  const MAPC = { treasure: '#f5c542', shop: '#46c46a', boss: '#e8344e', secret: '#8a7a6a', lab: '#ff3d6e', sanct: '#fff3b0' };
+  const MAPL = { treasure: 'T', shop: '$', boss: 'B', secret: '?', lab: 'L', sanct: 'S' };
+  function drawBigMap(c) {
+    const fl = G.floor, reveal = has('mapReveal'), showSecret = toolFx('showSecret');
+    c.fillStyle = 'rgba(8,4,16,0.82)'; c.fillRect(RX, RY, RW, RH);
+    let minX = 9, minY = 9, maxX = 0, maxY = 0; const vis = [];
+    for (const r of fl.rooms.values()) { const known = r.visited || r.seen || reveal; if (!known) continue; if (r.type === 'secret' && !r.visited && !showSecret && !r.revealed) continue; vis.push(r); minX = Math.min(minX, r.x); minY = Math.min(minY, r.y); maxX = Math.max(maxX, r.x); maxY = Math.max(maxY, r.y); }
+    const cw = 24, ch = 15, gap = 4, w = (maxX - minX + 1) * (cw + gap) - gap, h = (maxY - minY + 1) * (ch + gap) - gap, x0 = Math.round(RX + RW / 2 - w / 2), y0 = Math.round(RY + RH / 2 - h / 2 - 6);
+    const pos = r => [x0 + (r.x - minX) * (cw + gap), y0 + (r.y - minY) * (ch + gap)];
+    // 연결 통로
+    c.fillStyle = '#4a4060';
+    for (const r of vis) for (const d in r.doors) { const dr = r.doors[d]; if (dr.hidden) continue; const o = fl.rooms.get(dr.to); if (!o || !vis.includes(o)) continue; const [x, y] = pos(r); if (d === 'r') c.fillRect(x + cw, y + ch / 2 - 1, gap, 3); if (d === 'd') c.fillRect(x + cw / 2 - 1, y + ch, 3, gap); }
+    for (const r of vis) {
+      const [x, y] = pos(r), cur = r.key === G.room.key;
+      c.fillStyle = cur ? '#ffffff' : r.visited ? '#9aa1b8' : '#3a3550'; c.fillRect(x, y, cw, ch);
+      c.fillStyle = r.cleared && r.visited ? 'rgba(0,0,0,0)' : 'rgba(0,0,0,0)';
+      if (MAPC[r.type]) { c.fillStyle = MAPC[r.type]; c.fillRect(x + 3, y + 3, cw - 6, ch - 6); CR.text(c, MAPL[r.type], x + cw / 2 - 1, y + ch / 2 - 2, '#1a0f24', 1, false); }
+      if (r.type === 'start') CR.text(c, 'S', x + cw / 2 - 1, y + ch / 2 - 2, cur ? '#1a0f24' : '#6a6480', 1, false);
+      if (cur) { c.strokeStyle = Math.floor(G.time * 4) % 2 ? '#ffe066' : '#ffffff'; c.strokeRect(x - 1.5, y - 1.5, cw + 3, ch + 3); }
+      if (!r.cleared && r.visited && r.type !== 'start') { c.fillStyle = '#ff5d7a'; c.fillRect(x + cw - 4, y + 1, 3, 3); }
+    }
+    CR.text(c, 'MAP  STAGE ' + G.stage, RX + 8, RY + 6, '#ffe066');
   }
   function drawHeart(c, x, y, v, col, sh) {
     const img = CR.spr('hh|' + v + '|' + col, 8, 7, g => {
