@@ -1,4 +1,4 @@
-// 세포 레이드 — 게임 본체: 플레이어 · 탄도 · 병원체 AI · 보스 패턴 · 아이템 효과 · 방 진행 · 그리기
+// 생물의 번제 — 게임 본체: 플레이어 · 탄도 · 병원체 AI · 보스 패턴 · 아이템 효과 · 방 진행 · 그리기
 (function () {
   'use strict';
   const CR = window.CR, AU = CR.audio, IN = CR.input;
@@ -18,7 +18,7 @@
   function solid(tx, ty, mode) {
     const v = CR.tileAt(G.room, tx, ty);
     if (v === 1) { if ((mode === 'player' || mode === 'pfly') && tx >= 0 && ty >= 0 && tx < COLS && ty < ROWS) { const d = doorAt(tx, ty); if (d && doorOpen(G.room, d)) return false; } return true; }
-    if (v === 2 || v === 3) return !(mode === 'fly' || mode === 'ghost' || mode === 'spectral' || mode === 'pfly');
+    if (v === 2 || v === 3 || v === 5 || v === 6 || v === 8 || v === 9) return !(mode === 'fly' || mode === 'ghost' || mode === 'spectral' || mode === 'pfly');
     return false;
   }
   function blocked(x, y, r, mode) {
@@ -295,7 +295,7 @@
         if (e.state === 'dash') { const h = moveEnt(e, e.vx * dt, e.vy * dt, mode); if (h || e.st <= 0) { e.state = 'rest'; e.st = 0.7; } e.st -= dt; }
         else if (e.state === 'rest') { e.st -= dt; if (e.st <= 0) e.state = 'idle'; }
         else { e.dir += rand(-1, 1) * dt; if (moveEnt(e, Math.cos(e.dir) * sp * 0.5 * dt, Math.sin(e.dir) * sp * 0.5 * dt, mode)) e.dir += 2;
-          const ax = Math.abs(P.x - e.x) < 10, ay = Math.abs(P.y - e.y) < 10, f = (d.fast ? 260 : 190) * slow;
+          const ax = Math.abs(P.x - e.x) < 10, ay = Math.abs(P.y - e.y) < 10, f = (d.fast ? 182 : 133) * slow;
           if ((ax || ay || dd < 50) && e.t > 0.8) { e.state = 'dash'; e.st = 1.4; if (dd < 50) { e.vx = Math.cos(a) * f; e.vy = Math.sin(a) * f; } else if (ax) { e.vx = 0; e.vy = Math.sign(P.y - e.y) * f; } else { e.vy = 0; e.vx = Math.sign(P.x - e.x) * f; } } }
         break; }
       case 'burrow': {
@@ -398,7 +398,7 @@
     aim: { u(b) { const n = +b.c.a[0] || 3, k = Math.floor(b.c.t / 0.35); if (k > b.c.k) { b.c.k = k; const A = ang(b, G.P); for (let i = 0; i < n; i++) eShot(b.x, b.y, A + (i - (n - 1) / 2) * 0.2, 95); AU.sfx('eshot'); } return b.c.t > 1.1; } },
     ring: { u(b) { const n = +b.c.a[0] || 10, k = Math.floor(b.c.t / 0.5); if (k > b.c.k && k < 3) { b.c.k = k; ring(b.x, b.y, n, 78, k * Math.PI / n); if (b.def.segs) b.trail.forEach((p, i) => { if (i % 16 === 8) { eShot(p.x, p.y, ang(p, G.P), 80); } }); } return b.c.t > 1.2; } },
     spiral: { u(b) { b.c.e = (b.c.e || 0) + 1; const arms = b.phase ? 3 : 2; if (b.c.e % 5 === 0) for (let i = 0; i < arms; i++) eShot(b.x, b.y, b.c.t * 2.6 + i * TAU / arms, 85, { col: '#ff8ad0' }); if (b.c.e % 15 === 0) AU.sfx('eshot'); return b.c.t > 2.6; } },
-    charge: { s(b) { b.c.n = b.phase ? 2 : 1; b.c.w = 0.5; }, u(b, dt) { if (b.c.w > 0) { b.c.w -= dt; b.flash = 0.05; if (b.c.w <= 0) { const A = ang(b, G.P); b.c.vx = Math.cos(A) * 230; b.c.vy = Math.sin(A) * 230; } return false; } const h = moveEnt(b, b.c.vx * dt, b.c.vy * dt, 'walk'); if (h) { ring(b.x, b.y, 8, 70); G.shake = 5; AU.sfx('boom'); b.c.n--; if (b.c.n <= 0) return true; b.c.w = 0.4; } return b.c.t > 4; } },
+    charge: { s(b) { b.c.n = b.phase ? 2 : 1; b.c.w = 0.5; }, u(b, dt) { if (b.c.w > 0) { b.c.w -= dt; b.flash = 0.05; if (b.c.w <= 0) { const A = ang(b, G.P); b.c.vx = Math.cos(A) * 161; b.c.vy = Math.sin(A) * 161; } return false; } const h = moveEnt(b, b.c.vx * dt, b.c.vy * dt, 'walk'); if (h) { ring(b.x, b.y, 8, 70); G.shake = 5; AU.sfx('boom'); b.c.n--; if (b.c.n <= 0) return true; b.c.w = 0.4; } return b.c.t > 4; } },
     summon: { s(b) { const id = b.c.a[0], n = +b.c.a[1] || 1, alive = G.room.ents.filter(e => !e.boss && !e.dead && !e.ally).length; for (let i = 0; i < n && alive + i < 7; i++) { const e = mkEnemy(CR.ALL[id], b.x + rand(-20, 20), b.y + rand(-14, 20)); G.room.ents.push(e); burstFx(e.x, e.y, e.def.col, 8); } }, u(b) { return b.c.t > 0.6; } },
     teleport: { u(b) { const t = b.c.t; if (t < 0.4) { b.fade = 1 - t / 0.4; return false; } if (!b.c.m) { b.c.m = 1; const p = freeSpot(80); b.x = p.x; b.y = p.y; } if (t < 0.7) { b.fade = (t - 0.4) / 0.3; return false; } b.fade = 1; if (!b.c.s) { b.c.s = 1; const A = ang(b, G.P); for (let i = -1; i <= 1; i++) eShot(b.x, b.y, A + i * 0.25, 100); AU.sfx('eshot'); } return t > 0.9; } },
     laser8: { s(b) { const n = b.phase || b.def.phases3 ? 8 : 4, off = ang(b, G.P); for (let i = 0; i < n; i++) laser(b.x, b.y, off + i * TAU / n, { follow: b, w: 6 }); AU.sfx('charge'); }, u(b) { return b.c.t > 1.6; } },
@@ -494,6 +494,7 @@
       const nx = b.x + b.vx * dt + ox, ny = b.y + b.vy * dt + oy, step = Math.hypot(b.vx * dt, b.vy * dt);
       const tx = Math.floor(nx / T), ty = Math.floor(ny / T), tile = CR.tileAt(G.room, tx, ty);
       const spectral = has('spectral') || has('wave');
+      if (CR.isBreak(tile) && !spectral) { CR.hitProp(G.room, tx, ty, b.dmg, false); bulletEnd(b, i); continue; }
       if (tile === 1 || ((tile === 2 || tile === 3) && !spectral)) {
         if ((tile === 2) && toolFx('rockBreak')) { G.room.tiles[ty * COLS + tx] = 0; G.room.bgDirty = true; burstFx(tx * T + 8, ty * T + 8, CR.STAGES[G.stage - 1].rock, 10); AU.sfx('hit'); maybeRockDrop(tx, ty); }
         if (b.bounce > 0 && tile !== 2) { b.bounce--; if (CR.tileAt(G.room, Math.floor(nx / T), Math.floor(b.y / T)) !== 0) b.vx = -b.vx; else b.vy = -b.vy; continue; }
@@ -567,7 +568,7 @@
         if (b.homing && b.t < b.homing) { const want = ang(b, P), cur = Math.atan2(b.vy, b.vx); let dA = ((want - cur + Math.PI * 3) % TAU) - Math.PI; const na = cur + clamp(dA, -2.2 * dt, 2.2 * dt), sp = Math.hypot(b.vx, b.vy); b.vx = Math.cos(na) * sp; b.vy = Math.sin(na) * sp; }
         const m = G.slowAll > 0 ? 0.4 : 1; b.x += b.vx * dt * m; b.y += b.vy * dt * m;
         const tile = CR.tileAt(G.room, Math.floor(b.x / T), Math.floor(b.y / T));
-        if (tile === 1 || tile === 2 || tile === 3 || b.t > b.life) { if (b.web) creep(b.x, b.y, 10, 5, 'web'); G.eb.splice(i, 1); G.fx.push({ x: b.x, y: b.y, vx: 0, vy: 0, t: 0, life: 0.15, col: b.col, s: 2, pop: 1 }); continue; }
+        if (tile === 1 || tile === 2 || tile === 3 || CR.isBreak(tile) || b.t > b.life) { if (b.web) creep(b.x, b.y, 10, 5, 'web'); G.eb.splice(i, 1); G.fx.push({ x: b.x, y: b.y, vx: 0, vy: 0, t: 0, life: 0.15, col: b.col, s: 2, pop: 1 }); continue; }
       }
       // 수호 동료가 막아 줌
       let blockedByFam = false; for (const f of G.fams) if ((f.kind === 'guard') && Math.hypot(f.x - b.x, f.y - b.y) < 8) { blockedByFam = true; break; }
@@ -613,7 +614,9 @@
     const t0x = Math.floor((x - R) / T), t1x = Math.floor((x + R) / T), t0y = Math.floor((y - R) / T), t1y = Math.floor((y + R) / T);
     for (let ty = t0y; ty <= t1y; ty++) for (let tx = t0x; tx <= t1x; tx++) {
       if (Math.hypot(tx * T + 8 - x, ty * T + 8 - y) > R + 6) continue;
-      if (CR.tileAt(G.room, tx, ty) === 2) { G.room.tiles[ty * COLS + tx] = 0; G.room.bgDirty = true; burstFx(tx * T + 8, ty * T + 8, CR.STAGES[G.stage - 1].rock, 8); maybeRockDrop(tx, ty); }
+      const tv = CR.tileAt(G.room, tx, ty);
+      if (tv === 2) { G.room.tiles[ty * COLS + tx] = 0; G.room.bgDirty = true; burstFx(tx * T + 8, ty * T + 8, CR.STAGES[G.stage - 1].rock, 8); maybeRockDrop(tx, ty); }
+      else if (CR.isBreak(tv)) CR.hitProp(G.room, tx, ty, 999, true);
     }
     for (const d in G.room.doors) { const dr = G.room.doors[d]; if (dr.hidden) { const [tx, ty] = CR.DOOR_TILE[d]; if (Math.hypot(tx * T + 8 - x, ty * T + 8 - y) < R + 14) revealSecret(G.room, d); } }
   }
@@ -698,7 +701,7 @@
     A06() { dupPickups(); },
     A07() { let n = 0; G.room.items.forEach(p => { if (!p.taken && p.id && !p.pk) { const k = CR.ALL[p.id].kind; p.id = k === 'active' ? (takeFrom('active') || p.id) : rollItem(G.room.type === 'lab' ? 'lab' : 'treasure'); n++; burstFx(p.x, p.y, '#d68cff', 12); } }); if (!n) toast('바꿀 아이템이 없어요', '받침대 위 아이템이 있는 방에서 쓰세요', '#ff9e9e'); AU.sfx('power'); },
     A08() { G.creeps = G.creeps.filter(c => !['acid', 'cloud', 'web'].includes(c.kind)); heal(2); AU.sfx('heal'); },
-    A09() { for (let i = 0; i < G.room.tiles.length; i++) if (G.room.tiles[i] === 2) G.room.tiles[i] = 0; G.room.bgDirty = true; for (const d in G.room.doors) revealSecret(G.room, d); G.shake = 6; AU.sfx('boom'); },
+    A09() { for (let i = 0; i < G.room.tiles.length; i++) { if (G.room.tiles[i] === 2) G.room.tiles[i] = 0; else if (CR.isBreak(G.room.tiles[i])) CR.hitProp(G.room, i % COLS, Math.floor(i / COLS), 999, true); } G.room.bgDirty = true; for (const d in G.room.doors) revealSecret(G.room, d); G.shake = 6; AU.sfx('boom'); },
     A10() { G.P.room.vaccine = 5; AU.sfx('shield'); },
     A11() { for (let i = 0; i < 4; i++) G.room.ents.push(mkEnemy(CR.MINIS.ally, G.P.x + rand(-12, 12), G.P.y + rand(-12, 12), { ally: 1, life: 14 })); AU.sfx('power'); },
     A12() { revealMap(); for (const r of G.floor.rooms.values()) if (r.type === 'secret') r.revealed = true; G.room.weak = 1; AU.sfx('power'); },
@@ -790,6 +793,7 @@
     const P = G.P; let best = null, bd = 1e9;
     for (const it of G.room.items) { if (it.taken) continue; const d = Math.hypot(P.x - it.x, P.y - it.y); if (d < 38 && d < bd) { bd = d; best = { x: it.x, y: it.y - 14, id: it.id, pk: it.pk, price: it.price, hpCost: it.hpCost }; } }
     for (const p of G.room.pickups) { if (!['tool', 'chart', 'hormone'].includes(p.kind)) continue; const d = Math.hypot(P.x - p.x, P.y - p.y); if (d < 30 && d < bd) { bd = d; best = { x: p.x, y: p.y - 10, id: p.id, floor: 1 }; } }
+    if (!best) best = CR.propPeek(G.room, P);
     return best;
   }
   function collect(p) {
@@ -836,6 +840,7 @@
     if (has('giant')) { const tx = Math.floor((P.x + Math.sign(P.vx) * (P.r + 2)) / T), ty = Math.floor(P.y / T); if (CR.tileAt(G.room, tx, ty) === 2 && Math.abs(P.vx) > 20) { G.room.tiles[ty * COLS + tx] = 0; G.room.bgDirty = true; burstFx(tx * T + 8, ty * T + 8, CR.STAGES[G.stage - 1].rock, 8); AU.sfx('hit'); } }
     if (Math.hypot(P.vx, P.vy) > 15) { P.walkT += dt; if (Math.abs(P.vx) > Math.abs(P.vy)) P.dir = P.vx > 0 ? 'right' : 'left'; else P.dir = P.vy > 0 ? 'down' : 'up';
       if (has('trailCreep')) { P.trT = (P.trT || 0) - dt; if (P.trT <= 0) { P.trT = 0.25; creep(P.x, P.y + 3, 7, 2.2, 'pacid', { col: '#e6ff8a' }); } } }
+    if (!has('flight') && !has('creepImmune') && CR.fireTouch(G.room, P)) hurtPlayer(1, 'fire');
     // 가시
     if (!has('flight') && !has('creepImmune') && CR.tileAt(G.room, Math.floor(P.x / T), Math.floor(P.y / T)) === 4) hurtPlayer(1, 'spike');
     // 문 통과
@@ -949,6 +954,7 @@
     c.drawImage(CR.roomBg(G.room, st), ox, oy);
     c.save(); c.translate(ox, oy);
     for (const d in G.room.doors) CR.drawDoor(c, G.room, d, st, G.room.cleared, t);
+    CR.drawProps(c, G.room, st, t);
     // 장판
     for (const k of G.creeps) {
       const fade = Math.min(1, (k.life - k.t) / 0.6) * (k.delay && k.t < k.delay ? 0.35 : 1);

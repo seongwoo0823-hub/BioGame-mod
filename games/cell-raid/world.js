@@ -1,4 +1,4 @@
-// 세포 레이드 — 층 생성 · 방 배치 · 방 그리기 · 미니맵
+// 생물의 번제 — 층 생성 · 방 배치 · 방 그리기 · 미니맵
 (function () {
   'use strict';
   const CR = window.CR;
@@ -95,6 +95,7 @@
     } else if (room.type === 'boss' && stage >= 2) { sym(2, 2, 3); }
     else if (room.type === 'secret') { sym(2, 2, 2); sym(3, 2, 2); }
     room.tiles = t; room.bgDirty = true;
+    if (CR.placeProps) CR.placeProps(room, stage, rnd);
   };
   CR.tileAt = (room, tx, ty) => (tx < 0 || ty < 0 || tx >= COLS || ty >= ROWS) ? 1 : room.tiles[ty * COLS + tx];
 

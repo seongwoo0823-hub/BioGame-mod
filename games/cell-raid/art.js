@@ -1,4 +1,4 @@
-// 세포 레이드 — 고해상 환경 그림 (독창 디자인): 세포 조직 바닥 · 피부층 벽 · 각질 장애물 · 모공 문 · 조명
+// 생물의 번제 — 고해상 환경 그림 (독창 디자인): 세포 조직 바닥 · 피부층 벽 · 각질 장애물 · 모공 문 · 조명
 (function () {
   'use strict';
   const CR = window.CR, T = CR.T, COLS = CR.COLS, ROWS = CR.ROWS, RW = CR.RW, RH = CR.RH;

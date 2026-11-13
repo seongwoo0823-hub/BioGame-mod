@@ -18,7 +18,7 @@
 | 코돈 글래스 CODON GLASS | mRNA 번역 퍼즐 (모드 3 · 온라인 최대 4명 같은 판 경쟁) | `games/codon-glass.html` |
 | 바이오 피라미드 타이쿤 | 3D 생명과학 타이쿤 (펫 뽑기 · 온천 · 엔딩) | `games/bio-pyramid.html` |
 | 세포 원정대 3D | 면역 세포 요원 육성 원정 전투 | `games/cell-expedition.html` |
-| 세포 레이드 CELL RAID | 방 탐험 로그라이크 슈터 (6구역 · 병원체 40 · 보스 21 · 아이템 138) | `games/cell-raid.html` |
+| 생물의 번제 BIO OFFERING | 방 탐험 로그라이크 슈터 (6구역 · 병원체 40 · 보스 21 · 아이템 138) | `games/cell-raid.html` |
 
 ```
 index.html        메인 화면 (휴대폰은 목록형, 태블릿·PC는 바둑판형으로 자동 구성 · 분류/검색 · 이어하기 · 목표 달성)

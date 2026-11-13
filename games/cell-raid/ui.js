@@ -1,4 +1,4 @@
-// 세포 레이드 — 화면 UI: 화면 맞춤 · 메뉴 · 알림 · 보스 등장 · 결과 · 도감 · 터치 버튼 · 기록
+// 생물의 번제 — 화면 UI: 화면 맞춤 · 메뉴 · 알림 · 보스 등장 · 결과 · 도감 · 터치 버튼 · 기록
 (function () {
   'use strict';
   const CR = window.CR, G = CR.G, AU = CR.audio, IN = CR.input, W = CR.W, H = CR.H;
@@ -135,10 +135,11 @@
   function updatePeek() {
     const pk = G.mode === 'play' && !G.intro && G.peek;
     if (!pk) { if (peekKey) { peekEl.classList.remove('on'); peekKey = ''; } return; }
-    const k = (pk.id || pk.pk) + '|' + (pk.price || '') + '|' + (pk.hpCost || '');
+    const k = (pk.id || pk.pk || (pk.custom && pk.custom.name)) + '|' + (pk.price || '') + '|' + (pk.hpCost || '');
     if (k !== peekKey) {
       peekKey = k; let name, desc, tag = '', cls = '';
-      if (pk.pk) { [name, desc] = PKN[pk.pk] || [pk.pk, '']; }
+      if (pk.custom) { name = pk.custom.name; desc = pk.custom.desc; tag = pk.custom.tag; }
+      else if (pk.pk) { [name, desc] = PKN[pk.pk] || [pk.pk, '']; }
       else { const x = CR.ALL[pk.id]; name = x.name; desc = x.desc;
         if (x.kind === 'passive') { tag = x.tier === 4 ? '사기템' : '패시브 · 등급 ' + x.tier; cls = x.tier === 4 ? 'op' : ''; }
         else if (x.kind === 'active') tag = '액티브 · 충전 ' + x.charge + '칸 (Space)';
@@ -146,10 +147,10 @@
         else if (x.kind === 'chart') tag = '진단서 (Q 사용 · F 버리기)';
         else if (x.kind === 'hormone') { tag = (x.good ? '호르몬' : '호르몬 · 나쁜 효과') + ' (Q 사용 · F 버리기)'; cls = x.good ? '' : 'bad'; }
         peekEl.querySelector('b').style.color = x.tier === 4 ? '#ffd75e' : '#fff'; }
-      if (pk.pk) peekEl.querySelector('b').style.color = '#fff';
+      if (pk.pk || pk.custom) peekEl.querySelector('b').style.color = pk.custom ? '#9fe8ff' : '#fff';
       peekEl.querySelector('b').textContent = name; const ti = peekEl.querySelector('i'); ti.textContent = tag; ti.className = cls; ti.style.display = tag ? '' : 'none';
       peekEl.querySelector('span').textContent = desc;
-      peekEl.querySelector('em').textContent = pk.price ? '가격 ' + pk.price + ' ATP 코인 — 닿으면 구매' : pk.hpCost ? '최대 체력 1칸을 내고 가져가요 — 닿으면 거래' : '닿으면 먹어요 · 그냥 지나가도 돼요';
+      peekEl.querySelector('em').textContent = pk.custom ? '' : pk.price ? '가격 ' + pk.price + ' ATP 코인 — 닿으면 구매' : pk.hpCost ? '최대 체력 1칸을 내고 가져가요 — 닿으면 거래' : '닿으면 먹어요 · 그냥 지나가도 돼요';
       peekEl.classList.add('on');
     }
     const s = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--s')) || 2;

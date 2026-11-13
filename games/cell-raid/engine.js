@@ -1,4 +1,4 @@
-// 세포 레이드 — 엔진: 도트 그림 생성기 · 도트 글꼴 · 소리 합성 · 입력
+// 생물의 번제 — 엔진: 도트 그림 생성기 · 도트 글꼴 · 소리 합성 · 입력
 (function () {
   'use strict';
   const CR = window.CR = window.CR || {};
