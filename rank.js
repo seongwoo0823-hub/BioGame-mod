@@ -56,7 +56,7 @@
     'bio-kart':      {how: '맵마다 완주 시간이 빠른 순', cat: '맵', cols: [['time', '완주 시간', 't'], ['place', '순위', 's']]},
     'biotro':        {how: '도달 앤티가 높은 순 → 같으면 최고 핸드 점수가 높은 순', cols: [['ante', '앤티', 'n'], ['score', '최고 핸드 점수', 'n']]},
     'cell-brawl':    {how: 'ATP 그랩 수가 많은 순 → 같으면 총 킬 수가 많은 순', cat: '모드', cols: [['grab', 'ATP 그랩', 'n'], ['kills', '총 킬', 'n']]},
-    'only-up':       {how: '도달 구간이 높은 순 → 같으면 걸린 시간이 짧은 순', cols: [['stage', '도달 구간', 's'], ['time', '걸린 시간', 't']]},
+    'only-up':       {how: '맵(소화관·혈관·식물)마다 도달 구간이 높은 순 → 같으면 걸린 시간이 짧은 순', cat: '맵', cats: ['소화관', '혈관', '식물'], cols: [['stage', '도달 구간', 's'], ['time', '걸린 시간', 't']]},
     'bio-strike':    {how: '생존 모드는 점수가 높은 순, 온라인은 총 킬 수가 많은 순', cat: '모드', cols: [['score', '점수', 'n'], ['kills', '킬', 'n']]},
     'helix':         {how: '정리한 방(층) 수가 많은 순 → 같으면 걸린 시간이 짧은 순', cols: [['rooms', '정리한 방', 'n'], ['time', '걸린 시간', 't']]},
     'cell-frontier': {how: '지역마다 점유 면적이 넓은 순 → 점수가 높은 순 → 걸린 시간이 짧은 순', cat: '지역', cols: [['area', '점유 면적', 'p'], ['score', '점수', 'n'], ['time', '걸린 시간', 't']]},
@@ -110,6 +110,7 @@
   }
   // 게임별 기록 보정 (예전 방식으로 저장된 기록을 새 기준에 맞춤)
   var FIX = {
+    'only-up': function (all) { all.forEach(function (x) { if (!x.cat) x.cat = '소화관'; }); return all; },   // 맵이 생기기 전 기록은 소화관 맵
     'bio-pyramid': function (all) {
       // 우주물곰을 얻은 사람이 먼저(더 낮은 점수에서 얻을수록 위) → 못 얻은 사람은 점수가 높은 순
       all.forEach(function (x) {

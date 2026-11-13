@@ -105,6 +105,10 @@ button:focus-visible{outline:3px solid var(--accent-2);outline-offset:3px}
 .stats-grid span{display:block;font-size:13px;color:var(--muted)}
 .stats-grid b{font-size:26px;font-weight:400}
 .route{font-size:15px;line-height:1.6;color:var(--muted);margin:0 0 16px}
+.maps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 4px}
+.maps button{font-size:17px;padding:8px 6px;line-height:1.15;background:transparent;color:var(--text);box-shadow:3px 3px 0 var(--text)}
+.maps button small{display:block;font-size:12px;color:var(--muted);margin-top:3px;font-family:"DotGothic16",monospace}
+.maps button.on{background:var(--accent);color:#fff}.maps button.on small{color:#ffe4ea}
 
 /* touch */
 #touch{position:fixed;inset:0;pointer-events:none;z-index:4}
@@ -166,8 +170,9 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
 <div id="title" class="screen" hidden>
   <div class="card">
     <h1 class="logo">ONLY<br>UP</h1>
-    <div class="sub">거꾸로 소화 대탈출</div>
-    <p class="story">몸속 탐사 나노봇 B-01이 실수로 항문에 투입됐다. 세균, 효소, 위산, DNA를 밟고 소화관을 거꾸로 거슬러 올라 입 밖으로 탈출하자. 발밑의 모든 것은 밟는 순간 왁뿌볼처럼 부서지는 소리가 난다.</p>
+    <div class="sub" id="t-sub">거꾸로 소화 대탈출</div>
+    <div class="maps" id="maps" role="group" aria-label="맵 고르기"></div>
+    <p class="story" id="t-story"></p>
     <dl class="keys">
       <dt>WASD</dt><dd>이동</dd>
       <dt>SPACE</dt><dd>점프 (구간마다 끝에 있는 연동 패드는 위층으로 쏘아 올려 줘요)</dd>
@@ -179,7 +184,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
       <button id="btn-continue" type="button" class="ghost" hidden>이어하기</button>
       <button type="button" class="ghost" onclick="location.href='../index.html'">게임 목록</button>
     </div>
-    <p class="note">헤드폰을 끼면 바삭함이 두 배. 7개 구간, 예상 플레이 시간 약 15분. 떨어져도 각 구간 바닥의 괄약근에서 멈춰요.</p>
+    <p class="note">헤드폰을 끼면 바삭함이 두 배. 7개 구간, 예상 플레이 시간 약 15분. 떨어져도 각 구간 바닥의 고리에서 멈춰요. 맵은 3종이고 난이도는 모두 같아요.</p>
   </div>
 </div>
 
@@ -201,13 +206,13 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
 <div id="win" class="screen" hidden>
   <div class="card">
     <h1 class="logo" style="font-size:clamp(44px,9vw,72px)">탈출<br>성공</h1>
-    <div class="sub">입 밖으로 나왔어요!</div>
+    <div class="sub" id="w-sub">입 밖으로 나왔어요!</div>
     <div class="stats-grid">
       <div><span>기록</span><b class="num" id="w-time">00:00</b></div>
       <div><span>추락</span><b class="num" id="w-fall">0</b></div>
       <div><span>점프</span><b class="num" id="w-jump">0</b></div>
     </div>
-    <p class="route">음식은 원래 입 → 식도 → 위 → 십이지장 → 소장 → 대장 → 항문 순서로 이동해요. B-01은 이 약 9m의 길을 정확히 거꾸로 완주했습니다.</p>
+    <p class="route" id="w-route">음식은 원래 입 → 식도 → 위 → 십이지장 → 소장 → 대장 → 항문 순서로 이동해요. B-01은 이 약 9m의 길을 정확히 거꾸로 완주했습니다.</p>
     <div class="btns"><button id="btn-again" type="button">다시 도전</button><button type="button" class="ghost" onclick="location.href='../index.html'">게임 목록</button></div>
   </div>
 </div>
@@ -227,7 +232,7 @@ function mixc(a,b,t){const r=((a>>16)&255)*(1-t)+((b>>16)&255)*t,g=((a>>8)&255)*
 const K=(x,y,z)=>(y*512+(x+OFF))*512+(z+OFF);
 const VOX=new Map(), DECO=new Map();
 let CUR={map:VOX,vs:VS};
-function put(ix,iy,iz,v,jit){if(iy<0)return;const type=Math.floor(v/T),c=v-type*T;const j=jit===undefined?0.13:jit;const f=1-j/2+j*hash3(ix,iy,iz);CUR.map.set(K(ix,iy,iz),type*T+shade(c,f));}
+function put(ix,iy,iz,v,jit){if(iy<0)return;const type=Math.floor(v/T),c=v-type*T;const j=jit===undefined?0.13:jit;const f=1-j/2+j*hash3(ix,iy,iz);const cc=CUR.rc?CUR.rc(c):c;CUR.map.set(K(ix,iy,iz),type*T+shade(cc,f));}
 const hv=(x,y,z)=>hash3(Math.floor(x/CUR.vs),Math.floor(y/CUR.vs),Math.floor(z/CUR.vs)+7);
 function fill(x0,y0,z0,x1,y1,z1,fn){const vs=CUR.vs;const a=Math.floor(x0/vs),b=Math.floor(x1/vs),c=Math.floor(y0/vs),d=Math.floor(y1/vs),e=Math.floor(z0/vs),f=Math.floor(z1/vs);
   for(let iy=c;iy<=d;iy++){const wy=(iy+.5)*vs;for(let ix=a;ix<=b;ix++){const wx=(ix+.5)*vs;for(let iz=e;iz<=f;iz++){const v=fn(wx,wy,(iz+.5)*vs);if(v>=0)put(ix,iy,iz,v);}}}}
@@ -457,9 +462,9 @@ const META={
   saliva:['침 방울','침 속 아밀레이스가 입에서부터 녹말 분해를 시작해요. 밟으면 튀어요!'],
   mutans:['뮤탄스균','당을 먹고 산을 만들어 이를 부식시키는 충치의 주범, 연쇄상구균의 한 종류예요.'],
   cell:['상피세포','세포막(인지질 이중층)과 핵을 가진 생명의 기본 단위예요.'],
-  pad:['연동 패드','밟으면 다음 구간으로 솟구쳐요! 공중에서 옆으로 움직여 괄약근 고리 위로 착지하세요.']
+  pad:['연동 패드','밟으면 다음 구간으로 솟구쳐요! 공중에서 옆으로 움직여 위층 고리 위로 착지하세요.']
 };
-const STAGES=[
+const STAGES_GUT=[
   {name:'직장',en:'Rectum',h:28,R:14,deco:'haustra',wall:0x9c4a58,wall2:0x6c2838,fog:0x3a121c,light:0xffc8c8,part:0xffc0a8,floorName:'항문',
     blurb:'출발! 항문 괄약근은 속(민무늬근)과 바깥(골격근) 두 겹이라 바깥쪽은 의지로 조절할 수 있어요.',gens:[['ecoli',3],['staph',3],['bifido',2],['water',1],['fiber',2],['cell',1]]},
   {name:'대장',en:'Colon',h:32,R:17,deco:'haustra',wall:0xa45a48,wall2:0x6e3428,fog:0x34160e,light:0xffd8b8,part:0xe8c890,floorName:'직장–구불결장 이음부',
@@ -475,10 +480,170 @@ const STAGES=[
   {name:'인두·구강',en:'Pharynx & Mouth',h:26,R:15,deco:'palate',wall:0xe06478,wall2:0xa83448,fog:0x40141c,light:0xffe8e8,part:0xffffff,floorName:'상부 식도 괄약근',
     blurb:'삼킬 때만 열리는 식도의 입구예요. 마지막 구간, 입 밖의 빛을 향해!',gens:[['molar',3],['incisor',1],['tongue',2],['saliva',2],['mutans',2]]}
 ];
+// ---------- 맵 3종: 같은 생성 규칙(구간 높이·폭·간격·발판 종류 비율)을 써서 난이도를 맞추고, 모양·색·이름·설명만 바꿔요 ----------
+function hsl2hex(h,s,l){h=((h%360)+360)%360/360;const f=n=>{const k=(n+h*12)%12;const a=s*Math.min(l,1-l);return l-a*Math.max(-1,Math.min(k-3,9-k,1));};
+  return ((Math.round(f(0)*255))<<16)|((Math.round(f(8)*255))<<8)|Math.round(f(4)*255);}
+function hex2hsl(c){const r=((c>>16)&255)/255,g=((c>>8)&255)/255,b=(c&255)/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;let h=0,s=0;
+  if(mx!==mn){const d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?((g-b)/d+(g<b?6:0)):mx===g?((b-r)/d+2):((r-g)/d+4);h*=60;}return [h,s,l];}
+// 색 바꾸기: 원래 밝기는 살리고 색상(hue)과 채도만 새로 (흰색·회색 부분은 살짝만 물들임)
+function tint(hue,sat,lm=1,spread=0.12){return c=>{const [h,s,l]=hex2hsl(c);const hh=hue+((((h-hue)%360)+540)%360-180)*spread;
+  const ss=s<0.08?sat*0.25:sat*(0.55+0.45*s);return hsl2hex(hh,Math.min(1,ss),Math.max(0,Math.min(0.97,l*lm)));};}
+const BASE={};
+function alias(key,base,rc){BASE[key]=base;GEN[key]=P=>{const plan=GEN[base](P);plan.key=key;const b=plan.build;
+  plan.build=()=>{const prev=CUR.rc;CUR.rc=rc||null;b();CUR.rc=prev;};return plan;};}
+const MAPS={
+  gut:{id:'gut',cat:'소화관',seed:20261020,title:'ONLY UP: 거꾸로 소화 대탈출',sub:'거꾸로 소화 대탈출',btn:'소화관',
+    story:'몸속 탐사 나노봇 B-01이 실수로 항문에 투입됐다. 세균, 효소, 위산, DNA를 밟고 소화관을 거꾸로 거슬러 올라 입 밖으로 탈출하자. 발밑의 모든 것은 밟는 순간 왁뿌볼처럼 부서지는 소리가 난다.',
+    start:'항문에서 출발',winSub:'입 밖으로 나왔어요!',
+    route:'음식은 원래 입 → 식도 → 위 → 십이지장 → 소장 → 대장 → 항문 순서로 이동해요. B-01은 이 약 9m의 길을 정확히 거꾸로 완주했습니다.',
+    wallMsg:'소화관 벽 붙이는 중…',floatMsg:'떠다니는 미생물 풀어 놓는 중…',sky:0xfff6e0,skyFog:0xffe8d8,exit:'teeth',hemi:[0xffd0d8,0x401020],ring:[0xf27a8a,0xb8384c,0xa02e42],acc:0xd23a48,veins:['#c02838','#5060c0'],
+    FL:[['ecoli','staph'],['phage','ecoli'],['rbc','glucose'],['micelle','enz_amylase'],['hpylori','mucus'],['mito','ribosome'],['saliva','cell']]},
+  blood:{id:'blood',cat:'혈관',seed:202,title:'ONLY UP: 혈관 타고 뇌까지',sub:'혈관 타고 뇌까지',btn:'혈관',
+    story:'나노봇 B-02가 발끝 모세혈관에 주사됐다. 혈소판, 항체, 적혈구, 헤모글로빈을 밟고 정맥 → 심장 → 폐 → 대동맥 → 경동맥을 거슬러 올라 뇌까지 배달을 완료하자. 혈전 웅덩이는 위험해요!',
+    start:'발끝 모세혈관에서 출발',winSub:'뇌에 도착했어요!',
+    route:'혈액은 온몸 → 대정맥 → 우심방 → 우심실 → 폐동맥 → 폐 → 폐정맥 → 좌심방 → 좌심실 → 대동맥 → 온몸 순서로 돌아요. B-02는 발끝에서 뇌까지 혈관을 따라 약 1.5m를 올라왔습니다.',
+    wallMsg:'혈관 벽 붙이는 중…',floatMsg:'떠다니는 혈구 풀어 놓는 중…',sky:0xffeef4,skyFog:0xffd8e4,exit:'ring',ringCol:[0xff6a7a,0xa01830,0xe03048],hemi:[0xffc8d0,0x400818],ring:[0xffa0b0,0xc02848,0x8a1830],acc:0x8a1428,veins:['#e8f0ff','#5060c0'],
+    FL:[['platelet','antibody'],['b_virus','plasma'],['rbc','glucose'],['alveolus','hemoglobin'],['b_spiro','ldl'],['b_mito','b_ribo'],['csf','astro']]},
+  plant:{id:'plant',cat:'식물',seed:90417,title:'ONLY UP: 뿌리에서 잎까지',sub:'뿌리에서 잎까지',btn:'식물',
+    story:'나노봇 B-03이 흙 속 뿌리털에 떨어졌다. 물방울, 균사, 물관, 엽록체를 밟고 뿌리 → 줄기 → 잎맥을 따라 물이 올라가는 길을 거슬러, 잎의 기공으로 하늘까지 탈출하자. 산성비 웅덩이를 조심!',
+    start:'흙 속 뿌리털에서 출발',winSub:'기공을 지나 하늘로 나왔어요!',
+    route:'물은 뿌리털 → 피층 → 내피 → 물관 → 잎맥 → 잎살 → 기공 순서로 올라가 증산 작용으로 빠져나가요. B-03은 물과 같은 길로 식물 꼭대기까지 올라왔습니다.',
+    wallMsg:'물관 벽 붙이는 중…',floatMsg:'떠다니는 꽃가루 풀어 놓는 중…',sky:0xeaf6ff,skyFog:0xd8f0ff,exit:'ring',ringCol:[0x8ee070,0x2e7a2a,0x58b048],hemi:[0xe0ffd0,0x10300c],ring:[0xc8e890,0x6a9a3a,0x4a7a2a],acc:0x3a7a2a,veins:['#4a7a20','#d8c070'],
+    FL:[['p_water','hypha'],['spore','rhizobium'],['pit','p_glucose'],['sapfoam','auxin'],['tendril','wax'],['chloroplast','grana'],['dew','palisade_c']]}
+};
+const MAP_ID=(()=>{let m=null;try{m=new URLSearchParams(location.search).get('map');}catch(e){}if(!MAPS[m]){try{m=localStorage.getItem('onlyupMap');}catch(e){}}return MAPS[m]?m:'gut';})();
+const MD=MAPS[MAP_ID];
+const SAVE_K=MAP_ID==='gut'?'onlyupBio':'onlyupBio_'+MAP_ID, STATS_K=MAP_ID==='gut'?'onlyupBioStats':'onlyupBioStats_'+MAP_ID;
+// --- 혈관 맵 발판 (원래 발판의 모양을 그대로 써서 난이도가 같아요) ---
+alias('b_bact','ecoli',tint(95,0.55));alias('platelet','staph',tint(48,0.75,1.08));alias('antibody','bifido',tint(215,0.7));alias('plasma','water',tint(52,0.85,1.05));
+alias('fibrin','fiber',tint(35,0.75));alias('endo','cell',tint(345,0.55));alias('b_strep','strep',tint(130,0.5));alias('b_virus','phage',tint(160,0.45));
+alias('chordae','villus',tint(355,0.55,1.02,0.05));alias('insulin','peptide',tint(275,0.55));alias('trabeculae','microvilli',tint(350,0.7,0.95));
+alias('hemoglobin','enz_amylase',tint(0,0.8,0.9));alias('albumin','enz_trypsin',tint(42,0.7,1.05));alias('complement','enz_lipase',tint(190,0.6));alias('alveolus','micelle',tint(340,0.55,1.12));
+alias('plaque','rugae',tint(48,0.6,1.05));alias('clot','acid',tint(320,0.95,1.0,0));alias('b_spiro','hpylori',tint(150,0.6));alias('ldl','mucus',tint(55,0.7));alias('thrombin','enz_pepsin',tint(20,0.85));
+alias('b_dna','dna',null);alias('b_neuron','neuron',tint(290,0.45));alias('b_mito','mito',tint(10,0.75,0.95));alias('b_golgi','golgi',tint(330,0.55));alias('smooth','muscle',tint(350,0.5,1.05));alias('b_ribo','ribosome',tint(260,0.5));
+alias('astro','molar',tint(200,0.35,1.0,0));alias('bbb','incisor',tint(330,0.35,1.0,0));alias('gyrus','tongue',tint(345,0.4,1.08));alias('csf','saliva',tint(185,0.55));alias('vesicle','mutans',tint(300,0.55,1.05));
+// --- 식물 맵 발판 ---
+alias('rhizobium','ecoli',tint(30,0.45,1.05));alias('spore','staph',tint(28,0.55,0.9));alias('hypha','bifido',tint(40,0.18,1.15));alias('p_water','water',null);
+alias('roothair','fiber',tint(45,0.3,1.12));alias('cortex','cell',tint(95,0.45,1.05));alias('starch','strep',tint(48,0.25,1.15));alias('pollen','phage',tint(52,0.8,1.05));
+alias('xylem','villus',tint(85,0.45,1.0,0.05));alias('pit','rbc',tint(70,0.55,1.05));alias('aminochain','peptide',null);alias('p_glucose','glucose',null);alias('sieve','microvilli',tint(105,0.5));
+alias('auxin','enz_amylase',tint(55,0.8));alias('gibberellin','enz_trypsin',tint(160,0.6));alias('cytokinin','enz_lipase',tint(25,0.75));alias('sapfoam','micelle',tint(75,0.7,1.08));
+alias('node','rugae',tint(100,0.5));alias('acidrain','acid',tint(65,0.95,1.05,0));alias('tendril','hpylori',tint(110,0.6));alias('wax','mucus',tint(90,0.35,1.05));alias('aba','enz_pepsin',tint(275,0.55));
+alias('spiral','dna',tint(110,0.6,1.0,0.25));alias('vein','neuron',tint(105,0.5));alias('chloroplast','mito',tint(118,0.7,0.95));alias('grana','golgi',tint(125,0.65,0.95));alias('palisade','muscle',tint(100,0.6,1.05));alias('p_ribo','ribosome',tint(190,0.5));
+alias('palisade_c','molar',tint(110,0.45,1.0,0));alias('guard','incisor',tint(95,0.55,0.95,0));alias('leaf','tongue',tint(105,0.6,0.9));alias('dew','saliva',tint(195,0.45,1.05));alias('spongy','mutans',tint(90,0.55,1.05));
+Object.assign(META,{
+  b_bact:['침입 세균','상처로 들어온 세균. 곧 백혈구와 항체가 몰려와 처리해요.'],
+  platelet:['혈소판 덩어리','혈소판은 핵이 없는 세포 조각이에요. 상처가 나면 서로 뭉쳐 출혈을 막아요.'],
+  antibody:['항체 (Y자 단백질)','B 림프구가 만든 Y자 모양 단백질. 두 팔 끝으로 특정 항원에만 딱 맞게 결합해요(항원-항체 반응).'],
+  plasma:['혈장 방울','혈액의 약 55%는 혈장! 물에 영양소·호르몬·노폐물이 녹아 있어요. 밟으면 튀어 올라요!'],
+  fibrin:['피브린 그물','혈액이 응고될 때 피브리노겐이 피브린 실로 바뀌어 그물처럼 혈구를 붙잡아요.'],
+  endo:['혈관 내피세포','혈관 안쪽을 한 겹으로 덮은 세포. 모세혈관은 이 한 겹뿐이라 물질 교환이 잘 돼요.'],
+  b_strep:['연쇄상구균','핏속으로 들어오면 위험한 세균. 사슬처럼 이어져 자라요.'],
+  b_virus:['바이러스 입자','단백질 껍질(캡시드) 안에 유전 물질만 가진 비세포성 병원체예요. 스스로는 번식하지 못해요.'],
+  chordae:['힘줄끈 기둥','심장 판막을 붙잡아 혈액이 거꾸로 흐르지 않게 해 주는 끈이에요.'],
+  insulin:['인슐린','이자에서 분비되어 혈당을 낮추는 호르몬. 간에서 포도당을 글리코젠으로 저장하게 해요.'],
+  trabeculae:['심장 근육 육주','심실 안쪽의 울퉁불퉁한 근육 기둥. 심장 근육은 지치지 않고 평생 뛰어요.'],
+  hemoglobin:['헤모글로빈','적혈구 속 붉은 단백질. 철(Fe)을 가진 부분에 산소가 붙어 운반돼요.'],
+  albumin:['알부민','혈장에 가장 많은 단백질. 삼투압을 유지해 혈관 속 물이 빠져나가지 않게 해요.'],
+  complement:['보체 단백질','항체를 도와 세균에 구멍을 뚫는 혈장 단백질이에요.'],
+  alveolus:['폐포','폐 속 작은 공기주머니. 여기서 산소는 혈액으로, 이산화 탄소는 공기로 확산돼요. 말랑해서 튀어요!'],
+  plaque:['콜레스테롤 플라크','혈관 벽에 쌓이면 혈관이 좁아지는 동맥 경화가 생겨요.'],
+  clot:['혈전 웅덩이','혈관 속에서 굳은 피 덩어리(혈전)는 혈관을 막아 위험해요. 닿으면 체크포인트로 돌아가요!'],
+  b_spiro:['나선균','나선 모양으로 몸을 비틀며 이동하는 세균이에요.'],
+  ldl:['LDL 지질 방울','콜레스테롤을 운반하는 지질 단백질. 미끄러워요!'],
+  thrombin:['트롬빈','피브리노겐을 피브린으로 바꾸는 혈액 응고 효소예요.'],
+  b_dna:['백혈구 핵 속 DNA','적혈구에는 핵이 없지만 백혈구에는 핵과 DNA가 있어요. A-T, G-C로 짝을 지어요.'],
+  b_neuron:['혈관 주변 신경','자율 신경이 혈관을 넓히거나 좁혀 혈압을 조절해요.'],
+  b_mito:['심근세포 미토콘드리아','쉬지 않고 뛰는 심장 근육 세포에는 미토콘드리아가 아주 많아요.'],
+  b_golgi:['골지체','백혈구가 항체를 포장해 내보낼 때도 골지체가 일해요.'],
+  smooth:['혈관 민무늬근','동맥 벽의 두꺼운 근육층. 높은 혈압을 견디고 탄력으로 혈액을 밀어 줘요.'],
+  b_ribo:['리보솜','혈장 단백질도 간세포의 리보솜에서 만들어져요.'],
+  astro:['성상세포','뇌에서 신경세포를 돕고 혈액뇌장벽을 만드는 별 모양 세포예요.'],
+  bbb:['혈액뇌장벽','뇌 모세혈관 세포는 촘촘히 붙어 있어 아무 물질이나 뇌로 들어가지 못해요. 폭이 좁으니 조심!'],
+  gyrus:['대뇌 주름','주름 덕분에 좁은 머리뼈 안에 넓은 대뇌 겉질이 들어가요.'],
+  csf:['뇌척수액 방울','뇌와 척수를 감싸 충격을 막아 주는 액체예요. 밟으면 튀어요!'],
+  vesicle:['시냅스 소포','신경 말단에서 신경 전달 물질을 담아 두었다가 내보내요.'],
+  rhizobium:['뿌리혹박테리아','콩과 식물 뿌리에 살며 공기 중 질소를 식물이 쓸 수 있는 형태로 바꿔 줘요(질소 고정).'],
+  spore:['균근 포자','균근 곰팡이는 뿌리와 공생하며 인 같은 무기 양분을 뿌리에 전해 줘요.'],
+  hypha:['균사','곰팡이의 가는 실. 가지를 치며 흙 속으로 뻗어 나가요.'],
+  p_water:['물방울','뿌리털은 삼투 현상으로 흙 속의 물을 흡수해요. 밟으면 튀어요!'],
+  roothair:['뿌리털','뿌리 표피세포가 길게 자란 것. 흡수 면적을 넓혀 물과 무기 양분을 잘 흡수해요.'],
+  cortex:['피층 세포','뿌리털과 물관 사이의 세포층. 녹말을 저장하기도 해요.'],
+  starch:['녹말 알갱이 사슬','광합성으로 만든 포도당을 녹말로 바꿔 저장해요. 아이오딘 반응에서 청람색!'],
+  pollen:['꽃가루','바람에 날려 온 꽃가루. 암술머리에 붙으면 수분이 일어나요.'],
+  xylem:['물관 기둥','죽은 세포가 이어진 긴 관. 뿌리에서 흡수한 물이 이 관을 타고 위로 올라가요.'],
+  pit:['막공 (벽공)','물관 벽의 얇은 구멍. 옆의 물관으로 물이 건너갈 수 있어요. 가운데 움푹한 곳에 착지!'],
+  aminochain:['아미노산 사슬','식물도 질소를 흡수해 아미노산과 단백질을 만들어요.'],
+  sieve:['체판','체관 세포 사이의 구멍 뚫린 벽. 잎에서 만든 양분이 이 구멍을 지나 이동해요.'],
+  auxin:['옥신','줄기 끝에서 만들어져 세포 생장을 촉진하는 식물 호르몬. 빛을 향해 휘는 굴광성의 원인이에요.'],
+  gibberellin:['지베렐린','줄기 신장과 씨앗 발아를 돕는 식물 호르몬이에요.'],
+  cytokinin:['사이토키닌','세포 분열을 촉진하는 식물 호르몬이에요.'],
+  sapfoam:['수액 거품','체관을 흐르는 당이 많은 수액. 말랑해서 밟으면 튀어요!'],
+  node:['줄기 마디','잎이 붙는 마디. 마디 사이가 자라면서 키가 커져요.'],
+  acidrain:['산성비 웅덩이','대기 오염 물질이 녹은 산성비는 잎과 흙을 상하게 해요. 닿으면 체크포인트로 돌아가요!'],
+  tendril:['덩굴손','나선으로 감겨 다른 물체를 붙잡는 변형된 잎·줄기예요.'],
+  wax:['큐티클 왁스층','잎 겉을 덮은 왁스층. 물이 증발하지 않게 막아 줘요. 미끄러워요!'],
+  aba:['앱시스산','가뭄 때 기공을 닫게 하는 식물 호르몬이에요.'],
+  spiral:['물관 나선 비후','물관 벽 안쪽의 나선 모양 두꺼운 벽. 관이 찌그러지지 않게 받쳐 줘요.'],
+  vein:['잎맥','물관과 체관이 다발로 모인 관다발. 잎 구석구석으로 물을 나르고 양분을 모아요.'],
+  chloroplast:['엽록체','빛에너지로 이산화 탄소와 물에서 포도당을 만드는 광합성 공장이에요. 자기만의 DNA가 있어요.'],
+  grana:['그라나 (틸라코이드 더미)','엽록체 속 동전 더미 같은 막 구조. 엽록소가 빛을 흡수하는 곳이에요.'],
+  palisade:['울타리 조직','잎 윗면 아래에 빽빽이 선 세포층. 엽록체가 가장 많아 광합성이 활발해요.'],
+  p_ribo:['리보솜','엽록체 안에도 자기만의 리보솜이 있어요.'],
+  palisade_c:['울타리 세포','길쭉한 세포가 촘촘히 서서 햇빛을 최대한 받아요.'],
+  guard:['공변세포','기공을 둘러싼 두 세포. 물을 흡수해 부풀면 기공이 열려요. 폭이 좁으니 조심!'],
+  leaf:['잎 표면','넓고 얇은 잎은 빛을 많이 받고 기체 교환이 잘 돼요.'],
+  p_glucose:['포도당 (광합성 산물)','엽록체에서 광합성으로 만든 포도당. 체관을 따라 설탕(수크로스) 형태로 온몸에 운반돼요.'],
+  dew:['이슬 방울','밤사이 잎에 맺힌 물방울. 밟으면 튀어요!'],
+  spongy:['해면 조직 세포','잎 아래쪽의 엉성한 세포층. 세포 사이 공간으로 기체가 드나들어요.']
+});
+const S_GUT=STAGES_GUT;
+// 혈관·식물 맵: 각 구간은 소화관 맵의 같은 순번 구간과 높이·폭·발판 비율이 똑같아요
+function likeGut(si,o,sub){const g=S_GUT[si];return Object.assign({h:g.h,R:g.R,must:g.must?(o.mustKey||g.must):undefined},o,{gens:g.gens.map(([k,w])=>[sub[k]||k,w])});}
+const SUB_B={ecoli:'b_bact',staph:'platelet',bifido:'antibody',water:'plasma',fiber:'fibrin',cell:'endo',strep:'b_strep',phage:'b_virus',villus:'chordae',peptide:'insulin',microvilli:'trabeculae',
+  enz_amylase:'hemoglobin',enz_trypsin:'albumin',enz_lipase:'complement',micelle:'alveolus',rugae:'plaque',acid:'clot',hpylori:'b_spiro',mucus:'ldl',enz_pepsin:'thrombin',
+  dna:'b_dna',neuron:'b_neuron',mito:'b_mito',golgi:'b_golgi',muscle:'smooth',ribosome:'b_ribo',molar:'astro',incisor:'bbb',tongue:'gyrus',saliva:'csf',mutans:'vesicle'};
+const SUB_P={glucose:'p_glucose',ecoli:'rhizobium',staph:'spore',bifido:'hypha',water:'p_water',fiber:'roothair',cell:'cortex',strep:'starch',phage:'pollen',villus:'xylem',rbc:'pit',peptide:'aminochain',microvilli:'sieve',
+  enz_amylase:'auxin',enz_trypsin:'gibberellin',enz_lipase:'cytokinin',micelle:'sapfoam',rugae:'node',acid:'acidrain',hpylori:'tendril',mucus:'wax',enz_pepsin:'aba',
+  dna:'spiral',neuron:'vein',mito:'chloroplast',golgi:'grana',muscle:'palisade',ribosome:'p_ribo',molar:'palisade_c',incisor:'guard',tongue:'leaf',saliva:'dew',mutans:'spongy'};
+MAPS.gut.stages=S_GUT;
+MAPS.blood.stages=[
+  likeGut(0,{name:'발끝 모세혈관',en:'Capillaries',deco:'plicae',wall:0xc0485a,wall2:0x7a2034,fog:0x3a0c16,light:0xffc8d0,part:0xff9aa8,floorName:'발끝',
+    blurb:'출발! 모세혈관 벽은 세포 한 겹이라 산소와 영양소가 조직으로 쉽게 빠져나가요.'},SUB_B),
+  likeGut(1,{name:'다리 정맥',en:'Leg Vein',deco:'haustra',wall:0x8a3a6a,wall2:0x501c40,fog:0x220a1e,light:0xf0c8e8,part:0xd8a0d0,floorName:'정맥 판막',
+    blurb:'정맥에는 판막이 있어서 혈액이 거꾸로 흐르지 않아요. 다리 근육이 정맥을 눌러 피를 위로 올려 줘요.'},SUB_B),
+  likeGut(2,{name:'심장 (우심방·우심실)',en:'Right Heart',deco:'rugae',wall:0xb02a3a,wall2:0x6a1020,fog:0x30060c,light:0xffb8b8,part:0xff6070,floorName:'삼첨판',
+    blurb:'온몸을 돌고 온 혈액이 대정맥을 지나 우심방으로 들어와요. 우심실이 이 피를 폐로 보내요.'},SUB_B),
+  likeGut(3,{name:'폐',en:'Lungs',deco:'plicae',wall:0xe08a9a,wall2:0xa85068,fog:0x2a1424,light:0xffe0ea,part:0xffffff,floorName:'폐동맥판',
+    blurb:'폐동맥은 동맥이지만 산소가 적은 피(정맥혈)가 흘러요! 폐포에서 산소를 받아 동맥혈이 돼요.'},SUB_B),
+  likeGut(4,{name:'좌심장·대동맥',en:'Aorta',deco:'folds',wall:0xd03048,wall2:0x8a1428,fog:0x2a0810,light:0xffd0d0,part:0xffc040,floorName:'대동맥판',
+    blurb:'좌심실은 온몸으로 피를 보내야 해서 벽이 가장 두꺼워요. 대동맥은 몸에서 가장 굵은 동맥이에요. 혈전 웅덩이 조심!'},SUB_B),
+  likeGut(5,{name:'경동맥',en:'Carotid Artery',deco:'folds',wall:0xc85878,wall2:0x882848,fog:0x1e0a20,light:0xf0d0ff,part:0xd0a0ff,floorName:'대동맥궁',
+    blurb:'목의 경동맥은 뇌로 가는 큰 동맥이에요. 목에서 맥박을 느낄 수 있는 곳이죠.'},SUB_B),
+  likeGut(6,{name:'뇌',en:'Brain',deco:'palate',wall:0xe8a0b4,wall2:0xa86078,fog:0x281430,light:0xfff0f8,part:0xc8e8ff,floorName:'혈액뇌장벽',
+    blurb:'뇌는 몸무게의 약 2%지만 혈액의 약 15%를 받아요. 마지막 구간, 뇌 꼭대기까지!'},SUB_B)];
+MAPS.plant.stages=[
+  likeGut(0,{name:'흙·뿌리털',en:'Soil & Root Hairs',deco:'haustra',wall:0x8a6440,wall2:0x5a3e22,fog:0x241608,light:0xffe8c8,part:0xd8b888,floorName:'흙',
+    blurb:'출발! 뿌리털은 흙 속 물을 삼투로 흡수해요. 흙의 세균과 곰팡이는 뿌리와 함께 살아가요.'},SUB_P),
+  likeGut(1,{name:'뿌리 피층',en:'Root Cortex',deco:'plicae',wall:0xb89a68,wall2:0x7a6238,fog:0x221a0c,light:0xfff0d0,part:0xf0e0a0,floorName:'뿌리 표피',
+    blurb:'물은 피층 세포 사이와 세포 속을 지나 안쪽으로 이동해요. 피층에는 녹말이 저장돼 있어요.'},SUB_P),
+  likeGut(2,{name:'뿌리 물관',en:'Root Xylem',deco:'folds',wall:0xc8b878,wall2:0x8a7c40,fog:0x1e1c0a,light:0xf8ffd0,part:0xe8f0a0,floorName:'내피 (카스파리선)',
+    blurb:'내피의 카스파리선이 물이 아무렇게나 새지 않게 막아 줘요. 이제 물관을 타고 위로!'},SUB_P),
+  likeGut(3,{name:'줄기 관다발',en:'Stem Vascular Bundle',deco:'plicae',wall:0x6aa048,wall2:0x3c6a24,fog:0x10220a,light:0xe8ffd0,part:0xc8f080,floorName:'뿌리–줄기 이음부',
+    blurb:'줄기의 관다발에는 물이 올라가는 물관과 양분이 이동하는 체관이 함께 있어요. 그 사이 형성층이 줄기를 굵게 해요.'},SUB_P),
+  likeGut(4,{name:'줄기 마디·잎자루',en:'Node & Petiole',deco:'rugae',wall:0x58904a,wall2:0x2e5a26,fog:0x0e1e10,light:0xe0ffd8,part:0xb0ff80,floorName:'줄기 마디',
+    blurb:'잎자루는 잎을 줄기에 붙이고 관다발을 잎까지 이어 줘요. 산성비 웅덩이를 조심하세요!'},SUB_P),
+  likeGut(5,{name:'잎맥',en:'Leaf Vein',deco:'folds',wall:0x4ab060,wall2:0x24703a,fog:0x0a2014,light:0xd8ffe0,part:0x90ffb0,floorName:'잎자루',
+    blurb:'잎맥은 잎의 관다발이에요. 잎맥 주변 잎살 세포의 엽록체에서 광합성이 일어나요.'},SUB_P),
+  likeGut(6,{name:'잎살·기공',en:'Mesophyll & Stoma',deco:'palate',wall:0x78c858,wall2:0x3a8a30,fog:0x102a14,light:0xf0fff0,part:0xffffff,floorName:'잎맥 끝',
+    blurb:'기공은 주로 잎 뒷면에 있고, 공변세포가 열고 닫아요. 마지막 구간, 기공 밖 하늘을 향해!'},SUB_P)];
+const STAGES=MD.stages;
+const CELLK={gut:'cell',blood:'endo',plant:'cortex'}[MAP_ID];
+rng=mulberry32((()=>{try{const v=+new URLSearchParams(location.search).get('seed');if(v>0)return v;}catch(e){}return MD.seed;})());
+
 let Y_END=0;STAGES.forEach(s=>{s.y0=Y_END;Y_END+=s.h;s.y1=Y_END;});
 const PLATFORMS=[],FLOORS=[],PADS=[];
 const MAXC={dna:1,golgi:2,neuron:2};
-function pickGen(S,counts,lastKey){let tot=0;const L=S.gens.filter(g=>g[0]!==lastKey&&!(MAXC[g[0]]&&(counts[g[0]]||0)>=MAXC[g[0]]));for(const g of L)tot+=g[1];let r=rng()*tot;for(const g of L){r-=g[1];if(r<=0)return g[0];}return L[0][0];}
+function pickGen(S,counts,lastKey){let tot=0;const L=S.gens.filter(g=>g[0]!==lastKey&&!(MAXC[BASE[g[0]]||g[0]]&&(counts[g[0]]||0)>=MAXC[BASE[g[0]]||g[0]]));for(const g of L)tot+=g[1];let r=rng()*tot;for(const g of L){r-=g[1];if(r<=0)return g[0];}return L[0][0];}
 function conflicts(plan,si,lastPlan,reserved){
   for(const f of plan.fp){
     const lists=[reserved];for(const p of PLATFORMS){if(p.si!==si)continue;
@@ -491,9 +656,9 @@ function conflicts(plan,si,lastPlan,reserved){
 function inBounds(plan,S){for(const f of plan.fp){if(Math.hypot(f.x,f.z)+f.r>S.R-1.6)return false;if(f.top>S.y1-4.2)return false;if(f.bot<S.y0+0.1)return false;}return true;}
 function genStage(si){
   const S=STAGES[si];CUR={map:VOX,vs:VS};const reserved=[];
-  if(si===0){FLOORS.push({y:0,hole:0,R:S.R,si:0});torusXZ(0,0,0,2.6,0.6,(x,y,z,a,dn)=>dn>0.4?0xe07888:(Math.sin(a*20)>0.2?0xa83850:0x8a2a40));}
+  if(si===0){FLOORS.push({y:0,hole:0,R:S.R,si:0});torusXZ(0,0,0,2.6,0.6,(x,y,z,a,dn)=>dn>0.4?shade(MD.ring[0],0.92):(Math.sin(a*20)>0.2?shade(MD.ring[1],0.92):shade(MD.ring[2],0.86)));}
   else{FLOORS.push({y:S.y0,hole:3.2,R:Math.max(S.R,STAGES[si-1].R),si});
-    torusXZ(0,S.y0,0,3.2,0.75,(x,y,z,a,dn)=>dn>0.5?0xf27a8a:(Math.sin(a*24)>0.3?0xb8384c:0xa02e42));reserved.push({x:0,z:0,r:4.3,top:S.y0+5.5,bot:S.y0-1});}
+    torusXZ(0,S.y0,0,3.2,0.75,(x,y,z,a,dn)=>dn>0.5?MD.ring[0]:(Math.sin(a*24)>0.3?MD.ring[1]:MD.ring[2]));reserved.push({x:0,z:0,r:4.3,top:S.y0+5.5,bot:S.y0-1});}
   reserved.push({x:0,z:0,r:2.0,top:S.y1+1,bot:S.y1-6});
   let cur;if(si===0)cur={x:0,z:0,top:0,r:3.4,h:R(0,TAU)};else{const a=R(0,TAU);cur={x:Math.cos(a)*5.6,z:Math.sin(a)*5.6,top:S.y0,r:0.5,h:a+R(-1,1)};}
   S.start={x:cur.x,y:S.y0,z:cur.z};if(si===0){S.start={x:0,y:0,z:0};}
@@ -503,16 +668,16 @@ function genStage(si){
   while(cur.top<S.y1-7.5&&guard++<220){
     let placed=false,fallback=null;
     for(let at=0;at<34&&!placed;at++){
-      const key=at<26?((S.must&&!counts[S.must]&&cur.top>S.y0+5&&at<16)?S.must:pickGen(S,counts,lastKey)):'cell';
+      const key=at<26?((S.must&&!counts[S.must]&&cur.top>S.y0+5&&at<16)?S.must:pickGen(S,counts,lastKey)):CELLK;
       const gap=R(0.7,1.5+si*0.08);const dy=cur.bouncy?R(1.4,2.2):R(0.4,1.15);
       const rad=Math.hypot(cur.x,cur.z);let h;
       if(rad>(S.R-1.6)*0.55)h=Math.atan2(-cur.z,-cur.x)+R(-1.2,1.2);else h=(cur.h===undefined?R(0,TAU):cur.h)+R(-1,1)*(at<10?1:2.4);
       const plan=GEN[key]({x:cur.x,z:cur.z,top:cur.top,r:cur.r,h,gap,dy,y0:S.y0});if(plan.exit.h===undefined)plan.exit.h=h;
-      if(!inBounds(plan,S))continue;if(!fallback&&key==='cell')fallback=plan;
+      if(!inBounds(plan,S))continue;if(!fallback&&key===CELLK)fallback=plan;
       if(conflicts(plan,si,lastPlan,reserved))continue;
       place(plan);placed=true;}
     if(!placed){let alt=null;
-      for(let at=0;at<60&&!alt;at++){const plan=GEN.cell({x:cur.x,z:cur.z,top:cur.top,r:cur.r,h:R(0,TAU),gap:R(0.7,1.4),dy:R(0.3,1.0),y0:S.y0});plan.exit.h=Math.atan2(plan.exit.z-cur.z,plan.exit.x-cur.x);
+      for(let at=0;at<60&&!alt;at++){const plan=GEN[CELLK]({x:cur.x,z:cur.z,top:cur.top,r:cur.r,h:R(0,TAU),gap:R(0.7,1.4),dy:R(0.3,1.0),y0:S.y0});plan.exit.h=Math.atan2(plan.exit.z-cur.z,plan.exit.x-cur.x);
         if(inBounds(plan,S)&&!conflicts(plan,si,lastPlan,reserved))alt=plan;}
       if(alt)place(alt);else if(fallback)place(fallback);else break;}
   }
@@ -522,7 +687,7 @@ function genStage(si){
     let done=false,fb=null;
     for(let at=0;at<24&&!done;at++){
       const h=Math.atan2(-cur.z,-cur.x)+R(-0.6,0.6)*(0.3+at/10);const gap=R(0.7,1.25);const room=(S.y1-3.3)-cur.top;const dy=Math.max(-0.2,Math.min(R(0.3,0.8),room));
-      const plan=GEN.cell({x:cur.x,z:cur.z,top:cur.top,r:cur.r,h,gap,dy,y0:S.y0});plan.exit.h=h;
+      const plan=GEN[CELLK]({x:cur.x,z:cur.z,top:cur.top,r:cur.r,h,gap,dy,y0:S.y0});plan.exit.h=h;
       if(Math.hypot(plan.exit.x,plan.exit.z)<1.35+plan.exit.r+0.6)continue;
       if(Math.hypot(plan.exit.x,plan.exit.z)+plan.exit.r>S.R-1.6)continue;
       if(!fb)fb=plan;if(conflicts(plan,si,lastPlan,[]))continue;place(plan);done=true;}
@@ -533,8 +698,8 @@ function genStage(si){
   PADS.push({x:0,z:0,top:padTop,si});PLATFORMS.push({key:'pad',fp:[{x:0,z:0,r:1.35,top:padTop,bot:padTop-0.5}],si,plan:null});
 }
 function genFinal(){CUR={map:VOX,vs:VS};const S=STAGES[STAGES.length-1];FLOORS.push({y:Y_END,hole:3.2,R:S.R,si:STAGES.length});
-  torusXZ(0,Y_END+0.2,0,3.4,1.0,(x,y,z,a,dn)=>dn>0.5?0xff7a92:(dn<-0.3?0xa02840:0xe0506a));
-  for(let k=0;k<16;k++){const a=k*TAU/16;const c=Math.cos(a),s=Math.sin(a);const ry=Y_END-0.8;
+  const RC=MD.ringCol||[0xff7a92,0xa02840,0xe0506a];torusXZ(0,Y_END+0.2,0,3.4,1.0,(x,y,z,a,dn)=>dn>0.5?RC[0]:(dn<-0.3?RC[1]:RC[2]));
+  if(MD.exit==='teeth')for(let k=0;k<16;k++){const a=k*TAU/16;const c=Math.cos(a),s=Math.sin(a);const ry=Y_END-0.8;
     fill(-6,ry-0.8,-6,6,Y_END-0.3,6,(x,y,z)=>{const u=x*c+z*s,w=-x*s+z*c;if(u<4.15||u>4.75||Math.abs(w)>0.28)return -1;return y<ry-0.55?0xdfe6ea:0xfbf8ef;});}}
 function genDeco(){CUR={map:DECO,vs:0.5};
   STAGES.forEach((S,si)=>{const wc=S.wall,wc2=S.wall2;
@@ -545,7 +710,7 @@ function genDeco(){CUR={map:DECO,vs:0.5};
     if(S.deco==='folds'){for(let k=0;k<7;k++){const pts=[];for(let y=S.y0;y<=S.y1;y+=1){const a=k*TAU/7+0.2*Math.sin(y*0.2+k);pts.push([Math.cos(a)*(S.R+0.4),y,Math.sin(a)*(S.R+0.4)]);}
       tube(pts,1.0,(x,y,z,t,dn)=>dn<0.6?shade(wc,1.18):wc);}}
     if(S.deco==='palate'){for(let y=S.y0+3;y<S.y1-1.5;y+=R(3,4.5))torusXZ(0,y,0,S.R+0.3,0.9,(x,yy,z,a,dn)=>(Math.sin(a*10)>0.6)?shade(wc,1.25):wc);}
-    for(let i=0;i<26;i++){const a=R(0,TAU),y=R(S.y0+0.5,S.y1-0.5),r=R(0.8,1.7);const c=rng()<0.3?0xd23a48:(rng()<0.5?wc2:shade(wc,1.1));
+    for(let i=0;i<26;i++){const a=R(0,TAU),y=R(S.y0+0.5,S.y1-0.5),r=R(0.8,1.7);const c=rng()<0.3?MD.acc:(rng()<0.5?wc2:shade(wc,1.1));
       sphere(Math.cos(a)*(S.R+0.7),y,Math.sin(a)*(S.R+0.7),r,(x,yy,z,ny,n)=>n>0.85&&hv(x,yy,z)<0.25?shade(c,1.2):c);}
   });CUR={map:VOX,vs:VS};}
 // --------- mesher with ambient occlusion ---------
@@ -855,7 +1020,7 @@ function wallTexture(S,si){const c=document.createElement('canvas');c.width=c.he
     if(hash3(x>>2,y>>2,si+50)>0.86)col=mixc(col,S.wall2,0.5);
     col=shade(col,f);const i=(y*64+x)*4;d[i]=(col>>16)&255;d[i+1]=(col>>8)&255;d[i+2]=col&255;d[i+3]=255;}
   g.putImageData(img,0,0);
-  const vr=mulberry32(si*99+5);for(let k=0;k<5;k++){let x=vr()*64,y=vr()*64;g.fillStyle=k%2?'#c02838':'#5060c0';g.globalAlpha=0.55;for(let s=0;s<90;s++){x=(x+(vr()-0.5)*2.2+64)%64;y=(y+(vr()-0.3)*1.6+64)%64;g.fillRect(Math.floor(x),Math.floor(y),1,1);}}
+  const vr=mulberry32(si*99+5);for(let k=0;k<5;k++){let x=vr()*64,y=vr()*64;g.fillStyle=k%2?MD.veins[0]:MD.veins[1];g.globalAlpha=0.55;for(let s=0;s<90;s++){x=(x+(vr()-0.5)*2.2+64)%64;y=(y+(vr()-0.3)*1.6+64)%64;g.fillRect(Math.floor(x),Math.floor(y),1,1);}}
   g.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestMipmapLinearFilter;return t;}
 function floorTexture(a,b,seed){const c=document.createElement('canvas');c.width=c.height=32;const g=c.getContext('2d');const img=g.createImageData(32,32);const d=img.data;
   for(let y=0;y<32;y++)for(let x=0;x<32;x++){const n=hash3(x,y,seed);let col=(Math.floor((x+y*0.5)/4)%2)?a:b;col=shade(col,0.85+n*0.25);const i=(y*32+x)*4;d[i]=(col>>16)&255;d[i+1]=(col>>8)&255;d[i+2]=col&255;d[i+3]=255;}
@@ -889,7 +1054,7 @@ async function boot(){
   const coarse=matchMedia('(pointer: coarse)').matches;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,coarse?1.25:1.5));renderer.setSize(innerWidth,innerHeight);
   scene=new THREE.Scene();scene.background=new THREE.Color(STAGES[0].fog);scene.fog=new THREE.Fog(STAGES[0].fog,14,70);
   camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.05,200);
-  hemi=new THREE.HemisphereLight(0xffd0d8,0x401020,0.85);scene.add(hemi);
+  hemi=new THREE.HemisphereLight(MD.hemi[0],MD.hemi[1],0.85);scene.add(hemi);
   dirL=new THREE.DirectionalLight(0xffffff,0.55);scene.add(dirL);scene.add(dirL.target);
   ptL=new THREE.PointLight(0xfff0d8,0.9,11,1.6);scene.add(ptL);
   worldMat=new THREE.MeshLambertMaterial({vertexColors:true});
@@ -901,7 +1066,7 @@ async function boot(){
   for(const c of keysArr){const d=meshData(B.get(c),VOX,VS);if(d.faces){const m=new THREE.Mesh(geoFrom(d),worldMat);scene.add(m);}
     if((++i)%3===0){setLoad(0.5+0.35*i/keysArr.length,'복셀 다듬는 중…');await tick();}}
   const BD=bucket(DECO,32);for(const [c,arr] of BD){const d=meshData(arr,DECO,0.5);if(d.faces)scene.add(new THREE.Mesh(geoFrom(d),worldMat));}
-  setLoad(0.88,'소화관 벽 붙이는 중…');await tick();
+  setLoad(0.88,MD.wallMsg);await tick();
   // walls
   STAGES.forEach((S,si)=>{const geo=new THREE.CylinderGeometry(S.R,S.R,S.h,72,Math.max(2,Math.round(S.h/2)),true);const p=geo.attributes.position;
     for(let k=0;k<p.count;k++){const x=p.getX(k),y=p.getY(k)+S.y0+S.h/2,z=p.getZ(k);const a=Math.atan2(z,x);const b=0.45*Math.sin(a*9+y*0.4)+0.3*Math.sin(a*17-y*0.9)+0.75;const s=(S.R+b)/S.R;p.setX(k,x*s);p.setZ(k,z*s);}
@@ -910,14 +1075,14 @@ async function boot(){
   FLOORS.forEach((f,i)=>{const lo=STAGES[Math.max(0,f.si-1)],hi=STAGES[Math.min(STAGES.length-1,f.si)];const tex=floorTexture(shade(hi.wall2,1.1),lo.wall,i+3);tex.repeat.set(f.R/2,f.R/2);
     const geo=new THREE.RingGeometry(Math.max(0.01,f.hole),f.R+1.6,96,1);const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({map:tex,side:THREE.DoubleSide}));m.rotation.x=-Math.PI/2;m.position.y=f.y;scene.add(m);});
   // sky above the mouth
-  const sky=new THREE.Mesh(new THREE.CircleGeometry(30,48),new THREE.MeshBasicMaterial({color:0xfff6e0,fog:false}));sky.rotation.x=Math.PI/2;sky.position.y=Y_END+14;scene.add(sky);
+  const sky=new THREE.Mesh(new THREE.CircleGeometry(30,48),new THREE.MeshBasicMaterial({color:MD.sky,fog:false}));sky.rotation.x=Math.PI/2;sky.position.y=Y_END+14;scene.add(sky);
   const exitL=new THREE.PointLight(0xfff2d8,1.4,26,1.4);exitL.position.set(0,Y_END-1,0);scene.add(exitL);
   // pad beams
   PADS.forEach(p=>{const top=(p.si<STAGES.length-1?STAGES[p.si+1].y0:Y_END)+2;const h=top-p.top;const m=new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.15,h,20,1,true),
     new THREE.MeshBasicMaterial({color:0x7dffd8,transparent:true,opacity:0.12,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));m.position.set(0,p.top+h/2,0);scene.add(m);beams.push(m);});
   // floaters
-  setLoad(0.92,'떠다니는 미생물 풀어 놓는 중…');await tick();
-  const FL=[['ecoli','staph'],['phage','ecoli'],['rbc','glucose'],['micelle','enz_amylase'],['hpylori','mucus'],['mito','ribosome'],['saliva','cell']];
+  setLoad(0.92,MD.floatMsg);await tick();
+  const FL=MD.FL;
   const tmpl={};const trng=rng;rng=mulberry32(777);
   STAGES.forEach((S,si)=>{for(let k=0;k<7;k++){const key=FL[si][k%2];if(!tmpl[key])tmpl[key]=buildTemplate(key);const m=new THREE.Mesh(tmpl[key],worldMat);
     const a=R(0,TAU),r=R(S.R*0.45,S.R-2.5),y=R(S.y0+2,S.y1-2);const s=R(0.45,0.75);m.scale.setScalar(s);m.position.set(Math.cos(a)*r,y,Math.sin(a)*r);
@@ -946,7 +1111,7 @@ function buildTract(){const tr=$('tract');STAGES.forEach((S,si)=>{const d=docume
 let toastTimer=0,bannerTimer=0,fallTimer=0;
 function toast(t,p){$('toast-t').textContent=t;$('toast-p').textContent=p;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),6500);}
 function banner(si){const S=STAGES[si];$('b-small').textContent='구간 '+(si+1)+' / '+STAGES.length+'  '+S.floorName+' 통과';$('b-title').textContent=S.name;$('b-text').textContent=S.blurb;
-  if(si===0)$('b-small').textContent='구간 1 / '+STAGES.length+'  항문에서 출발';
+  if(si===0)$('b-small').textContent='구간 1 / '+STAGES.length+'  '+MD.start;
   $('banner').classList.add('show');clearTimeout(bannerTimer);bannerTimer=setTimeout(()=>$('banner').classList.remove('show'),5200);}
 function fallMsg(d){const el=$('fallmsg');el.textContent='−'+d.toFixed(1)+'m 추락';el.classList.add('show');clearTimeout(fallTimer);fallTimer=setTimeout(()=>el.classList.remove('show'),1600);}
 function popWord(w){if(!w)return;const v=new THREE.Vector3(pl.x,pl.y+1.4,pl.z).project(camera);if(v.z>1)return;const el=document.createElement('div');el.className='pop';el.textContent=w;
@@ -960,12 +1125,17 @@ function updateHUD(dt){hudT-=dt;if(hudT>0)return;hudT=0.1;const si=stageAt(pl.y)
   $('marker').style.bottom=Math.min(100,pl.y/Y_END*100)+'%';$('best').style.bottom=Math.min(100,bestY/Y_END*100)+'%';}
 
 /* ---------------- game flow ---------------- */
-function save(){try{localStorage.setItem('onlyupBio',JSON.stringify({cp:cpStage,time,falls,jumps,best:bestY}));}catch(e){}}
-function loadSave(){try{return JSON.parse(localStorage.getItem('onlyupBio')||'null');}catch(e){return null;}}
+function save(){try{localStorage.setItem(SAVE_K,JSON.stringify({cp:cpStage,time,falls,jumps,best:bestY}));}catch(e){}}
+function loadSave(){try{return JSON.parse(localStorage.getItem(SAVE_K)||'null');}catch(e){return null;}}
 function respawnAt(si){const s=STAGES[si].start;pl.x=s.x;pl.y=s.y+0.02;pl.z=s.z;vel.x=vel.y=vel.z=0;lastGroundY=pl.y;onGround=false;
   camPos.set(pl.x+Math.sin(yaw)*camDist,pl.y+3,pl.z+Math.cos(yaw)*camDist);}
-function showTitle(){$('title').hidden=false;$('hud').hidden=true;const sv=loadSave();const bc=$('btn-continue');
+function showTitle(){renderMaps();$('title').hidden=false;$('hud').hidden=true;const sv=loadSave();const bc=$('btn-continue');
   if(sv&&sv.cp>0){bc.hidden=false;bc.textContent='이어하기 ('+STAGES[sv.cp].name+')';}else bc.hidden=true;setTimeout(()=>$('btn-start').focus(),50);}
+function mapBest(id){try{const st=JSON.parse(localStorage.getItem(id==='gut'?'onlyupBioStats':'onlyupBioStats_'+id)||'null');if(st&&st.best>0)return '최고 '+fmtR(st.best);
+  const sv=JSON.parse(localStorage.getItem(id==='gut'?'onlyupBio':'onlyupBio_'+id)||'null');if(sv&&sv.cp>0)return (sv.cp+1)+'/7 구간';}catch(e){}return '새 맵';}
+function renderMaps(){const el=$('maps');el.innerHTML='';Object.values(MAPS).forEach(m=>{const b=document.createElement('button');b.type='button';b.className=m.id===MAP_ID?'on':'';
+  b.innerHTML=m.btn+'<small>'+mapBest(m.id)+'</small>';b.setAttribute('aria-pressed',m.id===MAP_ID?'true':'false');
+  b.onclick=()=>{if(m.id===MAP_ID)return;try{localStorage.setItem('onlyupMap',m.id);}catch(e){}location.href=location.pathname+'?map='+m.id;};el.appendChild(b);});}
 function startGame(cont){AU.init();const sv=cont?loadSave():null;
   if(sv){cpStage=sv.cp;time=sv.time||0;falls=sv.falls||0;jumps=sv.jumps||0;bestY=sv.best||0;}else{cpStage=0;time=0;falls=0;jumps=0;bestY=0;seen.clear();}
   respawnAt(cpStage);$('title').hidden=true;$('win').hidden=true;$('pause').hidden=true;$('hud').hidden=false;state='play';curStageShown=-1;
@@ -976,7 +1146,7 @@ function pauseGame(){if(state!=='play')return;state='pause';touchMove.x=touchMov
 function resumeGame(){$('pause').hidden=true;state='play';AU.init();requestLock();}
 function die(msg){AU.sizzle();toast(msg,'마지막 체크포인트인 '+STAGES[cpStage].name+' 구간 입구로 돌아가요.');respawnAt(cpStage);}
 function fmtR(t){const m=Math.floor(t/60),s=t%60;return m+'분 '+s.toFixed(1).padStart(4,'0')+'초';}
-function win(){state='win';window.BioGoal&&BioGoal.result('only-up',7,{ok:true,text:'정상 도착 · 완료 '+fmtR(time),rank:{v:BioGoal.key([[8,100,1],[time*10,1e8,-1]]),f:{stage:'정상 도착',time:Math.round(time*10)/10}}});AU.fanfare();try{localStorage.removeItem('onlyupBio');const st=JSON.parse(localStorage.getItem('onlyupBioStats')||'{}')||{};st.clears=(st.clears||0)+1;if(!(st.best>0)||time<st.best)st.best=time;localStorage.setItem('onlyupBioStats',JSON.stringify(st));}catch(e){}
+function win(){state='win';window.BioGoal&&BioGoal.result('only-up',7,{ok:true,text:'['+MD.cat+'] 정상 도착 · 완료 '+fmtR(time),rank:{cat:MD.cat,v:BioGoal.key([[8,100,1],[time*10,1e8,-1]]),f:{stage:'정상 도착',time:Math.round(time*10)/10}}});AU.fanfare();try{localStorage.removeItem(SAVE_K);const st=JSON.parse(localStorage.getItem(STATS_K)||'{}')||{};st.clears=(st.clears||0)+1;if(!(st.best>0)||time<st.best)st.best=time;localStorage.setItem(STATS_K,JSON.stringify(st));}catch(e){}
   $('w-time').textContent=fmt(time);$('w-fall').textContent=falls;$('w-jump').textContent=jumps;$('hud').hidden=true;$('touch').hidden=true;$('win').hidden=false;
   if(document.pointerLockElement)document.exitPointerLock();setTimeout(()=>$('btn-again').focus(),50);}
 function requestLock(){if(matchMedia('(pointer: coarse)').matches)return;const c=$('c');try{const r=c.requestPointerLock&&c.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(e){}}
@@ -1019,7 +1189,7 @@ function update(dt){
     if(onGround){lastGroundY=pl.y;
       const sp=Math.hypot(vel.x,vel.z);if(sp>1.5){stepT-=dt;if(stepT<=0){stepT=0.29;AU.step();}}else stepT=0.05;
       const si=stageAt(pl.y);if(si>cpStage){cpStage=si;AU.chime();banner(si);save();}}}
-  if(pl.y>bestY){bestY=pl.y;if(window.BioGoal)BioGoal.progress('only-up',stageAt(bestY)+1,{text:'구간 '+(stageAt(bestY)+1)+' · '+fmtR(time),rank:{v:BioGoal.key([[stageAt(bestY)+1,100,1],[time*10,1e8,-1]]),f:{stage:'구간 '+(stageAt(bestY)+1),time:Math.round(time*10)/10}}});}
+  if(pl.y>bestY){bestY=pl.y;if(window.BioGoal)BioGoal.progress('only-up',stageAt(bestY)+1,{text:'['+MD.cat+'] 구간 '+(stageAt(bestY)+1)+' · '+fmtR(time),rank:{cat:MD.cat,v:BioGoal.key([[stageAt(bestY)+1,100,1],[time*10,1e8,-1]]),f:{stage:'구간 '+(stageAt(bestY)+1),time:Math.round(time*10)/10}}});}
   if(pl.y>Y_END+0.6){win();return;}
   // animation
   const sp=Math.hypot(vel.x,vel.z);if(sp>0.4){const tgt=Math.atan2(vel.x,vel.z);let d=tgt-facing;d=Math.atan2(Math.sin(d),Math.cos(d));facing+=d*Math.min(1,dt*14);}
@@ -1041,7 +1211,7 @@ function updateCamera(dt,attract){
 const tmpA=new THREE.Color(),tmpB=new THREE.Color();
 function atmosphere(){const y=camera.position.y;const si=Math.min(STAGES.length-1,stageAt(y));const S=STAGES[si],N=STAGES[Math.min(STAGES.length-1,si+1)];
   let t=Math.max(0,Math.min(1,(y-(S.y1-4))/4));if(si===STAGES.length-1)t=0;tmpA.setHex(S.fog).lerp(tmpB.setHex(N.fog),t);
-  if(y>Y_END-6){const k=Math.min(1,(y-(Y_END-6))/8);tmpA.lerp(tmpB.setHex(0xffe8d8),k);}
+  if(y>Y_END-6){const k=Math.min(1,(y-(Y_END-6))/8);tmpA.lerp(tmpB.setHex(MD.skyFog),k);}
   scene.background.copy(tmpA);scene.fog.color.copy(tmpA);hemi.color.setHex(S.light);hemi.groundColor.setHex(S.fog);dust.material.color.setHex(S.part);}
 
 let lastT=performance.now(),elapsed=0;
@@ -1084,9 +1254,9 @@ addEventListener('resize',()=>{if(!renderer)return;renderer.setSize(innerWidth,i
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseGame();});
 $('btn-start').onclick=()=>startGame(false);$('btn-continue').onclick=()=>startGame(true);
 $('btn-resume').onclick=resumeGame;$('btn-cp').onclick=()=>{respawnAt(cpStage);resumeGame();};
-$('btn-rank').onclick=()=>{if(!window.BioGoal)return;const st=stageAt(bestY)+1;BioGoal.result('only-up',st,{rankOnly:true,title:'지금까지의 기록',text:'구간 '+st+' · '+fmtR(time),rank:{v:BioGoal.key([[st,100,1],[time*10,1e8,-1]]),f:{stage:'구간 '+st,time:Math.round(time*10)/10}}});};
+$('btn-rank').onclick=()=>{if(!window.BioGoal)return;const st=stageAt(bestY)+1;BioGoal.result('only-up',st,{rankOnly:true,title:'지금까지의 기록',text:'['+MD.cat+'] 구간 '+st+' · '+fmtR(time),rank:{cat:MD.cat,v:BioGoal.key([[st,100,1],[time*10,1e8,-1]]),f:{stage:'구간 '+st,time:Math.round(time*10)/10}}});};
 $('btn-sound').onclick=()=>{AU.init();AU.setMuted(!AU.muted);$('btn-sound').textContent=AU.muted?'소리 켜기':'소리 끄기';};
-$('btn-restart').onclick=()=>{try{localStorage.removeItem('onlyupBio');}catch(e){}startGame(false);};
+$('btn-restart').onclick=()=>{try{localStorage.removeItem(SAVE_K);}catch(e){}startGame(false);};
 $('btn-again').onclick=()=>startGame(false);
 // touch controls
 (function(){const joy=$('joy'),knob=joy.querySelector('i');let jid=null,lid=null,lx=0,ly=0;
@@ -1099,6 +1269,8 @@ $('btn-again').onclick=()=>startGame(false);
   const cv=$('c');cv.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'||state!=='play')return;lid=e.pointerId;lx=e.clientX;ly=e.clientY;});
   cv.addEventListener('pointermove',e=>{if(e.pointerId!==lid)return;yaw-=(e.clientX-lx)*0.006;pitch=Math.max(-0.35,Math.min(1.25,pitch+(e.clientY-ly)*0.006));lx=e.clientX;ly=e.clientY;});
   cv.addEventListener('pointerup',e=>{if(e.pointerId===lid)lid=null;});})();
+document.title=MD.title;$('t-sub').textContent=MD.sub;$('t-story').textContent=MD.story;$('w-sub').textContent=MD.winSub;$('w-route').textContent=MD.route;
+try{localStorage.setItem('onlyupMap',MAP_ID);}catch(e){}
 boot().catch(err=>{console.error(err);setLoad(0,'불러오는 중 문제가 생겼어요: '+err.message);});
 </script>
 <script src="../goal.js"></script>
