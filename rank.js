@@ -58,13 +58,11 @@
     'cell-brawl':    {how: 'ATP 그랩 수가 많은 순 → 같으면 총 킬 수가 많은 순', cat: '모드', cols: [['grab', 'ATP 그랩', 'n'], ['kills', '총 킬', 'n']]},
     'only-up':       {how: '맵(소화관·혈관·식물)마다 도달 구간이 높은 순 → 같으면 걸린 시간이 짧은 순', cat: '맵', cats: ['소화관', '혈관', '식물'], cols: [['stage', '도달 구간', 's'], ['time', '걸린 시간', 't']]},
     'bio-strike':    {how: '생존 모드는 점수가 높은 순, 온라인은 총 킬 수가 많은 순', cat: '모드', cols: [['score', '점수', 'n'], ['kills', '킬', 'n']]},
-    'helix':         {how: '정리한 방(층) 수가 많은 순 → 같으면 걸린 시간이 짧은 순', cols: [['rooms', '정리한 방', 'n'], ['time', '걸린 시간', 't']]},
     'cell-frontier': {how: '지역마다 점유 면적이 넓은 순 → 점수가 높은 순 → 걸린 시간이 짧은 순', cat: '지역', cols: [['area', '점유 면적', 'p'], ['score', '점수', 'n'], ['time', '걸린 시간', 't']]},
     'codon-glass':   {how: '모드마다 점수가 높은 순', cat: '모드', cols: [['score', '점수', 'n']]},
     'bio-tower':     {how: '연속 승리 수가 많은 순', cols: [['streak', '연속 승리', 'n'], ['height', '최고 탑 높이', 's']]},
     'cell-raid':     {how: '도달 구역이 깊은 순 → 같으면 걸린 시간이 짧은 순', cols: [['stage', '도달 구역', 's'], ['time', '시간', 't'], ['char', '세포', 's']]},
     'bio-pyramid':   {how: '불사의 우주물곰을 얻은 사람이 먼저(더 낮은 점수에서 얻을수록 위) → 못 얻은 사람은 총점이 높은 순', cols: [['tardi', '우주물곰', 's'], ['score', '점수', 'k'], ['stage', '최고 단계', 'n']]},
-    'cell-expedition': {how: '깬 원정 스테이지가 높은 순 → 같으면 전투력이 높은 순', cols: [['stage', '스테이지', 'n'], ['power', '전투력', 'n']]}
   };
   function fmtCol(v, f) {
     if (v == null || v === '') return '-';

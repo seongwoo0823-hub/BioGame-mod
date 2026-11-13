@@ -29,7 +29,6 @@
     'biotro': () => ({점수: G && G.score, 남은손: G && G.hands, 손패: G && G.hand && G.hand.length}),
     'cell-brawl': () => ({화면: state, 체력: G && G.player && r1(G.player.hp), x: G && G.player && G.player.pos && r1(G.player.pos.x), z: G && G.player && G.player.pos && r1(G.player.pos.z)}),
     'vessel-canyon': () => ({화면: STATE, 체력: G && G.player && r1(G.player.hp), x: G && G.player && r1(G.player.x), y: G && G.player && r1(G.player.y)}),
-    'helix': () => ({화면: G.state, 동작: G.player && G.player.act, x: G.player && Math.round(G.player.x), z: G.player && Math.round(G.player.z), 체력: G.player && G.player.hp, 방: G.run ? G.run.ch + '-' + G.run.room : ''}),
   };
   let watchFn = WATCH[GAME] || null;
   function snapshot() {
