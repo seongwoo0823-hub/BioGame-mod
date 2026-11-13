@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="cell-expedition/tw.css">
     <!-- Three.js -->
     <script src="../vendor/three.min.js"></script>
+    <script src="../lyric-audio.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -978,50 +979,16 @@
          * 3. WEB AUDIO SYNTHESIZER
          *************************************************************************/
         let audioCtx = null;
-        function playSfx(type) {
-            if (!state.soundOn) return;
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                const now = audioCtx.currentTime;
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                if (type === 'pop') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(520, now);
-                    osc.frequency.exponentialRampToValueAtTime(1040, now + 0.11);
-                    gain.gain.setValueAtTime(0.14, now);
-                    gain.gain.linearRampToValueAtTime(0.01, now + 0.11);
-                    osc.start(now);
-                    osc.stop(now + 0.11);
-                } else if (type === 'slash') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(280 + Math.random() * 140, now);
-                    osc.frequency.exponentialRampToValueAtTime(80, now + 0.08);
-                    gain.gain.setValueAtTime(0.09, now);
-                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
-                    osc.start(now);
-                    osc.stop(now + 0.08);
-                } else if (type === 'skill') {
-                    osc.type = 'sawtooth';
-                    [440, 554.37, 659.25, 880, 1108.73].forEach((f, idx) => {
-                        osc.frequency.setValueAtTime(f, now + idx * 0.055);
-                    });
-                    gain.gain.setValueAtTime(0.18, now);
-                    gain.gain.linearRampToValueAtTime(0.01, now + 0.42);
-                    osc.start(now);
-                    osc.stop(now + 0.42);
-                }
-            } catch (e) {}
+        // 소리: 공용 서정 사운드 엔진(../lyric-audio.js) — 왕국/전투 배경 음악 + 다듬은 효과음
+        function playSfx(type, o) { if (window.LyricAudio) LyricAudio.sfx(type, o); }
+        function soundBtnLook() {
+            const m = window.LyricAudio ? LyricAudio.mode : 'all', b = document.getElementById('btn-sound');
+            state.soundOn = m !== 'off';
+            if (b) { b.style.opacity = m === 'off' ? '0.45' : (m === 'sfx' ? '0.75' : '1'); b.title = '소리: ' + (window.LyricAudio ? LyricAudio.label : '') + ' (누르면 바뀜)'; }
         }
-
-        function toggleSound() {
-            state.soundOn = !state.soundOn;
-            document.getElementById('btn-sound').style.opacity = state.soundOn ? '1' : '0.45';
-        }
+        function toggleSound() { if (window.LyricAudio) LyricAudio.cycle(); soundBtnLook(); }
+        if (window.LyricAudio) { LyricAudio.init('cell-expedition'); LyricAudio.theme('kingdom'); }
+        soundBtnLook();
 
         /*************************************************************************
          * 4. THREE.JS 3D VOXEL KINGDOM & BANQUET HALL CARPET BATTLE SCENE
@@ -1252,6 +1219,7 @@
             document.getElementById('battle-ui-root').classList.remove('hidden');
 
             initBattleStage();
+            if (window.LyricAudio) LyricAudio.theme('battle');
         }
 
         function returnToKingdom() {
@@ -1263,6 +1231,7 @@
             document.getElementById('battle-ui-root').classList.add('hidden');
             document.getElementById('kingdom-ui-root').classList.remove('hidden');
             updateKingdomHUD();
+            if (window.LyricAudio) LyricAudio.theme('kingdom');
         }
 
         function initBattleStage() {
@@ -1502,7 +1471,7 @@
             bObj.data.stored = 0;
             state.coins += gain * 5;
             state.crystals += Math.round(gain * 0.25);
-            playSfx('pop');
+            playSfx('coin');
             spawnBkDamagePopup(bObj.group.position, `+${(gain * 5).toLocaleString()} 코인`, true);
             updateKingdomHUD();
         }
@@ -1516,7 +1485,7 @@
             if (totalGain > 0) {
                 state.coins += totalGain * 5;
                 state.crystals += Math.round(totalGain * 0.3);
-                playSfx('pop');
+                playSfx('coin');
                 spawnBkDamagePopup(new THREE.Vector3(0, 2, 0), `일괄 수확 +${(totalGain * 5).toLocaleString()} 코인!`, true);
                 updateKingdomHUD();
             }
@@ -1613,7 +1582,7 @@
             if (state.coins < cost) { banner('코인이 부족해요', `${cost.toLocaleString()} 코인 필요`, '#fca5a5'); return; }
             state.coins -= cost;
             c.lv = Math.min(c.maxLv, c.lv + 1);
-            playSfx('pop');
+            playSfx('levelup');
             openUnitDetailModal(state.selectedDetailHeroId);
             updateKingdomHUD();
         }
@@ -1625,7 +1594,7 @@
             if (state.coins < cost) { banner('코인이 부족해요', `${cost.toLocaleString()} 코인 필요`, '#fca5a5'); return; }
             state.coins -= cost;
             c.skillLv++;
-            playSfx('pop');
+            playSfx('levelup');
             openUnitDetailModal(state.selectedDetailHeroId);
             updateKingdomHUD();
         }
@@ -1637,7 +1606,7 @@
             if (c.soulstones >= c.soulstoneMax) {
                 c.soulstones -= c.soulstoneMax;
                 c.stars++;
-                playSfx('skill');
+                playSfx('jackpot');
             }
             openUnitDetailModal(state.selectedDetailHeroId);
             updateKingdomHUD();
@@ -1672,7 +1641,7 @@
             b.lv++;
             b.max += 400;
             b.stored = b.max;
-            playSfx('pop');
+            playSfx('upgrade');
             renderBuildModal();
             updateKingdomHUD();
         }
@@ -1712,7 +1681,7 @@
             const cost = count === 1 ? 300 : 800;
             if (state.crystals < cost) return;
             state.crystals -= cost;
-            playSfx('skill');
+            playSfx('summon');
 
             const box = document.getElementById('gacha-stage-box');
             box.innerHTML = '';
@@ -1786,14 +1755,14 @@
         function claimEventReward() {
             state.coins += 15000;
             state.crystals += 600;
-            playSfx('skill');
+            playSfx('levelup');
             updateKingdomHUD();
             closeModal('EventModal');
         }
 
         function claimPassReward() {
             UNIT_DB.forEach(c => state.units[c.id].soulstones += 5);
-            playSfx('skill');
+            playSfx('levelup');
             closeModal('PassModal');
         }
 
@@ -1805,6 +1774,7 @@
         }
 
         function openModal(id) {
+            playSfx('open');
             if (id === 'UnitGridModal') renderUnitCollectionGrid();
             if (id === 'BuildModal') renderBuildModal();
             if (id === 'WishTreeModal') renderWishTreeModal();
@@ -1977,7 +1947,8 @@
                                 f.atkTimer = 1.3;
                                 const dmg = Math.max(1, Math.round(f.atk * (1 - Math.min(0.6, frontAlly.stats.def / (frontAlly.stats.def + 9000)))));
                                 frontAlly.hp = Math.max(0, frontAlly.hp - dmg);
-                                if (frontAlly.hp <= 0) { frontAlly.mesh.visible = false; playSfx('pop'); }
+                                playSfx('hit');
+                                if (frontAlly.hp <= 0) { frontAlly.mesh.visible = false; playSfx('down'); }
                             }
                         }
                     }
@@ -1997,7 +1968,7 @@
                         if (first) state.bestStage = si;
                         banner(`STAGE ${state.stageWorld}-${state.stageSub} 클리어!`, `+${coin.toLocaleString()} 코인 · +${gem} 💎${first ? ' · 최고 기록!' : ''}`);
                         state.stageSub++; if (state.stageSub > 10) { state.stageWorld++; state.stageSub = 1; }
-                        playSfx('skill'); saveGame();
+                        playSfx('victory'); saveGame();
                         if (first && window.BioGoal) {
                             const g = BioGoal.GOALS[RANK_ID];
                             if (g && si === g.t) BioGoal.result(RANK_ID, si, { text: `STAGE ${rankPayload().f.code} · 전투력 ${teamPower().toLocaleString()}`, rank: rankPayload() });
@@ -2009,6 +1980,7 @@
                 // 패배: 요원이 모두 쓰러지거나 시간이 다 되면 왕국으로
                 if (!battleEnding && (battleAllies.length && battleAllies.every(a => a.hp <= 0) || state.battleTimer <= 0)) {
                     battleEnding = true;
+                    playSfx('defeat');
                     banner('패배…', '요원을 레벨업·승급하거나 효소 모듈을 바꿔 보세요', '#fca5a5');
                     setTimeout(() => { battleEnding = false; if (state.mode === 'BATTLE') returnToKingdom(); }, 2200);
                 }
