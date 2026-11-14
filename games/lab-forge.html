@@ -201,6 +201,11 @@ const SLOT_TABLE = [ // 지원금 슬롯: 합계 100%
 ];
 const tierOf = L => Math.min(4, Math.floor((L - 1) / 6));               // 강화에 쓰는 재료 종류
 const needMat = L => 3 + ((L - 1) % 6) * 2;                             // 필요한 재료 수
+const BOOSTS = [ // 강화 촉매: 재료로 사고, 강화 1번에 1개 써서 성공 확률을 배로 올려요 (최대 100%)
+  {x: 2, mat: 0, cost: 20, name: '규사 촉매'}, {x: 4, mat: 1, cost: 30, name: '티타늄 촉매'}, {x: 6, mat: 2, cost: 40, name: '실리콘 촉매'},
+  {x: 8, mat: 3, cost: 50, name: '초전도 촉매'}, {x: 10, mat: 4, cost: 60, name: '반물질 촉매'}];
+let boostSel = -1; try { boostSel = +(localStorage.getItem('labForgeBoost') ?? -1); if (!(boostSel >= -1 && boostSel < 5)) boostSel = -1; } catch (e) {}
+const boostRate = (r, b) => b >= 0 && S.boosts[b] > 0 ? Math.min(100, r * BOOSTS[b].x) : r;
 const needMoney = L => Math.round(500 * Math.pow(1.38, L - 1) / 100) * 100; // 필요한 연구비
 const sellPrice = L => Math.round(2000 * Math.pow(1.6, L - 1) / 100) * 100;
 const mineCd = L => Math.max(0.05, 1.2 * Math.pow(0.82, L - 1));         // 채굴 간격(초): 단계마다 0.82배 (최소 0.05초)
@@ -211,10 +216,10 @@ const fmtRate = p => p >= 1 ? p.toFixed(1) + '%' : p.toPrecision(3).replace(/0+$
 /* ======================= 저장 ======================= */
 const SAVE_KEY = 'labForgeSave';
 let S = null, uid = 1;
-function freshSave() { return {money: 20000, tickets: 0, mats: [0, 0, 0, 0, 0], inv: [{id: 1, L: 1}], store: [], eq: 1, pets: [], team: [], coats: [], coat: -1, autoMine: false, autoMineOn: true, best: 1, uid: 2, stats: {mined: 0, tries: 0, destroyed: 0}}; }
+function freshSave() { return {money: 20000, tickets: 0, mats: [0, 0, 0, 0, 0], inv: [{id: 1, L: 1}], store: [], eq: 1, pets: [], team: [], coats: [], coat: -1, autoMine: false, autoMineOn: true, boosts: [0, 0, 0, 0, 0], best: 1, uid: 2, stats: {mined: 0, tries: 0, destroyed: 0}}; }
 function load() { try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.inv) return Object.assign(freshSave(), d); } catch (e) {} return freshSave(); }
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
-S = load(); uid = S.uid;
+S = load(); uid = S.uid; if (!Array.isArray(S.boosts) || S.boosts.length !== 5) S.boosts = [0, 0, 0, 0, 0];
 // 예전 저장 옮기기: 펫 번호 배열 → {id, k, lv}, 한 명 장착 → 팀
 if (S.pets.length && typeof S.pets[0] === 'number') { const old = S.pets, eq = S.petEq; S.pets = old.map(k => ({id: ++uid, k, lv: 0})); S.team = eq >= 0 && S.pets[eq] ? [S.pets[eq].id] : []; S.uid = uid; }
 delete S.petEq; S.team = (S.team || []).filter(id => S.pets.some(p => p.id === id)).slice(0, TEAM_MAX);
@@ -576,12 +581,13 @@ function nearForge() { const f = BUILD[0]; return Math.hypot(pl.x - f.x, pl.z - 
 function openForge(tab) {
   forgeTab = tab || forgeTab;
   if (selId == null || !S.inv.find(t => t.id === selId)) selId = (eqTool() || S.inv[0] || {}).id ?? null;
-  const tabs = [['enh', '🔨 강화'], ['inv', '🎒 인벤토리'], ['store', '🗄 보관함'], ['mat', '⚗ 재료 합성'], ['shop', '🛒 상점']];
+  const tabs = [['enh', '🔨 강화'], ['inv', '🎒 인벤토리'], ['store', '🗄 보관함'], ['mat', '⚗ 재료 합성'], ['boost', '🧪 강화 촉매'], ['shop', '🛒 상점']];
   let body = '';
   if (forgeTab === 'enh') body = enhHtml();
   else if (forgeTab === 'inv') body = listHtml(S.inv, 'inv');
   else if (forgeTab === 'store') body = listHtml(S.store, 'store');
   else if (forgeTab === 'mat') body = matHtml();
+  else if (forgeTab === 'boost') body = boostHtml();
   else body = shopHtml();
   const m = modal(`<h2>🔨 공대 대장간 · 강화 연구실</h2><p class="sub">💰 ${won(S.money)} · 🛡 보호권 ${S.tickets}개 · ${MATS.map((x, i) => `<span style="color:${x.col}">${x.name} ${S.mats[i]}</span>`).join(' · ')}</p>
     <div class="tabs">${tabs.map(([k, n]) => `<button type="button" data-t="${k}" class="${forgeTab === k ? 'on' : ''}">${n}</button>`).join('')}</div>${body}
@@ -603,7 +609,8 @@ function enhHtml() {
       req = `<div class="req"><div><b>${esc(TOOLS[L - 1])}</b><span>→ ${esc(TOOLS[L])}</span></div>
         <div class="${okM ? 'ok' : 'no'}"><span>재료 · ${MATS[tr].name}</span><b>${S.mats[tr]} / ${nm}</b></div>
         <div class="${okW ? 'ok' : 'no'}"><span>연구비</span><b>${won(S.money)} / ${won(nmo)}</b></div>
-        <div><span>성공 확률</span><span class="rate">${fmtRate(rate)}</span></div>
+        <div><span>성공 확률</span><span class="rate">${boostSel >= 0 && S.boosts[boostSel] > 0 ? `<s style="opacity:.55;font-size:.8em">${fmtRate(rate)}</s> → ${fmtRate(boostRate(rate, boostSel))}` : fmtRate(rate)}</span></div>
+        <div><span>🧪 강화 촉매</span><select id="boostSel" style="font:inherit;font-weight:800;padding:3px 6px;border-radius:8px"><option value="-1">사용 안 함</option>${BOOSTS.map((b, i) => `<option value="${i}" ${boostSel === i ? 'selected' : ''} ${S.boosts[i] ? '' : 'disabled'}>${b.name} ×${b.x} (보유 ${S.boosts[i]})</option>`).join('')}</select></div>
         <div><span>실패 시</span><b style="color:${L >= DESTROY_FROM ? '#ff9aa6' : '#b8c6e4'}">${L >= DESTROY_FROM ? `${Math.round(DESTROY_CHANCE * 100)}% 확률로 파괴 (재료 환급)` : '단계 유지 (파괴 없음)'}</b></div></div>
         <div class="row" style="margin-top:8px"><label class="chk"><input type="checkbox" id="useT" ${L >= DESTROY_FROM && S.tickets ? 'checked' : ''} ${S.tickets ? '' : 'disabled'}> 🛡 장비 보호권 사용 (${S.tickets}개)</label>
         <button class="btn gold" id="doEnh" ${okM && okW ? '' : 'disabled'}>🔨 강화하기</button></div>
@@ -627,6 +634,10 @@ function listHtml(arr, where) {
   return `<p class="sub">${where === 'inv' ? '장착한 기구로 광석을 자동 채굴해요. 아끼는 기구는 보관함에 넣으면 판매·파괴 걱정이 없어요.' : '보관함의 기구는 강화·판매할 수 없어요. 쓰려면 인벤토리로 꺼내요.'}${!nearForge() && where === 'inv' ? ' (판매·강화는 대장간에서만)' : ''}</p>${acts}
     <div class="grid">${sorted.map(x => itemCard(x)).join('') || '<p class="sub">비어 있어요.</p>'}</div>`;
 }
+function boostHtml() {
+  return `<p class="sub">재료로 <b>강화 촉매</b>를 만들어요. 강화할 때 촉매 1개를 쓰면 그 번 성공 확률이 <b>배</b>로 올라가요 (최대 100%). 강화 탭에서 쓸 촉매를 고르면 자동 강화에도 쓰여요.</p><div class="plist">${BOOSTS.map((b, i) => { const m = MATS[b.mat], can = Math.floor(S.mats[b.mat] / b.cost);
+    return `<div class="prow"><span class="dot" style="background:${m.col}"></span><div style="flex:1"><b>${b.name} <span style="color:#ffd25e">성공 확률 ×${b.x}</span></b> <b class="cnt">보유 ${S.boosts[i]}</b><small>${m.name} ${b.cost}개 → 촉매 1개 · 가진 재료 ${S.mats[b.mat]}개 (${can}개 만들 수 있음)</small></div><button class="btn pri sm" data-bb="${i}" data-n="1" ${can ? '' : 'disabled'}>1개</button><button class="btn sm" data-bb="${i}" data-n="5" ${can >= 5 ? '' : 'disabled'}>5개</button></div>`; }).join('')}</div>`;
+}
 function matHtml() {
   return `<p class="sub">남은 재료 <b>${MAT_FUSE}개</b>를 합치면 바로 위 단계 재료 <b>1개</b>가 <b>확정</b>으로 나와요.</p><div class="plist">${MATS.slice(0, 4).map((m, i) => { const can = Math.floor(S.mats[i] / MAT_FUSE);
     return `<div class="prow"><span class="dot" style="background:${m.col}"></span><div style="flex:1"><b>${m.name} ${S.mats[i]}개</b> → <b style="color:${MATS[i + 1].col}">${MATS[i + 1].name}</b><small>${MAT_FUSE}개 → 1개 · 지금 ${can}번 가능</small></div><button class="btn pri sm" data-mf="${i}" data-n="1" ${can ? '' : 'disabled'}>1번</button><button class="btn sm" data-mf="${i}" data-n="10" ${can >= 10 ? '' : 'disabled'}>10번</button><button class="btn gold sm" data-mf="${i}" data-n="all" ${can ? '' : 'disabled'}>최대</button></div>`; }).join('')}</div>`;
@@ -648,6 +659,8 @@ function shopHtml() {
 function bindForge(m) {
   m.querySelectorAll('.item').forEach(e => e.onclick = () => { AU.click(); selId = +e.dataset.id; openForge(forgeTab === 'shop' || forgeTab === 'mat' ? 'inv' : forgeTab); });
   m.querySelectorAll('[data-mf]').forEach(b => b.onclick = () => { const i = +b.dataset.mf, can = Math.floor(S.mats[i] / MAT_FUSE), n = b.dataset.n === 'all' ? can : Math.min(can, +b.dataset.n); if (!n) return; S.mats[i] -= n * MAT_FUSE; S.mats[i + 1] += n; AU.build ? AU.build() : AU.hammer(); AU.success(); toast('재료 합성', `${MATS[i + 1].name} +${n}`, 1100); hudDirty = true; save(); openForge('mat'); });
+  m.querySelectorAll('[data-bb]').forEach(b => b.onclick = () => { const i = +b.dataset.bb, B = BOOSTS[i], n = Math.min(+b.dataset.n, Math.floor(S.mats[B.mat] / B.cost)); if (!n) return; S.mats[B.mat] -= n * B.cost; S.boosts[i] += n; AU.success(); toast('🧪 ' + B.name + ' ' + n + '개 제작', '성공 확률 ×' + B.x + ' · 보유 ' + S.boosts[i] + '개'); if (boostSel < 0) { boostSel = i; try { localStorage.setItem('labForgeBoost', i); } catch (e) {} } save(); hudDirty = true; openForge('boost'); });
+  const bs = $('boostSel'); if (bs) bs.onchange = () => { boostSel = +bs.value; try { localStorage.setItem('labForgeBoost', boostSel); } catch (e) {} AU.click(); openForge('enh'); };
   const on = (id, f) => { const e = $(id); if (e) e.onclick = f; };
   on('doEnh', () => { if (!nearForge()) { toast('대장간 안에서만 강화할 수 있어요'); return; } const r = enhance(selId, $('useT') && $('useT').checked); afterEnh(r); });
   on('autoBtn', () => { if (autoOn) { stopAuto(); openForge('enh'); return; } if (!nearForge()) { toast('대장간 안에서만 강화할 수 있어요'); return; } startAuto(); });
@@ -672,8 +685,9 @@ function enhance(id, useTicket) {
   if (S.mats[tr] < nm) return {err: MATS[tr].name + '이(가) 모자라요'};
   if (S.money < nmo) return {err: '연구비가 모자라요'};
   S.mats[tr] -= nm; S.money -= nmo; S.stats.tries++;
+  const useB = boostSel >= 0 && S.boosts[boostSel] > 0, rate = boostRate(RATE[L - 1], boostSel); if (useB) S.boosts[boostSel]--;
   const roll = Math.random() * 100;
-  if (roll < RATE[L - 1]) { t.L++; if (t.L > S.best) { S.best = t.L; reportBest(); } if (S.eq === t.id) refreshHeld(); save(); return {ok: true, L: t.L}; }
+  if (roll < rate) { t.L++; if (t.L > S.best) { S.best = t.L; reportBest(); } if (S.eq === t.id) refreshHeld(); save(); return {ok: true, L: t.L}; }
   if (L >= DESTROY_FROM) {
     if (useTicket && S.tickets > 0) { S.tickets--; save(); return {ok: false, protected: true, L}; }
     if (Math.random() < DESTROY_CHANCE) {
@@ -924,7 +938,7 @@ function loop(now) {
 }
 requestAnimationFrame(loop);
 if (!localStorage.getItem('labForgeSeen')) { try { localStorage.setItem('labForgeSeen', '1'); } catch (e) {} setTimeout(helpModal, 600); }
-window.LF = {spawnDrop, burst, get petObjs() { return petObjs; }, buyAutoMine, ZONE_MONEY_MULT, drops, view, refreshPet, refreshHeld, refreshCoat, COATS, petPull, petUp, petFuse, openPet, openCoat, openForge, mineRange, magnetR, moveSpeed, S, enhance, RATE, PETS, SLOT_TABLE, ores, pl, mineCd, mineDmg, needMat, needMoney, tierOf};   // 시험용
+window.LF = {enhance, BOOSTS, setBoost: i => { boostSel = i; }, get S() { return S; }, openForge, spawnDrop, burst, get petObjs() { return petObjs; }, buyAutoMine, ZONE_MONEY_MULT, drops, view, refreshPet, refreshHeld, refreshCoat, COATS, petPull, petUp, petFuse, openPet, openCoat, openForge, mineRange, magnetR, moveSpeed, S, enhance, RATE, PETS, SLOT_TABLE, ores, pl, mineCd, mineDmg, needMat, needMoney, tierOf};   // 시험용
 </script>
 <script src="../goal.js"></script>
 <script src="../rank.js"></script>
