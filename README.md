@@ -18,6 +18,7 @@
 | 바이오 피라미드 타이쿤 | 3D 생명과학 타이쿤 (펫 뽑기 · 온천 · 엔딩) | `games/bio-pyramid.html` |
 | 랩 포지 LAB FORGE | 3D 복셀 실험기구 30단계 강화·채굴 시뮬레이션 (광산 5 · 석사 펫 7 · 지원금 슬롯 · 보호권 · 자동 강화) | `games/lab-forge.html` |
 | 생명과학 보드게임 천국 | 3D 보드게임 4종 (코돈 타일 · 모두의 세포 · 게놈 해독 코드 · 혈류 윷놀이 · AI 3단계 · 온라인 방 · 한 기기 다인) | `games/bio-board.html` |
+| 바이오 스포츠 천국 | 3D 복셀 스포츠 5종 (축구 11:11 · 농구 5:5 · 야구 9이닝 · 배구 5:5 · 8볼 포켓볼 · 10개 대학 20인 로스터 · 라인업/포메이션/타순 · AI 3단계 · 온라인 방) | `games/bio-sports.html` |
 | 생물의 번제 BIO OFFERING | 방 탐험 로그라이크 슈터 (6구역 · 병원체 40 · 보스 21 · 아이템 138) | `games/cell-raid.html` |
 
 ```
@@ -31,6 +32,7 @@ games/cell-frontier/  세포 개척단 그림(숨은 그림 16장·덮개·지�
 games/bio-beat/    바이오 비트 노래 음원(mp3)과 채보(json), art/cover(K-pop 앨범풍 커버 43장) — tools/bio-beat/covers/의 생성기(cover.html·render.js)가 만듦. 뮤직비디오는 게임 안에서 곡마다 다른 도트 장면(SCENES)으로 그림. tools/bio-beat/make_chart.py가 음원을 분석해 하·중·상 채보를 만들고 embed_charts.py가 게임에 넣음
 games/codon-glass/ 코돈 글래스 Tailwind CSS(tw.css). tools/codon-glass/build-css.sh로 다시 만듦 (썸네일 원본: tools/codon-glass/concept.html)
 games/bio-board/  보드게임 천국 코드 (core.js 3D·소리·UI, app.js 로비·모드·온라인, rummi/cell/code/yut.js 게임별 규칙·AI·화면)
+games/bio-sports/ 스포츠 천국 코드 (core.js 3D·소리·입력·팀 데이터, app.js 로비·프리매치·현황·온라인, soccer/basketball/baseball/volleyball/pool.js 종목별 규칙·AI·화면)
 vendor/           three.js r128 (3D 게임용), Matter.js 0.19 (바이오 타워 물리), PeerJS — 모두 MIT 라이선스
 icons/            앱 아이콘
 manifest.webmanifest, sw.js   앱 설치(PWA) · 오프라인 실행

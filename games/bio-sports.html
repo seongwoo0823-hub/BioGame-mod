@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<script src="../device.js"></script>
+<script src="../icons.js"></script>
+<script src="../net.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>바이오 스포츠 천국 · Bio-Sports Heaven</title>
+<meta name="theme-color" content="#0f1a2e">
+<link rel="manifest" href="../manifest.webmanifest?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-v2-32.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon-v2.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<script>if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{}));</script>
+<style>
+:root{--glass:rgba(16,24,46,.66);--line:rgba(255,255,255,.22);--text:#f4f8ff;--sub:#c3d0ea;--neon:#5ef2c8;--gold:#ffd25e;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;overflow:hidden;background:#0f1a2e;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Apple SD Gothic Neo",sans-serif;-webkit-user-select:none;user-select:none;touch-action:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 14px 34px -14px rgba(0,0,0,.6)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 15px;border-radius:13px;font-weight:800;font-size:14.5px;background:rgba(255,255,255,.14);border:1px solid var(--line);transition:transform .1s}
+.btn:active{transform:scale(.95)} .btn[disabled]{opacity:.35;pointer-events:none}
+.btn.pri{background:linear-gradient(135deg,#38e0b0,#3aa6ff);color:#05221d;border-color:transparent}
+.btn.gold{background:linear-gradient(135deg,#ffe07a,#ff9f43);color:#2a1600;border-color:transparent}
+.btn.red{background:linear-gradient(135deg,#ff8a8a,#ff4d6d);color:#2a0008;border-color:transparent}
+.btn.sm{min-height:32px;padding:0 10px;font-size:12.5px;border-radius:10px}
+html.is-touch .btn{min-height:44px} html.is-touch .btn.sm{min-height:36px}
+.ui{position:fixed;z-index:5}
+#top{left:10px;right:10px;top:calc(8px + env(safe-area-inset-top));display:flex;gap:8px;align-items:flex-start;pointer-events:none}
+#top>*{pointer-events:auto}
+#score{margin:0 auto;padding:6px 16px;display:flex;align-items:center;gap:12px;font-weight:900;font-size:16px}
+#score .tm{display:flex;align-items:center;gap:7px}
+#score .sw{width:14px;height:14px;border-radius:4px}
+#score .pts{font-size:26px;min-width:30px;text-align:center}
+#score .clock{font-size:13px;color:var(--sub);text-align:center;line-height:1.25;min-width:96px}
+#score .clock b{display:block;font-size:17px;color:#fff}
+#btns{position:absolute;right:0;top:0;display:flex;gap:6px}
+#info{left:50%;transform:translateX(-50%);top:calc(70px + env(safe-area-inset-top));padding:6px 14px;font-weight:800;font-size:14px;text-align:center;max-width:92vw;pointer-events:none}
+#info:empty{display:none}
+#help{left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));padding:7px 14px;font-size:12.5px;color:var(--sub);text-align:center;max-width:94vw;line-height:1.6;pointer-events:none}
+#help kbd{display:inline-block;font:800 11px ui-monospace,monospace;padding:1px 6px;border-radius:5px;background:rgba(255,255,255,.14);color:#fff;margin:0 1px}
+#mini{right:10px;bottom:calc(10px + env(safe-area-inset-bottom));width:190px;height:124px;border-radius:12px;border:1px solid var(--line);background:rgba(10,18,34,.6)}
+#gauge{left:50%;bottom:calc(60px + env(safe-area-inset-bottom));transform:translateX(-50%);width:240px;height:16px;border-radius:9px;background:rgba(0,0,0,.4);border:1px solid var(--line);overflow:hidden}
+#gauge i{display:block;height:100%;width:0;background:linear-gradient(90deg,#5ef2c8,#ffd25e,#ff5d6c)}
+#gauge b{position:absolute;top:-2px;bottom:-2px;width:3px;background:#fff;box-shadow:0 0 6px #fff}
+#toast{position:fixed;left:50%;top:26%;transform:translate(-50%,-10px);z-index:30;padding:14px 26px;text-align:center;opacity:0;transition:all .3s;pointer-events:none;max-width:90vw}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast b{display:block;font-size:26px;font-weight:900}
+#toast span{display:block;font-size:14px;color:var(--sub);margin-top:3px}
+.scrim{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:12px;background:rgba(5,10,22,.5)}
+.modal{width:min(980px,100%);max-height:calc(var(--app-h,100vh) - 24px);overflow:auto;padding:18px;background:rgba(14,22,42,.96);font-size:14.5px;line-height:1.5}
+.modal h2{margin:0 0 2px;font-size:21px;font-weight:900}
+.modal .sub{margin:0 0 10px;color:var(--sub);font-size:14px}
+.lbl{font-size:12.5px;font-weight:900;color:var(--sub);letter-spacing:.04em;margin:12px 0 6px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:86px;padding:9px 8px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-weight:800;font-size:13.5px}
+.seg button small{display:block;font-weight:600;color:var(--sub);font-size:11.5px}
+.seg button.on{background:linear-gradient(135deg,rgba(56,224,176,.35),rgba(58,166,255,.35));border-color:var(--neon)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px}
+.teams button{padding:9px 10px;border-radius:13px;background:rgba(255,255,255,.07);border:1px solid var(--line);text-align:left;font-size:13px}
+.teams button b{display:block;font-size:14.5px}
+.teams button small{color:var(--sub);font-size:11.5px;display:block}
+.teams button.on{border-color:var(--neon);background:rgba(94,242,200,.14)}
+.teams button.on2{border-color:#ff8fa3;background:rgba(255,143,163,.14)}
+.chip{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+table.rt{width:100%;border-collapse:collapse;font-size:13px}
+table.rt th,table.rt td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.09);text-align:left;white-space:nowrap}
+table.rt th{color:var(--sub);font-weight:700;position:sticky;top:0;background:rgba(14,22,42,.98)}
+table.rt tr.st{background:rgba(94,242,200,.08)}
+table.rt tr.sel{outline:2px solid var(--gold)}
+table.rt tr{cursor:pointer}
+.bar{display:inline-block;width:46px;height:7px;border-radius:4px;background:rgba(255,255,255,.12);vertical-align:middle;margin-right:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#5ef2c8,#3aa6ff)}
+.wrap2{display:grid;grid-template-columns:1.25fr 1fr;gap:14px}
+.pitch{position:relative;border-radius:14px;min-height:300px;overflow:hidden}
+.pitch .ps{position:absolute;transform:translate(-50%,-50%);text-align:center;font-size:11px;font-weight:800;cursor:pointer}
+.pitch .ps i{display:block;width:30px;height:30px;margin:0 auto 2px;border-radius:10px;line-height:30px;font-style:normal;font-size:13px;color:#08202a;border:2px solid #fff}
+.pitch .ps.sel i{outline:3px solid var(--gold)}
+.box{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.box div{padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.07);font-size:13px}
+.box div b{display:block;font-size:19px}
+#touch{position:fixed;inset:0;z-index:4;pointer-events:none}
+#joy{position:absolute;left:calc(20px + env(safe-area-inset-left));bottom:calc(40px + env(safe-area-inset-bottom));width:130px;height:130px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(10,20,40,.25);pointer-events:auto;touch-action:none}
+#joy i{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(255,255,255,.6)}
+#tbtn{position:absolute;right:calc(18px + env(safe-area-inset-right));bottom:calc(150px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(2,70px);gap:10px;pointer-events:auto}
+#tbtn button{width:70px;height:70px;border-radius:50%;font-weight:900;font-size:13px;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.55);touch-action:none}
+#tbtn button.k{background:rgba(255,120,120,.4)} #tbtn button.j{background:rgba(94,242,200,.35)}
+#lobby{position:fixed;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;overflow:auto}
+#lobby h1{margin:0;font-size:clamp(26px,5vw,44px);font-weight:900;letter-spacing:-.03em;background:linear-gradient(90deg,#7cf5d4,#9ad0ff,#ffb3d9);-webkit-background-clip:text;background-clip:text;color:transparent;text-align:center}
+#lobby p{margin:0;color:var(--sub);text-align:center}
+.sports{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;width:min(960px,100%)}
+.sports button{padding:16px 12px;border-radius:20px;text-align:center;font-weight:900;font-size:16px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(12px)}
+.sports button span{display:block;font-size:42px;margin-bottom:6px}
+.sports button small{display:block;font-weight:600;color:var(--sub);font-size:12px;margin-top:4px;line-height:1.4}
+.code{font:900 34px/1 ui-monospace,Menlo,monospace;letter-spacing:.18em;color:#a6ffe6;text-align:center;padding:10px;border-radius:14px;background:rgba(0,0,0,.25);margin:6px 0}
+input.txt{flex:1;min-width:120px;height:42px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:#fff;font:800 16px inherit;padding:0 12px;letter-spacing:.1em;text-transform:uppercase;outline:none;-webkit-user-select:text;user-select:text}
+@media (max-width:760px),(max-height:520px){
+  .scrim{padding:0} .modal{width:100%;height:var(--app-h,100vh);max-height:none;border-radius:0;border:0;padding:12px 12px calc(14px + env(safe-area-inset-bottom))}
+  .wrap2{grid-template-columns:1fr}
+  #score{font-size:13px;gap:8px;padding:5px 10px} #score .pts{font-size:20px} #score .clock{min-width:70px;font-size:11px} #score .clock b{font-size:14px}
+  #btns{position:static} #top{flex-wrap:wrap}
+  #mini{width:130px;height:86px;top:calc(110px + env(safe-area-inset-top));bottom:auto}
+  #help{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0" aria-label="게임 화면"></canvas>
+<div id="lobby"></div>
+<div id="top" class="ui" hidden><div id="score" class="glass"></div><div id="btns"><button class="btn sm" id="bStat">📋 경기 현황 / 작전 타임</button><button class="btn sm" id="bCam">🎥 시점</button><button class="btn sm" id="bSnd">🔔</button><button class="btn sm" id="bExit">로비로</button></div></div>
+<div id="info" class="ui glass"></div>
+<div id="help" class="ui glass" hidden></div>
+<canvas id="mini" class="ui" width="380" height="248" hidden></canvas>
+<div id="gauge" class="ui" hidden><i></i></div>
+<div id="touch" hidden><div id="joy"><i></i></div><div id="tbtn"><button class="c" data-k="c">전환<br>태클</button><button class="j" data-k="a">패스<br>토스</button><button data-k="t">현황</button><button class="k" data-k="b">슛<br>타격</button></div></div>
+<div id="toast" class="glass"><b></b><span></span></div>
+<div id="scrim" class="scrim" hidden><div id="modal" class="modal glass"></div></div>
+
+<script src="../vendor/three.min.js"></script>
+<script src="../lyric-audio.js"></script>
+<script src="bio-sports/core.js"></script>
+<script src="bio-sports/soccer.js"></script>
+<script src="bio-sports/basketball.js"></script>
+<script src="bio-sports/baseball.js"></script>
+<script src="bio-sports/volleyball.js"></script>
+<script src="bio-sports/pool.js"></script>
+<script src="bio-sports/app.js"></script>
+<script src="../goal.js"></script>
+<script src="../rank.js"></script>
+<script src="../ilog.js"></script>
+</body>
+</html>
