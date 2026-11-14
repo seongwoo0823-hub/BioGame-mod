@@ -42,6 +42,7 @@
     const batM = SP.vox([[0, 0, 0, 0.08, 0.9, 0.08, '#c98a4a'], [0, 0.55, 0, 0.11, 0.35, 0.11, '#b07a3a']]); sc.add(batM);
     const zone = new THREE.Group(); const zm = new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.55});
     [[0, 0.6, 0.92, 0.03], [0, 1.6, 0.92, 0.03], [-0.45, 1.1, 0.03, 1.0], [0.45, 1.1, 0.03, 1.0]].forEach(([z, y, w, h]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.02, h, w), zm); b.position.set(0.15, y, z); zone.add(b); });
+    [[0, 0.933, 0.9, 0.012], [0, 1.267, 0.9, 0.012], [-0.15, 1.1, 0.012, 1.0], [0.15, 1.1, 0.012, 1.0]].forEach(([z, y, w, h]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.01, h, w), new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.3})); b.position.set(0.15, y, z); zone.add(b); });
     const zfill = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.0), new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.08, side: THREE.DoubleSide})); zfill.rotation.y = -Math.PI / 2; zfill.position.set(0.15, 1.1, 0); zone.add(zfill);
     const cur = col => { const m = new THREE.Mesh(new THREE.RingGeometry(0.07, 0.11, 20), new THREE.MeshBasicMaterial({color: col, side: THREE.DoubleSide, transparent: true, depthTest: false})); m.rotation.y = -Math.PI / 2; m.renderOrder = 9; zone.add(m); return m; };
     const curP = cur(0xff5d6c), curB = cur(0x5ef2c8); sc.add(zone);
@@ -64,7 +65,7 @@
       const f = fsd(), b = bsd();
       for (let k = 0; k < 10; k++) { const e = E(f, k); if (k === 9) { e.out = true; e.x = -6; e.z = 14; continue; } e.out = false; e.x = FP[k][0]; e.z = FP[k][1]; e.face = Math.atan2(-e.x, -e.z); e.spdNow = 0; }
       for (let k = 0; k < 10; k++) { const e = E(b, k); e.out = true; e.x = -5; e.z = -14 - k * 0.6; }
-      const bt = batter(); bt.out = false; bt.x = -0.2; bt.z = -0.85; bt.face = 0;
+      const bt = batter(); bt.out = false; bt.x = -0.2; bt.z = -1.0; bt.face = 0;
       for (const r of runners) { const e = ents[r.ei]; e.out = false; [e.x, e.z] = posOf(r.p); e.face = Math.atan2(-e.z, e.x); }
     }
     function beginAtBat() { st.balls = 0; st.strikes = 0; startPitchAim(); placeTeams(); const bt = batter(); ev('msg', {text: `${st.batI[bsd()] + 1}번 타자 ${bt.name}`, sub: `${SLK[bt.slot]} · 타율 ${avg(idx(bt))}`, ms: 1100}); }
@@ -345,22 +346,29 @@
       const amP = local && me === fsd(), amB = local && me === bsd();
       curP.visible = showZone && amP && st.phase === 'aim'; curB.visible = showZone && amB;
       curP.position.set(0.14, 1.1 + st.aimP.y * 0.5, st.aimP.x * 0.45); curB.position.set(0.13, 1.1 + st.aimB.y * 0.5, st.aimB.x * 0.45);
-      if (st.phase === 'aim' || st.phase === 'pitch' || (st.phase === 'dead' && st.next === 'pitch')) SP.camTo(SP.cam.mode === 'persp' ? {x: 5, y: 1.0, z: 0, dist: 9.5, h: 2.5, yaw: -Math.PI / 2} : {x: 6, y: 0, z: 0, dist: 22, h: 10, yaw: -Math.PI / 2});
+      if (st.phase === 'aim' || st.phase === 'pitch' || (st.phase === 'dead' && st.next === 'pitch')) SP.camTo(SP.cam.mode === 'persp' ? {x: 5, y: 1.0, z: 0, dist: 9.5, h: 2.7, yaw: -Math.PI / 2 + 0.13} : {x: 6, y: 0, z: 0, dist: 22, h: 10, yaw: -Math.PI / 2});
       else if (st.phase === 'play' || st.phase === 'dead') SP.camTo(SP.cam.mode === 'persp' ? {x: 6 + Math.max(0, ball.x) * 0.55, y: 0, z: ball.z * 0.5, dist: 26 + Math.max(0, ball.x) * 0.3, h: 22, yaw: -Math.PI / 2} : {x: 14 + ball.x * 0.3, y: 0, z: ball.z * 0.3, dist: 56, h: 22, yaw: -Math.PI / 2});
       else SP.camTo({x: 16, y: 0, z: 0, dist: 34, h: 26, yaw: -Math.PI / 2});
       SP.gauge(null);
     }
+    function countHtml() { const on = b => runners.some(r => Math.abs(r.p - b) < 0.3);
+      const dia = (x, y, f) => `<rect x="${x - 7}" y="${y - 7}" width="14" height="14" transform="rotate(45 ${x} ${y})" fill="${f ? '#ffd25e' : 'rgba(255,255,255,.12)'}" stroke="#fff" stroke-width="1.5"/>`;
+      const dots = (n, max, c) => Array.from({length: max}, (_, i) => `<i style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-left:3px;background:${i < n ? c : 'rgba(255,255,255,.18)'}"></i>`).join('');
+      return `<div style="display:flex;gap:12px;align-items:center"><svg width="56" height="44" viewBox="0 0 56 44">${dia(28, 10, on(2))}${dia(12, 26, on(3))}${dia(44, 26, on(1))}</svg><div style="line-height:1.45;font-size:12px"><div>B${dots(st.balls, 3, '#5ef2a0')}</div><div>S${dots(st.strikes, 2, '#ffd25e')}</div><div>O${dots(st.outs, 2, '#ff5d6c')}</div></div></div>`; }
     function hudInfo() { const me = cfg.me; if (cfg.sides[me] !== 'local') return '';
-      if (st.phase === 'aim' && me === fsd()) return `투수: 구종 <b>${PT[st.ptype].n}</b> (1~4·L로 변경) · WASD 코스 · K 투구`;
-      if ((st.phase === 'aim' || st.phase === 'pitch') && me === bsd()) return `타자: WASD로 초록 원을 공이 올 곳에 · 공이 존에 닿는 순간 K 스윙 · J 도루${st.steal >= 0 ? ' (도루 준비됨)' : ''}`;
+      if (st.phase === 'aim' && me === fsd()) return `⚾ <b>${PT[st.ptype].n}</b> · 빨간 원을 던질 코스로 옮기고 투구`;
+      if ((st.phase === 'aim' || st.phase === 'pitch') && me === bsd()) return st.steal >= 0 ? '🏃 도루 준비 완료! · 초록 원을 공에 맞추고 스윙' : '초록 원을 공 위치에 맞추고, 공이 존에 닿는 순간 스윙';
       return ''; }
     const N = n => n.toString();
     return {
       step, view,
       snap() { return {e: SP.snapEnts(ents), b: [ball.x, ball.y, ball.z].map(v => Math.round(v * 100) / 100), s: [st.inn, st.half, st.outs, st.balls, st.strikes, st.score, st.phase, st.ptype, st.swingT, st.pt, st.next, st.batI, st.H, st.Er, st.steal], ap: [st.aimP.x, st.aimP.y, st.aimB.x, st.aimB.y].map(v => Math.round(v * 100) / 100), ln: st.line, bs: st.bs, ps: st.ps, r: runners.map(r => [r.ei, Math.round(r.p * 100) / 100]), ev: EV.recent(), end: st.end}; },
       apply(s) { SP.applyEnts(cfg, ents, s.e, () => ({cap: true})); [ball.x, ball.y, ball.z] = s.b; [st.inn, st.half, st.outs, st.balls, st.strikes, st.score, st.phase, st.ptype, st.swingT, st.pt, st.next, st.batI, st.H, st.Er, st.steal] = s.s; [st.aimP.x, st.aimP.y] = s.ap; if (cfg.sides[cfg.me] !== 'local' || cfg.me !== bsd()) [st.aimB.x, st.aimB.y] = s.ap.slice(2); else [st.aimB.x, st.aimB.y] = s.ap.slice(2); st.line = s.ln; st.bs = s.bs; st.ps = s.ps; runners = s.r.map(a => ({ei: a[0], p: a[1], to: a[1]})); st.end = s.end; EV.ingest(s.ev); },
+      miniOn() { return st.phase === 'play' || st.phase === 'pre' || (st.phase === 'dead' && st.next !== 'pitch'); },
+      buttons(me) { if (st.phase === 'aim' && me === fsd()) return {b: '투구', c: '구종', move: true}; if ((st.phase === 'aim' || st.phase === 'pitch') && me === bsd()) return {b: '스윙', a: runners.some(r => Math.round(r.p) <= 2) ? '도루' : null}; return {move: false}; },
+      picks(me) { return st.phase === 'aim' && me === fsd() && cfg.sides[me] === 'local' ? PT.map((p, i) => ({n: i + 1, label: p.n, on: st.ptype === i})) : null; },
       hud() { const T = cfg.teams.map(i => SP.TEAMS[i]); const bases = [1, 2, 3].map(b => runners.some(r => Math.round(r.p) === b && Math.abs(r.p - b) < 0.3) ? '◆' : '◇');
-        return {score: {a: {name: T[0].name, c1: SP.kit(cfg, 0).c1, pts: st.score[0]}, b: {name: T[1].name, c1: SP.kit(cfg, 1).c1, pts: st.score[1]}, sub: `${st.inn}회${st.half ? '말' : '초'} · ${st.outs}아웃 · ${bases[1]}${bases[2]}${bases[0]}`, clock: `B${st.balls} S${st.strikes}`}, info: hudInfo()}; },
+        return {score: {a: {name: T[0].name, c1: SP.kit(cfg, 0).c1, pts: st.score[0]}, b: {name: T[1].name, c1: SP.kit(cfg, 1).c1, pts: st.score[1]}, sub: `${st.inn}회${st.half ? '말' : '초'} · ${SP.TEAMS[cfg.teams[bsd()]].name} 공격 · 투구 ${st.ps[idx(E(fsd(), 0))].p}`, clock: `${st.inn}${st.half ? '▼' : '▲'}`}, info: hudInfo(), extra: countHtml()}; },
       minimap(g, w, h) { g.fillStyle = '#2f8a4a'; g.fillRect(0, 0, w, h); const s = Math.min(w / 72, h / 52), ox = w / 2, oy = h - 6, P = (x, z) => [ox + z * s, oy - x * s];
         g.fillStyle = '#3fae6a'; g.beginPath(); g.moveTo(...P(0, 0)); for (let a = -45; a <= 45; a += 5) { const r = FENCE(a * Math.PI / 180); g.lineTo(...P(Math.cos(a * Math.PI / 180) * r, Math.sin(a * Math.PI / 180) * r)); } g.closePath(); g.fill();
         g.fillStyle = '#c8925a'; g.beginPath(); BASE.forEach((b, i) => g[i ? 'lineTo' : 'moveTo'](...P(b[0] * 1.35 - (i % 2 ? 0 : 0), b[1] * 1.35))); g.fill();

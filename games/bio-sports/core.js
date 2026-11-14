@@ -80,6 +80,7 @@ const SP = window.SP = {SPORTS: {}};
   SP.cam = cam;
   SP.camTo = (o, snap) => { Object.assign(cam.g, o); if (snap) Object.assign(cam, o); };
   SP.toggleCam = () => { cam.mode = cam.mode === 'persp' ? 'ortho' : 'persp'; SP.toast(cam.mode === 'persp' ? '원근 카메라' : '직교(쿼터뷰) 카메라', '', 900); };
+  SP.zoomK = asp => { const ph = document.documentElement.classList.contains('dev-phone'); return SP.cam.dist < 12 ? 1 : asp < 0.8 ? 1.2 : ph ? 0.8 : 1; }; // 휴대폰 가로는 조금 가깝게
   SP.getCam = () => cam.mode === 'persp' ? pcam : ocam;
   function updCam(dt) {
     const k = 1 - Math.pow(0.004, dt);
@@ -87,7 +88,7 @@ const SP = window.SP = {SPORTS: {}};
     let dy = cam.g.yaw - cam.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); cam.yaw += dy * k;
     let sx = 0, sy = 0; if (cam.shake > 0) { cam.shake = Math.max(0, cam.shake - dt * 2); sx = (Math.random() - .5) * cam.shake; sy = (Math.random() - .5) * cam.shake; }
     const C = SP.getCam(), asp = innerWidth / innerHeight;
-    if (cam.mode === 'persp') { pcam.aspect = asp; pcam.fov = asp < 0.8 ? 62 : 48; pcam.updateProjectionMatrix(); C.position.set(cam.x + Math.sin(cam.yaw) * cam.dist + sx, cam.y + cam.h + sy, cam.z + Math.cos(cam.yaw) * cam.dist); }
+    if (cam.mode === 'persp') { pcam.aspect = asp; pcam.fov = asp < 0.8 ? 62 : 48; pcam.updateProjectionMatrix(); const zk = SP.zoomK(asp); C.position.set(cam.x + Math.sin(cam.yaw) * cam.dist * zk + sx, cam.y + cam.h * zk + sy, cam.z + Math.cos(cam.yaw) * cam.dist * zk); }
     else { const h = cam.dist * 0.5 * (asp < 0.8 ? 1.3 : 1), w = h * asp; ocam.left = -w; ocam.right = w; ocam.top = h; ocam.bottom = -h; ocam.updateProjectionMatrix();
       const a = cam.yaw + Math.PI / 4 * 0; C.position.set(cam.x + Math.sin(a + 0.6) * 80 + sx, cam.y + 70 + sy, cam.z + Math.cos(a + 0.6) * 80); }
     C.lookAt(cam.x + sx, cam.y, cam.z);
@@ -150,10 +151,10 @@ const SP = window.SP = {SPORTS: {}};
   SP.animPlayer = function (g, speed, dt, face) {
     const u = g.userData; const mv = speed > 0.3;
     if (mv) u.walk += dt * (6 + speed * 1.8);
-    const hop = mv ? Math.abs(Math.sin(u.walk)) : 0;
-    g.children[0].position.y = hop * 0.22;
+    const hop = mv ? Math.abs(Math.sin(u.walk)) : 0; u.idle = (u.idle || Math.random() * 6) + dt * 3.2;
+    g.children[0].position.y = mv ? hop * 0.22 : Math.max(0, Math.sin(u.idle)) * 0.03;
     const sq = mv ? 1 - (1 - hop) * 0.1 : 1; g.children[0].scale.set(1 + (1 - sq) * 0.5, sq, 1 + (1 - sq) * 0.5);
-    u.legs[0].rotation.x = mv ? Math.sin(u.walk) * 0.8 : 0; u.legs[1].rotation.x = mv ? -Math.sin(u.walk) * 0.8 : 0;
+    u.legs[0].rotation.x = mv ? Math.sin(u.walk) * 0.8 : 0.12; u.legs[1].rotation.x = mv ? -Math.sin(u.walk) * 0.8 : -0.12;
     if (!u.armPose) { u.arms[0].rotation.x = mv ? -Math.sin(u.walk) * 0.7 : 0; u.arms[1].rotation.x = mv ? Math.sin(u.walk) * 0.7 : 0; u.arms[0].rotation.z = 0; u.arms[1].rotation.z = 0; }
     if (face != null) { let d = face - g.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); g.rotation.y += d * Math.min(1, dt * 12); }
   };
@@ -223,18 +224,29 @@ const SP = window.SP = {SPORTS: {}};
   };
   SP.consume = () => { const o = {mx: inp.mx, my: inp.my, a: inp.a, b: inp.b, c: inp.c, q: inp.q, hb: inp.hb, ha: inp.ha, num: inp.num, ext: inp.ext || null}; inp.a = inp.b = inp.c = inp.q = 0; inp.num = 0; inp.ext = null; return o; };
   SP.emptyInput = () => ({mx: 0, my: 0, a: 0, b: 0, c: 0, q: 0, hb: false, ha: false, num: 0});
-  // 터치 조이스틱 · 버튼
+  // 터치: 왼쪽 아무 곳이나 눌러 생기는 조이스틱 · 오른쪽 원형 버튼 · 구종 등 고르기 버튼
   (function () {
-    const J = $('joy'), K = J.querySelector('i'); let id = null;
-    const mv = e => { if (e.pointerId !== id) return; const r = J.getBoundingClientRect(); let dx = (e.clientX - r.left - r.width / 2) / (r.width / 2), dy = (e.clientY - r.top - r.height / 2) / (r.height / 2); const l = Math.hypot(dx, dy); if (l > 1) { dx /= l; dy /= l; } touch.x = dx; touch.y = dy; K.style.transform = `translate(${dx * 38}px,${dy * 38}px)`; };
-    J.addEventListener('pointerdown', e => { id = e.pointerId; J.setPointerCapture(id); mv(e); }); J.addEventListener('pointermove', mv);
-    const end = e => { if (e.pointerId !== id) return; id = null; touch.x = touch.y = 0; K.style.transform = ''; }; J.addEventListener('pointerup', end); J.addEventListener('pointercancel', end);
-    document.querySelectorAll('#tbtn button').forEach(b => {
+    const Z = $('joyzone'), J = $('joy'), K = J.querySelector('i'); let id = null, cx = 0, cy = 0;
+    const mv = e => { if (e.pointerId !== id) return; const R = J.offsetWidth / 2; let dx = (e.clientX - cx) / R, dy = (e.clientY - cy) / R; const l = Math.hypot(dx, dy); if (l > 1) { dx /= l; dy /= l; } touch.x = dx; touch.y = dy; K.style.transform = `translate(${dx * R * 0.6}px,${dy * R * 0.6}px)`; };
+    Z.addEventListener('pointerdown', e => { e.preventDefault(); A.init(); id = e.pointerId; Z.setPointerCapture(id); cx = e.clientX; cy = e.clientY; J.style.left = cx + 'px'; J.style.top = cy + 'px'; J.classList.remove('idle'); mv(e); });
+    Z.addEventListener('pointermove', mv);
+    const end = e => { if (e.pointerId !== id) return; id = null; touch.x = touch.y = 0; K.style.transform = ''; J.classList.add('idle'); J.style.left = ''; J.style.top = ''; }; Z.addEventListener('pointerup', end); Z.addEventListener('pointercancel', end);
+    document.querySelectorAll('#acts button').forEach(b => {
       const k = b.dataset.k;
-      b.addEventListener('pointerdown', e => { e.preventDefault(); A.init(); if (k === 't') { SP.onTab && SP.onTab(); return; } inp[k]++; if (k === 'b') touch.b = true; if (k === 'a') touch.a = true; });
-      const up = () => { if (k === 'b') touch.b = false; if (k === 'a') touch.a = false; }; b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
+      b.addEventListener('pointerdown', e => { e.preventDefault(); A.init(); b.classList.add('on'); inp[k]++; if (k === 'b') touch.b = true; if (k === 'a') touch.a = true; if (navigator.vibrate) try { navigator.vibrate(8); } catch (er) {} });
+      const up = () => { b.classList.remove('on'); if (k === 'b') touch.b = false; if (k === 'a') touch.a = false; }; b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
     });
+    $('picks').addEventListener('pointerdown', e => { const b = e.target.closest('button'); if (!b) return; e.preventDefault(); inp.num = +b.dataset.n; A.click(); });
   })();
+  // 상황별 버튼 이름: {b, a, c, q} (null = 숨김) · picks: [{n, label, on}]
+  const KEYN = {b: 'K', a: 'J', c: 'L', q: 'Q'}; let actKey = '';
+  SP.setActs = (L, picks) => {
+    L = L || {}; const key = JSON.stringify([L, picks || null]); if (key === actKey) return; actKey = key;
+    document.querySelectorAll('#acts button').forEach(b => { const v = L[b.dataset.k]; b.hidden = !v; if (v) b.innerHTML = `${v}<small>${SP.isTouch ? '' : KEYN[b.dataset.k]}</small>`; });
+    $('picks').innerHTML = (picks || []).map(p => `<button type="button" data-n="${p.n}" class="${p.on ? 'on' : ''}"><small>${p.n}</small>${SP.esc(p.label)}</button>`).join('');
+    const ks = $('keys'); ks.innerHTML = (L.move === false ? '' : '<span><kbd>WASD</kbd>이동</span>') + ['b', 'a', 'c', 'q'].filter(k => L[k]).map(k => `<span class="k-${k}"><kbd>${KEYN[k]}</kbd>${L[k].replace(/<br>/g, ' ')}</span>`).join('') + (picks || []).map(p => `<span class="${p.on ? 'on' : ''}"><kbd>${p.n}</kbd>${SP.esc(p.label)}</span>`).join('');
+  };
+  SP.setTouchLabels = L => SP.setActs({b: L.b, a: L.a, c: L.c, q: L.q});
   SP.isTouch = matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints || 0) > 0;
   SP.setTouchLabels = (labels) => { const bs = document.querySelectorAll('#tbtn button'); ['c', 'a', 't', 'b'].forEach((k, i) => { if (labels[k]) bs[i].innerHTML = labels[k]; }); };
   // 마우스 (포켓볼 조준 등)
@@ -247,14 +259,21 @@ const SP = window.SP = {SPORTS: {}};
   SP.groundAt = (sx, sy, y) => { ndc.set(sx / innerWidth * 2 - 1, -(sy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, SP.getCam()); const p = new THREE.Vector3(); return ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -(y || 0)), p) ? p : null; };
 
   /* ---------------- 화면 UI ---------------- */
-  SP.toast = (t, s, ms) => { const e = $('toast'); e.querySelector('b').textContent = t; e.querySelector('span').textContent = s || ''; e.classList.add('show'); clearTimeout(SP.toast.t); SP.toast.t = setTimeout(() => e.classList.remove('show'), ms || 1700); };
+  SP.toast = (t, s, ms, big) => { const e = $('toast'); e.classList.toggle('big', !!big); e.querySelector('b').textContent = t; e.querySelector('span').textContent = s || ''; e.classList.add('show'); clearTimeout(SP.toast.t); SP.toast.t = setTimeout(() => e.classList.remove('show'), ms || 1700); };
   SP.info = h => { $('info').innerHTML = h || ''; };
   SP.modal = (html, opt) => { const m = $('modal'); m.innerHTML = html; $('scrim').hidden = false; $('scrim').onclick = e => { if (e.target === $('scrim') && !(opt && opt.lock)) SP.closeModal(); }; SP.modalOpen = true; return m; };
   SP.closeModal = () => { $('scrim').hidden = true; $('modal').innerHTML = ''; SP.modalOpen = false; if (SP.onModalClose) { const f = SP.onModalClose; SP.onModalClose = null; f(); } };
-  SP.gauge = (v, mark) => { const g = $('gauge'); if (v == null) { g.hidden = true; return; } g.hidden = false; g.querySelector('i').style.width = (SP.clamp(v, 0, 1) * 100) + '%'; let b = g.querySelector('b'); if (mark != null) { if (!b) { b = document.createElement('b'); g.appendChild(b); } b.style.left = (mark * 100) + '%'; } else if (b) b.remove(); };
+  const gv = new THREE.Vector3();
+  SP.gauge = (v, mark, world) => { const g = $('gauge'); if (v == null) { g.hidden = true; return; } g.hidden = false; g.querySelector('i').style.width = (SP.clamp(v, 0, 1) * 100) + '%';
+    let b = g.querySelector('b'); if (mark != null) { if (!b) { b = document.createElement('b'); g.appendChild(b); } b.style.left = (mark * 100) + '%'; } else if (b) b.remove();
+    if (world) { gv.set(world.x, world.y, world.z).project(SP.getCam()); g.classList.add('at'); g.style.left = ((gv.x + 1) / 2 * innerWidth) + 'px'; g.style.top = ((1 - gv.y) / 2 * innerHeight - 8) + 'px'; }
+    else { g.classList.remove('at'); g.style.left = ''; g.style.top = ''; } };
   SP.help = h => { const e = $('help'); e.hidden = !h; e.innerHTML = h || ''; };
-  SP.score = (s) => { // {a:{name,c1,pts}, b:{...}, clock, sub}
-    $('score').innerHTML = `<span class="tm"><i class="sw" style="background:${s.a.c1}"></i>${SP.esc(s.a.name)}</span><span class="pts">${s.a.pts}</span><span class="clock">${s.sub || ''}<b>${s.clock || ''}</b></span><span class="pts">${s.b.pts}</span><span class="tm">${SP.esc(s.b.name)}<i class="sw" style="background:${s.b.c1}"></i></span>`;
+  SP.scoreHtml = s => `<div class="sb"><span class="t"><i style="background:${s.a.c1}"></i>${SP.esc(s.a.name)}</span><span class="sc">${s.a.pts}<small style="opacity:.6">-</small>${s.b.pts}</span><span class="t">${SP.esc(s.b.name)}<i style="background:${s.b.c1}"></i></span>${s.clock ? `<span class="ck">${SP.esc(s.clock)}</span>` : ''}</div>`;
+  let scoreKey = '';
+  SP.score = (s, extra) => { // {a:{name,c1,pts}, b:{...}, clock, sub} + 덧붙일 판(야구 볼카운트 등)
+    const k = JSON.stringify(s) + (extra || ''); if (k === scoreKey) return; scoreKey = k;
+    $('score').innerHTML = SP.scoreHtml(s) + `<div class="sbs">${SP.esc(s.sub || '')}</div><div class="sbx">${extra || ''}</div>`;
   };
   // 미니맵: fn(ctx, w, h)
   const mini = $('mini'), mctx = mini.getContext('2d');
@@ -334,11 +353,22 @@ const SP = window.SP = {SPORTS: {}};
   };
   SP.snapEnts = ents => ents.map(e => [Math.round(e.x * 100) / 100, Math.round(e.z * 100) / 100, Math.round(e.face * 100) / 100, Math.round(e.atp * 100) / 100, Math.round(e.spdNow * 10) / 10, e.out ? 1 : 0, Math.round((e.y || 0) * 100) / 100, e.pi]);
   SP.applyEnts = function (cfg, ents, arr, opt) { arr.forEach((a, i) => { const e = ents[i]; if (!e) return; if (a[7] != null && a[7] !== e.pi) SP.doSwap(cfg, e, a[7], opt && opt(e)); e.x = a[0]; e.z = a[1]; e.face = a[2]; e.atp = a[3]; e.spdNow = a[4]; e.out = !!a[5]; e.y = a[6] || 0; }); };
-  SP.viewEnts = function (ents, dt, ctrl) {
+  SP.viewEnts = function (ents, dt, ctrl) { let tagged = null;
     for (const e of ents) { const m = e.mesh; m.visible = !e.out; if (e.out) continue;
       m.position.x += (e.x - m.position.x) * Math.min(1, dt * 18); m.position.z += (e.z - m.position.z) * Math.min(1, dt * 18); m.position.y = e.y || 0;
-      SP.animPlayer(m, e.spdNow, dt, e.face); SP.setATP(m, e.atp); m.userData.ring.visible = ctrl ? ctrl(e) : false; }
+      SP.animPlayer(m, e.spdNow, dt, e.face); SP.setATP(m, e.atp); const on = ctrl ? ctrl(e) : false; m.userData.ring.visible = on; if (on) tagged = e; }
+    SP.tagEnt(tagged); 
   };
+  // 조작 중인 선수 이름표 (머리 위)
+  let tagS = null, tagName = '';
+  SP.tagEnt = e => { if (!tagS || !tagS.parent) { const c = document.createElement('canvas'); c.width = 256; c.height = 64; const t = new THREE.CanvasTexture(c); t.userData = {keep: true}; tagS = new THREE.Sprite(new THREE.SpriteMaterial({map: t, depthTest: false, transparent: true})); tagS.material.userData = {keep: true}; tagS.renderOrder = 20; tagS.scale.set(3.4, 0.85, 1); SP.scene.add(tagS); tagS.userData.cv = c; tagName = ''; }
+    if (!e || e.out) { tagS.visible = false; return; } tagS.visible = true; const nm = `▼ ${e.no} ${e.name}`;
+    if (nm !== tagName) { tagName = nm; const c = tagS.userData.cv, g = c.getContext('2d'); g.clearRect(0, 0, 256, 64); g.font = '900 30px "Noto Sans KR",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 7; g.strokeStyle = 'rgba(0,0,0,.75)'; g.strokeText(nm, 128, 34); g.fillStyle = '#ffe066'; g.fillText(nm, 128, 34); tagS.material.map.needsUpdate = true; }
+    tagS.position.set(e.mesh.position.x, (e.mesh.position.y || 0) + 2.55, e.mesh.position.z); };
+  // 목표 지점으로 걸어가기/뛰어가기 (멈춤 없이 자연스럽게): 도착하면 true
+  SP.walkTo = (e, tx, tz, dt, sp, lookX, lookZ) => { const dx = tx - e.x, dz = tz - e.z, d = Math.hypot(dx, dz);
+    if (d > 0.12) { const m = Math.min(sp, d * 4); e.vx = dx / d * m; e.vz = dz / d * m; e.x += e.vx * dt; e.z += e.vz * dt; e.spdNow = m; e.face = Math.atan2(dx, dz); return false; }
+    e.vx = e.vz = 0; e.spdNow = 0; if (lookX != null) e.face = Math.atan2(lookX - e.x, lookZ - e.z); return true; };
   // 달리기 속도 (시냅스 전도 속도 + ATP)
   SP.runSpeed = (e, base) => (base || 5.2) * (0.78 + e.st.spd / 300) * (0.62 + 0.38 * Math.max(0.15, e.atp));
   SP.drainATP = (e, moving, dt, team, extra) => { const k = (team.drain || 1) * (1.15 - e.st.atp / 200); if (moving) e.atp = Math.max(0.05, e.atp - dt * 0.0105 * k * (extra || 1)); else e.atp = Math.min(1, e.atp + dt * 0.006 * (team.recover || 1)); };

@@ -212,7 +212,7 @@
         lineG.attributes.position.needsUpdate = true; ghost.position.set(tr.gx, 0.04, tr.gz);
       }
       const persp = SP.cam.mode === 'persp';
-      SP.camTo(persp ? {x: 0, y: 0, z: 0.6, dist: 8.5, h: 17, yaw: 0} : {x: 0, y: 0, z: 0, dist: 16, h: 10, yaw: 0});
+      SP.camTo(persp ? {x: 0, y: 0, z: 0.2, dist: 1.4, h: 15.5, yaw: 0} : {x: 0, y: 0, z: 0, dist: 16, h: 10, yaw: 0});
       SP.gauge(aiming && (st.charging) && (myTurn || cfg.sides[st.turn] === 'ai') ? st.power : null, null);
     }
     return {
@@ -220,9 +220,10 @@
       snap() { return {b: balls.map(b => [Math.round(b.x * 1000) / 1000, Math.round(b.z * 1000) / 1000, b.on ? 1 : 0]), s: [st.turn, st.group, st.phase, Math.round(st.aim * 1000) / 1000, Math.round(st.power * 100) / 100, st.charging, st.spin, st.inHand, st.moveMode, Math.ceil(st.timer), st.broke, st.shots, st.fouls, st.potted, st.end, st.winner, st.why, st.kitchen], ev: EV.recent()}; },
       apply(s) { s.b.forEach((a, i) => { const b = balls[i]; const dx = a[0] - b.x, dz = a[1] - b.z, d = Math.hypot(dx, dz); if (d > 0.001 && d < 2) b.m.rotateOnWorldAxis(new THREE.Vector3(dz, 0, -dx).normalize(), d / R); b.x = a[0]; b.z = a[1]; b.on = !!a[2]; });
         [st.turn, st.group, st.phase, st.aim, st.power, st.charging, st.spin, st.inHand, st.moveMode, st.timer, st.broke, st.shots, st.fouls, st.potted, st.end, st.winner, st.why, st.kitchen] = s.s; EV.ingest(s.ev); },
+      buttons(me) { if (st.phase !== 'aim' || st.turn !== me) return {move: false}; return {b: '샷<br><small>꾹</small>', a: '회전', c: st.inHand ? (st.moveMode ? '조준<br>모드' : '큐볼<br>옮기기') : null}; },
       hud() { const T = cfg.teams.map(i => SP.TEAMS[i]); const left = sd => st.group[sd] ? remaining(st.group[sd]) : 7;
         const g = st.group, gtxt = g[0] ? `${g[0] === 'solid' ? '●양성' : '◐음성'} vs ${g[1] === 'solid' ? '●양성' : '◐음성'}` : '오픈 테이블';
-        return {score: {a: {name: `${T[0].name}`, c1: T[0].c1, pts: 7 - left(0)}, b: {name: `${T[1].name}`, c1: T[1].c1, pts: 7 - left(1)}, sub: `${gtxt} · ${st.turn === 0 ? '◀' : '▶'} ${SP.TEAMS[cfg.teams[st.turn]].name} 차례`, clock: st.phase === 'aim' ? `⏱ ${Math.max(0, Math.ceil(st.timer))}` : '🎱'}, info: hudInfo()}; },
+        return {score: {a: {name: `${T[0].name}`, c1: T[0].c1, pts: 7 - left(0)}, b: {name: `${T[1].name}`, c1: T[1].c1, pts: 7 - left(1)}, sub: `${gtxt} · ${st.turn === 0 ? '◀' : '▶'} ${SP.TEAMS[cfg.teams[st.turn]].name} 차례`, clock: st.phase === 'aim' ? `⏱ ${Math.max(0, Math.ceil(st.timer))}` : '🎱'}, info: hudInfo(), extra: trackHtml()}; },
       status() { const T = cfg.teams.map(i => SP.TEAMS[i]); const row = (l, x, y) => `<tr><td style="text-align:right"><b>${x}</b></td><td style="text-align:center;color:#c3d0ea">${l}</td><td><b>${y}</b></td></tr>`;
         const gl = sd => st.group[sd] ? GN[st.group[sd]] : '아직 안 정해짐';
         const rem = sd => st.group[sd] ? balls.filter(b => b.on && grp(b.n) === st.group[sd]).map(b => b.n).join(', ') || '모두 넣음 → 8번!' : '-';
@@ -231,7 +232,11 @@
       result() { if (!st.end) return null; return {winner: st.winner, score: `${15 - balls.filter(b => b.on && b.n).length}개 투입`, text: st.why}; },
       dispose() { SP.onPointer = null; SP.onWheel = null; }
     };
+    function trackHtml() { // 남은 공 표시 (내 그룹 · 상대 그룹 · 8번)
+      const ball = n => `<i style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;margin-right:3px;font:900 9.5px sans-serif;color:#111;background:${n >= 9 ? `linear-gradient(#f8f8fc 28%,${COL[n]} 28% 72%,#f8f8fc 72%)` : COL[n]};${balls[n].on ? '' : 'opacity:.18;'}box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.5)"><b style="background:#fff;border-radius:50%;width:11px;height:11px;line-height:11px;text-align:center">${n}</b></i>`;
+      const row = (sd) => { const g = st.group[sd], ns = g === 'solid' ? [1, 2, 3, 4, 5, 6, 7] : g === 'stripe' ? [9, 10, 11, 12, 13, 14, 15] : null; return `<div style="display:flex;align-items:center;gap:6px;margin:2px 0"><span style="width:56px;font-size:11px;color:${st.turn === sd ? '#ffd25e' : '#c3d0ea'}">${st.turn === sd ? '▶ ' : ''}${SP.esc(SP.TEAMS[cfg.teams[sd]].name)}</span>${ns ? ns.map(ball).join('') : '<span style="font-size:11px;color:#c3d0ea">그룹 미정</span>'}</div>`; };
+      return row(0) + row(1) + `<div style="font-size:11px;color:#c3d0ea;margin-top:2px">8번 핵소체 ${ball(8)} · 회전 ${SPIN[st.spin][0]}</div>`; }
     function hudInfo() { const me = cfg.me; if (cfg.sides[me] !== 'local' || st.turn !== me || st.phase !== 'aim') return st.phase === 'aim' && st.turn !== me ? '상대 차례예요' : '';
-      return `${st.inHand ? (st.moveMode ? '🟡 큐볼 옮기기: WASD·드래그 → L로 조준 모드' : '프리볼: L = 큐볼 옮기기 · ') : ''}회전: <b>${SPIN[st.spin][0]}</b> (J) · K 꾹 → 놓으면 샷${st.group[me] ? ' · 내 공 ' + GN[st.group[me]] : ''}`; }
+      return st.inHand && st.moveMode ? '🟡 프리볼 · 큐볼을 끌어서 놓을 곳에 두세요' : `화면을 끌어 조준 · <b>샷</b>을 꾹 눌렀다 놓기${st.inHand ? ' · 프리볼' : ''}`; }
   }
 })();

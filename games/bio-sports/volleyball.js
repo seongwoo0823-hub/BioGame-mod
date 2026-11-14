@@ -202,6 +202,36 @@
       q *= 0.75 + 0.25 * e.atp; q += (Math.random() - .5) * 0.3; st.softBlock = false;
       return SP.clamp(q, 0, 1);
     }
+    // 팀 전술 위치: 모든 선수가 상황에 맞게 계속 움직여요 (자기 코트 기준 좌표로 계산 후 뒤집기)
+    function tactic(e, sd, idleOnly) {
+      const tr = ball.tr, i = idx(e), R = e.rot, front = R === 1 || R === 2;
+      const bl = mir(sd, [ball.x, ball.z]), wob = Math.sin(st.t * 1.7 + i) * 0.35;
+      let p;
+      if (st.phase === 'point' || idleOnly && st.phase !== 'serveWait') p = POS[R];
+      else if (st.phase === 'serveWait') {
+        if (st.serve === sd) p = front ? [POS[R][0] + 0.6, POS[R][1]] : POS[R];
+        else p = [[-6.9, 3.0], [-3.1, 2.7], [-3.1, -2.7], [-6.9, -3.0], [-7.5, 0]][R];
+        p = [p[0], p[1] + wob * 0.4];
+      } else if (!tr) p = POS[R];
+      else {
+        const ours = tr.side === sd, kind = tr.kind;
+        if (i === st.rcv[sd] && (kind !== 'spike' || !ours) && !(ours && (kind === 'serve' || kind === 'free'))) { const L0 = (kind === 'pass' || kind === 'set') ? {x: tr.tx, z: tr.tz} : landingOf(tr); return kind === 'set' ? [tr.tx - dirX(sd) * 0.4, tr.tz] : [L0.x, L0.z]; }
+        const tl = mir(sd, [tr.tx, tr.tz]);
+        if (ours && kind === 'pass') { // 우리 리시브 → 세터에게: 공격수는 도움닫기 자리로
+          p = front ? [-3.6, R === 2 ? -3.3 : 3.3] : R === 4 ? [-5.6, 0.4] : [-6.4, R === 0 ? 2.6 : -2.6];
+        } else if (ours && kind === 'set') { // 토스 → 스파이크: 나머지는 공격수 뒤를 받쳐요
+          const hz = tl[1]; p = front ? [-2.4, hz > 0 ? -2.2 : 2.2] : R === 4 ? [-4.6, hz * 0.6] : [-6.0, hz + (R === 0 ? 1.8 : -1.8)];
+        } else if (ours) { // 우리 공이 넘어가는 중: 수비 대형으로 복귀
+          p = front ? [-1.1, R === 2 ? -2.2 : 2.2] : [[-6.3, 2.8], 0, 0, [-6.3, -2.8], [-7.2, 0]][R];
+        } else if (kind === 'set' || kind === 'pass') { // 상대가 공격 준비: 블로커는 네트에서 따라가고 수비는 흩어져요
+          const az = kind === 'set' ? tl[1] : bl[1]; p = front ? [-0.75, SP.clamp(az + (R === 1 ? 0.7 : -0.7), -4.2, 4.2)] : [[-6.2, SP.clamp(az + 2.6, -4, 4)], 0, 0, [-6.2, SP.clamp(az - 2.6, -4, 4)], [-7.4, az * 0.4]][R];
+        } else { // 상대 공격이 날아오는 중: 떨어질 곳 주변을 감싸요
+          const L0 = mir(sd, (() => { const q = landingOf(tr); return [q.x, q.z]; })());
+          p = front ? [-1.4, SP.clamp(L0[1] * 0.5 + (R === 1 ? 1.6 : -1.6), -4, 4)] : [SP.clamp(L0[0] - 0.8, -8, -4.5), SP.clamp(L0[1] + (R === 0 ? 2.4 : R === 3 ? -2.4 : 0), -4.2, 4.2)];
+        }
+      }
+      return mir(sd, p);
+    }
     function moveAll(dt, ins, idleOnly) {
       for (let sd = 0; sd < 2; sd++) {
         const i = ins[sd]; if (i && (Math.abs(i.mx) > 0.1 || Math.abs(i.my) > 0.1)) st.idle[sd] = 0; else st.idle[sd] += dt;
@@ -209,12 +239,7 @@
         for (const e of team(sd)) {
           if (e.jump > 0) { e.jump -= dt; e.y = Math.max(0, Math.sin(Math.max(0, e.jump) / 0.55 * Math.PI) * 0.9); } else e.y = 0;
           if (st.phase === 'serveWait' && e === server()) { e.spdNow = 0; continue; }
-          let tx, tz; const hp = home(e);
-          if (idleOnly) { tx = hp[0]; tz = hp[1]; }
-          else { tx = hp[0]; tz = hp[1]; const tr = ball.tr;
-            if (tr && idx(e) === st.rcv[sd]) { const L0 = (tr.kind === 'pass' || tr.kind === 'set') ? {x: tr.tx, z: tr.tz} : landingOf(tr); tx = L0.x; tz = L0.z; if (tr.kind === 'set') { tx = tr.tx - dirX(sd) * 0.4; } }
-            else if (tr && (e.rot === 1 || e.rot === 2) && st.lastTeam !== sd && tr.kind === 'set') { tx = sd === 0 ? -0.8 : 0.8; tz = SP.clamp(ball.z, -4, 4) * 0.8 + (e.rot === 1 ? 0.6 : -0.6) * (sd ? -1 : 1); } // 블로킹 준비
-          }
+          let [tx, tz] = tactic(e, sd, idleOnly);
           const human = i && idx(e) === st.ctrl[sd];
           let vx, vz; const sp = SP.runSpeed(e, 6.0);
           if (human && st.idle[sd] < 0.3 && st.phase !== 'serveWait') { vx = i.mx * sp; vz = i.my * sp; }
@@ -234,13 +259,15 @@
       const tr = ball.tr; mark.visible = false;
       if (st.phase === 'serveWait' && local && st.serve === me) { mark.visible = true; const a = st.aim[me]; mark.position.set(dirX(me) * (1.5 + a.x * 6.5), 0.03, a.z * 4.0); }
       else if (tr && st.phase === 'rally' && (tr.kind !== 'pass' && tr.kind !== 'set')) { const L0 = landingOf(tr); mark.visible = true; mark.position.set(L0.x, 0.03, L0.z); }
-      SP.camTo(SP.cam.mode === 'persp' ? {x: ball.x * 0.25, y: 1.2, z: 0.5, dist: 15.5, h: 8.5, yaw: 0.42} : {x: ball.x * 0.2, y: 0, z: 0, dist: 24, h: 10, yaw: 0});
-      SP.gauge(st.phase === 'serveWait' && local && st.serve === me && st.hold[me] > 0.05 ? SP.gaugeVal || 0 : null, 0.65);
+      SP.camTo(SP.cam.mode === 'persp' ? (innerWidth / innerHeight < 0.8 ? {x: ball.x * 0.45, y: 1.2, z: 0.5, dist: 19, h: 12, yaw: 0.12} : {x: ball.x * 0.25, y: 1.2, z: 0.5, dist: 15.5, h: 8.5, yaw: 0.42}) : {x: ball.x * 0.2, y: 0, z: 0, dist: 24, h: 10, yaw: 0});
+      SP.gauge(st.phase === 'serveWait' && local && st.serve === me && st.hold[me] > 0.05 ? SP.gaugeVal || 0 : null, 0.65, (() => { const sv = server(); return sv ? {x: sv.mesh.position.x, y: 3.0, z: sv.mesh.position.z} : null; })());
     }
     return {
       step, view,
       snap() { return {e: SP.snapEnts(ents), r: ents.map(e => e.rot), b: [ball.x, ball.y, ball.z].map(v => Math.round(v * 100) / 100), s: [st.score, st.sets, st.setNo, st.serve, st.phase, st.touches, st.lastTeam, st.ctrl, st.setLog, st.stats, st.pp], a: st.aim, tr: ball.tr ? [ball.tr.tx, ball.tr.tz, ball.tr.kind] : null, ev: EV.recent(), end: st.end}; },
       apply(s) { SP.applyEnts(cfg, ents, s.e); s.r.forEach((r, i) => ents[i].rot = r); [ball.x, ball.y, ball.z] = s.b; [st.score, st.sets, st.setNo, st.serve, st.phase, st.touches, st.lastTeam, st.ctrl, st.setLog, st.stats, st.pp] = s.s; st.aim = s.a; ball.tr = s.tr ? {sx: ball.x, sy: ball.y, sz: ball.z, tx: s.tr[0], tz: s.tr[1], ey: 0.1, T: 1, h: 1, t: 0, kind: s.tr[2]} : null; st.end = s.end; EV.ingest(s.ev); },
+      buttons(me) { if (st.phase === 'serveWait') return st.serve === me ? {b: '서브<br><small>꾹</small>'} : {move: true}; if (st.phase !== 'rally') return {}; const tr = ball.tr; if (!tr) return {a: '리시브'};
+        if (tr.side === me && tr.kind === 'set') return {b: '스파이크'}; if (tr.side === me && tr.kind === 'pass') return {a: '토스'}; if (tr.side !== me && (tr.kind === 'set' || tr.kind === 'spike')) return {c: '블로킹', a: '리시브'}; return {a: '리시브'}; },
       hud() { const T = cfg.teams.map(i => SP.TEAMS[i]);
         return {score: {a: {name: T[0].name, c1: SP.kit(cfg, 0).c1, pts: st.score[0]}, b: {name: T[1].name, c1: SP.kit(cfg, 1).c1, pts: st.score[1]}, sub: `${st.setNo}세트 · 세트 ${st.sets[0]}:${st.sets[1]}${st.phase === 'rally' && st.lastTeam >= 0 ? ` · 터치 ${st.touches}/3` : ''}`, clock: `🏐 ${SP.TEAMS[cfg.teams[st.serve]].name} 서브`}, info: hudInfo()}; },
       status() { const T = cfg.teams.map(i => SP.TEAMS[i]), [a, b] = st.stats;
@@ -258,8 +285,8 @@
       dispose() {}
     };
     function hudInfo() { const me = cfg.me; if (cfg.sides[me] !== 'local') return '';
-      if (st.phase === 'serveWait' && st.serve === me) return '서브: WASD로 노란 원 조준 · K를 꾹 눌렀다 놓기 (빨간 선 근처가 좋아요)';
-      if (st.phase === 'rally') { const tr = ball.tr; if (!tr) return ''; if (tr.kind === 'set' && tr.side === me) return '공격수에게 토스! 공이 올 때 K = 스파이크 (방향키로 코스)'; if (tr.kind === 'pass' && tr.side === me) return '세터: J = 토스 (위/아래 방향키로 공격수 고르기)'; if (tr.side !== me && tr.kind === 'spike') return 'L = 블로킹 점프 · 받을 선수를 노란 원으로!'; if (tr.side !== me) return '노란 원으로 가서 J = 리시브'; }
+      if (st.phase === 'serveWait' && st.serve === me) return '노란 원으로 조준 → 서브를 꾹 눌렀다가 흰 선 근처에서 놓기';
+      if (st.phase === 'rally') { const tr = ball.tr; if (!tr) return ''; if (tr.kind === 'set' && tr.side === me) return '공이 오면 <b>스파이크</b> · 방향으로 코스 조절'; if (tr.kind === 'pass' && tr.side === me) return '<b>토스</b> · 위/아래 방향으로 공격수 고르기'; if (tr.side !== me && tr.kind === 'spike') return '네트 앞에서 <b>블로킹</b>!'; if (tr.side !== me) return '노란 원으로 달려가 <b>리시브</b>'; }
       return ''; }
   }
 })();

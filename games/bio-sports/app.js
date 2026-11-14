@@ -11,7 +11,7 @@
   /* ================= 로비 ================= */
   function lobby() {
     SP.inMatch = false; SP.tick = lobbyTick; SP.onTab = null; SP.onEsc = null; SP.onPointer = null; SP.onWheel = null;
-    $('top').hidden = true; $('help').hidden = true; $('touch').hidden = true; SP.minimap(null); SP.gauge(null); SP.info('');
+    $('top').hidden = true; $('help').hidden = true; $('keys').hidden = true; $('touch').hidden = true; $('info').innerHTML = ''; SP.minimap(null); SP.gauge(null); SP.info('');
     SP.clearScene(); SP.audio.crowd(0);
     if (window.LyricAudio) LyricAudio.theme('kingdom');
     // 배경: 다섯 경기장 미니어처 + 뛰는 선수
@@ -122,18 +122,15 @@
     M.cfg = cfg; M.host = !opt.guest; M.over = false; M.paused = false; M.remoteIn = SP.emptyInput(); M.lastSnap = null;
     const S = SP.SPORTS[cfg.sid];
     SP.inMatch = true; $('top').hidden = false;
-    $('touch').hidden = !SP.isTouch; if (S.touch) SP.setTouchLabels(S.touch);
-    SP.help(S.controls); if (SP.isTouch) $('help').hidden = true;
+    $('touch').hidden = !SP.isTouch; $('keys').hidden = SP.isTouch; SP.setActs(defActs(S));
     if (window.LyricAudio) LyricAudio.theme('battle');
     M.game = S.create(cfg);
     SP.audio.crowd(0.4);
-    SP.onTab = () => statusModal();
-    SP.onEsc = () => { if (SP.modalOpen) SP.closeModal(); else statusModal(); };
+    SP.onTab = () => { if (SP.modalOpen && menuOpen) SP.closeModal(); else openMenu('stat'); };
+    SP.onEsc = () => { if (SP.modalOpen) SP.closeModal(); else openMenu('stat'); };
     SP.tick = matchTick;
-    $('bStat').onclick = () => statusModal();
+    $('bMenu').onclick = () => openMenu('stat');
     $('bCam').onclick = () => SP.toggleCam();
-    $('bSnd').textContent = SP.audio.muted ? '🔇' : '🔔'; $('bSnd').onclick = () => { SP.audio.setMuted(!SP.audio.muted); $('bSnd').textContent = SP.audio.muted ? '🔇' : '🔔'; };
-    $('bExit').onclick = () => { if (confirm('경기를 그만두고 로비로 갈까요?')) { net.close(); endMatch(); lobby(); } };
   }
   SP.startMatch = startMatch;
   function matchTick(dt) {
@@ -155,7 +152,7 @@
     }
     G.view(dt);
     M.hudT -= dt;
-    if (M.hudT <= 0) { M.hudT = 0.1; const h = G.hud(); SP.score(h.score); if (h.info != null) SP.info(h.info); if (G.minimap) SP.minimap((c, w, hh) => G.minimap(c, w, hh)); else SP.minimap(null); }
+    if (M.hudT <= 0) { M.hudT = 0.1; const h = G.hud(); SP.score(h.score, h.extra); if (M.cfg.sides[M.cfg.me] === 'local' || !M.host) SP.setActs(G.buttons ? G.buttons(M.cfg.me) || defActs(SP.SPORTS[M.cfg.sid]) : defActs(SP.SPORTS[M.cfg.sid]), G.picks ? G.picks(M.cfg.me) : null); if (h.info != null) SP.info(h.info); if (G.minimap && (!G.miniOn || G.miniOn())) SP.minimap((c, w, hh) => G.minimap(c, w, hh)); else SP.minimap(null); }
     const res = G.result();
     if (res && !M.over) { M.over = true; setTimeout(() => showResult(res), 1500); }
   }
@@ -179,30 +176,38 @@
   }
 
   /* ================= 경기 현황 · 작전 타임 ================= */
-  let subSel = null;
-  function statusModal() {
-    const G = M.game; if (!G) return;
+  let subSel = null, menuOpen = false, menuTab = 'stat';
+  function defActs(S) { const t = S.touch || {}; return {b: t.b, a: t.a, c: t.c, q: t.q}; }
+  function openMenu(tab) {
+    const G = M.game; if (!G) return; menuTab = tab || menuTab; menuOpen = true;
     if (M.cfg.sides[1] !== 'remote' && M.host) M.paused = true;
-    SP.onModalClose = () => { M.paused = false; subSel = null; };
-    const me = M.cfg.me, h = G.hud(), sub = G.subInfo ? G.subInfo(me) : null;
-    const field = G.lineupState ? G.lineupState(me) : null;
-    let subsHtml = '';
-    if (field) {
-      subsHtml = `<div class="lbl">선수 ATP 관리 · 교체 ${sub ? '(' + esc(sub.text) + ')' : ''}</div><p class="sub" style="margin:0 0 6px">${sub && sub.ok ? '뛰는 선수를 누르고 후보 선수를 누르면 교체돼요.' : esc(sub ? sub.why || '' : '')}</p>
-        <div class="wrap2"><div style="max-height:300px;overflow:auto"><table class="rt"><tr><th>위치</th><th>선수</th><th>ATP</th><th>상태</th></tr>${field.on.map(r => `<tr data-on="${r.slot}" class="${subSel === r.slot ? 'sel' : ''}"><td>${esc(r.pos)}</td><td><b>${r.no} ${esc(r.name)}</b></td><td><span class="bar"><i style="width:${Math.round(r.atp * 100)}%;background:${r.atp > .55 ? '#5ef2c8' : r.atp > .3 ? '#ffd25e' : '#ff5d6c'}"></i></span>${Math.round(r.atp * 100)}%</td><td>${esc(r.note || '')}</td></tr>`).join('')}</table></div>
-        <div style="max-height:300px;overflow:auto"><table class="rt"><tr><th>후보</th><th>종합</th><th>ATP</th></tr>${field.bench.map(r => `<tr data-in="${r.idx}"><td><b>${r.no} ${esc(r.name)}</b> <small style="color:#c3d0ea">${esc(r.role)}</small></td><td>${r.ovr}</td><td>${Math.round(r.atp * 100)}%</td></tr>`).join('')}</table></div></div>`;
-    }
-    const m = SP.modal(`<h2>📋 경기 현황 / 작전 타임</h2>
-      <div class="box"><div><small>${esc(h.score.a.name)}</small><b>${h.score.a.pts}</b></div><div><small>${esc(h.score.sub || '')}</small><b>${esc(h.score.clock || '')}</b></div><div><small>${esc(h.score.b.name)}</small><b>${h.score.b.pts}</b></div></div>
-      <div class="lbl">상세 경기 기록</div>${G.status()}${subsHtml}
-      <div class="row" style="margin-top:12px"><button class="btn pri" id="res">▶ 경기 계속</button><button class="btn" id="cam2">🎥 시점 전환</button></div>`);
-    $('res').onclick = SP.closeModal; $('cam2').onclick = () => SP.toggleCam();
-    m.querySelectorAll('[data-on]').forEach(e => e.onclick = () => { subSel = e.dataset.on; statusModal(); });
+    SP.onModalClose = () => { M.paused = false; subSel = null; menuOpen = false; };
+    const me = M.cfg.me, h = G.hud(), S = SP.SPORTS[M.cfg.sid], sub = G.subInfo ? G.subInfo(me) : null, field = G.lineupState ? G.lineupState(me) : null;
+    const tabs = [['stat', '📊 경기 현황']].concat(field ? [['sub', '🔁 선수 교체']] : []).concat([['set', '⚙ 설정 · 조작법']]);
+    if (!tabs.some(t => t[0] === menuTab)) menuTab = 'stat';
+    let body = '';
+    if (menuTab === 'stat') body = G.status();
+    else if (menuTab === 'sub') {
+      const atpBar = a => `<span class="bar"><i style="width:${Math.round(a * 100)}%;background:${a > .55 ? '#5ef2c8' : a > .3 ? '#ffd25e' : '#ff5d6c'}"></i></span>${Math.round(a * 100)}%`;
+      body = `<p class="sub">${sub ? esc(sub.text) + ' · ' : ''}${sub && sub.ok ? '① 뛰는 선수를 누르고 ② 후보 선수를 누르면 교체돼요.' : esc(sub ? sub.why || '' : '')}</p>
+        <div class="wrap2"><div style="max-height:52vh;overflow:auto"><table class="rt"><tr><th>위치</th><th>선수</th><th>ATP</th><th>상태</th></tr>${field.on.map(r => `<tr data-on="${r.slot}" class="${String(subSel) === String(r.slot) ? 'sel' : ''}"><td>${esc(r.pos)}</td><td><b>${r.no} ${esc(r.name)}</b></td><td>${atpBar(r.atp)}</td><td>${esc(r.note || '')}</td></tr>`).join('')}</table></div>
+        <div style="max-height:52vh;overflow:auto"><table class="rt"><tr><th>후보</th><th>종합</th><th>ATP</th></tr>${field.bench.map(r => `<tr data-in="${r.idx}"><td><b>${r.no} ${esc(r.name)}</b> <small style="color:#c3d0ea">${esc(r.role)}</small></td><td>${r.ovr}</td><td>${atpBar(r.atp)}</td></tr>`).join('')}</table></div></div>`;
+    } else body = `<div class="lbl">화면 · 소리</div><div class="row"><button class="btn" id="mCam">🎥 시점: ${SP.cam.mode === 'persp' ? '중계 카메라' : '쿼터뷰'} (C)</button><button class="btn" id="mSnd">${SP.audio.muted ? '🔇 소리 켜기' : '🔔 소리 끄기'}</button></div>
+      <div class="lbl">조작법</div><div class="sub" style="line-height:2">${SP.isTouch ? '왼쪽 화면 아무 곳이나 눌러 끌면 이동 · 오른쪽 둥근 버튼은 상황에 맞게 이름이 바뀌어요.<br>' : ''}${S.controls || ''}</div>`;
+    const m = SP.modal(`<div class="menu-head"><h2>⏸ 일시정지 · ${esc(S.name)}</h2>${SP.scoreHtml(h.score)}</div><p class="sub" style="margin-top:4px">${esc(h.score.sub || '')}</p>
+      <div class="menu-tabs">${tabs.map(([k, n]) => `<button type="button" data-mt="${k}" class="${menuTab === k ? 'on' : ''}">${n}</button>`).join('')}</div>${body}
+      <div class="row" style="margin-top:14px"><button class="btn pri" id="res">▶ 경기 계속</button><button class="btn" id="mExit">🏠 로비로 나가기</button></div>`);
+    m.querySelectorAll('[data-mt]').forEach(b => b.onclick = () => { SP.audio.click(); subSel = null; openMenu(b.dataset.mt); });
+    $('res').onclick = SP.closeModal;
+    $('mExit').onclick = () => { if (confirm('경기를 그만두고 로비로 갈까요?')) { net.close(); endMatch(); lobby(); } };
+    const mc = $('mCam'); if (mc) mc.onclick = () => { SP.toggleCam(); openMenu('set'); };
+    const ms = $('mSnd'); if (ms) ms.onclick = () => { SP.audio.setMuted(!SP.audio.muted); openMenu('set'); };
+    m.querySelectorAll('[data-on]').forEach(e => e.onclick = () => { subSel = e.dataset.on; openMenu('sub'); });
     m.querySelectorAll('[data-in]').forEach(e => e.onclick = () => {
       if (subSel == null) { SP.toast('먼저 교체할 선수(왼쪽)를 눌러요'); return; }
       const action = {slot: isNaN(+subSel) ? subSel : +subSel, inIdx: +e.dataset.in};
-      if (!M.host) { net.send({t: 'sub', a: action}); SP.toast('교체 요청을 보냈어요'); subSel = null; setTimeout(statusModal, 400); return; }
-      const r = G.sub(me, action.slot, action.inIdx); SP.toast(r.ok ? '선수 교체!' : '교체할 수 없어요', r.msg || '', 1300); if (r.ok) SP.audio.whistle(1); subSel = null; statusModal();
+      if (!M.host) { net.send({t: 'sub', a: action}); SP.toast('교체 요청을 보냈어요'); subSel = null; setTimeout(() => openMenu('sub'), 400); return; }
+      const r = G.sub(me, action.slot, action.inIdx); SP.toast(r.ok ? '선수 교체!' : '교체할 수 없어요', r.msg || '', 1300); if (r.ok) SP.audio.whistle(1); subSel = null; openMenu('sub');
     });
   }
 
@@ -248,5 +253,5 @@
 
   lobby();
   // 시험용: 주소에 ?sport=soccer&auto=1 → 바로 AI 대 AI
-  try { const q = new URLSearchParams(location.search); const s = q.get('sport'); if (SP.SPORTS[s] && q.get('auto')) { const S = SP.SPORTS[s], opts = {}; (S.options || []).forEach(o => opts[o.key] = o.def); const slots = S.slots ? S.slots(opts) : []; startMatch({sid: s, teams: [0, 1], lineups: [S.slots ? SP.autoLineup(0, slots) : [], S.slots ? SP.autoLineup(1, slots) : []], opts, diff: 1, speed: +(q.get('speed') || 3), sim: +(q.get('sim') || 1), sides: ['ai', 'ai'], me: 0}); } } catch (e) {}
+  try { const q = new URLSearchParams(location.search); const s = q.get('sport'); if (SP.SPORTS[s] && q.get('auto')) { const S = SP.SPORTS[s], opts = {}; (S.options || []).forEach(o => opts[o.key] = o.def); const slots = S.slots ? S.slots(opts) : []; startMatch({sid: s, teams: [0, 1], lineups: [S.slots ? SP.autoLineup(0, slots) : [], S.slots ? SP.autoLineup(1, slots) : []], opts, diff: 1, speed: +(q.get('speed') || 3), sim: +(q.get('sim') || 1), sides: q.get('human') ? ['local', 'ai'] : ['ai', 'ai'], me: 0}); } } catch (e) {}
 })();

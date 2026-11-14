@@ -62,11 +62,26 @@
     const EV = SP.makeEvents(e => fire(e)); const ev = (type, data) => EV.emit(type, data);
     function fire(e) { // 소리·연출 (호스트·게스트 공통)
       const A = SP.audio;
-      if (e.type === 'whistle') A.whistle(e.n || 1); if (e.type === 'kick') A.kick(e.p); if (e.type === 'goal') { A.cheer(); A.whistle(1); SP.toast('⚽ 골!', e.text, 2000); SP.burst(e.x, 1, e.z, ['#ffd25e', '#ffffff', e.c], 60, 1.2); }
+      if (e.type === 'whistle') A.whistle(e.n || 1); if (e.type === 'kick') A.kick(e.p); if (e.type === 'goal') { A.cheer(); A.whistle(1); SP.toast('⚽ GOAL!', e.text, 2200, true); SP.burst(e.x, 1, e.z, ['#ffd25e', '#ffffff', e.c], 60, 1.2); }
       if (e.type === 'card') { A.card(); SP.toast(e.red ? '🟥 레드카드!' : '🟨 옐로카드', e.text, 1800); } if (e.type === 'offside') { A.flag(); A.whistle(1); SP.toast('🚩 오프사이드', e.text, 1600); flagT = 1.6; }
       if (e.type === 'msg') SP.toast(e.text, e.sub || '', e.ms || 1500);
     }
     let flagT = 0;
+    function kickSpot(e) { const f = FORMS[form][e.slot], d = dir(e.side); return [-d * (L / 2) + d * f[0] * L * 0.48, f[1] * W * 0.4]; }
+    function celebrate(dt) { // 골 세리머니: 득점자는 코너로, 동료는 모이고, 상대는 제자리로
+      const sc = 1 - st.kickSide, sh = ents[ball.last], cx = dir(sc) * (L / 2 - 2), cz = sh && sh.z > 0 ? W / 2 - 2 : -W / 2 + 2;
+      ents.forEach(e => { if (e.out) return; if (e.side === sc) { if (e === sh) SP.walkTo(e, cx, cz, dt, SP.runSpeed(e, 7.5)); else if (e.slot && Math.hypot(e.x - cx, e.z - cz) < 30) SP.walkTo(e, cx - dir(sc) * (1 + (e.slot % 3)), cz - Math.sign(cz) * (e.slot % 4) * 0.9, dt, SP.runSpeed(e, 6.5)); else { const k = kickSpot(e); SP.walkTo(e, k[0], k[1], dt, SP.runSpeed(e, 3.5)); } }
+        else { const k = kickSpot(e); SP.walkTo(e, k[0], k[1], dt, SP.runSpeed(e, 3.2)); } });
+    }
+    function restartMove(dt) { // 세트피스 준비: 키커는 공으로, 나머지는 자리 잡기
+      const R = st.restart, bx = R.x, bz = R.z;
+      ents.forEach(e => { if (e.out) return; const f = FORMS[form][e.slot], d = dir(e.side); let tx, tz;
+        if (e.slot === 0) { tx = -d * L / 2 + d * 1.2; tz = SP.clamp(bz * 0.3, -2.5, 2.5); }
+        else { tx = -d * L / 2 + d * f[0] * L * 0.8 + (bx - (-d * L / 2)) * 0.22; tz = f[1] * W * 0.4 + (bz - f[1] * W * 0.4) * 0.25; }
+        if (e.side !== R.side && Math.hypot(tx - bx, tz - bz) < 6.5) { const a = Math.atan2(tz - bz, tx - bx); tx = bx + Math.cos(a) * 6.5; tz = bz + Math.sin(a) * 6.5; }
+        SP.walkTo(e, SP.clamp(tx, -L / 2 + 0.5, L / 2 - 0.5), SP.clamp(tz, -W / 2 + 0.5, W / 2 - 0.5), dt, SP.runSpeed(e, 5.5), bx, bz); });
+      const tk = R.type === 'goalkick' ? ents.find(e => e.side === R.side && e.slot === 0 && !e.out) : closest(R.side, bx, bz, true); if (tk) SP.walkTo(tk, bx - dir(R.side) * 0.5, bz, dt, SP.runSpeed(tk, 7), bx, bz);
+    }
     function placeKickoff(kickSide) {
       ents.forEach(e => { if (e.out) return; const f = FORMS[form][e.slot], d = dir(e.side); e.x = -d * (L / 2) + d * f[0] * L * 0.48; e.z = f[1] * W * 0.4; e.vx = e.vz = 0; e.face = d > 0 ? Math.PI / 2 : -Math.PI / 2; });
       Object.assign(ball, {x: 0, y: 0.2, z: 0, vx: 0, vy: 0, vz: 0, owner: -1, lock: 0});
@@ -117,7 +132,7 @@
       if (card === 2) { off.out = true; st.stats[off.side].r++; off.x = 999; if (st.ctrl[off.side] === idxOf(off)) st.ctrl[off.side] = -1; }
       setRestart('free', vic.side, ball.x, ball.z, '프리킥');
     }
-    function setRestart(type, side, x, z, label) { st.phase = 'restart'; st.phaseT = 1.2; st.restart = {type, side, x: SP.clamp(x, -L / 2 + 0.5, L / 2 - 0.5), z: SP.clamp(z, -W / 2 + 0.3, W / 2 - 0.3)}; Object.assign(ball, {vx: 0, vy: 0, vz: 0, owner: -1}); st.offPend = null; if (label) ev('msg', {text: label, sub: SP.TEAMS[cfg.teams[side]].name, ms: 1000}); }
+    function setRestart(type, side, x, z, label) { st.phase = 'restart'; st.phaseT = 1.7; st.restart = {type, side, x: SP.clamp(x, -L / 2 + 0.5, L / 2 - 0.5), z: SP.clamp(z, -W / 2 + 0.3, W / 2 - 0.3)}; Object.assign(ball, {vx: 0, vy: 0, vz: 0, owner: -1}); st.offPend = null; if (label) ev('msg', {text: label, sub: SP.TEAMS[cfg.teams[side]].name, ms: 1000}); }
     function doRestart() {
       const R = st.restart; Object.assign(ball, {x: R.x, y: 0.2, z: R.z, vx: 0, vy: 0, vz: 0});
       let taker = R.type === 'goalkick' ? ents.find(e => e.side === R.side && e.slot === 0 && !e.out) : closest(R.side, R.x, R.z, true);
@@ -165,8 +180,10 @@
       if (st.msgT > 0) st.msgT -= dt;
       if (st.phase === 'end') return;
       if (st.phase === 'pk') { pkStep(dt, ins); return; }
-      if (st.phase === 'goal') { st.phaseT -= dt; moveFree(dt); if (st.phaseT <= 0) placeKickoff(st.kickSide); return; }
-      if (st.phase === 'restart') { st.phaseT -= dt; if (st.phaseT <= 0) doRestart(); return; }
+      if (st.phase === 'goal') { st.phaseT -= dt; moveFree(dt); celebrate(dt); if (st.phaseT <= 0) { st.phase = 'reform'; st.phaseT = 3.0; } return; }
+      if (st.phase === 'reform') { st.phaseT -= dt; let all = true; ents.forEach(e => { if (e.out) return; const k = kickSpot(e); if (!SP.walkTo(e, k[0], k[1], dt, SP.runSpeed(e, 6.0), 0, 0)) all = false; }); if (all || st.phaseT <= 0) placeKickoff(st.kickSide); return; }
+      if (st.phase === 'restart') { st.phaseT -= dt; restartMove(dt); if (st.phaseT <= 0) doRestart(); return; }
+      if (st.phase === 'kick') ents.forEach(e => { if (!e.out) { e.spdNow = 0; e.face = Math.atan2(ball.x - e.x, ball.z - e.z); } });
       if (st.phase === 'kick') { st.phaseT -= dt; if (st.phaseT <= 0) { st.phase = 'play'; const k = closest(st.kickSide, 0, 0, true); ball.owner = idxOf(k); ball.lastSide = st.kickSide; if (cfg.sides[st.kickSide] !== 'ai') st.ctrl[st.kickSide] = ball.owner; ev('whistle', {n: 1}); } return; }
       // 시계
       st.clock -= dt * speed;
@@ -318,7 +335,7 @@
       if (st.phase === 'pk') SP.camTo({x: L / 2 - 6, y: 0, z: 0, dist: 14, h: 7, yaw: -Math.PI / 2 + 0.0001});
       else if (c.mode === 'persp') SP.camTo({x: ball.x * 0.92, y: 0, z: ball.z * 0.55 + 2, dist: 26, h: 20, yaw: 0});
       else SP.camTo({x: ball.x * 0.9, y: 0, z: ball.z * 0.6, dist: 34, h: 20, yaw: 0});
-      SP.gauge(cfg.sides[me] === 'local' && st.holdT[me] > 0.04 && ball.owner === st.ctrl[me] ? Math.min(1, st.holdT[me]) : null);
+      SP.gauge(cfg.sides[me] === 'local' && st.holdT[me] > 0.04 && ball.owner === st.ctrl[me] ? Math.min(1, st.holdT[me]) : null, null, ents[st.ctrl[me]] ? {x: ents[st.ctrl[me]].mesh.position.x, y: 2.9, z: ents[st.ctrl[me]].mesh.position.z} : null);
     }
     const perName = () => st.phase === 'pk' ? '승부차기' : ['', '전반전', '후반전', '연장전'][st.period] || '';
     if (/[?&]pktest=1/.test(location.search)) startPK(); // 시험용: 바로 승부차기
@@ -327,7 +344,8 @@
       snap() { return {e: SP.snapEnts(ents), b: [ball.x, ball.y, ball.z, ball.vx, ball.vz].map(v => Math.round(v * 100) / 100), s: st.score, p: st.period, c: Math.round(st.clock), ph: st.phase, ct: st.ctrl, ev: EV.recent(), st: st.stats.map(x => Object.assign({}, x)), pk: st.pk ? {g: st.pk.goals, n: st.pk.n} : null, h: st.holdT, pw: st.pkWinner}; },
       apply(s) { SP.applyEnts(cfg, ents, s.e, e => e.slot === 0 ? {gk: e.side ? '#ffe066' : '#ff9f43'} : {}); [ball.x, ball.y, ball.z, ball.vx, ball.vz] = s.b; st.score = s.s; st.period = s.p; st.clock = s.c; st.phase = s.ph; st.ctrl = s.ct; st.stats = s.st; st.holdT = s.h; st.pkWinner = s.pw; if (s.pk) st.pk = Object.assign(st.pk || {}, {goals: s.pk.g, n: s.pk.n});
         EV.ingest(s.ev); },
-      hud() { const T = cfg.teams.map(i => SP.TEAMS[i]); let pts = st.score.slice(); return {score: {a: {name: T[0].name, c1: SP.kit(cfg, 0).c1, pts: pts[0]}, b: {name: T[1].name, c1: SP.kit(cfg, 1).c1, pts: pts[1]}, sub: perName(), clock: st.phase === 'pk' ? `${st.pk.goals[0]} : ${st.pk.goals[1]}` : SP.fmtTime(st.clock)}, info: st.phase === 'pk' ? (st.pk.turn === cfg.me ? '키커: W/S로 방향(위·가운데·아래) → K' : '골키퍼: W/S로 막을 방향 → K') : ''}; },
+      buttons(me) { if (st.phase === 'pk') return {b: st.pk && st.pk.turn === me ? '⚽ 킥' : '🧤 다이빙'}; if (st.phase !== 'play') return {}; const has = ball.owner >= 0 && ents[ball.owner].side === me; return has ? {b: '슛', a: '패스'} : {c: '태클', q: '선수<br>변경'}; },
+      hud() { const T = cfg.teams.map(i => SP.TEAMS[i]); let pts = st.score.slice(); return {score: {a: {name: T[0].name, c1: SP.kit(cfg, 0).c1, pts: pts[0]}, b: {name: T[1].name, c1: SP.kit(cfg, 1).c1, pts: pts[1]}, sub: perName(), clock: st.phase === 'pk' ? `${st.pk.goals[0]} : ${st.pk.goals[1]}` : SP.fmtTime(st.clock)}, info: st.phase === 'pk' ? (st.pk.turn === cfg.me ? '⚽ 위·아래로 방향을 고르고 킥' : '🧤 막을 방향을 고르고 다이빙') : ''}; },
       minimap(g, w, h) { g.fillStyle = '#2f8a4a'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2; g.strokeRect(4, 4, w - 8, h - 8); g.beginPath(); g.moveTo(w / 2, 4); g.lineTo(w / 2, h - 4); g.stroke();
         const sx = (w - 8) / L, sz = (h - 8) / W; for (const e of ents) { if (e.out) continue; g.fillStyle = SP.kit(cfg, e.side).c1; g.beginPath(); g.arc(4 + (e.x + L / 2) * sx, 4 + (e.z + W / 2) * sz, ents.indexOf(e) === st.ctrl[cfg.me] ? 6 : 4, 0, 6.3); g.fill(); if (ents.indexOf(e) === st.ctrl[cfg.me]) { g.strokeStyle = '#ffe066'; g.stroke(); } }
         g.fillStyle = '#fff'; g.beginPath(); g.arc(4 + (ball.x + L / 2) * sx, 4 + (ball.z + W / 2) * sz, 3.5, 0, 6.3); g.fill(); },

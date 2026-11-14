@@ -44,8 +44,14 @@
     function fire(e) { const A = SP.audio;
       if (e.type === 'whistle') A.whistle(e.n || 1); if (e.type === 'bounce') A.bounce(); if (e.type === 'swish') { A.swish(); A.cheer(); SP.toast(e.text, e.sub || '', 1300); SP.burst(e.x, RIM, 0, ['#ffd25e', '#ff7eb6', '#fff'], 30, 0.8); }
       if (e.type === 'rim') A.rim(); if (e.type === 'buzzer') A.buzzer(); if (e.type === 'msg') SP.toast(e.text, e.sub || '', e.ms || 1300); }
-    function setOffense(side, how) { // 공격권 넘기기: 자기 진영 끝에서 시작
-      st.off = side; st.shot = 24; ball.fl = null; const d = dir(side), pg = ents.find(e => e.side === side && e.slot === 0) || ents.find(e => e.side === side);
+    const inboundSpot = side => [-dir(side) * 9.5, 1.2];
+    function goDead(side, msg, t) { st.phase = 'dead'; st.phaseT = t; st.next = side; st.nextMsg = msg; ball.fl = null; ball.owner = -1; const sp = inboundSpot(side); st.ib = idx(ents.filter(e => e.side === side).sort((a, b) => Math.hypot(a.x - sp[0], a.z - sp[1]) - Math.hypot(b.x - sp[0], b.z - sp[1]))[0]); }
+    function deadMove(dt) { const s = st.next, d = dir(s);
+      ents.forEach(e => { const sp = SPOTS[e.slot]; let tx, tz; if (idx(e) === st.ib) [tx, tz] = inboundSpot(s); else if (e.side === s) { tx = d * (-3 + sp[0] * 0.35); tz = sp[1] * 0.8; } else { tx = d * (sp[0] * 0.75 + 1); tz = sp[1] * 0.75; }
+        SP.walkTo(e, tx, tz, dt, SP.runSpeed(e, 6.2), ball.x, ball.z); }); }
+    function setOffense(side, how, soft) { // 공격권 넘기기
+      st.off = side; st.shot = 24; ball.fl = null; const d = dir(side); let pg = ents.find(e => e.side === side && e.slot === 0) || ents.find(e => e.side === side);
+      if (soft && st.ib != null && ents[st.ib].side === side) { pg = ents[st.ib]; ball.owner = idx(pg); ball.lastSide = side; if (cfg.sides[side] !== 'ai') st.ctrl[side] = ball.owner; st.lastOwner = -1; st.phase = 'play'; if (how) ev('msg', {text: how, sub: SP.TEAMS[cfg.teams[side]].name + ' 공격', ms: 1100}); return; }
       ents.forEach(e => { const sp = SPOTS[e.slot]; if (e.side === side) { e.x = d * (-4 + sp[0] * 0.3); e.z = sp[1] * 0.8; } else { e.x = d * (sp[0] * 0.5 + 2); e.z = sp[1] * 0.7; } });
       pg.x = -d * 9; pg.z = 0; ball.owner = idx(pg); ball.lastSide = side; if (cfg.sides[side] !== 'ai') st.ctrl[side] = ball.owner;
       st.phase = 'play'; if (how) ev('msg', {text: how, sub: SP.TEAMS[cfg.teams[side]].name + ' 공격', ms: 1100});
@@ -83,20 +89,20 @@
       ball.owner = -1; ball.fl = {sx: ball.x, sy: 1.2, sz: ball.z, tx: tgt.x, tz: tgt.z, t: 0, T: Math.hypot(tgt.x - ball.x, tgt.z - ball.z) / 16 + 0.08, pass: idx(tgt), steal: !!steal, h: 0.4};
       SP.pose(e.mesh, 'bump', 200);
     }
-    function turnover(side, why) { st.stats[side].to++; ev('whistle', {n: 1}); setOffense(1 - side, why); }
+    function turnover(side, why) { st.stats[side].to++; ev('whistle', {n: 1}); goDead(1 - side, why, 0.9); if (why) ev('msg', {text: why, sub: SP.TEAMS[cfg.teams[1 - side]].name + ' 공격', ms: 1100}); }
     function personalFoul(off, vic, shooting) {
       off.fouls++; st.stats[off.side].fouls++; st.stats[off.side].tf++; ev('whistle', {n: 1});
       let txt = `${off.no} ${off.name} 파울 (${off.fouls}개)`;
       if (off.fouls >= 5) { txt += ' · 5반칙 퇴장'; autoSub(off); }
       ev('msg', {text: '파울', sub: txt, ms: 1300});
       if (st.stats[off.side].tf > 5) { startFT(vic, 2); return; } // 팀 파울 보너스
-      setOffense(vic.side, null);
+      goDead(vic.side, null, 0.9);
     }
     function autoSub(e) { const used = new Set(ents.filter(x => x.side === e.side).map(x => x.pi)); const ro = SP.roster(cfg.teams[e.side]).filter(p => !used.has(p.i) && !(st.fouledOut || new Set()).has(p.i)).sort((a, b) => b.ovr - a.ovr)[0]; st.fouledOut = st.fouledOut || new Set(); st.fouledOut.add(e.pi); if (ro) { SP.doSwap(cfg, e, ro.i); e.fouls = 0; e.pts = 0; e.reb = 0; } }
-    function startFT(e, n) { st.phase = 'ft'; st.ft = {shooter: idx(e), n, done: 0, made: 0, t: 0, hold: 0}; ents.forEach(o => { if (o !== e) { const s = SPOTS[o.slot]; o.x = hoopX(e.side) - dir(e.side) * (1.5 + (o.slot % 3)); o.z = (o.slot % 2 ? -1 : 1) * (2 + o.slot * 0.3); } }); e.x = hoopX(e.side) - dir(e.side) * 4.6; e.z = 0; e.face = dir(e.side) > 0 ? Math.PI / 2 : -Math.PI / 2; ball.owner = idx(e); ball.fl = null; ev('msg', {text: `자유투 ${n}개`, sub: `${e.no} ${e.name}`, ms: 1300}); }
+    function startFT(e, n) { st.phase = 'ft'; st.ft = {shooter: idx(e), n, done: 0, made: 0, t: 0, hold: 0, wait: 1.1, tg: ents.map((o, k) => o === e ? [hoopX(e.side) - dir(e.side) * 4.6, 0] : [hoopX(e.side) - dir(e.side) * (1.4 + (k % 4) * 0.9), (k % 2 ? -1 : 1) * 2.1])}; ball.x = e.x; ball.z = e.z; e.face = dir(e.side) > 0 ? Math.PI / 2 : -Math.PI / 2; ball.owner = idx(e); ball.fl = null; ev('msg', {text: `자유투 ${n}개`, sub: `${e.no} ${e.name}`, ms: 1300}); }
     function ftStep(dt, ins) {
-      const F = st.ft, e = ents[F.shooter], inp = ins[e.side]; F.t += dt;
-      if (F.wait) { F.wait -= dt; if (F.wait <= 0) { F.wait = 0; if (F.done >= F.n) { if (F.lastMade) setOffense(1 - e.side, null); else { st.phase = 'play'; ball.owner = -1; ballRebound(e.side); } } } return; }
+      const F = st.ft, e = ents[F.shooter], inp = ins[e.side]; F.t += dt; const hx = hoopX(e.side); ents.forEach((o, k) => SP.walkTo(o, F.tg[k][0], F.tg[k][1], dt, SP.runSpeed(o, 5.5), hx, 0));
+      if (F.wait) { F.wait -= dt; if (F.wait <= 0) { F.wait = 0; if (F.done >= F.n) { if (F.lastMade) goDead(1 - e.side, null, 0.9); else { st.phase = 'play'; ball.owner = -1; ballRebound(e.side); } } } return; }
       let release = false, timing = 0.6;
       if (inp) { if (inp.hb) F.hold += dt; else if (F.hold > 0.05) { release = true; timing = 1 - Math.min(1, Math.abs(F.hold - 0.8) / 0.5); } SP.gaugeVal = Math.min(1, F.hold / 0.9); }
       else if (F.t > 0.9) { release = true; timing = SP.clamp(0.35 + e.st.bal / 140 + Math.random() * 0.3, 0, 1); }
@@ -109,7 +115,7 @@
       if (st.phase === 'end') return;
       if (st.phase === 'ft') { ftStep(dt, ins); moveBodies(dt); return; }
       if (st.phase === 'jump') { st.phaseT -= dt; ball.vy -= 6 * dt; ball.y += ball.vy * dt; if (st.phaseT <= 0) { const win = Math.random() < 0.5 + (ents[4].st.pow - ents[9].st.pow) / 200 ? 0 : 1; setOffense(win, '점프볼'); ev('whistle', {n: 1}); } return; }
-      if (st.phase === 'dead') { st.phaseT -= dt; if (st.phaseT <= 0) setOffense(st.next, st.nextMsg); moveBodies(dt); return; }
+      if (st.phase === 'dead') { st.phaseT -= dt; deadMove(dt); if (st.phaseT <= 0) setOffense(st.next, null, true); moveBodies(dt); return; }
       st.clock -= dt * speed; st.shot -= dt * speed;
       if (st.clock <= 0) { ev('buzzer'); endPeriod(); return; }
       if (st.shot <= 0 && ball.owner >= 0) { ev('buzzer'); turnover(st.off, '24초 샷클락 위반'); return; }
@@ -161,8 +167,8 @@
         const sp = SPOTS[e.slot]; tx = d0 * sp[0]; tz = sp[1];
         if (has) {
           st.aiT[i] -= dt; const dh = distHoop(e, side), cd = contest(e);
-          if (st.lastOwner !== i) { st.lastOwner = i; e.plan = Math.random() < (e.slot === 1 || e.slot === 2 ? 0.5 : e.slot === 0 ? 0.25 : 0.05) ? 'three' : 'drive'; st.aiT[i] = 0.35 + Math.random() * 0.3; }
-          if (e.plan === 'three' && st.shot > 4) { if (dh > THREE_R + 0.3) { tx = e.x; tz = e.z; } else { tx = e.x - d0 * 1.2; tz = e.z * 1.1; } if (dh > THREE_R + 0.15 && st.aiT[i] <= 0 && cd > 1.3) { shoot(e, SP.clamp(0.5 + lvl * 0.16 + Math.random() * 0.3, 0, 1)); return; } if (cd < 1.0 && st.aiT[i] <= 0) e.plan = 'drive'; }
+          if (st.lastOwner !== i) { st.lastOwner = i; e.plan = Math.random() < (e.slot === 1 || e.slot === 2 ? 0.35 : e.slot === 0 ? 0.18 : 0.04) ? 'three' : 'drive'; st.aiT[i] = 0.35 + Math.random() * 0.3; }
+          if (e.plan === 'three' && st.shot > 4) { if (dh > THREE_R + 0.3) { tx = e.x; tz = e.z; } else { tx = e.x - d0 * 1.2; tz = e.z * 1.1; } if (dh > THREE_R + 0.15 && st.aiT[i] <= 0 && cd > 1.8) { shoot(e, SP.clamp(0.5 + lvl * 0.16 + Math.random() * 0.3, 0, 1)); return; } if (cd < 1.0 && st.aiT[i] <= 0) e.plan = 'drive'; }
           else { tx = hoopX(side) - d0 * 1.0; tz = e.z * 0.7; }
           if (st.aiT[i] <= 0) { st.aiT[i] = 0.25 + Math.random() * 0.35;
             if (dh > THREE_R && dh < 7.8 && cd > 1.8 && Math.random() < (e.slot === 1 || e.slot === 2 ? 0.5 : 0.25)) { shoot(e, SP.clamp(0.45 + lvl * 0.18 + Math.random() * 0.35, 0, 1)); return; }
@@ -191,7 +197,7 @@
           const sh = ents[F.shooter], pts = F.three ? 3 : 2;
           if (F.made) { st.score[F.side] += pts; sh.pts += pts; st.stats[F.side].fgm++; if (F.three) st.stats[F.side].tpm++; ev('swish', {text: `${pts}점!`, sub: `${sh.no} ${sh.name}`, x: F.tx}); hoopM[F.tx > 0 ? 1 : 0].scale.y = 1.6;
             if (F.foul) { startFT(sh, 1); ev('msg', {text: '앤드원!', ms: 900}); return; }
-            st.phase = 'dead'; st.phaseT = 1.0; st.next = 1 - F.side; st.nextMsg = null; ball.fl = null; return; }
+            goDead(1 - F.side, null, 1.3); return; }
           ev('rim'); if (F.foul) { const df = ents.filter(o => o.side !== F.side).sort((a, b) => Math.hypot(a.x - sh.x, a.z - sh.z) - Math.hypot(b.x - sh.x, b.z - sh.z))[0]; df.fouls++; st.stats[df.side].fouls++; st.stats[df.side].tf++; ev('whistle'); startFT(sh, F.three ? 3 : 2); return; }
           ballRebound(F.side); }
         return; }
@@ -208,13 +214,14 @@
       hoopM.forEach(n => { n.scale.y += (1 - n.scale.y) * Math.min(1, dt * 4); });
       SP.camTo(SP.cam.mode === 'persp' ? {x: ball.x * 0.8, y: 0, z: 1.5, dist: 17, h: 12, yaw: 0} : {x: ball.x * 0.8, y: 0, z: 0, dist: 22, h: 12, yaw: 0});
       const holding = (st.phase === 'ft' && st.ft && ents[st.ft.shooter].side === me) || (ball.owner === st.ctrl[me] && st.hold[me] > 0.05);
-      SP.gauge(cfg.sides[me] === 'local' && holding ? SP.gaugeVal || 0 : null, 0.85);
+      { const ge = st.phase === 'ft' && st.ft ? ents[st.ft.shooter] : ents[st.ctrl[me]]; SP.gauge(cfg.sides[me] === 'local' && holding ? SP.gaugeVal || 0 : null, 0.85, ge ? {x: ge.mesh.position.x, y: 3.0, z: ge.mesh.position.z} : null); }
     }
     return {
       step, view,
       snap() { return {e: SP.snapEnts(ents), b: [ball.x, ball.y, ball.z].map(v => Math.round(v * 100) / 100), s: st.score, p: st.period, c: Math.round(st.clock), sh: Math.round(st.shot), ph: st.phase, ct: st.ctrl, ev: EV.recent(), st: st.stats, of: st.off, pp: ents.map(e => [e.pts, e.reb, e.fouls]), g: SP.gaugeVal || 0}; },
       apply(s) { SP.applyEnts(cfg, ents, s.e); [ball.x, ball.y, ball.z] = s.b; st.score = s.s; st.period = s.p; st.clock = s.c; st.shot = s.sh; st.phase = s.ph; st.ctrl = s.ct; st.stats = s.st; st.off = s.of; s.pp.forEach((a, i) => { [ents[i].pts, ents[i].reb, ents[i].fouls] = a; }); EV.ingest(s.ev); },
-      hud() { const T = cfg.teams.map(i => SP.TEAMS[i]); return {score: {a: {name: T[0].name, c1: SP.kit(cfg, 0).c1, pts: st.score[0]}, b: {name: T[1].name, c1: SP.kit(cfg, 1).c1, pts: st.score[1]}, sub: (['', '전반', '후반', '연장'][st.period] || '') + ` · 샷클락 ${Math.max(0, Math.ceil(st.shot))}`, clock: SP.fmtTime(st.clock)}, info: st.phase === 'ft' && st.ft && ents[st.ft.shooter].side === cfg.me && cfg.sides[cfg.me] === 'local' ? '자유투: K를 꾹 눌렀다가 초록 선 근처에서 놓아요' : ''}; },
+      buttons(me) { if (st.phase === 'ft') return st.ft && ents[st.ft.shooter].side === me ? {b: '자유투', move: false} : {move: false}; if (st.phase !== 'play') return {}; const has = ball.owner >= 0 && ents[ball.owner].side === me; return has ? {b: '슛', a: '패스'} : {c: '스틸<br>블록', q: '선수<br>변경'}; },
+      hud() { const T = cfg.teams.map(i => SP.TEAMS[i]); return {score: {a: {name: T[0].name, c1: SP.kit(cfg, 0).c1, pts: st.score[0]}, b: {name: T[1].name, c1: SP.kit(cfg, 1).c1, pts: st.score[1]}, sub: (['', '전반', '후반', '연장'][st.period] || '') + ` · 샷클락 ${Math.max(0, Math.ceil(st.shot))}`, clock: SP.fmtTime(st.clock)}, info: st.phase === 'ft' && st.ft && ents[st.ft.shooter].side === cfg.me && cfg.sides[cfg.me] === 'local' ? '자유투 · 꾹 눌렀다가 흰 선에서 놓기' : ''}; },
       minimap(g, w, h) { g.fillStyle = '#c8874a'; g.fillRect(0, 0, w, h); g.strokeStyle = '#fff'; g.lineWidth = 2; g.strokeRect(3, 3, w - 6, h - 6); g.beginPath(); g.moveTo(w / 2, 3); g.lineTo(w / 2, h - 3); g.stroke();
         const sx = (w - 6) / L, sz = (h - 6) / W; for (const s of [-1, 1]) { g.beginPath(); g.arc(3 + (s * HX + L / 2) * sx, h / 2, THREE_R * sx, 0, 6.3); g.stroke(); }
         for (const e of ents) { g.fillStyle = SP.kit(cfg, e.side).c1; g.beginPath(); g.arc(3 + (e.x + L / 2) * sx, 3 + (e.z + W / 2) * sz, idx(e) === st.ctrl[cfg.me] ? 7 : 5, 0, 6.3); g.fill(); }
