@@ -86,6 +86,7 @@
   // 기록 보내기: entry = {who, value, text, ok, rank: {v, cat, f}}
   function submit(game, entry) {
     if (!ready()) return Promise.reject(new Error('랭킹 서버가 아직 설정되지 않았어요'));
+    if (window.BioGoal && BioGoal.rankOn && !BioGoal.rankOn(game)) return Promise.reject(new Error('선생님이 이 게임의 랭킹을 꺼 두었어요'));
     var who = parseName(entry.who);
     if (!who) return Promise.reject(new Error("'20800 홍길동' 처럼 학번 5자리와 이름을 띄어 써 주세요"));
     var R = entry.rank || {};
@@ -105,7 +106,7 @@
   }
   function run(game, q) {
     return req('POST', base() + '/rankings/' + encodeURIComponent(game) + ':runQuery' + key(), q).then(function (rows) {
-      return (rows || []).filter(function (r) { return r.document; }).map(function (r) { return norm(fromFields(r.document.fields)); }).filter(function (x) { return x.r === 2; });
+      return (rows || []).filter(function (r) { return r.document; }).map(function (r) { var x = norm(fromFields(r.document.fields)); x._id = r.document.name; return x; }).filter(function (x) { return x.r === 2; });
     });
   }
   // 게임별 기록 보정 (예전 방식으로 저장된 기록을 새 기준에 맞춤)
@@ -146,6 +147,31 @@
     var q = {structuredQuery: {from: [{collectionId: 'scores'}], where: {fieldFilter: {field: {fieldPath: 'sid'}, op: 'EQUAL', value: {stringValue: w.sid}}}, limit: 300}};
     return run(game, q).then(function (l) { return l.filter(function (x) { return x.name === w.name; }).sort(function (a, b) { return b.t - a.t; }); });
   }
+  // ---- 관리자: 기록 전체 보기 · 지우기 (Firestore 보안 규칙이 삭제를 허용해야 함)
+  function all(game) {
+    if (!ready()) return Promise.resolve([]);
+    var q = {structuredQuery: {from: [{collectionId: 'scores'}], orderBy: [{field: {fieldPath: 'value'}, direction: 'DESCENDING'}], limit: 1000}};
+    return run(game, q).then(function (l) { return FIX[game] ? FIX[game](l) : l; });
+  }
+  function remove(docName) { return req('DELETE', 'https://firestore.googleapis.com/v1/' + docName + key()); }
+  function removeMany(names, onProgress) { // 5개씩 나눠 지우기
+    var i = 0, done = 0, fail = 0;
+    function next() {
+      var chunk = names.slice(i, i + 5); i += 5;
+      if (!chunk.length) return Promise.resolve({done: done, fail: fail});
+      return Promise.all(chunk.map(function (n) { return remove(n).then(function () { done++; }, function () { fail++; }); })).then(function () { if (onProgress) onProgress(done + fail, names.length); return next(); });
+    }
+    return next();
+  }
+  function removeGame(game, onProgress) {
+    // 같은 게임이 여러 번 쌓였을 수 있어 비워질 때까지 반복 (최대 10번)
+    var total = {done: 0, fail: 0}, rounds = 0;
+    function round() {
+      return all(game).then(function (l) { if (!l.length || rounds++ >= 10) return total;
+        return removeMany(l.map(function (x) { return x._id; }), onProgress).then(function (r) { total.done += r.done; total.fail += r.fail; if (r.fail && !r.done) return total; return round(); }); });
+    }
+    return round();
+  }
   // 성공 기준 (선생님이 바꾼 값) — 모든 기기 공용
   function loadGoalConfig() {
     if (!ready()) return Promise.resolve(null);
@@ -155,7 +181,7 @@
     if (!ready()) return Promise.resolve();
     return req('PATCH', base() + '/config/goals' + key(), {fields: toFields({cfg: cfg || {}, t: Date.now()})});
   }
-  window.BioRank = {SPEC: SPEC, fmtCol: fmtCol, korNum: korNum, ready: ready, submit: submit, top: top, mine: mine, parseName: parseName, loadGoalConfig: loadGoalConfig, saveGoalConfig: saveGoalConfig};
+  window.BioRank = {SPEC: SPEC, fmtCol: fmtCol, korNum: korNum, ready: ready, submit: submit, top: top, mine: mine, parseName: parseName, loadGoalConfig: loadGoalConfig, saveGoalConfig: saveGoalConfig, all: all, remove: remove, removeMany: removeMany, removeGame: removeGame};
   // 시작할 때 공용 성공 기준을 받아 적용
   if (ready()) loadGoalConfig().then(function (cfg) { if (cfg && window.BioGoal) BioGoal.setConfig(cfg); if (window.onBioGoalCfg) window.onBioGoalCfg(); });
 })();

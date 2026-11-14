@@ -87,6 +87,14 @@ i[data-ic] svg.pg{width:1em;height:1em;vertical-align:0}
 .grow b{display:block;color:var(--ink);font-size:14px}
 .grow small{display:block;font-size:12px;color:var(--dim)}
 .grow input{height:34px;text-align:right}
+.admlist{display:flex;flex-direction:column;gap:5px;max-height:46vh;overflow:auto}
+.admlist .ar{display:grid;grid-template-columns:34px 1fr auto auto;gap:8px;align-items:center;padding:7px 10px;border-radius:10px;background:rgba(255,255,255,.05);font-size:13.5px}
+.admlist .ar small{color:var(--dim)}
+.admlist .ar button,.btn.danger{border:1px solid rgba(255,120,130,.5);background:rgba(255,80,100,.16);color:#ffc2c8;border-radius:9px;padding:5px 10px;font-weight:700}
+.admchk{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px;max-height:50vh;overflow:auto}
+.admchk label{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.05);font-size:14px;font-weight:600;cursor:pointer}
+.admchk input{width:18px;height:18px}
+.gift-badge{position:absolute;right:8px;top:8px;z-index:2;padding:3px 8px;border-radius:99px;background:linear-gradient(135deg,#ffe07a,#ff9fc8);color:#3a1020;font-size:12px;font-weight:900;box-shadow:0 4px 10px rgba(0,0,0,.25)}
 .sheet.wide{width:min(640px,100%)}
 .rseg{flex-wrap:wrap;overflow:visible}
 .rseg button{flex:none!important;height:32px;padding:0 11px;font-size:13px}
@@ -272,7 +280,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
       <button type="button" role="tab" data-filter="action">액션 <b id="nAction"></b></button>
       <button type="button" role="tab" data-filter="casual">캐주얼 <b id="nCasual"></b></button>
     </nav>
-    <div class="sum" title="게임마다 정해진 목표 점수를 넘긴 수"><i data-ic="target"></i>목표 달성 <b id="heroGoal">0 / 12</b><button class="mini" id="goalReset" type="button" aria-label="목표 달성 기록 초기화">초기화</button><button class="mini" id="goalEdit" type="button" aria-label="성공 기준 수정 (선생님용)">기준 수정</button></div>
+    <div class="sum" title="게임마다 정해진 목표 점수를 넘긴 수"><i data-ic="target"></i>목표 달성 <b id="heroGoal">0 / 12</b><button class="mini" id="goalReset" type="button" aria-label="목표 달성 기록 초기화">초기화</button><button class="mini" id="goalEdit" type="button" aria-label="관리자 모드 (선생님용)">관리자 모드</button></div>
   </div>
 
   <a class="resume" id="resume" hidden>
@@ -307,8 +315,8 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
 </div>
 
 <div class="modal" id="goalModal" hidden role="dialog" aria-modal="true" aria-labelledby="goalTitle">
-  <div class="sheet">
-    <header><span id="goalTitle">성공 기준 수정</span><button class="ib" type="button" data-gclose aria-label="닫기"><i data-ic="x"></i></button></header>
+  <div class="sheet wide">
+    <header><span id="goalTitle">관리자 모드</span><button class="ib" type="button" data-gclose aria-label="닫기"><i data-ic="x"></i></button></header>
     <div class="bd">
       <div id="gLock" style="display:flex;flex-direction:column;gap:10px">
         <span>선생님용 기능이에요. 비밀번호를 입력하세요.</span>
@@ -316,9 +324,28 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
         <span id="gPwMsg" style="color:#fca5a5;font-size:13px"></span>
       </div>
       <div id="gEditor" hidden style="display:flex;flex-direction:column;gap:8px">
-        <div id="gRows" style="display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow:auto"></div>
-        <div class="sw"><button class="btn ghost" type="button" id="gDefault">처음 값으로</button><button class="btn" type="button" id="gSave">저장</button></div>
-        <span id="gNote" style="font-size:12px;color:var(--dim)">저장하면 이 기기에 바로 적용돼요.</span>
+        <div class="seg rseg" id="admTabs"><button type="button" class="on" data-at="goal">성공 기준</button><button type="button" data-at="rank">랭킹 기록 관리</button><button type="button" data-at="ron">랭킹 적용 게임</button><button type="button" data-at="gift">사은품 적용 게임</button></div>
+        <div data-ap="goal" style="display:flex;flex-direction:column;gap:8px">
+          <div id="gRows" style="display:flex;flex-direction:column;gap:6px;max-height:52vh;overflow:auto"></div>
+          <div class="sw"><button class="btn ghost" type="button" id="gDefault">처음 값으로</button><button class="btn" type="button" id="gSave">저장</button></div>
+          <span id="gNote" style="font-size:12px;color:var(--dim)">저장하면 모든 기기에 적용돼요.</span>
+        </div>
+        <div data-ap="rank" hidden style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select id="admGame" class="fld" style="flex:1;min-width:160px"></select><button class="btn ghost" type="button" id="admReload">새로 불러오기</button></div>
+          <div id="admList" class="admlist"></div>
+          <div class="sw"><button class="btn ghost" type="button" id="admDelGame">이 게임 랭킹 모두 지우기</button><button class="btn danger" type="button" id="admDelAll">모든 게임 랭킹 모두 지우기</button></div>
+          <span id="admMsg" style="font-size:12.5px;color:var(--dim)">기록을 지우면 되돌릴 수 없어요.</span>
+        </div>
+        <div data-ap="ron" hidden style="display:flex;flex-direction:column;gap:8px">
+          <span style="font-size:13px;color:var(--dim)">끈 게임은 결과 창에 [랭킹에 보내기]가 나오지 않고, 랭킹 화면에서도 숨겨져요.</span>
+          <div id="admRon" class="admchk"></div>
+          <div class="sw"><button class="btn ghost" type="button" data-allron="1">모두 켜기</button><button class="btn" type="button" id="admRonSave">저장</button></div>
+        </div>
+        <div data-ap="gift" hidden style="display:flex;flex-direction:column;gap:8px">
+          <span style="font-size:13px;color:var(--dim)">켠 게임에서 목표를 달성하면 결과 창에 🎁 사은품 대상 안내와 확인 코드가 나오고, 메인 화면 카드에 🎁 표시가 붙어요.</span>
+          <div id="admGift" class="admchk"></div>
+          <div class="sw"><button class="btn ghost" type="button" data-allgift="0">모두 끄기</button><button class="btn" type="button" id="admGiftSave">저장</button></div>
+        </div>
       </div>
     </div>
   </div>
@@ -499,18 +526,62 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
   }
   function unlock(){
     if(document.getElementById('gPw').value!=='1211'){document.getElementById('gPwMsg').textContent='비밀번호가 맞지 않아요.';return;}
-    gLock.hidden=true;gEd.hidden=false;fillRows(BioGoal.config());
+    gLock.hidden=true;gEd.hidden=false;fillRows(BioGoal.config());admTab('goal');
   }
   document.getElementById('goalEdit').addEventListener('click',openGoalEdit);
   document.getElementById('gPwOk').addEventListener('click',unlock);
   document.getElementById('gPw').addEventListener('keydown',e=>{if(e.key==='Enter')unlock();});
   document.getElementById('gDefault').addEventListener('click',()=>fillRows({}));
   document.getElementById('gSave').addEventListener('click',async()=>{
-    const cfg={};gRows.querySelectorAll('[data-gid]').forEach(i=>{const v=Math.round(+i.value);if(v>0&&v!==BioGoal.DEFAULTS[i.dataset.gid])cfg[i.dataset.gid]=v;});
+    const old=BioGoal.config(),cfg={};if(old._rankOff)cfg._rankOff=old._rankOff;if(old._gift)cfg._gift=old._gift;
+    gRows.querySelectorAll('[data-gid]').forEach(i=>{const v=Math.round(+i.value);if(v>0&&v!==BioGoal.DEFAULTS[i.dataset.gid])cfg[i.dataset.gid]=v;});
     BioGoal.setConfig(cfg);
     if(window.BioRank&&BioRank.ready())try{await BioRank.saveGoalConfig(cfg);}catch(e){}
     renderGoals();gModal.hidden=true;toast('성공 기준을 저장했어요');
   });
+  // ---------- 관리자: 랭킹 기록 관리 · 랭킹 적용 게임 · 사은품 적용 게임 ----------
+  const admMsg=t=>{document.getElementById('admMsg').textContent=t;};
+  function admTab(t){document.querySelectorAll('#admTabs button').forEach(b=>b.classList.toggle('on',b.dataset.at===t));document.querySelectorAll('[data-ap]').forEach(p=>p.hidden=p.dataset.ap!==t);
+    if(t==='rank'){const sel=document.getElementById('admGame');if(!sel.options.length)sel.innerHTML=Object.keys(BioGoal.GOALS).map(id=>`<option value="${id}">${esc(NAME[id]||id)}</option>`).join('');admLoad();}
+    if(t==='ron'||t==='gift')admChecks(t);}
+  document.querySelectorAll('#admTabs button').forEach(b=>b.addEventListener('click',()=>{tone('tap');admTab(b.dataset.at);}));
+  async function admLoad(){
+    const id=document.getElementById('admGame').value,L=document.getElementById('admList');
+    if(!(window.BioRank&&BioRank.ready())){L.innerHTML='<div class="rempty">랭킹 서버가 설정되지 않았어요</div>';return;}
+    L.innerHTML='<div class="rempty">불러오는 중…</div>';
+    try{const rows=await BioRank.all(id);
+      if(!rows.length){L.innerHTML='<div class="rempty">이 게임에는 기록이 없어요</div>';admMsg('기록 0개');return;}
+      L.innerHTML=rows.map((r,i)=>`<div class="ar"><b>${i+1}</b><span><b>${esc(r.sid)} ${esc(r.name)}</b> <small>${esc(r.cat?r.cat+' · ':'')}${esc(r.text||'')} · ${day(r.t)}</small></span><small>${r.ok?'목표 달성':''}</small><button type="button" data-del="${esc(r._id)}">삭제</button></div>`).join('');
+      admMsg(`기록 ${rows.length}개 · 같은 학생의 여러 기록도 모두 보여요`);
+      L.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',async()=>{if(!confirm('이 기록을 지울까요?'))return;b.disabled=true;try{await BioRank.remove(b.dataset.del);b.closest('.ar').remove();admMsg('지웠어요');}catch(e){b.disabled=false;admMsg('지우지 못했어요: '+e.message+' (Firestore 보안 규칙에서 삭제를 허용해야 해요)');}}));
+    }catch(e){L.innerHTML='<div class="rempty">불러오지 못했어요 ('+esc(e.message)+')</div>';}
+  }
+  document.getElementById('admGame').addEventListener('change',admLoad);
+  document.getElementById('admReload').addEventListener('click',admLoad);
+  document.getElementById('admDelGame').addEventListener('click',async()=>{
+    const id=document.getElementById('admGame').value;if(!confirm(`'${NAME[id]||id}'의 랭킹 기록을 모두 지울까요? 되돌릴 수 없어요.`))return;
+    admMsg('지우는 중…');try{const r=await BioRank.removeGame(id,(n,t)=>admMsg(`지우는 중… ${n}/${t}`));admMsg(`${r.done}개 지움`+(r.fail?` · ${r.fail}개 실패 (보안 규칙 확인)`:''));}catch(e){admMsg('실패: '+e.message);}admLoad();});
+  document.getElementById('admDelAll').addEventListener('click',async()=>{
+    if(prompt("모든 게임의 랭킹 기록을 지워요. 정말이면 '전체 삭제'라고 입력하세요")!=='전체 삭제')return;
+    let done=0,fail=0;const ids=Object.keys(BioGoal.GOALS);
+    for(let k=0;k<ids.length;k++){admMsg(`지우는 중… ${NAME[ids[k]]||ids[k]} (${k+1}/${ids.length})`);try{const r=await BioRank.removeGame(ids[k]);done+=r.done;fail+=r.fail;}catch(e){fail++;}}
+    admMsg(`모든 게임: ${done}개 지움`+(fail?` · ${fail}개 실패 (보안 규칙 확인)`:''));admLoad();});
+  function admChecks(t){
+    const c=BioGoal.config(),key=t==='ron'?'_rankOff':'_gift',m=c[key]||{},el=document.getElementById(t==='ron'?'admRon':'admGift');
+    el.innerHTML=Object.keys(BioGoal.GOALS).map(id=>{const on=t==='ron'?!m[id]:!!m[id];return `<label><input type="checkbox" data-g="${id}" ${on?'checked':''}>${t==='gift'?'🎁 ':''}${esc(NAME[id]||id)}</label>`;}).join('');}
+  async function admSave(t){
+    const el=document.getElementById(t==='ron'?'admRon':'admGift'),m={};
+    el.querySelectorAll('[data-g]').forEach(i=>{if(t==='ron'?!i.checked:i.checked)m[i.dataset.g]=1;});
+    const cfg=Object.assign({},BioGoal.config());cfg[t==='ron'?'_rankOff':'_gift']=m;
+    BioGoal.setConfig(cfg);if(window.BioRank&&BioRank.ready())try{await BioRank.saveGoalConfig(cfg);}catch(e){}
+    renderGoals();applyGiftBadges();toast(t==='ron'?'랭킹 적용 게임을 저장했어요':'사은품 적용 게임을 저장했어요');}
+  document.getElementById('admRonSave').addEventListener('click',()=>admSave('ron'));
+  document.getElementById('admGiftSave').addEventListener('click',()=>admSave('gift'));
+  document.querySelector('[data-allron]').addEventListener('click',()=>document.querySelectorAll('#admRon input').forEach(i=>i.checked=true));
+  document.querySelector('[data-allgift]').addEventListener('click',()=>document.querySelectorAll('#admGift input').forEach(i=>i.checked=false));
+  function applyGiftBadges(){document.querySelectorAll('.gift-badge').forEach(e=>e.remove());if(!window.BioGoal||!BioGoal.giftOn)return;
+    document.querySelectorAll('a[href^="games/"]').forEach(a=>{const m=/games\/([a-z0-9-]+)\.html/.exec(a.getAttribute('href'));if(m&&BioGoal.giftOn(m[1])){const th=a.querySelector('.th')||a;th.style.position=th.style.position||'relative';const b=document.createElement('span');b.className='gift-badge';b.textContent='🎁 사은품';th.appendChild(b);}});}
+  applyGiftBadges();
   gModal.querySelectorAll('[data-gclose]').forEach(b=>b.addEventListener('click',()=>{gModal.hidden=true;}));
   gModal.addEventListener('click',e=>{if(e.target===gModal)gModal.hidden=true;});
 
@@ -519,16 +590,17 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
   const btnRank=document.getElementById('btnRank'),rModal=document.getElementById('rankModal');
   let rCur=null;
   if(window.BioRank&&BioRank.ready())btnRank.hidden=false;
-  window.onBioGoalCfg=()=>renderGoals();
+  window.onBioGoalCfg=()=>{renderGoals();applyGiftBadges();};
   const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const day=t=>{const d=new Date(t);return (d.getMonth()+1)+'/'+d.getDate();};
   function rTabs(){
-    const ids=Object.keys(BioGoal.GOALS);if(!rCur)rCur=ids[0];
+    const ids=Object.keys(BioGoal.GOALS).filter(id=>!BioGoal.rankOn||BioGoal.rankOn(id));if(!rCur||!ids.includes(rCur))rCur=ids[0];if(!rCur){document.getElementById('rTabs').innerHTML='';return;}
     document.getElementById('rTabs').innerHTML=ids.map(id=>`<button type="button" class="${id===rCur?'on':''}" data-rg="${id}">${NAME[id]||id}</button>`).join('');
     document.querySelectorAll('[data-rg]').forEach(b=>b.addEventListener('click',()=>{rCur=b.dataset.rg;const sp=BioRank.SPEC[rCur];rCat=sp&&sp.cats?sp.cats[0]:'';rTabs();rLoad();}));
   }
   let rCat='';
   async function rLoad(who){
+    if(!rCur){document.getElementById('rList').innerHTML='<div class="rempty">랭킹이 켜진 게임이 없어요</div>';return;}
     const g=BioGoal.GOALS[rCur],SP=BioRank.SPEC[rCur]||{how:'점수가 높은 순',cols:[]},L=document.getElementById('rList'),C=document.getElementById('rCats');
     document.getElementById('rHow').innerHTML='<b>순위 기준</b> · '+esc(SP.how);
     document.getElementById('rGoal').textContent='목표 · '+g.goal;

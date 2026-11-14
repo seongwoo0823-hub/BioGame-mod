@@ -60,6 +60,7 @@
       '.bg-card button{border:0;border-radius:999px;padding:8px 18px;font:700 14px "Noto Sans KR",sans-serif;color:#0b1220;background:#fff;cursor:pointer}',
       '.bg-card .bg-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.bg-card .bg-send{background:#38bdf8}.bg-card button:disabled{opacity:.5}',
       '.bg-card .bg-rk{margin:0 0 12px}.bg-card .bg-in{width:100%;box-sizing:border-box;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);color:#fff;font:600 16px "Noto Sans KR",sans-serif;text-align:center;outline:0}',
+      '.bg-gift{margin:0 0 12px;padding:10px 12px;border-radius:14px;background:linear-gradient(135deg,#ffe07a,#ff9fc8);color:#3a1020;font-weight:900;font-size:14px;line-height:1.4}.bg-gift small{display:block;font-weight:700;font-size:11.5px;opacity:.8;margin-top:3px}' +
       '.bg-card .bg-msg{font-size:12.5px;margin-top:6px;min-height:16px;color:rgba(255,255,255,.75)}.bg-card .bg-msg.err{color:#fca5a5}.bg-card .bg-msg.good{color:#86efac}'
     ].join('');
     document.head.appendChild(s);
@@ -92,17 +93,19 @@
     if (resEl) resEl.remove();
     resEl = document.createElement('div'); resEl.className = 'bg-res';
     var shown = o.text != null ? o.text : fmtV(g, value);
-    var canRank = !!(window.BioRank && BioRank.ready()) && o.rank !== false;
+    var canRank = !!(window.BioRank && BioRank.ready()) && o.rank !== false && rankOn(id);
+    var gift = ok && !ro && giftOn(id);
     resEl.innerHTML = '<div class="bg-card ' + (ro ? 'ok' : ok ? 'ok' : 'no') + '"><div class="g">' + (ro ? (o.title || '기록') : '목표 · ' + g.goal) + '</div>' +
       '<div class="big">' + (ro ? '기록' : ok ? '성공!' : '실패') + '</div>' +
       '<div class="v">내 기록 <b>' + shown + '</b>' + (!ro && o.ok == null && g.t > 1 ? ' / 목표 ' + fmtV(g, g.t) : '') + '</div>' +
+      (gift ? '<div class="bg-gift">🎁 사은품 대상이에요! 선생님께 이 화면을 보여 주세요<small>' + new Date().toLocaleString('ko-KR') + ' · 확인 코드 ' + (Date.now() % 9973 + 1000) + '</small></div>' : '') +
       (canRank ? '<div class="bg-rk" hidden><input class="bg-in" maxlength="20" placeholder="20800 홍길동" autocomplete="off"><div class="bg-msg"></div></div>' : '') +
       '<div class="bg-btns">' + (canRank ? '<button type="button" class="bg-send">랭킹에 보내기</button>' : '') + '<button type="button" class="bg-ok">' + (canRank ? '안 보내기' : '확인') + '</button></div></div>';
     document.body.appendChild(resEl);
     var close = function () { if (resEl) { resEl.remove(); resEl = null; } };
     resEl.querySelector('.bg-ok').onclick = close;
     clearTimeout(resT);
-    if (!canRank) resT = setTimeout(close, 7000);
+    if (!canRank && !gift) resT = setTimeout(close, 7000);
     else {
       var rk = resEl.querySelector('.bg-rk'), inp = resEl.querySelector('.bg-in'), msg = resEl.querySelector('.bg-msg'), send = resEl.querySelector('.bg-send');
       try { inp.value = localStorage.getItem('bioRankWho') || ''; } catch (e) {}
@@ -132,9 +135,12 @@
     parts.forEach(function (p) { var m = p[1], x = Math.max(0, Math.min(m - 1, Math.round(+p[0] || 0))); v = v * m + (p[2] < 0 ? m - 1 - x : x); });
     return v;
   }
+  // 관리자 설정: cfg._rankOff = {게임: 1} (랭킹 끔) · cfg._gift = {게임: 1} (사은품 적용)
+  function rankOn(id) { var c = loadCfg(); return !(c._rankOff && c._rankOff[id]); }
+  function giftOn(id) { var c = loadCfg(); return !!(c._gift && c._gift[id]); }
   function setCfg(cfg) { try { localStorage.setItem('bioGoalCfg', JSON.stringify(cfg || {})); } catch (e) {} applyCfg(cfg || {}); }
   window.BioGoal = {GOALS: GOALS, DEFAULTS: DEF, show: show, result: result, progress: progress, status: function (id) { return load()[id] || null; }, all: load,
-    config: loadCfg, setConfig: setCfg, key: key};
+    config: loadCfg, setConfig: setCfg, key: key, rankOn: rankOn, giftOn: giftOn};
   // 게임 페이지(games/…/이름.html)라면 목표를 한 번 보여 줌
   var m = /\/games\/([a-z0-9-]+)\.html/.exec(location.pathname);
   if (m && GOALS[m[1]]) {

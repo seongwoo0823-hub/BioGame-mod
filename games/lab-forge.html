@@ -91,11 +91,40 @@ table.pt th{color:var(--sub);font-weight:700}
 .pet{display:flex;align-items:center;gap:10px}
 .pet .dot{width:34px;height:34px;border-radius:10px;flex:none}
 .log{font-size:12px;color:var(--sub);max-height:84px;overflow:auto;margin-top:8px;line-height:1.5}
-@media (max-width:640px){
+/* ---- 가독성 · 기기별 화면 ---- */
+.modal{background:rgba(14,22,42,.95);font-size:14.5px;line-height:1.5}
+.modal .sub{color:#d2def5;font-size:14px}
+.modal h2{font-size:21px}
+.pt{font-size:13.5px} table.pt th{color:#c9d6ef}
+.req div{font-size:14px}
+.teamrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.tslot{display:flex;align-items:center;gap:8px;min-height:62px;padding:8px 10px;border-radius:14px;border:2px dashed rgba(255,255,255,.25);color:#9fb0d0;font-weight:700;font-size:13px}
+.tslot>div{flex:1;min-width:0} .tslot .btn,.prow .btn{flex:none;white-space:nowrap}
+.tslot.on{border-style:solid;border-color:rgba(94,242,200,.6);background:rgba(94,242,200,.1);color:#fff}
+.tslot small,.prow small{display:block;color:#c3d0ea;font-size:12.5px;font-weight:600}
+.plist{display:flex;flex-direction:column;gap:7px}
+.prow{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)}
+.dot{width:30px;height:30px;border-radius:9px;flex:none}
+.cnt{display:inline-block;padding:0 7px;border-radius:8px;background:rgba(255,255,255,.16);font-size:13px}
+.hide-s{}
+html.is-touch .btn{min-height:44px} html.is-touch .btn.sm{min-height:38px;font-size:13.5px}
+@media (min-width:900px){ .modal{width:min(820px,100%);padding:20px 22px} #stat{font-size:14px} #stat b{font-size:18px} }
+@media (max-width:640px), (max-height:520px){
+  .scrim{padding:0}
+  .modal{width:100%;height:var(--app-h,100vh);max-height:none;border-radius:0;padding:12px 12px calc(14px + env(safe-area-inset-bottom));border:0}
+  .tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;position:sticky;top:-12px;z-index:2;background:rgba(14,22,42,.97);padding:6px 0;margin:6px 0 10px}
+  .tabs button{flex:none;min-width:auto;padding:10px 12px}
   .forge{grid-template-columns:1fr} .forge .slot{height:120px}
-  #stat{font-size:12px} #stat b{font-size:15px}
-  .reel{width:72px;height:88px;font-size:24px}
+  #stat{font-size:12px;padding:6px 10px} #stat b{font-size:15px} .hide-s{display:none!important}
+  #mats span{padding:1px 6px;font-size:11px} .teamrow{grid-template-columns:1fr 1fr}
+  #topbtn .btn{padding:0 9px}
+  .reel{width:76px;height:88px;font-size:24px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+  #zone{top:auto;bottom:calc(150px + env(safe-area-inset-bottom));font-size:12.5px}
 }
+@media (max-height:520px) and (orientation:landscape){ #joy{width:110px;height:110px} #mats{display:none} }
+html.dev-tablet #joy{width:150px;height:150px} html.dev-tablet #joy i{width:60px;height:60px;margin:-30px 0 0 -30px}
+html.is-touch #prompt .btn{min-height:46px;padding:0 20px;font-size:16px}
 </style>
 </head>
 <body>
@@ -147,6 +176,21 @@ const PETS = [
   {name: '전설의 석박통합 마스터', w: 0.1, spd: 1.00, mag: 12.0, col: '#ffd25e', gold: true}
 ];
 const PET_W = PETS.reduce((a, p) => a + p.w, 0);
+const PET_TAG = ['신입', '적응', '밤샘', '논문', '랩장', 'SCI', '전설'];
+const TEAM_MAX = 4, PET_MAXLV = 10;
+const PET_UP_RATE = [90, 80, 70, 60, 50, 40, 30, 22, 15, 10];               // 석사 강화 +0→+1 … +9→+10 (%)
+const petUpCost = (k, lv) => Math.round(20000 * Math.pow(2, lv) * (k + 1));
+const FUSE_RATE = [55, 45, 35, 25, 15, 8];                                   // 같은 등급 3명 합성 → 상위 등급 확률 (%)
+const COATS = [   // 실험복 5종: 가격 8배씩, 채굴 범위 증가 · 모습과 오라가 바뀜
+  {name: '방진 실험복', price: 50000, range: 0.6, coat: '#bfe4ff', trim: '#4a90d9', aura: 0x7cc8ff},
+  {name: '내화학 보호복', price: 400000, range: 1.2, coat: '#ffe066', trim: '#e07a1a', aura: 0x8fff8a},
+  {name: '클린룸 버니슈트', price: 3200000, range: 2.0, coat: '#f4f8ff', trim: '#9ad0ff', aura: 0x5ef2ff, mask: true},
+  {name: 'Level A 방호복', price: 25600000, range: 3.0, coat: '#5cd65c', trim: '#1f7a2a', aura: 0xc77dff, helmet: true},
+  {name: '양자 연구원 가운', price: 204800000, range: 4.5, coat: '#232a5a', trim: '#ffd25e', aura: 0xffd25e, quantum: true}
+];
+const BASE_RANGE = 2.2;
+const mineRange = () => BASE_RANGE + (S.coat >= 0 ? COATS[S.coat].range : 0);
+const MAT_FUSE = 10;   // 아래 재료 10개 → 위 재료 1개 (확정)
 const SLOT_TABLE = [ // 지원금 슬롯: 합계 100%
   {k: 'none', p: 51, label: '꽝', sym: '꽝'},
   {k: 'money', v: 1000, p: 11.5, label: '연구비 1,000원 (본전)', sym: '1천'},
@@ -167,13 +211,17 @@ const fmtRate = p => p >= 1 ? p.toFixed(1) + '%' : p.toPrecision(3).replace(/0+$
 /* ======================= 저장 ======================= */
 const SAVE_KEY = 'labForgeSave';
 let S = null, uid = 1;
-function freshSave() { return {money: 20000, tickets: 0, mats: [0, 0, 0, 0, 0], inv: [{id: 1, L: 1}], store: [], eq: 1, pets: [], petEq: -1, best: 1, uid: 2, stats: {mined: 0, tries: 0, destroyed: 0}}; }
+function freshSave() { return {money: 20000, tickets: 0, mats: [0, 0, 0, 0, 0], inv: [{id: 1, L: 1}], store: [], eq: 1, pets: [], team: [], coats: [], coat: -1, best: 1, uid: 2, stats: {mined: 0, tries: 0, destroyed: 0}}; }
 function load() { try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.inv) return Object.assign(freshSave(), d); } catch (e) {} return freshSave(); }
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
 S = load(); uid = S.uid;
+// 예전 저장 옮기기: 펫 번호 배열 → {id, k, lv}, 한 명 장착 → 팀
+if (S.pets.length && typeof S.pets[0] === 'number') { const old = S.pets, eq = S.petEq; S.pets = old.map(k => ({id: ++uid, k, lv: 0})); S.team = eq >= 0 && S.pets[eq] ? [S.pets[eq].id] : []; S.uid = uid; }
+delete S.petEq; S.team = (S.team || []).filter(id => S.pets.some(p => p.id === id)).slice(0, TEAM_MAX);
 const newId = () => { S.uid = ++uid; return uid; };
 const eqTool = () => S.inv.find(t => t.id === S.eq) || null;
-const curPet = () => S.petEq >= 0 ? PETS[S.pets[S.petEq]] : null;
+const teamPets = () => S.team.map(id => S.pets.find(p => p.id === id)).filter(Boolean);
+const petSpd = p => PETS[p.k].spd * (1 + 0.12 * p.lv), petMag = p => PETS[p.k].mag * (1 + 0.1 * p.lv);
 setInterval(save, 4000); addEventListener('pagehide', save); document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
 
 /* ======================= 소리 (Web Audio 신디사이저) ======================= */
@@ -273,6 +321,8 @@ function building(x, z, parts, name, kind, info) { const m = vox(parts); m.posit
 building(0, -8, [[0, 0, 0, 7, 3.6, 5, '#b9644a'], [0, 3.6, 0, 7.6, 0.5, 5.6, '#7a3a2a'], [0, 4.1, 0, 5, 1.2, 3.6, '#7a3a2a'], [2.2, 4.1, -1, 0.9, 2.4, 0.9, '#555a66'], [0, 0, 2.55, 2.2, 2.4, 0.1, '#3a2418'], [-2.2, 1.2, 2.55, 1.4, 1.0, 0.1, '#ffd27a'], [2.2, 1.2, 2.55, 1.4, 1.0, 0.1, '#ffd27a'], [-3.8, 0, 2, 1.2, 0.9, 1.2, '#4a4a55'], [-3.8, 0.9, 2, 1.6, 0.25, 0.7, '#6a6a78']], '🔨 공대 대장간 (강화 연구실)', 'forge');
 building(-8.5, 3.5, [[0, 0, 0, 3.4, 4.6, 2.6, '#8a5af0'], [0, 4.6, 0, 3.8, 0.6, 3.0, '#ffd25e'], [0, 2.2, 1.32, 2.4, 1.6, 0.06, '#1b1035'], [-0.7, 2.6, 1.36, 0.5, 0.5, 0.04, '#9ad0ff'], [0, 2.6, 1.36, 0.5, 0.5, 0.04, '#8ff0b0'], [0.7, 2.6, 1.36, 0.5, 0.5, 0.04, '#ffd25e'], [0, 0.6, 1.4, 2.6, 0.6, 0.5, '#ff7eb6'], [1.9, 2.4, 0, 0.25, 1.6, 0.25, '#e8e8f2'], [1.9, 4.0, 0, 0.5, 0.5, 0.5, '#ff4d6d']], '🎓 석사생 리크루팅 머신', 'pet');
 building(8.5, 3.5, [[0, 0, 0, 3.4, 4.6, 2.6, '#2fa36b'], [0, 4.6, 0, 3.8, 0.6, 3.0, '#ffd25e'], [0, 2.2, 1.32, 2.6, 1.4, 0.06, '#0e2a1c'], [-0.8, 2.5, 1.36, 0.6, 0.8, 0.04, '#ffffff'], [0, 2.5, 1.36, 0.6, 0.8, 0.04, '#ffffff'], [0.8, 2.5, 1.36, 0.6, 0.8, 0.04, '#ffffff'], [0, 0.6, 1.4, 2.6, 0.6, 0.5, '#ffd25e'], [1.9, 2.4, 0, 0.25, 1.6, 0.25, '#e8e8f2'], [1.9, 4.0, 0, 0.5, 0.5, 0.5, '#ff4d6d']], '💰 연구재단 지원금 슬롯', 'slot');
+{ const m = building(0, 9.5, [[0, 0, 0, 5.2, 3.6, 3.4, '#ff9fc8'], [0, 3.6, 0, 5.8, 0.5, 4.0, '#7a3a7a'], [0, 4.1, 0, 3.6, 0.9, 2.6, '#7a3a7a'], [0, 0, 1.72, 1.6, 2.4, 0.1, '#3a2030'],
+  [-1.7, 1.0, 1.72, 1.2, 1.6, 0.08, '#e8f6ff'], [1.7, 1.0, 1.72, 1.2, 1.6, 0.08, '#e8f6ff'], [-1.7, 1.2, 1.78, 0.5, 1.0, 0.06, '#f6f7fb'], [1.7, 1.2, 1.78, 0.5, 1.0, 0.06, '#ffe066'], [0, 2.7, 1.74, 2.8, 0.6, 0.08, '#ffffff']], '🥼 실험복 부티크', 'coat'); m.rotation.y = Math.PI; BUILD[BUILD.length - 1].ez = -2.4; }
 // 나무·벤치
 for (let k = 0; k < 70; k++) { const a = Math.random() * Math.PI * 2, r = 13.5 + Math.random() * 32; const x = Math.cos(a) * r, z = Math.sin(a) * r;
   if (ZONES.some(zz => Math.hypot(zz.x - x, zz.z - z) < 13) || Math.abs(x) > WORLD || Math.abs(z) > WORLD) continue;
@@ -283,28 +333,44 @@ for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + 0.2; const b = vox
 for (let k = -WORLD; k <= WORLD; k += 2) for (const [x, z] of [[k, -WORLD], [k, WORLD], [-WORLD, k], [WORLD, k]]) { const f = vox([[0, 0, 0, 0.25, 0.9, 0.25, '#fff4dc'], [0, 0.55, 0, 2, 0.15, 0.15, '#fff4dc']], true); f.position.set(x, 0, z); if (x === -WORLD || x === WORLD) f.rotation.y = Math.PI / 2; scene.add(f); }
 
 /* ======================= 주인공 · 석사 ======================= */
-function gradStudent() { // 하얀 가운 · 안경 대학원생
+function gradStudent(ci) { // 대학원생 · 입은 실험복에 따라 색·모자·마스크가 바뀜
+  const C = ci >= 0 ? COATS[ci] : {coat: '#f6f7fb', trim: '#cfd6e6'};
   const g = new THREE.Group();
-  const body = vox([[0, 0.35, 0, 0.72, 0.85, 0.5, '#f6f7fb'], [0, 0.35, 0.26, 0.22, 0.85, 0.02, '#cfd6e6'], [0, 0.95, 0.26, 0.16, 0.18, 0.02, '#3a7bd5'],
+  const P = [[0, 0.35, 0, 0.72, 0.85, 0.5, C.coat], [0, 0.35, 0.26, 0.22, 0.85, 0.02, C.trim], [0, 0.95, 0.26, 0.16, 0.18, 0.02, '#3a7bd5'],
     [0, 1.2, 0, 0.62, 0.6, 0.56, '#ffd8b4'], [0, 1.72, -0.02, 0.66, 0.2, 0.6, '#2a2018'], [0, 1.5, -0.3, 0.66, 0.4, 0.06, '#2a2018'],
     [-0.15, 1.33, 0.29, 0.18, 0.14, 0.02, '#202838'], [0.15, 1.33, 0.29, 0.18, 0.14, 0.02, '#202838'], [-0.15, 1.33, 0.305, 0.11, 0.08, 0.01, '#aee2ff'], [0.15, 1.33, 0.305, 0.11, 0.08, 0.01, '#aee2ff'], [0, 1.37, 0.29, 0.12, 0.03, 0.02, '#202838'],
-    [0, 1.1, 0.29, 0.14, 0.04, 0.02, '#c0607a']]);
-  g.add(body);
-  const legMat = new THREE.MeshLambertMaterial({color: 0x34405a}), armMat = new THREE.MeshLambertMaterial({color: 0xf6f7fb});
+    [0, 1.1, 0.29, 0.14, 0.04, 0.02, '#c0607a'], [-0.37, 0.35, 0, 0.04, 0.85, 0.5, C.trim], [0.37, 0.35, 0, 0.04, 0.85, 0.5, C.trim]];
+  if (C.mask) P.push([0, 1.04, 0.29, 0.5, 0.2, 0.04, '#ffffff'], [0, 1.66, 0, 0.7, 0.3, 0.64, C.coat]);
+  if (C.helmet) P.push([0, 1.0, 0, 0.82, 0.95, 0.74, C.coat], [0, 1.18, 0.38, 0.6, 0.42, 0.02, '#aef0ff'], [0, 1.95, 0, 0.3, 0.12, 0.3, C.trim]);
+  if (C.quantum) P.push([0, 0.35, 0.265, 0.6, 0.06, 0.02, C.trim], [0, 0.8, 0.265, 0.6, 0.04, 0.02, C.trim], [0, 1.82, 0, 0.36, 0.1, 0.36, C.trim], [0, 1.92, 0, 0.14, 0.14, 0.14, '#ffffff']);
+  g.add(vox(P));
+  const legMat = new THREE.MeshLambertMaterial({color: C.helmet ? 0x2e8a36 : 0x34405a}), armMat = new THREE.MeshLambertMaterial({color: new THREE.Color(C.coat)});
   const mk = (x, y, w, h, mat) => { const p = new THREE.Group(); p.position.set(x, y, 0); const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), mat); m.position.y = -h / 2; m.castShadow = true; p.add(m); g.add(p); return p; };
   g.userData.legs = [mk(-0.16, 0.38, 0.22, 0.36, legMat), mk(0.16, 0.38, 0.22, 0.36, legMat)];
   g.userData.arms = [mk(-0.46, 1.15, 0.18, 0.62, armMat), mk(0.46, 1.15, 0.18, 0.62, armMat)];
   const held = new THREE.Group(); held.position.set(0.5, 0.55, 0.22); g.add(held); g.userData.held = held;
+  if (ci >= 0) { // 실험복 오라: 바닥 고리 + 떠오르는 빛 조각
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.62, 0.78 + ci * 0.06, 36), new THREE.MeshBasicMaterial({color: C.aura, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false}));
+    ring.rotation.x = -Math.PI / 2; ring.position.y = 0.03; g.add(ring); g.userData.aura = ring;
+    const motes = []; for (let k = 0; k < 4 + ci * 2; k++) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.08), new THREE.MeshBasicMaterial({color: C.aura, transparent: true})); m.userData.ph = Math.random() * 6; m.userData.r = 0.45 + Math.random() * 0.35; g.add(m); motes.push(m); }
+    g.userData.motes = motes;
+    if (ci >= 3) { const l = new THREE.PointLight(C.aura, 0.9, 4); l.position.y = 1.2; g.add(l); }
+  }
   return g;
 }
-function petModel(i) {
-  const p = PETS[i], g = new THREE.Group();
+function petModel(i, lv) {
+  const p = PETS[i], g = new THREE.Group(); lv = lv || 0;
   g.add(vox([[0, 0.25, 0, 0.5, 0.55, 0.36, p.col], [0, 0.8, 0, 0.44, 0.42, 0.4, '#ffd8b4'], [0, 1.18, 0, 0.48, 0.14, 0.44, i >= 4 ? '#5a3a2a' : '#1a1a22'],
     [-0.1, 0.86, 0.21, 0.08, 0.08, 0.02, '#111'], [0.1, 0.86, 0.21, 0.08, 0.08, 0.02, '#111'], [-0.12, 0, 0, 0.16, 0.26, 0.16, '#34405a'], [0.12, 0, 0, 0.16, 0.26, 0.16, '#34405a'],
     [0.32, 0.3, 0.1, 0.12, 0.34, 0.22, '#f4f4f4']]));
   if (i >= 3) g.add(vox([[0, 1.32, 0, 0.5, 0.06, 0.5, '#1a1a22'], [0, 1.38, 0, 0.2, 0.1, 0.2, '#1a1a22']])); // 학사모
-  if (p.gold) { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.06, 8, 24), new THREE.MeshBasicMaterial({color: 0xffd25e})); ring.rotation.x = Math.PI / 2; ring.position.y = 0.05; g.add(ring); g.userData.ring = ring;
-    const l = new THREE.PointLight(0xffd25e, 1.2, 4); l.position.y = 1; g.add(l); }
+  // 강화 오라: +1~3 하늘 · +4~6 보라 · +7~9 분홍 · +10 금빛 (전설은 원래 금빛)
+  const ac = p.gold || lv >= 10 ? 0xffd25e : lv >= 7 ? 0xff7eb6 : lv >= 4 ? 0xc77dff : 0x7cc8ff;
+  if (lv > 0 || p.gold) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.5 + Math.min(lv, 10) * 0.012, 0.04 + Math.min(lv, 10) * 0.004, 8, 24), new THREE.MeshBasicMaterial({color: ac, transparent: true, opacity: 0.85})); ring.rotation.x = Math.PI / 2; ring.position.y = 0.05; g.add(ring); g.userData.ring = ring;
+    if (lv >= 4 || p.gold) { const ring2 = ring.clone(); ring2.scale.setScalar(0.7); ring2.position.y = 0.6; g.add(ring2); g.userData.ring2 = ring2; }
+    if (lv >= 7 || p.gold) { const l = new THREE.PointLight(ac, 0.9 + (lv >= 10 ? 0.6 : 0), 4); l.position.y = 1; g.add(l); }
+  }
   return g;
 }
 function toolModel(L, s) { // 실험기구 모양: 단계에 따라 색과 크기가 달라짐
@@ -319,10 +385,11 @@ function toolModel(L, s) { // 실험기구 모양: 단계에 따라 색과 크�
   const m = vox(P.map(p => [p[0] * s, p[1] * s, p[2] * s, p[3] * s, p[4] * s, p[5] * s, p[6]]));
   return m;
 }
-const player = gradStudent(); scene.add(player);
+let player = gradStudent(S.coat); scene.add(player);
 const pl = {x: 0, z: 2, vx: 0, vz: 0, face: 0, walk: 0, hop: 0, cd: 0};
-let petObj = null, petPos = {x: -1, z: 2};
-function refreshPet() { if (petObj) { scene.remove(petObj); petObj = null; } const p = curPet(); if (!p) return; petObj = petModel(S.pets[S.petEq]); petObj.position.set(pl.x - 1, 0, pl.z); petPos = {x: pl.x - 1, z: pl.z}; scene.add(petObj); }
+let petObjs = [];   // [{obj, x, z}]
+function refreshPet() { for (const p of petObjs) scene.remove(p.obj); petObjs = teamPets().map((p, i) => { const obj = petModel(p.k, p.lv); obj.position.set(pl.x - 1 - i * 0.8, 0, pl.z); scene.add(obj); return {obj, x: pl.x - 1 - i * 0.8, z: pl.z}; }); }
+function refreshCoat() { const pos = player.position.clone(), rot = player.rotation.y; scene.remove(player); player = gradStudent(S.coat); player.position.copy(pos); player.rotation.y = rot; scene.add(player); refreshHeld(); }
 function refreshHeld() { const h = player.userData.held; while (h.children.length) h.remove(h.children[0]); const t = eqTool(); if (t) { const m = toolModel(t.L, 0.9); m.castShadow = false; h.add(m); } }
 refreshPet(); refreshHeld();
 
@@ -364,8 +431,8 @@ $('c').addEventListener('pointerdown', e => { ndc.set(e.clientX / innerWidth * 2
 
 /* ======================= 업데이트 ======================= */
 let near = null, curZone = -2;
-function moveSpeed() { const p = curPet(); return 5.2 * (1 + (p ? p.spd : 0)); }
-function magnetR() { const p = curPet(); return p ? p.mag : 1.0; }
+function moveSpeed() { const b = teamPets().reduce((a, p) => a + petSpd(p), 0); return 5.2 * (1 + Math.min(2, b)); }   // 팀 이속 합 (최대 +200%)
+function magnetR() { const t = teamPets(); if (!t.length) return 1.0; const m = t.map(petMag).sort((a, b) => b - a); return m[0] + (m.length - 1) * 0.4; }   // 가장 센 석사 + 나머지 1명당 0.4m
 function update(dt, t) {
   // 이동
   let ix = 0, iz = 0;
@@ -380,7 +447,7 @@ function update(dt, t) {
   if ($('scrim').hidden) {
     let nx = pl.x + mx * sp * dt, nz = pl.z + mz * sp * dt;
     // 건물·광석 충돌
-    for (const b of BUILD) { const hw = b.kind === 'forge' ? 3.8 : 2.0, hd = b.kind === 'forge' ? 2.8 : 1.6; if (Math.abs(nx - b.x) < hw && Math.abs(nz - b.z) < hd) { if (Math.abs(pl.x - b.x) >= hw) nx = pl.x; else nz = pl.z; } }
+    for (const b of BUILD) { const hw = b.kind === 'forge' ? 3.8 : b.kind === 'coat' ? 2.9 : 2.0, hd = b.kind === 'forge' ? 2.8 : b.kind === 'coat' ? 2.0 : 1.6; if (Math.abs(nx - b.x) < hw && Math.abs(nz - b.z) < hd) { if (Math.abs(pl.x - b.x) >= hw) nx = pl.x; else nz = pl.z; } }
     for (const o of ores) { if (o.dead) continue; const dx = nx - o.x, dz = nz - o.z, d = Math.hypot(dx, dz); if (d < 0.75) { nx = o.x + dx / (d || 1) * 0.75; nz = o.z + dz / (d || 1) * 0.75; } }
     pl.x = Math.max(-WORLD + 1, Math.min(WORLD - 1, nx)); pl.z = Math.max(-WORLD + 1, Math.min(WORLD - 1, nz));
   }
@@ -393,20 +460,26 @@ function update(dt, t) {
   player.userData.legs[0].rotation.x = moving ? Math.sin(pl.walk) * 0.7 : 0; player.userData.legs[1].rotation.x = moving ? -Math.sin(pl.walk) * 0.7 : 0;
   player.userData.arms[0].rotation.x = moving ? -Math.sin(pl.walk) * 0.6 : 0;
   // 펫 따라오기
-  if (petObj) { const bx = pl.x - Math.sin(pl.face) * 1.2, bz = pl.z - Math.cos(pl.face) * 1.2; const dx = bx - petPos.x, dz = bz - petPos.z, d = Math.hypot(dx, dz);
-    if (d > 0.3) { const k = Math.min(1, dt * (d > 4 ? 8 : 4)); petPos.x += dx * k; petPos.z += dz * k; petObj.rotation.y = Math.atan2(dx, dz); }
-    petObj.position.set(petPos.x, 0.12 + (d > 0.4 ? Math.abs(Math.sin(t * 12)) * 0.25 : 0), petPos.z); if (petObj.userData.ring) petObj.userData.ring.rotation.z += dt * 2; }
+  let lx = pl.x, lz = pl.z, lf = pl.face;
+  petObjs.forEach((po, i) => { const bx = lx - Math.sin(lf) * 1.1, bz = lz - Math.cos(lf) * 1.1; const dx = bx - po.x, dz = bz - po.z, d = Math.hypot(dx, dz);
+    if (d > 0.3) { const k = Math.min(1, dt * (d > 4 ? 8 : 4.5)); po.x += dx * k; po.z += dz * k; po.obj.rotation.y = Math.atan2(dx, dz); }
+    po.obj.position.set(po.x, 0.12 + (d > 0.4 ? Math.abs(Math.sin(t * 12 + i)) * 0.25 : 0), po.z);
+    if (po.obj.userData.ring) po.obj.userData.ring.rotation.z += dt * 2; if (po.obj.userData.ring2) po.obj.userData.ring2.rotation.z -= dt * 3;
+    lf = po.obj.rotation.y; lx = po.x; lz = po.z; });
+  // 실험복 오라
+  if (player.userData.aura) { player.userData.aura.material.opacity = 0.4 + Math.sin(t * 4) * 0.15; player.userData.aura.rotation.z += dt; }
+  if (player.userData.motes) player.userData.motes.forEach((m, i) => { const ph = (t * 0.6 + m.userData.ph) % 1; m.position.set(Math.cos(t * 1.5 + i * 2) * m.userData.r, 0.1 + ph * 2.0, Math.sin(t * 1.5 + i * 2) * m.userData.r); m.material.opacity = 1 - ph; });
   // 지역 표시
   let zi = -1; ZONES.forEach((z, i) => { if (Math.hypot(pl.x - z.x, pl.z - z.z) < 12) zi = i; });
   if (zi !== curZone) { curZone = zi; $('zone').textContent = zi >= 0 ? ZONES[zi].name : (Math.hypot(pl.x, pl.z) < 14 ? '메인 캠퍼스' : '캠퍼스 숲길'); }
   // 건물 근처
-  near = null; for (const b of BUILD) { if (Math.hypot(pl.x - b.x, pl.z - (b.z + (b.kind === 'forge' ? 3 : 2))) < 2.6) near = b; }
+  near = null; for (const b of BUILD) { if (Math.hypot(pl.x - b.x, pl.z - (b.z + (b.ez != null ? b.ez : b.kind === 'forge' ? 3 : 2))) < 2.6) near = b; }
   const pr = $('prompt'); if (near && $('scrim').hidden) { pr.hidden = false; $('pText').textContent = near.name + (touch ? '' : ' · E 키'); } else pr.hidden = true;
   // 자동 채굴
   pl.cd -= dt;
   const tool = eqTool();
   if (tool && pl.cd <= 0) {
-    let best = null, bd = 2.2; for (const o of ores) { if (o.dead) continue; const d = Math.hypot(o.x - pl.x, o.z - pl.z); if (d < bd) { bd = d; best = o; } }
+    let best = null, bd = mineRange(); for (const o of ores) { if (o.dead) continue; const d = Math.hypot(o.x - pl.x, o.z - pl.z); if (d < bd) { bd = d; best = o; } }
     if (best) { pl.cd = mineCd(tool.L); hit(best, tool); }
   }
   // 광석 다시 생기기
@@ -417,7 +490,7 @@ function update(dt, t) {
   const R = magnetR();
   for (let i = drops.length - 1; i >= 0; i--) { const d = drops[i]; d.age += dt;
     const tx = pl.x, tz = pl.z, dist = Math.hypot(tx - d.x, tz - d.z);
-    const pd = petObj ? Math.hypot(petPos.x - d.x, petPos.z - d.z) : 99;
+    const pd = petObjs.reduce((a, po) => Math.min(a, Math.hypot(po.x - d.x, po.z - d.z)), 99);
     if (d.age > 0.45 && (dist < R || pd < R * 0.6)) { const k = Math.min(1, dt * (8 + 6 / Math.max(0.3, dist))); d.x += (tx - d.x) * k; d.z += (tz - d.z) * k; d.y += (1 - d.y) * k;
       if (dist < 0.5) { collect(d); scene.remove(d.m); drops.splice(i, 1); continue; } }
     else { d.vy -= 18 * dt; d.x += d.vx * dt; d.z += d.vz * dt; d.y += d.vy * dt; if (d.y < 0.2) { d.y = 0.2; d.vy *= -0.4; d.vx *= 0.6; d.vz *= 0.6; } }
@@ -449,10 +522,11 @@ function collect(d) {
 /* ======================= HUD ======================= */
 let hudDirty = true;
 function drawHud() {
-  const t = eqTool(), p = curPet();
+  const t = eqTool(), tp = teamPets();
   $('stat').innerHTML = `<div class="row"><span>💰 <b>${won(S.money)}</b></span><span>🛡 보호권 <b style="color:#9ff5dc">${S.tickets}</b></span></div>
     <div class="row"><small>장착</small> ${t ? `<span class="lv">+${t.L}</span> ${TOOLS[t.L - 1]} <small>· ${mineCd(t.L).toFixed(2)}초마다 ${mineDmg(t.L)}</small>` : '<small>장착한 기구가 없어요 (가방에서 장착)</small>'}</div>
-    <div class="row"><small>석사</small> ${p ? `<span style="color:${p.col};font-weight:900">${p.name}</span> <small>이속 +${Math.round(p.spd * 100)}% · 자력 ${p.mag}m</small>` : '<small>없음 (리크루팅 머신)</small>'}</div>
+    <div class="row hide-s"><small>석사 ${tp.length}/${TEAM_MAX}</small> ${tp.length ? tp.map(p => `<span style="color:${PETS[p.k].col};font-weight:900">${PET_TAG[p.k]}${p.lv ? '+' + p.lv : ''}</span>`).join(' ') + ` <small>· 이속 +${Math.round(Math.min(2, tp.reduce((a, p) => a + petSpd(p), 0)) * 100)}% · 자력 ${magnetR().toFixed(1)}m</small>` : '<small>없음 (리크루팅 머신)</small>'}</div>
+    <div class="row hide-s"><small>실험복</small> ${S.coat >= 0 ? `<b style="font-size:13px;color:#fff">${COATS[S.coat].name}</b>` : '<small>기본 가운</small>'} <small>· 채굴 범위 ${mineRange().toFixed(1)}m</small></div>
     <div id="mats">${MATS.map((m, i) => `<span title="${m.name}"><i style="background:${m.col}"></i>${S.mats[i]}</span>`).join('')}</div>`;
   hudDirty = false;
 }
@@ -464,7 +538,7 @@ $('pBtn').onclick = () => { if (near) openBuilding(near.kind); };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 function modal(html) { const m = $('modal'); m.innerHTML = html; $('scrim').hidden = false; $('scrim').onclick = e => { if (e.target === $('scrim')) closeModal(); }; return m; }
 function closeModal() { $('scrim').hidden = true; stopAuto(); hudDirty = true; save(); }
-function openBuilding(kind) { AU.click(); goal = null; if (kind === 'forge') openForge('enh'); else if (kind === 'pet') openPet('pull'); else openSlot(); }
+function openBuilding(kind) { AU.click(); goal = null; if (kind === 'forge') openForge('enh'); else if (kind === 'pet') openPet('pull'); else if (kind === 'coat') openCoat(); else openSlot(); }
 // 기구 그림 (작은 3D 미리보기를 캔버스로)
 const thumbR = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true}); thumbR.setSize(128, 128);
 const thumbS = new THREE.Scene(); thumbS.add(new THREE.HemisphereLight(0xffffff, 0x8090b0, 1.0)); const tdl = new THREE.DirectionalLight(0xffffff, 0.6); tdl.position.set(2, 4, 3); thumbS.add(tdl);
@@ -478,11 +552,12 @@ function nearForge() { const f = BUILD[0]; return Math.hypot(pl.x - f.x, pl.z - 
 function openForge(tab) {
   forgeTab = tab || forgeTab;
   if (selId == null || !S.inv.find(t => t.id === selId)) selId = (eqTool() || S.inv[0] || {}).id ?? null;
-  const tabs = [['enh', '🔨 강화'], ['inv', '🎒 인벤토리'], ['store', '🗄 보관함'], ['shop', '🛒 상점']];
+  const tabs = [['enh', '🔨 강화'], ['inv', '🎒 인벤토리'], ['store', '🗄 보관함'], ['mat', '⚗ 재료 합성'], ['shop', '🛒 상점']];
   let body = '';
   if (forgeTab === 'enh') body = enhHtml();
   else if (forgeTab === 'inv') body = listHtml(S.inv, 'inv');
   else if (forgeTab === 'store') body = listHtml(S.store, 'store');
+  else if (forgeTab === 'mat') body = matHtml();
   else body = shopHtml();
   const m = modal(`<h2>🔨 공대 대장간 · 강화 연구실</h2><p class="sub">💰 ${won(S.money)} · 🛡 보호권 ${S.tickets}개 · ${MATS.map((x, i) => `<span style="color:${x.col}">${x.name} ${S.mats[i]}</span>`).join(' · ')}</p>
     <div class="tabs">${tabs.map(([k, n]) => `<button type="button" data-t="${k}" class="${forgeTab === k ? 'on' : ''}">${n}</button>`).join('')}</div>${body}
@@ -528,6 +603,10 @@ function listHtml(arr, where) {
   return `<p class="sub">${where === 'inv' ? '장착한 기구로 광석을 자동 채굴해요. 아끼는 기구는 보관함에 넣으면 판매·파괴 걱정이 없어요.' : '보관함의 기구는 강화·판매할 수 없어요. 쓰려면 인벤토리로 꺼내요.'}${!nearForge() && where === 'inv' ? ' (판매·강화는 대장간에서만)' : ''}</p>${acts}
     <div class="grid">${sorted.map(x => itemCard(x)).join('') || '<p class="sub">비어 있어요.</p>'}</div>`;
 }
+function matHtml() {
+  return `<p class="sub">남은 재료 <b>${MAT_FUSE}개</b>를 합치면 바로 위 단계 재료 <b>1개</b>가 <b>확정</b>으로 나와요.</p><div class="plist">${MATS.slice(0, 4).map((m, i) => { const can = Math.floor(S.mats[i] / MAT_FUSE);
+    return `<div class="prow"><span class="dot" style="background:${m.col}"></span><div style="flex:1"><b>${m.name} ${S.mats[i]}개</b> → <b style="color:${MATS[i + 1].col}">${MATS[i + 1].name}</b><small>${MAT_FUSE}개 → 1개 · 지금 ${can}번 가능</small></div><button class="btn pri sm" data-mf="${i}" data-n="1" ${can ? '' : 'disabled'}>1번</button><button class="btn sm" data-mf="${i}" data-n="10" ${can >= 10 ? '' : 'disabled'}>10번</button><button class="btn gold sm" data-mf="${i}" data-n="all" ${can ? '' : 'disabled'}>최대</button></div>`; }).join('')}</div>`;
+}
 function shopHtml() {
   return `<div class="req">
     <div><span>🧪 새 알코올 램프 (+1)</span><button class="btn pri sm" id="buyTool" ${S.money >= NEW_TOOL_PRICE && nearForge() ? '' : 'disabled'}>${won(NEW_TOOL_PRICE)}</button></div>
@@ -536,7 +615,8 @@ function shopHtml() {
     <table class="pt"><tr><th>단계</th><th>판매가</th><th>채굴 간격</th><th>타격량</th></tr>${[1, 5, 10, 15, 18, 20, 25, 30].map(L => `<tr><td>+${L}</td><td>${won(sellPrice(L))}</td><td>${mineCd(L).toFixed(2)}초</td><td>${mineDmg(L)}</td></tr>`).join('')}</table>`;
 }
 function bindForge(m) {
-  m.querySelectorAll('.item').forEach(e => e.onclick = () => { AU.click(); selId = +e.dataset.id; openForge(forgeTab === 'shop' ? 'inv' : forgeTab); });
+  m.querySelectorAll('.item').forEach(e => e.onclick = () => { AU.click(); selId = +e.dataset.id; openForge(forgeTab === 'shop' || forgeTab === 'mat' ? 'inv' : forgeTab); });
+  m.querySelectorAll('[data-mf]').forEach(b => b.onclick = () => { const i = +b.dataset.mf, can = Math.floor(S.mats[i] / MAT_FUSE), n = b.dataset.n === 'all' ? can : Math.min(can, +b.dataset.n); if (!n) return; S.mats[i] -= n * MAT_FUSE; S.mats[i + 1] += n; AU.build ? AU.build() : AU.hammer(); AU.success(); toast('재료 합성', `${MATS[i + 1].name} +${n}`, 1100); hudDirty = true; save(); openForge('mat'); });
   const on = (id, f) => { const e = $(id); if (e) e.onclick = f; };
   on('doEnh', () => { if (!nearForge()) { toast('대장간 안에서만 강화할 수 있어요'); return; } const r = enhance(selId, $('useT') && $('useT').checked); afterEnh(r); });
   on('autoBtn', () => { if (autoOn) { stopAuto(); openForge('enh'); return; } if (!nearForge()) { toast('대장간 안에서만 강화할 수 있어요'); return; } startAuto(); });
@@ -603,28 +683,119 @@ function startAuto() {
 }
 function stopAuto() { if (autoT) clearInterval(autoT); autoT = null; autoOn = false; }
 
-/* ======================= 석사 리크루팅 ======================= */
+/* ======================= 석사 리크루팅 (3릴 슬롯 · 팀 4명 · 강화 · 합성) ======================= */
+let petTab = 'pull', petSpin = false;
+function rollPet() { let r = Math.random() * PET_W, i = 0; for (; i < PETS.length - 1; i++) { r -= PETS[i].w; if (r < 0) break; } return i; }
+function petGroups() { // 같은 석사(등급+강화)는 묶어서 개수로
+  const g = {}; for (const p of S.pets) { const key = p.k + ':' + p.lv; (g[key] = g[key] || {k: p.k, lv: p.lv, ids: []}).ids.push(p.id); }
+  return Object.values(g).sort((a, b) => b.k - a.k || b.lv - a.lv);
+}
+const inTeam = id => S.team.includes(id);
+function petName(k, lv) { return `<span style="color:${PETS[k].col};font-weight:900">${PETS[k].name}</span>${lv ? ` <span class="lv">+${lv}</span>` : ''}`; }
 function openPet(tab) {
-  tab = tab || 'pull';
-  const rows = PETS.map((p, i) => `<tr><td><span style="color:${p.col};font-weight:900">${p.name}</span></td><td>${p.w}%</td><td><b>${(p.w / PET_W * 100).toFixed(2)}%</b></td><td>+${Math.round(p.spd * 100)}%</td><td>${p.mag}m</td></tr>`).join('');
-  const mine = {}; S.pets.forEach((k, i) => { (mine[k] = mine[k] || []).push(i); });
-  const body = tab === 'pull' ? `<div class="res" id="pRes">한 번에 ${won(PET_PRICE)}</div><div class="row" style="justify-content:center"><button class="btn gold" id="pull1" ${S.money >= PET_PRICE ? '' : 'disabled'}>🎓 1회 리크루팅</button><button class="btn gold" id="pull10" ${S.money >= PET_PRICE * 10 ? '' : 'disabled'}>🎓 10회 리크루팅</button></div>
-      <table class="pt"><tr><th>석사 용병</th><th>기획 가중치</th><th>실제 확률</th><th>이속</th><th>자력 범위</th></tr>${rows}</table><p class="sub">실제 확률 = 가중치 ÷ 가중치 합계(${PET_W.toFixed(1)})로 100%에 맞춘 값이에요.</p>`
-    : `<p class="sub">석사 한 명을 데리고 다녀요. 뒤를 졸졸 따라오며 이동 속도를 올리고, 바닥의 재료·연구비를 자석처럼 끌어당겨요.</p><div class="list" style="display:flex;flex-direction:column;gap:6px">${PETS.map((p, k) => mine[k] ? `<div class="pet" style="padding:8px;border-radius:12px;background:rgba(255,255,255,.07)"><span class="dot" style="background:${p.col}${p.gold ? ';box-shadow:0 0 12px #ffd25e' : ''}"></span><div style="flex:1"><b>${p.name}</b> ×${mine[k].length}<br><small style="color:#b8c6e4">이속 +${Math.round(p.spd * 100)}% · 자력 ${p.mag}m</small></div><button class="btn sm ${S.petEq >= 0 && S.pets[S.petEq] === k ? '' : 'pri'}" data-pk="${k}" ${S.petEq >= 0 && S.pets[S.petEq] === k ? 'disabled' : ''}>${S.petEq >= 0 && S.pets[S.petEq] === k ? '함께하는 중' : '데려가기'}</button></div>` : '').join('') || '<p class="sub">아직 석사가 없어요.</p>'}</div>`;
-  const m = modal(`<h2>🎓 석사생 리크루팅 머신</h2><p class="sub">💰 ${won(S.money)} · 보유 석사 ${S.pets.length}명</p>
-    <div class="tabs"><button type="button" data-t="pull" class="${tab === 'pull' ? 'on' : ''}">🎰 리크루팅</button><button type="button" data-t="mine" class="${tab === 'mine' ? 'on' : ''}">🧑‍🎓 내 석사들</button></div>${body}
+  petTab = tab || petTab;
+  const tabs = [['pull', '🎰 리크루팅'], ['team', '🧑‍🎓 내 석사 · 팀'], ['up', '⬆ 강화'], ['fuse', '⚗ 합성']];
+  let body = '';
+  if (petTab === 'pull') {
+    const rows = PETS.map((p, i) => `<tr><td>${petName(i, 0)}</td><td>${p.w}%</td><td><b>${(p.w / PET_W * 100).toFixed(2)}%</b></td><td>+${Math.round(p.spd * 100)}%</td><td>${p.mag}m</td></tr>`).join('');
+    body = `<div class="reels"><div class="reel" id="q0"><span>신입</span></div><div class="reel" id="q1"><span>신입</span></div><div class="reel" id="q2"><span>신입</span></div></div>
+      <div class="res" id="pRes">세 칸이 같은 석사로 멈추면 그 석사가 합류해요 · 1회 ${won(PET_PRICE)}</div>
+      <div class="row" style="justify-content:center"><button class="btn gold" id="pull1" ${S.money >= PET_PRICE ? '' : 'disabled'}>🎰 1회 (${won(PET_PRICE)})</button><button class="btn gold" id="pull10" ${S.money >= PET_PRICE * 10 ? '' : 'disabled'}>🎰 10회 (${won(PET_PRICE * 10)})</button></div>
+      <table class="pt"><tr><th>석사 용병</th><th>기획 가중치</th><th>실제 확률</th><th>이속</th><th>자력 범위</th></tr>${rows}</table><p class="sub">실제 확률 = 가중치 ÷ 가중치 합계(${PET_W.toFixed(1)}). 석사는 최대 ${TEAM_MAX}명까지 함께 다녀요.</p>`;
+  } else if (petTab === 'team') {
+    const team = teamPets();
+    body = `<p class="sub">함께 다니는 석사 <b>${team.length}/${TEAM_MAX}</b> · 이속은 모두 더하고(최대 +200%), 자력 범위는 가장 센 석사 + 나머지 1명당 0.4m.</p>
+      <div class="teamrow">${[0, 1, 2, 3].map(i => { const p = team[i]; return p ? `<div class="tslot on"><span class="dot" style="background:${PETS[p.k].col}"></span><div>${petName(p.k, p.lv)}<small>이속 +${Math.round(petSpd(p) * 100)}% · 자력 ${petMag(p).toFixed(1)}m</small></div><button class="btn sm" data-out="${p.id}">빼기</button></div>` : `<div class="tslot">빈 자리</div>`; }).join('')}</div>
+      <div class="plist">${petGroups().map(g => { const free = g.ids.filter(id => !inTeam(id)); return `<div class="prow"><span class="dot" style="background:${PETS[g.k].col}${PETS[g.k].gold || g.lv >= 10 ? ';box-shadow:0 0 12px #ffd25e' : ''}"></span><div style="flex:1">${petName(g.k, g.lv)} <b class="cnt">×${g.ids.length}</b><small>이속 +${Math.round(PETS[g.k].spd * (1 + 0.12 * g.lv) * 100)}% · 자력 ${(PETS[g.k].mag * (1 + 0.1 * g.lv)).toFixed(1)}m${g.ids.length - free.length ? ' · 팀 ' + (g.ids.length - free.length) + '명' : ''}</small></div><button class="btn pri sm" data-in="${free[0] || ''}" ${free.length && S.team.length < TEAM_MAX ? '' : 'disabled'}>팀에 넣기</button></div>`; }).join('') || '<p class="sub">아직 석사가 없어요. 리크루팅에서 뽑아요.</p>'}</div>`;
+  } else if (petTab === 'up') {
+    body = `<p class="sub">석사를 강화하면 이속 +12%·자력 +10%씩 늘고 발밑에 오라가 생겨요 (+1 하늘 · +4 보라 · +7 분홍 · +10 금빛). 실패해도 석사는 그대로예요.</p>
+      <div class="plist">${petGroups().map(g => { const id = g.ids.find(x => inTeam(x)) || g.ids[0]; const max = g.lv >= PET_MAXLV, cost = petUpCost(g.k, g.lv);
+        return `<div class="prow"><span class="dot" style="background:${PETS[g.k].col}"></span><div style="flex:1">${petName(g.k, g.lv)} <b class="cnt">×${g.ids.length}</b><small>${max ? '최고 강화' : `+${g.lv}→+${g.lv + 1} · 성공 ${PET_UP_RATE[g.lv]}% · ${won(cost)}`}</small></div><button class="btn gold sm" data-up="${id}" ${!max && S.money >= cost ? '' : 'disabled'}>강화</button></div>`; }).join('') || '<p class="sub">석사가 없어요.</p>'}</div>`;
+  } else {
+    body = `<p class="sub">같은 등급 석사 3명을 합치면 확률적으로 <b>한 등급 위</b> 석사가 나와요. 실패하면 같은 등급 석사 1명이 남아요. 팀에 있는 석사와 강화된 석사는 마지막에 쓰여요.</p>
+      <div class="plist">${PETS.map((p, k) => { const n = S.pets.filter(x => x.k === k).length; if (k >= PETS.length - 1) return n ? `<div class="prow"><span class="dot" style="background:${p.col};box-shadow:0 0 12px #ffd25e"></span><div style="flex:1">${petName(k, 0)} <b class="cnt">×${n}</b><small>최고 등급이라 합성할 수 없어요</small></div></div>` : '';
+        return `<div class="prow"><span class="dot" style="background:${p.col}"></span><div style="flex:1">${petName(k, 0)} <b class="cnt">×${n}</b><small>3명 → ${PETS[k + 1].name} ${FUSE_RATE[k]}%</small></div><button class="btn pri sm" data-fuse="${k}" ${n >= 3 ? '' : 'disabled'}>합성</button><button class="btn sm" data-fuseall="${k}" ${n >= 3 ? '' : 'disabled'}>모두</button></div>`; }).join('')}</div>
+      <div class="res" id="fRes"></div>`;
+  }
+  const m = modal(`<h2>🎓 석사생 리크루팅 머신</h2><p class="sub">💰 ${won(S.money)} · 보유 석사 ${S.pets.length}명 · 팀 ${S.team.length}/${TEAM_MAX}</p>
+    <div class="tabs">${tabs.map(([k, n]) => `<button type="button" data-t="${k}" class="${petTab === k ? 'on' : ''}">${n}</button>`).join('')}</div>${body}
     <div class="row" style="margin-top:10px"><button class="btn" id="pClose">닫기</button></div>`);
-  m.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { AU.click(); openPet(b.dataset.t); });
-  m.querySelectorAll('[data-pk]').forEach(b => b.onclick = () => { const k = +b.dataset.pk; S.petEq = S.pets.indexOf(k); refreshPet(); hudDirty = true; save(); AU.pet(k); openPet('mine'); });
-  $('pClose').onclick = closeModal;
-  const go = n => { if (S.money < PET_PRICE * n) return; S.money -= PET_PRICE * n; const got = [];
-    for (let k = 0; k < n; k++) { let r = Math.random() * PET_W, i = 0; for (; i < PETS.length - 1; i++) { r -= PETS[i].w; if (r < 0) break; } S.pets.push(i); got.push(i); }
-    const best = Math.max(...got); const cur = curPet();
-    if (!cur || PETS[best].mag > cur.mag) { S.petEq = S.pets.lastIndexOf(best); refreshPet(); }
-    AU.pet(best); if (best >= 5) { fireworks(); AU.jackpot(); }
+  m.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { if (petSpin) return; AU.click(); openPet(b.dataset.t); });
+  $('pClose').onclick = () => { if (!petSpin) closeModal(); };
+  m.querySelectorAll('[data-in]').forEach(b => b.onclick = () => { const id = +b.dataset.in; if (!id || S.team.length >= TEAM_MAX) return; S.team.push(id); refreshPet(); hudDirty = true; save(); AU.pet(S.pets.find(x => x.id === id).k); openPet('team'); });
+  m.querySelectorAll('[data-out]').forEach(b => b.onclick = () => { S.team = S.team.filter(x => x !== +b.dataset.out); refreshPet(); hudDirty = true; save(); AU.click(); openPet('team'); });
+  m.querySelectorAll('[data-up]').forEach(b => b.onclick = () => petUp(+b.dataset.up));
+  m.querySelectorAll('[data-fuse]').forEach(b => b.onclick = () => petFuse(+b.dataset.fuse, false));
+  m.querySelectorAll('[data-fuseall]').forEach(b => b.onclick = () => petFuse(+b.dataset.fuseall, true));
+  const p1 = $('pull1'), p10 = $('pull10'); if (p1) p1.onclick = () => petPull(1); if (p10) p10.onclick = () => petPull(10);
+}
+function petPull(n) {
+  if (petSpin || S.money < PET_PRICE * n) return;
+  S.money -= PET_PRICE * n; hudDirty = true;
+  const got = []; for (let k = 0; k < n; k++) got.push(rollPet());
+  const best = Math.max(...got);
+  petSpin = true; const els = [0, 1, 2].map(i => $('q' + i)), res = $('pRes'); res.classList.remove('jackpot'); res.textContent = '리크루팅 중…';
+  $('pull1').disabled = $('pull10').disabled = true;
+  els.forEach(e => e.classList.add('spin'));
+  const ticker = setInterval(() => { AU.tick(); els.forEach(e => { if (e.classList.contains('spin')) e.firstChild.textContent = PET_TAG[Math.floor(Math.random() * 7)]; }); }, 70);
+  els.forEach((e, i) => setTimeout(() => { e.classList.remove('spin'); e.firstChild.textContent = PET_TAG[best]; e.style.color = PETS[best].col === '#ffd25e' ? '#b8860b' : '#18223a'; AU.slotStop(); if (i === 2) { clearInterval(ticker); done(); } }, 650 + i * 380 + (best >= 4 ? i * 250 : 0)));
+  function done() {
+    petSpin = false;
+    for (const k of got) S.pets.push({id: newId(), k, lv: 0});
+    // 팀에 빈자리가 있으면 새 석사 중 가장 센 순서로 자동 합류
+    const newOnes = S.pets.slice(-n).sort((a, b) => b.k - a.k);
+    for (const p of newOnes) if (S.team.length < TEAM_MAX) S.team.push(p.id);
+    refreshPet(); AU.pet(best); if (best >= 5) { fireworks(); AU.jackpot(); }
     hudDirty = true; save(); openPet('pull');
-    const res = $('pRes'); res.innerHTML = got.map(i => `<span style="color:${PETS[i].col}">${PETS[i].name}</span>`).join(' · '); if (best >= 4) res.classList.add('jackpot'); };
-  const p1 = $('pull1'), p10 = $('pull10'); if (p1) p1.onclick = () => go(1); if (p10) p10.onclick = () => go(10);
+    const cnt = {}; got.forEach(k => cnt[k] = (cnt[k] || 0) + 1);
+    const r = $('pRes'); r.innerHTML = Object.keys(cnt).sort((a, b) => b - a).map(k => `${petName(+k, 0)} ×${cnt[k]}`).join(' · ');
+    if (best >= 4) r.classList.add('jackpot');
+    [0, 1, 2].forEach(i => { const e = $('q' + i); if (e) e.firstChild.textContent = PET_TAG[best]; });
+  }
+}
+function petUp(id) {
+  const p = S.pets.find(x => x.id === id); if (!p || p.lv >= PET_MAXLV) return;
+  const cost = petUpCost(p.k, p.lv); if (S.money < cost) return;
+  S.money -= cost; AU.hammer();
+  if (Math.random() * 100 < PET_UP_RATE[p.lv]) { p.lv++; setTimeout(() => AU.success(), 120); toast(`석사 강화 성공! +${p.lv}`, PETS[p.k].name, 1300); if (p.lv % 3 === 1 || p.lv >= 7) fireworks(); }
+  else { setTimeout(() => AU.fail(), 120); toast('석사 강화 실패', `+${p.lv} 유지`, 1000); }
+  refreshPet(); hudDirty = true; save(); openPet('up');
+}
+function petFuse(k, all) {
+  let made = 0, up = 0;
+  do {
+    const pool = S.pets.filter(x => x.k === k).sort((a, b) => (inTeam(a.id) - inTeam(b.id)) || (a.lv - b.lv));
+    if (pool.length < 3) break;
+    const use = pool.slice(0, 3).map(x => x.id);
+    S.pets = S.pets.filter(x => !use.includes(x.id)); const wasTeam = use.filter(inTeam).length; S.team = S.team.filter(x => !use.includes(x));
+    const ok = Math.random() * 100 < FUSE_RATE[k], np = {id: newId(), k: ok ? k + 1 : k, lv: 0}; S.pets.push(np);
+    if (wasTeam && S.team.length < TEAM_MAX) S.team.push(np.id);
+    made++; if (ok) up++;
+  } while (all);
+  if (!made) return;
+  AU.hammer(); setTimeout(() => up ? (AU.success(), up && k + 1 >= 5 && (fireworks(), AU.jackpot())) : AU.fail(), 150);
+  refreshPet(); hudDirty = true; save(); openPet('fuse');
+  const r = $('fRes'); if (r) { r.innerHTML = `합성 ${made}번 · <span style="color:#9ff5dc">${PETS[k + 1].name} ${up}명</span> · 실패 ${made - up}번`; if (up) r.classList.add('jackpot'); }
+}
+
+/* ======================= 실험복 부티크 ======================= */
+function openCoat() {
+  const m = modal(`<h2>🥼 실험복 부티크</h2><p class="sub">💰 ${won(S.money)} · 실험복을 입으면 모습과 오라가 바뀌고 <b>채굴 범위</b>가 넓어져요 (기본 ${BASE_RANGE}m).</p>
+    <div class="plist">${COATS.map((c, i) => { const own = S.coats.includes(i), on = S.coat === i;
+      return `<div class="prow"><img src="${coatThumb(i)}" style="width:64px;height:64px;flex:none"><div style="flex:1"><b style="font-size:15px">${c.name}</b>${on ? ' <span class="lv">입는 중</span>' : ''}<small>채굴 범위 +${c.range}m → ${(BASE_RANGE + c.range).toFixed(1)}m · 오라 <i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#${new THREE.Color(c.aura).getHexString()}"></i></small></div>
+        ${own ? `<button class="btn ${on ? '' : 'pri'} sm" data-wear="${i}" ${on ? 'disabled' : ''}>${on ? '입는 중' : '입기'}</button>` : `<button class="btn gold sm" data-buy="${i}" ${S.money >= c.price ? '' : 'disabled'}>${won(c.price)}</button>`}</div>`; }).join('')}
+      <div class="prow"><img src="${coatThumb(-1)}" style="width:64px;height:64px;flex:none"><div style="flex:1"><b style="font-size:15px">기본 흰 가운</b><small>채굴 범위 ${BASE_RANGE}m</small></div><button class="btn sm" data-wear="-1" ${S.coat < 0 ? 'disabled' : ''}>${S.coat < 0 ? '입는 중' : '입기'}</button></div></div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="cClose">닫기</button></div>`);
+  $('cClose').onclick = closeModal;
+  m.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => { const i = +b.dataset.buy, c = COATS[i]; if (S.money < c.price) return; S.money -= c.price; S.coats.push(i); S.coat = i; refreshCoat(); AU.success(); fireworks(); toast('🥼 ' + c.name, '채굴 범위 ' + mineRange().toFixed(1) + 'm', 1600); hudDirty = true; save(); openCoat(); });
+  m.querySelectorAll('[data-wear]').forEach(b => b.onclick = () => { S.coat = +b.dataset.wear; refreshCoat(); AU.click(); hudDirty = true; save(); openCoat(); });
+}
+const coatCache = {};
+function coatThumb(i) {
+  if (coatCache[i]) return coatCache[i];
+  const g = gradStudent(i); g.scale.setScalar(0.48); g.position.y = -0.02; g.rotation.y = 0.35; thumbS.add(g);
+  const cam0 = thumbC.clone(); thumbC.lookAt(0, 0.46, 0); thumbR.render(thumbS, thumbC); thumbC.copy(cam0); thumbS.remove(g);
+  coatCache[i] = thumbR.domElement.toDataURL(); return coatCache[i];
 }
 
 /* ======================= 지원금 슬롯 ======================= */
@@ -683,14 +854,16 @@ function helpModal() {
     <b>채굴</b>: 장착한 실험기구로 가까운 광석을 자동으로 캐요. 채굴 간격은 1.2초 × 0.82^(단계−1)로 단계마다 짧아지고(최소 0.05초) 한 번에 깎는 양도 늘어요.<br>
     <b>5개 광산</b>: 1구역 규사 조각(+1~6 강화) · 2구역 티타늄 광석(+7~12) · 3구역 고순도 실리콘(+13~18) · 4구역 초전도 결정(+19~24) · 5구역 반물질 코어(+25~30). 바깥 구역일수록 광석이 단단해요.<br>
     <b>대장간</b>: 기구를 누르면 필요한 재료·연구비·확률이 자동으로 채워져요. +18부터는 실패하면 30% 확률로 파괴되고 재료를 일부 돌려받아요. 🛡 보호권을 쓰면 파괴되지 않아요(100만 원).<br>
-    <b>석사 리크루팅</b>: 1만 원. 석사는 뒤를 따라오며 이동 속도와 자석 범위를 늘려요.<br>
+    <b>석사 리크루팅</b>: 3칸 슬롯으로 뽑아요(1만 원). 석사는 최대 4명까지 줄지어 따라오며 이동 속도와 자석 범위를 늘려요. 같은 석사는 개수로 묶여 보이고, 강화하면 오라가 생기며, 같은 등급 3명을 합성하면 확률적으로 상위 석사가 나와요.<br>
+    <b>실험복 부티크</b>: 실험복 5종(가격 8배씩). 입으면 모습과 오라가 바뀌고 채굴 범위가 넓어져요.<br>
+    <b>재료 합성</b>: 대장간 [재료 합성]에서 재료 10개 → 위 단계 재료 1개(확정).<br>
     <b>지원금 슬롯</b>: 1천 원. 연구비·재료·보호권이 나와요.<br>
     진행 상황은 이 기기에 자동 저장돼요.</div><div class="row"><button class="btn pri" id="hOk">알겠어요</button></div>`);
   $('hOk').onclick = closeModal;
 }
 
 /* ======================= 루프 ======================= */
-const view = {x: 0, z: 0, zoom: 12};
+const view = {x: 0, z: 0, zoom: (() => { const w = innerWidth, h = innerHeight; if (Math.min(w, h) < 520) return h > w ? 9.5 : 7.5; if (Math.min(w, h) < 900) return 10.5; return 12; })()};
 function updCam(dt) {
   const k = 1 - Math.pow(0.002, dt); view.x += (pl.x - view.x) * k; view.z += (pl.z - view.z) * k;
   const asp = innerWidth / innerHeight, h = view.zoom * (asp < 0.8 ? 1.15 : 1), w = h * asp;
@@ -713,7 +886,7 @@ function loop(now) {
 }
 requestAnimationFrame(loop);
 if (!localStorage.getItem('labForgeSeen')) { try { localStorage.setItem('labForgeSeen', '1'); } catch (e) {} setTimeout(helpModal, 600); }
-window.LF = {view, refreshPet, refreshHeld, S, enhance, RATE, PETS, SLOT_TABLE, ores, pl, mineCd, mineDmg, needMat, needMoney, tierOf};   // 시험용
+window.LF = {view, refreshPet, refreshHeld, refreshCoat, COATS, petPull, petUp, petFuse, openPet, openCoat, openForge, mineRange, magnetR, moveSpeed, S, enhance, RATE, PETS, SLOT_TABLE, ores, pl, mineCd, mineDmg, needMat, needMoney, tierOf};   // 시험용
 </script>
 <script src="../goal.js"></script>
 <script src="../rank.js"></script>
