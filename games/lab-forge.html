@@ -211,7 +211,7 @@ const fmtRate = p => p >= 1 ? p.toFixed(1) + '%' : p.toPrecision(3).replace(/0+$
 /* ======================= 저장 ======================= */
 const SAVE_KEY = 'labForgeSave';
 let S = null, uid = 1;
-function freshSave() { return {money: 20000, tickets: 0, mats: [0, 0, 0, 0, 0], inv: [{id: 1, L: 1}], store: [], eq: 1, pets: [], team: [], coats: [], coat: -1, best: 1, uid: 2, stats: {mined: 0, tries: 0, destroyed: 0}}; }
+function freshSave() { return {money: 20000, tickets: 0, mats: [0, 0, 0, 0, 0], inv: [{id: 1, L: 1}], store: [], eq: 1, pets: [], team: [], coats: [], coat: -1, autoMine: false, autoMineOn: true, best: 1, uid: 2, stats: {mined: 0, tries: 0, destroyed: 0}}; }
 function load() { try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.inv) return Object.assign(freshSave(), d); } catch (e) {} return freshSave(); }
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
 S = load(); uid = S.uid;
@@ -396,13 +396,16 @@ refreshPet(); refreshHeld();
 /* ======================= 드랍 · 파티클 · 글자 ======================= */
 const drops = [];
 const coinCol = {1000: '#ffd25e', 10000: '#5ef2c8', 50000: '#ff7eb6'};
-function spawnDrop(x, z, kind, v) {
+const ZONE_MONEY_MULT = [1, 8, 64, 512, 4096];        // 바깥 구역일수록 연구비 8배씩
+const AUTO_MINE_PRICE = 10000000;                      // 석사 자동 채굴 (1,000만 원)
+function spawnDrop(x, z, kind, v, mult) {
   let m;
   if (kind === 'mat') m = vox([[0, 0, 0, 0.32, 0.32, 0.32, MATS[v].col], [0, 0.32, 0, 0.16, 0.1, 0.16, '#ffffff']]);
-  else m = vox([[0, 0, 0, v >= 50000 ? 0.46 : v >= 10000 ? 0.38 : 0.3, 0.1, v >= 50000 ? 0.46 : v >= 10000 ? 0.38 : 0.3, coinCol[v]], [0, 0.1, 0, 0.16, 0.04, 0.16, '#fff8d8']]);
+  else { const sz = (v >= 50000 ? 0.46 : v >= 10000 ? 0.38 : 0.3) * (1 + (mult > 1 ? Math.log(mult) / Math.log(8) * 0.12 : 0));
+    m = vox([[0, 0, 0, sz, 0.1, sz, coinCol[v]], [0, 0.1, 0, 0.16, 0.04, 0.16, mult >= 64 ? '#ffffff' : '#fff8d8']].concat(mult >= 8 ? [[0, 0.14, 0, sz * 0.7, 0.08, sz * 0.7, coinCol[v]]] : [])); }
   m.position.set(x, 0.8, z); scene.add(m);
   const a = Math.random() * Math.PI * 2, s = 1.5 + Math.random() * 2.5;
-  drops.push({m, kind, v, x, y: 0.8, z, vx: Math.cos(a) * s, vy: 5 + Math.random() * 3, vz: Math.sin(a) * s, age: 0});
+  drops.push({m, kind, v, mult: mult || 1, x, y: 0.8, z, vx: Math.cos(a) * s, vy: 5 + Math.random() * 3, vz: Math.sin(a) * s, age: 0});
 }
 const parts = [], pGeo = new THREE.BoxGeometry(0.14, 0.14, 0.14);
 function burst(x, y, z, cols, n, pw) { for (let i = 0; i < n; i++) { const m = new THREE.Mesh(pGeo, new THREE.MeshBasicMaterial({color: cols[i % cols.length], transparent: true})); m.position.set(x, y, z); const a = Math.random() * Math.PI * 2, s = (1.5 + Math.random() * 4) * (pw || 1);
@@ -461,7 +464,20 @@ function update(dt, t) {
   player.userData.arms[0].rotation.x = moving ? -Math.sin(pl.walk) * 0.6 : 0;
   // 펫 따라오기
   let lx = pl.x, lz = pl.z, lf = pl.face;
-  petObjs.forEach((po, i) => { const bx = lx - Math.sin(lf) * 1.1, bz = lz - Math.cos(lf) * 1.1; const dx = bx - po.x, dz = bz - po.z, d = Math.hypot(dx, dz);
+  const tool0 = eqTool(), autoM = S.autoMine && S.autoMineOn && tool0, taken = new Set();
+  petObjs.forEach((po, i) => {
+    // 자동 채굴: 주인 근처(9m) 광석으로 가서 직접 캐기
+    if (autoM) {
+      if (po.ore && (po.ore.dead || Math.hypot(po.ore.x - pl.x, po.ore.z - pl.z) > 10)) po.ore = null;
+      if (!po.ore) { let best = null, bd = 9; for (const o of ores) { if (o.dead || taken.has(o)) continue; const d = Math.hypot(o.x - pl.x, o.z - pl.z); if (d < bd) { bd = d; best = o; } } po.ore = best; }
+      if (po.ore) { taken.add(po.ore); const o = po.ore, dx = o.x - po.x, dz = o.z - po.z, d = Math.hypot(dx, dz);
+        po.obj.rotation.y = Math.atan2(dx, dz);
+        if (d > 1.0) { const sp = 5.5 * dt; po.x += dx / d * Math.min(sp, d - 0.9); po.z += dz / d * Math.min(sp, d - 0.9); po.obj.position.set(po.x, 0.12 + Math.abs(Math.sin(t * 12 + i)) * 0.25, po.z); }
+        else { po.obj.position.set(po.x, 0.12, po.z); po.cd = (po.cd || 0) - dt; if (po.cd <= 0) { const pd = teamPets()[i]; po.cd = mineCd(tool0.L) * 1.6; petHit(o, tool0, pd ? pd.lv : 0, po); } }
+        if (po.obj.userData.ring) po.obj.userData.ring.rotation.z += dt * 2; if (po.obj.userData.ring2) po.obj.userData.ring2.rotation.z -= dt * 3;
+        return; }
+    }
+    const bx = lx - Math.sin(lf) * 1.1, bz = lz - Math.cos(lf) * 1.1; const dx = bx - po.x, dz = bz - po.z, d = Math.hypot(dx, dz);
     if (d > 0.3) { const k = Math.min(1, dt * (d > 4 ? 8 : 4.5)); po.x += dx * k; po.z += dz * k; po.obj.rotation.y = Math.atan2(dx, dz); }
     po.obj.position.set(po.x, 0.12 + (d > 0.4 ? Math.abs(Math.sin(t * 12 + i)) * 0.25 : 0), po.z);
     if (po.obj.userData.ring) po.obj.userData.ring.rotation.z += dt * 2; if (po.obj.userData.ring2) po.obj.userData.ring2.rotation.z -= dt * 3;
@@ -491,7 +507,7 @@ function update(dt, t) {
   for (let i = drops.length - 1; i >= 0; i--) { const d = drops[i]; d.age += dt;
     const tx = pl.x, tz = pl.z, dist = Math.hypot(tx - d.x, tz - d.z);
     const pd = petObjs.reduce((a, po) => Math.min(a, Math.hypot(po.x - d.x, po.z - d.z)), 99);
-    if (d.age > 0.45 && (dist < R || pd < R * 0.6)) { const k = Math.min(1, dt * (8 + 6 / Math.max(0.3, dist))); d.x += (tx - d.x) * k; d.z += (tz - d.z) * k; d.y += (1 - d.y) * k;
+    if (d.age > 0.45 && (dist < R || pd < (S.autoMine && S.autoMineOn ? Math.max(2.5, R * 0.6) : R * 0.6))) { const k = Math.min(1, dt * (8 + 6 / Math.max(0.3, dist))); d.x += (tx - d.x) * k; d.z += (tz - d.z) * k; d.y += (1 - d.y) * k;
       if (dist < 0.5) { collect(d); scene.remove(d.m); drops.splice(i, 1); continue; } }
     else { d.vy -= 18 * dt; d.x += d.vx * dt; d.z += d.vz * dt; d.y += d.vy * dt; if (d.y < 0.2) { d.y = 0.2; d.vy *= -0.4; d.vx *= 0.6; d.vz *= 0.6; } }
     d.m.position.set(d.x, d.y + Math.sin(t * 4 + i) * 0.04, d.z); d.m.rotation.y += dt * 3;
@@ -499,23 +515,31 @@ function update(dt, t) {
   for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.life -= dt; p.vy -= 16 * dt; p.m.position.x += p.vx * dt; p.m.position.y += p.vy * dt; p.m.position.z += p.vz * dt; p.m.rotation.x += dt * 8;
     if (p.m.position.y < 0.1) { p.m.position.y = 0.1; p.vy *= -0.3; } p.m.material.opacity = Math.min(1, p.life * 2); if (p.life <= 0) { scene.remove(p.m); p.m.material.dispose(); parts.splice(i, 1); } }
 }
-function hit(o, tool) {
-  const z = ZONES[o.zi], dmg = mineDmg(tool.L);
-  o.hp -= dmg; o.shake = 0.15; AU.mine(z.tier);
-  pl.face = Math.atan2(o.x - pl.x, o.z - pl.z); player.userData.arms[1].rotation.x = -1.4; setTimeout(() => { player.userData.arms[1].rotation.x = 0; }, 90);
-  floatText(o.x, 1.6, o.z, '-' + dmg, '#ffffff');
+function hit(o, tool, byPet) {
+  const z = ZONES[o.zi], dmg = byPet ? 0 : mineDmg(tool.L);
+  if (!byPet) { o.hp -= dmg; o.shake = 0.15; AU.mine(z.tier);
+    pl.face = Math.atan2(o.x - pl.x, o.z - pl.z); player.userData.arms[1].rotation.x = -1.4; setTimeout(() => { player.userData.arms[1].rotation.x = 0; }, 90);
+    floatText(o.x, 1.6, o.z, '-' + dmg, '#ffffff'); }
   burst(o.x, 0.9, o.z, ['#' + new THREE.Color(z.ore).getHexString(), '#ffffff'], 4, 0.5);
   if (o.hp <= 0) {
     o.dead = 6 + z.tier * 1.5; o.m.visible = false; AU.crack(z.tier); S.stats.mined++;
     burst(o.x, 0.6, o.z, ['#' + new THREE.Color(z.ore).getHexString(), '#' + new THREE.Color(z.ore2).getHexString(), '#ffffff'], 18, 0.9);
     const n = 1 + Math.floor(Math.random() * 3); for (let k = 0; k < n; k++) spawnDrop(o.x, o.z, 'mat', z.tier);
-    const r = Math.random();   // 연구비: 1,000원 38% · 10,000원 10% · 50,000원 2%
-    if (r < 0.02) spawnDrop(o.x, o.z, 'money', 50000); else if (r < 0.12) spawnDrop(o.x, o.z, 'money', 10000); else if (r < 0.5) spawnDrop(o.x, o.z, 'money', 1000);
+    const r = Math.random(), mm = ZONE_MONEY_MULT[z.tier];   // 연구비: 1,000원 38% · 10,000원 10% · 50,000원 2% × 구역 배수(8배씩)
+    if (r < 0.02) spawnDrop(o.x, o.z, 'money', 50000, mm); else if (r < 0.12) spawnDrop(o.x, o.z, 'money', 10000, mm); else if (r < 0.5) spawnDrop(o.x, o.z, 'money', 1000, mm);
   }
+}
+// 석사가 캐기: 주인 기구 위력의 절반(+강화 1단계마다 10%)
+function petHit(o, tool, lv, po) {
+  const z = ZONES[o.zi], dmg = Math.max(1, Math.round(mineDmg(tool.L) * 0.5 * (1 + 0.1 * lv)));
+  o.hp -= dmg; o.shake = 0.12; if (Math.random() < 0.5) AU.mine(z.tier);
+  po.obj.scale.set(1.15, 0.85, 1.15); setTimeout(() => po.obj.scale.setScalar(1), 90);
+  floatText(o.x, 1.5, o.z, '-' + dmg, '#c7f7ff');
+  if (o.hp <= 0) hit(o, tool, true);
 }
 function collect(d) {
   if (d.kind === 'mat') { S.mats[d.v]++; AU.pick(); floatText(pl.x, 2.2, pl.z, '+1 ' + MATS[d.v].name, MATS[d.v].col); }
-  else { S.money += d.v; AU.coin(d.v >= 10000); floatText(pl.x, 2.4, pl.z, '+' + won(d.v), coinCol[d.v], d.v >= 10000); }
+  else { const amt = d.v * (d.mult || 1); S.money += amt; AU.coin(amt >= 10000); floatText(pl.x, 2.4, pl.z, '+' + won(amt), coinCol[d.v], amt >= 10000); }
   hudDirty = true;
 }
 
@@ -526,7 +550,7 @@ function drawHud() {
   $('stat').innerHTML = `<div class="row"><span>💰 <b>${won(S.money)}</b></span><span>🛡 보호권 <b style="color:#9ff5dc">${S.tickets}</b></span></div>
     <div class="row"><small>장착</small> ${t ? `<span class="lv">+${t.L}</span> ${TOOLS[t.L - 1]} <small>· ${mineCd(t.L).toFixed(2)}초마다 ${mineDmg(t.L)}</small>` : '<small>장착한 기구가 없어요 (가방에서 장착)</small>'}</div>
     <div class="row hide-s"><small>석사 ${tp.length}/${TEAM_MAX}</small> ${tp.length ? tp.map(p => `<span style="color:${PETS[p.k].col};font-weight:900">${PET_TAG[p.k]}${p.lv ? '+' + p.lv : ''}</span>`).join(' ') + ` <small>· 이속 +${Math.round(Math.min(2, tp.reduce((a, p) => a + petSpd(p), 0)) * 100)}% · 자력 ${magnetR().toFixed(1)}m</small>` : '<small>없음 (리크루팅 머신)</small>'}</div>
-    <div class="row hide-s"><small>실험복</small> ${S.coat >= 0 ? `<b style="font-size:13px;color:#fff">${COATS[S.coat].name}</b>` : '<small>기본 가운</small>'} <small>· 채굴 범위 ${mineRange().toFixed(1)}m</small></div>
+    <div class="row hide-s"><small>실험복</small> ${S.coat >= 0 ? `<b style="font-size:13px;color:#fff">${COATS[S.coat].name}</b>` : '<small>기본 가운</small>'} <small>· 채굴 범위 ${mineRange().toFixed(1)}m</small>${S.autoMine ? ` <small style="color:${S.autoMineOn ? '#9ff5dc' : '#b8c6e4'}">· 🤖 자동 채굴 ${S.autoMineOn ? 'ON' : 'OFF'}</small>` : ''}</div>
     <div id="mats">${MATS.map((m, i) => `<span title="${m.name}"><i style="background:${m.col}"></i>${S.mats[i]}</span>`).join('')}</div>`;
   hudDirty = false;
 }
@@ -607,9 +631,16 @@ function matHtml() {
   return `<p class="sub">남은 재료 <b>${MAT_FUSE}개</b>를 합치면 바로 위 단계 재료 <b>1개</b>가 <b>확정</b>으로 나와요.</p><div class="plist">${MATS.slice(0, 4).map((m, i) => { const can = Math.floor(S.mats[i] / MAT_FUSE);
     return `<div class="prow"><span class="dot" style="background:${m.col}"></span><div style="flex:1"><b>${m.name} ${S.mats[i]}개</b> → <b style="color:${MATS[i + 1].col}">${MATS[i + 1].name}</b><small>${MAT_FUSE}개 → 1개 · 지금 ${can}번 가능</small></div><button class="btn pri sm" data-mf="${i}" data-n="1" ${can ? '' : 'disabled'}>1번</button><button class="btn sm" data-mf="${i}" data-n="10" ${can >= 10 ? '' : 'disabled'}>10번</button><button class="btn gold sm" data-mf="${i}" data-n="all" ${can ? '' : 'disabled'}>최대</button></div>`; }).join('')}</div>`;
 }
+function buyAutoMine(after) {
+  if (S.autoMine || S.money < AUTO_MINE_PRICE) return;
+  S.money -= AUTO_MINE_PRICE; S.autoMine = true; S.autoMineOn = true; AU.jackpot(); fireworks();
+  toast('🤖 석사 자동 채굴 구매!', teamPets().length ? '석사들이 근처 광석을 캐기 시작해요' : '석사를 팀에 넣으면 함께 캐요', 2200);
+  hudDirty = true; save(); if (after) after();
+}
 function shopHtml() {
   return `<div class="req">
     <div><span>🧪 새 알코올 램프 (+1)</span><button class="btn pri sm" id="buyTool" ${S.money >= NEW_TOOL_PRICE && nearForge() ? '' : 'disabled'}>${won(NEW_TOOL_PRICE)}</button></div>
+    <div><span>🤖 석사 자동 채굴 · 함께 다니는 석사들이 근처 광석을 직접 캐요 (영구)</span>${S.autoMine ? `<button class="btn sm" id="amToggle">${S.autoMineOn ? '켜짐 · 끄기' : '꺼짐 · 켜기'}</button>` : `<button class="btn gold sm" id="buyAM" ${S.money >= AUTO_MINE_PRICE ? '' : 'disabled'}>${won(AUTO_MINE_PRICE)}</button>`}</div>
     <div><span>🛡 장비 보호권 · 강화 실패 시 파괴를 막아요 (1회 소모)</span><button class="btn gold sm" id="buyT" ${S.money >= PROTECT_PRICE && nearForge() ? '' : 'disabled'}>${won(PROTECT_PRICE)}</button></div></div>
     <p class="sub" style="margin-top:10px">${nearForge() ? '판매는 인벤토리 탭에서 기구를 골라 할 수 있어요. 판매 가격은 단계가 오를수록 1.6배씩 올라가요.' : '상점은 대장간 안에서만 이용할 수 있어요.'}</p>
     <table class="pt"><tr><th>단계</th><th>판매가</th><th>채굴 간격</th><th>타격량</th></tr>${[1, 5, 10, 15, 18, 20, 25, 30].map(L => `<tr><td>+${L}</td><td>${won(sellPrice(L))}</td><td>${mineCd(L).toFixed(2)}초</td><td>${mineDmg(L)}</td></tr>`).join('')}</table>`;
@@ -630,6 +661,8 @@ function bindForge(m) {
     if (t.L >= 10 && !confirm(`+${t.L} ${TOOLS[t.L - 1]}을(를) ${won(sellPrice(t.L))}에 팔까요?`)) return;
     S.inv = S.inv.filter(x => x !== t); S.money += sellPrice(t.L); if (S.eq === t.id) { S.eq = (S.inv[0] || {}).id ?? -1; refreshHeld(); } AU.coin(true); toast('판매 완료', '+' + won(sellPrice(t.L))); save(); hudDirty = true; openForge('inv'); });
   on('buyTool', () => { if (S.money < NEW_TOOL_PRICE) return; S.money -= NEW_TOOL_PRICE; const t = {id: newId(), L: 1}; S.inv.push(t); if (!eqTool()) { S.eq = t.id; refreshHeld(); } AU.coin(); save(); hudDirty = true; openForge('shop'); });
+  on('buyAM', () => buyAutoMine(() => openForge('shop')));
+  on('amToggle', () => { S.autoMineOn = !S.autoMineOn; AU.click(); hudDirty = true; save(); openForge('shop'); });
   on('buyT', () => { if (S.money < PROTECT_PRICE) return; S.money -= PROTECT_PRICE; S.tickets++; AU.success(); toast('🛡 장비 보호권 구매', '보유 ' + S.tickets + '개'); save(); hudDirty = true; openForge('shop'); });
 }
 // 강화 한 번: 결과 {ok, destroyed, protected, err}
@@ -705,6 +738,7 @@ function openPet(tab) {
   } else if (petTab === 'team') {
     const team = teamPets();
     body = `<p class="sub">함께 다니는 석사 <b>${team.length}/${TEAM_MAX}</b> · 이속은 모두 더하고(최대 +200%), 자력 범위는 가장 센 석사 + 나머지 1명당 0.4m.</p>
+      <div class="prow" style="margin-bottom:10px;border-color:rgba(255,210,94,.45)"><span class="dot" style="background:#ffd25e;display:grid;place-items:center;font-size:17px">🤖</span><div style="flex:1"><b>석사 자동 채굴</b><small>${S.autoMine ? (S.autoMineOn ? '켜짐 · 석사들이 내 근처 9m 안의 광석을 직접 캐요 (내 기구 위력의 50%, 강화 1단계마다 +10%)' : '꺼짐') : '1,000만 원에 사면 석사들이 내 근처 광석을 직접 캐요 (영구)'}</small></div>${S.autoMine ? `<button class="btn sm" id="amToggle2">${S.autoMineOn ? '끄기' : '켜기'}</button>` : `<button class="btn gold sm" id="buyAM2" ${S.money >= AUTO_MINE_PRICE ? '' : 'disabled'}>${won(AUTO_MINE_PRICE)}</button>`}</div>
       <div class="teamrow">${[0, 1, 2, 3].map(i => { const p = team[i]; return p ? `<div class="tslot on"><span class="dot" style="background:${PETS[p.k].col}"></span><div>${petName(p.k, p.lv)}<small>이속 +${Math.round(petSpd(p) * 100)}% · 자력 ${petMag(p).toFixed(1)}m</small></div><button class="btn sm" data-out="${p.id}">빼기</button></div>` : `<div class="tslot">빈 자리</div>`; }).join('')}</div>
       <div class="plist">${petGroups().map(g => { const free = g.ids.filter(id => !inTeam(id)); return `<div class="prow"><span class="dot" style="background:${PETS[g.k].col}${PETS[g.k].gold || g.lv >= 10 ? ';box-shadow:0 0 12px #ffd25e' : ''}"></span><div style="flex:1">${petName(g.k, g.lv)} <b class="cnt">×${g.ids.length}</b><small>이속 +${Math.round(PETS[g.k].spd * (1 + 0.12 * g.lv) * 100)}% · 자력 ${(PETS[g.k].mag * (1 + 0.1 * g.lv)).toFixed(1)}m${g.ids.length - free.length ? ' · 팀 ' + (g.ids.length - free.length) + '명' : ''}</small></div><button class="btn pri sm" data-in="${free[0] || ''}" ${free.length && S.team.length < TEAM_MAX ? '' : 'disabled'}>팀에 넣기</button></div>`; }).join('') || '<p class="sub">아직 석사가 없어요. 리크루팅에서 뽑아요.</p>'}</div>`;
   } else if (petTab === 'up') {
@@ -725,6 +759,8 @@ function openPet(tab) {
   m.querySelectorAll('[data-in]').forEach(b => b.onclick = () => { const id = +b.dataset.in; if (!id || S.team.length >= TEAM_MAX) return; S.team.push(id); refreshPet(); hudDirty = true; save(); AU.pet(S.pets.find(x => x.id === id).k); openPet('team'); });
   m.querySelectorAll('[data-out]').forEach(b => b.onclick = () => { S.team = S.team.filter(x => x !== +b.dataset.out); refreshPet(); hudDirty = true; save(); AU.click(); openPet('team'); });
   m.querySelectorAll('[data-up]').forEach(b => b.onclick = () => petUp(+b.dataset.up));
+  const am2 = $('buyAM2'); if (am2) am2.onclick = () => buyAutoMine(() => openPet('team'));
+  const at2 = $('amToggle2'); if (at2) at2.onclick = () => { S.autoMineOn = !S.autoMineOn; AU.click(); hudDirty = true; save(); openPet('team'); };
   m.querySelectorAll('[data-fuse]').forEach(b => b.onclick = () => petFuse(+b.dataset.fuse, false));
   m.querySelectorAll('[data-fuseall]').forEach(b => b.onclick = () => petFuse(+b.dataset.fuseall, true));
   const p1 = $('pull1'), p10 = $('pull10'); if (p1) p1.onclick = () => petPull(1); if (p10) p10.onclick = () => petPull(10);
@@ -856,6 +892,8 @@ function helpModal() {
     <b>대장간</b>: 기구를 누르면 필요한 재료·연구비·확률이 자동으로 채워져요. +18부터는 실패하면 30% 확률로 파괴되고 재료를 일부 돌려받아요. 🛡 보호권을 쓰면 파괴되지 않아요(100만 원).<br>
     <b>석사 리크루팅</b>: 3칸 슬롯으로 뽑아요(1만 원). 석사는 최대 4명까지 줄지어 따라오며 이동 속도와 자석 범위를 늘려요. 같은 석사는 개수로 묶여 보이고, 강화하면 오라가 생기며, 같은 등급 3명을 합성하면 확률적으로 상위 석사가 나와요.<br>
     <b>실험복 부티크</b>: 실험복 5종(가격 8배씩). 입으면 모습과 오라가 바뀌고 채굴 범위가 넓어져요.<br>
+    <b>연구비</b>: 바깥 구역일수록 8배씩 많이 나와요 (1구역 ×1 → 5구역 ×4,096).<br>
+    <b>석사 자동 채굴</b>: 1,000만 원(대장간 상점·리크루팅 머신 팀 탭). 함께 다니는 석사들이 근처 광석을 직접 캐요.<br>
     <b>재료 합성</b>: 대장간 [재료 합성]에서 재료 10개 → 위 단계 재료 1개(확정).<br>
     <b>지원금 슬롯</b>: 1천 원. 연구비·재료·보호권이 나와요.<br>
     진행 상황은 이 기기에 자동 저장돼요.</div><div class="row"><button class="btn pri" id="hOk">알겠어요</button></div>`);
@@ -886,7 +924,7 @@ function loop(now) {
 }
 requestAnimationFrame(loop);
 if (!localStorage.getItem('labForgeSeen')) { try { localStorage.setItem('labForgeSeen', '1'); } catch (e) {} setTimeout(helpModal, 600); }
-window.LF = {view, refreshPet, refreshHeld, refreshCoat, COATS, petPull, petUp, petFuse, openPet, openCoat, openForge, mineRange, magnetR, moveSpeed, S, enhance, RATE, PETS, SLOT_TABLE, ores, pl, mineCd, mineDmg, needMat, needMoney, tierOf};   // 시험용
+window.LF = {buyAutoMine, ZONE_MONEY_MULT, drops, view, refreshPet, refreshHeld, refreshCoat, COATS, petPull, petUp, petFuse, openPet, openCoat, openForge, mineRange, magnetR, moveSpeed, S, enhance, RATE, PETS, SLOT_TABLE, ores, pl, mineCd, mineDmg, needMat, needMoney, tierOf};   // 시험용
 </script>
 <script src="../goal.js"></script>
 <script src="../rank.js"></script>
