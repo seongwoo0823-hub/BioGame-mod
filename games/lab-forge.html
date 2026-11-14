@@ -396,13 +396,13 @@ refreshPet(); refreshHeld();
 /* ======================= 드랍 · 파티클 · 글자 ======================= */
 const drops = [];
 const coinCol = {1000: '#ffd25e', 10000: '#5ef2c8', 50000: '#ff7eb6'};
-const ZONE_MONEY_MULT = [1, 8, 64, 512, 4096];        // 바깥 구역일수록 연구비 8배씩
+const ZONE_MONEY_MULT = [1, 2, 4, 8, 16];             // 바깥 구역일수록 연구비 2배씩
 const AUTO_MINE_PRICE = 10000000;                      // 석사 자동 채굴 (1,000만 원)
 function spawnDrop(x, z, kind, v, mult) {
   let m;
   if (kind === 'mat') m = vox([[0, 0, 0, 0.32, 0.32, 0.32, MATS[v].col], [0, 0.32, 0, 0.16, 0.1, 0.16, '#ffffff']]);
-  else { const sz = (v >= 50000 ? 0.46 : v >= 10000 ? 0.38 : 0.3) * (1 + (mult > 1 ? Math.log(mult) / Math.log(8) * 0.12 : 0));
-    m = vox([[0, 0, 0, sz, 0.1, sz, coinCol[v]], [0, 0.1, 0, 0.16, 0.04, 0.16, mult >= 64 ? '#ffffff' : '#fff8d8']].concat(mult >= 8 ? [[0, 0.14, 0, sz * 0.7, 0.08, sz * 0.7, coinCol[v]]] : [])); }
+  else { const sz = (v >= 50000 ? 0.46 : v >= 10000 ? 0.38 : 0.3) * (1 + (mult > 1 ? Math.log2(mult) * 0.06 : 0));
+    m = vox([[0, 0, 0, sz, 0.1, sz, coinCol[v]], [0, 0.1, 0, 0.16, 0.04, 0.16, mult >= 8 ? '#ffffff' : '#fff8d8']].concat(mult >= 4 ? [[0, 0.14, 0, sz * 0.7, 0.08, sz * 0.7, coinCol[v]]] : [])); }
   m.position.set(x, 0.8, z); scene.add(m);
   const a = Math.random() * Math.PI * 2, s = 1.5 + Math.random() * 2.5;
   drops.push({m, kind, v, mult: mult || 1, x, y: 0.8, z, vx: Math.cos(a) * s, vy: 5 + Math.random() * 3, vz: Math.sin(a) * s, age: 0});
@@ -525,7 +525,7 @@ function hit(o, tool, byPet) {
     o.dead = 6 + z.tier * 1.5; o.m.visible = false; AU.crack(z.tier); S.stats.mined++;
     burst(o.x, 0.6, o.z, ['#' + new THREE.Color(z.ore).getHexString(), '#' + new THREE.Color(z.ore2).getHexString(), '#ffffff'], 18, 0.9);
     const n = 1 + Math.floor(Math.random() * 3); for (let k = 0; k < n; k++) spawnDrop(o.x, o.z, 'mat', z.tier);
-    const r = Math.random(), mm = ZONE_MONEY_MULT[z.tier];   // 연구비: 1,000원 38% · 10,000원 10% · 50,000원 2% × 구역 배수(8배씩)
+    const r = Math.random(), mm = ZONE_MONEY_MULT[z.tier];   // 연구비: 1,000원 38% · 10,000원 10% · 50,000원 2% × 구역 배수(2배씩)
     if (r < 0.02) spawnDrop(o.x, o.z, 'money', 50000, mm); else if (r < 0.12) spawnDrop(o.x, o.z, 'money', 10000, mm); else if (r < 0.5) spawnDrop(o.x, o.z, 'money', 1000, mm);
   }
 }
@@ -892,7 +892,7 @@ function helpModal() {
     <b>대장간</b>: 기구를 누르면 필요한 재료·연구비·확률이 자동으로 채워져요. +18부터는 실패하면 30% 확률로 파괴되고 재료를 일부 돌려받아요. 🛡 보호권을 쓰면 파괴되지 않아요(100만 원).<br>
     <b>석사 리크루팅</b>: 3칸 슬롯으로 뽑아요(1만 원). 석사는 최대 4명까지 줄지어 따라오며 이동 속도와 자석 범위를 늘려요. 같은 석사는 개수로 묶여 보이고, 강화하면 오라가 생기며, 같은 등급 3명을 합성하면 확률적으로 상위 석사가 나와요.<br>
     <b>실험복 부티크</b>: 실험복 5종(가격 8배씩). 입으면 모습과 오라가 바뀌고 채굴 범위가 넓어져요.<br>
-    <b>연구비</b>: 바깥 구역일수록 8배씩 많이 나와요 (1구역 ×1 → 5구역 ×4,096).<br>
+    <b>연구비</b>: 바깥 구역일수록 2배씩 많이 나와요 (1구역 ×1 → 5구역 ×16).<br>
     <b>석사 자동 채굴</b>: 1,000만 원(대장간 상점·리크루팅 머신 팀 탭). 함께 다니는 석사들이 근처 광석을 직접 캐요.<br>
     <b>재료 합성</b>: 대장간 [재료 합성]에서 재료 10개 → 위 단계 재료 1개(확정).<br>
     <b>지원금 슬롯</b>: 1천 원. 연구비·재료·보호권이 나와요.<br>
@@ -924,7 +924,7 @@ function loop(now) {
 }
 requestAnimationFrame(loop);
 if (!localStorage.getItem('labForgeSeen')) { try { localStorage.setItem('labForgeSeen', '1'); } catch (e) {} setTimeout(helpModal, 600); }
-window.LF = {buyAutoMine, ZONE_MONEY_MULT, drops, view, refreshPet, refreshHeld, refreshCoat, COATS, petPull, petUp, petFuse, openPet, openCoat, openForge, mineRange, magnetR, moveSpeed, S, enhance, RATE, PETS, SLOT_TABLE, ores, pl, mineCd, mineDmg, needMat, needMoney, tierOf};   // 시험용
+window.LF = {spawnDrop, burst, get petObjs() { return petObjs; }, buyAutoMine, ZONE_MONEY_MULT, drops, view, refreshPet, refreshHeld, refreshCoat, COATS, petPull, petUp, petFuse, openPet, openCoat, openForge, mineRange, magnetR, moveSpeed, S, enhance, RATE, PETS, SLOT_TABLE, ores, pl, mineCd, mineDmg, needMat, needMoney, tierOf};   // 시험용
 </script>
 <script src="../goal.js"></script>
 <script src="../rank.js"></script>
