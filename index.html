@@ -357,6 +357,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     ['codon-glass','코돈 글래스','mRNA 코돈 번역 퍼즐','online casual','4','퍼즐 코돈 mRNA 번역 아미노산 리보솜 codon glass'],
     ['bio-pyramid','바이오 피라미드 타이쿤','양분을 모아 생명의 피라미드 쌓기 3D','casual','','타이쿤 방치 피라미드 펫 뽑기 양분 bio pyramid'],
     ['cell-raid','생물의 번제','인체 6구역 방 탐험 로그라이크 슈터','action','','생물의 번제 세포 레이드 로그라이크 슈터 병원체 보스 인체 cell raid'],
+    ['lab-forge','랩 포지','실험기구 30단계 강화·5개 광산 채굴 시뮬레이션','casual','','강화 채굴 실험기구 석사 뽑기 슬롯 대장간 시뮬레이션 lab forge'],
     ['bio-board','생명과학 보드게임 천국','코돈 타일·모두의 세포·게놈 해독·혈류 윷놀이 3D 보드게임 4종','online casual','4','보드게임 윷놀이 타일 추리 주사위 경영 AI 한 기기 bio board']
   ];
   const ic=n=>window.BioIcon?BioIcon.svg(n):'';
@@ -409,6 +410,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     'biotro'(){const s=get('biotroStats');if(!s||!s.runs)return '';return `최고 앤티 <b>${s.bestAnte||1}</b>`;},
     'cell-brawl'(){const t=get('cellbrawl:trophies');if(!t||typeof t!=='object')return '';const v=Object.values(t).filter(x=>typeof x==='number'&&x>0);
       return v.length?`트로피 <b>${v.reduce((a,b)=>a+b,0)}</b>`:'';},
+    'lab-forge'(){const s=get('labForgeSave');return s&&s.best>1?`최고 <b>+${s.best}</b> 강화`:'';},
     'bio-board'(){const s=get('bioBoardStats');return s&&s.played?`<b>${s.played}</b>판 · 승리 <b>${s.wins||0}</b>`:'';},
     'only-up'(){const ss=['','_blood','_plant'].map(k=>get('onlyupBioStats'+k)).filter(x=>x&&x.clears);if(ss.length){const c=ss.reduce((a,x)=>a+x.clears,0),b=Math.min(...ss.map(x=>x.best>0?x.best:1e9));return `탈출 <b>${c}</b>회 · <b>${ss.length}</b>/3맵`+(b<1e9?` · 최고 <b>${Math.floor(b/60)}분 ${(b%60).toFixed(1)}초</b>`:'');}const p=get('onlyupBio');return p&&p.cp>0?`<b>${p.cp+1}</b>/7 구간`:'';},
     'bio-strike'(){const s=get('bioStrike');if(!s||typeof s!=='object')return '';const out=[];if(s.cleared)out.push(`스토리 <b>${s.cleared}</b>/5장`);
