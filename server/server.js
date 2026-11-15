@@ -240,7 +240,7 @@ const server = http.createServer((req, res) => {
   if (u.pathname === '/__hello' || u.pathname === '/hello') {
     res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store'});
     res.end('<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>연결 확인</title>' +
-      '<body style="font-family:sans-serif;text-align:center;padding:40px 16px;background:#0b1020;color:#e8f0ff"><div style="font-size:64px">✅</div>' +
+      '<body style="font-family:sans-serif;text-align:center;padding:40px 16px;background:#0b1020;color:#e8f0ff"><svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7 12.5l3.5 3.5L17 9"/></svg>' +
       '<h2>교실 서버에 연결됐어요!</h2><p>네트워크는 정상이에요.</p><p><a style="color:#7cf" href="/">게임 사이트 열기 →</a></p>');
     return;
   }

@@ -147,7 +147,24 @@
     play: ['f:M8 5.5v13l10.5-6.5z'],
     chevron: ['M9 5.5l6.5 6.5L9 18.5'],
     gamepad: ['M7 7.5h10a5 5 0 0 1 4.8 6.4l-1 3.4a2.4 2.4 0 0 1-4.1 1L14.5 16h-5l-2.2 2.3a2.4 2.4 0 0 1-4.1-1l-1-3.4A5 5 0 0 1 7 7.5z', 'M7.5 10.5v3M6 12h3', 'f:' + C(15.5, 11, 1.1), 'f:' + C(17.5, 13, 1.1)],
-    clock: [C(12, 12, 9), 'M12 7v5l3 2']
+    clock: [C(12, 12, 9), 'M12 7v5l3 2'],
+    monitor: ['M3 4h18v12H3z', 'M9 20h6M12 16v4'],
+    bell: ['M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z', 'M10 20.5a2 2 0 0 0 4 0'],
+    menu: ['M4 6h16M4 12h16M4 18h16'],
+    stop: ['f:' + R(6, 6, 12, 12, 2)],
+    clover: [C(9, 9, 3.2), C(15, 9, 3.2), C(9, 15, 3.2), C(15, 15, 3.2), 'M12 12l4 9'],
+    badge: [R(2.5, 7, 19, 10, 3), 'M6 14.5v-5l3 5v-5M11.5 9.5h3M11.5 12h2.5M11.5 14.5h3M16 9.5l1 5 1-3 1 3 1-5'],
+    flag: ['M5 21V4', 'M5 4h12l-2.5 4L17 12H5'],
+    bars: ['M4 20h16', 'M7 20v-6M12 20V8M17 20v-10'],
+    camera: [R(3, 7, 13, 10, 2), 'M16 10.5l5-3v9l-5-3'],
+    ball: [C(12, 12, 9), 'M12 3v18M3 12h18M5.6 5.6c3.6 3.6 3.6 9.2 0 12.8M18.4 5.6c-3.6 3.6-3.6 9.2 0 12.8'],
+    soccer: [C(12, 12, 9), 'f:M12 8.5l3.3 2.4-1.3 3.9h-4l-1.3-3.9z', 'M12 8.5V3.5M15.3 10.9l4.5-1.6M14 14.8l2.8 4M10 14.8l-2.8 4M8.7 10.9L4.2 9.3'],
+    volley: [C(12, 12, 9), 'M12 3c0 5 3 8 8.5 8M12 12c-4 2.5-6 6-5.5 8M12 12c4.5 0 8 2.5 8 4'],
+    pool: [C(12, 12, 9), C(12, 12, 4), 'M11 10.5h2v3'],
+    grad: ['M2 9l10-5 10 5-10 5z', 'M6 11v5c3 2.5 9 2.5 12 0v-5', 'M21 9v6'],
+    cabinet: [R(5, 3, 14, 18, 1.5), 'M5 12h14M10 7.5h4M10 16.5h4'],
+    slot: [R(3, 5, 15, 15, 2), 'M7 9v7M10.5 9v7M14 9v7', 'M18 10h2.5V5', C(20.5, 4.5, 1.4)],
+    school: ['M3 21h18M5 21V10l7-5 7 5v11', 'M10 21v-5h4v5', C(12, 11, 1.6)],
   };
   function dot(c) { return ['f' + c + ':' + C(12, 12, 7.5)]; }
   function sq(c) { return ['f' + c + ':' + R(4.5, 4.5, 15, 15, 3)]; }
@@ -155,7 +172,7 @@
   var MAP = {
     shield: '🛡🔰', x: '❌✖', check: '✅✔☑', home: '🏠🏡', bolt: '⚡', globe: '🌐🌍🌎🌏', crown: '👑', sword: '🗡🔪🤺', swords: '⚔',
     dna: '🧬', target: '🎯', flask: '🧪⚗🧫🫙🧴', hourglass: '⏳⌛', spiral: '🌀💫', rocket: '🚀', trophy: '🏆', microbe: '🦠🍄',
-    search: '🔎🔍', microscope: '🔬', user: '👤👼🙂', users: '👥🤝', warning: '⚠', skull: '☠💀😵', ghost: '👻', speaker: '🔊🔉🔈',
+    search: '🔎🔍', microscope: '🔬', users: '👥🤝', warning: '⚠', skull: '☠💀😵', ghost: '👻', speaker: '🔊🔉🔈',
     mute: '🔇', snow: '❄🌨🥶', hazard: '☣☢', wind: '💨🌫🌪', coin: '🪙💰', bow: '🏹', repeat: '🔁🔄🔃', shuffle: '🔀', music: '🎵🎶🎼',
     headphones: '🎧', robot: '🤖', burst: '💥💢🎉', sparkle: '✨✳✴🎆🎇', drop: '💧💦', web: '🕸', spider: '🕷🦟', fire: '🔥♨☄',
     timer: '⏱⏲', phone: '📱📲', phoneoff: '📴', clipboard: '📋', book: '📖📕📜', map: '🗺', orb: '🔮', brick: '🧱',
@@ -167,7 +184,9 @@
     gift: '🎁', box: '📦🛒🎒🧶', plug: '🔌', battery: '🔋', pin: '📍', chart: '📈', sleep: '💤', info: 'ℹ', pause: '⏸',
     full: '⛶', up: '⬆', food: '🍽🥖🍬🧃🍷🌽🍇🌰', face: '😊😐😈😷😋😀😄', candle: '🕯', balloon: '🎈', star: '⭐🌟',
     exclaim: '❗❕', question: '❔❓', circle: '⭕', bone: '🦴', wand: '🪄🔱🦯', compass: '🧭', hole: '🕳', scissors: '✂',
-    blaster: '🔫', gamepad: '🎮🕹', clock: '⏰🕒', sun: '☀🌞'
+    blaster: '🔫', gamepad: '🎮🕹', clock: '⏰🕒', sun: '☀🌞',
+    monitor: '🖥💻', bell: '🔔', stop: '⏹', clover: '🍀', badge: '🆕', flag: '🏁🚩🏳', bars: '📊', camera: '🎥📷', ball: '🏀',
+    soccer: '⚽', volley: '🏐', pool: '🎱', grad: '🎓', cabinet: '🗄', slot: '🎰', school: '🏫', user: '👤👼🙂🧑'
   };
   var COLOR = {
     '🔴': dot('#ef4444'), '🟢': dot('#22c55e'), '🔵': dot('#3b82f6'), '🟡': dot('#eab308'), '🟠': dot('#f97316'), '🟣': dot('#a855f7'),
