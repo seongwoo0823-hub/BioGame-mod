@@ -505,7 +505,7 @@
                         <span class="text-[11px] font-black tracking-wider text-pink-300 uppercase">RIBOSOME BIO-SLOT MACHINE</span>
                     </div>
                     <div id="gacha-stage-subtitle" class="text-[11px] font-extrabold text-amber-300">
-                        물곰 0.005% · 엽록체 0.02%(2%) · 미토콘드리아 0.05% · 자석박테리아 5% · 파지 30% · 적혈구 55%+
+                        물곰 0.005% · 엽록체 0.02% · 미토콘드리아 0.05% · 자석박테리아 5% · 파지 30% · 적혈구 나머지
                     </div>
                 </div>
 
@@ -517,6 +517,7 @@
                 <!-- Particle & Shockwave Overlay Container -->
                 <div id="gacha-impact-layer" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
             </div>
+            <div id="gacha-extra" class="mb-4"></div>
 
             <!-- Pet Probability & Visual Preview Strip (6 Pets including Chloroplast & Magnetotactic Bacteria) -->
             <div class="grid grid-cols-2 sm:grid-cols-6 gap-1.5 mb-4">
@@ -545,7 +546,7 @@
                     <div id="mini-preview-chloroplast" class="w-7 h-7 shrink-0"></div>
                     <div>
                         <div class="text-[10px] font-black text-emerald-950">광합성 엽록체</div>
-                        <div class="text-[9px] font-extrabold text-emerald-700">신화 (0.02)</div>
+                        <div class="text-[9px] font-extrabold text-emerald-700">신화 (0.02%)</div>
                     </div>
                 </div>
                 <div class="bg-amber-50/80 border border-orange-300 rounded-xl p-1.5 flex items-center gap-1.5">
@@ -1066,8 +1067,54 @@
                 tierColors: [0x581c87, 0xa855f7, 0xf472b6, 0xfacc15, 0xffffff],
                 springWaterColor: 0xfacc15,
                 springRimColor: 0x581c87
+            },
+            {
+                stage: 6,
+                name: '리보솜 단백질 공장 피라미드',
+                springName: '아미노산 칵테일 온천',
+                desc: 'mRNA 설계도로 단백질을 찍어 내는 거대 공장 테마. 온천 입수 시 근섬유 단백질이 폭발적으로 합성됩니다!',
+                baseMult: 240.0,
+                riboWeight: 8.0,
+                stemWeight: 6.5,
+                enzWeight: 7.0,
+                springSpeedBonus: 1.55,
+                springLiftBonus: 150,
+                tierColors: [0x7f1d1d, 0xdc2626, 0xfb923c, 0xfde047, 0xfff7ed],
+                springWaterColor: 0xfb7185,
+                springRimColor: 0x7f1d1d
+            },
+            {
+                stage: 7,
+                name: '면역 항체 요새 피라미드',
+                springName: '인터페론 방어막 온천',
+                desc: 'B세포·T세포가 지키는 면역계 요새 테마. 온천 입수 시 항체 방어막이 몸을 감싸 초인적인 힘을 냅니다!',
+                baseMult: 780.0,
+                riboWeight: 9.5,
+                stemWeight: 9.0,
+                enzWeight: 9.0,
+                springSpeedBonus: 1.8,
+                springLiftBonus: 200,
+                tierColors: [0x0c4a6e, 0x0284c7, 0x22d3ee, 0xa5f3fc, 0xf0f9ff],
+                springWaterColor: 0x67e8f9,
+                springRimColor: 0x0c4a6e
+            },
+            {
+                stage: 8,
+                name: '판스페르미아 우주 생명 성소',
+                springName: '성간 원시세포 온천',
+                desc: '우주에서 온 생명의 씨앗을 모신 마지막 성소. 온천 입수 시 은하의 에너지로 모든 한계를 넘어섭니다!',
+                baseMult: 2600.0,
+                riboWeight: 12.0,
+                stemWeight: 12.0,
+                enzWeight: 12.0,
+                springSpeedBonus: 2.1,
+                springLiftBonus: 280,
+                tierColors: [0x0f0a2e, 0x4c1d95, 0xc026d3, 0x38bdf8, 0xfef9c3],
+                springWaterColor: 0xc4b5fd,
+                springRimColor: 0x1e1b4b
             }
         ];
+        const MAX_STAGE = PYRAMID_THEMES.length;
 
         const SKIN_PACKS = [
             {
@@ -1180,6 +1227,9 @@
 
             // Multi-Gacha Unlock Level (1, 2, or 3)
             maxGachaPull: 1,
+            autoGacha: false,      // 펫 뽑기 자동화 (1억 RIBO)
+            gachaPacks: [],        // 확률 증가 팩 (×2·×4·×8) 보유 목록 — 가장 높은 팩 적용
+
 
             // Skins
             unlockedSkins: [0],
@@ -1189,7 +1239,7 @@
             instantDepositUnlocked: false,
 
             // Pyramid & Conditional Timed Hot Spring
-            pyramidStage: 1,         // 1 to 5
+            pyramidStage: 1,         // 1 to 8
             highestPyramidStage: 1,
             pyramidBlocksBuilt: 0,
             pyramidTotalBlocks: 165,
@@ -1267,8 +1317,8 @@
                     else if (Array.isArray(d) && Array.isArray(v)) gameState[k] = v;
                 }
                 if (!Array.isArray(gameState.pets) || !gameState.pets.length) gameState.pets = [{ id: 'pet_starter', typeId: 'rbc', enhanced: false, equipped: true }];
-                gameState.pyramidStage = Math.max(1, Math.min(5, gameState.pyramidStage | 0));
-                gameState.highestPyramidStage = Math.max(gameState.pyramidStage, Math.min(5, gameState.highestPyramidStage | 0));
+                gameState.pyramidStage = Math.max(1, Math.min(8, gameState.pyramidStage | 0));
+                gameState.highestPyramidStage = Math.max(gameState.pyramidStage, Math.min(8, gameState.highestPyramidStage | 0));
                 gameState.isInsideSpring = false;
             } catch (e) {}
         })();
@@ -1391,36 +1441,42 @@
         const pyramidCenter = new THREE.Vector3(0, 0, -8.5);
         const dropPadPos = new THREE.Vector3(0, 0, 5.0);
 
-        worldGroup.add(createVoxel(14.5, 0.45, 14.5, 0xe2e8f0, pyramidCenter.x, 0.22, pyramidCenter.z, false));
+        const pyrBasePlate = createVoxel(14.5, 0.45, 14.5, 0xe2e8f0, pyramidCenter.x, 0.22, pyramidCenter.z, false);
+        worldGroup.add(pyrBasePlate);
         worldGroup.add(createVoxel(4.6, 0.25, 4.6, 0xf59e0b, dropPadPos.x, 0.12, dropPadPos.z, false));
         worldGroup.add(createVoxel(3.6, 0.32, 3.6, 0xfef08a, dropPadPos.x, 0.16, dropPadPos.z, false));
 
-        const pyramidSlots = [];
-        const layerSizes = [9, 7, 5, 3, 1];
-        layerSizes.forEach((size, layerIdx) => {
-            const half = (size - 1) / 2;
-            for (let gx = -half; gx <= half; gx++) {
-                for (let gz = -half; gz <= half; gz++) {
-                    pyramidSlots.push({
-                        pos: new THREE.Vector3(pyramidCenter.x + gx * 1.15, 0.9 + layerIdx * 1.15, pyramidCenter.z + gz * 1.15),
-                        tierIdx: layerIdx
-                    });
-                }
-            }
-        });
-        gameState.pyramidTotalBlocks = pyramidSlots.length;
-
+        // 피라미드 크기: 단계가 오를수록 바닥 칸 수와 블록 크기가 함께 커져요 (앞쪽 끝은 그대로, 뒤로 커짐)
+        const PYR_BASE = [9, 9, 11, 11, 13, 13, 15, 15];
+        const pyramidSlots = []; let pyrBuiltStage = 0, pyrStep = 1.15;
+        function rebuildPyramidSlots() {
+            const st = Math.max(1, Math.min(MAX_STAGE, gameState.pyramidStage)), base = PYR_BASE[st - 1], sc = 1 + (st - 1) * 0.05, step = 1.15 * sc;
+            pyrStep = step; pyrBuiltStage = st;
+            pyramidCenter.z = -3.3 - ((base - 1) / 2 * step + step / 2);
+            pyramidSlots.length = 0;
+            const layers = (base + 1) / 2;
+            for (let li = 0; li < layers; li++) { const size = base - li * 2, half = (size - 1) / 2;
+                for (let gx = -half; gx <= half; gx++) for (let gz = -half; gz <= half; gz++)
+                    pyramidSlots.push({ pos: new THREE.Vector3(pyramidCenter.x + gx * step, 0.45 + step / 2 + li * step, pyramidCenter.z + gz * step), tierIdx: Math.min(4, Math.floor(li * 5 / layers)) }); }
+            gameState.pyramidTotalBlocks = pyramidSlots.length;
+            if (gameState.pyramidBlocksBuilt > pyramidSlots.length) gameState.pyramidBlocksBuilt = pyramidSlots.length;
+            const pw = base * step + 1.6; pyrBasePlate.scale.set(pw, 0.45, pw); pyrBasePlate.position.z = pyramidCenter.z;
+            if (updateWorldLabels3D.items) { const it = updateWorldLabels3D.items.find(x => x.id === 'label-pyramid'); if (it) it.pos.set(pyramidCenter.x, 0.9 + layers * step + 1.2, pyramidCenter.z); }
+        }
+        rebuildPyramidSlots();
         const pyramidGroup = new THREE.Group();
         scene.add(pyramidGroup);
 
         function rebuildPyramidVisuals() {
             while (pyramidGroup.children.length > 0) pyramidGroup.remove(pyramidGroup.children[0]);
+            if (pyrBuiltStage !== gameState.pyramidStage) rebuildPyramidSlots();
             const theme = PYRAMID_THEMES[gameState.pyramidStage - 1];
             const count = Math.min(gameState.pyramidBlocksBuilt, pyramidSlots.length);
+            const bs = pyrStep * 0.92;
             for (let i = 0; i < count; i++) {
                 const slot = pyramidSlots[i];
                 const col = theme.tierColors[slot.tierIdx];
-                pyramidGroup.add(createVoxel(1.06, 1.06, 1.06, col, slot.pos.x, slot.pos.y, slot.pos.z));
+                pyramidGroup.add(createVoxel(bs, bs, bs, col, slot.pos.x, slot.pos.y, slot.pos.z));
             }
         }
 
@@ -1666,7 +1722,7 @@
 
         // 자원이 생길 수 없는 자리: 피라미드·놓는 자리·온천·뽑기 기계 주변, 플레이어 바로 옆, 다른 자원과 겹치는 곳
         function nutrientSpotOk(x, z, nearPlayerOk) {
-            if (Math.abs(x - pyramidCenter.x) < 9 && Math.abs(z - pyramidCenter.z) < 9) return false;
+            if (Math.abs(x - pyramidCenter.x) < PYR_BASE[pyrBuiltStage - 1] * pyrStep / 2 + 2 && Math.abs(z - pyramidCenter.z) < PYR_BASE[pyrBuiltStage - 1] * pyrStep / 2 + 2) return false;
             if (Math.hypot(x - dropPadPos.x, z - dropPadPos.z) < 4) return false;
             if (Math.hypot(x - springPos.x, z - springPos.z) < 6.2) return false;
             if (Math.hypot(x - gachaPos.x, z - gachaPos.z) < 5.5) return false;
@@ -1840,7 +1896,7 @@
 
         function advanceToNextPyramid() {
             if (gameState.pyramidBlocksBuilt < gameState.pyramidTotalBlocks) return;
-            if (gameState.pyramidStage < 5) {
+            if (gameState.pyramidStage < MAX_STAGE) {
                 gameState.pyramidStage++;
                 if (gameState.pyramidStage > gameState.highestPyramidStage) {
                     gameState.highestPyramidStage = gameState.pyramidStage;
@@ -1963,6 +2019,7 @@
         }
 
         function updateGachaModalUI() {
+            renderGachaExtra();
             const btnPack2 = document.getElementById('btn-buy-pack2');
             const btnPack3 = document.getElementById('btn-buy-pack3');
             const btnPull1 = document.getElementById('btn-pull-1');
@@ -1982,6 +2039,38 @@
             btnPull3.disabled = isSlotSpinning || gameState.maxGachaPull < 3;
         }
 
+        const GACHA_PACKS = [{ x: 2, cost: 200000000 }, { x: 4, cost: 400000000 }, { x: 8, cost: 800000000 }];
+        const AUTO_GACHA_COST = 100000000;
+        let autoGachaOn = false, autoGachaStop = 'tardigrade';
+        function gachaPackMult() { return (gameState.gachaPacks || []).reduce((a, i) => Math.max(a, GACHA_PACKS[i] ? GACHA_PACKS[i].x : 1), 1); }
+        const RANK_ORDER = ['rbc', 'phage', 'magbact', 'mito', 'chloroplast', 'tardigrade'];
+        function continueAutoGacha(res) {
+            if (!autoGachaOn) return;
+            const modalOpen = !document.getElementById('gacha-modal').classList.contains('hidden');
+            const hit = autoGachaStop !== 'none' && res.some(k => RANK_ORDER.indexOf(k) >= RANK_ORDER.indexOf(autoGachaStop));
+            if (!modalOpen || hit) { autoGachaOn = false; renderGachaExtra(); if (hit) spawnFloatingText(playerGroup.position, '자동 뽑기 멈춤: 목표 펫 등장!', 'text-amber-300'); return; }
+            const costs = { 1: 1200, 2: 2100, 3: 3000 }, n = gameState.maxGachaPull;
+            if (gameState.ribo < costs[n]) { autoGachaOn = false; renderGachaExtra(); spawnFloatingText(playerGroup.position, '자동 뽑기 멈춤: RIBO 부족', 'text-rose-400'); return; }
+            const big = res.some(k => k === 'mito' || k === 'chloroplast' || k === 'tardigrade');
+            setTimeout(() => { if (autoGachaOn) pullGacha(n); }, big ? 1600 : 350);
+        }
+        function renderGachaExtra() {
+            const el = document.getElementById('gacha-extra'); if (!el) return;
+            const pm = gachaPackMult(), owned = gameState.gachaPacks || [];
+            el.innerHTML = `<div class="grid sm:grid-cols-2 gap-2">
+              <div class="bg-white/85 border border-pink-200 rounded-2xl p-3"><div class="font-black text-slate-900 text-sm">🤖 펫 뽑기 자동화</div>
+                <div class="text-[11px] text-slate-500 font-semibold mb-2">가장 큰 연속 추출로 계속 뽑고, 고른 펫이 나오면 멈춰요.</div>
+                ${gameState.autoGacha ? `<div class="flex gap-2 items-center flex-wrap"><select id="auto-gacha-stop" class="text-xs font-bold border rounded-lg px-2 py-1">${[['tardigrade', '우주물곰 나오면 멈춤'], ['chloroplast', '엽록체 이상 나오면'], ['mito', '미토콘드리아 이상'], ['none', '멈추지 않기']].map(([v, n]) => `<option value="${v}" ${autoGachaStop === v ? 'selected' : ''}>${n}</option>`).join('')}</select>
+                  <button id="btn-auto-gacha" class="voxel-btn ${autoGachaOn ? 'bg-rose-500' : 'bg-emerald-500'} text-white text-xs font-black rounded-xl px-3 py-1.5">${autoGachaOn ? '⏹ 자동 멈추기' : '▶ 자동 뽑기 시작'}</button></div>`
+                : `<button id="btn-buy-auto-gacha" class="voxel-btn bg-gradient-to-b from-amber-400 to-orange-500 text-slate-950 text-xs font-black rounded-xl px-3 py-1.5" ${gameState.ribo >= AUTO_GACHA_COST ? '' : 'disabled'}>구매 · ${korNum(AUTO_GACHA_COST)} RIBO</button>`}</div>
+              <div class="bg-white/85 border border-amber-200 rounded-2xl p-3"><div class="font-black text-slate-900 text-sm">🍀 확률 증가 팩 <span class="text-amber-600">${pm > 1 ? '현재 ×' + pm : ''}</span></div>
+                <div class="text-[11px] text-slate-500 font-semibold mb-2">물곰·엽록체·미토콘드리아·자석박테리아 확률이 배로 올라요 (가장 높은 팩 적용, 영구).</div>
+                <div class="flex gap-1.5 flex-wrap">${GACHA_PACKS.map((k, i) => owned.includes(i) ? `<span class="text-xs font-black px-3 py-1.5 rounded-xl bg-slate-200 text-slate-500">×${k.x} 보유</span>` : `<button data-gpack="${i}" class="voxel-btn bg-gradient-to-b from-yellow-300 to-amber-500 text-slate-950 text-xs font-black rounded-xl px-3 py-1.5" ${gameState.ribo >= k.cost ? '' : 'disabled'}>×${k.x} · ${korNum(k.cost)}</button>`).join('')}</div></div></div>`;
+            const bb = document.getElementById('btn-buy-auto-gacha'); if (bb) bb.onclick = () => { if (gameState.ribo < AUTO_GACHA_COST) return; gameState.ribo -= AUTO_GACHA_COST; gameState.autoGacha = true; playSfx('upgrade'); saveGame(); updateHUD(); renderGachaExtra(); };
+            const sel = document.getElementById('auto-gacha-stop'); if (sel) sel.onchange = () => { autoGachaStop = sel.value; };
+            const ab = document.getElementById('btn-auto-gacha'); if (ab) ab.onclick = () => { autoGachaOn = !autoGachaOn; renderGachaExtra(); if (autoGachaOn && !isSlotSpinning) pullGacha(gameState.maxGachaPull); };
+            el.querySelectorAll('[data-gpack]').forEach(b => b.onclick = () => { const i = +b.dataset.gpack, k = GACHA_PACKS[i]; if (gameState.ribo < k.cost || owned.includes(i)) return; gameState.ribo -= k.cost; gameState.gachaPacks = owned.concat([i]); playSfx('jackpot'); saveGame(); updateHUD(); renderGachaExtra(); });
+        }
         function pullGacha(count) {
             if (isSlotSpinning || count > gameState.maxGachaPull) return;
             const costs = { 1: 1200, 2: 2100, 3: 3000 };
@@ -2004,20 +2093,21 @@
             stageContainer.innerHTML = '';
 
             const petKeys = ['rbc', 'phage', 'magbact', 'chloroplast', 'mito', 'tardigrade'];
+            const ownedBefore = new Set(gameState.pets.map(p => p.typeId));
             const finalResults = [];
             const reelDomElements = [];
 
             for (let i = 0; i < count; i++) {
-                const luckBoost = count === 3 ? 1.5 : 1.0;
+                const luckBoost = (count === 3 ? 1.5 : 1.0) * gachaPackMult();
                 const r = Math.random() * 100; // 0.0000 to 100.0000%
                 let chosen = 'rbc';
                 // Exact user-specified probability table:
                 // Tardigrade: 0.005%, Mitochondria: 0.05%, Chloroplast: 2% (0.02 probability), Magnetotactic Bacteria: 5%, Bacteriophage: 30%, Red Blood Cell Slime: remaining (~62.945%, base >=55%)
                 const pTardi = 0.005 * luckBoost;
                 const pMito  = pTardi + 0.05 * luckBoost;
-                const pChloro = pMito + 2.0 * luckBoost;
+                const pChloro = pMito + 0.02 * luckBoost;
                 const pMag   = pChloro + 5.0 * luckBoost;
-                const pPhage = pMag + 30.0;
+                const pPhage = Math.max(pMag, pMag + 30.0);
 
                 if (r < pTardi) chosen = 'tardigrade';
                 else if (r < pMito) chosen = 'mito';
@@ -2081,6 +2171,7 @@
                             isLegend ? 'bg-amber-400 text-slate-950' : isHighTier ? 'bg-cyan-500 text-slate-950' : 'bg-emerald-500/20 text-emerald-300'
                         }`;
                         badgeEl.innerText = `${info.rarity} · 자력 +${info.magnet}m · 효율 +${Math.round(info.mult * 100)}%`;
+                        const own = document.createElement('div'); own.className = 'text-[11px] font-black px-2 py-0.5 rounded-full z-10 mt-1 ' + (ownedBefore.has(chosenKey) ? 'bg-slate-700 text-slate-200' : 'bg-pink-500 text-white animate-pulse'); own.innerText = ownedBefore.has(chosenKey) ? `✔ 이미 보유한 펫 (${gameState.pets.filter(p => p.typeId === chosenKey).length}마리 보유)` : '🆕 NEW · 처음 얻은 펫!'; badgeEl.after(own); ownedBefore.add(chosenKey);
                     }
 
                     if (isHighTier && wrapper) {
@@ -2103,7 +2194,7 @@
                     stoppedCount++;
 
                     if (stoppedCount === count) {
-                        isSlotSpinning = false;
+                        isSlotSpinning = false; setTimeout(() => continueAutoGacha(finalResults), 50);
                         updateGachaModalUI();
                         rebuildEquippedPets3D();
                         updateHUD();
@@ -2804,7 +2895,7 @@
 
         function updateWorldLabels3D() {
             if (!updateWorldLabels3D.items) updateWorldLabels3D.items = [
-                { id: 'label-pyramid', pos: new THREE.Vector3(pyramidCenter.x, 7.4, pyramidCenter.z) },
+                { id: 'label-pyramid', pos: new THREE.Vector3(pyramidCenter.x, 0.9 + (PYR_BASE[pyrBuiltStage - 1] + 1) / 2 * pyrStep + 1.2, pyramidCenter.z) },
                 { id: 'label-spring',  pos: new THREE.Vector3(springPos.x, 3.6, springPos.z) },
                 { id: 'label-gacha',   pos: new THREE.Vector3(gachaPos.x, 6.6, gachaPos.z) }
             ].map(it => Object.assign(it, { el: document.getElementById(it.id), v: new THREE.Vector3(), lx: -1, ly: -1 }));

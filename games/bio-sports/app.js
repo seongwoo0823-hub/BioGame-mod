@@ -2,7 +2,7 @@
 'use strict';
 (function () {
   const {$, esc} = SP;
-  const ORDER = ['soccer', 'basketball', 'baseball', 'volleyball', 'pool'];
+  const ORDER = ['soccer', 'basketball', 'volleyball', 'pool'];
   const DIFF = [['쉬움', '세포 입문'], ['보통', '연구실 리그'], ['어려움', '노벨상 리그']];
   const pref = (() => { try { return JSON.parse(localStorage.getItem('bioSportsPref') || '{}') || {}; } catch (e) { return {}; } })();
   const savePref = () => { try { localStorage.setItem('bioSportsPref', JSON.stringify(pref)); } catch (e) {} };
@@ -13,7 +13,7 @@
     SP.inMatch = false; SP.tick = lobbyTick; SP.onTab = null; SP.onEsc = null; SP.onPointer = null; SP.onWheel = null;
     $('top').hidden = true; $('help').hidden = true; $('keys').hidden = true; $('touch').hidden = true; $('info').innerHTML = ''; SP.minimap(null); SP.gauge(null); SP.info('');
     SP.clearScene(); SP.audio.crowd(0);
-    if (window.LyricAudio) LyricAudio.theme('kingdom');
+    SP.music.play('lobby');
     // 배경: 다섯 경기장 미니어처 + 뛰는 선수
     SP.scene.background.set(0x8fd0e6);
     const g = SP.plane(80, 80, 0x7ccf86); SP.scene.add(g);
@@ -23,9 +23,14 @@
       for (let k = 0; k < 2; k++) { const m = SP.makePlayer(SP.ri(10), 7 + i * 2 + k); m.position.set(x + (k ? 1.6 : -1.6), 0.3, z); SP.scene.add(m); lobbyGuys.push({m, x, z, ph: Math.random() * 6, r: 1.6 + k * 0.4}); } });
     SP.camTo({x: 0, y: 0, z: 0, dist: 34, h: 24, yaw: 0.5}, true);
     const L = $('lobby'); L.hidden = false;
-    L.innerHTML = `<h1>바이오 스포츠 천국</h1><p>생명과학 테마 5종목 종합 스포츠 · 10개 대학 · 팀당 20명</p>
-      <div class="sports">${ORDER.map(id => { const S = SP.SPORTS[id]; return `<button type="button" data-s="${id}"><span>${S.icon}</span>${esc(S.name)}<small>${esc(S.desc)}</small></button>`; }).join('')}</div>
-      <div class="row" style="justify-content:center"><button class="btn" id="lHelp">조작법</button><button class="btn" id="lSnd">${SP.audio.muted ? '🔇 소리 켜기' : '🔔 소리 끄기'}</button><button class="btn" onclick="location.href='../index.html'">🏠 게임 목록</button></div>`;
+    let W = {}; try { W = JSON.parse(localStorage.getItem('bioSportsWins') || '{}') || {}; } catch (e) {}
+    const TAG = {soccer: '11 vs 11 · 오프사이드 · 승부차기', basketball: '5 vs 5 · 3점슛 · 24초 샷클락', volleyball: '5 vs 5 · 스파이크 · 블로킹', pool: '1 vs 1 · 8볼 · 프리볼'};
+    L.innerHTML = `<div class="lb">
+      <header class="lb-hero"><span class="lb-badge">🧬 10개 대학 리그 · 팀당 20명</span><h1>바이오 스포츠 천국</h1>
+        <p>생명과학 능력치로 뛰는 3D 복셀 스포츠 · 싱글 AI 대전 · 온라인 방</p>
+        <div class="lb-stat"><div><b>${W.total || 0}</b><small>AI 상대 총 승리</small></div><div><b>${ORDER.length}</b><small>종목</small></div><div><b>10</b><small>대학 팀</small></div></div></header>
+      <div class="lb-cards">${ORDER.map(id => { const S = SP.SPORTS[id]; return `<button type="button" class="lb-card" data-s="${id}"><span class="lb-img" style="background-image:url(../assets/bio-sports/${id}.jpg)"></span><span class="lb-ic">${S.icon}</span><span class="lb-tx"><b>${esc(S.name)}</b><small>${esc(TAG[id] || S.desc)}</small></span><span class="lb-go">${W[id] ? `🏆 ${W[id]}승 · ` : ''}플레이 ▶</span></button>`; }).join('')}</div>
+      <div class="lb-foot"><button class="btn" id="lHelp">🎮 조작법</button><button class="btn" id="lSnd">${SP.audio.muted ? '🔇 소리 켜기' : '🔔 소리 끄기'}</button><button class="btn" onclick="location.href='../index.html'">🏠 게임 목록</button></div></div>`;
     L.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { SP.audio.click(); modeModal(b.dataset.s); });
     $('lHelp').onclick = () => { SP.modal(`<h2>조작법</h2><div class="sub" style="line-height:1.9"><b>이동</b> WASD·방향키 (휴대폰: 왼쪽 조이스틱)<br><b>J</b> 패스·토스·리시브 · <b>K / Space</b> 슛·타격·투구·스파이크 (누르고 있으면 힘 게이지) · <b>L</b> 태클·블록·도루 · <b>Q</b> 선수 전환<br><b>Tab</b> 경기 현황·작전 타임(교체) · <b>C</b> 원근/직교 시점 전환 · <b>Esc</b> 닫기<br>종목마다 화면 아래에 조작 안내가 나와요.</div><div class="row"><button class="btn pri" onclick="SP.closeModal()">알겠어요</button></div>`); };
     $('lSnd').onclick = () => { SP.audio.setMuted(!SP.audio.muted); lobby(); };
@@ -123,7 +128,7 @@
     const S = SP.SPORTS[cfg.sid];
     SP.inMatch = true; $('top').hidden = false;
     $('touch').hidden = !SP.isTouch; $('keys').hidden = SP.isTouch; SP.setActs(defActs(S));
-    if (window.LyricAudio) LyricAudio.theme('battle');
+    SP.music.play(cfg.sid);
     M.game = S.create(cfg);
     SP.audio.crowd(0.4);
     SP.onTab = () => { if (SP.modalOpen && menuOpen) SP.closeModal(); else openMenu('stat'); };

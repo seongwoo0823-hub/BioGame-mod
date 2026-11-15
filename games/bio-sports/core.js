@@ -258,6 +258,56 @@ const SP = window.SP = {SPORTS: {}};
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   SP.groundAt = (sx, sy, y) => { ndc.set(sx / innerWidth * 2 - 1, -(sy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, SP.getCam()); const p = new THREE.Vector3(); return ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -(y || 0)), p) ? p : null; };
 
+  /* ---------------- 종목별 배경음 (직접 만든 단계 시퀀서) ---------------- */
+  SP.music = (function () {
+    const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+    let th = null, tm = null, step = 0, nt = 0, bus = null, want = null;
+    function ensure() { const A = SP.audio; if (!A.c) return false; if (!bus) { bus = A.c.createGain(); bus.gain.value = 0.32; bus.connect(A.out); } return true; }
+    function tone(f, t, d, type, g, cut, glide) { const c = SP.audio.c, o = c.createOscillator(), a = c.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (glide) o.frequency.exponentialRampToValueAtTime(glide, t + d * 0.6);
+      let n = o; if (cut) { const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = cut; o.connect(fl); n = fl; }
+      a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(g, t + 0.008); a.gain.exponentialRampToValueAtTime(0.0001, t + d); n.connect(a); a.connect(bus); o.start(t); o.stop(t + d + 0.05); }
+    function noise(t, d, f, q, g, type) { const c = SP.audio.c, s = c.createBufferSource(); s.buffer = SP.audio.nb; const fl = c.createBiquadFilter(); fl.type = type || 'highpass'; fl.frequency.value = f; fl.Q.value = q || 0.7; const a = c.createGain();
+      a.gain.setValueAtTime(g, t); a.gain.exponentialRampToValueAtTime(0.0001, t + d); s.connect(fl); fl.connect(a); a.connect(bus); s.start(t, Math.random()); s.stop(t + d + 0.05); }
+    const kick = (t, g) => tone(150, t, 0.28, 'sine', g || 0.55, 0, 42), snare = (t, g) => { noise(t, 0.16, 1800, 0.8, g || 0.28); tone(190, t, 0.09, 'triangle', 0.12); },
+      hat = (t, g) => noise(t, 0.04, 8000, 1, g || 0.08), clap = t => { for (let k = 0; k < 3; k++) noise(t + k * 0.012, 0.09, 1500, 1.2, 0.22, 'bandpass'); },
+      chord = (root, type, t, d, g, wave, cut) => (type === 'm' ? [0, 3, 7] : type === 'm7' ? [0, 3, 7, 10] : type === '7' ? [0, 4, 7, 10] : type === 'M7' ? [0, 4, 7, 11] : [0, 4, 7]).forEach(i => tone(mf(root + i), t, d, wave || 'triangle', g, cut));
+    // 테마: bpm · 스윙 · 코드 진행 · 단계마다 부를 함수
+    const T = {
+      lobby: {bpm: 120, prog: [[60, ''], [67, ''], [69, 'm'], [65, '']], fn(s, b, [r, ty], t, d) { // 밝은 스포츠 테마 (팝)
+        if (s % 4 === 0) kick(t); if (s % 8 === 4) snare(t); if (s % 2 === 0) hat(t, 0.06);
+        if (s % 2 === 0) tone(mf(r - 24), t, d * 1.8, 'sawtooth', 0.09, 700);
+        if (s === 0) chord(r, ty, t, d * 15, 0.035, 'triangle', 2500);
+        const mel = [0, 4, 7, 12, 7, 4, 9, 7]; if (s % 2 === 0 && (s + b * 3) % 6 !== 4) tone(mf(r + 12 + mel[(s / 2 + b * 2) % 8] - (ty === 'm' && mel[(s / 2) % 8] === 4 ? 1 : 0)), t, d * 1.6, 'square', 0.035, 3200); } },
+      soccer: {bpm: 126, prog: [[62, ''], [67, ''], [64, 'm'], [69, '']], fn(s, b, [r, ty], t, d) { // 경기장 응원가: 쿵쿵짝 + 브라스 구호
+        if (s === 0 || s === 2 || s === 8 || s === 10) tone(90, t, 0.32, 'sine', 0.5, 0, 50); if (s === 4 || s === 12) clap(t); if (s % 2 === 1) hat(t, 0.04);
+        if (s % 4 === 0) tone(mf(r - 24), t, d * 3.5, 'sawtooth', 0.1, 600);
+        const chant = [[0, 0], [2, 0], [4, 4], [6, 7], [8, 7], [12, 4]]; for (const [st, iv] of chant) if (s === st && b % 2 === 0) tone(mf(r + 12 + iv), t, d * 1.8, 'sawtooth', 0.06, 1800);
+        if (b % 2 === 1 && s % 4 === 0) chord(r + 12, ty, t, d * 3, 0.03, 'sawtooth', 1600); } },
+      basketball: {bpm: 92, swing: 0.18, prog: [[57, 'm'], [57, 'm'], [53, ''], [55, '']], fn(s, b, [r], t, d) { // 힙합 붐뱁 + 808 베이스
+        if (s === 0 || s === 7 || s === 10) kick(t, 0.6); if (s === 4 || s === 12) snare(t, 0.32); if (s % 2 === 0) hat(t, s % 4 === 2 ? 0.1 : 0.06);
+        if (s === 0 || s === 10) tone(mf(r - 24), t, d * 5, 'sine', 0.32, 0, s === 10 ? mf(r - 26) : 0);
+        const pent = [0, 3, 5, 7, 10, 12]; if (s === 3 || s === 6 || s === 14) tone(mf(r + 12 + pent[(s + b) % 6]), t, d * 1.2, 'square', 0.04, 1400);
+        if (s === 0 && b % 2 === 0) chord(r, 'm7', t, d * 2, 0.03, 'sawtooth', 900); } },
+      volleyball: {bpm: 112, prog: [[65, ''], [60, ''], [62, 'm'], [70, '']], fn(s, b, [r, ty], t, d) { // 해변 트로피컬: 마림바 + 셰이커
+        if (s % 4 === 0) kick(t, 0.42); if (s === 6 || s === 14) clap(t); hat(t, s % 2 ? 0.05 : 0.025);
+        if (s === 0 || s === 3 || s === 8 || s === 11) tone(mf(r - 24), t, d * 2, 'triangle', 0.18);
+        const arp = ty === 'm' ? [0, 3, 7, 12] : [0, 4, 7, 12]; if (s % 2 === 0) { const f = mf(r + 12 + arp[(s / 2 + b) % 4]); tone(f, t, 0.25, 'sine', 0.08); tone(f * 4, t, 0.06, 'sine', 0.02); }
+        const mel = [12, 14, 16, 19, 16, 14, 12, 9]; if (b % 2 === 1 && s % 4 === 2) tone(mf(r + 12 + mel[(s / 2) % 8] - (ty === 'm' ? 1 : 0)), t, d * 2.5, 'triangle', 0.05); } },
+      pool: {bpm: 84, swing: 0.33, prog: [[60, 'm7'], [65, '7'], [58, 'M7'], [55, 'm7']], fn(s, b, [r, ty], t, d) { // 라운지 재즈: 워킹 베이스 + 라이드 + 로즈 코드
+        if (s % 4 === 0) { const walk = [0, 4, 7, 9]; tone(mf(r - 24 + walk[s / 4]), t, d * 3.6, 'triangle', 0.16, 900); }
+        if (s % 4 === 0 || s % 4 === 3) noise(t, 0.22, 6000, 0.6, s % 4 === 0 ? 0.05 : 0.03); if (s === 4 || s === 12) noise(t, 0.18, 2500, 0.5, 0.05, 'bandpass');
+        if (s === 2 || s === 10) chord(r, ty, t, d * 5, 0.04, 'sine', 2200);
+        const lick = [7, 10, 12, 14, 12, 10, 7, 3]; if (b % 2 === 1 && (s === 6 || s === 7 || s === 9 || s === 14)) tone(mf(r + 12 + lick[(s + b) % 8]), t, d * 1.5, 'triangle', 0.045, 2600); } }
+    };
+    function tick() { if (!th || !ensure()) return; const A = SP.audio, c = A.c; if (c.state !== 'running') return;
+      const d = 60 / th.bpm / 4; if (nt < c.currentTime) nt = c.currentTime + 0.05;
+      while (nt < c.currentTime + 0.18) { const s = step % 16, b = Math.floor(step / 16) % th.prog.length; if (!A.muted) th.fn(s, b, th.prog[b], nt + (s % 2 ? (th.swing || 0) * d : 0), d); nt += d; step++; } }
+    return {
+      play(name) { want = name; if (th === T[name]) return; th = T[name] || null; step = 0; nt = 0; if (!tm) tm = setInterval(tick, 40); },
+      stop() { th = null; want = null; },
+      themes: Object.keys(T)
+    };
+  })();
   /* ---------------- 화면 UI ---------------- */
   SP.toast = (t, s, ms, big) => { const e = $('toast'); e.classList.toggle('big', !!big); e.querySelector('b').textContent = t; e.querySelector('span').textContent = s || ''; e.classList.add('show'); clearTimeout(SP.toast.t); SP.toast.t = setTimeout(() => e.classList.remove('show'), ms || 1700); };
   SP.info = h => { $('info').innerHTML = h || ''; };
@@ -271,9 +321,11 @@ const SP = window.SP = {SPORTS: {}};
   SP.help = h => { const e = $('help'); e.hidden = !h; e.innerHTML = h || ''; };
   SP.scoreHtml = s => `<div class="sb"><span class="t"><i style="background:${s.a.c1}"></i>${SP.esc(s.a.name)}</span><span class="sc">${s.a.pts}<small style="opacity:.6">-</small>${s.b.pts}</span><span class="t">${SP.esc(s.b.name)}<i style="background:${s.b.c1}"></i></span>${s.clock ? `<span class="ck">${SP.esc(s.clock)}</span>` : ''}</div>`;
   let scoreKey = '';
+  try { SP.sbxHide = localStorage.getItem('bioSportsSbxHide') === '1'; } catch (e) { SP.sbxHide = false; }
+  $('score').addEventListener('pointerdown', e => { if (!e.target.closest('.sbx-t')) return; e.preventDefault(); SP.sbxHide = !SP.sbxHide; try { localStorage.setItem('bioSportsSbxHide', SP.sbxHide ? '1' : '0'); } catch (er) {} scoreKey = ''; A.click && A.click(); });
   SP.score = (s, extra) => { // {a:{name,c1,pts}, b:{...}, clock, sub} + 덧붙일 판(야구 볼카운트 등)
-    const k = JSON.stringify(s) + (extra || ''); if (k === scoreKey) return; scoreKey = k;
-    $('score').innerHTML = SP.scoreHtml(s) + `<div class="sbs">${SP.esc(s.sub || '')}</div><div class="sbx">${extra || ''}</div>`;
+    const col = SP.sbxHide, k = JSON.stringify(s) + (extra || '') + col; if (k === scoreKey) return; scoreKey = k;
+    $('score').innerHTML = SP.scoreHtml(s) + `<div class="sbs">${SP.esc(s.sub || '')}</div>` + (extra ? (col ? '<div class="sbx sbx-t" title="정보판 펼치기">▸ 정보판 보기</div>' : `<div class="sbx sbx-t" title="눌러서 접기">${extra}<div class="sbx-x">▴ 접기</div></div>`) : '');
   };
   // 미니맵: fn(ctx, w, h)
   const mini = $('mini'), mctx = mini.getContext('2d');
