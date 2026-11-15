@@ -380,7 +380,6 @@ function drop(cid, from) {
 const SRV_GAMES = {
   'bio-kart':      {file: 'games/bio-kart.html',      prefix: 'biokart-p2p-v1-', worker: 'kart-room.js'},
   'bio-beat':      {file: 'games/bio-beat.html',      prefix: 'biobeat-v1-'},
-  'vessel-canyon': {file: 'games/vessel-canyon.html', prefix: 'biocanyon-room-'},
   'cell-brawl':    {file: 'games/cell-brawl.html',    prefix: 'cellbrawl-v2-'},
   'bio-strike':    {file: 'games/bio-strike.html',    prefix: 'biostrike-v1-'},
   'bio-tower':     {file: 'games/bio-tower.html',     prefix: 'biotower-v1-'},

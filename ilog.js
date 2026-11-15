@@ -28,7 +28,6 @@
     'bio-strike': () => ({모드: G.mode, 체력: G.player && r1(G.player.hp), x: G.player && r1(G.player.pos.x), y: G.player && r1(G.player.pos.y), z: G.player && r1(G.player.pos.z), 점수: G.score}),
     'biotro': () => ({점수: G && G.score, 남은손: G && G.hands, 손패: G && G.hand && G.hand.length}),
     'cell-brawl': () => ({화면: state, 체력: G && G.player && r1(G.player.hp), x: G && G.player && G.player.pos && r1(G.player.pos.x), z: G && G.player && G.player.pos && r1(G.player.pos.z)}),
-    'vessel-canyon': () => ({화면: STATE, 체력: G && G.player && r1(G.player.hp), x: G && G.player && r1(G.player.x), y: G && G.player && r1(G.player.y)}),
   };
   let watchFn = WATCH[GAME] || null;
   function snapshot() {
