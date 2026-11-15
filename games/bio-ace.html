@@ -19,7 +19,8 @@
 [hidden]{display:none!important}
 html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 0%,#1b2a5c,#0b0f24 70%);color:#f4f8ff;font-family:"Noto Sans KR",-apple-system,"Apple SD Gothic Neo",sans-serif;-webkit-user-select:none;user-select:none;touch-action:none}
 #wrap{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 2px rgba(255,255,255,.08),0 30px 80px rgba(0,0,0,.6);border-radius:14px;overflow:hidden}
-canvas{display:block;width:100%;height:100%;touch-action:none}
+canvas{display:block;width:100%;height:100%;touch-action:none;position:absolute;inset:0}
+#gl{z-index:0} #cv{z-index:1}
 .hbtn{position:absolute;top:44px;width:38px;height:38px;border-radius:12px;border:2px solid rgba(255,255,255,.55);background:rgba(10,14,34,.6);color:#fff;font:900 16px sans-serif;display:grid;place-items:center;cursor:pointer;z-index:3}
 #bPause{left:10px} #bMute{left:54px}
 #absorbBtn{position:absolute;right:14px;bottom:110px;width:86px;height:86px;border-radius:50%;border:3px solid #fff;background:radial-gradient(circle at 35% 30%,#ff8ad4,#c2187a);color:#fff;font:900 13px "Noto Sans KR",sans-serif;z-index:3;display:grid;place-items:center;text-align:center;line-height:1.15;box-shadow:0 6px 18px rgba(0,0,0,.4);touch-action:none}
@@ -67,6 +68,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 </head>
 <body>
 <div id="wrap">
+  <canvas id="gl"></canvas>
   <canvas id="cv"></canvas>
   <button class="hbtn" id="bPause" hidden title="일시정지 (P)">II</button>
   <button class="hbtn" id="bMute" hidden title="소리 (M)">♪</button>
@@ -98,6 +100,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
   </div>
   <div id="sCodex" class="scr" hidden><h2>📖 생물학 도감</h2><div class="codex" id="codexBox"></div><button class="btn sub" id="bCodexX">닫기</button></div>
 </div>
+<script src="../vendor/three.min.js"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -155,7 +158,7 @@ addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; inp.drag = false; inp.rmb = false; });
 cv.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('pointerdown', e => { AU.init(); if (e.button === 2) { inp.rmb = true; return; } inp.drag = true; inp.touch = e.pointerType !== 'mouse'; inp.lastTouch = inp.touch; dragPrev = {x: e.clientX, y: e.clientY, id: e.pointerId}; try { cv.setPointerCapture(e.pointerId); } catch (er) {} });
-cv.addEventListener('pointermove', e => { if (!inp.drag || !dragPrev || e.pointerId !== dragPrev.id) return; const k = W / wrap.clientWidth * 1.15; if (G.state === 'play' && P) { P.x = clamp(P.x + (e.clientX - dragPrev.x) * k, 16, W - 16); P.y = clamp(P.y + (e.clientY - dragPrev.y) * k, 60, H - 30); } dragPrev.x = e.clientX; dragPrev.y = e.clientY; });
+cv.addEventListener('pointermove', e => { if (!inp.drag || !dragPrev || e.pointerId !== dragPrev.id) return; const k = W / wrap.clientWidth * 1.15; if (G.state === 'play' && P) { P.x = clamp(P.x + (e.clientX - dragPrev.x) * k, 16, W - 16); P.y = clamp(P.y + (e.clientY - dragPrev.y) * k / SINT, 60, H - 30); } dragPrev.x = e.clientX; dragPrev.y = e.clientY; });
 const endDrag = e => { if (e.button === 2) { inp.rmb = false; return; } if (dragPrev && e.pointerId !== dragPrev.id) return; inp.drag = false; dragPrev = null; };
 cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
 const ab = $('absorbBtn');
@@ -617,7 +620,7 @@ function choose(op) {
 function banner(t, s) { G.banner = {t, s, life: 2.4}; }
 function startRun(stage) { P = newPlayer(); G.score = 0; G.kills = 0; G.totalT = 0; G.stage = stage || 0; stats = ST(); startStage(); hideAll(); G.state = 'play'; $('bPause').hidden = false; $('bMute').hidden = false; $('absorbBtn').hidden = !isTouchDev; G.last = performance.now(); }
 function startStage() { enemies = []; zones = []; boss = null; pBul.clear(); eBul.clear(); parts.clear(); texts.clear(); orbs.clear(); lightning.length = 0;
-  G.stageT = 0; G.phase = 'wave'; G.clearPending = false; G.spawnT = STAGES[G.stage].spawn.map(() => 1.5); G.gim = {t: 6}; G.pendingLv = 0; initBG(); P.x = W / 2; P.y = H - 170; P.inv = 2;
+  G.stageT = 0; G.phase = 'wave'; G.clearPending = false; G.spawnT = STAGES[G.stage].spawn.map(() => 1.5); G.gim = {t: 6}; G.pendingLv = 0; initBG(); buildStage3(); P.x = W / 2; P.y = H - 170; P.inv = 2;
   banner(STAGES[G.stage].name + ' · ' + STAGES[G.stage].area, STAGES[G.stage].sub); }
 function stageClear() { if (G.state !== 'play') return; AU.clear(); saveBest(G.stage + 1, true);
   if (G.stage >= STAGES.length - 1) { ending(); return; }
@@ -761,29 +764,295 @@ function drawHUD() {
     ctx.fillStyle = '#ffe94a'; for (let x = -40 + (G.t * 120) % 40; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 300); ctx.lineTo(x + 20, 300); ctx.lineTo(x + 10, 312); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(x, 392); ctx.lineTo(x + 20, 392); ctx.lineTo(x + 10, 380); ctx.closePath(); ctx.fill(); }
     ctx.globalAlpha = a; ctx.fillStyle = '#fff'; ctx.font = '900 32px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('WARNING', W / 2, 342); ctx.font = '900 16px sans-serif'; ctx.fillText('PATHOGEN DETECTED', W / 2, 368); ctx.globalAlpha = 1; }
 }
-function render(dt) {
-  ctx.setTransform(Q, 0, 0, Q, 0, 0);
-  let sx = 0, sy = 0; if (G.shake > 0) { sx = rnd(-G.shake, G.shake); sy = rnd(-G.shake, G.shake); G.shake = Math.max(0, G.shake - dt * 40); }
-  ctx.save(); ctx.translate(sx, sy);
-  drawBG(dt);
-  if (G.state !== 'title') {
-    drawZones();
-    for (const o of orbs.a) { ctx.fillStyle = 'rgba(94,242,120,.3)'; ctx.beginPath(); ctx.arc(o.x, o.y, 8, 0, TAU); ctx.fill(); ctx.fillStyle = '#7cff9a'; ctx.strokeStyle = '#0b3a1a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(o.x, o.y - 6); ctx.lineTo(o.x + 5, o.y); ctx.lineTo(o.x, o.y + 6); ctx.lineTo(o.x - 5, o.y); ctx.closePath(); ctx.fill(); ctx.stroke(); }
-    for (const e of enemies) { ctx.save(); ctx.translate(e.x, e.y); const sq = e.squash || 0; ctx.scale(1 + sq * 0.6, 1 - sq * 0.45); TYPES[e.type].draw(e); ctx.restore();
-      if (e.max > 100 && e.hp < e.max) { ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(e.x - 20, e.y - e.r - 10, 40, 4); ctx.fillStyle = '#ff5d6c'; ctx.fillRect(e.x - 20, e.y - e.r - 10, 40 * e.hp / e.max, 4); } }
-    if (boss && !boss.dead) boss.draw();
-    for (const b of pBul.a) drawPlayerBullet(b);
-    // T세포 검 · 드론
-    for (const w of P.weapons) { if (w.id === 'tblade' && w.blades) for (const [bx, by, a] of w.blades) { ctx.save(); ctx.translate(bx, by); ctx.rotate(a + Math.PI / 2); ctx.fillStyle = w.evo ? '#ffe94a' : '#e8f0ff'; ctx.strokeStyle = '#0b0f24'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(7, 0); ctx.lineTo(0, 18); ctx.lineTo(-7, 0); ctx.closePath(); ctx.fill(); ctx.stroke(); if (w.evo) { ctx.strokeStyle = 'rgba(255,233,74,.5)'; ctx.lineWidth = 8; ctx.beginPath(); ctx.arc(0, 0, 14, 0, TAU); ctx.stroke(); } ctx.restore(); } }
-    for (const d of P.drones) { ctx.save(); ctx.translate(d.x, d.y); ctx.rotate(G.t * 2); const evo = P.weapons.some(w => w.id === 'drone' && w.evo); ctx.fillStyle = evo ? '#ffd25e' : '#ffb3d9'; ctx.strokeStyle = '#0b0f24'; ctx.lineWidth = 3; ctx.beginPath(); for (let i = 0; i < (evo ? 10 : 8); i++) { const a = i / (evo ? 10 : 8) * TAU, r = i % 2 ? 9 : 13; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#7a2d6a'; ctx.beginPath(); ctx.arc(0, 0, 4, 0, TAU); ctx.fill(); ctx.restore(); }
-    for (const l of lightning) { ctx.strokeStyle = l.evo ? '#ffffff' : '#ffe94a'; ctx.lineWidth = l.evo ? 5 : 3; ctx.beginPath(); ctx.moveTo(l.x1, l.y1); const n = 6; for (let i = 1; i < n; i++) ctx.lineTo(l.x1 + (l.x2 - l.x1) * i / n + rnd(-12, 12), l.y1 + (l.y2 - l.y1) * i / n + rnd(-12, 12)); ctx.lineTo(l.x2, l.y2); ctx.stroke(); ctx.strokeStyle = l.evo ? 'rgba(255,233,74,.5)' : 'rgba(255,233,74,.35)'; ctx.lineWidth = 10; ctx.stroke(); }
-    if (P && G.state !== 'over') drawPlayer();
-    for (const b of eBul.a) drawEnemyBullet(b);
-    for (const p of parts.a) { const a = p.life / p.max; if (p.ring) { ctx.strokeStyle = p.col; ctx.globalAlpha = a; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + (1 - a) * 60, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; } else { ctx.globalAlpha = a; ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (0.5 + a * 0.5), 0, TAU); ctx.fill(); ctx.globalAlpha = 1; } }
-    drawFog();
-    for (const t of texts.a) { ctx.globalAlpha = Math.min(1, t.life * 2.5); ctx.font = `900 ${t.big ? 20 : 14}px "Noto Sans KR",sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(10,8,30,.85)'; ctx.strokeText(t.s, t.x, t.y); ctx.fillStyle = t.col; ctx.fillText(t.s, t.x, t.y); ctx.globalAlpha = 1; }
+/* =====================================================================
+ * 3D 복셀 렌더러 — 모서리를 둥글게 깎은 블록(둥근 복셀)으로 모든 그래픽을 그려요.
+ * 게임 판(가로 540 × 세로 960)을 바닥에 눕히고, 비스듬히 내려다보는 정사영 카메라로 봅니다.
+ * 판 위 좌표가 화면과 1:1로 대응해서 충돌 판정은 그대로예요.
+ * ===================================================================== */
+const S3 = 1 / 20, TILT = 50 * Math.PI / 180, SINT = Math.sin(TILT), COST = Math.cos(TILT);
+const wx = x => (x - W / 2) * S3, wz = y => (y - H / 2) * S3;
+const glc = $('gl');
+const R3D = new THREE.WebGLRenderer({canvas: glc, antialias: true, powerPreference: 'high-performance'});
+R3D.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+const scene = new THREE.Scene();
+const HW = W * S3 / 2, HH = H * S3 / 2;
+const cam = new THREE.OrthographicCamera(-HW, HW, HH, -HH, 0.1, 400);
+const camT = new THREE.Vector3(0, 0, -0.6);
+function placeCam(sx, sy) { cam.position.set(camT.x + sx, camT.y + SINT * 120, camT.z + COST * 120 + sy); cam.lookAt(camT.x + sx, camT.y, camT.z + sy); }
+placeCam(0, 0);
+const hemi = new THREE.HemisphereLight(0xffffff, 0x445577, 0.62); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff2dd, 0.95); sun.position.set(-14, 26, 18); scene.add(sun);
+scene.add(new THREE.AmbientLight(0xffffff, 0.12));
+function fit3() { R3D.setSize(wrap.clientWidth, wrap.clientHeight, false); }
+addEventListener('resize', fit3); fit3();
+const toV = new THREE.Vector3();
+function toScreen(x, y, h) { toV.set(wx(x), (h || 0) * S3, wz(y)).project(cam); return [(toV.x + 1) / 2 * W, (1 - toV.y) / 2 * H]; }
+
+/* ---------- 둥근 복셀 지오메트리 ---------- */
+const geoCache = {}, colCache = {};
+const C3 = c => colCache[c] || (colCache[c] = new THREE.Color(c));
+function rbox(w, h, d, rf) { const r = Math.min(w, h, d) * (rf == null ? 0.32 : rf), k = w.toFixed(3) + ',' + h.toFixed(3) + ',' + d.toFixed(3) + ',' + r.toFixed(3);
+  if (geoCache[k]) return geoCache[k];
+  const g = new THREE.BoxGeometry(w, h, d, 3, 3, 3), p = g.attributes.position, n = g.attributes.normal, hx = w / 2 - r, hy = h / 2 - r, hz = d / 2 - r;
+  for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), cx = clamp(x, -hx, hx), cy = clamp(y, -hy, hy), cz = clamp(z, -hz, hz), dx = x - cx, dy = y - cy, dz = z - cz, l = Math.hypot(dx, dy, dz);
+    if (l > 1e-6) { p.setXYZ(i, cx + dx / l * r, cy + dy / l * r, cz + dz / l * r); n.setXYZ(i, dx / l, dy / l, dz / l); } }
+  return (geoCache[k] = g); }
+// 부품 [x, y(높이), z, w, h, d, 색, 회전Y, 둥글기] (단위: 게임 px) → 하나로 합친 지오메트리
+function voxGeo(parts) {
+  const pos = [], nor = [], col = [], idx = []; const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), nn = new THREE.Vector3(), nm = new THREE.Matrix3();
+  for (const pt of parts) { const [x, y, z, w, h, d, c, ry, rf, rx] = pt; const g = rbox(w * S3, h * S3, d * S3, rf); e.set(rx || 0, ry || 0, 0); q.setFromEuler(e); m.compose(v.set(x * S3, y * S3, z * S3), q, new THREE.Vector3(1, 1, 1)); nm.getNormalMatrix(m);
+    const base = pos.length / 3, P = g.attributes.position, N = g.attributes.normal, cc = C3(c);
+    for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(m); pos.push(v.x, v.y, v.z); nn.fromBufferAttribute(N, i).applyMatrix3(nm).normalize(); nor.push(nn.x, nn.y, nn.z); col.push(cc.r, cc.g, cc.b); }
+    const I = g.index.array; for (let i = 0; i < I.length; i++) idx.push(I[i] + base); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); return g; }
+const MAT = new THREE.MeshLambertMaterial({vertexColors: true});
+const FLASHM = new THREE.MeshLambertMaterial({vertexColors: true, emissive: 0x6a6a6a});
+const modelGeo = {};
+function mdl(key, fn) { if (!modelGeo[key]) modelGeo[key] = voxGeo(fn()); return new THREE.Mesh(modelGeo[key], MAT); }
+const ring = (n, r, y, sz, c, c2) => Array.from({length: n}, (_, i) => { const a = i / n * TAU; return [Math.cos(a) * r, y, Math.sin(a) * r, sz, sz, sz, i % 2 && c2 ? c2 : c, -a]; });
+const EYES = (y, z, s, gap) => [[-gap, y, z, s, s * 1.2, 4, '#141020', 0, 0.5], [gap, y, z, s, s * 1.2, 4, '#141020', 0, 0.5], [-gap + s * 0.25, y + s * 0.3, z + 2, s * 0.35, s * 0.35, 2, '#ffffff', 0, 0.5], [gap + s * 0.25, y + s * 0.3, z + 2, s * 0.35, s * 0.35, 2, '#ffffff', 0, 0.5]];
+
+/* ---------- 모델 정의 (단위 px · y는 높이 · +z는 화면 아래쪽 면) ---------- */
+const MODELS = {
+  player: () => [[0, 12, 2, 18, 16, 44, '#f4f8ff'], [0, 12, -24, 12, 12, 12, '#ffffff'], [0, 20, -6, 10, 7, 14, '#ff4fb8'], [0, 9, 6, 64, 7, 18, '#3f7ff0'], [-30, 12, 8, 8, 12, 16, '#7cc4ff'], [30, 12, 8, 8, 12, 16, '#7cc4ff'], [0, 22, 18, 5, 14, 12, '#3f7ff0'], [0, 10, 25, 12, 9, 6, '#2a3a6a'], [-12, 6, 14, 6, 6, 10, '#5ef2c8'], [12, 6, 14, 6, 6, 10, '#5ef2c8']],
+  staph: () => [[0, 14, 0, 22, 22, 22, '#ffd84a']].concat(Array.from({length: 6}, (_, i) => { const a = i / 6 * TAU; return [Math.cos(a) * 15, 12 + (i % 2) * 6, Math.sin(a) * 15, 20, 20, 20, i % 2 ? '#ffc21e' : '#ffe680']; })),
+  coccus: () => [[0, 10, 0, 18, 18, 18, '#ffd84a', 0, 0.45], [-3, 16, 6, 5, 5, 3, '#fff7c4', 0, 0.5]],
+  strepH: () => [[0, 12, 0, 26, 24, 26, '#7ce08a', 0, 0.42]].concat(EYES(14, 13, 5, 6)),
+  strepS: () => [[0, 11, 0, 22, 20, 22, '#4fc46a', 0, 0.42]],
+  flu: () => [[0, 16, 0, 34, 32, 34, '#9a7af0', 0, 0.42]].concat(ring(8, 23, 16, 9, '#ffd25e', '#ff8ad4'), [[0, 34, 0, 9, 9, 9, '#ffd25e'], [0, -1, 0, 9, 9, 9, '#ff8ad4']], EYES(18, 17, 5, 7)),
+  adeno: () => [[0, 16, 0, 36, 30, 36, '#5ad8f0', 0, 0.28], [0, 16, 0, 30, 34, 30, '#86ecff', Math.PI / 4, 0.28]].concat(ring(6, 22, 16, 8, '#ffffff', '#ff4fb8')),
+  pylori: () => [[0, 10, 0, 16, 16, 34, '#cfee6a', 0, 0.48], [0, 13, -10, 8, 6, 8, '#e8ff9a', 0, 0.5]].concat(Array.from({length: 3}, (_, k) => [-5 + k * 5, 9, 24 + k * 2, 3, 3, 14, '#3a6a1a', 0, 0.4])),
+  phage: () => [[0, 32, 0, 26, 24, 26, '#d8b0ff', Math.PI / 4, 0.3], [0, 18, 0, 7, 16, 7, '#9aa6c8'], [0, 9, 0, 22, 4, 22, '#6a7aa8', 0, 0.3]].concat(Array.from({length: 6}, (_, i) => { const a = i / 6 * TAU; return [Math.cos(a) * 16, 4, Math.sin(a) * 16, 4, 10, 14, '#4a5a88', -a]; })),
+  bcell: () => [[0, 16, 0, 38, 32, 38, '#ff7a7a', 0, 0.45]].concat(ring(6, 24, 22, 7, '#b31a2a'), ring(6, 28, 28, 5, '#ff4a4a'), EYES(18, 20, 6, 8)),
+  hiv: () => [[0, 15, 0, 32, 30, 32, '#ffb36b', 0, 0.45], [0, 16, 15, 12, 12, 6, '#7a2d0a', 0, 0.4]].concat(ring(10, 20, 15, 6, '#ffe0a0', '#d0702a')),
+  prion: () => [[0, 16, 0, 36, 26, 36, '#ff7ad8', 0, 0.22], [0, 16, 0, 36, 26, 36, '#d84ab8', Math.PI / 4, 0.22], [0, 30, 0, 14, 8, 14, '#ffd0f0', 0, 0.4]],
+  cancer: () => [[0, 15, 0, 36, 30, 36, '#ff9ab0', 0, 0.48], [0, 31, 0, 14, 8, 14, '#8a1a3a', 0, 0.5], [-6, 22, 16, 5, 5, 3, '#ffd0d8', 0, 0.5]],
+  host: () => [[0, 16, 0, 38, 32, 38, '#ffc08a', 0, 0.48], [0, 32, 0, 16, 8, 16, '#7a2d6a', 0, 0.5]].concat(ring(5, 12, 33, 5, '#c7b0ff')),
+  drone: () => [[0, 10, 0, 18, 12, 18, '#ffb3d9', Math.PI / 4, 0.4], [0, 16, 0, 8, 6, 8, '#7a2d6a', 0, 0.5]].concat(ring(4, 12, 10, 6, '#ff8ac8')),
+  droneE: () => [[0, 10, 0, 22, 14, 22, '#ffd25e', Math.PI / 4, 0.4], [0, 18, 0, 9, 7, 9, '#a85a00', 0, 0.5]].concat(ring(6, 14, 10, 6, '#ffe9a0')),
+  blade: () => [[0, 0, 0, 8, 6, 36, '#e8f0ff', 0, 0.25], [0, 0, 0, 14, 7, 14, '#5ef2c8', Math.PI / 4, 0.3]],
+  bladeE: () => [[0, 0, 0, 10, 7, 44, '#ffe94a', 0, 0.25], [0, 0, 0, 16, 8, 16, '#ff9f43', Math.PI / 4, 0.3]],
+  lob: () => [[0, 0, 0, 18, 18, 18, '#c77dff', 0, 0.5], [-4, 4, 4, 5, 5, 5, '#ffffff', 0, 0.5]],
+  lobE: () => [[0, 0, 0, 20, 20, 20, '#4a1a8a', 0, 0.5], [-4, 4, 4, 5, 5, 5, '#e0b0ff', 0, 0.5]],
+  // 보스
+  mrsa: () => [[0, 34, 0, 50, 50, 50, '#ffd84a', 0, 0.42]].concat(Array.from({length: 8}, (_, i) => { const a = i / 8 * TAU; return [Math.cos(a) * 40, 26 + (i % 2) * 16, Math.sin(a) * 40, 42, 42, 42, i % 2 ? '#f0b41e' : '#ffe680', 0, 0.42]; }),
+    [[-13, 46, 26, 10, 12, 4, '#141020', 0, 0.4], [13, 46, 26, 10, 12, 4, '#141020', 0, 0.4], [-14, 56, 27, 16, 4, 3, '#141020', 0.35], [14, 56, 27, 16, 4, 3, '#141020', -0.35], [0, 30, 27, 18, 5, 3, '#8a1a1a']]),
+  shield: () => [[0, 34, 0, 150, 90, 150, '#9ae6ff', 0, 0.5]],
+  sars: () => [[0, 50, 0, 100, 96, 100, '#ff8aa4', 0, 0.45]].concat(ring(14, 64, 50, 16, '#ffd25e', '#ff4fb8'), ring(8, 46, 96, 12, '#ffd25e'), [[0, 104, 0, 40, 10, 40, '#ffd25e', 0, 0.3], [0, 118, 0, 12, 14, 12, '#ff4fb8', 0, 0.4]], EYES(56, 51, 12, 18), [[0, 34, 51, 30, 8, 3, '#7a0a2a']]),
+  gHead: () => [[0, 30, 0, 74, 56, 84, '#fff0b0', 0, 0.45], [0, 30, -38, 50, 40, 14, '#ffe680', 0, 0.45]].concat(EYES(38, 43, 12, 16)),
+  gSeg: () => [[0, 20, 0, 66, 30, 44, '#e8d27a', 0, 0.38], [0, 36, 0, 12, 6, 12, '#ff4fb8', 0, 0.5], [0, 20, 0, 70, 6, 46, '#b89a3a', 0, 0.3]],
+  ovCore: () => [[0, 40, 0, 84, 80, 84, '#ff6ac8', 0, 0.48], [0, 42, 36, 34, 34, 14, '#2a0a3a', 0, 0.5], [0, 44, 42, 14, 14, 6, '#ff3d5a', 0, 0.5]],
+  ovRing: () => ring(16, 68, 0, 10, '#ff3d5a', '#5ef2c8'),
+  ovClone: () => [[0, 30, 0, 56, 52, 56, '#c77dff', 0, 0.48], [0, 32, 26, 22, 22, 8, '#2a0a3a', 0, 0.5]],
+  glio: () => [[0, 56, 0, 130, 100, 130, '#ffffff', 0, 0.45], [0, 56, 0, 112, 116, 112, '#f0f0f0', Math.PI / 4, 0.45]].concat(ring(6, 58, 72, 18, '#ffe0f0'), ring(6, 58, 72, 8, '#5a0a2a'), [[0, 60, 64, 36, 36, 10, '#141020', 0, 0.5], [0, 62, 70, 16, 16, 6, '#ffd25e', 0, 0.5]]),
+  tentHead: () => [[0, 26, 0, 52, 44, 52, '#ff6a7a', 0, 0.35], [0, 26, 0, 46, 50, 46, '#c4203a', Math.PI / 4, 0.35]],
+  vessel: () => [[0, 0, 0, 22, 22, 22, '#d8304a', 0, 0.48]],
+  // 탄환·효과 (인스턴스용, 흰색으로 만들고 인스턴스 색을 입힘)
+  ball: () => [[0, 0, 0, 20, 20, 20, '#ffffff', 0, 0.48]],
+  spikeB: () => [[0, 0, 0, 10, 10, 26, '#ffffff', 0, 0.4]],
+  yB: () => [[0, 0, 6, 6, 6, 14, '#ffffff', 0, 0.4], [-5, 0, -5, 5, 5, 12, '#ffffff', -0.6, 0.4], [5, 0, -5, 5, 5, 12, '#ffffff', 0.6, 0.4]],
+  missile: () => [[0, 0, 0, 9, 9, 22, '#ffffff', 0, 0.45]],
+  cube: () => [[0, 0, 0, 20, 20, 20, '#ffffff', 0, 0.3]],
+  gem: () => [[0, 0, 0, 14, 14, 14, '#ffffff', Math.PI / 4, 0.25]],
+  tile: () => [[0, 0, 0, 20, 20, 20, '#ffffff', 0, 0.22]]
+};
+const MODEL_FOR = {staph: 'staph', coccus: 'coccus', strep: 'strepH', flu: 'flu', adeno: 'adeno', pylori: 'pylori', phage: 'phage', bcell: 'bcell', hiv: 'hiv', prion: 'prion', cancer: 'cancer', host: 'host'};
+
+/* ---------- 인스턴스 묶음 (탄환·입자·바닥 타일처럼 많은 것은 한 번에) ---------- */
+const dummy = new THREE.Object3D();
+class Inst {
+  constructor(key, max, mat) { const g = modelGeo[key] || (modelGeo[key] = voxGeo(MODELS[key]())); this.m = new THREE.InstancedMesh(g, mat || new THREE.MeshLambertMaterial({vertexColors: true}), max); this.m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.m.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(max * 3).fill(1), 3); this.m.frustumCulled = false; this.max = max; this.n = 0; scene.add(this.m); }
+  begin() { this.n = 0; }
+  add(x, y, z, sx, sy, sz, ry, col, rx, rz) { if (this.n >= this.max) return; dummy.position.set(x, y, z); dummy.rotation.set(rx || 0, ry || 0, rz || 0); dummy.scale.set(sx, sy, sz); dummy.updateMatrix(); this.m.setMatrixAt(this.n, dummy.matrix); if (col != null) this.m.setColorAt(this.n, typeof col === 'object' ? col : C3(col)); this.n++; }
+  end() { this.m.count = this.n; this.m.instanceMatrix.needsUpdate = true; this.m.instanceColor.needsUpdate = true; }
+}
+const addMat = (op) => new THREE.MeshBasicMaterial({vertexColors: true, transparent: true, opacity: op == null ? 0.85 : op, depthWrite: false, blending: THREE.AdditiveBlending});
+const I = {};
+function makeInst() {
+  I.eb = new Inst('ball', 1000); I.halo = new Inst('ball', 400, addMat(0.45)); I.esp = new Inst('spikeB', 300); I.ey = new Inst('yB', 300);
+  I.pb = new Inst('yB', 500); I.ms = new Inst('missile', 200); I.part = new Inst('cube', 700, new THREE.MeshBasicMaterial({vertexColors: true}));
+  I.orb = new Inst('gem', 400, new THREE.MeshLambertMaterial({vertexColors: true, emissive: 0x1a4a1a})); I.shadow = new Inst('ball', 260, new THREE.MeshBasicMaterial({color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false}));
+  I.beam = new Inst('cube', 260, addMat(0.85)); I.beamS = new Inst('cube', 120, new THREE.MeshBasicMaterial({vertexColors: true, transparent: true, opacity: 0.32, depthWrite: false}));
+  I.tile = new Inst('tile', 1100); I.wall = new Inst('tile', 260); I.deco = new Inst('ball', 90); I.decoG = new Inst('ball', 70, addMat(0.75)); I.dust = new Inst('cube', 70, new THREE.MeshBasicMaterial({vertexColors: true, transparent: true, opacity: 0.55, depthWrite: false}));
+}
+makeInst();
+const BULCOL = {};
+const bc = c => BULCOL[c] || (BULCOL[c] = new THREE.Color(c));
+
+/* ---------- 스테이지 디오라마 (바닥 타일 · 양옆 벽 · 떠다니는 장식 · 가까운 먼지: 3중 패럴랙스) ---------- */
+const STAGE3 = {
+  vessel: {sky: 0x3a0814, fog: 0x5a1020, tiles: ['#b02a40', '#b83046', '#a8263c', '#bc3449'], wall: ['#d8506a', '#ff7a8a', '#b3263c'], deco: '#e83a4a', decoK: 'rbc', dust: '#ffd0d8', glow: null},
+  lung: {sky: 0xbfe6ff, fog: 0xd8f0ff, tiles: ['#d98aa2', '#cf7f98', '#e295ab', '#c87590'], wall: ['#f6a6bd', '#ffc0d2', '#e48aa6'], deco: '#fff4f8', decoK: 'mucus', dust: '#ffffff', glow: null},
+  gut: {sky: 0x1d4a1a, fog: 0x2f6a2a, tiles: ['#4f8f3a', '#54943e', '#4a8a36', '#58983f'], wall: ['#7fbf4a', '#9ad85a', '#68a83a'], deco: '#ffe85a', decoK: 'bubble', dust: '#e8ff9a', glow: '#ffe85a'},
+  lymph: {sky: 0x160a30, fog: 0x2a1450, tiles: ['#3a2470', '#2e2a68', '#2a3a6e', '#44287a'], wall: ['#5ef2c8', '#c77dff', '#3aa6c8'], deco: '#c77dff', decoK: 'cell', dust: '#c8f0ff', glow: '#5ef2c8'},
+  brain: {sky: 0x020210, fog: 0x05061a, tiles: ['#0e1236', '#121842', '#0a0e2c', '#161e4e'], wall: ['#3a5aff', '#5ef2ff', '#2a3ac8'], deco: '#9ff0ff', decoK: 'node', dust: '#9ff0ff', glow: '#5ef2ff'}
+};
+const D3 = {cols: 22, rows: 46, ts: 26, tileCol: [], walls: [], decos: [], dust: [], kind: 'vessel', scroll: 0};
+function buildStage3() {
+  const s = STAGES[G.stage], k = s.bg, P3 = STAGE3[k]; D3.kind = k; D3.scroll = 0;
+  scene.background = new THREE.Color(P3.sky); scene.fog = null;
+  hemi.intensity = k === 'brain' ? 0.42 : k === 'lymph' ? 0.55 : 0.62; sun.intensity = k === 'brain' ? 0.55 : 0.95;
+  D3.tileCol = []; for (let r = 0; r < D3.rows; r++) for (let c = 0; c < D3.cols; c++) { const cc = C3(P3.tiles[(r + c + ((r * 7 + c * 3) % 5 === 0 ? 1 : 0)) % P3.tiles.length]).clone(); cc.offsetHSL(0, 0, rnd(-0.015, 0.015)); D3.tileCol.push(cc); }
+  D3.walls = []; for (let r = 0; r < D3.rows; r++) for (const side of [0, 1]) for (let k2 = 0; k2 < 2; k2++) D3.walls.push({r, side, k: k2, h: rnd(1, 3.2), w: rnd(1, 1.6), col: C3(P3.wall[Math.floor(Math.random() * P3.wall.length)]), ph: rnd(0, TAU)});
+  D3.decos = Array.from({length: k === 'brain' ? 26 : 18}, () => ({x: rnd(40, W - 40), y: rnd(0, H + 200), s: rnd(0.8, 1.6), h: rnd(18, 70), ph: rnd(0, TAU), sp: rnd(0.8, 1.3)}));
+  D3.dust = Array.from({length: 60}, () => ({x: rnd(0, W), y: rnd(0, H), h: rnd(100, 220), s: rnd(0.12, 0.3)}));
+}
+function drawStage3(dt) {
+  const k = D3.kind, P3 = STAGE3[k], flow = (G.gim && G.gim.hist > 0 ? 2.4 : 1) * (G.state === 'play' ? 1 : 0.35); D3.scroll += dt * 60 * flow; const t = G.t, ts = D3.ts, span = D3.rows * ts;
+  // 1층: 바닥 타일 (둥근 블록 바닥)
+  I.tile.begin(); let i = 0;
+  for (let r = 0; r < D3.rows; r++) { const y = ((r * ts + D3.scroll * 0.6) % span) - ts * 4; for (let c = 0; c < D3.cols; c++, i++) { const x = (c - (D3.cols - W / ts) / 2) * ts + ts / 2; const bump = k === 'lung' ? Math.sin(t * 2 + r * 0.6 + c) * 0.04 : 0; I.tile.add(wx(x), -0.5 + bump + ((r * 3 + c * 5) % 7 === 0 ? 0.12 : 0), wz(y), ts * 0.92 / 20, 0.8, ts * 0.92 / 20, 0, D3.tileCol[i]); } }
+  I.tile.end();
+  // 양옆 벽: 혈관 주름 · 섬모 · 융털 · 림프관 · 뉴런 기둥
+  I.wall.begin();
+  for (const w of D3.walls) { const y = ((w.r * ts + D3.scroll * 0.6) % span) - ts * 4; const xo = w.side ? W - 12 - w.k * 26 : 12 + w.k * 26; let h = w.h, sx = w.w, rz = 0, rx = 0;
+    if (k === 'vessel') { h = 1.2 + Math.sin((w.r * ts + D3.scroll * 0.6) * 0.03 + w.k) * 0.8 + w.h * 0.4; sx = 1.6; }
+    else if (k === 'lung') { h = 2.6 + w.h * 0.4; sx = 0.35; rz = Math.sin(t * 5 + w.r * 0.7) * 0.35 * (w.side ? -1 : 1) + (G.gim && G.gim.wind ? G.gim.wind * 0.002 : 0); }
+    else if (k === 'gut') { h = 2.2 + w.h * 0.6 + Math.sin(t * 1.6 + w.ph) * 0.15; sx = 1.1; }
+    else if (k === 'lymph') { h = 0.6 + w.h * 0.35; sx = 1.3; }
+    else { h = 0.5 + w.h * 0.9; sx = 0.5; }
+    const hh = h * 20 * S3; I.wall.add(wx(xo), hh / 2 - 0.3, wz(y), sx, h, sx, 0, w.col, rx, rz); }
+  I.wall.end();
+  // 2층: 떠다니는 장식 (적혈구·점액·위산 기포·림프구·뉴런 신호)
+  I.deco.begin(); I.decoG.begin();
+  for (const d of D3.decos) { const fl = k === 'gut' ? -1 : 1; let y = ((d.y + D3.scroll * 0.9 * d.sp * fl) % (H + 200) + H + 200) % (H + 200) - 100; d.ph += dt;
+    if (k === 'vessel') I.deco.add(wx(d.x), d.h * S3, wz(y), 1.7 * d.s, 0.55 * d.s, 1.7 * d.s, d.ph * 0.6, '#e83a4a', Math.sin(d.ph) * 0.5);
+    else if (k === 'lung') I.deco.add(wx(d.x), d.h * S3, wz(y), 1.2 * d.s, 1.0 * d.s, 1.2 * d.s, 0, '#ffffff');
+    else if (k === 'gut') I.decoG.add(wx(d.x + Math.sin(t + d.ph) * 10), d.h * S3, wz(y), 0.9 * d.s, 0.9 * d.s, 0.9 * d.s, 0, '#ffe85a');
+    else if (k === 'lymph') { I.deco.add(wx(d.x), d.h * S3, wz(y), 1.1 * d.s, 1.1 * d.s, 1.1 * d.s, d.ph, d.s > 1.2 ? '#c77dff' : '#5ef2c8'); }
+    else { I.decoG.add(wx(d.x), 0.2, wz(y), 0.55 * d.s, 0.55 * d.s, 0.55 * d.s, 0, '#5ef2ff'); }
   }
-  ctx.restore();
+  if (k === 'brain') { // 뉴런 사이를 흐르는 전기 신호
+    for (let j = 0; j < D3.decos.length; j++) { const a = D3.decos[j], b = D3.decos[(j * 5 + 2) % D3.decos.length]; const ay = ((a.y + D3.scroll * 0.9 * a.sp) % (H + 200)) - 100, by = ((b.y + D3.scroll * 0.9 * b.sp) % (H + 200)) - 100; if (Math.abs(ay - by) > 260) continue;
+      beam(a.x, ay, b.x, by, 3, '#2a4aff', 6, true); const q = (t * 0.6 * a.sp + j * 0.13) % 1; I.decoG.add(wx(a.x + (b.x - a.x) * q), 0.3, wz(ay + (by - ay) * q), 0.35, 0.35, 0.35, 0, '#ffffff'); } }
+  I.deco.end(); I.decoG.end();
+  // 3층: 가까운 먼지 (빠르게 흐름)
+  I.dust.begin(); for (const d of D3.dust) { const y = (d.y + D3.scroll * 1.8) % (H + 100) - 50; I.dust.add(wx(d.x), d.h * S3, wz(y), d.s, d.s, d.s * (k === 'brain' ? 1 : 3), 0, P3.dust); } I.dust.end();
+}
+function beam(x1, y1, x2, y2, wpx, col, hpx, soft) { const dx = x2 - x1, dy = y2 - y1, l = Math.hypot(dx, dy) || 1; (soft ? I.beamS : I.beam).add(wx((x1 + x2) / 2), (hpx || 18) * S3, wz((y1 + y2) / 2), l / 20, Math.max(0.12, wpx * 0.35 / 20), wpx / 20, -Math.atan2(dy, dx), col); }
+function dashed(x1, y1, x2, y2, col, hpx) { const dx = x2 - x1, dy = y2 - y1, l = Math.hypot(dx, dy), n = Math.min(40, Math.floor(l / 26)); for (let i = 0; i < n; i++) { const a = i / n, b = (i + 0.55) / n; beam(x1 + dx * a, y1 + dy * a, x1 + dx * b, y1 + dy * b, 4, col, hpx); } }
+
+/* ---------- 개체 메시 동기화 ---------- */
+const meshOf = new Map();   // 적·보스 부품 → 메시
+let seen = new Set();
+function getMesh(key, mk) { let m = meshOf.get(key); if (!m) { m = mk(); scene.add(m); meshOf.set(key, m); } seen.add(key); return m; }
+function sweepMeshes() { for (const [k, m] of meshOf) if (!seen.has(k)) { scene.remove(m); meshOf.delete(k); } seen = new Set(); }
+function flashMat(m, f) { const want = f > 0 ? FLASHM : m.userData.mat || MAT; if (m.isMesh) { if (!m.userData.mat) m.userData.mat = m.material; m.material = f > 0 ? FLASHM : m.userData.mat; } else m.traverse(o => { if (o.isMesh) { if (!o.userData.mat) o.userData.mat = o.material; o.material = f > 0 ? FLASHM : o.userData.mat; } }); return want; }
+function shadow(x, y, r) { I.shadow.add(wx(x), 0.02, wz(y), r * 2.1 / 20, 0.04, r * 1.7 / 20, 0, null); }
+function place(m, x, y, h) { m.position.set(wx(x), (h || 0) * S3, wz(y)); }
+let playerM = null, flameM = null, fieldM = null, fieldRing = null;
+function ensurePlayer() { if (playerM) return; playerM = mdl('player', MODELS.player); scene.add(playerM);
+  flameM = new THREE.Mesh(rbox(0.5, 0.5, 1.2, 0.45), new THREE.MeshBasicMaterial({color: 0x7cf0ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false})); scene.add(flameM);
+  fieldM = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.12, 40), new THREE.MeshBasicMaterial({color: 0xff4fb8, transparent: true, opacity: 0.22, depthWrite: false})); scene.add(fieldM);
+  fieldRing = new THREE.Group(); for (let i = 0; i < 14; i++) { const c = new THREE.Mesh(rbox(0.32, 0.32, 0.32, 0.45), new THREE.MeshBasicMaterial({color: 0xffb3e6})); const a = i / 14 * TAU; c.position.set(Math.cos(a), 0, Math.sin(a)); fieldRing.add(c); } scene.add(fieldRing); }
+const bossMeshes = {};
+function render3(dt) {
+  drawStage3(dt);
+  I.eb.begin(); I.halo.begin(); I.esp.begin(); I.ey.begin(); I.pb.begin(); I.ms.begin(); I.part.begin(); I.orb.begin(); I.shadow.begin(); I.beam.begin(); I.beamS.begin();
+  const inGame = G.state !== 'title' && P;
+  if (inGame) {
+    ensurePlayer();
+    // 플레이어
+    const blink = P.inv > 0 && Math.floor(P.inv * 16) % 2 && G.state === 'play'; playerM.visible = G.state !== 'over' && !blink; flameM.visible = playerM.visible;
+    place(playerM, P.x, P.y, 26); playerM.rotation.set(0, 0, -P.tilt * 0.6); playerM.position.y += Math.sin(G.t * 4) * 0.08;
+    flameM.position.set(wx(P.x), 26 * S3 + 0.1, wz(P.y + 34)); flameM.scale.set(1, 1, 0.8 + Math.sin(G.t * 40) * 0.3);
+    shadow(P.x, P.y, 26);
+    const ab = absorbing() && P.laserT <= 0 && G.state === 'play'; fieldM.visible = fieldRing.visible = ab;
+    if (ab) { const R = (82 + Math.sin(G.t * 8) * 4) * S3; fieldM.position.set(wx(P.x), 0.12, wz(P.y)); fieldM.scale.set(R, 1, R); fieldRing.position.set(wx(P.x), 0.9, wz(P.y)); fieldRing.scale.set(R, R, R); fieldRing.rotation.y = G.t * 2; fieldRing.children.forEach(c => c.scale.setScalar(1 / R)); }
+    if (P.laserT > 0) { const w2 = 76 + Math.sin(G.t * 50) * 10; beam(P.x, P.y - 20, P.x, -120, w2, '#ff4fb8', 30); beam(P.x, P.y - 20, P.x, -120, w2 * 0.35, '#ffffff', 34); }
+    // T세포 검 · 드론
+    for (const w of P.weapons) { if (w.id === 'tblade' && w.blades) w.blades.forEach(([bx, by, a], j) => { const m = getMesh('blade' + j, () => mdl(w.evo ? 'bladeE' : 'blade', MODELS[w.evo ? 'bladeE' : 'blade'])); place(m, bx, by, 24); m.rotation.set(0, -a, 0); m.userData.evo !== w.evo && (m.geometry = modelGeo[w.evo ? 'bladeE' : 'blade'] || voxGeo(MODELS.bladeE()), m.userData.evo = w.evo); }); }
+    const dEvo = P.weapons.some(w => w.id === 'drone' && w.evo); P.drones.forEach((d, j) => { const key = dEvo ? 'droneE' : 'drone', m = getMesh('drone' + j + key, () => mdl(key, MODELS[key])); place(m, d.x, d.y, 30 + Math.sin(G.t * 3 + j) * 4); m.rotation.y = G.t * 2; shadow(d.x, d.y, 12); });
+    // 적
+    for (const e of enemies) { if (!e.alive) continue; const key = MODEL_FOR[e.type]; const m = getMesh(e, () => mdl(key, MODELS[key])); place(m, e.x, e.y, e.type === 'phage' && e.mode >= 1 && e.mode < 4 ? 0 : 6); flashMat(m, e.flash);
+      const sq = e.squash || 0; let sx = 1 + sq * 0.5, sy = 1 - sq * 0.4; if (e.type === 'cancer' && e.mt < 0.6) { sx += (0.6 - e.mt) * 0.6; sy -= (0.6 - e.mt) * 0.2; } m.scale.set(sx, sy, sx);
+      let ry = 0; if (e.type === 'flu') ry = e.rot || e.t; else if (e.type === 'adeno') ry = e.t * 0.8; else if (e.type === 'prion') ry = e.t * 1.6; else if (e.type === 'pylori') ry = Math.sign(e.vx || 1) * 0.5; else if (e.type === 'staph' || e.type === 'host') ry = e.t * 0.6; else if (e.type === 'bcell') ry = e.t;
+      m.rotation.set(0, ry, 0); m.position.y += Math.sin(G.t * 3 + e.id) * 0.06; shadow(e.x, e.y, e.r);
+      if (e.type === 'strep' && e.segs) e.segs.forEach((s, j) => { const sm = getMesh(e.id + 'seg' + j, () => mdl('strepS', MODELS.strepS)); place(sm, s[0], s[1], 6); flashMat(sm, e.flash); shadow(s[0], s[1], 11); });
+      if (e.type === 'phage') { if (e.mode === 2) dashed(e.x, e.y + 20, e.x + Math.cos(e.aim) * 1400, e.y + 20 + Math.sin(e.aim) * 1400, '#ff3d6a', 14); if (e.mode === 3) { beam(e.x, e.y + 20, e.x + Math.cos(e.aim) * 1400, e.y + 20 + Math.sin(e.aim) * 1400, 18, '#ff3d6a', 14); beam(e.x, e.y + 20, e.x + Math.cos(e.aim) * 1400, e.y + 20 + Math.sin(e.aim) * 1400, 6, '#ffffff', 16); } }
+      if (e.type === 'flu' && e.mode === 1) beamRing(e.x, e.y, e.r + 16, '#ff3d3d');
+      if (e.type === 'host' && e.boom > 0) beamRing(e.x, e.y, 70, '#ff3d3d'); }
+    // 보스
+    if (boss && !boss.dead) renderBoss(boss); else for (const k in bossMeshes) { if (bossMeshes[k]) { scene.remove(bossMeshes[k]); bossMeshes[k] = null; } }
+    // 플레이어 탄환
+    for (const b of pBul.a) { const ang = Math.atan2(b.vy, b.vx); if (b.kind === 'missile') I.ms.add(wx(b.x), 20 * S3, wz(b.y), b.r / 7, b.r / 7, b.r / 7, -ang - Math.PI / 2 + Math.PI, b.aoe ? '#ffd25e' : '#ff9ad4');
+      else { const s = b.big ? 1.7 : 1.05; I.pb.add(wx(b.x), 18 * S3, wz(b.y), s, s, s, -ang - Math.PI / 2, b.big ? '#ffe94a' : '#5ef2c8'); } }
+    // 적 탄환
+    for (const b of eBul.a) { const s = b.r / 10, ang = Math.atan2(b.vy, b.vx);
+      if (b.pink) { const p = 1 + Math.sin(G.t * 12 + b.x) * 0.12; I.eb.add(wx(b.x), 16 * S3, wz(b.y), s * 1.25, s * 1.25, s * 1.25, G.t * 3, '#ff4fb8'); I.halo.add(wx(b.x), 16 * S3, wz(b.y), s * 2.3 * p, s * 2.3 * p, s * 2.3 * p, 0, '#ff4fb8'); }
+      else if (b.kind === 'spike') I.esp.add(wx(b.x), 16 * S3, wz(b.y), s * 1.1, s * 1.1, s * 1.1, -ang - Math.PI / 2, bc(b.col));
+      else if (b.kind === 'y') I.ey.add(wx(b.x), 16 * S3, wz(b.y), s * 1.2, s * 1.2, s * 1.2, -ang + Math.PI / 2, bc(b.col));
+      else I.eb.add(wx(b.x), 16 * S3, wz(b.y), s, s, s, G.t * 2 + b.x, bc(b.col)); }
+    // ATP
+    for (const o of orbs.a) I.orb.add(wx(o.x), (14 + Math.sin(G.t * 6 + o.x) * 3) * S3, wz(o.y), 0.9, 0.9, 0.9, G.t * 3 + o.x, '#5ef27a');
+    // 번개
+    for (const l of lightning) { let px = l.x1, py = l.y1; for (let j = 1; j <= 5; j++) { const nx = j === 5 ? l.x2 : l.x1 + (l.x2 - l.x1) * j / 5 + rnd(-12, 12), ny = j === 5 ? l.y2 : l.y1 + (l.y2 - l.y1) * j / 5 + rnd(-12, 12); beam(px, py, nx, ny, l.evo ? 9 : 6, l.evo ? '#ffffff' : '#ffe94a', 24); px = nx; py = ny; } }
+    // 장판·기믹
+    renderZones();
+  } else { for (const k in bossMeshes) if (bossMeshes[k]) { scene.remove(bossMeshes[k]); bossMeshes[k] = null; } if (playerM) playerM.visible = flameM.visible = fieldM.visible = fieldRing.visible = false; }
+  // 입자 (세포 용해 조각)
+  for (const p of parts.a) { const a = p.life / p.max; if (p.ring) { beamRing(p.x, p.y, p.r + (1 - a) * 60, p.col); continue; } const s = p.r / 10 * (0.4 + a * 0.6); I.part.add(wx(p.x), (14 + (1 - a) * 10) * S3, wz(p.y), s, s, s, p.x, bc(p.col)); }
+  I.eb.end(); I.halo.end(); I.esp.end(); I.ey.end(); I.pb.end(); I.ms.end(); I.part.end(); I.orb.end(); I.shadow.end(); I.beam.end(); I.beamS.end();
+  sweepZoneMeshes(); sweepMeshes();
+  let sx = 0, sy = 0; if (G.shake > 0) { sx = rnd(-G.shake, G.shake) * S3 * 0.6; sy = rnd(-G.shake, G.shake) * S3 * 0.6; }
+  placeCam(sx, sy);
+  R3D.render(scene, cam);
+}
+function beamRing(x, y, r, col) { const n = 16; for (let i = 0; i < n; i++) { const a1 = i / n * TAU, a2 = (i + 0.6) / n * TAU; beam(x + Math.cos(a1) * r, y + Math.sin(a1) * r, x + Math.cos(a2) * r, y + Math.sin(a2) * r, 4, col, 10); } }
+
+/* ---------- 보스 3D ---------- */
+function bm(key, make) { if (!bossMeshes[key]) { bossMeshes[key] = make(); scene.add(bossMeshes[key]); } return bossMeshes[key]; }
+function dropBossMesh(key) { if (bossMeshes[key]) { scene.remove(bossMeshes[key]); bossMeshes[key] = null; } }
+function renderBoss(b) {
+  if (b instanceof BossMRSA) { const m = bm('mrsa', () => mdl('mrsa', MODELS.mrsa)); place(m, b.x, b.y, 4); m.rotation.y = Math.sin(b.t) * 0.2; const sq = 1 + Math.sin(b.t * 3) * 0.04; m.scale.set(sq, 2 - sq, sq); flashMat(m, b.flash); shadow(b.x, b.y, 70);
+    const sh = bm('shield', () => { const s = mdl('shield', MODELS.shield); s.material = new THREE.MeshLambertMaterial({vertexColors: true, transparent: true, opacity: 0.35, depthWrite: false}); return s; }); sh.visible = b.shield > 0; place(sh, b.x, b.y, 4); sh.rotation.y = b.t; const p = 1 + Math.sin(b.t * 6) * 0.03; sh.scale.set(p, p, p); }
+  else if (b instanceof BossSARS) { const m = bm('sars', () => mdl('sars', MODELS.sars)); place(m, b.x, b.y, 0); m.rotation.y = b.t * 0.3; flashMat(m, b.flash); shadow(b.x, b.y, 80); }
+  else if (b instanceof BossGiardia) { const h = bm('gHead', () => mdl('gHead', MODELS.gHead)); place(h, b.x, b.y, 4); const h1 = b.hist[6] || [b.x, b.y - 10]; h.rotation.y = -Math.atan2(b.y - h1[1], b.x - h1[0]) + Math.PI / 2 + Math.PI; flashMat(h, b.flash); shadow(b.x, b.y, 50);
+    b.segs.forEach((s, i) => { const key = 'gSeg' + i; if (!s.alive) { dropBossMesh(key); return; } const m = bm(key, () => mdl('gSeg', MODELS.gSeg)); place(m, s.x, s.y, 2); const n = b.segs[i - 1] || {x: b.x, y: b.y}; m.rotation.y = -Math.atan2(n.y - s.y, n.x - s.x) + Math.PI / 2; flashMat(m, s.flash); shadow(s.x, s.y, 34); });
+    if (b.aliveSegs() > 4) beamRing(b.x, b.y, b.r + 12, '#8ae6ff');
+    if (b.slam > 1.6) { beam(b.x, b.y, b.x, b.y + 500, 120, '#ff3d6a', 2); } }
+  else if (b instanceof BossOverlord) { const m = bm('ovCore', () => mdl('ovCore', MODELS.ovCore)); place(m, b.x, b.y, 0); flashMat(m, b.flash); shadow(b.x, b.y, 60);
+    for (let k = 0; k < 3; k++) { const r = bm('ovRing' + k, () => mdl('ovRing', MODELS.ovRing)); place(r, b.x, b.y, 40); r.rotation.set(k * 0.9 + b.t * 0.3, b.t * (k % 2 ? -1.5 : 1.5), k * 0.5); r.scale.setScalar(1 + k * 0.18); }
+    for (let i = 0; i < 2; i++) { const c = b.clones.find(x => x.i === i && x.hp > 0); const key = 'ovClone' + i; if (!c) { dropBossMesh(key); continue; } const m2 = bm(key, () => mdl('ovClone', MODELS.ovClone)); place(m2, c.x, c.y, 0); m2.rotation.y = b.t * 2; flashMat(m2, c.flash); shadow(c.x, c.y, 40); }
+    if (b.cage) { const v = [[b.x, b.y]].concat(b.clones.map(c => [c.x, c.y])); for (let i = 0; i < v.length; i++) for (let j = i + 1; j < v.length; j++) { if (b.cage === 1) dashed(v[i][0], v[i][1], v[j][0], v[j][1], '#ff3d6a', 30); else { beam(v[i][0], v[i][1], v[j][0], v[j][1], 20, '#ff3d78', 30); beam(v[i][0], v[i][1], v[j][0], v[j][1], 6, '#ffffff', 32); } } } }
+  else if (b instanceof BossGlio) { const m = bm('glio', () => { const g = mdl('glio', MODELS.glio); g.material = new THREE.MeshLambertMaterial({vertexColors: true}); return g; }); place(m, b.x, b.y, 0); const pulse = 1 + Math.sin(b.t * (b.phase2 ? 7 : 3)) * 0.05; m.scale.set(pulse, 2 - pulse, pulse); m.rotation.y = b.t * 0.25;
+    if (b.flash > 0) m.material = FLASHM; else { m.material = m.userData.own || (m.userData.own = new THREE.MeshLambertMaterial({vertexColors: true})); m.material.color.set(b.phase2 ? 0xff5a6a : 0xc7a0ff); }
+    shadow(b.x, b.y, 90); if (b.tentAlive()) beamRing(b.x, b.y, b.r + 16, '#ff5a7a');
+    b.tent.forEach((t, i) => { const key = 'tent' + i; if (!t.alive) { dropBossMesh(key); for (let j = 0; j < 9; j++) dropBossMesh(key + 'v' + j); return; } const h = bm(key, () => mdl('tentHead', MODELS.tentHead)); place(h, t.x, t.y, 4); h.rotation.y = b.t; flashMat(h, t.flash); shadow(t.x, t.y, 36);
+      const mx = (b.x + t.x) / 2 + Math.sin(b.t * 2 + t.s) * 30, my = (b.y + t.y) / 2 - 40; for (let j = 0; j < 9; j++) { const q = (j + 1) / 10, x = (1 - q) * (1 - q) * t.x + 2 * (1 - q) * q * mx + q * q * b.x, y = (1 - q) * (1 - q) * t.y + 2 * (1 - q) * q * my + q * q * b.y; const v = bm(key + 'v' + j, () => mdl('vessel', MODELS.vessel)); place(v, x, y, 30 + Math.sin(q * Math.PI) * 30); const pk = (b.t * 1.4) % 1; v.scale.setScalar(1 + (Math.abs(pk - (1 - q)) < 0.08 ? 0.35 : 0)); flashMat(v, t.flash); } }); }
+}
+/* ---------- 장판·기믹 3D ---------- */
+const zoneMesh = new Map(); let zSeen = new Set();
+const discGeo = new THREE.CylinderGeometry(1, 1, 0.14, 32);
+function zm(z, make) { let m = zoneMesh.get(z); if (!m) { m = make(); scene.add(m); zoneMesh.set(z, m); } zSeen.add(z); return m; }
+function sweepZoneMeshes() { for (const [k, m] of zoneMesh) if (!zSeen.has(k)) { scene.remove(m); zoneMesh.delete(k); } zSeen = new Set(); }
+function renderZones() {
+  for (const z of zones) {
+    if (z.kind === 'acid' || z.kind === 'slow') { const m = zm(z, () => new THREE.Mesh(discGeo, new THREE.MeshBasicMaterial({color: z.kind === 'acid' ? 0xc77dff : 0xff9a3c, transparent: true, opacity: 0.45, depthWrite: false}))); m.position.set(wx(z.x), 0.06, wz(z.y)); m.scale.set(z.r * S3, 1, z.r * S3 * 0.85); m.material.opacity = 0.45 * Math.min(1, z.life / 0.5);
+      for (let j = 0; j < 3; j++) I.part.add(wx(z.x + Math.cos(G.t * 2 + j * 2) * z.r * 0.5), 0.3 + ((G.t + j) % 1) * 0.6, wz(z.y + Math.sin(G.t * 3 + j) * z.r * 0.3), 0.3, 0.3, 0.3, 0, z.kind === 'acid' ? '#f0d0ff' : '#ffe0b0'); }
+    else if (z.kind === 'hole') { const m = zm(z, () => new THREE.Mesh(discGeo, new THREE.MeshBasicMaterial({color: 0x12001e, transparent: true, opacity: 0.85, depthWrite: false}))); m.position.set(wx(z.x), 0.08, wz(z.y)); m.scale.set(z.r * S3 * 0.5, 1, z.r * S3 * 0.5);
+      for (let j = 0; j < 18; j++) { const a = G.t * 4 + j / 18 * TAU, r = z.r * (0.45 + (j % 3) * 0.2); I.part.add(wx(z.x + Math.cos(a) * r), 0.4 + (j % 3) * 0.2, wz(z.y + Math.sin(a) * r), 0.45, 0.45, 0.45, a, j % 2 ? '#c77dff' : '#5a1a9a'); } }
+    else if (z.kind === 'lob') { const key = z.evo ? 'lobE' : 'lob'; const m = zm(z, () => mdl(key, MODELS[key])); m.position.set(wx(z.x), (z.sc - 1) * 3 + 0.8, wz(z.y + Math.sin(Math.min(1, z.t / z.T) * Math.PI) * 120)); m.rotation.y = z.t * 8; beamRing(z.tx, z.ty, 22, '#c77dff'); }
+    else if (z.kind === 'bubble') { const m = zm(z, () => { const g = mdl('ball', MODELS.ball); g.material = new THREE.MeshLambertMaterial({vertexColors: true, transparent: true, opacity: 0.6, color: 0xffe85a, emissive: 0x3a3000}); return g; }); m.position.set(wx(z.x), 0.6, wz(z.y)); m.scale.setScalar(z.r / 10); }
+    else if (z.kind === 'fog') { const m = zm(z, () => new THREE.Mesh(discGeo, new THREE.MeshBasicMaterial({color: 0x463c6e, transparent: true, opacity: 0.0, depthWrite: false}))); const a = Math.min(1, z.life, z.max - z.life); m.position.set(wx(z.x), 3.2, wz(z.y)); m.scale.set(z.r * S3, 4, z.r * S3); m.material.opacity = 0.72 * a; }
+    else if (z.kind === 'spark') { if (z.life > 0.35) { beam(0, z.y, W, z.y, 44, '#3aa6ff', 3, true); dashed(0, z.y, W, z.y, '#9ff0ff', 6); } else { let px = 0, py = z.y; for (let x = 30; x <= W; x += 30) { const ny = z.y + rnd(-14, 14); beam(px, py, x, ny, 10, '#ffffff', 20); beam(px, py, x, ny, 24, '#5ac8ff', 18); px = x; py = ny; } } }
+  }
+}
+
+function render(dt) {
+  render3(dt);
+  ctx.setTransform(Q, 0, 0, Q, 0, 0); ctx.clearRect(0, 0, W, H);
+  if (G.state !== 'title' && P) {
+    // 큰 적·보스 부품 체력바 (3D 위치를 화면에 맞춰)
+    for (const e of enemies) if (e.max > 100 && e.hp < e.max) { const [x, y] = toScreen(e.x, e.y, 60); ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(x - 20, y, 40, 5); ctx.fillStyle = '#ff5d6c'; ctx.fillRect(x - 20, y, 40 * e.hp / e.max, 5); }
+    if (boss && !boss.dead) { const bars = []; if (boss.segs) boss.segs.forEach(s => s.alive && bars.push([s.x, s.y, s.hp / s.max, '#5ef2c8', 50])); if (boss.tent) boss.tent.forEach(t => t.alive && bars.push([t.x, t.y, t.hp / t.max, '#ff5a7a', 70])); if (boss.clones) boss.clones.forEach(c => bars.push([c.x, c.y, c.hp / c.max, '#c77dff', 80]));
+      for (const [bx, by, f, col, h] of bars) { const [x, y] = toScreen(bx, by, h); ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(x - 26, y, 52, 6); ctx.fillStyle = col; ctx.fillRect(x - 26, y, 52 * clamp(f, 0, 1), 6); }
+      if (boss instanceof BossGiardia && boss.slam > 1.6) { const [x, y] = toScreen(boss.x, boss.y + 90, 0); ctx.fillStyle = '#ff3d6a'; ctx.font = '900 18px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('▼ 몸통 박치기!', x, y); } }
+    for (const z of zones) if (z.kind === 'slow') { const [x, y] = toScreen(z.x, z.y, 0); ctx.fillStyle = '#fff'; ctx.font = '900 12px "Noto Sans KR"'; ctx.textAlign = 'center'; ctx.fillText('역전사 둔화', x, y + 4); } else if (z.kind === 'spark' && z.life > 0.35) { const [x, y] = toScreen(10, z.y, 0); ctx.fillStyle = '#9ff0ff'; ctx.font = '900 14px "Noto Sans KR"'; ctx.textAlign = 'left'; ctx.fillText('⚡ 시냅스 스파크', 10, y - 26); }
+    for (const t of texts.a) { const [x, y] = toScreen(t.x, t.y, 40); ctx.globalAlpha = Math.min(1, t.life * 2.5); ctx.font = `900 ${t.big ? 20 : 14}px "Noto Sans KR",sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(10,8,30,.85)'; ctx.strokeText(t.s, x, y); ctx.fillStyle = t.col; ctx.fillText(t.s, x, y); ctx.globalAlpha = 1; }
+  }
+  if (G.shake > 0) G.shake = Math.max(0, G.shake - dt * 40);
   if (G.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${Math.min(0.6, G.flash)})`; ctx.fillRect(0, 0, W, H); G.flash -= dt; }
   if (G.state !== 'title' && P) drawHUD();
 }
@@ -797,7 +1066,7 @@ $('bQuit').onclick = () => { $('sPause').hidden = true; gameOver(true); };
 $('bStart').onclick = () => { AU.init(); startRun(0); };
 $('bRetry').onclick = () => { AU.init(); startRun(0); };
 $('bHome').onclick = $('bEndHome').onclick = () => toTitle();
-function toTitle() { hideAll(); G.state = 'title'; $('sTitle').hidden = false; $('bPause').hidden = $('bMute').hidden = $('absorbBtn').hidden = true; G.stage = 0; initBG(); showBest(); }
+function toTitle() { hideAll(); G.state = 'title'; $('sTitle').hidden = false; $('bPause').hidden = $('bMute').hidden = $('absorbBtn').hidden = true; G.stage = 0; initBG(); buildStage3(); showBest(); }
 function gameOver(quit) { if (G.state === 'over') return; G.state = 'over'; saveBest(G.stage + 1, false); SFX('hurt'); $('absorbBtn').hidden = true;
   $('overSub').textContent = `${STAGES[G.stage].name} · ${STAGES[G.stage].area}에서 ${quit ? '작전을 포기했어요' : '세포막이 무너졌어요'}`;
   $('overStats').innerHTML = `<div><b>${G.score.toLocaleString()}</b><small>점수</small></div><div><b>${G.stage + 1}</b><small>도달 스테이지</small></div><div><b>Lv.${P.lv}</b><small>레벨</small></div>`;
@@ -825,10 +1094,10 @@ G.last = performance.now();
 function loop(now) { let dt = (now - G.last) / 1000; G.last = now; dt = Math.min(dt, 1 / 30);
   if (G.state === 'play') updatePlay(dt); else { G.t += dt; if (G.state === 'ending') { for (const p of parts.a) { p.life -= dt; if (p.life <= 0) p.alive = false; p.x += p.vx * dt; p.y += p.vy * dt + 30 * dt; } parts.sweep(); } }
   render(G.state === 'play' || G.state === 'title' || G.state === 'ending' ? dt : 0); requestAnimationFrame(loop); }
-initBG(); showBest(); requestAnimationFrame(loop);
+initBG(); buildStage3(); showBest(); requestAnimationFrame(loop);
 // 시험용: ?stage=3&lv=12 → 해당 스테이지부터 바로 시작 (무작위 빌드)
 try { const q = new URLSearchParams(location.search); if (q.get('stage')) { startRun(Math.max(0, Math.min(4, +q.get('stage') - 1))); const n = +(q.get('lv') || 0); for (let i = 0; i < n; i++) { const o = options(); if (o.length) { G.pendingLv = 1; choose(o[0]); } P.lv++; } if (q.get('boss')) G.stageT = 59; } } catch (e) {}
-window.BA = {G, get P() { return P; }, get boss() { return boss; }, get enemies() { return enemies; }, STAGES, startRun, choose, options};
+window.BA = {spawnBoss() { G.phase = 'boss'; boss = STAGES[G.stage].boss(); boss.enter = 0; if (boss.homeY) boss.y = boss.homeY; G.banner = null; }, G, get P() { return P; }, get boss() { return boss; }, get enemies() { return enemies; }, STAGES, startRun, choose, options};
 </script>
 <script src="../goal.js"></script>
 <script src="../rank.js"></script>
