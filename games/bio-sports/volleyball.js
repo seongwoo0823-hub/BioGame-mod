@@ -243,7 +243,7 @@
           const human = i && idx(e) === st.ctrl[sd];
           let vx, vz; const sp = SP.runSpeed(e, 6.0);
           if (human && st.idle[sd] < 0.3 && st.phase !== 'serveWait') { vx = i.mx * sp; vz = i.my * sp; }
-          else { const dx = tx - e.x, dz = tz - e.z, d = Math.hypot(dx, dz); const re = st.react ? st.react[sd] : 0; if (d > 0.08 && !(idx(e) === st.rcv[sd] && st.rallyT < re + (st.planT ? st.planT[sd] : 0) && !idleOnly)) { const m = Math.min(sp * (cfg.sides[sd] === 'ai' ? 0.9 + lvl(sd) * 0.06 : 1), d * 5); vx = dx / d * m; vz = dz / d * m; } else { vx = 0; vz = 0; } }
+          else { const dx = tx - e.x, dz = tz - e.z, d = Math.hypot(dx, dz); const re = st.react ? st.react[sd] : 0; if (d > (e.spdNow > 0.3 ? 0.1 : 0.35) && !(idx(e) === st.rcv[sd] && st.rallyT < re + (st.planT ? st.planT[sd] : 0) && !idleOnly)) { const m = Math.min(sp * (cfg.sides[sd] === 'ai' ? 0.9 + lvl(sd) * 0.06 : 1), d * 5); vx = dx / d * m; vz = dz / d * m; } else { vx = 0; vz = 0; } }
           e.x += vx * dt; e.z += vz * dt;
           // 자기 코트 안에서만
           if (sd === 0) e.x = SP.clamp(e.x, -11, -0.3); else e.x = SP.clamp(e.x, 0.3, 11); e.z = SP.clamp(e.z, -6, 6);

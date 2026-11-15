@@ -287,7 +287,7 @@
       }
       // 이동
       const dx = tx - e.x, dz = tz - e.z, dd = Math.hypot(dx, dz), sp = SP.runSpeed(e, 7.0) * rush * (0.9 + lvl * 0.06) * (st.period >= 2 && T.late ? T.late : 1) * (has ? 0.88 : 1);
-      if (dd > 0.25) { e.vx = dx / dd * Math.min(sp, dd * 3); e.vz = dz / dd * Math.min(sp, dd * 3); e.face = Math.atan2(dx, dz); } else { e.vx *= 0.8; e.vz *= 0.8; }
+      if (dd > (e.spdNow > 0.5 ? 0.25 : 0.7)) { e.vx = dx / dd * Math.min(sp, dd * 3); e.vz = dz / dd * Math.min(sp, dd * 3); e.face = Math.atan2(dx, dz); } else { e.vx *= 0.8; e.vz *= 0.8; }
       e.x += e.vx * dt; e.z += e.vz * dt; clampE(e);
       e.spdNow = Math.hypot(e.vx, e.vz); SP.drainATP(e, e.spdNow > 1, dt, T);
     }

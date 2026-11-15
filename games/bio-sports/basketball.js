@@ -184,7 +184,7 @@
         if (ball.fl && !ball.fl.pass && Math.hypot(ball.x - e.x, ball.z - e.z) < 1.5 && Math.random() < 0.05 + lvl * 0.05) defend(e);
       }
       const dx = tx - e.x, dz = tz - e.z, dd = Math.hypot(dx, dz), sp = SP.runSpeed(e, 6.4) * (0.88 + lvl * 0.07) * (has ? 0.9 : 1);
-      if (dd > 0.2) { e.vx = dx / dd * Math.min(sp, dd * 3); e.vz = dz / dd * Math.min(sp, dd * 3); e.face = Math.atan2(dx, dz); } else { e.vx *= 0.7; e.vz *= 0.7; }
+      if (dd > (e.spdNow > 0.5 ? 0.2 : 0.6)) { e.vx = dx / dd * Math.min(sp, dd * 3); e.vz = dz / dd * Math.min(sp, dd * 3); e.face = Math.atan2(dx, dz); } else { e.vx *= 0.7; e.vz *= 0.7; }
       e.x += e.vx * dt; e.z += e.vz * dt; clampE(e); e.spdNow = Math.hypot(e.vx, e.vz); SP.drainATP(e, e.spdNow > 1, dt, TM[side]);
     }
     function ballPhys(dt) {

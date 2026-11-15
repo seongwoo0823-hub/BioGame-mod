@@ -129,7 +129,7 @@
     SP.inMatch = true; $('top').hidden = false;
     $('touch').hidden = !SP.isTouch; $('keys').hidden = SP.isTouch; SP.setActs(defActs(S));
     SP.music.play(cfg.sid);
-    M.game = S.create(cfg);
+    SP.pickIndColor(cfg); M.game = S.create(cfg);
     SP.audio.crowd(0.4);
     SP.onTab = () => { if (SP.modalOpen && menuOpen) SP.closeModal(); else openMenu('stat'); };
     SP.onEsc = () => { if (SP.modalOpen) SP.closeModal(); else openMenu('stat'); };

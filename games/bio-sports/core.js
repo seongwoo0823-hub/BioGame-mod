@@ -141,8 +141,11 @@ const SP = window.SP = {SPORTS: {}};
     const bar = new THREE.Sprite(new THREE.SpriteMaterial({color: 0x5ef2c8, depthWrite: false})); bar.scale.set(0.86, 0.08, 1); bar.position.y = 2.0; bar.renderOrder = 6; g.add(bar);
     g.userData.bar = bar; g.userData.barBg = barBg;
     // 선택 표시 고리
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.66, 28), new THREE.MeshBasicMaterial({color: 0xffe066, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false}));
-    ring.rotation.x = -Math.PI / 2; ring.position.y = 0.04; ring.visible = false; g.add(ring); g.userData.ring = ring;
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.46, 24), new THREE.MeshBasicMaterial({color: new THREE.Color(c1), transparent: true, opacity: 0.85, depthWrite: false}));   // 팀 색 발판
+    disc.rotation.x = -Math.PI / 2; disc.position.y = 0.03; disc.renderOrder = 1; g.add(disc); g.userData.disc = disc;
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.62, 0.86, 32), new THREE.MeshBasicMaterial({color: 0xffe94a, transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false, depthTest: false}));
+    ring.rotation.x = -Math.PI / 2; ring.position.y = 0.05; ring.visible = false; ring.renderOrder = 7; g.add(ring); g.userData.ring = ring;
+    const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.4, 0.7, 4), new THREE.MeshBasicMaterial({color: 0xffe94a, depthTest: false})); arrow.rotation.x = Math.PI; arrow.position.y = 2.6; arrow.visible = false; arrow.renderOrder = 8; g.add(arrow); g.userData.arrow = arrow;
     g.userData.walk = Math.random() * 6;
     return g;
   };
@@ -156,7 +159,7 @@ const SP = window.SP = {SPORTS: {}};
     const sq = mv ? 1 - (1 - hop) * 0.1 : 1; g.children[0].scale.set(1 + (1 - sq) * 0.5, sq, 1 + (1 - sq) * 0.5);
     u.legs[0].rotation.x = mv ? Math.sin(u.walk) * 0.8 : 0.12; u.legs[1].rotation.x = mv ? -Math.sin(u.walk) * 0.8 : -0.12;
     if (!u.armPose) { u.arms[0].rotation.x = mv ? -Math.sin(u.walk) * 0.7 : 0; u.arms[1].rotation.x = mv ? Math.sin(u.walk) * 0.7 : 0; u.arms[0].rotation.z = 0; u.arms[1].rotation.z = 0; }
-    if (face != null) { let d = face - g.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); g.rotation.y += d * Math.min(1, dt * 12); }
+    if (face != null) { let d = face - g.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); if (Math.abs(d) > 0.02) g.rotation.y += d * Math.min(1, dt * 8); }
   };
   SP.pose = (g, kind, t) => { const u = g.userData; u.armPose = kind; clearTimeout(u.pt); if (kind === 'up') { u.arms[0].rotation.x = u.arms[1].rotation.x = -3.0; } else if (kind === 'kick') { u.legs[1].rotation.x = -1.2; } else if (kind === 'swing') { u.arms[0].rotation.x = u.arms[1].rotation.x = -1.4; u.arms[0].rotation.z = 0.8; u.arms[1].rotation.z = 0.8; } else if (kind === 'bump') { u.arms[0].rotation.x = u.arms[1].rotation.x = -0.9; }
     u.pt = setTimeout(() => { u.armPose = null; }, t || 300); };
@@ -167,16 +170,14 @@ const SP = window.SP = {SPORTS: {}};
     init() { if (this.c) { if (this.c.state !== 'running') this.c.resume(); return; } const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
       try { const c = this.c = new C(); this.out = c.createGain(); this.out.gain.value = this.muted ? 0 : 0.55; const k = c.createDynamicsCompressor(); this.out.connect(k); k.connect(c.destination);
         const b = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; this.nb = b;
-        // 관중 소리: 계속 흐르는 낮은 웅성거림
-        const s = c.createBufferSource(); s.buffer = b; s.loop = true; const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 650; f.Q.value = 0.6;
-        const g = c.createGain(); g.gain.value = 0.0; s.connect(f); f.connect(g); g.connect(this.out); s.start(); this.crowdG = g; } catch (e) { this.c = null; } },
+      } catch (e) { this.c = null; } },
     ok() { return this.c && this.c.state === 'running' && !this.muted; },
     setMuted(m) { this.muted = m; if (this.out) this.out.gain.value = m ? 0 : 0.55; try { localStorage.setItem('bioSportsMute', m ? '1' : '0'); } catch (e) {} },
     t(f, d, type, g, at, f2) { if (!this.ok()) return; const c = this.c, t = c.currentTime + (at || 0), o = c.createOscillator(), a = c.createGain(); o.type = type || 'sine'; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
       a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(g || 0.2, t + 0.006); a.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(a); a.connect(this.out); o.start(t); o.stop(t + d + 0.05); },
     n(d, f, q, g, at, type) { if (!this.ok()) return; const c = this.c, t = c.currentTime + (at || 0), s = c.createBufferSource(); s.buffer = this.nb; const fl = c.createBiquadFilter(); fl.type = type || 'bandpass'; fl.frequency.value = f; fl.Q.value = q || 1;
       const a = c.createGain(); a.gain.setValueAtTime(0.0001, t); a.gain.exponentialRampToValueAtTime(g || 0.2, t + 0.004); a.gain.exponentialRampToValueAtTime(0.0001, t + d); s.connect(fl); fl.connect(a); a.connect(this.out); s.start(t, Math.random(), d + 0.05); },
-    crowd(level) { if (this.crowdG && this.c) this.crowdG.gain.setTargetAtTime(this.muted ? 0 : 0.05 + level * 0.25, this.c.currentTime, 0.3); },
+    crowd() {}, // 계속 흐르던 관중 잡음(지지직)은 없앰
     cheer() { this.n(1.6, 900, 0.5, 0.35); this.n(1.2, 1800, 0.8, 0.15, 0.1); for (let i = 0; i < 6; i++) this.t(500 + Math.random() * 600, 0.3, 'triangle', 0.03, Math.random() * 0.6); },
     whistle(n) { for (let i = 0; i < (n || 1); i++) { const at = i * 0.32; this.t(2900, 0.26, 'square', 0.06, at); this.t(3150, 0.26, 'square', 0.04, at); this.n(0.26, 3000, 8, 0.08, at); } },
     kick(p) { this.n(0.06, 500 + (p || 1) * 300, 1.2, 0.35); this.t(140, 0.08, 'sine', 0.2, 0, 70); },
@@ -408,18 +409,26 @@ const SP = window.SP = {SPORTS: {}};
   SP.viewEnts = function (ents, dt, ctrl) { let tagged = null;
     for (const e of ents) { const m = e.mesh; m.visible = !e.out; if (e.out) continue;
       m.position.x += (e.x - m.position.x) * Math.min(1, dt * 18); m.position.z += (e.z - m.position.z) * Math.min(1, dt * 18); m.position.y = e.y || 0;
-      SP.animPlayer(m, e.spdNow, dt, e.face); SP.setATP(m, e.atp); const on = ctrl ? ctrl(e) : false; m.userData.ring.visible = on; if (on) tagged = e; }
+      const u = m.userData; u.vs = (u.vs || 0) + ((e.spdNow || 0) - (u.vs || 0)) * Math.min(1, dt * 4);   // 속도를 부드럽게 (떨림 방지)
+      // 바라보는 방향: 실제로 움직인 속도를 부드럽게 따라가요 (목표가 조금씩 바뀌어도 몸이 떨리지 않게)
+      if (u.px == null) { u.px = e.x; u.pz = e.z; u.svx = 0; u.svz = 0; u.fc = e.face; }
+      const k = Math.min(1, dt * 4), ivx = dt > 0 ? (e.x - u.px) / dt : 0, ivz = dt > 0 ? (e.z - u.pz) / dt : 0; u.px = e.x; u.pz = e.z;
+      if (Math.abs(ivx) < 40 && Math.abs(ivz) < 40) { u.svx += (ivx - u.svx) * k; u.svz += (ivz - u.svz) * k; }
+      const sv = Math.hypot(u.svx, u.svz);
+      if (sv > 1.2) u.fc = Math.atan2(u.svx, u.svz); else { let d = e.face - u.fc; d = Math.atan2(Math.sin(d), Math.cos(d)); if (Math.abs(d) > 0.5) u.fc += d * Math.min(1, dt * 2.5); }
+      SP.animPlayer(m, u.vs < 0.5 ? 0 : u.vs, dt, u.fc); SP.setATP(m, e.atp); const on = ctrl ? ctrl(e) : false; u.ring.visible = on; u.arrow.visible = on;
+      if (on) { tagged = e; const t = performance.now() / 1000; if (u.ic !== SP.indColor) { u.ic = SP.indColor; u.ring.material.color.set(SP.indColor); u.arrow.material.color.set(SP.indColor); } u.ring.scale.setScalar(1 + Math.sin(t * 6) * 0.08); u.arrow.position.y = 2.75 + Math.sin(t * 5) * 0.12; u.arrow.rotation.y = t * 2; } }
     SP.tagEnt(tagged); 
   };
   // 조작 중인 선수 이름표 (머리 위)
   let tagS = null, tagName = '';
   SP.tagEnt = e => { if (!tagS || !tagS.parent) { const c = document.createElement('canvas'); c.width = 256; c.height = 64; const t = new THREE.CanvasTexture(c); t.userData = {keep: true}; tagS = new THREE.Sprite(new THREE.SpriteMaterial({map: t, depthTest: false, transparent: true})); tagS.material.userData = {keep: true}; tagS.renderOrder = 20; tagS.scale.set(3.4, 0.85, 1); SP.scene.add(tagS); tagS.userData.cv = c; tagName = ''; }
     if (!e || e.out) { tagS.visible = false; return; } tagS.visible = true; const nm = `▼ ${e.no} ${e.name}`;
-    if (nm !== tagName) { tagName = nm; const c = tagS.userData.cv, g = c.getContext('2d'); g.clearRect(0, 0, 256, 64); g.font = '900 30px "Noto Sans KR",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 7; g.strokeStyle = 'rgba(0,0,0,.75)'; g.strokeText(nm, 128, 34); g.fillStyle = '#ffe066'; g.fillText(nm, 128, 34); tagS.material.map.needsUpdate = true; }
-    tagS.position.set(e.mesh.position.x, (e.mesh.position.y || 0) + 2.55, e.mesh.position.z); };
+    if (nm + SP.indColor !== tagName) { tagName = nm + SP.indColor; const c = tagS.userData.cv, g = c.getContext('2d'); g.clearRect(0, 0, 256, 64); g.font = '900 30px "Noto Sans KR",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 7; g.strokeStyle = 'rgba(0,0,0,.75)'; g.strokeText(nm, 128, 34); g.fillStyle = SP.indColor; g.fillText(nm, 128, 34); tagS.material.map.needsUpdate = true; }
+    tagS.position.set(e.mesh.position.x, (e.mesh.position.y || 0) + 3.35, e.mesh.position.z); };
   // 목표 지점으로 걸어가기/뛰어가기 (멈춤 없이 자연스럽게): 도착하면 true
   SP.walkTo = (e, tx, tz, dt, sp, lookX, lookZ) => { const dx = tx - e.x, dz = tz - e.z, d = Math.hypot(dx, dz);
-    if (d > 0.12) { const m = Math.min(sp, d * 4); e.vx = dx / d * m; e.vz = dz / d * m; e.x += e.vx * dt; e.z += e.vz * dt; e.spdNow = m; e.face = Math.atan2(dx, dz); return false; }
+    if (d > (e.spdNow > 0.3 ? 0.15 : 0.45)) { const m = Math.min(sp, d * 3); e.vx = dx / d * m; e.vz = dz / d * m; e.x += e.vx * dt; e.z += e.vz * dt; e.spdNow = m; e.face = Math.atan2(dx, dz); return false; }
     e.vx = e.vz = 0; e.spdNow = 0; if (lookX != null) e.face = Math.atan2(lookX - e.x, lookZ - e.z); return true; };
   // 달리기 속도 (시냅스 전도 속도 + ATP)
   SP.runSpeed = (e, base) => (base || 5.2) * (0.78 + e.st.spd / 300) * (0.62 + 0.38 * Math.max(0.15, e.atp));
@@ -433,10 +442,15 @@ SP.makeEvents = function (fire) {
     ingest(arr) { for (const o of arr || []) if (!seen.has(o.id)) { seen.add(o.id); fire(o); } }};
 };
 // 유니폼 색이 비슷하면 원정팀은 흰색 원정 유니폼
+SP.indColor = '#ffe94a';
+SP.pickIndColor = cfg => { const near = c => { const h = {}; new THREE.Color(c).getHSL(h); return h.s > 0.4 && Math.min(Math.abs(h.h - 0.14), 1 - Math.abs(h.h - 0.14)) < 0.08; }; SP.indColor = [0, 1].some(sd => near(SP.kit(cfg, sd).c1)) ? '#ff3df0' : '#ffe94a'; };
 SP.kit = function (cfg, side) {
   const A = SP.TEAMS[cfg.teams[0]], B = SP.TEAMS[cfg.teams[side]];
   if (side === 0) return {c1: A.c1, c2: A.c2};
-  const ca = new THREE.Color(A.c1), cb = new THREE.Color(B.c1);
-  const d = Math.abs(ca.r - cb.r) + Math.abs(ca.g - cb.g) + Math.abs(ca.b - cb.b);
-  return d < 0.45 ? {c1: '#f4f4f8', c2: B.c1} : {c1: B.c1, c2: B.c2};
+  // 두 팀 색이 비슷하면(파랑끼리·빨강끼리 등) 원정 팀은 홈 색과 가장 다른 선명한 색으로
+  const ca = new THREE.Color(A.c1), cb = new THREE.Color(B.c1), dist = (x, y) => { const p = {}, q = {}; x.getHSL(p); y.getHSL(q); const dh = Math.min(Math.abs(p.h - q.h), 1 - Math.abs(p.h - q.h)) * 2; return dh * 1.4 + Math.abs(p.l - q.l) * 1.2; };
+  if (dist(ca, cb) >= 0.55) return {c1: B.c1, c2: B.c2};
+  const ALT = ['#f4f4f8', '#ffc81e', '#ff6a1a', '#20c05a', '#e11d48', '#10c4d8'];
+  const best = ALT.map(c => [c, dist(ca, new THREE.Color(c))]).sort((x, y) => y[1] - x[1])[0][0];
+  return {c1: best, c2: B.c1};
 };
