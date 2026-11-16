@@ -7,7 +7,7 @@
 <title>BIO ARCADE · 생명과학 게임 아케이드</title>
 <meta name="description" content="리듬게임, 카트 레이싱, 5대5 대전, 로그라이크, 3D 난투, 타이쿤, 육성 원정, FPS, 액션 RPG, 퍼즐까지 생명과학을 주제로 한 웹 게임 14종. PC·태블릿·휴대폰에서 설치 없이 바로 플레이.">
 <meta name="theme-color" content="#0b1020">
-<link rel="manifest" href="manifest.webmanifest?v=2">
+<link rel="manifest" href="manifest.webmanifest?v=2" crossorigin="use-credentials">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-v2-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-v2-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon-v2.png">
@@ -685,6 +685,10 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
   let onServer=false;
   function showNet(j){
     onServer=true;netBox.hidden=false;
+    // 고른 종류를 앱 설치 정보 주소에 직접 넣음 (manifest는 쿠키 없이 받아지므로)
+    const nv=j.net==='wifi'?'wifi':'lan',ml=document.querySelector('link[rel="manifest"]');
+    if(ml&&!new RegExp('net='+nv+'\\b').test(ml.getAttribute('href')||''))ml.setAttribute('href','manifest.webmanifest?v=2&net='+nv);
+    document.querySelectorAll('link[rel="apple-touch-icon"]').forEach(l=>l.setAttribute('href','icons/apple-touch-icon-'+nv+'.png'));
     netBox.querySelectorAll('.netpick').forEach(b=>{const on=b.dataset.net===j.net;b.style.borderColor=on?(j.net==='wifi'?'#f87171':'#4ade80'):'transparent';b.style.opacity=on?'1':'.7';});
     netTxt.textContent=(j.net==='wifi'?'🔴 지금: 와이파이용':'🟢 지금: 랜선용')+(j.picked?' (직접 고름)':' (주소로 자동 판단)');
   }

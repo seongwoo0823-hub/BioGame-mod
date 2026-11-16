@@ -70,7 +70,10 @@ function netAuto(req) {
   const n = list.find(x => x.ip === host) || list.find(x => x.ip === loc);
   return n && n.kind === '와이파이' ? 'wifi' : 'lan';
 }
-function netVariant(req) { return netPick(req) || netAuto(req); }
+// 주소에 ?net=wifi|lan 또는 ?pwa=wifi|lan 이 붙어 있으면 그것을 가장 먼저 따름
+//   (브라우저는 앱 설치 정보(manifest)·아이콘을 받을 때 쿠키를 보내지 않아서, 고른 종류를 주소로 넘겨야 함)
+function netQuery(req) { const m = /[?&](?:net|pwa)=(wifi|lan)\b/.exec(String(req.url || '')); return m ? m[1] : ''; }
+function netVariant(req) { return netQuery(req) || netPick(req) || netAuto(req); }
 const installLog = new Map();
 const VARIANT = {
   lan:  {id: './?pwa=lan',  name: 'BIO ARCADE 교실 서버 (랜선)',    short: 'BIO 랜선',    color: '#06140c'},
@@ -164,6 +167,17 @@ function sendFile(req, res, urlPath) {
         m.icons = (m.icons || []).map(sw);
         (m.shortcuts || []).forEach(sc => { if (sc.icons) sc.icons = sc.icons.map(sw); });
         const body = Buffer.from(JSON.stringify(m, null, 2));
+        res.writeHead(200, Object.assign(head, {'Content-Length': body.length, 'Cache-Control': 'no-cache'})); res.end(req.method === 'HEAD' ? undefined : body);
+      });
+      return;
+    }
+    // 메인 페이지: 앱 설치 정보·홈 화면 아이콘 주소에 네트워크 종류를 직접 넣어 보냄 (쿠키 없이도 맞는 색으로 설치)
+    if (relp === 'index.html') {
+      fs.readFile(file, 'utf8', (e, txt) => {
+        if (e) { res.writeHead(500); res.end(); return; }
+        const html = txt.replace(/manifest\.webmanifest\?v=2"/g, 'manifest.webmanifest?v=2&net=' + vk + '"')
+          .replace(/icons\/apple-touch-icon-v2\.png/g, 'icons/apple-touch-icon-' + vk + '.png').replace(/icons\/favicon-v2-32\.png/g, 'icons/favicon-' + vk + '-32.png');
+        const body = Buffer.from(html);
         res.writeHead(200, Object.assign(head, {'Content-Length': body.length, 'Cache-Control': 'no-cache'})); res.end(req.method === 'HEAD' ? undefined : body);
       });
       return;

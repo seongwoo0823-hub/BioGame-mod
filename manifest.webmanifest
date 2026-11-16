@@ -52,18 +52,6 @@
       ]
     },
     {
-      "name": "면역 특공대",
-      "short_name": "런앤건",
-      "url": "./games/immune-strike.html",
-      "icons": [
-        {
-          "src": "icons/icon-v2-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
       "name": "바이오 카트 레이서",
       "short_name": "카트",
       "url": "./games/bio-kart.html",
@@ -79,18 +67,6 @@
       "name": "BIOTRO",
       "short_name": "세포 포커",
       "url": "./games/biotro.html",
-      "icons": [
-        {
-          "src": "icons/icon-v2-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "세포 탐사대",
-      "short_name": "핀볼",
-      "url": "./games/cell-pinball.html",
       "icons": [
         {
           "src": "icons/icon-v2-192.png",
@@ -127,18 +103,6 @@
       "name": "바이오 스트라이크",
       "short_name": "생명과학 FPS",
       "url": "./games/bio-strike.html",
-      "icons": [
-        {
-          "src": "icons/icon-v2-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "감염의 군주",
-      "short_name": "생명과학 RPG",
-      "url": "./games/infection-lord.html",
       "icons": [
         {
           "src": "icons/icon-v2-192.png",
