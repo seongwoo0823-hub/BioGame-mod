@@ -50,6 +50,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;image-rende
 #tract{position:absolute;right:calc(18px + env(safe-area-inset-right,0px));top:calc(14px + env(safe-area-inset-top,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));
   width:26px;display:flex;flex-direction:column-reverse;border:2px solid var(--line);border-radius:13px;overflow:visible;background:var(--panel);box-shadow:4px 4px 0 var(--shade)}
 #tract .seg{position:relative;width:100%;opacity:.85}
+#tract .seg.cp-seg{box-shadow:inset 0 2px 0 #ffe866,inset 0 -1px 0 rgba(0,0,0,.35);opacity:1}
 #tract .seg:first-child{border-radius:0 0 11px 11px}
 #tract .seg:last-child{border-radius:11px 11px 0 0}
 #tract .seg i{position:absolute;right:32px;top:50%;transform:translateY(-50%);font-style:normal;font-size:12px;white-space:nowrap;color:var(--text);
@@ -70,7 +71,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;image-rende
   text-shadow:2px 2px 0 #b8213f,4px 4px 0 #7a1028,6px 6px 0 rgba(0,0,0,.35)}
 #banner p{margin:0 auto;font-size:17px;line-height:1.5;color:#fff4f6;text-shadow:1px 1px 0 rgba(0,0,0,.6);max-width:520px}
 #fallmsg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-family:"DotGothic16",monospace;font-size:clamp(28px,5vw,48px);color:#ff4d6d;
-  text-shadow:2px 2px 0 #000;opacity:0;transition:opacity .4s}
+  text-shadow:2px 2px 0 #000;opacity:0;transition:opacity .4s;text-align:center;white-space:nowrap}
 #fallmsg.show{opacity:1}
 #hint{position:absolute;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));font-size:14px;color:#fff;
   text-shadow:1px 1px 0 rgba(0,0,0,.7);opacity:.9;transition:opacity 1s;line-height:1.6}
@@ -81,7 +82,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;image-rende
 /* screens */
 .screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--scrim);padding:20px;z-index:10;overflow:auto}
 .screen[hidden]{display:none}
-.card{background:var(--panel);border:2px solid var(--line);border-radius:6px;padding:28px 30px 24px;max-width:560px;width:100%;box-shadow:8px 8px 0 var(--shade)}
+.card{background:var(--panel);border:2px solid var(--line);border-radius:6px;padding:28px 30px 24px;max-width:590px;width:100%;box-shadow:8px 8px 0 var(--shade)}
 .logo{font-family:"DotGothic16",monospace;font-size:clamp(54px,11vw,92px);line-height:.95;margin:0;color:#fff;letter-spacing:.02em;
   text-shadow:2px 2px 0 #e2375f,4px 4px 0 #c22a4f,6px 6px 0 #9c1e3f,8px 8px 0 #721430,10px 10px 0 rgba(0,0,0,.3)}
 .sub{font-size:30px;margin:14px 0 4px}
@@ -106,10 +107,12 @@ button:focus-visible{outline:3px solid var(--accent-2);outline-offset:3px}
 .stats-grid span{display:block;font-size:13px;color:var(--muted)}
 .stats-grid b{font-size:26px;font-weight:400}
 .route{font-size:15px;line-height:1.6;color:var(--muted);margin:0 0 16px}
-.maps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 4px}
-.maps button{font-size:17px;padding:8px 6px;line-height:1.15;background:transparent;color:var(--text);box-shadow:3px 3px 0 var(--text)}
-.maps button small{display:block;font-size:12px;color:var(--muted);margin-top:3px;font-family:"DotGothic16",monospace}
+.maps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0 4px}
+.maps button{font-size:16px;padding:8px 5px;line-height:1.15;background:transparent;color:var(--text);box-shadow:3px 3px 0 var(--text)}
+.maps button small{display:block;font-size:11px;color:var(--muted);margin-top:3px;font-family:"DotGothic16",monospace}
 .maps button.on{background:var(--accent);color:#fff}.maps button.on small{color:#ffe4ea}
+.maps button.hardcore{border-color:#7c2ae8}
+.maps button.hardcore.on{background:linear-gradient(135deg,#7c2ae8,#e2375f);color:#fff;border-color:var(--text)}
 
 /* touch */
 #touch{position:fixed;inset:0;pointer-events:none;z-index:4}
@@ -127,6 +130,7 @@ button:focus-visible{outline:3px solid var(--accent-2);outline-offset:3px}
   #tract{width:18px} #tract .seg i{display:none}
   #hint{display:none}
   .card{padding:20px 18px}
+  .maps{grid-template-columns:repeat(2,1fr)}
 }
 @media (prefers-reduced-motion: reduce){ .pop{animation-duration:.01s} }
 </style>
@@ -163,7 +167,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
 <div id="touch" hidden>
   <div id="joy"><i></i></div>
   <button id="jumpbtn" type="button">점프</button>
-  <div style="position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto"><button id="pausebtn" type="button" class="ghost" style="position:static;transform:none">일시정지</button><button type="button" class="ghost" onclick="location.href='../index.html'" style="font-size:15px;padding:4px 12px;box-shadow:none">🏠 게임 목록</button></div>
+  <div style="position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto"><button id="pausebtn" type="button" class="ghost" style="position:static;transform:none">일시정지</button><button id="touch-cpbtn" type="button" class="ghost" style="font-size:15px;padding:4px 12px;box-shadow:none">체크포인트</button><button type="button" class="ghost" onclick="location.href='../index.html'" style="font-size:15px;padding:4px 12px;box-shadow:none">🏠 게임 목록</button></div>
 </div>
 
 <div id="loading"><p id="load-text">세포 배양 중…</p><div class="bar"><div id="load-bar"></div></div></div>
@@ -176,7 +180,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
     <p class="story" id="t-story"></p>
     <dl class="keys">
       <dt>WASD</dt><dd>이동</dd>
-      <dt>SPACE</dt><dd>점프 (구간마다 끝에 있는 연동 패드는 위층으로 쏘아 올려 줘요)</dd>
+      <dt id="k-space-dt">SPACE</dt><dd id="k-space-dd">점프 (구간마다 끝에 있는 연동 패드는 위층으로 쏘아 올려 줘요)</dd>
       <dt>MOUSE</dt><dd>시점 회전, 화면을 클릭하면 마우스가 고정돼요. 휠로 줌</dd>
       <dt>R · M · ESC</dt><dd>체크포인트로 · 소리 켜기/끄기 · 일시정지</dd>
     </dl>
@@ -185,7 +189,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
       <button id="btn-continue" type="button" class="ghost" hidden>이어하기</button>
       <button type="button" class="ghost" onclick="location.href='../index.html'">게임 목록</button>
     </div>
-    <p class="note">헤드폰을 끼면 바삭함이 두 배. 7개 구간, 예상 플레이 시간 약 15분. 떨어져도 각 구간 바닥의 고리에서 멈춰요. 맵은 3종이고 난이도는 모두 같아요.</p>
+    <p class="note" id="t-note">헤드폰을 끼면 바삭함이 두 배. 7개 구간, 예상 플레이 시간 약 15분. 떨어져도 각 구간 바닥의 고리에서 멈춰요. 맵은 4종이며 ‘심연 21층’은 7층마다 체크포인트가 있는 극악 난이도예요.</p>
   </div>
 </div>
 
@@ -219,6 +223,7 @@ document.addEventListener('dblclick',e=>{if(!e.target.closest('input,textarea,se
 </div>
 
 <script src="../vendor/three.min.js"></script>
+<script>if(typeof THREE==='undefined')document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
 <script>
 'use strict';
 // ===GEN START===
@@ -249,7 +254,7 @@ function cylY(cx,y0,cz,r,h,col,type=0){const isF=typeof col==='function';
   fill(cx-r,y0,cz-r,cx+r,y0+h,cz+r,(x,y,z)=>{if(y>y0+h)return -1;const rho=Math.hypot(x-cx,z-cz);if(rho>r)return -1;const c=isF?col(x,y,z,rho/r,(y-y0)/h):col;return c<0?-1:c+type*T;});}
 function torusXZ(cx,cy,cz,Rm,rt,col,type=0){const isF=typeof col==='function';const E=Rm+rt;
   fill(cx-E,cy-rt,cz-E,cx+E,cy+rt,cz+E,(x,y,z)=>{const dx=x-cx,dz=z-cz;const q=Math.hypot(dx,dz)-Rm,dy=y-cy;if(q*q+dy*dy>rt*rt)return -1;const c=isF?col(x,y,z,Math.atan2(dz,dx),dy/rt):col;return c<0?-1:c+type*T;});}
-function carve(cx,cy,cz,r){const vs=CUR.vs;for(let iy=Math.floor((cy-r)/vs);iy<=Math.floor((cy+r)/vs);iy++)for(let ix=Math.floor((cx-r)/vs);ix<=Math.floor((cx+r)/vs);ix++)for(let iz=Math.floor((cz-r)/vs);iz<=Math.floor((cz+r)/vs);iz++){
+function carve(cx,cy,cz,r){const vs=CUR.vs;for(let iy=Math.floor((cy-r)/vs);iy<=Math.floor((cy+r)/vs);iy++)for(let ix=Math.floor((cx-r)/vs);ix<=Math.floor((cx+r)/vs);ix++)for(let iz=Math.floor((cz-r)/vs);iz<=Math.floor((cz-r)/vs);iz++){
   const x=(ix+.5)*vs-cx,y=(iy+.5)*vs-cy,z=(iz+.5)*vs-cz;if(x*x+y*y+z*z<=r*r)CUR.map.delete(K(ix,iy,iz));}}
 function strand(pts,col){const vs=CUR.vs;for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];const L=Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2]);const n=Math.max(1,Math.ceil(L/(vs*0.5)));
   for(let j=0;j<=n;j++){const t=j/n;put(Math.floor((a[0]+(b[0]-a[0])*t)/vs),Math.floor((a[1]+(b[1]-a[1])*t)/vs),Math.floor((a[2]+(b[2]-a[2])*t)/vs),col,0.1);}}}
@@ -429,6 +434,74 @@ GEN.cell=P=>{const r=R(0.95,1.15);const e=ent(P,r);const base=e.top-0.6;const of
   return {key:'cell',fp:[{x:e.x,z:e.z,r:r+0.1,top:e.top,bot:base}],exit:{x:e.x,z:e.z,top:e.top,r:r*0.95},
     build(){cylY(e.x,base,e.z,r,0.45,(x,y,z,rr)=>{if(rr>0.84)return y>base+0.3?0xffe0a0:0xe0a868;const hh=hv(x,y,z);if(hh<0.05)return 0xe07a3a;if(hh<0.09)return 0x7a9ae0;return y>base+0.3?0xf8c8d2:0xe8a8b6;});
       sphere(e.x+off,e.top-0.48,e.z-off,0.52,(x,y,z,ny)=>ny>0.75&&hv(x,y,z)<0.3?0x4a2a78:(ny>0.3?0x9a6ad0:0x7c4cb0));}}};
+
+// ---------- 4번째 맵(심연 21층) 전용 초정밀 하드코어 발판 생성기 ----------
+GEN.ranvier_node=P=>{
+  const n=4,s=0.48,sp=0.98,rise=R(0.95,1.35);let h=P.h+R(-0.15,0.15);const curve=R(-0.12,0.12);const e=ent(P,s);const pts=[];let x=e.x,z=e.z;
+  for(let i=0;i<n;i++){pts.push([x,e.top-s+rise*i/(n-1),z]);if(i<n-1){h+=curve;x+=Math.cos(h)*sp;z+=Math.sin(h)*sp;}}
+  const last=pts[n-1];const fp=pts.map(p=>({x:p[0],z:p[2],r:0.68,top:p[1]+s,bot:p[1]-s-0.3}));
+  return {key:'ranvier_node',er:s,entPt:{x:e.x,z:e.z,top:e.top},fp,exit:{x:last[0],z:last[2],top:last[1]+s,r:s,h},
+    build(){for(let i=0;i<n-1;i++){const a=pts[i],b=pts[i+1];capsule(a[0],a[1],a[2],b[0],b[1],b[2],0.24,0x38d8ff);}
+      pts.forEach((p,i)=>sphere(p[0],p[1],p[2],s,(xx,yy,zz,ny)=>ny>0.4?0xf8f0c8:(i%2?0xd4b872:0x60e8ff)));}};};
+GEN.ion_ring=P=>{
+  const Rr=1.48,inner=0.62,h=P.h;const [fx,fz]=fw(h);const e=ent(P,0.45);
+  const cx=e.x+fx*(Rr-0.45),cz=e.z+fz*(Rr-0.45),base=e.top-0.75;const ex=cx+fx*(Rr-0.45),ez=cz+fz*(Rr-0.45);
+  return {key:'ion_ring',er:0.45,entPt:{x:e.x,z:e.z,top:e.top},fp:[{x:cx,z:cz,r:Rr+0.1,top:e.top,bot:base}],exit:{x:ex,z:ez,top:e.top,r:0.45,h},
+    build(){fill(cx-Rr,base,cz-Rr,cx+Rr,e.top,cz+Rr,(x,y,z)=>{const dx=x-cx,dz=z-cz,rho=Math.hypot(dx,dz);if(rho>Rr||rho<inner||y>e.top)return -1;
+      const a=Math.atan2(dz,dx);if(y>e.top-0.26)return Math.sin(a*4)>0.5?0x98ffff:0x48c8ff;return Math.sin(a*8)>0?0x2868b8:0x1c4888;});}};};
+GEN.synapse_trap=P=>{
+  const Rr=1.52,inner=0.72,h=P.h;const [fx,fz]=fw(h);const e=ent(P,0.45);
+  const cx=e.x+fx*(Rr-0.42),cz=e.z+fz*(Rr-0.42),base=e.top-0.88;const ex=cx+fx*(Rr-0.42),ez=cz+fz*(Rr-0.42);
+  return {key:'synapse_trap',er:0.45,entPt:{x:e.x,z:e.z,top:e.top},fp:[{x:cx,z:cz,r:Rr,top:e.top,bot:base}],exit:{x:ex,z:ez,top:e.top,r:0.45,h},
+    build(){fill(cx-Rr,base,cz-Rr,cx+Rr,e.top,cz+Rr,(x,y,z)=>{const rho=Math.hypot(x-cx,z-cz);if(rho>Rr||y>e.top)return -1;
+      if(rho>inner)return y>e.top-0.28?(hv(x,y,z)<0.12?0xf0d8ff:0x9a58d8):0x5a2888;const pt=e.top-0.34;if(y>pt)return -1;
+      if(y>pt-0.3)return 0xb8ff2a+3*T;return 0x486814;});}};};
+GEN.microtubule=P=>{
+  const r=0.40,h=P.h+R(-0.15,0.15),e=ent(P,r+0.04);const L1=R(1.75,2.15),L2=R(1.75,2.15),turn=(rng()<0.5?1:-1)*R(0.45,0.70);
+  const rise1=R(0.45,0.70),rise2=R(0.45,0.70);const [fx1,fz1]=fw(h);const jx=e.x+fx1*L1,jz=e.z+fz1*L1,jy=e.top+rise1;
+  const h2=h+turn;const [fx2,fz2]=fw(h2);const bx=jx+fx2*L2,bz=jz+fz2*L2,by=jy+rise2;
+  return {key:'microtubule',er:r,entPt:{x:e.x,z:e.z,top:e.top},
+    fp:[{x:(e.x+jx)/2,z:(e.z+jz)/2,r:L1/2+0.48,top:jy,bot:e.top-0.8},{x:(jx+bx)/2,z:(jz+bz)/2,r:L2/2+0.48,top:by,bot:jy-0.8}],
+    exit:{x:bx,z:bz,top:by,r:0.46,h:h2},
+    build(){const col=(x,y,z,t)=>(Math.floor(t*8)%2)?0x52e0b8:0x2ca888;capsule(e.x,e.top-r,e.z,jx,jy-r,jz,r,col);
+      sphere(jx,jy-0.46,jz,0.48,(x,y,z,ny)=>ny>0.4?0xffe066:0xd89828);capsule(jx,jy-r,jz,bx,by-r,bz,r,col);sphere(bx,by-0.44,bz,0.46,0x78f8d0);}};};
+GEN.vesicle_bounce=P=>{
+  const rx=0.84,ry=0.64;const e=ent(P,rx);const cy=e.top-ry;
+  return {key:'vesicle_bounce',er:rx,entPt:{x:e.x,z:e.z,top:e.top},fp:[{x:e.x,z:e.z,r:rx+0.1,top:e.top,bot:cy-ry}],exit:{x:e.x,z:e.z,top:e.top,r:rx*0.85,bouncy:true},
+    build(){ellipsoid(e.x,cy,e.z,rx,ry,rx,(x,y,z,ny)=>ny>0.65?0xffffff:(ny>0.25?0xff94e8:0xc848b8),1);
+      for(let k=0;k<6;k++){const a=k*TAU/6;sphere(e.x+Math.cos(a)*rx*0.85,cy,e.z+Math.sin(a)*rx*0.85,0.18,0xffe878,1);}}};};
+GEN.lipid_raft=P=>{
+  const rx=0.92,ry=0.50,rz=0.88;const e=ent(P,rx);const cy=e.top-ry;
+  return {key:'lipid_raft',er:rx,entPt:{x:e.x,z:e.z,top:e.top},fp:[{x:e.x,z:e.z,r:rx+0.1,top:e.top,bot:cy-ry}],exit:{x:e.x,z:e.z,top:e.top,r:rx*0.82,slippery:true},
+    build(){ellipsoid(e.x,cy,e.z,rx,ry,rz,(x,y,z,ny)=>hv(x,y,z)>0.92?0xffffff:(ny>0.3?0xa8f8ff:0x58c4d8),2);}};};
+GEN.perforin=P=>{
+  const Rm=1.22,sr=0.52,h=P.h;const e=ent(P,sr);const dir=rng()<0.5?1:-1;const th0=h+Math.PI;
+  const cx=e.x-Math.cos(th0)*Rm,cz=e.z-Math.sin(th0)*Rm;const steps=[];
+  for(let i=0;i<3;i++){const th=th0+dir*i*1.25;steps.push({x:cx+Math.cos(th)*Rm,z:cz+Math.sin(th)*Rm,top:e.top+i*0.82,th});}
+  const last=steps[2];
+  return {key:'perforin',er:sr,entPt:{x:e.x,z:e.z,top:e.top},fp:[{x:cx,z:cz,r:Rm+sr+0.15,top:last.top,bot:e.top-1.2}],
+    exit:{x:last.x,z:last.z,top:last.top,r:sr,h:last.th+dir*0.9},
+    build(){torusXZ(cx,e.top-0.55,cz,Rm*0.65,0.28,0x6858a8);
+      steps.forEach((st,i)=>cylY(st.x,st.top-0.55,st.z,sr,0.55,(x,y,z,rr,yy)=>yy>0.72?0xffb870:(i%2?0xd86840:0xb84828)));}};};
+GEN.dna_hell=P=>{
+  const n=8,dy=1.26,Rb=1.85,rl=1.75;const dir=rng()<0.5?1:-1;const step=dir*TAU/8;const th0=P.h+Math.PI;const e=ent(P,0.5);
+  const cx=e.x-Math.cos(th0)*1.15,cz=e.z-Math.sin(th0)*1.15,y0=e.top;
+  const pairs=[];for(let i=0;i<n;i++){const p=rng()<0.5?['A','T']:['G','C'];if(rng()<0.5)p.reverse();pairs.push(p);}
+  const last=n-1,thL=th0+step*last;
+  return {key:'dna_hell',er:0.5,entPt:{x:e.x,z:e.z,top:e.top},fp:[{x:cx,z:cz,r:2.25,top:y0+dy*last,bot:y0-0.6}],
+    exit:{x:cx+Math.cos(thL)*1.15,z:cz+Math.sin(thL)*1.15,top:y0+dy*last,r:0.42,h:thL+dir*Math.PI/2},
+    build(){const BC={A:0xff4a6a,T:0xffe04a,G:0x42f08a,C:0x4aa8ff};
+      for(let i=0;i<n;i++){const th=th0+step*i,ry=y0+dy*i;const ux=Math.cos(th),uz=Math.sin(th),px=-uz,pz=ux;const b1=pairs[i][0],b2=pairs[i][1];
+        fill(cx-rl,ry-0.38,cz-rl,cx+rl,ry-0.01,cz+rl,(x,y,z)=>{const dx=x-cx,dz=z-cz;const s=dx*ux+dz*uz,w=dx*px+dz*pz;if(Math.abs(s)>rl||Math.abs(w)>0.34||y<ry-0.35)return -1;
+          if(Math.abs(s)<0.1)return 0xffffff;const c=s>0?BC[b1]:BC[b2];return y>ry-0.13?shade(c,1.18):c;});}
+      for(const off of [0,Math.PI]){const pts=[];for(let t=-0.3;t<=dy*last+0.3;t+=0.24){const th=th0+off+step*t/dy;pts.push([cx+Math.cos(th)*Rb,y0-0.17+t,cz+Math.sin(th)*Rb]);}
+        tube(pts,0.28,(x,y)=>(Math.floor((y-y0)/0.64)&1)?0xc878ff:0x70d8ff);}}};};
+GEN.neuro_soma=P=>{
+  const r=0.74;const e=ent(P,r);const base=e.top-0.55;
+  return {key:'neuro_soma',er:r,entPt:{x:e.x,z:e.z,top:e.top},fp:[{x:e.x,z:e.z,r:r+0.1,top:e.top,bot:base}],exit:{x:e.x,z:e.z,top:e.top,r:r*0.92},
+    build(){cylY(e.x,base,e.z,r,0.45,(x,y,z,rr)=>rr>0.82?0x68e8ff:(y>base+0.28?0xb898f8:0x8860d0));
+      sphere(e.x,e.top-0.44,e.z,0.38,(x,y,z,ny)=>ny>0.3?0xffe878:0xd89830);}};};
+
 const META={
   ecoli:['대장균 (E. coli)','그람 음성균이라 그람 염색에서 붉은색을 띠어요. 장 속 대장균 일부는 비타민 K를 만들어요.'],
   staph:['포도상구균','포도송이처럼 뭉쳐 자라는 그람 양성균. 두꺼운 펩티도글리칸 세포벽 때문에 보라색으로 염색돼요.'],
@@ -463,7 +536,17 @@ const META={
   saliva:['침 방울','침 속 아밀레이스가 입에서부터 녹말 분해를 시작해요. 밟으면 튀어요!'],
   mutans:['뮤탄스균','당을 먹고 산을 만들어 이를 부식시키는 충치의 주범, 연쇄상구균의 한 종류예요.'],
   cell:['상피세포','세포막(인지질 이중층)과 핵을 가진 생명의 기본 단위예요.'],
-  pad:['연동 패드','밟으면 다음 구간으로 솟구쳐요! 공중에서 옆으로 움직여 위층 고리 위로 착지하세요.']
+  pad:['연동 패드','밟으면 다음 구간으로 솟구쳐요! 공중에서 옆으로 움직여 위층 고리 위로 착지하세요.'],
+  ranvier_node:['랑비에 결절 (도약 전도)','말이집(슈반세포)으로 싸이지 않은 축삭 노출 부위예요. 활동전위가 결절에서 결절로 건너뛰듯 전도되어 속도가 비약적으로 빨라져요!'],
+  ion_ring:['전압 개폐 이온 통로','막전위 변화에 반응해 열리고 닫히는 막단백질 통로예요. 가운데 이온 구멍으로 빠지면 1층까지 추락하니 테두리 위로 착지하세요!'],
+  synapse_trap:['억제성 시냅스 과분극 함정','Cl⁻ 유입으로 막전위가 휴지 전위보다 더 낮아지는 과분극 영역이에요. 가운데 형광 독소에 닿으면 체크포인트로 돌아갑니다!'],
+  microtubule:['미세소관과 키네신 다리','튜불린 단백질로 이루어진 세포골격 레일이에요. 가운데 노란 키네신 운동 단백질이 ATP를 소모하며 소포를 운반해요!'],
+  vesicle_bounce:['시냅스 소포 (신경전달물질)','아세틸콜린·글루탐산 같은 신경전달물질을 담은 주머니예요. SNARE 단백질 탄성으로 밟으면 높이 솟구쳐 올라요!'],
+  lipid_raft:['스핑고지질·콜레스테롤 뗏목','세포막 인지질 이중층 위를 떠다니는 미끄러운 지질 뗏목이에요. 마찰력이 매우 낮으니 착지 즉시 중심을 잡으세요!'],
+  perforin:['퍼포린 천공 단백질 타워','세포독성 T림프구와 NK세포가 분비하는 천공 단백질이에요. 감염 세포막에 원통형 구멍을 뚫어 세포 사멸을 유도합니다!'],
+  dna_hell:['초고밀도 크로마틴 이중나선','히스톤 단백질에 감긴 핵 속 DNA 나선 계단이에요. 아데닌(A)-티민(T)은 2중, 구아닌(G)-시토신(C)은 3중 수소결합으로 짝을 지어요!'],
+  neuro_soma:['신경세포체 (니슬소체)','핵과 리보솜 덩어리(니슬소체)가 모여 신경전달물질과 단백질을 합성하는 뉴런의 중심부예요.'],
+  recall_core:['체크포인트 귀환 코어','7층·14층·21층 체크포인트를 개방한 뒤 심연 바닥으로 떨어졌을 때, 이 코어를 밟거나 R 키를 누르면 저장된 체크포인트로 복귀합니다!']
 };
 const STAGES_GUT=[
   {name:'직장',en:'Rectum',h:28,R:14,deco:'haustra',wall:0x9c4a58,wall2:0x6c2838,fog:0x3a121c,light:0xffc8c8,part:0xffc0a8,floorName:'항문',
@@ -481,7 +564,7 @@ const STAGES_GUT=[
   {name:'인두·구강',en:'Pharynx & Mouth',h:26,R:15,deco:'palate',wall:0xe06478,wall2:0xa83448,fog:0x40141c,light:0xffe8e8,part:0xffffff,floorName:'상부 식도 괄약근',
     blurb:'삼킬 때만 열리는 식도의 입구예요. 마지막 구간, 입 밖의 빛을 향해!',gens:[['molar',3],['incisor',1],['tongue',2],['saliva',2],['mutans',2]]}
 ];
-// ---------- 맵 3종: 같은 생성 규칙(구간 높이·폭·간격·발판 종류 비율)을 써서 난이도를 맞추고, 모양·색·이름·설명만 바꿔요 ----------
+// ---------- 맵 4종: 소화관(7층) · 혈관(7층) · 식물(7층) + 극악 난이도 심연 21층(7층마다 체크포인트, 비체크포인트 추락 시 1층 직행) ----------
 function hsl2hex(h,s,l){h=((h%360)+360)%360/360;const f=n=>{const k=(n+h*12)%12;const a=s*Math.min(l,1-l);return l-a*Math.max(-1,Math.min(k-3,9-k,1));};
   return ((Math.round(f(0)*255))<<16)|((Math.round(f(8)*255))<<8)|Math.round(f(4)*255);}
 function hex2hsl(c){const r=((c>>16)&255)/255,g=((c>>8)&255)/255,b=(c&255)/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;let h=0,s=0;
@@ -510,11 +593,18 @@ const MAPS={
     start:'흙 속 뿌리털에서 출발',winSub:'기공을 지나 하늘로 나왔어요!',
     route:'물은 뿌리털 → 피층 → 내피 → 물관 → 잎맥 → 잎살 → 기공 순서로 올라가 증산 작용으로 빠져나가요. B-03은 물과 같은 길로 식물 꼭대기까지 올라왔습니다.',
     wallMsg:'물관 벽 붙이는 중…',floatMsg:'떠다니는 꽃가루 풀어 놓는 중…',sky:0xeaf6ff,skyFog:0xd8f0ff,exit:'ring',ringCol:[0x8ee070,0x2e7a2a,0x58b048],hemi:[0xe0ffd0,0x10300c],ring:[0xc8e890,0x6a9a3a,0x4a7a2a],acc:0x3a7a2a,veins:['#4a7a20','#d8c070'],
-    FL:[['p_water','hypha'],['spore','rhizobium'],['pit','p_glucose'],['sapfoam','auxin'],['tendril','wax'],['chloroplast','grana'],['dew','palisade_c']]}
+    FL:[['p_water','hypha'],['spore','rhizobium'],['pit','p_glucose'],['sapfoam','auxin'],['tendril','wax'],['chloroplast','grana'],['dew','palisade_c']]},
+  abyss:{id:'abyss',cat:'심연21층',seed:20261116,title:'ONLY UP: 심연의 시냅스 21층',sub:'심연의 시냅스 21층 [극악]',btn:'🔥 심연 21층',hardcore:true,
+    story:'나노봇 B-ZERO가 말초 감각 신경 말단(1층)에 투입됐다. 말초 신경·면역 전선(1~7층) → 척수·시냅스 폭풍(8~14층) → 대뇌 피질·생명 중심원리 코어(15~21층)까지 총 21층을 돌파하라! 체크포인트는 오직 7층·14층·21층뿐이며, 체크포인트가 아닌 곳에서 떨어지면 가장 밑바닥(1층)까지 직행 추락한다!',
+    start:'1층 진피 감각 말단에서 출발',winSub:'21층 대뇌 의식 크라운을 돌파했어요!',
+    route:'감각 수용기(1층) → 후근 신경절(7층 CP1) → 척수·시냅스·뇌줄기 → 시상하부(14층 CP2) → 소뇌·해마·핵공·전사·번역 → 대뇌 피질(21층 CP3)까지 총 21층(396m) 극악의 신경·면역·유전 코스를 완주했습니다!',
+    wallMsg:'21층 신경·시냅스 수직 통로 구축 중…',floatMsg:'신경전달물질·면역 인자 배치 중…',sky:0xf0ffff,skyFog:0xd8f4ff,exit:'ring',ringCol:[0x78f8ff,0x4828a8,0xd858ff],hemi:[0xd8c8ff,0x0c061c],ring:[0x68f0ff,0x4a68e8,0x283898],acc:0x8848f0,veins:['#58e8ff','#d858ff'],
+    FL:[['ranvier_node','vesicle_bounce'],['ion_ring','microtubule'],['synapse_trap','perforin'],['lipid_raft','neuro_soma']]}
 };
-const MAP_ID=(()=>{let m=null;try{m=new URLSearchParams(location.search).get('map');}catch(e){}if(!MAPS[m]){try{m=localStorage.getItem('onlyupMap');}catch(e){}}return MAPS[m]?m:'gut';})();
-const MD=MAPS[MAP_ID];
-const SAVE_K=MAP_ID==='gut'?'onlyupBio':'onlyupBio_'+MAP_ID, STATS_K=MAP_ID==='gut'?'onlyupBioStats':'onlyupBioStats_'+MAP_ID;
+let MAP_ID=(()=>{let m=null;try{m=new URLSearchParams(location.search).get('map');}catch(e){}if(!MAPS[m]){try{m=localStorage.getItem('onlyupMapV2');}catch(e){}}return MAPS[m]?m:'abyss';})();
+let MD=MAPS[MAP_ID];
+let IS_ABYSS=MAP_ID==='abyss';
+let SAVE_K=MAP_ID==='gut'?'onlyupBio':'onlyupBio_'+MAP_ID, STATS_K=MAP_ID==='gut'?'onlyupBioStats':'onlyupBioStats_'+MAP_ID;
 // --- 혈관 맵 발판 (원래 발판의 모양을 그대로 써서 난이도가 같아요) ---
 alias('b_bact','ecoli',tint(95,0.55));alias('platelet','staph',tint(48,0.75,1.08));alias('antibody','bifido',tint(215,0.7));alias('plasma','water',tint(52,0.85,1.05));
 alias('fibrin','fiber',tint(35,0.75));alias('endo','cell',tint(345,0.55));alias('b_strep','strep',tint(130,0.5));alias('b_virus','phage',tint(160,0.45));
@@ -637,28 +727,178 @@ MAPS.plant.stages=[
     blurb:'잎맥은 잎의 관다발이에요. 잎맥 주변 잎살 세포의 엽록체에서 광합성이 일어나요.'},SUB_P),
   likeGut(6,{name:'잎살·기공',en:'Mesophyll & Stoma',deco:'palate',wall:0x78c858,wall2:0x3a8a30,fog:0x102a14,light:0xf0fff0,part:0xffffff,floorName:'잎맥 끝',
     blurb:'기공은 주로 잎 뒷면에 있고, 공변세포가 열고 닫아요. 마지막 구간, 기공 밖 하늘을 향해!'},SUB_P)];
-const STAGES=MD.stages;
-const CELLK={gut:'cell',blood:'endo',plant:'cortex'}[MAP_ID];
+MAPS.abyss.stages=[
+  // 제1막 (1층 ~ 7층): 말초 신경과 면역 전선
+  {name:'파치니 감각 수용기',en:'1F · Pacinian Corpuscle',h:18,R:16,deco:'plicae',wall:0x321b4c,wall2:0x1c0d30,fog:0x120822,light:0xc8b8ff,part:0x70e8ff,acc:0x6078ff,floorName:'1층 진피 감각 말단',
+    blurb:'1층 출발! 피부 깊은 곳의 파치니 소체가 압력 자극을 감지해 첫 활동전위를 일으킵니다. 7층 체크포인트까지 중간 바닥은 없습니다!',
+    gens:[['ranvier_node',3],['ion_ring',2],['vesicle_bounce',2],['microtubule',2],['neuro_soma',2]]},
+  {name:'도약 전도 축삭',en:'2F · Saltatory Axon',h:17,R:16,deco:'folds',wall:0x2c2054,wall2:0x181034,fog:0x100a24,light:0xb8d0ff,part:0x68f0ff,acc:0x4a90ff,floorName:'2층 무체크포인트 구간',
+    blurb:'2층! 말이집 신경은 랑비에 결절에서만 탈분극이 일어나 흥분이 빠르게 도약 전도됩니다. 헛디디면 1층 바닥까지 직행 추락합니다!',
+    gens:[['ranvier_node',4],['lipid_raft',2],['microtubule',2],['ion_ring',2],['vesicle_bounce',1]]},
+  {name:'비만세포 히스타민 폭풍',en:'3F · Mast Cell Storm',h:17,R:16,deco:'haustra',wall:0x481a44,wall2:0x280c28,fog:0x1c081c,light:0xffb8e8,part:0xff70c8,acc:0xd848a8,floorName:'3층 무체크포인트 구간',
+    blurb:'3층! 상처 부위의 비만세포가 히스타민을 분비해 모세혈관을 확장시키고 백혈구를 불러 모읍니다.',
+    gens:[['vesicle_bounce',3],['synapse_trap',2],['perforin',2],['ranvier_node',2],['lipid_raft',2]]},
+  {name:'대식세포 파고리소좀',en:'4F · Phagolysosome',h:18,R:16,deco:'rugae',wall:0x4c1e38,wall2:0x2a0e20,fog:0x1e0814,light:0xffc0d8,part:0xb8ff4a,acc:0xe84878,floorName:'4층 무체크포인트 구간',
+    blurb:'4층! 대식세포가 병원체를 삼켜 리소좀 효소로 분해하고 항원 조각을 제시합니다. 가운데 형광 독소 함정을 피하세요!',
+    gens:[['synapse_trap',3],['perforin',2],['microtubule',2],['ion_ring',2],['vesicle_bounce',2]]},
+  {name:'보조 T세포 사이토카인 폭포',en:'5F · Helper T Cascade',h:18,R:16,deco:'plicae',wall:0x3c245c,wall2:0x201038,fog:0x160a28,light:0xd8c0ff,part:0x90d8ff,acc:0x9858f0,floorName:'5층 무체크포인트 구간',
+    blurb:'5층! 대식세포가 제시한 항원을 인식한 보조 T림프구가 사이토카인을 분비해 B세포와 세포독성 T세포를 활성화합니다.',
+    gens:[['ion_ring',3],['ranvier_node',3],['lipid_raft',2],['microtubule',2],['vesicle_bounce',2]]},
+  {name:'세포독성 T세포 퍼포린 전선',en:'6F · Perforin Frontline',h:19,R:16,deco:'folds',wall:0x4a1c4c,wall2:0x280c2a,fog:0x1c0620,light:0xffc8f0,part:0xff9860,acc:0xf06048,floorName:'6층 무체크포인트 구간',
+    blurb:'6층! 세포독성 T림프구가 퍼포린으로 감염 세포막에 구멍을 뚫습니다. 이 층 꼭대기의 연동 패드를 타면 대망의 7층 1차 체크포인트입니다!',
+    gens:[['perforin',4],['synapse_trap',2],['ranvier_node',2],['microtubule',2],['vesicle_bounce',2]]},
+  {name:'척수 후근 신경절 [★CP1]',en:'7F · Dorsal Root Ganglion',h:21,R:16,deco:'haustra',wall:0x1e4a58,wall2:0x0e2832,fog:0x081a22,light:0xb8fff0,part:0x60ffd8,acc:0x20d8b0,floorName:'★ 7층 1차 체크포인트',
+    blurb:'★ 7층 1차 체크포인트 저장 완료! 감각 뉴런의 신경세포체가 모인 후근 신경절입니다. 7층에서는 떨어져도 안전 고리가 받아 주지만, 8층부터는 다시 무체크포인트 심연입니다!',
+    gens:[['ranvier_node',3],['microtubule',3],['ion_ring',2],['vesicle_bounce',2],['lipid_raft',2]]},
+  // 제2막 (8층 ~ 14층): 척수 반사궁과 시냅스 폭풍
+  {name:'척수 회백질 연합 뉴런',en:'8F · Spinal Interneuron',h:18,R:16,deco:'folds',wall:0x262858,wall2:0x141434,fog:0x0c0c24,light:0xc0c8ff,part:0x80a8ff,acc:0x5870e8,floorName:'8층 무체크포인트 구간',
+    blurb:'8층! 척수 속질(회백질)의 연합 뉴런이 감각 신호를 받아 반사 명령을 중계합니다. 체크포인트가 아닌 층에서 떨어지면 1층 바닥까지 추락합니다!',
+    gens:[['microtubule',3],['ranvier_node',3],['synapse_trap',2],['ion_ring',2],['vesicle_bounce',2]]},
+  {name:'전압 개폐 Na⁺ 통로 급류',en:'9F · Na+ Channel Surge',h:18,R:16,deco:'plicae',wall:0x1c3860,wall2:0x0c1e38,fog:0x061224,light:0xb8e8ff,part:0x40e8ff,acc:0x28a8f8,floorName:'9층 무체크포인트 구간',
+    blurb:'9층! 역치 이상의 자극에 전압 개폐 Na⁺ 통로가 열려 Na⁺이 세포 안으로 확산되며 막전위가 +30mV까지 치솟습니다(탈분극).',
+    gens:[['ion_ring',4],['lipid_raft',3],['ranvier_node',2],['microtubule',2],['vesicle_bounce',2]]},
+  {name:'Na⁺-K⁺ 펌프 능동수송 회전문',en:'10F · Na+/K+ ATPase Pump',h:18,R:16,deco:'haustra',wall:0x28345c,wall2:0x141c36,fog:0x0a1024,light:0xd0e0ff,part:0xffe060,acc:0x48b8d8,floorName:'10층 무체크포인트 구간',
+    blurb:'10층! Na⁺-K⁺ 펌프가 ATP를 소모해 Na⁺ 3개를 밖으로, K⁺ 2개를 안으로 능동 수송하여 분극 상태(-70mV)를 유지합니다.',
+    gens:[['perforin',3],['ion_ring',3],['synapse_trap',2],['lipid_raft',2],['vesicle_bounce',2]]},
+  {name:'시냅스 틈 아세틸콜린 도약',en:'11F · Synaptic Cleft Leap',h:18,R:16,deco:'rugae',wall:0x3e2058,wall2:0x220e34,fog:0x140822,light:0xe8c0ff,part:0xff90e8,acc:0xb858f0,floorName:'11층 무체크포인트 구간',
+    blurb:'11층! 축삭돌기 말단의 시냅스 소포가 세포막과 융합해 아세틸콜린을 방출합니다. 흥분의 전달은 축삭 말단에서 다음 뉴런의 가지돌기 쪽으로만 일어납니다!',
+    gens:[['vesicle_bounce',4],['ranvier_node',3],['microtubule',2],['synapse_trap',2],['lipid_raft',2]]},
+  {name:'억제성 시냅스 과분극 함정',en:'12F · Hyperpolarization Trap',h:19,R:16,deco:'plicae',wall:0x4a183c,wall2:0x280820,fog:0x1a0414,light:0xffb8d8,part:0xb8ff2a,acc:0xe83880,floorName:'12층 무체크포인트 구간',
+    blurb:'12층! 억제성 신경전달물질(GABA)이 Cl⁻ 통로를 열어 막전위를 더 낮추는 과분극을 일으킵니다. 녹색 독소 웅덩이를 조심하세요!',
+    gens:[['synapse_trap',4],['lipid_raft',3],['ion_ring',2],['microtubule',2],['perforin',2]]},
+  {name:'뇌줄기 생명유지 중추',en:'13F · Brainstem Core',h:20,R:16,deco:'folds',wall:0x38244e,wall2:0x1e102c,fog:0x12081c,light:0xd8c8ff,part:0x98b8ff,acc:0x8868e8,floorName:'13층 무체크포인트 구간',
+    blurb:'13층! 호흡·심장박동의 연수, 교뇌, 동공 반사의 중뇌로 이루어진 뇌줄기입니다. 이 층 끝의 연동 패드를 타면 14층 2차 체크포인트입니다!',
+    gens:[['dna_hell',1],['microtubule',3],['ranvier_node',3],['synapse_trap',2],['vesicle_bounce',2]]},
+  {name:'시상·시상하부 성소 [★CP2]',en:'14F · Hypothalamus Sanctuary',h:21,R:16,deco:'haustra',wall:0x4c3818,wall2:0x2c200a,fog:0x1c1404,light:0xffeeb8,part:0xffd860,acc:0xf0b828,floorName:'★ 14층 2차 체크포인트',
+    blurb:'★ 14층 2차 체크포인트 저장 완료! 자율신경과 호르몬을 총괄해 체온·혈당·삼투압 항상성을 조절하는 간뇌(시상·시상하부) 성소입니다!',
+    gens:[['ion_ring',3],['perforin',3],['ranvier_node',2],['microtubule',2],['vesicle_bounce',2]]},
+  // 제3막 (15층 ~ 21층): 대뇌 피질과 중심원리 코어
+  {name:'소뇌 평형감각 미로',en:'15F · Cerebellar Labyrinth',h:18,R:16,deco:'folds',wall:0x24384c,wall2:0x121e2c,fog:0x08101a,light:0xc8e8ff,part:0x78d8ff,acc:0x3898d8,floorName:'15층 무체크포인트 구간',
+    blurb:'15층! 내이의 반고리관·전정기관과 함께 정밀한 수의 운동과 몸의 평형을 유지하는 소뇌입니다. 좁은 미세소관 위에서 균형을 잡으세요!',
+    gens:[['microtubule',4],['lipid_raft',3],['ranvier_node',2],['ion_ring',2],['perforin',2]]},
+  {name:'해마 장기기억(LTP) 회로',en:'16F · Hippocampal LTP Circuit',h:18,R:16,deco:'plicae',wall:0x2e2458,wall2:0x181034,fog:0x0e0822,light:0xd8c8ff,part:0xc098ff,acc:0x7858f0,floorName:'16층 무체크포인트 구간',
+    blurb:'16층! 반복적인 시냅스 자극으로 신경전달 효율이 강화되는 해마의 장기 증강(LTP) 기억 회로입니다.',
+    gens:[['ranvier_node',4],['vesicle_bounce',3],['synapse_trap',2],['ion_ring',2],['microtubule',2]]},
+  {name:'혈액뇌장벽(BBB) 밀착연접',en:'17F · Blood-Brain Barrier',h:19,R:16,deco:'haustra',wall:0x481c38,wall2:0x280c1e,fog:0x1a0612,light:0xffc0dc,part:0xff80b0,acc:0xe04888,floorName:'17층 무체크포인트 구간',
+    blurb:'17층! 성상교세포 발돌기가 뇌 모세혈관을 감싸 독소와 병원체의 침입을 차단하는 혈액뇌장벽입니다.',
+    gens:[['synapse_trap',3],['perforin',3],['lipid_raft',3],['microtubule',2],['ion_ring',2]]},
+  {name:'핵공 복합체와 크로마틴',en:'18F · Nuclear Pore & Chromatin',h:20,R:16,deco:'rugae',wall:0x381e54,wall2:0x1e0e32,fog:0x120620,light:0xe0c0ff,part:0xd888ff,acc:0xa848f0,floorName:'18층 무체크포인트 구간',
+    blurb:'18층! 뉴런 핵막의 핵공 복합체(NPC)를 통과해 히스톤 단백질에 감긴 초고밀도 크로마틴 이중나선으로 진입합니다!',
+    gens:[['dna_hell',1],['ion_ring',3],['perforin',3],['ranvier_node',2],['microtubule',2]]},
+  {name:'RNA 중합효소 전사 코어',en:'19F · RNA Transcription Core',h:19,R:16,deco:'plicae',wall:0x1c3c4c,wall2:0x0c202c,fog:0x06121a,light:0xb8f0ff,part:0x58f8e0,acc:0x28c8b8,floorName:'19층 무체크포인트 구간',
+    blurb:'19층! RNA 중합효소가 프로모터에 결합해 DNA 주형 가닥(3\'→5\')으로부터 mRNA(5\'→3\')를 전사하는 중심원리 코어입니다.',
+    gens:[['microtubule',3],['synapse_trap',3],['lipid_raft',3],['ranvier_node',2],['vesicle_bounce',2]]},
+  {name:'스플라이소좀과 개시 코돈',en:'20F · Spliceosome & AUG Codon',h:20,R:16,deco:'folds',wall:0x442048,wall2:0x260e28,fog:0x18081a,light:0xf8c8ff,part:0xff98f0,acc:0xd858e8,floorName:'20층 무체크포인트 구간',
+    blurb:'20층! 인트론을 제거하고 엑손만 연결한 성숙 mRNA에서 개시 코돈(AUG)으로 번역이 시작됩니다. 꼭대기 패드 너머가 21층 최종 체크포인트입니다!',
+    gens:[['dna_hell',1],['synapse_trap',3],['perforin',3],['microtubule',2],['vesicle_bounce',2]]},
+  {name:'대뇌 피질 의식 각성 [★CP3]',en:'21F · Cerebral Cortex Crown',h:22,R:16,deco:'palate',wall:0x4c2858,wall2:0x2a1234,fog:0x1a0a24,light:0xfff0ff,part:0xffffff,acc:0xff78c8,floorName:'★ 21층 최종 체크포인트',
+    blurb:'★ 21층 최종 체크포인트 도달! 수백억 뉴런의 시냅스가 발화하는 대뇌 겉질 최정상입니다. 마지막 코어를 정복하고 의식의 빛으로 탈출하세요!',
+    gens:[['dna_hell',1],['synapse_trap',3],['microtubule',3],['ranvier_node',3],['ion_ring',2],['vesicle_bounce',2]]}
+];
+let STAGES=MD.stages;
+let CELLK={gut:'cell',blood:'endo',plant:'cortex',abyss:'neuro_soma'}[MAP_ID];
+const isAbyssCP=si=>!IS_ABYSS||(si===0||(si+1)%7===0);
+const hasLaunchPadAtEnd=si=>!IS_ABYSS||(si===5||si===12||si===19||si===20);
 rng=mulberry32((()=>{try{const v=+new URLSearchParams(location.search).get('seed');if(v>0)return v;}catch(e){}return MD.seed;})());
 
 let Y_END=0;STAGES.forEach(s=>{s.y0=Y_END;Y_END+=s.h;s.y1=Y_END;});
 const PLATFORMS=[],FLOORS=[],PADS=[];
-const MAXC={dna:1,golgi:2,neuron:2};
+const MAXC={dna:1,golgi:2,neuron:2,dna_hell:1};
 function pickGen(S,counts,lastKey){let tot=0;const L=S.gens.filter(g=>g[0]!==lastKey&&!(MAXC[BASE[g[0]]||g[0]]&&(counts[g[0]]||0)>=MAXC[BASE[g[0]]||g[0]]));for(const g of L)tot+=g[1];let r=rng()*tot;for(const g of L){r-=g[1];if(r<=0)return g[0];}return L[0][0];}
 function conflicts(plan,si,lastPlan,reserved){
   for(const f of plan.fp){
-    const lists=[reserved];for(const p of PLATFORMS){if(p.si!==si)continue;
+    const lists=[reserved];for(const p of PLATFORMS){if(!IS_ABYSS&&p.si!==si)continue;
       if(p.plan&&p.plan===lastPlan){if(p.fp.length<2)continue;const ex=p.plan.exit;
-        // long structures: only the circle around the exit may touch the next platform; the rest of the walkway must stay clear
         lists.push(p.fp.map(q=>Math.hypot(q.x-ex.x,q.z-ex.z)<=q.r?{x:ex.x,z:ex.z,r:ex.r,top:q.top,bot:q.bot}:q));continue;}
       lists.push(p.fp);}
-    for(const L of lists)for(const q of L){const d=Math.hypot(f.x-q.x,f.z-q.z);if(d>f.r+q.r+0.3)continue;if(f.bot<q.top+1.9&&q.bot<f.top+1.9)return true;}
+    for(const L of lists)for(const q of L){
+      if(IS_ABYSS&&Math.abs(f.top-q.top)>16&&f.bot>q.top+2)continue;
+      const d=Math.hypot(f.x-q.x,f.z-q.z);if(d>f.r+q.r+(IS_ABYSS?0.35:0.3))continue;if(f.bot<q.top+2.0&&q.bot<f.top+2.0)return true;}
   }return false;}
 function inBounds(plan,S){for(const f of plan.fp){if(Math.hypot(f.x,f.z)+f.r>S.R-1.6)return false;if(f.top>S.y1-4.2)return false;if(f.bot<S.y0+0.1)return false;}return true;}
+function inAbyssBounds(plan,S,isEnd){const maxY=isEnd?S.y1-4.0:S.y1+1.5;for(const f of plan.fp){const r=Math.hypot(f.x,f.z);if(r+f.r>S.R-1.5)return false;if(r-f.r<3.6)return false;if(f.top>maxY)return false;if(f.bot<0.2)return false;}return true;}
+
+let abyssCur=null,abyssLastPlan=null,abyssLastKey=null;
+function genAbyssStage(si){
+  const S=STAGES[si];CUR={map:VOX,vs:VS};const reserved=[];const isCP=isAbyssCP(si),isEnd=hasLaunchPadAtEnd(si);
+  if(si===0){
+    FLOORS.push({y:0,hole:0,R:S.R,si:0,isCP:true});
+    torusXZ(0,0,0,2.6,0.6,(x,y,z,a,dn)=>dn>0.4?0x70f0ff:(Math.sin(a*20)>0.2?0x4868d8:0x283888));
+    cylY(0,0,0,1.2,0.28,(x,y,z,rr)=>rr<0.6?0xffe866:0x38d8ff,6);
+    const a0=R(0,TAU);abyssCur={x:Math.cos(a0)*4.8,z:Math.sin(a0)*4.8,top:0,r:0.6,h:a0+Math.PI/2};S.start={x:0,y:0,z:0};
+  }else if(isCP){
+    FLOORS.push({y:S.y0,hole:3.2,R:S.R,si,isCP:true});
+    const rc1=si===6?0x58ffd8:(si===13?0xffd858:0xff78d8),rc2=si===6?0x188878:(si===13?0x986814:0x982878);
+    torusXZ(0,S.y0,0,3.2,0.75,(x,y,z,a,dn)=>dn>0.45?rc1:(Math.sin(a*24)>0.3?rc2:shade(rc2,0.8)));
+    reserved.push({x:0,z:0,r:4.3,top:S.y0+5.5,bot:S.y0-1.2});
+    const a=R(0,TAU);abyssCur={x:Math.cos(a)*5.8,z:Math.sin(a)*5.8,top:S.y0,r:0.55,h:a+Math.PI/2};S.start={x:abyssCur.x,y:S.y0,z:abyssCur.z};
+  }else{
+    S.start={x:abyssCur.x,y:abyssCur.top,z:abyssCur.z};
+  }
+  if(isEnd)reserved.push({x:0,z:0,r:2.2,top:S.y1+1,bot:S.y1-6});
+  const counts={};
+  const place=plan=>{plan.build();counts[plan.key]=(counts[plan.key]||0)+1;PLATFORMS.push({key:plan.key,fp:plan.fp,si,plan});abyssLastPlan=plan;abyssLastKey=plan.key;
+    abyssCur={x:plan.exit.x,z:plan.exit.z,top:plan.exit.top,r:plan.exit.r,h:plan.exit.h,bouncy:!!plan.exit.bouncy,slippery:!!plan.exit.slippery};};
+  const targetTop=isEnd?(S.y1-6.8):(S.y1-1.2),spiralDir=(si<6)?1:(si<13?-1:1);let guard=0;
+  while(abyssCur.top<targetTop&&guard++<180){
+    let placed=false;
+    for(let at=0;at<45&&!placed;at++){
+      let key=at<32?pickGen(S,counts,abyssLastKey):'neuro_soma';
+      if(key==='dna_hell'&&abyssCur.top>targetTop-10.5)key='ranvier_node';
+      const act=si<6?0:(si<13?1:2);let dy,gap;
+      if(abyssCur.bouncy){dy=R(1.55,2.25+act*0.08);gap=R(1.35,2.05+act*0.08);}
+      else if(abyssCur.slippery){dy=R(0.55,1.05);gap=R(1.05,1.42);}
+      else if(abyssCur.r<=0.50){dy=R(0.65,1.18);gap=R(1.15,1.58+act*0.04);}
+      else{dy=R(0.75,1.32+act*0.04);gap=R(1.30,1.82+act*0.06);}
+      if(!abyssCur.bouncy){
+        const tFlight=(10.4+Math.sqrt(Math.max(0.1,108.16-56*(dy+0.25))))/28;
+        const vEff=abyssCur.slippery?3.8:(abyssCur.r<=0.50?4.6:5.2);
+        const maxGap=vEff*tFlight-0.55;if(gap>maxGap)gap=Math.max(0.95,maxGap);
+      }
+      const curR=Math.hypot(abyssCur.x,abyssCur.z)||6.0,baseAng=Math.atan2(abyssCur.z,abyssCur.x),tangAng=baseAng+spiralDir*Math.PI/2;
+      const radialPull=Math.max(-0.65,Math.min(0.65,(9.8-curR)*0.16));
+      const h=tangAng-spiralDir*radialPull+R(-0.32,0.32)*(1+at*0.04);
+      const plan=GEN[key]({x:abyssCur.x,z:abyssCur.z,top:abyssCur.top,r:abyssCur.r,h,gap,dy,y0:S.y0});if(plan.exit.h===undefined)plan.exit.h=h;
+      if(!inAbyssBounds(plan,S,isEnd))continue;
+      if(conflicts(plan,si,abyssLastPlan,reserved))continue;
+      place(plan);placed=true;
+    }
+    if(!placed){
+      for(let at=0;at<60&&!placed;at++){
+        const baseAng=Math.atan2(abyssCur.z,abyssCur.x),h=baseAng+spiralDir*Math.PI/2+R(-0.8,0.8);
+        const plan=GEN.neuro_soma({x:abyssCur.x,z:abyssCur.z,top:abyssCur.top,r:abyssCur.r,h,gap:R(1.0,1.45),dy:R(0.55,1.05),y0:S.y0});plan.exit.h=h;
+        if(inAbyssBounds(plan,S,isEnd)&&!conflicts(plan,si,abyssLastPlan,reserved)){place(plan);placed=true;}
+      }
+      if(!placed)break;
+    }
+  }
+  if(isEnd){
+    for(let g2=0;g2<14;g2++){
+      const dc=Math.hypot(abyssCur.x,abyssCur.z);if(dc-abyssCur.r<=1.35+1.85)break;
+      let done=false,fb=null;
+      for(let at=0;at<36&&!done;at++){
+        const h=Math.atan2(-abyssCur.z,-abyssCur.x)+R(-0.45,0.45)*(0.25+at/14);
+        const gap=Math.min(R(1.05,1.52),Math.max(0.85,dc-abyssCur.r-1.35-1.5));
+        const room=(S.y1-3.2)-abyssCur.top,dy=Math.max(0.2,Math.min(R(0.45,0.90),room));
+        const key=(at<14&&dc>6.5&&rng()<0.5)?'vesicle_bounce':'neuro_soma';
+        const plan=GEN[key]({x:abyssCur.x,z:abyssCur.z,top:abyssCur.top,r:abyssCur.r,h,gap,dy,y0:S.y0});plan.exit.h=h;
+        const exR=Math.hypot(plan.exit.x,plan.exit.z);
+        if(exR<1.35+plan.exit.r+0.55||exR+plan.exit.r>S.R-1.5)continue;
+        if(!fb)fb=plan;if(conflicts(plan,si,abyssLastPlan,[]))continue;place(plan);done=true;
+      }
+      if(!done){if(fb)place(fb);else break;}
+    }
+    const padTop=Math.min(abyssCur.top+R(0.35,0.70),S.y1-2.4);
+    cylY(0,padTop-0.5,0,1.35,0.5,(x,y,z,rr)=>(Math.floor(rr*5)%2?0x7dffd8:0x2ec8a0),5);
+    PADS.push({x:0,z:0,top:padTop,si});PLATFORMS.push({key:'pad',fp:[{x:0,z:0,r:1.35,top:padTop,bot:padTop-0.5}],si,plan:null});
+  }
+}
+
 function genStage(si){
+  if(IS_ABYSS){genAbyssStage(si);return;}
   const S=STAGES[si];CUR={map:VOX,vs:VS};const reserved=[];
-  if(si===0){FLOORS.push({y:0,hole:0,R:S.R,si:0});torusXZ(0,0,0,2.6,0.6,(x,y,z,a,dn)=>dn>0.4?shade(MD.ring[0],0.92):(Math.sin(a*20)>0.2?shade(MD.ring[1],0.92):shade(MD.ring[2],0.86)));}
-  else{FLOORS.push({y:S.y0,hole:3.2,R:Math.max(S.R,STAGES[si-1].R),si});
+  if(si===0){FLOORS.push({y:0,hole:0,R:S.R,si:0,isCP:true});torusXZ(0,0,0,2.6,0.6,(x,y,z,a,dn)=>dn>0.4?shade(MD.ring[0],0.92):(Math.sin(a*20)>0.2?shade(MD.ring[1],0.92):shade(MD.ring[2],0.86)));}
+  else{FLOORS.push({y:S.y0,hole:3.2,R:Math.max(S.R,STAGES[si-1].R),si,isCP:true});
     torusXZ(0,S.y0,0,3.2,0.75,(x,y,z,a,dn)=>dn>0.5?MD.ring[0]:(Math.sin(a*24)>0.3?MD.ring[1]:MD.ring[2]));reserved.push({x:0,z:0,r:4.3,top:S.y0+5.5,bot:S.y0-1});}
   reserved.push({x:0,z:0,r:2.0,top:S.y1+1,bot:S.y1-6});
   let cur;if(si===0)cur={x:0,z:0,top:0,r:3.4,h:R(0,TAU)};else{const a=R(0,TAU);cur={x:Math.cos(a)*5.6,z:Math.sin(a)*5.6,top:S.y0,r:0.5,h:a+R(-1,1)};}
@@ -698,20 +938,20 @@ function genStage(si){
   cylY(0,padTop-0.5,0,1.35,0.5,(x,y,z,rr)=>(Math.floor(rr*5)%2?0x7dffd8:0x2ec8a0),5);
   PADS.push({x:0,z:0,top:padTop,si});PLATFORMS.push({key:'pad',fp:[{x:0,z:0,r:1.35,top:padTop,bot:padTop-0.5}],si,plan:null});
 }
-function genFinal(){CUR={map:VOX,vs:VS};const S=STAGES[STAGES.length-1];FLOORS.push({y:Y_END,hole:3.2,R:S.R,si:STAGES.length});
+function genFinal(){CUR={map:VOX,vs:VS};const S=STAGES[STAGES.length-1];FLOORS.push({y:Y_END,hole:3.2,R:S.R,si:STAGES.length,isCP:true});
   const RC=MD.ringCol||[0xff7a92,0xa02840,0xe0506a];torusXZ(0,Y_END+0.2,0,3.4,1.0,(x,y,z,a,dn)=>dn>0.5?RC[0]:(dn<-0.3?RC[1]:RC[2]));
   if(MD.exit==='teeth')for(let k=0;k<16;k++){const a=k*TAU/16;const c=Math.cos(a),s=Math.sin(a);const ry=Y_END-0.8;
     fill(-6,ry-0.8,-6,6,Y_END-0.3,6,(x,y,z)=>{const u=x*c+z*s,w=-x*s+z*c;if(u<4.15||u>4.75||Math.abs(w)>0.28)return -1;return y<ry-0.55?0xdfe6ea:0xfbf8ef;});}}
-function genDeco(){CUR={map:DECO,vs:0.5};
+function genDeco(){CUR={map:DECO,vs:0.5};const dyStep=IS_ABYSS?1.8:1,nSph=IS_ABYSS?10:26;
   STAGES.forEach((S,si)=>{const wc=S.wall,wc2=S.wall2;
-    if(S.deco==='haustra'){for(let y=S.y0+3;y<S.y1-1.5;y+=R(4,6))torusXZ(0,y,0,S.R+0.3,1.15,(x,yy,z,a,dn)=>dn>0.2?shade(wc,1.12):shade(wc,0.9));}
-    if(S.deco==='plicae'){for(let y=S.y0+2;y<S.y1-1;y+=R(2.2,3))torusXZ(0,y,0,S.R+0.3,0.85,(x,yy,z,a,dn)=>dn>0.3?shade(wc,1.2):wc);}
-    if(S.deco==='rugae'){for(let k=0;k<16;k++){const pts=[];const ph=R(0,TAU);for(let y=S.y0;y<=S.y1;y+=1){const a=k*TAU/16+0.12*Math.sin(y*0.35+ph);pts.push([Math.cos(a)*(S.R+0.3),y,Math.sin(a)*(S.R+0.3)]);}
+    if(S.deco==='haustra'){for(let y=S.y0+3;y<S.y1-1.5;y+=R(4,6)*(IS_ABYSS?1.4:1))torusXZ(0,y,0,S.R+0.3,1.15,(x,yy,z,a,dn)=>dn>0.2?shade(wc,1.12):shade(wc,0.9));}
+    if(S.deco==='plicae'){for(let y=S.y0+2;y<S.y1-1;y+=R(2.2,3)*(IS_ABYSS?1.6:1))torusXZ(0,y,0,S.R+0.3,0.85,(x,yy,z,a,dn)=>dn>0.3?shade(wc,1.2):wc);}
+    if(S.deco==='rugae'){for(let k=0;k<(IS_ABYSS?10:16);k++){const pts=[];const ph=R(0,TAU);for(let y=S.y0;y<=S.y1;y+=dyStep){const a=k*TAU/(IS_ABYSS?10:16)+0.12*Math.sin(y*0.35+ph);pts.push([Math.cos(a)*(S.R+0.3),y,Math.sin(a)*(S.R+0.3)]);}
       tube(pts,0.95,(x,y,z,t,dn)=>dn<0.6?shade(wc,1.15):wc);}}
-    if(S.deco==='folds'){for(let k=0;k<7;k++){const pts=[];for(let y=S.y0;y<=S.y1;y+=1){const a=k*TAU/7+0.2*Math.sin(y*0.2+k);pts.push([Math.cos(a)*(S.R+0.4),y,Math.sin(a)*(S.R+0.4)]);}
+    if(S.deco==='folds'){for(let k=0;k<(IS_ABYSS?5:7);k++){const pts=[];for(let y=S.y0;y<=S.y1;y+=dyStep){const a=k*TAU/(IS_ABYSS?5:7)+0.2*Math.sin(y*0.2+k);pts.push([Math.cos(a)*(S.R+0.4),y,Math.sin(a)*(S.R+0.4)]);}
       tube(pts,1.0,(x,y,z,t,dn)=>dn<0.6?shade(wc,1.18):wc);}}
-    if(S.deco==='palate'){for(let y=S.y0+3;y<S.y1-1.5;y+=R(3,4.5))torusXZ(0,y,0,S.R+0.3,0.9,(x,yy,z,a,dn)=>(Math.sin(a*10)>0.6)?shade(wc,1.25):wc);}
-    for(let i=0;i<26;i++){const a=R(0,TAU),y=R(S.y0+0.5,S.y1-0.5),r=R(0.8,1.7);const c=rng()<0.3?MD.acc:(rng()<0.5?wc2:shade(wc,1.1));
+    if(S.deco==='palate'){for(let y=S.y0+3;y<S.y1-1.5;y+=R(3,4.5)*(IS_ABYSS?1.4:1))torusXZ(0,y,0,S.R+0.3,0.9,(x,yy,z,a,dn)=>(Math.sin(a*10)>0.6)?shade(wc,1.25):wc);}
+    for(let i=0;i<nSph;i++){const a=R(0,TAU),y=R(S.y0+0.5,S.y1-0.5),r=R(0.8,1.7);const c=rng()<0.3?MD.acc:(rng()<0.5?wc2:shade(wc,1.1));
       sphere(Math.cos(a)*(S.R+0.7),y,Math.sin(a)*(S.R+0.7),r,(x,yy,z,ny,n)=>n>0.85&&hv(x,yy,z)<0.25?shade(c,1.2):c);}
   });CUR={map:VOX,vs:VS};}
 // --------- mesher with ambient occlusion ---------
@@ -734,38 +974,47 @@ function bucket(map,rows){const B=new Map();for(const k of map.keys()){const y=M
 /* ======================= runtime ======================= */
 const $=id=>document.getElementById(id);
 const G=28,JV=10.4,SPEED=6.4,PW=0.3,PH=1.2,EPS=1e-3;
-let renderer,scene,camera,hemi,dirL,ptL,worldMat,player,legL,legR,armL,armR,shadowMesh,beams=[],floaters=[],parts,partPos,dust,dustPos;
-let state='loading',time=0,falls=0,jumps=0,cpStage=0,bestY=0;
+let renderer,scene,camera,hemi,dirL,ptL,worldMat,worldGroup,player,legL,legR,armL,armR,shadowMesh,beams=[],floaters=[],parts,partPos,dust,dustPos,loopStarted=false;
+let state='loading',time=0,falls=0,jumps=0,cpStage=0,bestY=0,maxStageBanner=0,abyssFall=false;
 const pl={x:0,y:0,z:0},vel={x:0,y:0,z:0};
 let onGround=false,coyote=0,jumpBuf=0,lastGroundY=0,slippery=false,stepT=0,walkPh=0,facing=0,groundFloor=false;
 let yaw=0.6,pitch=0.35,camDist=5.2;const camPos=new THREE.Vector3();
 const keys={};let locked=false,dragging=false;const touchMove={x:0,y:0};
-const seen=new Set();let curStageShown=-1;
+const seen=new Set();let curStageShown=-1,curCpShown=-1;
 
 function stageAt(y){let s=0;for(let i=0;i<STAGES.length;i++)if(y>=STAGES[i].y0-0.001)s=i;return s;}
-function boxHit(x,y,z){const x0=Math.floor((x-PW+EPS)/VS),x1=Math.floor((x+PW-EPS)/VS),y0=Math.floor((y+EPS)/VS),y1=Math.floor((y+PH-EPS)/VS),z0=Math.floor((z-PW+EPS)/VS),z1=Math.floor((z+PW-EPS)/VS);
+function boxHit(x,y,z){
+  if(abyssFall&&y>0.75)return false;
+  const x0=Math.floor((x-PW+EPS)/VS),x1=Math.floor((x+PW-EPS)/VS),y0=Math.floor((y+EPS)/VS),y1=Math.floor((y+PH-EPS)/VS),z0=Math.floor((z-PW+EPS)/VS),z1=Math.floor((z+PW-EPS)/VS);
   for(let iy=y0;iy<=y1;iy++)for(let ix=x0;ix<=x1;ix++)for(let iz=z0;iz<=z1;iz++)if(VOX.has(K(ix,iy,iz)))return true;return false;}
-function floorDown(py,ny){const rh=Math.hypot(pl.x,pl.z);for(const f of FLOORS){if(py>=f.y-1e-4&&ny<f.y&&rh+PW>f.hole&&rh<f.R+3)return f.y;}return null;}
-function floorUp(py,ny){const rh=Math.hypot(pl.x,pl.z);for(const f of FLOORS){if(py+PH<=f.y+1e-4&&ny+PH>f.y&&rh+PW>f.hole&&rh<f.R+3)return f.y;}return null;}
+function floorDown(py,ny){const rh=Math.hypot(pl.x,pl.z);for(const f of FLOORS){if(abyssFall&&f.y>0.1)continue;if(py>=f.y-1e-4&&ny<f.y&&rh+PW>f.hole&&rh<f.R+3)return f.y;}return null;}
+function floorUp(py,ny){if(abyssFall)return null;const rh=Math.hypot(pl.x,pl.z);for(const f of FLOORS){if(py+PH<=f.y+1e-4&&ny+PH>f.y&&rh+PW>f.hole&&rh<f.R+3)return f.y;}return null;}
 
 function physStep(dt){let landV=0;const wasG=onGround;onGround=false;groundFloor=false;
   vel.y-=G*dt;if(vel.y<-42)vel.y=-42;
+  // 심연 21층: 체크포인트 층(7층·14층·21층)이 아닌 곳에서 발판을 헛디뎌 추락하면 가장 밑(1층 바닥, y=0)까지 직행 추락
+  if(IS_ABYSS&&!abyssFall&&vel.y<-4&&pl.y<lastGroundY-3.2){
+    const fromSi=stageAt(lastGroundY);
+    if(!isAbyssCP(fromSi))abyssFall=true;
+  }
   const tryAxis=(ax,d)=>{if(d===0)return;pl[ax]+=d;if(boxHit(pl.x,pl.y,pl.z)){if(vel.y<=2.5&&!boxHit(pl.x,pl.y+0.26,pl.z)){pl.y+=0.26;}else{pl[ax]-=d;vel[ax]=0;}}};
   tryAxis('x',vel.x*dt);tryAxis('z',vel.z*dt);
   const py=pl.y;pl.y+=vel.y*dt;
-  if(vel.y<=0){if(boxHit(pl.x,pl.y,pl.z)){pl.y=(Math.floor(pl.y/VS)+1)*VS;let g=0;while(boxHit(pl.x,pl.y,pl.z)&&g++<4)pl.y+=VS;landV=-vel.y;vel.y=0;onGround=true;}
-    else{const fy=floorDown(py,pl.y);if(fy!==null){pl.y=fy;landV=-vel.y;vel.y=0;onGround=true;groundFloor=true;}}}
+  if(vel.y<=0){if(boxHit(pl.x,pl.y,pl.z)){pl.y=(Math.floor(pl.y/VS)+1)*VS;let g=0;while(boxHit(pl.x,pl.y,pl.z)&&g++<4)pl.y+=VS;landV=-vel.y;vel.y=0;onGround=true;abyssFall=false;}
+    else{const fy=floorDown(py,pl.y);if(fy!==null){pl.y=fy;landV=-vel.y;vel.y=0;onGround=true;groundFloor=true;abyssFall=false;}}}
   else{if(boxHit(pl.x,pl.y,pl.z)){pl.y=Math.floor((pl.y+PH-EPS)/VS)*VS-PH;vel.y=0;}else{const fy=floorUp(py,pl.y);if(fy!==null){pl.y=fy-PH-0.01;vel.y=0;}}}
   // tube wall
   const S=STAGES[Math.min(STAGES.length-1,stageAt(pl.y))];const rw=S.R-1.0;const rh=Math.hypot(pl.x,pl.z);
   if(rh>rw){const k=rw/rh;pl.x*=k;pl.z*=k;const nx=pl.x/rw,nz=pl.z/rw;const vd=vel.x*nx+vel.z*nz;if(vd>0){vel.x-=vd*nx;vel.z-=vd*nz;}}
-  if(pl.y<0){pl.y=0;vel.y=0;onGround=true;groundFloor=true;}
+  if(pl.y<0){pl.y=0;vel.y=0;onGround=true;groundFloor=true;abyssFall=false;}
   return wasG?0:landV;}
-const PRIO={0:0,2:1,1:2,5:3,3:4};
+const PRIO={0:0,2:1,1:2,5:3,6:3,3:4};
 let underColor=0xffffff;
-function groundType(){if(groundFloor){underColor=STAGES[stageAt(pl.y)].wall2;return 0;}const iy=Math.round(pl.y/VS)-1;let best=0,found=false;
+function groundType(){const iy=Math.round(pl.y/VS)-1;let best=0,found=false;
   for(const o of [[0,0],[-PW+0.02,-PW+0.02],[PW-0.02,-PW+0.02],[-PW+0.02,PW-0.02],[PW-0.02,PW-0.02]]){const v=VOX.get(K(Math.floor((pl.x+o[0])/VS),iy,Math.floor((pl.z+o[1])/VS)));
-    if(v!==undefined){const t=Math.floor(v/T);if(!found||PRIO[t]>PRIO[best]){best=t;underColor=v%T;found=true;}}}return best;}
+    if(v!==undefined){const t=Math.floor(v/T);if(!found||PRIO[t]>PRIO[best]){best=t;underColor=v%T;found=true;}}}
+  if(groundFloor&&!found){underColor=STAGES[stageAt(pl.y)].wall2;return 0;}
+  return best;}
 
 /* ---------------- audio: hyper-realistic ASMR wax-ball (왁뿌볼) crunch synth ---------------- */
 const AU={c:null,m:null,nb:null,pink:null,crisp:null,muted:false,last:-1,stepSide:1,nextBeat:0,nextGurgle:0,
@@ -859,10 +1108,10 @@ const AU={c:null,m:null,nb:null,pink:null,crisp:null,muted:false,last:-1,stepSid
     p=Math.min(1.45,Math.max(0.35,p));
     // 재질별 선호 아키타입 풀 또는 14종 전체 순환
     let pool=null;
-    if(matKey==='glucose'||matKey==='molar'||matKey==='incisor'||matKey==='phage')pool=[2,5,8,11]; // 얼음사탕·크리스탈 왁뿌볼
-    else if(matKey==='water'||matKey==='saliva'||matKey==='mucus'||matKey==='micelle')pool=[4,6,9,12]; // 과즙 팡팡 젤리 왁뿌볼
-    else if(matKey==='staph'||matKey==='strep'||matKey==='mutans'||matKey==='ribosome')pool=[3,7,10,13]; // 포도송이 연쇄 톡톡 왁뿌볼
-    else if(matKey==='dna'||matKey==='neuron'||matKey==='golgi'||matKey==='mito')pool=[2,6,11,13]; // 스파클링 탄산 왁뿌볼
+    if(matKey==='glucose'||matKey==='molar'||matKey==='incisor'||matKey==='phage'||matKey==='ion_ring'||matKey==='perforin')pool=[2,5,8,11]; // 얼음사탕·크리스탈 왁뿌볼
+    else if(matKey==='water'||matKey==='saliva'||matKey==='mucus'||matKey==='micelle'||matKey==='vesicle_bounce'||matKey==='lipid_raft')pool=[4,6,9,12]; // 과즙 팡팡 젤리 왁뿌볼
+    else if(matKey==='staph'||matKey==='strep'||matKey==='mutans'||matKey==='ribosome'||matKey==='ranvier_node')pool=[3,7,10,13]; // 포도송이 연쇄 톡톡 왁뿌볼
+    else if(matKey==='dna'||matKey==='neuron'||matKey==='golgi'||matKey==='mito'||matKey==='dna_hell'||matKey==='microtubule')pool=[2,6,11,13]; // 스파클링 탄산 왁뿌볼
     let v;
     if(pool&&Math.random()<0.68){
       v=pool[Math.floor(Math.random()*pool.length)];
@@ -1006,7 +1255,7 @@ const AU={c:null,m:null,nb:null,pink:null,crisp:null,muted:false,last:-1,stepSid
     let tt=t;f.frequency.setValueAtTime(250,t);for(let i=0;i<8;i++){tt+=0.12+Math.random()*0.06;f.frequency.exponentialRampToValueAtTime(180+Math.random()*520,tt);}
     s.connect(f);f.connect(a);a.connect(this.m);s.start(t);s.stop(t+1.2);},
   tick(si){if(!this.ok())return;const t=this.c.currentTime;
-    if(t>this.nextBeat){this.o(t,64,38,0.15,0.2,'sine');this.o(t+0.22,58,34,0.13,0.12,'sine');this.nextBeat=t+60/(64+si*3);}
+    if(t>this.nextBeat){this.o(t,64,38,0.15,0.2,'sine');this.o(t+0.22,58,34,0.13,0.12,'sine');this.nextBeat=t+60/(64+Math.min(20,si)*(IS_ABYSS?1.8:3));}
     if(t>this.nextGurgle){this.gurgle();this.nextGurgle=t+(si===4?5:10)+Math.random()*10;}}
 };
 try{AU.muted=localStorage.getItem('onlyupBioMute')==='1';}catch(e){}
@@ -1049,6 +1298,72 @@ function buildTemplate(key){const map=new Map();CUR={map,vs:VS};const plan=GEN[k
 
 const tick=()=>new Promise(r=>setTimeout(r,0));
 function setLoad(p,t){$('load-bar').style.width=(p*100).toFixed(0)+'%';if(t)$('load-text').textContent=t;}
+
+function applyMapTexts(){
+  document.title=MD.title;$('t-sub').textContent=MD.sub;$('t-story').textContent=MD.story;$('w-sub').textContent=MD.winSub;$('w-route').textContent=MD.route;
+  if(IS_ABYSS){
+    $('k-space-dd').textContent='점프 (6층·13층·20층·21층 끝의 연동 패드가 체크포인트 성소와 정상으로 쏘아 올려 줘요)';
+    $('t-note').textContent='극악 난이도 21층(396m) 대원정! 체크포인트는 7층마다(7층·14층·21층) 있으며, 체크포인트가 아닌 층에서 떨어지면 가장 밑(1층 바닥)까지 직행 추락합니다. R 키 또는 1층 중앙 귀환 코어로 저장된 체크포인트로 복귀할 수 있어요.';
+  }else{
+    $('k-space-dd').textContent='점프 (구간마다 끝에 있는 연동 패드는 위층으로 쏘아 올려 줘요)';
+    $('t-note').textContent='헤드폰을 끼면 바삭함이 두 배. 7개 구간, 예상 플레이 시간 약 15분. 떨어져도 각 구간 바닥의 고리에서 멈춰요. 맵은 4종이며 ‘심연 21층’은 7층마다 체크포인트가 있는 극악 난이도예요.';
+  }
+}
+
+async function buildWorld(){
+  state='loading';
+  $('loading').hidden=false;$('loading').style.display='flex';
+  if(worldGroup){scene.remove(worldGroup);}
+  worldGroup=new THREE.Group();scene.add(worldGroup);
+  VOX.clear();DECO.clear();PLATFORMS.length=0;FLOORS.length=0;PADS.length=0;beams.length=0;floaters.length=0;
+  abyssCur=null;abyssLastPlan=null;abyssLastKey=null;
+  Y_END=0;STAGES.forEach(s=>{s.y0=Y_END;Y_END+=s.h;s.y1=Y_END;});
+  rng=mulberry32((()=>{try{const v=+new URLSearchParams(location.search).get('seed');if(v>0)return v;}catch(e){}return MD.seed;})());
+  scene.background=new THREE.Color(STAGES[0].fog);scene.fog.color.setHex(STAGES[0].fog);
+  hemi.color.setHex(MD.hemi[0]);hemi.groundColor.setHex(MD.hemi[1]);
+  const steps=STAGES.length;
+  for(let si=0;si<steps;si++){setLoad(0.05+0.4*si/steps,(IS_ABYSS?(si+1)+'층':'구간')+' 생성 중: '+STAGES[si].name);await tick();genStage(si);}
+  genFinal();setLoad(0.48,'장벽 주름 만드는 중…');await tick();genDeco();
+  const B=bucket(VOX,48);const keysArr=[...B.keys()].sort((a,b)=>a-b);let i=0;
+  for(const c of keysArr){const d=meshData(B.get(c),VOX,VS);if(d.faces){const m=new THREE.Mesh(geoFrom(d),worldMat);worldGroup.add(m);}
+    if((++i)%3===0){setLoad(0.5+0.35*i/keysArr.length,'복셀 다듬는 중…');await tick();}}
+  const BD=bucket(DECO,32);for(const [c,arr] of BD){const d=meshData(arr,DECO,0.5);if(d.faces)worldGroup.add(new THREE.Mesh(geoFrom(d),worldMat));}
+  setLoad(0.88,MD.wallMsg);await tick();
+  STAGES.forEach((S,si)=>{const geo=new THREE.CylinderGeometry(S.R,S.R,S.h,72,Math.max(2,Math.round(S.h/2)),true);const p=geo.attributes.position;
+    for(let k=0;k<p.count;k++){const x=p.getX(k),y=p.getY(k)+S.y0+S.h/2,z=p.getZ(k);const a=Math.atan2(z,x);const b=0.45*Math.sin(a*9+y*0.4)+0.3*Math.sin(a*17-y*0.9)+0.75;const s=(S.R+b)/S.R;p.setX(k,x*s);p.setZ(k,z*s);}
+    geo.computeVertexNormals();const tex=wallTexture(S,si);tex.repeat.set(Math.round(TAU*S.R/12),S.h/12);
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({map:tex,side:THREE.BackSide}));m.position.y=S.y0+S.h/2;worldGroup.add(m);});
+  FLOORS.forEach((f,i)=>{const lo=STAGES[Math.max(0,f.si-1)],hi=STAGES[Math.min(STAGES.length-1,f.si)];const tex=floorTexture(shade(hi.wall2,1.1),lo.wall,i+3);tex.repeat.set(f.R/2,f.R/2);
+    const geo=new THREE.RingGeometry(Math.max(0.01,f.hole),f.R+1.6,96,1);const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({map:tex,side:THREE.DoubleSide}));m.rotation.x=-Math.PI/2;m.position.y=f.y;worldGroup.add(m);});
+  const sky=new THREE.Mesh(new THREE.CircleGeometry(30,48),new THREE.MeshBasicMaterial({color:MD.sky,fog:false}));sky.rotation.x=Math.PI/2;sky.position.y=Y_END+14;worldGroup.add(sky);
+  const exitL=new THREE.PointLight(0xfff2d8,1.4,26,1.4);exitL.position.set(0,Y_END-1,0);worldGroup.add(exitL);
+  PADS.forEach(p=>{const top=(p.si<STAGES.length-1?STAGES[p.si+1].y0:Y_END)+2;const h=top-p.top;const m=new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.15,h,20,1,true),
+    new THREE.MeshBasicMaterial({color:0x7dffd8,transparent:true,opacity:0.12,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));m.position.set(0,p.top+h/2,0);worldGroup.add(m);beams.push(m);});
+  setLoad(0.92,MD.floatMsg);await tick();
+  const FL=MD.FL;const nFl=IS_ABYSS?3:7;
+  const tmpl={};const trng=rng;rng=mulberry32(777);
+  STAGES.forEach((S,si)=>{const flPair=FL[si%FL.length];for(let k=0;k<nFl;k++){const key=flPair[k%flPair.length];if(!tmpl[key])tmpl[key]=buildTemplate(key);const m=new THREE.Mesh(tmpl[key],worldMat);
+    const a=R(0,TAU),r=R(S.R*0.45,S.R-2.5),y=R(S.y0+2,S.y1-2);const s=R(0.45,0.75);m.scale.setScalar(s);m.position.set(Math.cos(a)*r,y,Math.sin(a)*r);
+    floaters.push({m,a,r,y,ph:R(0,TAU),sp:R(0.05,0.12),rs:R(-0.4,0.4)});worldGroup.add(m);}});rng=trng;
+  buildTract();
+  applyMapTexts();
+  setLoad(1,'준비 완료');await tick();
+  $('loading').hidden=true;$('loading').style.display='none';
+  respawnAt(0);state='title';showTitle();
+}
+
+async function switchMap(newId){
+  if(!MAPS[newId]||newId===MAP_ID)return;
+  MAP_ID=newId;MD=MAPS[MAP_ID];IS_ABYSS=MAP_ID==='abyss';
+  SAVE_K=MAP_ID==='gut'?'onlyupBio':'onlyupBio_'+MAP_ID;
+  STATS_K=MAP_ID==='gut'?'onlyupBioStats':'onlyupBioStats_'+MAP_ID;
+  STAGES=MD.stages;CELLK={gut:'cell',blood:'endo',plant:'cortex',abyss:'neuro_soma'}[MAP_ID];
+  try{localStorage.setItem('onlyupMapV2',MAP_ID);localStorage.setItem('onlyupMap',MAP_ID);}catch(e){}
+  try{if(history.replaceState&&location.protocol.startsWith('http'))history.replaceState(null,'',location.pathname+'?map='+MAP_ID);}catch(e){}
+  $('title').hidden=true;
+  await buildWorld();
+}
+
 async function boot(){
   if(typeof THREE==='undefined'){setLoad(0,'3D 엔진을 불러오지 못했어요. 네트워크를 확인하고 새로고침해 주세요.');return;}
   const canvas=$('c');renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'});
@@ -1059,35 +1374,6 @@ async function boot(){
   dirL=new THREE.DirectionalLight(0xffffff,0.55);scene.add(dirL);scene.add(dirL.target);
   ptL=new THREE.PointLight(0xfff0d8,0.9,11,1.6);scene.add(ptL);
   worldMat=new THREE.MeshLambertMaterial({vertexColors:true});
-  const steps=STAGES.length;
-  for(let si=0;si<steps;si++){setLoad(0.05+0.4*si/steps,'구간 생성 중: '+STAGES[si].name);await tick();genStage(si);}
-  genFinal();setLoad(0.48,'장벽 주름 만드는 중…');await tick();genDeco();
-  // mesh chunks
-  const B=bucket(VOX,48);const keysArr=[...B.keys()].sort((a,b)=>a-b);let i=0;
-  for(const c of keysArr){const d=meshData(B.get(c),VOX,VS);if(d.faces){const m=new THREE.Mesh(geoFrom(d),worldMat);scene.add(m);}
-    if((++i)%3===0){setLoad(0.5+0.35*i/keysArr.length,'복셀 다듬는 중…');await tick();}}
-  const BD=bucket(DECO,32);for(const [c,arr] of BD){const d=meshData(arr,DECO,0.5);if(d.faces)scene.add(new THREE.Mesh(geoFrom(d),worldMat));}
-  setLoad(0.88,MD.wallMsg);await tick();
-  // walls
-  STAGES.forEach((S,si)=>{const geo=new THREE.CylinderGeometry(S.R,S.R,S.h,72,Math.max(2,Math.round(S.h/2)),true);const p=geo.attributes.position;
-    for(let k=0;k<p.count;k++){const x=p.getX(k),y=p.getY(k)+S.y0+S.h/2,z=p.getZ(k);const a=Math.atan2(z,x);const b=0.45*Math.sin(a*9+y*0.4)+0.3*Math.sin(a*17-y*0.9)+0.75;const s=(S.R+b)/S.R;p.setX(k,x*s);p.setZ(k,z*s);}
-    geo.computeVertexNormals();const tex=wallTexture(S,si);tex.repeat.set(Math.round(TAU*S.R/12),S.h/12);
-    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({map:tex,side:THREE.BackSide}));m.position.y=S.y0+S.h/2;scene.add(m);});
-  FLOORS.forEach((f,i)=>{const lo=STAGES[Math.max(0,f.si-1)],hi=STAGES[Math.min(STAGES.length-1,f.si)];const tex=floorTexture(shade(hi.wall2,1.1),lo.wall,i+3);tex.repeat.set(f.R/2,f.R/2);
-    const geo=new THREE.RingGeometry(Math.max(0.01,f.hole),f.R+1.6,96,1);const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({map:tex,side:THREE.DoubleSide}));m.rotation.x=-Math.PI/2;m.position.y=f.y;scene.add(m);});
-  // sky above the mouth
-  const sky=new THREE.Mesh(new THREE.CircleGeometry(30,48),new THREE.MeshBasicMaterial({color:MD.sky,fog:false}));sky.rotation.x=Math.PI/2;sky.position.y=Y_END+14;scene.add(sky);
-  const exitL=new THREE.PointLight(0xfff2d8,1.4,26,1.4);exitL.position.set(0,Y_END-1,0);scene.add(exitL);
-  // pad beams
-  PADS.forEach(p=>{const top=(p.si<STAGES.length-1?STAGES[p.si+1].y0:Y_END)+2;const h=top-p.top;const m=new THREE.Mesh(new THREE.CylinderGeometry(1.15,1.15,h,20,1,true),
-    new THREE.MeshBasicMaterial({color:0x7dffd8,transparent:true,opacity:0.12,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));m.position.set(0,p.top+h/2,0);scene.add(m);beams.push(m);});
-  // floaters
-  setLoad(0.92,MD.floatMsg);await tick();
-  const FL=MD.FL;
-  const tmpl={};const trng=rng;rng=mulberry32(777);
-  STAGES.forEach((S,si)=>{for(let k=0;k<7;k++){const key=FL[si][k%2];if(!tmpl[key])tmpl[key]=buildTemplate(key);const m=new THREE.Mesh(tmpl[key],worldMat);
-    const a=R(0,TAU),r=R(S.R*0.45,S.R-2.5),y=R(S.y0+2,S.y1-2);const s=R(0.45,0.75);m.scale.setScalar(s);m.position.set(Math.cos(a)*r,y,Math.sin(a)*r);
-    floaters.push({m,a,r,y,ph:R(0,TAU),sp:R(0.05,0.12),rs:R(-0.4,0.4)});scene.add(m);}});rng=trng;
   // dust motes
   const DN=700;dustPos=new Float32Array(DN*3);for(let k=0;k<DN;k++){dustPos[k*3]=(Math.random()-0.5)*36;dustPos[k*3+1]=Math.random()*36;dustPos[k*3+2]=(Math.random()-0.5)*36;}
   const dg=new THREE.BufferGeometry();dg.setAttribute('position',new THREE.BufferAttribute(dustPos,3));dust=new THREE.Points(dg,new THREE.PointsMaterial({color:0xffc0a8,size:0.06,transparent:true,opacity:0.75,depthWrite:false}));scene.add(dust);
@@ -1097,30 +1383,42 @@ async function boot(){
   // player + shadow
   player=buildPlayer();scene.add(player);
   shadowMesh=new THREE.Mesh(new THREE.CircleGeometry(0.4,16),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.35,depthWrite:false}));shadowMesh.rotation.x=-Math.PI/2;scene.add(shadowMesh);
-  buildTract();
-  setLoad(1,'준비 완료');await tick();
-  $('loading').hidden=true;$('loading').style.display='none';
-  respawnAt(0);state='title';showTitle();
-  requestAnimationFrame(loop);
+  await buildWorld();
+  if(!loopStarted){loopStarted=true;requestAnimationFrame(loop);}
 }
 
 /* ---------------- HUD ---------------- */
 const ACC=[0xd0607a,0xb87850,0xff7a92,0xe0b040,0x9ad040,0xb48af0,0xff9aa8];
-function hex(c){return '#'+c.toString(16).padStart(6,'0');}
-function buildTract(){const tr=$('tract');STAGES.forEach((S,si)=>{const d=document.createElement('div');d.className='seg';d.style.height=(S.h/Y_END*100)+'%';d.style.background=hex(ACC[si]);
-  const i=document.createElement('i');i.textContent=S.name;d.appendChild(i);tr.insertBefore(d,$('best'));S.seg=d;});}
+function hex(c){return '#'+((c===undefined?0xd0607a:c)>>>0).toString(16).padStart(6,'0');}
+function buildTract(){const tr=$('tract');tr.querySelectorAll('.seg').forEach(el=>el.remove());
+  STAGES.forEach((S,si)=>{const d=document.createElement('div');
+  const cp=IS_ABYSS&&isAbyssCP(si)&&si>0;
+  d.className='seg'+(cp?' cp-seg':'');d.style.height=(S.h/Y_END*100)+'%';d.style.background=hex(S.acc||ACC[si%ACC.length]);
+  const i=document.createElement('i');i.textContent=IS_ABYSS?((cp?'★ ':'')+(si+1)+'층 · '+S.name):S.name;d.appendChild(i);tr.insertBefore(d,$('best'));S.seg=d;});}
 let toastTimer=0,bannerTimer=0,fallTimer=0;
 function toast(t,p){$('toast-t').textContent=t;$('toast-p').textContent=p;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),6500);}
-function banner(si){const S=STAGES[si];$('b-small').textContent='구간 '+(si+1)+' / '+STAGES.length+'  '+S.floorName+' 통과';$('b-title').textContent=S.name;$('b-text').textContent=S.blurb;
-  if(si===0)$('b-small').textContent='구간 1 / '+STAGES.length+'  '+MD.start;
+function banner(si){const S=STAGES[si];const uLabel=IS_ABYSS?'층':'구간';
+  $('b-small').textContent=uLabel+' '+(si+1)+' / '+STAGES.length+'  '+S.floorName+(IS_ABYSS?'':' 통과');$('b-title').textContent=S.name;$('b-text').textContent=S.blurb;
+  if(si===0)$('b-small').textContent=uLabel+' 1 / '+STAGES.length+'  '+MD.start;
   $('banner').classList.add('show');clearTimeout(bannerTimer);bannerTimer=setTimeout(()=>$('banner').classList.remove('show'),5200);}
-function fallMsg(d){const el=$('fallmsg');el.textContent='−'+d.toFixed(1)+'m 추락';el.classList.add('show');clearTimeout(fallTimer);fallTimer=setTimeout(()=>el.classList.remove('show'),1600);}
+function fallMsg(d,extra){const el=$('fallmsg');el.textContent='−'+d.toFixed(1)+'m 추락'+(extra?' ('+extra+')':'');el.classList.add('show');clearTimeout(fallTimer);fallTimer=setTimeout(()=>el.classList.remove('show'),1900);}
 function popWord(w){if(!w)return;const v=new THREE.Vector3(pl.x,pl.y+1.4,pl.z).project(camera);if(v.z>1)return;const el=document.createElement('div');el.className='pop';el.textContent=w;
   el.style.left=((v.x+1)/2*innerWidth)+'px';el.style.top=((1-v.y)/2*innerHeight)+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),800);}
 function fmt(t){const m=Math.floor(t/60),s=Math.floor(t%60);return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
 let hudT=0;
-function updateHUD(dt){hudT-=dt;if(hudT>0)return;hudT=0.1;const si=stageAt(pl.y);const S=STAGES[si];
-  if(curStageShown!==si){curStageShown=si;$('stg-num').textContent='구간 '+(si+1)+' / '+STAGES.length;$('stg-name').textContent=S.name;$('stg-en').textContent=S.en;
+function updateHUD(dt){
+  if(abyssFall){
+    const el=$('fallmsg');el.textContent='심연 추락 중… −'+Math.max(0,lastGroundY-pl.y).toFixed(1)+'m';el.classList.add('show');
+  }
+  hudT-=dt;if(hudT>0)return;hudT=0.1;const si=stageAt(pl.y);const S=STAGES[si];
+  if(curStageShown!==si||curCpShown!==cpStage){curStageShown=si;curCpShown=cpStage;
+    if(IS_ABYSS){
+      const cpTxt=isAbyssCP(si)?' ★체크포인트':' · CP '+(cpStage+1)+'층';
+      $('stg-num').textContent=(si+1)+'층 / '+STAGES.length+'층'+cpTxt;
+    }else{
+      $('stg-num').textContent='구간 '+(si+1)+' / '+STAGES.length;
+    }
+    $('stg-name').textContent=S.name;$('stg-en').textContent=S.en;
     STAGES.forEach((s,i)=>s.seg.classList.toggle('on',i===si));}
   $('t-time').textContent=fmt(time);$('t-fall').textContent=falls;$('t-prog').textContent=Math.min(100,Math.floor(pl.y/Y_END*100))+'%';
   $('marker').style.bottom=Math.min(100,pl.y/Y_END*100)+'%';$('best').style.bottom=Math.min(100,bestY/Y_END*100)+'%';}
@@ -1128,26 +1426,30 @@ function updateHUD(dt){hudT-=dt;if(hudT>0)return;hudT=0.1;const si=stageAt(pl.y)
 /* ---------------- game flow ---------------- */
 function save(){try{localStorage.setItem(SAVE_K,JSON.stringify({cp:cpStage,time,falls,jumps,best:bestY}));}catch(e){}}
 function loadSave(){try{return JSON.parse(localStorage.getItem(SAVE_K)||'null');}catch(e){return null;}}
-function respawnAt(si){const s=STAGES[si].start;pl.x=s.x;pl.y=s.y+0.02;pl.z=s.z;vel.x=vel.y=vel.z=0;lastGroundY=pl.y;onGround=false;
+function respawnAt(si){const s=STAGES[si].start;pl.x=s.x;pl.y=s.y+0.02;pl.z=s.z;vel.x=vel.y=vel.z=0;lastGroundY=pl.y;onGround=false;abyssFall=false;
   camPos.set(pl.x+Math.sin(yaw)*camDist,pl.y+3,pl.z+Math.cos(yaw)*camDist);}
 function showTitle(){renderMaps();$('title').hidden=false;$('hud').hidden=true;const sv=loadSave();const bc=$('btn-continue');
-  if(sv&&sv.cp>0){bc.hidden=false;bc.textContent='이어하기 ('+STAGES[sv.cp].name+')';}else bc.hidden=true;setTimeout(()=>$('btn-start').focus(),50);}
-function mapBest(id){try{const st=JSON.parse(localStorage.getItem(id==='gut'?'onlyupBioStats':'onlyupBioStats_'+id)||'null');if(st&&st.best>0)return '최고 '+fmtR(st.best);
-  const sv=JSON.parse(localStorage.getItem(id==='gut'?'onlyupBio':'onlyupBio_'+id)||'null');if(sv&&sv.cp>0)return (sv.cp+1)+'/7 구간';}catch(e){}return '새 맵';}
-function renderMaps(){const el=$('maps');el.innerHTML='';Object.values(MAPS).forEach(m=>{const b=document.createElement('button');b.type='button';b.className=m.id===MAP_ID?'on':'';
+  if(sv&&sv.cp>0&&STAGES[sv.cp]){bc.hidden=false;bc.textContent='이어하기 ('+(IS_ABYSS?(sv.cp+1)+'층 · ':'')+STAGES[sv.cp].name+')';}else bc.hidden=true;setTimeout(()=>$('btn-start').focus(),50);}
+function mapBest(id){const nSt=MAPS[id].stages.length,u=id==='abyss'?'층':'구간';
+  try{const st=JSON.parse(localStorage.getItem(id==='gut'?'onlyupBioStats':'onlyupBioStats_'+id)||'null');if(st&&st.best>0)return '최고 '+fmtR(st.best);
+  const sv=JSON.parse(localStorage.getItem(id==='gut'?'onlyupBio':'onlyupBio_'+id)||'null');if(sv&&sv.cp>0)return (sv.cp+1)+'/'+nSt+' '+u;}catch(e){}return id==='abyss'?'극악 · 21층':'새 맵';}
+function renderMaps(){const el=$('maps');el.innerHTML='';Object.values(MAPS).forEach(m=>{const b=document.createElement('button');b.type='button';
+  b.className=(m.id===MAP_ID?'on':'')+(m.hardcore?' hardcore':'');
   b.innerHTML=m.btn+'<small>'+mapBest(m.id)+'</small>';b.setAttribute('aria-pressed',m.id===MAP_ID?'true':'false');
-  b.onclick=()=>{if(m.id===MAP_ID)return;try{localStorage.setItem('onlyupMap',m.id);}catch(e){}location.href=location.pathname+'?map='+m.id;};el.appendChild(b);});}
+  b.onclick=()=>{switchMap(m.id);};el.appendChild(b);});}
 function startGame(cont){AU.init();const sv=cont?loadSave():null;
-  if(sv){cpStage=sv.cp;time=sv.time||0;falls=sv.falls||0;jumps=sv.jumps||0;bestY=sv.best||0;}else{cpStage=0;time=0;falls=0;jumps=0;bestY=0;seen.clear();}
-  respawnAt(cpStage);$('title').hidden=true;$('win').hidden=true;$('pause').hidden=true;$('hud').hidden=false;state='play';curStageShown=-1;
+  if(sv&&STAGES[sv.cp]){cpStage=sv.cp;time=sv.time||0;falls=sv.falls||0;jumps=sv.jumps||0;bestY=sv.best||0;maxStageBanner=cpStage;}else{cpStage=0;time=0;falls=0;jumps=0;bestY=0;maxStageBanner=0;seen.clear();}
+  respawnAt(cpStage);$('title').hidden=true;$('win').hidden=true;$('pause').hidden=true;$('hud').hidden=false;state='play';curStageShown=-1;curCpShown=-1;
   $('touch').hidden=!matchMedia('(pointer: coarse)').matches;banner(cpStage);setTimeout(()=>{$('hint').style.opacity='0';},22000);requestLock();}
 function pauseGame(){if(state!=='play')return;state='pause';touchMove.x=touchMove.y=0;dragging=false;for(const k in keys)keys[k]=false;$('pause').hidden=false;
-  $('pause-info').textContent='지금 '+STAGES[stageAt(pl.y)].name+' 구간, '+fmt(time)+' 경과, 추락 '+falls+'회.';$('btn-sound').textContent=AU.muted?'소리 켜기':'소리 끄기';
+  const si=stageAt(pl.y);
+  $('pause-info').textContent='지금 '+(IS_ABYSS?(si+1)+'층('+STAGES[si].name+'), 체크포인트 '+(cpStage+1)+'층, ':STAGES[si].name+' 구간, ')+fmt(time)+' 경과, 추락 '+falls+'회.';
+  $('btn-sound').textContent=AU.muted?'소리 켜기':'소리 끄기';
   if(document.pointerLockElement)document.exitPointerLock();setTimeout(()=>$('btn-resume').focus(),50);}
 function resumeGame(){$('pause').hidden=true;state='play';AU.init();requestLock();}
-function die(msg){AU.sizzle();toast(msg,'마지막 체크포인트인 '+STAGES[cpStage].name+' 구간 입구로 돌아가요.');respawnAt(cpStage);}
+function die(msg){AU.sizzle();toast(msg,'마지막 체크포인트인 '+(IS_ABYSS?(cpStage+1)+'층 ':'')+STAGES[cpStage].name+' 입구로 돌아가요.');respawnAt(cpStage);}
 function fmtR(t){const m=Math.floor(t/60),s=t%60;return m+'분 '+s.toFixed(1).padStart(4,'0')+'초';}
-function win(){state='win';window.BioGoal&&BioGoal.result('only-up',7,{ok:true,text:'['+MD.cat+'] 정상 도착 · 완료 '+fmtR(time),rank:{cat:MD.cat,v:BioGoal.key([[8,100,1],[time*10,1e8,-1]]),f:{stage:'정상 도착',time:Math.round(time*10)/10}}});AU.fanfare();try{localStorage.removeItem(SAVE_K);const st=JSON.parse(localStorage.getItem(STATS_K)||'{}')||{};st.clears=(st.clears||0)+1;if(!(st.best>0)||time<st.best)st.best=time;localStorage.setItem(STATS_K,JSON.stringify(st));}catch(e){}
+function win(){state='win';const nSt=STAGES.length;window.BioGoal&&BioGoal.result('only-up',nSt,{ok:true,text:'['+MD.cat+'] 정상 도착 · 완료 '+fmtR(time),rank:{cat:MD.cat,v:BioGoal.key([[nSt+1,100,1],[time*10,1e8,-1]]),f:{stage:'정상 도착',time:Math.round(time*10)/10}}});AU.fanfare();try{localStorage.removeItem(SAVE_K);const st=JSON.parse(localStorage.getItem(STATS_K)||'{}')||{};st.clears=(st.clears||0)+1;if(!(st.best>0)||time<st.best)st.best=time;localStorage.setItem(STATS_K,JSON.stringify(st));}catch(e){}
   $('w-time').textContent=fmt(time);$('w-fall').textContent=falls;$('w-jump').textContent=jumps;$('hud').hidden=true;$('touch').hidden=true;$('win').hidden=false;
   if(document.pointerLockElement)document.exitPointerLock();setTimeout(()=>$('btn-again').focus(),50);}
 function requestLock(){if(matchMedia('(pointer: coarse)').matches)return;const c=$('c');try{const r=c.requestPointerLock&&c.requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(e){}}
@@ -1165,7 +1467,6 @@ function factCheck(){const si=stageAt(pl.y);let best=null,bd=1e9;for(const p of 
   if(best&&!seen.has(best)&&META[best]){seen.add(best);toast(META[best][0],META[best][1]);}}
 
 function update(dt){
-  const S0=STAGES[stageAt(pl.y)];
   // input
   let ix=0,iz=0;if(keys.KeyA)ix-=1;if(keys.KeyD)ix+=1;if(keys.KeyW)iz+=1;if(keys.KeyS)iz-=1;ix+=touchMove.x;iz+=touchMove.y;
   if(keys.ArrowLeft)yaw+=dt*2.2;if(keys.ArrowRight)yaw-=dt*2.2;if(keys.ArrowUp)pitch=Math.max(-0.35,pitch-dt*1.5);if(keys.ArrowDown)pitch=Math.min(1.25,pitch+dt*1.5);
@@ -1183,14 +1484,35 @@ function update(dt){
       const si=stageAt(pl.y);let matKey=null,bd=1e9;
       for(const pf of PLATFORMS){if(Math.abs(pf.si-si)>1)continue;for(const f of pf.fp){const d=Math.hypot(pl.x-f.x,pl.z-f.z);if(d<f.r+0.5&&pl.y>f.bot-0.4&&pl.y<f.top+0.7&&d<bd){bd=d;matKey=pf.key;}}}
       const p=Math.min(1.4,0.42+landV/16);popWord(AU.crunch(p,matKey));spawnDebris(underColor,Math.round(10+landV*1.1),Math.min(1.5,0.55+landV/15));
-      const drop=lastGroundY-pl.y;if(drop>4.5){falls++;fallMsg(drop);}factCheck();}
-    if(gt===3){die('위산에 녹아 버렸어요!');return;}
+      const drop=lastGroundY-pl.y;
+      if(drop>4.5){
+        falls++;
+        if(IS_ABYSS&&pl.y<0.5){
+          fallMsg(drop,'1층 바닥까지 추락!');
+          if(cpStage>0)toast('심연 1층 바닥까지 추락했습니다!','R 키를 누르거나 1층 중앙의 황금 귀환 코어를 밟으면 저장된 '+(cpStage+1)+'층 체크포인트로 복귀해요.');
+        }else{
+          fallMsg(drop);
+        }
+      }
+      factCheck();}
+    if(gt===3){die(IS_ABYSS?'과분극 신경독소에 침몰했어요!':'위산에 녹아 버렸어요!');return;}
+    if(gt===6){
+      if(cpStage>0){AU.launch();respawnAt(cpStage);toast((cpStage+1)+'층 체크포인트로 도약!',STAGES[cpStage].name+' 성소로 복귀했습니다.');return;}
+      else toastOnce('recall_core');
+    }
     if(gt===5){const si=stageAt(pl.y);const tgt=(si<STAGES.length-1?STAGES[si+1].y0:Y_END)+2.9;vel.y=Math.sqrt(2*G*Math.max(2,tgt-pl.y));onGround=false;AU.launch();toastOnce('pad');}
     else if(gt===1){vel.y=13.2;onGround=false;AU.boing();}
     if(onGround){lastGroundY=pl.y;
       const sp=Math.hypot(vel.x,vel.z);if(sp>1.5){stepT-=dt;if(stepT<=0){stepT=0.29;AU.step();}}else stepT=0.05;
-      const si=stageAt(pl.y);if(si>cpStage){cpStage=si;AU.chime();banner(si);save();}}}
-  if(pl.y>bestY){bestY=pl.y;if(window.BioGoal)BioGoal.progress('only-up',stageAt(bestY)+1,{text:'['+MD.cat+'] 구간 '+(stageAt(bestY)+1)+' · '+fmtR(time),rank:{cat:MD.cat,v:BioGoal.key([[stageAt(bestY)+1,100,1],[time*10,1e8,-1]]),f:{stage:'구간 '+(stageAt(bestY)+1),time:Math.round(time*10)/10}}});}
+      const si=stageAt(pl.y);
+      if(IS_ABYSS){
+        if(si>maxStageBanner){maxStageBanner=si;banner(si);}
+        if(isAbyssCP(si)&&si>cpStage){cpStage=si;AU.chime();banner(si);save();}
+      }else{
+        if(si>cpStage){cpStage=si;AU.chime();banner(si);save();}
+      }
+    }}
+  if(pl.y>bestY){bestY=pl.y;const u=IS_ABYSS?'층':'구간';if(window.BioGoal)BioGoal.progress('only-up',stageAt(bestY)+1,{text:'['+MD.cat+'] '+u+' '+(stageAt(bestY)+1)+' · '+fmtR(time),rank:{cat:MD.cat,v:BioGoal.key([[stageAt(bestY)+1,100,1],[time*10,1e8,-1]]),f:{stage:u+' '+(stageAt(bestY)+1),time:Math.round(time*10)/10}}});}
   if(pl.y>Y_END+0.6){win();return;}
   // animation
   const sp=Math.hypot(vel.x,vel.z);if(sp>0.4){const tgt=Math.atan2(vel.x,vel.z);let d=tgt-facing;d=Math.atan2(Math.sin(d),Math.cos(d));facing+=d*Math.min(1,dt*14);}
@@ -1199,7 +1521,7 @@ function update(dt){
   player.position.set(pl.x,pl.y+(onGround?Math.abs(Math.sin(walkPh))*0.03*Math.min(1,sp/4):0),pl.z);player.rotation.y=facing;
   time+=dt;AU.tick(stageAt(pl.y));
 }
-function toastOnce(k){if(!seen.has(k)){seen.add(k);toast(META[k][0],META[k][1]);}}
+function toastOnce(k){if(!seen.has(k)&&META[k]){seen.add(k);toast(META[k][0],META[k][1]);}}
 
 function updateCamera(dt,attract){
   if(attract){yaw+=dt*0.12;}
@@ -1239,7 +1561,7 @@ function loop(now){requestAnimationFrame(loop);let dt=(now-lastT)/1000;lastT=now
 
 /* ---------------- input ---------------- */
 addEventListener('keydown',e=>{keys[e.code]=true;
-  if(state==='play'){if(e.code==='Space'){jumpBuf=0.13;e.preventDefault();}if(e.code==='KeyR'){respawnAt(cpStage);toast('체크포인트로 이동',STAGES[cpStage].name+' 구간 입구로 돌아왔어요.');}
+  if(state==='play'){if(e.code==='Space'){jumpBuf=0.13;e.preventDefault();}if(e.code==='KeyR'){respawnAt(cpStage);toast('체크포인트로 이동',(IS_ABYSS?(cpStage+1)+'층 ':'')+STAGES[cpStage].name+' 입구로 돌아왔어요.');}
     if(e.code==='Escape'||e.code==='KeyP')pauseGame();}
   else if(state==='pause'&&(e.code==='Escape'||e.code==='KeyP')){resumeGame();}
   if(e.code==='KeyM'){AU.init();AU.setMuted(!AU.muted);if(state==='play')toast(AU.muted?'소리 꺼짐':'소리 켜짐','M 키로 다시 바꿀 수 있어요.');}
@@ -1255,7 +1577,7 @@ addEventListener('resize',()=>{if(!renderer)return;renderer.setSize(innerWidth,i
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseGame();});
 $('btn-start').onclick=()=>startGame(false);$('btn-continue').onclick=()=>startGame(true);
 $('btn-resume').onclick=resumeGame;$('btn-cp').onclick=()=>{respawnAt(cpStage);resumeGame();};
-$('btn-rank').onclick=()=>{if(!window.BioGoal)return;const st=stageAt(bestY)+1;BioGoal.result('only-up',st,{rankOnly:true,title:'지금까지의 기록',text:'['+MD.cat+'] 구간 '+st+' · '+fmtR(time),rank:{cat:MD.cat,v:BioGoal.key([[st,100,1],[time*10,1e8,-1]]),f:{stage:'구간 '+st,time:Math.round(time*10)/10}}});};
+$('btn-rank').onclick=()=>{if(!window.BioGoal)return;const st=stageAt(bestY)+1,u=IS_ABYSS?'층':'구간';BioGoal.result('only-up',st,{rankOnly:true,title:'지금까지의 기록',text:'['+MD.cat+'] '+u+' '+st+' · '+fmtR(time),rank:{cat:MD.cat,v:BioGoal.key([[st,100,1],[time*10,1e8,-1]]),f:{stage:u+' '+st,time:Math.round(time*10)/10}}});};
 $('btn-sound').onclick=()=>{AU.init();AU.setMuted(!AU.muted);$('btn-sound').textContent=AU.muted?'소리 켜기':'소리 끄기';};
 $('btn-restart').onclick=()=>{try{localStorage.removeItem(SAVE_K);}catch(e){}startGame(false);};
 $('btn-again').onclick=()=>startGame(false);
@@ -1267,11 +1589,12 @@ $('btn-again').onclick=()=>startGame(false);
   joy.addEventListener('pointermove',mv);const end=e=>{if(e.pointerId!==jid)return;jid=null;touchMove.x=touchMove.y=0;knob.style.transform='';};joy.addEventListener('pointerup',end);joy.addEventListener('pointercancel',end);
   $('jumpbtn').addEventListener('pointerdown',e=>{e.preventDefault();AU.init();jumpBuf=0.13;});
   $('pausebtn').addEventListener('click',()=>pauseGame());
+  $('touch-cpbtn').addEventListener('click',()=>{if(state!=='play')return;respawnAt(cpStage);toast('체크포인트로 이동',(IS_ABYSS?(cpStage+1)+'층 ':'')+STAGES[cpStage].name+' 입구로 돌아왔어요.');});
   const cv=$('c');cv.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'||state!=='play')return;lid=e.pointerId;lx=e.clientX;ly=e.clientY;});
   cv.addEventListener('pointermove',e=>{if(e.pointerId!==lid)return;yaw-=(e.clientX-lx)*0.006;pitch=Math.max(-0.35,Math.min(1.25,pitch+(e.clientY-ly)*0.006));lx=e.clientX;ly=e.clientY;});
   cv.addEventListener('pointerup',e=>{if(e.pointerId===lid)lid=null;});})();
-document.title=MD.title;$('t-sub').textContent=MD.sub;$('t-story').textContent=MD.story;$('w-sub').textContent=MD.winSub;$('w-route').textContent=MD.route;
-try{localStorage.setItem('onlyupMap',MAP_ID);}catch(e){}
+applyMapTexts();
+try{localStorage.setItem('onlyupMapV2',MAP_ID);localStorage.setItem('onlyupMap',MAP_ID);}catch(e){}
 boot().catch(err=>{console.error(err);setLoad(0,'불러오는 중 문제가 생겼어요: '+err.message);});
 </script>
 <script src="../goal.js"></script>
