@@ -22,6 +22,7 @@
     'cell-raid':     {tpl: '{t}구역까지 도달하기', t: 3, unit: '구역', pre: true},
     'lab-forge':     {tpl: '실험기구를 +{t}까지 강화하기', t: 10, unit: '단계', pre: true},
     'bio-board':     {tpl: '보드게임에서 AI를 {t}번 이기기', t: 1, unit: '승'},
+    'blue-dive':     {tpl: '수심 {t}m까지 잠수하기', t: 130, unit: 'm', pre: true},
     'bio-ace':       {tpl: '스테이지 {t}까지 클리어하기', t: 2, unit: '스테이지'},
     'bio-sports':    {tpl: '스포츠 종목에서 AI를 {t}번 이기기', t: 1, unit: '승'}
   };

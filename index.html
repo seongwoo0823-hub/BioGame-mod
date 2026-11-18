@@ -385,6 +385,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     ['cell-raid','생물의 번제','인체 6구역 방 탐험 로그라이크 슈터','action','','생물의 번제 세포 레이드 로그라이크 슈터 병원체 보스 인체 cell raid'],
     ['lab-forge','실험기구 강화하기','실험기구 30단계 강화·5개 광산 채굴·교수 전직 시뮬레이션','casual','','강화 채굴 실험기구 석사 뽑기 슬롯 대장간 시뮬레이션 lab forge'],
     ['bio-board','생명과학 보드게임 천국','코돈 타일·모두의 세포·게놈 해독·혈류 윷놀이 3D 보드게임 4종','online casual','4','보드게임 윷놀이 타일 추리 주사위 경영 AI 한 기기 bio board'],
+    ['blue-dive','블루홀 다이브: 제주 바다 식당','제주 블루홀 650m 다이빙 · 한국 사계절 어종 44종 · 3성 포획 · 밤엔 초밥집 운영','casual','','다이빙 낚시 작살 물고기 바다 해양 제주 초밥 스시 타이쿤 도감 보스 상어 고래 사계절 도트'],
     ['bio-ace','BIO-ACE 면역 특공대','핑크 리간드 흡수·카운터 · 유전자 진화 로그라이트 탄막 슈팅 5스테이지','action','','탄막 슈팅 슈팅 로그라이트 면역 항체 바이러스 세균 보스 진화 비행기 bio ace'],
     ['bio-sports','바이오 스포츠 천국','10개 대학 · 축구·농구·배구·포켓볼 3D 복셀 스포츠 4종','online action','2','스포츠 축구 농구 배구 포켓볼 당구 대학 로스터 라인업 bio sports']
   ];
@@ -439,6 +440,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     'cell-brawl'(){const t=get('cellbrawl:trophies');if(!t||typeof t!=='object')return '';const v=Object.values(t).filter(x=>typeof x==='number'&&x>0);
       return v.length?`트로피 <b>${v.reduce((a,b)=>a+b,0)}</b>`:'';},
     'lab-forge'(){const s=get('labForgeSave');return s&&s.best>1?`최고 <b>+${s.best}</b> 강화`:'';},
+    'blue-dive'(){const s=get('blueDiveSave');if(!s||!s.S)return '';const n=Object.keys(s.dex||{}).length;return `<b>${s.day}</b>일차 · 도감 <b>${n}</b>/44 · 최대 <b>${s.S.maxDepth||0}</b>m`;},
     'bio-ace'(){const s=get('bioAceStats');if(!s||!(s.score||s.best))return '';return s.wins?`학위 <b>${s.wins}</b>회 · ${s.score.toLocaleString()}점`:`최고 <b>${s.best||0}</b>스테이지 클리어`;},
     'bio-sports'(){const s=get('bioSportsWins');return s&&s.total?`AI 상대 <b>${s.total}</b>승`:'';},
     'bio-board'(){const s=get('bioBoardStats');return s&&s.played?`<b>${s.played}</b>판 · 승리 <b>${s.wins||0}</b>`:'';},
