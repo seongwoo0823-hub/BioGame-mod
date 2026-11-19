@@ -376,7 +376,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     ['bio-kart','바이오 카트','5개 월드 20개 트랙 블록 카트 레이싱','online casual','8','카트 레이싱 레이스 혈관 소화 bio kart'],
     ['biotro','바이오트로','세포 포커 덱빌딩 로그라이크','casual','','포커 카드 덱빌딩 로그라이크 조커 소기관 biotro'],
     ['cell-brawl','셀 브롤','면역세포 3D 난투','online action','6','난투 브롤 3D 면역 병원체 트로피 cell brawl'],
-    ['only-up','온리 업','소화관·혈관·식물·심연 21층 4맵을 거슬러 오르는 점프','casual','','플랫포머 점프 소화관 혈관 식물 뿌리 심연 시냅스 나노봇 only up'],
+    ['only-up','온리 업','소화관·혈관·식물·심연 21층 오르기 + 추락 500층 내려가기 5맵 점프','casual','','플랫포머 점프 소화관 혈관 식물 뿌리 심연 시냅스 추락 내려가기 나노봇 only up only down'],
     ['bio-strike','바이오 스트라이크','면역 요원 1인칭 슈팅','online action','8','FPS 슈팅 총 백신 바이러스 암세포 bio strike'],
     ['cell-frontier','세포 개척단','선을 그어 땅을 넓히는 아케이드','casual','','땅따먹기 아케이드 숨은그림 cell frontier'],
     ['bio-tower','바이오 타워','생물 조각 쌓기 대결','online casual','4','쌓기 타워 동물 물리 bio tower'],
@@ -444,7 +444,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     'bio-ace'(){const s=get('bioAceStats');if(!s||!(s.score||s.best))return '';return s.wins?`학위 <b>${s.wins}</b>회 · ${s.score.toLocaleString()}점`:`최고 <b>${s.best||0}</b>스테이지 클리어`;},
     'bio-sports'(){const s=get('bioSportsWins');return s&&s.total?`AI 상대 <b>${s.total}</b>승`:'';},
     'bio-board'(){const s=get('bioBoardStats');return s&&s.played?`<b>${s.played}</b>판 · 승리 <b>${s.wins||0}</b>`:'';},
-    'only-up'(){const ss=['','_blood','_plant','_abyss'].map(k=>get('onlyupBioStats'+k)).filter(x=>x&&x.clears);if(ss.length){const c=ss.reduce((a,x)=>a+x.clears,0),b=Math.min(...ss.map(x=>x.best>0?x.best:1e9));return `탈출 <b>${c}</b>회 · <b>${ss.length}</b>/4맵`+(b<1e9?` · 최고 <b>${Math.floor(b/60)}분 ${(b%60).toFixed(1)}초</b>`:'');}const p=get('onlyupBio');return p&&p.cp>0?`<b>${p.cp+1}</b>/7 구간`:'';},
+    'only-up'(){const ss=['','_blood','_plant','_abyss','_fall'].map(k=>get('onlyupBioStats'+k)).filter(x=>x&&x.clears);if(ss.length){const c=ss.reduce((a,x)=>a+x.clears,0),b=Math.min(...ss.map(x=>x.best>0?x.best:1e9));return `탈출 <b>${c}</b>회 · <b>${ss.length}</b>/5맵`+(b<1e9?` · 최고 <b>${Math.floor(b/60)}분 ${(b%60).toFixed(1)}초</b>`:'');}const p=get('onlyupBio');return p&&p.cp>0?`<b>${p.cp+1}</b>/7 구간`:'';},
     'bio-strike'(){const s=get('bioStrike');if(!s||typeof s!=='object')return '';const out=[];if(s.cleared)out.push(`스토리 <b>${s.cleared}</b>/5장`);
       if(s.surv&&s.surv.wave)out.push(`생존 <b>${s.surv.wave}</b>웨이브`);return out.join(' · ');},
     'codon-glass'(){const s=get('codonGlass');return s&&s.plays?`<b>${s.plays}</b>판`:'';},
