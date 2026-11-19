@@ -602,7 +602,7 @@ const MAPS={
     wallMsg:'21층 신경·시냅스 수직 통로 구축 중…',floatMsg:'신경전달물질·면역 인자 배치 중…',sky:0xf0ffff,skyFog:0xd8f4ff,exit:'ring',ringCol:[0x78f8ff,0x4828a8,0xd858ff],hemi:[0xd8c8ff,0x0c061c],ring:[0x68f0ff,0x4a68e8,0x283898],acc:0x8848f0,veins:['#58e8ff','#d858ff'],
     FL:[['ranvier_node','vesicle_bounce'],['ion_ring','microtubule'],['synapse_trap','perforin'],['lipid_raft','neuro_soma']]},
   fall:{id:'fall',cat:'추락500층',seed:20261119,title:'ONLY DOWN: 정수리에서 발바닥까지 500층',sub:'추락 500층 [극악] · 무조건 내려가기',btn:'⬇ 추락 500층',hardcore:true,
-    story:'나노봇 B-DROP이 정수리 두피에 떨어졌다. 이번엔 올라가는 게 아니라 무조건 내려가야 한다! 세포·세균·신경 발판을 하나씩 밟고 뛰어내려 두개골 → 뇌 → 척수 → 좌골신경 → 다리를 지나 발바닥까지 500층을 돌파하라. 가시 바이러스·튕김막·회전 미세소관·순찰 대식세포·활동전위 레이저에 닿으면 처음 떨어지기 전 자리로 튕겨 올라간다!',
+    story:'나노봇 B-DROP이 정수리 두피에 떨어졌다. 이번엔 올라가는 게 아니라 무조건 내려가야 한다! 출발 선반에서 뛰어내려 끝없이 떨어지며 두개골 → 뇌 → 척수 → 좌골신경 → 다리를 지나 발바닥까지 500층을 돌파하라. 벽에서 튀어나오는 가시와 피스톤, 회전 날개, 세포막 장벽, 레이저 그물에 부딪히면 처음 떨어지기 전 자리로 튕겨 올라간다!',
     start:'1층 정수리 두피에서 출발',winSub:'500층을 모두 내려와 발바닥에 도착했어요!',
     route:'정수리 두피(1층) → 두개골·뇌척수액 → 대뇌 피질 → 뇌줄기 → 경수 → 흉수 → 요수·말총 → 좌골신경 → 정강이 → 발바닥 신경 말단(500층). 감각과 운동 신호가 오가는 신경의 길을 따라 온몸을 세로로 관통했습니다!',
     wallMsg:'500층 수직 통로 뚫는 중…',floatMsg:'함정 배치하는 중…',sky:0xfff4ea,skyFog:0xffe8d8,exit:'ring',ringCol:[0x78f8ff,0x2860a8,0x58b8ff],hemi:[0xfff0e0,0x200c18],ring:[0x78f8ff,0x2860a8,0x58b8ff],acc:0x58b8ff,veins:['#ffffff','#5060c0'],
@@ -804,153 +804,123 @@ MAPS.abyss.stages=[
 ];
 // ---- 추락 500층: 위(1층)에서 아래(500층)로. STAGES는 아래→위 순서라 뒤집어서 넣음 ----
 MAPS.fall.stages=[
-  ['두피와 모낭','1~50F · Scalp & Hair Follicle',0x6a4632,0x3a2418,0xf2d8c0,0xfff0e0,0xffe0b0,0xd08a5a,'1~50층 두피','정수리 피부와 모낭에서 출발! 털은 모낭 속 세포가 분열해 자라요. 아래 발판으로 하나씩 뛰어내리고, 빨간 가시 바이러스는 절대 밟지 마세요.'],
-  ['두개골과 뇌척수액','51~100F · Skull & CSF',0xd8d0c0,0x9a9080,0xc8e4f0,0xe8f4ff,0xbfe8ff,0x9ac8e0,'51~100층 두개골','두개골은 뇌를 감싸는 단단한 뼈이고, 그 안의 뇌척수액이 충격을 흡수해요. 분홍 튕김막을 밟으면 처음으로 튕겨 올라가요!'],
-  ['대뇌 피질','101~150F · Cerebral Cortex',0xd8909a,0x9a5060,0xe0a8b8,0xffd0e0,0xffb0d0,0xe07a9a,'101~150층 대뇌','대뇌 피질은 생각·기억·감각을 담당하는 주름진 회백질이에요. 빙글빙글 도는 미세소관 막대를 피하세요.'],
-  ['뇌줄기와 연수','151~200F · Brainstem',0xb07090,0x6a3a5a,0x8a5a7a,0xe8c0ff,0xd8a0ff,0xb070d0,'151~200층 뇌줄기','연수는 호흡·심장 박동을 조절하는 생명 중추예요. 순찰하는 대식세포가 층을 오가요.'],
-  ['경수 척수','201~250F · Cervical Spinal Cord',0xe8e0d0,0xa89880,0x9aa8c0,0xdde8ff,0xc8d8ff,0x8a9ad8,'201~250층 경수','척수는 뇌와 온몸을 잇는 신경 고속도로예요. 깜빡이다 켜지는 활동전위 레이저와 움직이는 발판이 나와요!'],
-  ['흉수와 심장 신경총','251~300F · Thoracic Cord',0xa83040,0x5a1020,0x6a2030,0xffb0b8,0xff8090,0xd04050,'251~300층 흉수','흉수에서 나온 교감 신경이 심장 박동을 빠르게 해요. 발판 사이 허공의 바이러스·대식세포가 늘어나요. 떨어지면서 피하세요!'],
-  ['요수와 말총','301~350F · Lumbar Cord & Cauda Equina',0xc8a870,0x7a6030,0x5a4a30,0xffe0a0,0xffd080,0xc89a40,'301~350층 요수','척수 끝의 신경 다발은 말꼬리처럼 생겨 말총이라 불러요. 갈색 세포막 발판은 밟으면 곧 무너져요. 재빨리 건너가세요!'],
+  ['두피와 모낭','1~50F · Scalp & Hair Follicle',0x6a4632,0x3a2418,0xf2d8c0,0xfff0e0,0xffe0b0,0xd08a5a,'1~50층 두피','정수리 피부와 모낭에서 출발! 털은 모낭 속 세포가 분열해 자라요. 선반에서 뛰어내리면 끝까지 떨어져요. 벽에서 튀어나온 빨간 가시를 피하세요!'],
+  ['두개골과 뇌척수액','51~100F · Skull & CSF',0xd8d0c0,0x9a9080,0xc8e4f0,0xe8f4ff,0xbfe8ff,0x9ac8e0,'51~100층 두개골','두개골은 뇌를 감싸는 단단한 뼈이고, 그 안의 뇌척수액이 충격을 흡수해요. 회전 날개가 나타나요. 날개 사이로 빠져나가세요!'],
+  ['대뇌 피질','101~150F · Cerebral Cortex',0xd8909a,0x9a5060,0xe0a8b8,0xffd0e0,0xffb0d0,0xe07a9a,'101~150층 대뇌','대뇌 피질은 생각·기억·감각을 담당하는 주름진 회백질이에요. 분홍 세포막 장벽은 하늘색 구멍으로만 통과할 수 있어요.'],
+  ['뇌줄기와 연수','151~200F · Brainstem',0xb07090,0x6a3a5a,0x8a5a7a,0xe8c0ff,0xd8a0ff,0xb070d0,'151~200층 뇌줄기','연수는 호흡·심장 박동을 조절하는 생명 중추예요. 벽에서 피스톤이 쾅 하고 튀어나와요!'],
+  ['경수 척수','201~250F · Cervical Spinal Cord',0xe8e0d0,0xa89880,0x9aa8c0,0xdde8ff,0xc8d8ff,0x8a9ad8,'201~250층 경수','척수는 뇌와 온몸을 잇는 신경 고속도로예요. 깜빡이다 켜지는 활동전위 레이저 그물을 조심!'],
+  ['흉수와 심장 신경총','251~300F · Thoracic Cord',0xa83040,0x5a1020,0x6a2030,0xffb0b8,0xff8090,0xd04050,'251~300층 흉수','흉수에서 나온 교감 신경이 심장 박동을 빠르게 해요. 대식세포가 통로를 가로지르고, 전류 소용돌이가 몸을 옆으로 밀어요.'],
+  ['요수와 말총','301~350F · Lumbar Cord & Cauda Equina',0xc8a870,0x7a6030,0x5a4a30,0xffe0a0,0xffd080,0xc89a40,'301~350층 요수','척수 끝의 신경 다발은 말꼬리처럼 생겨 말총이라 불러요. 세포막 장벽이 빙글빙글 돌아 구멍 위치가 계속 바뀌어요!'],
   ['좌골신경','351~400F · Sciatic Nerve',0xe8d878,0x8a7a30,0x3a3a22,0xfff0a0,0xffe870,0xd8c040,'351~400층 좌골신경','좌골신경은 우리 몸에서 가장 굵고 긴 신경이에요. 함정이 겹겹이 깔리기 시작해요. 타이밍을 노리세요!'],
-  ['정강이 근육과 혈관','401~450F · Shin Muscle & Tibial Artery',0x9a2a2a,0x4a0a10,0x2a0c12,0xff9a8a,0xff7060,0xb83030,'401~450층 정강이','근육은 운동 신경의 신호를 받아 수축해요. 함정이 빽빽하고 발판 사이가 멀어요.'],
+  ['정강이 근육과 혈관','401~450F · Shin Muscle & Tibial Artery',0x9a2a2a,0x4a0a10,0x2a0c12,0xff9a8a,0xff7060,0xb83030,'401~450층 정강이','근육은 운동 신경의 신호를 받아 수축해요. 장애물이 빽빽하게 겹쳐 있어요.'],
   ['발바닥 신경 말단','451~500F · Plantar Nerve Endings',0x6a4a8a,0x2a1a40,0x140a22,0xc8a8ff,0x9a7aff,0x7a5ad8,'451~500층 발바닥','마지막 구역! 발바닥의 압력 수용기는 땅을 디디는 감각을 뇌로 보내요. 맨 아래 금빛 바닥이 바로 결승점입니다.']
-].map(([name,en,wall,wall2,fog,light,part,acc,floorName,blurb])=>({name,en,h:120,R:11,deco:'folds',wall,wall2,fog,light,part,acc,floorName,blurb,gens:[]})).reverse();
+].map(([name,en,wall,wall2,fog,light,part,acc,floorName,blurb])=>({name,en,h:400,R:7.5,deco:'folds',wall,wall2,fog,light,part,acc,floorName,blurb,gens:[]})).reverse();
 let IS_FALL=MAP_ID==='fall';
-const FALL={N:500,specs:[],traps:[],buckets:new Map(),launch:null,cpMode:false,root:null,on:null,lastSafe:null,hint:{},vis:-999,goalZ:0};
-const FALL_TOP=()=>Y_END-3;
-const fallFloorNo=y=>Math.max(1,Math.min(FALL.N,Math.floor((FALL_TOP()-y)/(FALL_TOP()/FALL.N))+1));
+const FALL={N:500,FLH:8,VMAX:13,specs:[],obs:[],buckets:new Map(),launch:null,cpMode:false,root:null,on:null,hint:{},vis:-999,goalZ:0,prevY:0};
+const FALL_TOP=()=>Y_END-4;
+const fallFloorNo=y=>Math.max(1,Math.min(FALL.N,Math.floor((FALL_TOP()-y)/FALL.FLH)+1));
 const fallZone=n=>Math.floor((n-1)/50);
-const TRAP_N={spike:'가시 바이러스',pad:'튕김막',arm:'회전 미세소관',cell:'순찰 대식세포',laser:'활동전위 레이저',float:'떠다니는 바이러스'};
-const FALL_GENS=[['cell','staph','ecoli','bifido','glucose','fiber','b_bact'],['molar','incisor','rbc','endo','ribosome','b_ribo','astro'],['gyrus','neuro_soma','mito','b_mito','vesicle','ion_ring','neuron'],
-  ['ranvier_node','microtubule','ion_ring','neuro_soma','bbb','astro','lipid_raft'],['ranvier_node','microtubule','b_neuron','fibrin','insulin','mito','cell'],['trabeculae','hemoglobin','albumin','complement','rbc','platelet','endo'],
-  ['fiber','roothair','b_strep','strep','aminochain','starch','b_mito'],['ranvier_node','microtubule','lipid_raft','neuro_soma','ion_ring','b_neuron','bbb'],['muscle','smooth','palisade','hemoglobin','rbc','thrombin','mito'],['lipid_raft','neuro_soma','ion_ring','cell','endo','b_virus','mucus']];
-function armAng(tr,t){return tr.ph+t*tr.spd;}
-function cellPos(tr,t){const k=0.5-0.5*Math.cos(t*tr.spd+tr.ph);return [tr.x0+(tr.x1-tr.x0)*k,tr.z0+(tr.z1-tr.z0)*k];}
-function laserState(tr,t){const q=((t+tr.ph)%tr.per)/tr.per;return q<tr.on?2:(q>0.8?1:0);}
-function floatPos(tr,t){return [tr.x+Math.cos(t*tr.spd+tr.ph)*tr.amp,tr.z+Math.sin(t*tr.spd*1.3+tr.ph)*tr.amp];}
-function moverPos(sp,t){const k=0.5-0.5*Math.cos(t*sp.spd+sp.ph);return [sp.xa+(sp.xb-sp.xa)*k,sp.za+(sp.zb-sp.za)*k];}
+const TRAP_N={wspike:'벽 가시',piston:'벽 피스톤',blade:'회전 미세소관 날개',laser:'활동전위 레이저 그물',float:'떠다니는 바이러스',membrane:'세포막 장벽',cell:'순찰 대식세포'};
 function segDist(px,pz,ax,az,bx,bz){const dx=bx-ax,dz=bz-az,l=dx*dx+dz*dz||1e-9;let u=((px-ax)*dx+(pz-az)*dz)/l;u=Math.max(0,Math.min(1,u));return Math.hypot(px-ax-dx*u,pz-az-dz*u);}
+function pistonLen(o,t){const q=((t+o.ph)%o.per)/o.per;if(q<0.35)return o.len*Math.min(1,q/0.06);if(q<0.55)return o.len*(1-(q-0.35)/0.2);return 0;}
+function laserOn(o,t){const q=((t+o.ph)%o.per)/o.per;return q<o.on?2:(q>0.8?1:0);}
+function floatPos(o,t){return [o.x+Math.cos(t*o.spd+o.ph)*o.amp,o.z+Math.sin(t*o.spd*1.3+o.ph)*o.amp];}
+function cellPos(o,t){const k=0.5-0.5*Math.cos(t*o.spd+o.ph);return [o.x0+(o.x1-o.x0)*k,o.z0+(o.z1-o.z0)*k];}
 function genFallWorld(){
-  const F=FALL;F.specs=[];F.traps=[];F.buckets=new Map();CUR={map:VOX,vs:VS};
-  const SR=STAGES[0].R,Rlim=SR-1.5,TOP=FALL_TOP();
-  const a0=R(0,TAU);let cur={x:Math.cos(a0)*4,z:Math.sin(a0)*4,top:TOP,r:1.7,h:a0+Math.PI/2};
-  cylY(cur.x,TOP-0.6,cur.z,1.8,0.6,(x,y,z,rr)=>(Math.floor(rr*4)%2?0xfff0e0:0xf2c8a8));
-  PLATFORMS.push({key:'cell',fp:[{x:cur.x,z:cur.z,r:1.8,top:TOP,bot:TOP-0.6}],si:STAGES.length-1,plan:null});
-  STAGES[STAGES.length-1].start={x:cur.x,y:TOP,z:cur.z};
-  const recent=[];const spiral=rng()<0.5?1:-1;let lastKey=null,zSet=new Set([0]);
-  const okFp=(plan)=>{for(const f of plan.fp){if(Math.hypot(f.x,f.z)+f.r>SR-1.25)return false;if(f.top>TOP+0.5)return false;}
-    for(let k=0;k<recent.length-1;k++){const q=recent[k];for(const f of plan.fp)for(const g of q.fp){if(Math.hypot(f.x-g.x,f.z-g.z)<f.r+g.r+0.25&&f.bot<g.top+2.5&&g.bot<f.top+2.5)return false;}}return true;};
-  const addTrap=tr=>{F.traps.push(tr);const b=Math.floor(tr.y/6);if(!F.buckets.has(b))F.buckets.set(b,[]);F.buckets.get(b).push(tr);};
-  let guard=0;
-  while(cur.top>4.2&&guard++<1400){
-    const t=(TOP-cur.top)/TOP,z=Math.min(9,Math.floor(t*10));
-    if(!zSet.has(z)){zSet.add(z);STAGES[9-z].start={x:cur.x,y:cur.top,z:cur.z};}
-    const EA={x:cur.x,z:cur.z,top:cur.top,r:cur.r};
-    // 특수 발판: 무너지는 세포막 / 움직이는 발판
-    const special=z>=2&&rng()<0.07+z*0.012?'crumble':(z>=4&&rng()<0.06+z*0.008?'mover':null);
-    let placed=null;
-    for(let at=0;at<46&&!placed;at++){
-      const rad=Math.hypot(cur.x,cur.z),base=Math.atan2(cur.z,cur.x);let h=rad>Rlim*0.62?Math.atan2(-cur.z,-cur.x)+R(-1.0,1.0):base+spiral*Math.PI/2+R(-0.9,0.9);
-      const dy=-R(1.1,2.3+1.1*t),gap=R(0.55,1.15+0.9*t);
-      if(special&&at<24){const d=cur.r+gap+1.05,ax=cur.x+Math.cos(h)*d,az=cur.z+Math.sin(h)*d,top=cur.top+dy;
-        let plan;if(special==='crumble'){plan={key:'crumble',fp:[{x:ax,z:az,r:1.05,top,bot:top-0.4}],exit:{x:ax,z:az,top,r:0.9,h}};}
-        else{const L=R(2.6,3.8),bx=ax+Math.cos(h)*L,bz=az+Math.sin(h)*L;plan={key:'mover',fp:[{x:ax,z:az,r:1.05,top,bot:top-0.4},{x:(ax+bx)/2,z:(az+bz)/2,r:1.0,top,bot:top-0.4},{x:bx,z:bz,r:1.05,top,bot:top-0.4}],exit:{x:bx,z:bz,top,r:0.9,h},mv:{xa:ax,za:az,xb:bx,zb:bz}};}
-        if(!okFp(plan))continue;placed=plan;break;}
-      const list=FALL_GENS[z];let key=list[Math.floor(rng()*list.length)];if(key===lastKey)key=list[Math.floor(rng()*list.length)];if(!GEN[key])key='cell';
-      if(at>34)key='cell';
-      const plan=GEN[key]({x:cur.x,z:cur.z,top:cur.top,r:cur.r,h,gap,dy,y0:0});if(plan.exit.h===undefined)plan.exit.h=h;
-      if(plan.exit.top>cur.top-0.3||plan.exit.bouncy)continue;
-      if(!okFp(plan))continue;placed=plan;}
-    if(!placed){const h=R(0,TAU);placed=GEN.cell({x:cur.x,z:cur.z,top:cur.top,r:cur.r,h,gap:0.7,dy:-1.4,y0:0});placed.exit.h=h;}
-    const si=Math.max(0,Math.min(STAGES.length-1,Math.floor(placed.exit.top/STAGES[0].h)));
-    if(placed.key==='crumble'||placed.key==='mover'){const f=placed.fp[0];const sp={k:placed.key,x:f.x,z:f.z,y:f.top,r:1.05,st:0,t:0};if(placed.mv)Object.assign(sp,placed.mv,{spd:R(0.7,1.1),ph:R(0,TAU)});F.specs.push(sp);}
-    else placed.build();
-    PLATFORMS.push({key:placed.key,fp:placed.fp,si,plan:placed});lastKey=placed.key;
-    recent.push(placed);if(recent.length>10)recent.shift();
-    // 착지 예상 지점
-    const B=placed,hh=B.exit.h,L={x:EA.x+Math.cos(hh)*(EA.r+0.9),z:EA.z+Math.sin(hh)*(EA.r+0.9)};let Lb=B.fp[0];for(const f of B.fp)if(Math.hypot(f.x-L.x,f.z-L.z)<Math.hypot(Lb.x-L.x,Lb.z-L.z))Lb=f;
-    const LT={x:Lb.x,z:Lb.z,top:Lb.top};
-    // 함정
-    if(B.key!=='mover'&&B.key!=='crumble'&&cur.top<TOP-6){let cap=1+Math.floor(z/2.5);const P=pr=>cap>0&&rng()<pr&&(cap--,true);
-      const onPlat=(clear)=>{for(let at=0;at<14;at++){const f=B.fp[Math.floor(rng()*B.fp.length)];if(f.r<0.6)continue;const a=R(0,TAU),d=R(0,f.r*0.75);const x=f.x+Math.cos(a)*d,zz=f.z+Math.sin(a)*d;
-        if(Math.hypot(x-LT.x,zz-LT.z)<0.95+clear||Math.hypot(x-B.exit.x,zz-B.exit.z)<0.85+clear)continue;return {x,z:zz,y:f.top};}return null;};
-      if(z>=2&&P(0.26+z*0.05)){const f=B.fp.reduce((a,b)=>b.r>a.r?b:a);if(f.r>=1.0){let ax=f.x,az=f.z;const dd=Math.hypot(f.x-LT.x,f.z-LT.z);if(dd<0.7){const aa=dd>0.01?Math.atan2(f.z-LT.z,f.x-LT.x):R(0,TAU);ax=f.x+Math.cos(aa)*Math.min(0.75,f.r*0.5);az=f.z+Math.sin(aa)*Math.min(0.75,f.r*0.5);}addTrap({k:'arm',x:ax,z:az,y:f.top,len:Math.min(2.3,f.r*1.1+0.3),spd:R(1.0,1.6+z*0.1)*(rng()<0.5?-1:1),ph:R(0,TAU)});}}
-      if(P(0.32+z*0.05)){const q=onPlat(0);if(q)addTrap({k:'spike',x:q.x,z:q.z,y:q.y,r:0.4});}
-      if(z>=1&&P(0.16+z*0.03)){const q=onPlat(0.1);if(q)addTrap({k:'pad',x:q.x,z:q.z,y:q.y,r:R(0.5,0.7)});}
-      if(z>=1&&P(0.2+z*0.05)){const mx=(EA.x+LT.x)/2+R(-0.3,0.3),mz=(EA.z+LT.z)/2+R(-0.3,0.3);addTrap({k:'float',x:mx,z:mz,y:(EA.top+LT.top)/2+0.5,amp:R(0.5,0.8),spd:R(1.2,2.0),ph:R(0,TAU),r:0.36});}
-      if(z>=3&&P(0.2+z*0.05)){const px=-Math.sin(hh),pz=Math.cos(hh),Lh=R(1.4,2.0);addTrap({k:'cell',x0:LT.x+px*Lh,z0:LT.z+pz*Lh,x1:LT.x-px*Lh,z1:LT.z-pz*Lh,y:LT.top+0.6,spd:R(1.0,1.7),ph:R(0,TAU)});}
-      if(z>=4&&P(0.16+z*0.04)){const nx=Math.cos(hh),nz=Math.sin(hh),mx=(EA.x+LT.x)/2,mz=(EA.z+LT.z)/2,o=mx*nx+mz*nz,half=Math.sqrt(Math.max(0.5,(SR-0.6)**2-o*o));const cx=nx*o,cz=nz*o;
-        addTrap({k:'laser',x0:cx-nz*half,z0:cz+nx*half,x1:cx+nz*half,z1:cz-nx*half,y:Math.min(EA.top,LT.top+1.6)-0.3,per:R(2.0,3.0),on:R(0.38,0.5),ph:R(0,10)});}
+  const F=FALL;F.specs=[];F.obs=[];F.buckets=new Map();const SR=STAGES[0].R,RW=SR-1.0,TOP=FALL_TOP();
+  const add=o=>{F.obs.push(o);const b=Math.floor(o.y/8);if(!F.buckets.has(b))F.buckets.set(b,[]);F.buckets.get(b).push(o);};
+  // 출발 선반과 50층마다 체크포인트 선반
+  const ledge=(y,a)=>{const x=Math.cos(a)*(RW-1.0),z=Math.sin(a)*(RW-1.0);F.specs.push({k:'ledge',x,z,y,r:1.25});return {x,y,z};};
+  const a0=R(0,TAU);STAGES[STAGES.length-1].start=ledge(TOP,a0);
+  for(let zc=1;zc<10;zc++){const y=TOP-zc*50*F.FLH+2;STAGES[9-zc].start=ledge(y,R(0,TAU));}
+  for(let n=3;n<=F.N;n++){
+    const z=fallZone(n),t=(n-1)/(F.N-1),y0=TOP-(n-1)*F.FLH;
+    if(n%50===0||n%50===1)continue;              // 체크포인트 선반 근처는 비워 둠
+    const kinds=['wspike','wspike','float'];if(z>=1)kinds.push('blade');if(z>=2)kinds.push('membrane');if(z>=3)kinds.push('piston','piston');if(z>=4)kinds.push('laser');if(z>=5)kinds.push('cell','membrane');if(z>=7)kinds.push('blade','laser');
+    const cnt=Math.max(1,Math.round(R(0.7,1.3)*(1+z*0.32)));
+    for(let k=0;k<cnt;k++){const kind=kinds[Math.floor(rng()*kinds.length)],y=y0-R(0.5,F.FLH-0.5);
+      if(kind==='wspike'){const m=RI(1,2+Math.floor(z/3));for(let q=0;q<m;q++)add({k:'wspike',a:R(0,TAU),y:y+R(-0.8,0.8),len:R(1.6,2.6+z*0.22),r:R(0.35,0.55)});}
+      else if(kind==='piston')add({k:'piston',a:R(0,TAU),y,len:R(2.5,3.6+z*0.15),w:R(0.6,0.9),per:R(1.8,2.8),ph:R(0,10)});
+      else if(kind==='float')add({k:'float',x:R(-RW*0.6,RW*0.6),z:R(-RW*0.6,RW*0.6),y,amp:R(0.8,1.8),spd:R(1.0,2.0),ph:R(0,TAU),r:R(0.35,0.5)});
+      else if(kind==='blade'){const two=rng()<0.35+z*0.04;add({k:'blade',x:two?0:R(-1.5,1.5),z:two?0:R(-1.5,1.5),y,len:two?RW-0.2:R(2.5,RW-0.4),two,spd:R(0.9,1.5+z*0.08)*(rng()<0.5?-1:1),ph:R(0,TAU),th:0.35});}
+      else if(kind==='membrane'){const nh=z>=7?1:RI(1,2),hs=[];const hr=Math.max(0.95,1.9-z*0.1);for(let q=0;q<nh;q++){const a=R(0,TAU),r=R(0,RW-hr-0.3);hs.push({x:Math.cos(a)*r,z:Math.sin(a)*r,r:hr});}
+        add({k:'membrane',y,holes:hs,rot:z>=6?R(0.25,0.6)*(rng()<0.5?-1:1):0});}
+      else if(kind==='laser'){const nb=RI(1,Math.min(4,1+Math.floor(z/3))),bs=[];const base=R(0,Math.PI);for(let q=0;q<nb;q++){const ang=base+q*Math.PI/nb+R(-0.15,0.15);bs.push({nx:Math.cos(ang),nz:Math.sin(ang),o:R(-RW*0.5,RW*0.5)});}
+        add({k:'laser',y,beams:bs,per:R(1.8,2.8),on:R(0.35,0.5),ph:R(0,10)});}
+      else if(kind==='cell'){const a=R(0,TAU),L=R(3,RW*1.4),cx=R(-1.5,1.5),cz=R(-1.5,1.5);add({k:'cell',x0:cx-Math.cos(a)*L/2,z0:cz-Math.sin(a)*L/2,x1:cx+Math.cos(a)*L/2,z1:cz+Math.sin(a)*L/2,y,spd:R(1.0,1.8),ph:R(0,TAU),r:0.7});}
     }
-    cur={x:B.exit.x,z:B.exit.z,top:B.exit.top,r:B.exit.r,h:B.exit.h};
+    // 전류 소용돌이 (해롭지 않음, 옆으로 밀어 냄)
+    if(z>=5&&rng()<0.05)add({k:'current',y:y0-4,h:6,fx:R(-1,1),fz:R(-1,1)});
   }
-  F.endTop=cur.top;
 }
-function fallDown(py,ny){const t=elapsed;for(const sp of FALL.specs){if(Math.abs(sp.y-py)>2)continue;if(sp.k==='crumble'&&sp.st===2)continue;let x=sp.x,z=sp.z;if(sp.k==='mover')[x,z]=moverPos(sp,t);
-  if(py>=sp.y-1e-4&&ny<sp.y&&Math.hypot(pl.x-x,pl.z-z)<sp.r)return sp.y;}return null;}
-function fallOnSpec(){if(!onGround)return null;for(const sp of FALL.specs){if(Math.abs(sp.y-pl.y)>0.03)continue;if(sp.k==='crumble'&&sp.st===2)continue;let x=sp.x,z=sp.z;if(sp.k==='mover')[x,z]=moverPos(sp,elapsed);if(Math.hypot(pl.x-x,pl.z-z)<sp.r+0.02)return sp;}return null;}
-function fallTrapHit(){const t=elapsed,b0=Math.floor(pl.y/6);
-  for(let b=b0-1;b<=b0+1;b++){const L=FALL.buckets.get(b);if(!L)continue;
-    for(const tr of L){let hit=false;const dy=pl.y-tr.y;
-      if(tr.k==='spike')hit=dy>-1.1&&dy<0.85&&Math.hypot(pl.x-tr.x,pl.z-tr.z)<tr.r+0.28;
-      else if(tr.k==='pad')hit=onGround&&Math.abs(dy)<0.2&&Math.hypot(pl.x-tr.x,pl.z-tr.z)<tr.r-0.05;
-      else if(tr.k==='arm'){if(dy>-0.25&&dy<0.85){const a=armAng(tr,t);hit=segDist(pl.x,pl.z,tr.x,tr.z,tr.x+Math.cos(a)*tr.len,tr.z+Math.sin(a)*tr.len)<0.33;}}
-      else if(tr.k==='cell'){if(Math.abs(pl.y+0.6-tr.y)<0.95){const [cx,cz]=cellPos(tr,t);hit=Math.hypot(pl.x-cx,pl.z-cz)<0.8;}}
-      else if(tr.k==='laser'){if(laserState(tr,t)===2&&Math.abs(pl.y+0.6-tr.y)<0.68)hit=segDist(pl.x,pl.z,tr.x0,tr.z0,tr.x1,tr.z1)<0.3;}
-      else if(tr.k==='float'){const [fx,fz]=floatPos(tr,t);hit=Math.abs(pl.y+0.6-tr.y)<0.72&&Math.hypot(pl.x-fx,pl.z-fz)<tr.r+0.28;}
-      if(hit){fallLaunch('trap',tr);return true;}}}
+function fallDown(py,ny){for(const sp of FALL.specs){if(Math.abs(sp.y-py)>2)continue;if(py>=sp.y-1e-4&&ny<sp.y&&Math.hypot(pl.x-sp.x,pl.z-sp.z)<sp.r)return sp.y;}return null;}
+function fallOnSpec(){return null;}
+// 몸통(두 점)을 지난 프레임 위치부터 지금까지 쓸어 보며 검사 (빠른 낙하에도 얇은 장애물을 놓치지 않음)
+function fallHitObs(o,px,py,pz,t){const SR=STAGES[0].R;
+  if(o.k==='wspike'){const ca=Math.cos(o.a),sa=Math.sin(o.a);const wx=ca*SR,wz=sa*SR,tx=ca*(SR-o.len),tz=sa*(SR-o.len);const d=segDist(px,pz,wx,wz,tx,tz);const u=Math.max(0,Math.min(1,(SR-Math.hypot(px,pz))/o.len));return Math.abs(py-o.y)<o.r*(1-u)+0.35&&d<o.r*(1-u)+0.3;}
+  if(o.k==='piston'){const L=pistonLen(o,t);if(L<0.2)return false;const ca=Math.cos(o.a),sa=Math.sin(o.a);const d=segDist(px,pz,ca*SR,sa*SR,ca*(SR-L),sa*(SR-L));return Math.abs(py-o.y)<o.w*0.5+0.3&&d<o.w*0.5+0.3;}
+  if(o.k==='float'){const [x,z]=floatPos(o,t);return Math.hypot(px-x,pz-z,py-o.y)<o.r+0.38;}
+  if(o.k==='blade'){if(Math.abs(py-o.y)>o.th+0.3)return false;const a=o.ph+t*o.spd,ca=Math.cos(a),sa=Math.sin(a);const ax=o.two?o.x-ca*o.len:o.x,az=o.two?o.z-sa*o.len:o.z;return segDist(px,pz,ax,az,o.x+ca*o.len,o.z+sa*o.len)<0.3+0.15;}
+  if(o.k==='cell'){const [x,z]=cellPos(o,t);return Math.hypot(px-x,pz-z,py-o.y)<o.r+0.35;}
+  if(o.k==='laser'){if(laserOn(o,t)!==2||Math.abs(py-o.y)>0.3)return false;for(const b of o.beams)if(Math.abs(px*b.nx+pz*b.nz-b.o)<0.26)return true;return false;}
   return false;}
-function fallLaunch(kind,tr){if(FALL.launch)return;falls++;let to;
-  if(kind==='miss'&&FALL.lastSafe)to=Object.assign({},FALL.lastSafe);else{const si=FALL.cpMode?cpStage:STAGES.length-1;to=Object.assign({},STAGES[si].start);}
-  const up=to.y-pl.y;FALL.launch={t:0,dur:kind==='miss'?0.75:Math.min(3.2,1.0+Math.max(0,up)/450),from:{x:pl.x,y:pl.y,z:pl.z},to,kind};
-  AU.launch();AU.boing();spawnDebris(kind==='miss'?0x9ad8ff:0xff4a6a,kind==='miss'?14:40,kind==='miss'?0.8:1.6);
-  const el=$('fallmsg');el.textContent=kind==='miss'?'헛디딤! 떨어지기 전 발판으로 튕겨 올라가요':'↑ '+fallFloorNo(pl.y)+'층 → '+fallFloorNo(to.y)+'층 튕김! (+'+Math.max(0,up).toFixed(0)+'m)';el.classList.add('show');clearTimeout(fallTimer);fallTimer=setTimeout(()=>el.classList.remove('show'),2400);
-  if(kind==='trap'&&!FALL.hint[tr.k]){FALL.hint[tr.k]=1;toast(TRAP_N[tr.k]+'에 닿았어요!',FALL.cpMode?'연습 모드: 마지막 체크포인트('+fallFloorNo(to.y)+'층)로 튕겨 올라갑니다.':'처음 떨어지기 전 자리(1층 정수리)로 튕겨 올라갑니다. 다시 내려가세요!');}
-  if(kind==='miss'&&!FALL.hint.miss){FALL.hint.miss=1;toast('발판을 놓쳤어요!','너무 깊이 떨어지면 신경막 그물에 걸려 떨어지기 전 발판으로 되돌아가요. 발판을 하나씩 밟고 내려가세요.');}
+function fallTrapHit(){const t=elapsed,y1=pl.y,y0=Math.max(FALL.prevY,y1),b0=Math.floor(y1/8);let hitO=null;
+  for(let b=b0-1;b<=Math.floor(y0/8)+1&&!hitO;b++){const L=FALL.buckets.get(b);if(!L)continue;
+    for(const o of L){if(o.k==='current')continue;
+      if(o.k==='membrane'){if(y0+0.6>=o.y&&y1+0.6<o.y||Math.abs(y1+0.6-o.y)<0.25){const ang=-o.rot*t,c=Math.cos(ang),s2=Math.sin(ang);const rx=pl.x*c-pl.z*s2,rz=pl.x*s2+pl.z*c;let inHole=false;for(const h of o.holes)if(Math.hypot(rx-h.x,rz-h.z)<h.r-0.32)inHole=true;if(!inHole){hitO=o;break;}}continue;}
+      if(o.y<y1-1.5||o.y>y0+2.5)continue;
+      for(let yy=y0;yy>=y1-1e-6;yy-=0.2){if(fallHitObs(o,pl.x,yy+0.3,pl.z,t)||fallHitObs(o,pl.x,yy+0.95,pl.z,t)){hitO=o;break;}if(y0-y1<0.2)break;}
+      if(hitO)break;}}
+  FALL.prevY=pl.y;if(hitO){fallLaunch('trap',hitO);return true;}return false;}
+function fallCurrent(dt){const b0=Math.floor(pl.y/8);for(let b=b0-1;b<=b0+1;b++){const L=FALL.buckets.get(b);if(!L)continue;for(const o of L)if(o.k==='current'&&pl.y<o.y+o.h/2&&pl.y>o.y-o.h/2){vel.x+=o.fx*14*dt;vel.z+=o.fz*14*dt;}}}
+function fallLaunch(kind,o){if(FALL.launch)return;falls++;const si=FALL.cpMode?cpStage:STAGES.length-1;const to=Object.assign({},STAGES[si].start);
+  const up=to.y-pl.y;FALL.launch={t:0,dur:Math.min(3.2,1.0+Math.max(0,up)/1200),from:{x:pl.x,y:pl.y,z:pl.z},to,kind};
+  AU.launch();AU.boing();spawnDebris(0xff4a6a,40,1.6);
+  const el=$('fallmsg');el.textContent='↑ '+fallFloorNo(pl.y)+'층 → '+fallFloorNo(to.y)+'층 튕김! ('+(TRAP_N[o.k]||'함정')+')';el.classList.add('show');clearTimeout(fallTimer);fallTimer=setTimeout(()=>el.classList.remove('show'),2400);
+  if(!FALL.hint[o.k]){FALL.hint[o.k]=1;toast(TRAP_N[o.k]+'에 부딪혔어요!',FALL.cpMode?'연습 모드: 마지막 체크포인트('+fallFloorNo(to.y)+'층)로 튕겨 올라갑니다.':'처음 떨어지기 전 자리(1층 정수리)로 튕겨 올라갑니다. 다시 떨어지세요!');}
   save();}
 function updateFallLaunch(dt){const L=FALL.launch;L.t+=dt;const k=Math.min(1,L.t/L.dur),e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
-  pl.x=L.from.x+(L.to.x-L.from.x)*e;pl.z=L.from.z+(L.to.z-L.from.z)*e;pl.y=L.from.y+(L.to.y-L.from.y)*e+Math.sin(k*Math.PI)*(L.kind==='miss'?1.5:4);vel.x=vel.y=vel.z=0;
+  pl.x=L.from.x+(L.to.x-L.from.x)*e;pl.z=L.from.z+(L.to.z-L.from.z)*e;pl.y=L.from.y+(L.to.y-L.from.y)*e+Math.sin(k*Math.PI)*4;vel.x=vel.y=vel.z=0;
   player.position.set(pl.x,pl.y,pl.z);player.rotation.y+=dt*14;armL.rotation.x=armR.rotation.x=-2.6;legL.rotation.x=0.4;legR.rotation.x=-0.4;
   if(Math.random()<0.5)spawnDebris(0xffffff,2,0.5);time+=dt;
-  if(k>=1){FALL.launch=null;pl.x=L.to.x;pl.y=L.to.y+0.05;pl.z=L.to.z;lastGroundY=pl.y;onGround=false;}}
+  if(k>=1){FALL.launch=null;pl.x=L.to.x;pl.y=L.to.y+0.05;pl.z=L.to.z;FALL.prevY=pl.y;lastGroundY=pl.y;onGround=false;}}
 function spikeGeo(r,col){const g=new THREE.Group();const m=new THREE.MeshLambertMaterial({color:col});g.add(new THREE.Mesh(new THREE.IcosahedronGeometry(r,1),m));
   const cg=new THREE.ConeGeometry(r*0.28,r*0.9,6);const dirs=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1],[.7,.7,0],[-.7,.7,0],[0,.7,.7],[0,.7,-.7],[.7,-.7,0],[-.7,-.7,0]];
   for(const d of dirs){const c=new THREE.Mesh(cg,m);const v=new THREE.Vector3(...d).normalize();c.position.copy(v).multiplyScalar(r*1.05);c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v);g.add(c);}return g;}
 function buildFallMeshes(){
-  const F=FALL;F.root=new THREE.Group();worldGroup.add(F.root);F.vis=-999;
-  const padM=new THREE.MeshBasicMaterial({color:0xff4fae,transparent:true,opacity:0.85}),armM=new THREE.MeshLambertMaterial({color:0xe8f0ff}),pivM=new THREE.MeshLambertMaterial({color:0x6a7aa8}),
-    cellM=new THREE.MeshLambertMaterial({color:0xfff0f4}),nucM=new THREE.MeshLambertMaterial({color:0x9a5ad8}),laserM=new THREE.MeshBasicMaterial({color:0xff2a4a,transparent:true,opacity:0.9,blending:THREE.AdditiveBlending,depthWrite:false}),
-    emitM=new THREE.MeshLambertMaterial({color:0x3a3a4a}),crumM=new THREE.MeshLambertMaterial({color:0xd8a070}),movM=new THREE.MeshLambertMaterial({color:0x58d8b8}),movRim=new THREE.MeshBasicMaterial({color:0xbffff0});
-  const spikeT=spikeGeo(0.32,0xe8303a),floatT=spikeGeo(0.3,0xb04ae8);const cellG=new THREE.SphereGeometry(0.55,14,10),nucG=new THREE.SphereGeometry(0.22,10,8),pivG=new THREE.CylinderGeometry(0.16,0.2,0.9,10);
-  const all=[];
-  for(const tr of F.traps){let m;
-    if(tr.k==='spike'){m=spikeT.clone();m.position.set(tr.x,tr.y+0.42,tr.z);}
-    else if(tr.k==='pad'){m=new THREE.Mesh(new THREE.CylinderGeometry(tr.r,tr.r,0.07,22),padM);m.position.set(tr.x,tr.y+0.04,tr.z);}
-    else if(tr.k==='arm'){m=new THREE.Group();const pv=new THREE.Mesh(pivG,pivM);pv.position.y=0.45;m.add(pv);const bar=new THREE.Mesh(new THREE.BoxGeometry(tr.len,0.22,0.22),armM);bar.position.set(tr.len/2,0.55,0);const arm=new THREE.Group();arm.add(bar);m.add(arm);tr.mesh=arm;m.position.set(tr.x,tr.y,tr.z);}
-    else if(tr.k==='cell'){m=new THREE.Group();m.add(new THREE.Mesh(cellG,cellM));const nu=new THREE.Mesh(nucG,nucM);nu.position.set(0.18,0.12,0.18);m.add(nu);tr.mesh=m;m.position.set(tr.x0,tr.y,tr.z0);}
-    else if(tr.k==='laser'){m=new THREE.Group();const len=Math.hypot(tr.x1-tr.x0,tr.z1-tr.z0);const beam=new THREE.Mesh(new THREE.BoxGeometry(len,0.09,0.09),laserM.clone());beam.position.set((tr.x0+tr.x1)/2,tr.y,(tr.z0+tr.z1)/2);beam.rotation.y=-Math.atan2(tr.z1-tr.z0,tr.x1-tr.x0);m.add(beam);tr.beam=beam;
-      for(const [x,z] of [[tr.x0,tr.z0],[tr.x1,tr.z1]]){const e=new THREE.Mesh(new THREE.BoxGeometry(0.32,0.32,0.32),emitM);e.position.set(x,tr.y,z);m.add(e);}}
-    else if(tr.k==='float'){m=floatT.clone();m.position.set(tr.x,tr.y,tr.z);tr.mesh=m;}
-    if(m){m.visible=false;tr.g=m;if(!tr.mesh)tr.mesh=m;F.root.add(m);all.push(tr);}}
-  for(const sp of F.specs){const g=new THREE.Group();const c=new THREE.Mesh(new THREE.CylinderGeometry(sp.r,sp.r*0.85,0.4,22),sp.k==='crumble'?crumM:movM);c.position.y=-0.2;g.add(c);
-    if(sp.k==='mover'){const rr=new THREE.Mesh(new THREE.TorusGeometry(sp.r-0.05,0.06,6,24),movRim);rr.rotation.x=Math.PI/2;rr.position.y=0.02;g.add(rr);}
-    else for(let k=0;k<5;k++){const cr=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.02,sp.r*1.2),new THREE.MeshBasicMaterial({color:0x6a3a1a}));cr.rotation.y=k*0.7;cr.position.y=0.011;g.add(cr);}
-    g.position.set(sp.x,sp.y,sp.z);sp.g=g;F.root.add(g);}
-  const gt=floorTexture(0xffe08a,0xd8a040,91);gt.repeat.set(0.5,0.5);const gnd=new THREE.Mesh(new THREE.CircleGeometry(STAGES[0].R+0.9,48),new THREE.MeshLambertMaterial({map:gt}));gnd.rotation.x=-Math.PI/2;gnd.position.y=0.01;F.root.add(gnd);
+  const F=FALL;F.root=new THREE.Group();worldGroup.add(F.root);F.vis=-999;const SR=STAGES[0].R;
+  const M=c=>new THREE.MeshLambertMaterial({color:c});const spM=M(0xe8303a),spTip=M(0xffe0e0),pisM=M(0xb8c0d8),pisCap=M(0xff5a3a),bladeM=M(0xe8f0ff),hubM=M(0x6a7aa8),cellM=M(0xfff0f4),nucM=M(0x9a5ad8),
+    memM=new THREE.MeshLambertMaterial({color:0xffb8d8,transparent:true,opacity:0.92,side:THREE.DoubleSide}),rimM=new THREE.MeshBasicMaterial({color:0x7af6ff}),laserM=new THREE.MeshBasicMaterial({color:0xff2a4a,transparent:true,opacity:0.9,blending:THREE.AdditiveBlending,depthWrite:false}),
+    curM=new THREE.MeshBasicMaterial({color:0x9ae8ff,transparent:true,opacity:0.25,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}),ledgeM=M(0xfff0e0),cpM=new THREE.MeshBasicMaterial({color:0xffd25e});
+  const floatT=spikeGeo(0.32,0xb04ae8);const cellG=new THREE.SphereGeometry(0.7,14,10),nucG=new THREE.SphereGeometry(0.26,10,8);
+  for(const o of F.obs){let m;
+    if(o.k==='wspike'){m=new THREE.Group();const c=new THREE.Mesh(new THREE.ConeGeometry(o.r,o.len,8),spM);c.rotation.z=Math.PI/2;c.position.x=-o.len/2;m.add(c);const tip=new THREE.Mesh(new THREE.ConeGeometry(o.r*0.3,o.len*0.25,6),spTip);tip.rotation.z=Math.PI/2;tip.position.x=-o.len+o.len*0.125;m.add(tip);
+      m.position.set(Math.cos(o.a)*SR,o.y,Math.sin(o.a)*SR);m.rotation.y=-o.a;}
+    else if(o.k==='piston'){m=new THREE.Group();const rod=new THREE.Mesh(new THREE.BoxGeometry(1,o.w,o.w),pisM);rod.position.x=-0.5;const cap=new THREE.Mesh(new THREE.BoxGeometry(0.25,o.w*1.25,o.w*1.25),pisCap);const inner=new THREE.Group();inner.add(rod);m.add(inner);m.add(cap);o.rod=rod;o.cap=cap;
+      m.position.set(Math.cos(o.a)*SR,o.y,Math.sin(o.a)*SR);m.rotation.y=-o.a;}
+    else if(o.k==='float'){m=floatT.clone();const s=o.r/0.32;m.scale.setScalar(s);m.position.set(o.x,o.y,o.z);}
+    else if(o.k==='blade'){m=new THREE.Group();const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.6,10),hubM);m.add(hub);const arm=new THREE.Group();const L=o.two?o.len*2:o.len;const bar=new THREE.Mesh(new THREE.BoxGeometry(L,o.th*2,0.32),bladeM);bar.position.x=o.two?0:L/2;arm.add(bar);m.add(arm);o.arm=arm;m.position.set(o.x,o.y,o.z);}
+    else if(o.k==='cell'){m=new THREE.Group();m.add(new THREE.Mesh(cellG,cellM));const nu=new THREE.Mesh(nucG,nucM);nu.position.set(0.22,0.15,0.22);m.add(nu);m.position.set(o.x0,o.y,o.z0);}
+    else if(o.k==='membrane'){m=new THREE.Group();const shp=new THREE.Shape();shp.absarc(0,0,SR+0.6,0,TAU,false);for(const h of o.holes){const hp=new THREE.Path();hp.absarc(h.x,-h.z,h.r,0,TAU,true);shp.holes.push(hp);}
+      const geo=new THREE.ExtrudeGeometry(shp,{depth:0.3,bevelEnabled:false,curveSegments:22});const d=new THREE.Mesh(geo,memM);d.rotation.x=-Math.PI/2;d.position.y=-0.15;m.add(d);
+      for(const h of o.holes){const rr=new THREE.Mesh(new THREE.RingGeometry(h.r,h.r+0.16,26),rimM);rr.rotation.x=-Math.PI/2;rr.position.set(h.x,0.17,h.z);m.add(rr);}m.position.y=o.y;}
+    else if(o.k==='laser'){m=new THREE.Group();o.bm=[];for(const b of o.beams){const half=Math.sqrt(Math.max(0.3,(SR-0.3)**2-b.o*b.o));const bm=new THREE.Mesh(new THREE.BoxGeometry(half*2,0.1,0.1),laserM.clone());bm.position.set(b.nx*b.o,0,b.nz*b.o);bm.rotation.y=Math.atan2(-b.nx,-b.nz);m.add(bm);o.bm.push(bm);}m.position.y=o.y;}
+    else if(o.k==='current'){m=new THREE.Mesh(new THREE.CylinderGeometry(SR-0.5,SR-0.5,o.h,24,1,true),curM);m.position.y=o.y;}
+    if(m){m.visible=false;o.g=m;F.root.add(m);}}
+  for(const sp of F.specs){const g=new THREE.Group();const c=new THREE.Mesh(new THREE.CylinderGeometry(sp.r,sp.r*0.8,0.5,22),ledgeM);c.position.y=-0.25;g.add(c);const rr=new THREE.Mesh(new THREE.TorusGeometry(sp.r-0.05,0.07,6,24),cpM);rr.rotation.x=Math.PI/2;rr.position.y=0.02;g.add(rr);g.position.set(sp.x,sp.y,sp.z);sp.g=g;F.root.add(g);}
+  const gt=floorTexture(0xffe08a,0xd8a040,91);gt.repeat.set(0.5,0.5);const gnd=new THREE.Mesh(new THREE.CircleGeometry(SR+0.9,48),new THREE.MeshLambertMaterial({map:gt}));gnd.rotation.x=-Math.PI/2;gnd.position.y=0.01;F.root.add(gnd);
   const gr=new THREE.Mesh(new THREE.TorusGeometry(2.4,0.25,10,40),new THREE.MeshBasicMaterial({color:0xffd25e}));gr.rotation.x=Math.PI/2;gr.position.y=0.3;F.root.add(gr);const gl=new THREE.PointLight(0xffe0a0,1.4,18,1.4);gl.position.set(0,3,0);F.root.add(gl);
 }
-function animFall(dt){const F=FALL;if(!F.root)return;const cy=camera?camera.position.y:pl.y,t=elapsed;const vb=Math.floor(cy/6);
-  if(vb!==F.vis){for(const tr of F.traps){if(tr.g)tr.g.visible=Math.abs(tr.y-cy)<34;}F.vis=vb;}
-  for(let b=vb-6;b<=vb+6;b++){const L=F.buckets.get(b);if(!L)continue;for(const tr of L){if(!tr.mesh)continue;
-    if(tr.k==='arm')tr.mesh.rotation.y=-armAng(tr,t);
-    else if(tr.k==='cell'){const [x,z]=cellPos(tr,t);tr.mesh.position.x=x;tr.mesh.position.z=z;tr.mesh.rotation.y=t*2;}
-    else if(tr.k==='laser'){const st=laserState(tr,t);tr.beam.visible=st>0;tr.beam.material.opacity=st===2?0.95:(Math.floor(t*10)%2?0.35:0.05);tr.beam.scale.set(1,st===2?1.7:0.5,st===2?1.7:0.5);}
-    else if(tr.k==='float'){const [x,z]=floatPos(tr,t);tr.mesh.position.x=x;tr.mesh.position.z=z;tr.mesh.rotation.y=t*1.5;}
-    else if(tr.k==='spike')tr.mesh.rotation.y=t*0.8;}}
-  for(const sp of F.specs){if(Math.abs(sp.y-cy)>40){sp.g.visible=false;continue;}sp.g.visible=true;
-    if(sp.k==='mover'){const [x,z]=moverPos(sp,t);sp.g.position.x=x;sp.g.position.z=z;}
-    else{if(sp.st===1){sp.t-=dt;sp.g.position.x=sp.x+(Math.random()-0.5)*0.08;if(sp.t<=0){sp.st=2;sp.t=3.2;AU.crunch&&AU.crunch(0.6,null);}}
-      else if(sp.st===2){sp.t-=dt;sp.g.position.y=sp.y-(3.2-sp.t)*6;sp.g.visible=sp.t>2.4;if(sp.t<=0){sp.st=0;sp.g.position.set(sp.x,sp.y,sp.z);}}}}}
+function animFall(dt){const F=FALL;if(!F.root)return;const cy=camera?camera.position.y:pl.y,t=elapsed,vb=Math.floor(cy/8);
+  if(vb!==F.vis){for(const o of F.obs)if(o.g)o.g.visible=o.y<cy+12&&o.y>cy-60;for(const sp of F.specs)sp.g.visible=Math.abs(sp.y-cy)<60;F.vis=vb;}
+  for(let b=vb-8;b<=vb+2;b++){const L=F.buckets.get(b);if(!L)continue;for(const o of L){if(!o.g)continue;
+    if(o.k==='piston'){const len=Math.max(0.01,pistonLen(o,t));o.rod.scale.x=len;o.rod.position.x=-len/2;o.cap.position.x=-len;}
+    else if(o.k==='float'){const [x,z]=floatPos(o,t);o.g.position.x=x;o.g.position.z=z;o.g.rotation.y=t*1.5;}
+    else if(o.k==='blade')o.arm.rotation.y=-(o.ph+t*o.spd);
+    else if(o.k==='cell'){const [x,z]=cellPos(o,t);o.g.position.x=x;o.g.position.z=z;o.g.rotation.y=t*2;}
+    else if(o.k==='membrane')o.g.rotation.y=-(-o.rot*t);
+    else if(o.k==='laser'){const st=laserOn(o,t);for(const bm of o.bm){bm.visible=st>0;bm.material.opacity=st===2?0.95:(Math.floor(t*10)%2?0.35:0.05);bm.scale.set(1,st===2?1.8:0.5,st===2?1.8:0.5);}}
+    else if(o.k==='current')o.g.rotation.y=t*3;}}}
 let STAGES=MD.stages;
 let CELLK={gut:'cell',blood:'endo',plant:'cortex',abyss:'neuro_soma',fall:'cell'}[MAP_ID];
 const isAbyssCP=si=>!IS_ABYSS||(si===0||(si+1)%7===0);
@@ -1148,7 +1118,7 @@ function floorDown(py,ny){if(IS_FALL)return fallDown(py,ny);const rh=Math.hypot(
 function floorUp(py,ny){if(IS_FALL)return null;if(abyssFall)return null;const rh=Math.hypot(pl.x,pl.z);for(const f of FLOORS){if(py+PH<=f.y+1e-4&&ny+PH>f.y&&rh+PW>f.hole&&rh<f.R+3)return f.y;}return null;}
 
 function physStep(dt){let landV=0;const wasG=onGround;onGround=false;groundFloor=false;
-  vel.y-=G*dt;if(vel.y<-42)vel.y=-42;
+  vel.y-=G*dt;if(vel.y<-42)vel.y=-42;if(IS_FALL&&vel.y<-FALL.VMAX)vel.y=-FALL.VMAX;
   // 심연 21층: 체크포인트 층(7층·14층·21층)이 아닌 곳에서 발판을 헛디뎌 추락하면 가장 밑(1층 바닥, y=0)까지 직행 추락
   if(IS_ABYSS&&!abyssFall&&vel.y<-4&&pl.y<lastGroundY-3.2){
     const fromSi=stageAt(lastGroundY);
@@ -1461,8 +1431,8 @@ function applyMapTexts(){
   try{$('t-fall').previousElementSibling.textContent=IS_FALL?'튕김':'추락';$('w-fall').previousElementSibling.textContent=IS_FALL?'튕김':'추락';$('fallcp').hidden=!IS_FALL;}catch(e){}
   document.title=MD.title;$('t-sub').textContent=MD.sub;$('t-story').textContent=MD.story;$('w-sub').textContent=MD.winSub;$('w-route').textContent=MD.route;
   if(IS_FALL){
-    $('k-space-dd').textContent='점프 (발판에서 아래 발판으로 하나씩 뛰어내려요. 너무 깊이 떨어지면 떨어지기 전 발판으로 되돌아가요)';
-    $('t-note').textContent='무조건 내려가는 500층 극악 맵! 발판을 하나씩 밟고 내려가요. 함정(가시 바이러스·튕김막·회전 미세소관·대식세포·레이저·떠다니는 바이러스·무너지는 세포막)에 닿으면 처음 떨어지기 전 자리(1층)로 튕겨 올라갑니다. 아무리 빨라도 5분 이상 걸려요. 너무 어렵다면 연습 모드(50층마다 체크포인트)를 켜 보세요.';
+    $('k-space-dd').textContent='점프 (출발 선반에서 뛰어내린 뒤에는 WASD로 몸을 움직여 장애물 사이로 떨어져요)';
+    $('t-note').textContent='무조건 내려가는 500층 극악 맵! 쭉 떨어지면서 WASD로 피하는 맵! 벽 가시·벽 피스톤·회전 날개·세포막 장벽(구멍으로 통과)·레이저 그물·대식세포·떠다니는 바이러스에 부딪히면 처음 떨어지기 전 자리(1층)로 튕겨 올라갑니다. 아무리 빨라도 5분 이상 걸려요. 너무 어렵다면 연습 모드(50층마다 체크포인트)를 켜 보세요.';
   }else if(IS_ABYSS){
     $('k-space-dd').textContent='점프 (6층·13층·20층·21층 끝의 연동 패드가 체크포인트 성소와 정상으로 쏘아 올려 줘요)';
     $('t-note').textContent='극악 난이도 21층(396m) 대원정! 체크포인트는 7층마다(7층·14층·21층) 있으며, 체크포인트가 아닌 층에서 떨어지면 가장 밑(1층 바닥)까지 직행 추락합니다. R 키 또는 1층 중앙 귀환 코어로 저장된 체크포인트로 복귀할 수 있어요.';
@@ -1606,7 +1576,7 @@ function renderMaps(){const el=$('maps');el.innerHTML='';Object.values(MAPS).for
   b.onclick=()=>{switchMap(m.id);};el.appendChild(b);});}
 function startGame(cont){AU.init();const sv=cont?loadSave():null;
   if(sv&&STAGES[sv.cp]){cpStage=sv.cp;time=sv.time||0;falls=sv.falls||0;jumps=sv.jumps||0;bestY=sv.best||0;maxStageBanner=cpStage;}else{cpStage=0;time=0;falls=0;jumps=0;bestY=0;maxStageBanner=0;seen.clear();}
-  if(IS_FALL){FALL.launch=null;FALL.hint={};FALL.goalZ=0;FALL.lastSafe=null;FALL.on=null;try{FALL.cpMode=!!$('fallcp-c').checked;localStorage.setItem('onlyupFallCP',FALL.cpMode?'1':'0');}catch(e){}if(!(sv&&STAGES[sv.cp]&&FALL.cpMode)){cpStage=STAGES.length-1;if(!sv){time=0;falls=0;jumps=0;}}bestY=Y_END;maxStageBanner=cpStage;}
+  if(IS_FALL){FALL.launch=null;FALL.hint={};FALL.goalZ=0;FALL.on=null;FALL.prevY=1e9;pitch=1.15;camDist=6.2;try{FALL.cpMode=!!$('fallcp-c').checked;localStorage.setItem('onlyupFallCP',FALL.cpMode?'1':'0');}catch(e){}if(!(sv&&STAGES[sv.cp]&&FALL.cpMode)){cpStage=STAGES.length-1;if(!sv){time=0;falls=0;jumps=0;}}bestY=Y_END;maxStageBanner=cpStage;}
   respawnAt(cpStage);$('title').hidden=true;$('win').hidden=true;$('pause').hidden=true;$('hud').hidden=false;state='play';curStageShown=-1;curCpShown=-1;
   $('touch').hidden=!matchMedia('(pointer: coarse)').matches;banner(cpStage);setTimeout(()=>{$('hint').style.opacity='0';},22000);requestLock();}
 function pauseGame(){if(state!=='play')return;state='pause';touchMove.x=touchMove.y=0;dragging=false;for(const k in keys)keys[k]=false;$('pause').hidden=false;
@@ -1636,14 +1606,13 @@ function factCheck(){const si=stageAt(pl.y);let best=null,bd=1e9;for(const p of 
 
 function update(dt){
   if(IS_FALL&&FALL.launch){updateFallLaunch(dt);return;}
-  if(IS_FALL&&FALL.on&&FALL.on.k==='mover'&&onGround){const [x1,z1]=moverPos(FALL.on,elapsed),[x0,z0]=moverPos(FALL.on,elapsed-dt);pl.x+=x1-x0;pl.z+=z1-z0;}
   // input
   let ix=0,iz=0;if(keys.KeyA)ix-=1;if(keys.KeyD)ix+=1;if(keys.KeyW)iz+=1;if(keys.KeyS)iz-=1;ix+=touchMove.x;iz+=touchMove.y;
   if(keys.ArrowLeft)yaw+=dt*2.2;if(keys.ArrowRight)yaw-=dt*2.2;if(keys.ArrowUp)pitch=Math.max(-0.35,pitch-dt*1.5);if(keys.ArrowDown)pitch=Math.min(1.25,pitch+dt*1.5);
   const il=Math.hypot(ix,iz);if(il>1){ix/=il;iz/=il;}
   if(window.ILOG){const q=Math.round(ix*5)+','+Math.round(iz*5);if(q!==update.lq){update.lq=q;ILOG.game(il>0.05?'이동':'멈춤','옆 '+ix.toFixed(1)+' · 앞 '+iz.toFixed(1));}}
   const fx=-Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=-Math.sin(yaw);const mx=fx*iz+rx*ix,mz=fz*iz+rz*ix;
-  const acc=onGround?(slippery?2.2:42):9;const k=Math.min(1,acc*dt);vel.x+=(mx*SPEED-vel.x)*k;vel.z+=(mz*SPEED-vel.z)*k;
+  const acc=onGround?(slippery?2.2:42):(IS_FALL?24:9);const k=Math.min(1,acc*dt);vel.x+=(mx*SPEED-vel.x)*k;vel.z+=(mz*SPEED-vel.z)*k;
   coyote=onGround?0.12:coyote-dt;jumpBuf-=dt;
   if(jumpBuf>0&&coyote>0){vel.y=JV;jumpBuf=0;coyote=0;onGround=false;jumps++;AU.jump();if(window.ILOG)ILOG.game('점프');}
   // physics
@@ -1665,7 +1634,7 @@ function update(dt){
         }
       }
       factCheck();}
-    if(gt===3&&IS_FALL){fallLaunch('trap',{k:'spike'});return;}
+    if(gt===3&&IS_FALL){fallLaunch('trap',{k:'wspike'});return;}
     if(gt===3){die(IS_ABYSS?'과분극 신경독소에 침몰했어요!':'위산에 녹아 버렸어요!');return;}
     if(gt===6){
       if(cpStage>0){AU.launch();respawnAt(cpStage);toast((cpStage+1)+'층 체크포인트로 도약!',STAGES[cpStage].name+' 성소로 복귀했습니다.');return;}
@@ -1686,10 +1655,7 @@ function update(dt){
         if(si>cpStage){cpStage=si;AU.chime();banner(si);save();}
       }
     }}
-  if(IS_FALL){FALL.on=fallOnSpec();if(FALL.on&&FALL.on.k==='crumble'&&FALL.on.st===0){FALL.on.st=1;FALL.on.t=0.5;}
-    if(onGround&&!FALL.on)FALL.lastSafe={x:pl.x,y:pl.y,z:pl.z};
-    if(fallTrapHit())return;
-    if(!onGround&&lastGroundY-pl.y>6.5&&pl.y>0.5){fallLaunch('miss');return;}if(pl.y<bestY){bestY=pl.y;const fz=fallZone(fallFloorNo(pl.y))+1;if(fz>(FALL.goalZ||0)){FALL.goalZ=fz;if(window.BioGoal)BioGoal.progress('only-up',fz,{text:'['+MD.cat+'] '+fallFloorNo(pl.y)+'층 · '+fmtR(time),rank:{cat:MD.cat,v:BioGoal.key([[fallFloorNo(pl.y),1000,1],[time*10,1e8,-1]]),f:{stage:fallFloorNo(pl.y)+'층',time:Math.round(time*10)/10}}});}}
+  if(IS_FALL){fallCurrent(dt);if(fallTrapHit())return;if(pl.y<bestY){bestY=pl.y;const fz=fallZone(fallFloorNo(pl.y))+1;if(fz>(FALL.goalZ||0)){FALL.goalZ=fz;if(window.BioGoal)BioGoal.progress('only-up',fz,{text:'['+MD.cat+'] '+fallFloorNo(pl.y)+'층 · '+fmtR(time),rank:{cat:MD.cat,v:BioGoal.key([[fallFloorNo(pl.y),1000,1],[time*10,1e8,-1]]),f:{stage:fallFloorNo(pl.y)+'층',time:Math.round(time*10)/10}}});}}
     if(onGround&&pl.y<0.3){win();return;}}
   else if(pl.y>bestY){bestY=pl.y;const u=IS_ABYSS?'층':'구간';if(window.BioGoal)BioGoal.progress('only-up',stageAt(bestY)+1,{text:'['+MD.cat+'] '+u+' '+(stageAt(bestY)+1)+' · '+fmtR(time),rank:{cat:MD.cat,v:BioGoal.key([[stageAt(bestY)+1,100,1],[time*10,1e8,-1]]),f:{stage:u+' '+(stageAt(bestY)+1),time:Math.round(time*10)/10}}});}
   if(!IS_FALL&&pl.y>Y_END+0.6){win();return;}
@@ -1728,7 +1694,7 @@ function loop(now){requestAnimationFrame(loop);let dt=(now-lastT)/1000;lastT=now
   // shadow
   if(player){let gy=-1e9;const ix=Math.floor(pl.x/VS),iz=Math.floor(pl.z/VS);const sy=Math.floor((pl.y+0.1)/VS);for(let iy=sy;iy>sy-160;iy--){if(VOX.has(K(ix,iy,iz))){gy=(iy+1)*VS;break;}}
     const rh=Math.hypot(pl.x,pl.z);for(const f of FLOORS){if(f.y<=pl.y+0.05&&f.y>gy&&rh>f.hole)gy=f.y;}
-    if(IS_FALL){for(const sp of FALL.specs){if(sp.y<=pl.y+0.05&&sp.y>gy&&!(sp.k==='crumble'&&sp.st===2)){let x=sp.x,z=sp.z;if(sp.k==='mover')[x,z]=moverPos(sp,elapsed);if(Math.hypot(pl.x-x,pl.z-z)<sp.r)gy=sp.y;}}if(gy<-1e8)gy=0;}
+    if(IS_FALL){for(const sp of FALL.specs){if(sp.y<=pl.y+0.05&&sp.y>gy&&Math.hypot(pl.x-sp.x,pl.z-sp.z)<sp.r)gy=sp.y;}}
     if(gy>-1e8){const h=pl.y-gy;shadowMesh.visible=true;shadowMesh.position.set(pl.x,gy+0.02,pl.z);const s=Math.max(0.3,1-h/14);shadowMesh.scale.setScalar(s);shadowMesh.material.opacity=0.38*s;}else shadowMesh.visible=false;}
   // floaters
   for(const f of floaters){f.a+=f.sp*dt*0.3;f.m.position.set(Math.cos(f.a)*f.r,f.y+Math.sin(elapsed*0.6+f.ph)*0.8,Math.sin(f.a)*f.r);f.m.rotation.y+=f.rs*dt;f.m.rotation.x=Math.sin(elapsed*0.3+f.ph)*0.3;}
