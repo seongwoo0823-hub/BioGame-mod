@@ -12,6 +12,7 @@
 html,body{margin:0;height:100%;background:#020611;color:var(--ink);font-family:"Noto Sans KR","Apple SD Gothic Neo",sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:none}
 #wrap{position:fixed;inset:0;display:grid;place-items:center}
 #stage{position:relative;aspect-ratio:16/9;width:min(100vw,177.78vh);background:#000}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
 #cv{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;cursor:crosshair}
 .hud{position:absolute;left:0;right:0;top:0;display:flex;gap:6px;align-items:center;padding:6px 8px;pointer-events:none;font-size:clamp(10px,1.35vw,14px);font-weight:800;text-shadow:0 1px 0 #000}
 .chip{background:var(--pan);border:1px solid var(--line);border-radius:8px;padding:3px 8px;white-space:nowrap;display:flex;align-items:center;gap:5px}
@@ -147,6 +148,7 @@ html,body{margin:0;height:100%;background:#020611;color:var(--ink);font-family:"
 <div class="modal" id="mDex" hidden><div class="panel"><header>바다 카드 도감 <span id="dexPct" style="color:var(--gold);font-size:13px"></span><span class="sp"></span><button class="mb x" data-x>닫기</button></header><div class="bd"><div class="tabs" id="dexSea"></div><div class="tabs" id="dexZone"></div><div class="grid" id="dexGrid"></div></div></div></div>
 <div class="modal" id="mAch" hidden><div class="panel"><header>도전 과제 <span id="achPct" style="color:var(--gold);font-size:13px"></span><span class="sp"></span><button class="mb x" data-x>닫기</button></header><div class="bd"><div class="list" id="achList"></div></div></div></div>
 </div></div>
+<script src="../vendor/three.min.js"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -411,7 +413,7 @@ function paint(w, h, fn, outline) {
   const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); const im = g.createImageData(w, h), D = im.data;
   const cols = new Array(w * h);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const v = fn(x, y); if (v) { cols[y * w + x] = v; const [r, gg, b] = rgb(v), i = (y * w + x) * 4; D[i] = r; D[i + 1] = gg; D[i + 2] = b; D[i + 3] = 255; } }
-  if (outline !== false) for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { if (cols[y * w + x]) continue; let nb = null;
+  if (outline !== false && !PAINT_NO_OUTLINE) for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { if (cols[y * w + x]) continue; let nb = null;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < w && yy < h && cols[yy * w + xx]) { nb = cols[yy * w + xx]; break; } }
     if (nb) { const [r, gg, b] = rgb(nb), i = (y * w + x) * 4; D[i] = r * 0.25; D[i + 1] = gg * 0.25; D[i + 2] = b * 0.3; D[i + 3] = 255; } }
   g.putImageData(im, 0, 0); return c;
@@ -791,7 +793,7 @@ function killFish(f, src) {
   const stars = src.stars || starsBy(src);
   if (f.st.bleed > 0 && f.bleedBy) G.S.bleedKills++;
   if ((src.w === 'deathRifle' || src.w === 'deathSniper') && f.sp.big && f.sp.dmg > 0) G.S.deathKill++;
-  if (f.sp.big) { D.fish.push(Object.assign(f, {carcass: true, stars, alive: false})); floatT(f.x, f.y - 16, 'E: 인양 드론 호출', '#7cf3ff'); return; }
+  if (f.sp.big) { Object.assign(f, {carcass: true, stars, alive: false}); if (!D.fish.includes(f)) D.fish.push(f); floatT(f.x, f.y - 16, 'E: 인양 드론 호출', '#7cf3ff'); return; }
   collect(f, stars, false);
 }
 function collect(f, stars, byDrone, extra) {
@@ -923,7 +925,7 @@ function explode(x, y, rad, dmg, gid) {
 }
 function breakIce(px, py, how) { const c = Math.floor(px / TS), r = Math.floor(py / TS); if (tileAt(px, py) !== 2) return 0; const st = [[c, r]], g = D.W.g; let n = 0;
   while (st.length && n < 14) { const [cc, rr] = st.pop(); const i = rr * COLS + cc; if (cc < 0 || cc >= COLS || rr < 0 || rr >= ROWS || g[i] !== 2) continue; g[i] = 0; n++; burst(cc * TS + 8, rr * TS + 8, how === 'fire' ? '#ffffff' : '#bff3ff', 6, 50); if (how === 'fire') D.parts.push({k: 'steam', x: cc * TS + 8, y: rr * TS + 8, life: 1, max: 1}); st.push([cc + 1, rr], [cc - 1, rr], [cc, rr + 1], [cc, rr - 1]); }
-  if (n) { AU.sfx(how === 'fire' ? 'fire' : 'ice'); floatT(px, py - 8, how === 'fire' ? '얼음벽이 녹았어요!' : '얼음벽 파괴!', '#bff3ff'); } return n; }
+  if (n) { for (let k = -1; k <= 1; k++) DV.dirtyAt(r + k * 6); AU.sfx(how === 'fire' ? 'fire' : 'ice'); floatT(px, py - 8, how === 'fire' ? '얼음벽이 녹았어요!' : '얼음벽 파괴!', '#bff3ff'); } return n; }
 function mineOre(o, amt) {
   o.p += amt * (0.55 + 0.32 * G.gear.knife); AU.sfx('mine'); if (Math.random() < 0.5) burst(o.x, o.y, ORES[o.t].c, 2, 30);
   if (o.p >= 1) { o.alive = false; const rare = RARE_ORES.includes(o.t); let n = 1 + (Math.random() < 0.18 * G.gear.knife ? 1 : 0) + (rare && G.gear.knife >= 4 && Math.random() < 0.35 ? 1 : 0);
@@ -1509,6 +1511,433 @@ function drawService() {
   const left = Math.max(0, R.dur - R.t); ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(4, 250, 150, 16); ctx.fillStyle = '#fff'; ctx.font = 'bold 8px "Noto Sans KR",sans-serif'; ctx.textAlign = 'left'; ctx.fillText(left > 0 ? `영업 종료까지 ${Math.ceil(left)}초 · 손님 ${R.served}` : '마지막 손님 응대 중…', 8, 261);
 }
 
+
+/* =========================== 6.5 3D 복셀 렌더 레이어 ===========================
+ * 게임 로직은 그대로 2D(x 오른쪽, y 아래) — 화면만 Three.js 복셀로 그림.
+ * 원근 카메라를 정면 횡스크롤 시점에 두어 z=0 평면이 화면과 1:1로 맞음 (조준·글자 좌표는 그대로)
+ * 물고기·보스·광석·상자·초밥은 도트 그림을 두께 있는 복셀로 부풀리고, 다이버·사람은 관절 복셀 모델
+ * ===================================================================== */
+let PAINT_NO_OUTLINE = false;
+const V3 = (() => {
+  const glc = document.createElement('canvas'); glc.id = 'gl'; cv.parentNode.insertBefore(glc, cv);
+  const R3 = new THREE.WebGLRenderer({canvas: glc, antialias: true, alpha: false, powerPreference: 'high-performance'});
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  R3.setPixelRatio(Math.min(coarse ? 1.5 : 2, window.devicePixelRatio || 1));
+  const FOV = 24, CAMD = (VH / 2) / Math.tan(FOV / 2 * Math.PI / 180);
+  const cam = new THREE.PerspectiveCamera(FOV, VW / VH, 20, CAMD + 3000);
+  function fit() { const r = cv.getBoundingClientRect(); if (r.width > 0) R3.setSize(r.width, r.height, false); }
+  addEventListener('resize', () => setTimeout(fit, 30)); setTimeout(fit, 0);
+  function setCam(cx, cy) { cam.position.set(cx + VW / 2, -(cy + VH / 2), CAMD); cam.lookAt(cx + VW / 2, -(cy + VH / 2), 0); }
+  // ---------- 지오메트리 도우미 ----------
+  const _c = new THREE.Color();
+  function Q() { return {p: [], n: [], c: [], i: []}; }
+  function quad(q, a, b, c, d, nx, ny, nz, col, sh) {
+    // 바깥쪽에서 볼 때 반시계가 되도록 자동 정렬
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    const cx = uy * vz - uz * vy, cy = uz * vx - ux * vz, cz = ux * vy - uy * vx; if (cx * nx + cy * ny + cz * nz < 0) { const t = b; b = d; d = t; }
+    const base = q.p.length / 3; _c.set(col); const r = _c.r * sh, g = _c.g * sh, bl = _c.b * sh;
+    for (const v of [a, b, c, d]) { q.p.push(v[0], v[1], v[2]); q.n.push(nx, ny, nz); q.c.push(r, g, bl); }
+    q.i.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+  function box(q, x0, y0, z0, x1, y1, z1, col, faces) {   // faces: 비트(+x,-x,+y,-y,+z,-z), 기본 전부
+    const f = faces == null ? 63 : faces;
+    if (f & 1) quad(q, [x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1], 1, 0, 0, col, 0.86);
+    if (f & 2) quad(q, [x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0], -1, 0, 0, col, 0.8);
+    if (f & 4) quad(q, [x0, y1, z0], [x0, y1, z1], [x1, y1, z1], [x1, y1, z0], 0, 1, 0, col, 1.08);
+    if (f & 8) quad(q, [x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], 0, -1, 0, col, 0.62);
+    if (f & 16) quad(q, [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1], 0, 0, 1, col, 1.0);
+    if (f & 32) quad(q, [x0, y0, z0], [x0, y1, z0], [x1, y1, z0], [x1, y0, z0], 0, 0, -1, col, 0.7);
+  }
+  function geo(q) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(q.p, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(q.n, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(q.c, 3));
+    if (q.p.length / 3 > 65535) g.setIndex(new THREE.Uint32BufferAttribute(q.i, 1)); else g.setIndex(q.i); g.computeBoundingSphere(); return g; }
+  // 복셀 격자 → 보이는 면만
+  function gridGeo(W, H, Dp, get, vs, ox, oy, oz) {
+    const q = Q();
+    for (let z = 0; z < Dp; z++) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = get(x, y, z); if (c < 0) continue;
+      const e = (a, b, cc) => get(a, b, cc) < 0;
+      let f = 0; if (x === W - 1 || e(x + 1, y, z)) f |= 1; if (x === 0 || e(x - 1, y, z)) f |= 2; if (y === H - 1 || e(x, y + 1, z)) f |= 4; if (y === 0 || e(x, y - 1, z)) f |= 8; if (z === Dp - 1 || e(x, y, z + 1)) f |= 16; if (z === 0 || e(x, y, z - 1)) f |= 32;
+      if (f) box(q, ox + x * vs, oy + y * vs, oz + z * vs, ox + (x + 1) * vs, oy + (y + 1) * vs, oz + (z + 1) * vs, c, f); }
+    return geo(q);
+  }
+  // 도트 그림 → 가운데가 두툼한 복셀 모형
+  function voxSprite(c, o) {
+    o = o || {}; const w = c.width, h = c.height, d = c.getContext('2d').getImageData(0, 0, w, h).data;
+    const col = new Int32Array(w * h).fill(-1);
+    for (let i = 0; i < w * h; i++) if (d[i * 4 + 3] > 120) col[i] = (d[i * 4] << 16) | (d[i * 4 + 1] << 8) | d[i * 4 + 2];
+    const dist = new Int16Array(w * h).fill(0), qx = [];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (col[i] < 0) continue; const edge = x === 0 || y === 0 || x === w - 1 || y === h - 1 || col[i - 1] < 0 || col[i + 1] < 0 || col[i - w] < 0 || col[i + w] < 0; if (edge) { dist[i] = 1; qx.push(i); } }
+    for (let k = 0; k < qx.length; k++) { const i = qx[k], x = i % w, y = (i / w) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue; const j = yy * w + xx; if (col[j] >= 0 && !dist[j]) { dist[j] = dist[i] + 1; qx.push(j); } } }
+    const maxT = o.maxT || 4, k = o.k == null ? 0.8 : o.k, vs = o.vs || 1, Dp = maxT * 2;
+    const th = new Int8Array(w * h); for (let i = 0; i < w * h; i++) if (col[i] >= 0) th[i] = Math.max(o.minT || 1, Math.min(maxT, Math.round(dist[i] * k)));
+    const get = (x, y, z) => { if (x < 0 || y < 0 || x >= w || y >= h || z < 0 || z >= Dp) return -1; const i = (h - 1 - y) * w + x; if (col[i] < 0) return -1; const t = th[i]; if (z < maxT - t || z >= maxT + t) return -1; return col[i]; };
+    return gridGeo(w, h, Dp, get, vs, -w * vs / 2, -h * vs / 2, -maxT * vs);
+  }
+  const MAT = new THREE.MeshLambertMaterial({vertexColors: true});
+  const MAT_FLASH = new THREE.MeshLambertMaterial({vertexColors: true, emissive: 0x9a9a9a});
+  const MAT_GLOW = new THREE.MeshBasicMaterial({vertexColors: true});
+  const MAT_ICE = new THREE.MeshLambertMaterial({vertexColors: true, transparent: true, opacity: 0.78});
+  const GEO = {};
+  const cache = (k, mk) => GEO[k] || (GEO[k] = mk());
+  function withNoOutline(fn) { PAINT_NO_OUTLINE = true; try { return fn(); } finally { PAINT_NO_OUTLINE = false; } }
+  function fishScale(L) { return L <= 14 ? 3 : L <= 24 ? 2 : L <= 42 ? 1.5 : 1; }
+  function fishGeo(sp, f, v) { return cache('F' + sp.id + f + (v || ''), () => { const s = fishScale(sp.L); const ss = Object.assign({}, sp, {L: Math.round(sp.L * s), H: Math.round(sp.H * s)});
+    const c = withNoOutline(() => makeSprite(ss, f, v)); const flat = sp.plan === 'flat' || sp.plan === 'jelly' || sp.plan === 'tube';
+    return voxSprite(c, {vs: 1 / s, maxT: Math.max(2, Math.round(sp.H * s * (flat ? 0.12 : 0.32))), k: flat ? 0.5 : 0.75}); }); }
+  function bossGeo(id, f) { return cache('B' + id + f, () => { const c = withNoOutline(() => makeBossSprite(id, f)); return voxSprite(c, {vs: 1, maxT: id === 'kraken' ? 9 : 8, k: 0.6}); }); }
+  function spriteGeo(key, mk, o) { return cache(key, () => voxSprite(withNoOutline(mk), o)); }
+  // ---------- 관절 복셀 다이버 ----------
+  function boxesGeo(list) { const q = Q(); for (const b of list) box(q, b[0], b[1], b[2], b[0] + b[3], b[1] + b[4], b[2] + b[5], b[6]); return geo(q); }
+  const SUITS = ['#2a4a8a', '#2a5aa8', '#1a7a8a', '#5a3a9a', '#2a7a4a', '#8a3a3a', '#c08a1a'];
+  function makeDiver3() {
+    const g = new THREE.Group(), suit = SUITS[Math.max(0, G.gear.suit - 1)], suit2 = hexA(suit, 1.3);
+    const body = new THREE.Mesh(boxesGeo([[-7, -3, -3.2, 14, 6, 6.4, suit], [-7, 2, -3.2, 14, 1.2, 6.4, suit2], [-1, -3.2, -3.3, 1.6, 6.4, 6.6, '#ffd25e'], [-6, 3, -2.2, 10, 4, 4.4, '#c8d2dc'], [-6.4, 3.6, -1.8, 10.8, 2.8, 3.6, '#e8eef4'], [4, 4, -1, 1.6, 2, 2, '#3a3a3a'], [-7.5, -2.6, -2.8, 1, 5.2, 5.6, '#1a2a4a']]), MAT);
+    g.add(body);
+    const head = new THREE.Group(); head.position.set(7.5, 0.5, 0);
+    head.add(new THREE.Mesh(boxesGeo([[-1, -3, -3, 6, 6, 6, '#f0c8a0'], [-1.4, 1.4, -3.4, 6.4, 2.6, 6.8, '#2a2018'], [2.8, -1.4, -3.3, 2.6, 3.2, 6.6, '#38d8ff'], [3.2, -0.2, -3.4, 2.4, 1.2, 6.8, '#d8faff'], [-1.6, -0.8, -3.6, 1.6, 1.6, 7.2, '#1a1a1a'], [4, -3.2, -0.8, 2.2, 1.6, 1.6, '#3a3a3a']]), MAT)); g.add(head);
+    const mkLeg = z => { const L = new THREE.Group(); L.position.set(-7, -0.6, z); L.add(new THREE.Mesh(boxesGeo([[-8, -1.4, -1.3, 8, 2.8, 2.6, suit], [-9, -1.6, -1.5, 1.4, 3.2, 3, '#1a2a4a'], [-16, -0.6, -2.2, 7.4, 1.2, 4.4, '#ffd25e'], [-17, -0.5, -1.8, 1.4, 1, 3.6, '#e0a820']]), MAT)); g.add(L); return L; };
+    const legA = mkLeg(1.6), legB = mkLeg(-1.6);
+    const arm = new THREE.Group(); arm.position.set(5, -1, 2.4); arm.add(new THREE.Mesh(boxesGeo([[0, -1.2, -1.2, 7, 2.4, 2.4, suit], [6.4, -1.4, -1.4, 2.4, 2.8, 2.8, '#f0c8a0']]), MAT)); g.add(arm);
+    const arm2 = new THREE.Group(); arm2.position.set(5, -1, -2.4); arm2.add(new THREE.Mesh(boxesGeo([[0, -1.2, -1.2, 6.4, 2.4, 2.4, hexA(suit, 0.85)], [5.8, -1.4, -1.4, 2.4, 2.8, 2.8, '#e0b890']]), MAT)); g.add(arm2);
+    const wep = new THREE.Group(); wep.position.set(8, 0, 0); arm.add(wep);
+    return {g, legA, legB, arm, arm2, wep, head, suit: G.gear.suit, wkey: ''};
+  }
+  function weaponGeo(slot) {
+    if (slot === 0) { const tip = TIPS[G.eq.tip].c; return cache('W0' + G.eq.tip, () => boxesGeo([[-1, -1.2, -1, 10, 2.4, 2, '#6a6a72'], [0, -2.8, -0.8, 2, 2, 1.6, '#3a3a40'], [9, -0.5, -0.5, 6, 1, 1, '#c8c8c8'], [15, -0.9, -0.9, 2.4, 1.8, 1.8, tip]])); }
+    if (slot === 1) { const k = G.eq.melee, M = MELEE[k]; return cache('W1' + k, () => {
+      if (k === 'knife') return boxesGeo([[0, -0.8, -0.6, 3, 1.6, 1.2, '#3a2a1a'], [3, -0.6, -0.3, 7, 1.4, 0.6, '#e0e8f0']]);
+      if (k === 'katana') return boxesGeo([[0, -0.8, -0.6, 4, 1.6, 1.2, '#2a1a3a'], [4, -1.2, -1.2, 0.8, 2.4, 2.4, '#ffd25e'], [4.8, -0.5, -0.25, 14, 1.1, 0.5, '#f4f8ff']]);
+      if (k === 'anchor') return boxesGeo([[0, -0.7, -0.7, 12, 1.4, 1.4, '#6a7a8a'], [11, -4, -1, 2.4, 8, 2, '#8a9ab0'], [9, -4.6, -1, 4, 1.4, 2, '#8a9ab0'], [9, 3.2, -1, 4, 1.4, 2, '#8a9ab0']]);
+      if (k === 'thunder') return boxesGeo([[0, -0.7, -0.7, 9, 1.4, 1.4, '#7a5a2a'], [8, -2.6, -2.2, 4.4, 5.2, 4.4, '#ffe94a'], [8.6, -2, -2.4, 3.2, 4, 4.8, '#c8a020']]);
+      if (k === 'sleepHammer') return boxesGeo([[0, -0.7, -0.7, 8, 1.4, 1.4, '#ffffff'], [7, -2.4, -2, 4, 4.8, 4, '#ff9ad8'], [7.4, -1.8, -2.2, 3.2, 3.6, 4.4, '#ffd0ec']]);
+      return boxesGeo([[0, -0.8, -0.8, 11, 1.6, 1.6, '#2a3a4a'], [10, -1.1, -1.1, 2.4, 2.2, 2.2, M.c]]); }); }
+    const gid = curGun() || 'rifle', Gd = GUNS[gid]; return cache('W2' + gid, () => boxesGeo([[-1, -1.6, -1.2, 9, 3.2, 2.4, '#3a3a44'], [0, -4, -0.8, 2.2, 2.8, 1.6, '#2a2a30'], [7, -0.8, -0.8, gid.includes('niper') ? 9 : 5, 1.6, 1.6, '#5a5a66'], [gid.includes('niper') ? 15 : 11, -0.9, -0.9, 1.8, 1.8, 1.8, Gd.c], [2, 1.6, -0.6, 4, 1.2, 1.2, Gd.c]]));
+  }
+  // ---------- 관절 복셀 사람 (초밥집) ----------
+  function makeHuman(pal, kind) {
+    const [hair, shirt, skin, pants] = pal; const g = new THREE.Group();
+    const legL = new THREE.Group(), legR = new THREE.Group(); legL.position.set(0, 9, 1.6); legR.position.set(0, 9, -1.6);
+    for (const L of [legL, legR]) { L.add(new THREE.Mesh(boxesGeo([[-1.4, -9, -1.3, 2.8, 9, 2.6, pants], [-1.6, -9, -1.5, 3.6, 1.6, 3, '#1a1a1a']]), MAT)); g.add(L); }
+    const torso = kind === 'chef' ? [[-3, 9, -3.4, 6, 8, 6.8, '#ffffff'], [-3.1, 9, -1.5, 6.2, 6.5, 3, '#f0f0f0'], [2.9, 10, -2.4, 0.3, 5, 4.8, '#e8e8e8']] :
+      kind === 'player' ? [[-3, 9, -3.4, 6, 8, 6.8, shirt], [2.9, 9, -2.8, 0.4, 6.4, 5.6, '#2a3a5a'], [-3.1, 15.4, -3.5, 6.2, 1, 7, hexA(shirt, 1.2)]] : [[-3, 9, -3.4, 6, 8, 6.8, shirt], [-3.1, 15.6, -3.5, 6.2, 0.8, 7, hexA(shirt, 1.2)]];
+    g.add(new THREE.Mesh(boxesGeo(torso), MAT));
+    const armL = new THREE.Group(), armR = new THREE.Group(); armL.position.set(0, 16, 4.2); armR.position.set(0, 16, -4.2);
+    for (const A of [armL, armR]) { A.add(new THREE.Mesh(boxesGeo([[-1.2, -6.5, -1.1, 2.4, 6.5, 2.2, kind === 'chef' ? '#ffffff' : shirt], [-1.2, -8, -1.1, 2.4, 1.6, 2.2, skin]]), MAT)); g.add(A); }
+    const head = [[-3.2, 17, -3.2, 6.4, 6.4, 6.4, skin], [2.6, 19.6, -2.2, 0.8, 1.2, 1.2, '#101018'], [2.6, 19.6, 1, 0.8, 1.2, 1.2, '#101018'], [2.7, 18, -1, 0.6, 0.6, 2, '#b85a5a']];
+    if (kind === 'chef') head.push([-3.4, 23, -3.4, 6.8, 1.2, 6.8, '#e8e8e8'], [-2.8, 24, -2.8, 5.6, 4, 5.6, '#ffffff']);
+    else head.push([-3.5, 21.6, -3.5, 7, 2.4, 7, hair], [-3.5, 18, -3.5, 1.6, 4, 7, hair]);
+    if (kind === 'vip') head.push([-2.4, 24, -2.4, 4.8, 1.4, 4.8, '#ffd25e'], [-2.4, 25.4, -2.4, 1, 1, 1, '#ffd25e'], [1.4, 25.4, 1.4, 1, 1, 1, '#ffd25e'], [-0.5, 25.4, -0.5, 1, 1.4, 1, '#ff4a6a']);
+    g.add(new THREE.Mesh(boxesGeo(head), MAT));
+    return {g, legL, legR, armL, armR};
+  }
+  return {R3, cam, CAMD, setCam, Q, quad, box, geo, gridGeo, voxSprite, boxesGeo, MAT, MAT_FLASH, MAT_GLOW, MAT_ICE, cache, fishGeo, bossGeo, spriteGeo, withNoOutline, makeDiver3, weaponGeo, makeHuman, fit};
+})();
+// ---------- 장식 도트 원본 (복셀로 부풀림) ----------
+function decoCanvas(k, v) {
+  const S = {coral: [14, 22], fan: [24, 14], anemone: [14, 10], kelp: [9, 34], rockweed: [9, 26], glowshroom: [9, 9], spire: [10, 15], icecrystal: [9, 9], icespike: [9, 15], vent: [9, 10], chimney: [9, 19], basalt: [10, 13]}[k] || [8, 8];
+  const c = document.createElement('canvas'); c.width = S[0]; c.height = S[1]; const g = c.getContext('2d'); const W = S[0], H = S[1]; const r = (a) => hash(a, v * 7 + 3, k.length);
+  const px = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), w, h); };
+  if (k === 'coral') { const cols = ['#ff7aa8', '#ff9a4a', '#c87aff', '#ff5a6a', '#ffd25e'], c0 = cols[v % 5]; for (let b = 0; b < 4; b++) { let bx = W / 2 + (b - 1.5) * 2.6, by = H - 2; for (let i = 0; i < 7 + (b + v) % 4; i++) { px(bx, by, 2, 2, i % 3 ? c0 : hexA(c0, 1.25)); by -= 2; bx += Math.sin(i * 1.3 + b + v) * 1.2; if (i > 3 && r(i + b * 9) > 0.7) px(bx + 1.5, by - 1, 2, 2, hexA(c0, 0.85)); } } }
+  else if (k === 'fan') { const c0 = ['#ff6a8a', '#ff9a4a', '#b86aff'][v % 3]; for (let i = 0; i < 11; i++) { const a = -Math.PI / 2 + (i - 5) * 0.2; for (let rr = 2; rr < 13; rr += 1.5) px(W / 2 + Math.cos(a) * rr, H - 1 + Math.sin(a) * rr, 1, 1, rr > 10 ? hexA(c0, 1.2) : c0); } px(W / 2 - 1, H - 3, 2, 3, '#7a3a3a'); }
+  else if (k === 'anemone') { for (let i = 0; i < 7; i++) px(1 + i * 2, 0 + (i % 2), 1, H - 3, i % 2 ? '#ffb0d0' : '#ff7ab8'); px(1, H - 4, W - 2, 4, '#ffd25e'); px(2, H - 3, W - 4, 2, '#ff9a4a'); }
+  else if (k === 'kelp' || k === 'rockweed') { const c0 = k === 'kelp' ? '#3a9a4a' : '#9a8a2a'; let x = W / 2; for (let y = H - 1; y > 0; y -= 2) { x += Math.sin(y * 0.3 + v) * 0.8; px(x - 1, y - 1, 3, 2, y % 4 ? c0 : hexA(c0, 1.25)); if (y % 6 === 0) px(x + (y % 12 ? 2 : -3), y - 1, 2, 2, hexA(c0, 0.85)); } }
+  else if (k === 'glowshroom') { px(3, 4, 3, 5, '#5a4a7a'); px(0, 1, 9, 3, '#7affd0'); px(1, 0, 7, 1, '#bfffe8'); px(2, 2, 1, 1, '#ffffff'); }
+  else if (k === 'spire') { for (let i = 0; i < H; i++) { const w = Math.max(2, W - i / 1.4); px((W - w) / 2, H - 1 - i, w, 1, i % 3 ? '#4a4060' : '#5a5074'); } }
+  else if (k === 'icecrystal' || k === 'icespike') { for (let i = 0; i < H; i++) { const w = Math.max(1, (H - i) / (k === 'icespike' ? 1.6 : 1.1)); px((W - w) / 2, H - 1 - i, w, 1, i % 2 ? '#dff8ff' : '#bfeaff'); } px(W / 2, 0, 1, H, '#9ad8f0'); }
+  else if (k === 'vent' || k === 'chimney') { for (let i = 0; i < H; i++) { const w = 7 - (i / H) * 2; px((W - w) / 2, H - 1 - i, w, 1, i % 3 ? '#2a1a18' : '#3a2420'); } px(W / 2 - 1, 0, 2, 2, '#ff6a2a'); px(W / 2 - 2, 2, 4, 1, '#ff9a4a'); }
+  else if (k === 'basalt') { px(1, 2, 3, H - 2, '#1e1414'); px(4, 5, 3, H - 5, '#2a1c1c'); px(7, 3, 2, H - 3, '#1a1010'); px(2, H - 3, 1, 1, '#ff4a1a'); px(5, H - 2, 1, 1, '#ff7a2a'); }
+  return c;
+}
+// ---------- 다이빙 3D 장면 ----------
+const DV = (() => {
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a9cc8); scene.fog = new THREE.Fog(0x2a9cc8, V3.CAMD + 10, V3.CAMD + 300);
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x203050, 0.8); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xfff8e8, 0.7); sun.position.set(-0.35, 1, 0.75); scene.add(sun);
+  const lamp = new THREE.PointLight(0xfff2d0, 0, 170, 1.3); scene.add(lamp);
+  const spot = new THREE.SpotLight(0xfff6d8, 0, 340, 0.45, 0.55, 1); scene.add(spot); scene.add(spot.target);
+  const MAT_LAVA = new THREE.MeshBasicMaterial({vertexColors: true}), MAT_DIM = new THREE.MeshLambertMaterial({vertexColors: true, transparent: true, opacity: 0.45});
+  const MAT_COL = new THREE.MeshBasicMaterial({color: 0xffd0a0, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending});
+  const root = new THREE.Group(); scene.add(root);
+  const CH = 6; let W = null; const chunks = new Map();
+  // 입자·투사체 인스턴스
+  const cube = new THREE.BoxGeometry(1, 1, 1);
+  const IP = new THREE.InstancedMesh(cube, new THREE.MeshBasicMaterial(), 1400); IP.instanceMatrix.setUsage(THREE.DynamicDrawUsage); IP.frustumCulled = false; scene.add(IP);
+  const IL = new THREE.InstancedMesh(cube, new THREE.MeshLambertMaterial(), 900); IL.instanceMatrix.setUsage(THREE.DynamicDrawUsage); IL.frustumCulled = false; scene.add(IL);
+  for (const I of [IP, IL]) { I.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(I.count * 3).fill(1), 3); I.userData.max = I.count; }
+  const dm = new THREE.Object3D(), tc = new THREE.Color();
+  function ibegin(I) { I.userData.n = 0; }
+  function iadd(I, x, y, z, sx, sy, sz, col, rz) { const n = I.userData.n; if (n >= I.userData.max) return; dm.position.set(x, -y, z); dm.rotation.set(0, 0, rz || 0); dm.scale.set(sx, sy, sz); dm.updateMatrix(); I.setMatrixAt(n, dm.matrix); I.setColorAt(n, tc.set(col)); I.userData.n = n + 1; }
+  function iend(I) { I.count = I.userData.n; I.instanceMatrix.needsUpdate = true; if (I.instanceColor) I.instanceColor.needsUpdate = true; }
+  // 하늘·수면·보트·햇살
+  const skyC = document.createElement('canvas'); skyC.width = 4; skyC.height = 64; const skyT = new THREE.CanvasTexture(skyC);
+  const sky = new THREE.Mesh(new THREE.PlaneGeometry(WW * 4, 900), new THREE.MeshBasicMaterial({map: skyT, fog: false})); sky.position.set(WW / 2, 450, -900); scene.add(sky);
+  const surf = new THREE.Mesh(new THREE.BoxGeometry(WW * 3, 3, 900), new THREE.MeshLambertMaterial({color: 0x9ae8ff, transparent: true, opacity: 0.45})); surf.position.set(WW / 2, -1.5, -300); scene.add(surf);
+  const isle = new THREE.Mesh(V3.boxesGeo([[-160, 0, -10, 320, 28, 20, '#4a7a5a'], [-120, 28, -10, 220, 24, 20, '#5a8a62'], [-60, 52, -10, 120, 18, 20, '#6a9a6a'], [-20, 70, -10, 50, 12, 20, '#7aa872'], [40, 28, -10, 40, 30, 20, '#8a8070']]), V3.MAT); isle.position.set(WW * 0.7, 0, -700); scene.add(isle);
+  const boat = new THREE.Mesh(V3.boxesGeo([[-34, -2, -12, 68, 7, 24, '#7a3a1a'], [-30, -6, -10, 60, 4, 20, '#5a2a10'], [-36, 5, -13, 72, 2, 26, '#a85a2a'], [-10, 7, -8, 22, 13, 16, '#f0f0f0'], [-7, 11, 7.9, 6, 5, 0.4, '#3a8ad0'], [3, 11, 7.9, 6, 5, 0.4, '#3a8ad0'], [-12, 20, -10, 26, 3, 20, '#ff5a3a'], [20, 7, -1, 2, 14, 2, '#ffd25e'], [22, 15, -1, 7, 5, 1, '#ff5a3a']]), V3.MAT); scene.add(boat);
+  const rays = new THREE.Group(); for (let i = 0; i < 7; i++) { const m = new THREE.Mesh(new THREE.PlaneGeometry(26, 340), new THREE.MeshBasicMaterial({color: 0xfffbe0, transparent: true, opacity: 0.07, depthWrite: false, blending: THREE.AdditiveBlending, fog: false})); m.rotation.z = 0.32; m.position.set(i * 110, -150, -40); rays.add(m); } scene.add(rays);
+  // 플레이어
+  let rig = null, rigSuit = 0;
+  // 지형 덩어리
+  function zfAt(c, rr, i, j) { return 6 + Math.floor(hash(c * 4 + i, rr * 4 + j, 11) * 3) * 3; }
+  function tileV(c, rr) { if (rr < 0) return 0; if (c < 0 || c >= COLS || rr >= ROWS) return 1; return W.g[rr * COLS + c]; }
+  function buildChunk(ci) {
+    const g = new THREE.Group(), r0 = ci * CH, r1 = Math.min(ROWS - 1, r0 + CH - 1);
+    const qR = V3.Q(), qI = V3.Q(), qL = V3.Q(), qB = V3.Q(); const ZB = -42;
+    for (let rr = r0; rr <= r1; rr++) { const Z = ZONES[zoneOf(rowDepth(rr))], zi = zoneOf(rowDepth(rr));
+      for (let c = 0; c < COLS; c++) { const v = W.g[rr * COLS + c], x0 = c * TS, y0 = rr * TS;
+        if (v === 0) { // 뒷벽 (어둡고 울퉁불퉁)
+          { const h = hash(c, rr, 5), base = mixC(Z.rock2, Z.w[1], 0.62), col = hexA(base, 0.9 + h * 0.16), zz = -118 - h * 6;
+            V3.quad(qB, [x0, -y0, zz], [x0 + 16, -y0, zz], [x0 + 16, -y0 - 16, zz], [x0, -y0 - 16, zz], 0, 0, 1, col, 1);
+            if (h > 0.72) { const bx = x0 + 2 + (h * 37 % 1) * 6, by = y0 + 3 + (h * 53 % 1) * 6; V3.box(qB, bx, -by - 7, zz, bx + 7, -by, zz + 6 + h * 8, hexA(base, 1.08), 1 | 2 | 4 | 8 | 16); } }
+          continue; }
+        const q = v === 2 ? qI : v === 3 ? qL : qR;
+        for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+          const sx0 = x0 + i * 4, sx1 = sx0 + 4, sy0 = -(y0 + j * 4), sy1 = sy0 - 4, zf = v === 2 ? 10 : zfAt(c, rr, i, j), h = hash(c * 4 + i, rr * 4 + j, 3);
+          let col = v === 2 ? (h > 0.7 ? '#e8faff' : h > 0.35 ? '#bfeaff' : '#a8e0f8') : v === 3 ? (h > 0.6 ? '#ffb030' : h > 0.25 ? '#ff6a1a' : '#5a1a10') : (h > 0.82 ? hexA(Z.rock, 1.15) : h < 0.18 ? Z.rock2 : (hash(c * 2 + (i >> 1), rr * 2 + (j >> 1), 9) > 0.5 ? Z.rock : mixC(Z.rock, Z.rock2, 0.4)));
+          V3.quad(q, [sx0, sy1, zf], [sx1, sy1, zf], [sx1, sy0, zf], [sx0, sy0, zf], 0, 0, 1, col, 1);
+          // 옆면: 이웃 기둥과 높이 차이만큼
+          const nb = (di, dj) => { let ni = i + di, nj = j + dj, nc = c, nr = rr; if (ni < 0) { ni = 3; nc--; } if (ni > 3) { ni = 0; nc++; } if (nj < 0) { nj = 3; nr--; } if (nj > 3) { nj = 0; nr++; } const nv = tileV(nc, nr); if (!nv) return ZB - 1; return nv === 2 ? 10 : zfAt(nc, nr, ni, nj); };
+          const zr = nb(1, 0), zl = nb(-1, 0), zu = nb(0, -1), zd = nb(0, 1);
+          const topCol = (zi === 0 ? (hash(c * 4 + i, rr, 21) > 0.75 ? '#6ac86a' : '#f0d098') : Z.top);
+          if (zr < zf) V3.quad(q, [sx1, sy1, Math.max(ZB, zr)], [sx1, sy0, Math.max(ZB, zr)], [sx1, sy0, zf], [sx1, sy1, zf], 1, 0, 0, col, 0.84);
+          if (zl < zf) V3.quad(q, [sx0, sy1, Math.max(ZB, zl)], [sx0, sy1, zf], [sx0, sy0, zf], [sx0, sy0, Math.max(ZB, zl)], -1, 0, 0, col, 0.78);
+          if (zu < zf) V3.quad(q, [sx0, sy0, Math.max(ZB, zu)], [sx0, sy0, zf], [sx1, sy0, zf], [sx1, sy0, Math.max(ZB, zu)], 0, 1, 0, zu < ZB ? topCol : col, zu < ZB ? 1.1 : 0.95);
+          if (zd < zf) V3.quad(q, [sx0, sy1, Math.max(ZB, zd)], [sx1, sy1, Math.max(ZB, zd)], [sx1, sy1, zf], [sx0, sy1, zf], 0, -1, 0, col, 0.6);
+        }
+        // 위가 물이면 윗면 장식 (모래알·풀·눈)
+        if (!tileV(c, rr - 1) && v === 1) { for (let k = 0; k < 3; k++) { const hx = hash(c, rr, 40 + k); if (hx > 0.55) { const bx = x0 + 2 + hx * 12, bz = -30 + hash(c, rr, 50 + k) * 38; V3.box(qR, bx, -y0, bz, bx + 2, -y0 + 2 + (zi === 0 ? hx * 3 : 1), bz + 2, zi === 0 ? (k % 2 ? '#5ab85a' : '#e8c890') : zi >= 3 && zi <= 5 ? '#ffffff' : hexA(Z.top, 0.9)); } } }
+      } }
+    const add = (q, m) => { if (q.p.length) { const mesh = new THREE.Mesh(V3.geo(q), m); mesh.userData.own = true; g.add(mesh); } };
+    add(qR, V3.MAT); add(qI, V3.MAT_ICE); add(qL, MAT_LAVA); add(qB, V3.MAT);
+    // 장식·광석·상자·부표·고드름·간헐천
+    const objs = [];
+    for (const d of W.deco) { const rr = Math.floor((d.y - 1) / TS); if (rr < r0 || rr > r1) continue; const v = Math.floor(d.s) % 4; const gg = V3.spriteGeo('D' + d.k + v, () => decoCanvas(d.k, v), {maxT: d.k === 'fan' || d.k === 'anemone' ? 2 : 2, k: 1});
+      const m = new THREE.Mesh(gg, V3.MAT); gg.computeBoundingBox(); const hh = gg.boundingBox.max.y; m.position.set(d.x, -d.y + hh, -18 + hash(d.x, d.y, 2) * 26); m.rotation.y = (hash(d.x, d.y, 4) - 0.5) * 0.8; g.add(m); if (d.k === 'kelp' || d.k === 'rockweed' || d.k === 'anemone') objs.push({k: 'sway', m, ph: d.s}); }
+    for (const o of W.ores) { const rr = Math.floor(o.y / TS); if (rr < r0 || rr > r1) continue; const m = new THREE.Mesh(V3.spriteGeo('O' + o.t, () => makeOre(o.t), {maxT: 4, k: 0.9}), V3.MAT); m.position.set(o.x, -o.y, 2); m.rotation.y = hash(o.x, o.y, 1) * 0.6 - 0.3; g.add(m); objs.push({k: 'ore', o, m}); }
+    for (const ch of W.chests) { const rr = Math.floor(ch.y / TS); if (rr < r0 || rr > r1) continue; const m = new THREE.Mesh(V3.spriteGeo('C' + ch.k, () => makeChest(ch.k), {maxT: ch.k === 'o2' ? 4 : 5, k: 1}), V3.MAT); m.position.set(ch.x, -ch.y, 2); g.add(m); objs.push({k: 'chest', o: ch, m}); }
+    for (const bu of W.buoys) { const rr = Math.floor(bu.y / TS); if (rr < r0 || rr > r1) continue; const m = new THREE.Mesh(V3.boxesGeo([[-0.6, 0, -0.6, 1.2, 26, 1.2, '#555555'], [-5, -5, -5, 10, 10, 10, '#ff5a3a'], [-5.2, -1.5, -5.2, 10.4, 3, 10.4, '#ffffff'], [-1.5, 5, -1.5, 3, 3, 3, '#ffe94a']]), V3.MAT); m.position.set(bu.x, -bu.y, 0); g.add(m); objs.push({k: 'buoy', o: bu, m}); }
+    for (const ic of W.icicles) { const rr = Math.floor(ic.y0 / TS); if (rr < r0 || rr > r1) continue; const m = new THREE.Mesh(V3.cache('ICI', () => V3.boxesGeo([[-2.5, -3, -2.5, 5, 3, 5, '#e8faff'], [-1.6, -7, -1.6, 3.2, 4, 3.2, '#d0f2ff'], [-0.8, -11, -0.8, 1.6, 4, 1.6, '#a8e4ff']])), V3.MAT_ICE); g.add(m); objs.push({k: 'ice', o: ic, m}); }
+    for (const gy of W.geysers) { const rr = Math.floor((gy.y - 1) / TS); if (rr < r0 || rr > r1) continue; const b = new THREE.Mesh(V3.cache('GEY', () => V3.boxesGeo([[-6, 0, -6, 12, 4, 12, '#2a1410'], [-3, 4, -3, 6, 2, 6, '#7a2a1a'], [-1.5, 6, -1.5, 3, 1, 3, '#ff8a2a']])), V3.MAT); b.position.set(gy.x, -gy.y, 0); g.add(b);
+      const col = new THREE.Mesh(new THREE.BoxGeometry(14, 80, 14), MAT_COL); col.position.set(gy.x, -gy.y + 40, 0); g.add(col); objs.push({k: 'gey', o: gy, m: col}); }
+    root.add(g); return {g, objs, ci};
+  }
+  function dirtyAt(rr) { const ci = Math.floor(rr / CH); for (const k of [ci]) { const c = chunks.get(k); if (c) { root.remove(c.g); disposeG(c.g); chunks.delete(k); } } }
+  function disposeG(g) { g.traverse(o => { if (o.isMesh && o.userData.own && o.geometry) o.geometry.dispose(); }); }
+  function reset(world) { W = world; for (const c of chunks.values()) root.remove(c.g); chunks.clear(); for (const m of fishM.values()) scene.remove(m); fishM.clear(); for (const m of bossM.values()) scene.remove(m); bossM.clear(); for (const m of droneM.values()) scene.remove(m); droneM.clear(); }
+  // 물고기·보스 메시
+  const fishM = new Map(), bossM = new Map(), droneM = new Map();
+  const iceBox = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({color: 0xbff3ff, transparent: true, opacity: 0.45, depthWrite: false}));
+  function fishMesh(f) { let m = fishM.get(f); if (!m) { m = new THREE.Mesh(V3.fishGeo(f.sp, 0), V3.MAT); m.userData.ry = f.dir > 0 ? 0 : Math.PI; scene.add(m); fishM.set(f, m); } return m; }
+  let spearM = null;
+  function render(D, dt) {
+    if (W !== D.W) reset(D.W);
+    const P = D.P, ox = D.cam.x + (D.shake ? rnd(-D.shake, D.shake) : 0), oy = D.cam.y + (D.shake ? rnd(-D.shake, D.shake) : 0); V3.setCam(ox, oy);
+    const m = Math.max(0, (oy + VH / 2) / PXM), z = zoneOf(m), [wt, wb] = waterGrad(m), wcol = new THREE.Color(mixC(wt, wb, 0.55));
+    scene.background.copy(wcol); scene.fog.color.copy(wcol);
+    let lv = ZONES[z].light; if (z < 2) lv = lerp(1, ZONES[2].light, clamp((m - 90) / 40, 0, 1) * (z === 1 ? 1 : 0));
+    hemi.intensity = 0.35 + 0.55 * lv; sun.intensity = 0.25 + 0.6 * lv; hemi.color.set(z >= 6 ? 0xffc8a8 : 0xffffff);
+    const dark = 1 - lv; lamp.intensity = dark > 0.2 ? 1.1 : 0.25; lamp.position.set(P.x, -P.y, 30);
+    const a = aimAngle(); spot.intensity = dark > 0.2 ? 1.6 : 0; spot.position.set(P.x, -P.y, 12); spot.target.position.set(P.x + Math.cos(a) * 100, -(P.y + Math.sin(a) * 100), 0);
+    // 하늘 (수면 위)
+    const sc = [['#ffd0e0', '#9ad8ff'], ['#7ad0ff', '#c8f0ff'], ['#ffb08a', '#ffe0b0'], ['#c8d8e8', '#eef6ff']][season()]; if (skyT.__s !== season()) { const g2 = skyC.getContext('2d'), gr = g2.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, sc[0]); gr.addColorStop(1, sc[1]); g2.fillStyle = gr; g2.fillRect(0, 0, 4, 64); skyT.needsUpdate = true; skyT.__s = season(); }
+    const nearTop = oy < 80; sky.visible = surf.visible = isle.visible = boat.visible = nearTop; boat.position.set(WW / 2, 2 + Math.sin(D.t * 1.5) * 1, 0); boat.rotation.z = Math.sin(D.t * 1.2) * 0.03;
+    rays.visible = m < 110 && season() !== 3; rays.children.forEach((r, i) => { r.position.x = ox + ((i * 97 + D.t * 6) % (VW + 200)) - 60; r.position.y = -oy - 120; r.material.opacity = 0.07 * (1 - m / 110) * (season() === 1 ? 1.6 : 1); });
+    // 덩어리 표시
+    const c0 = Math.max(0, Math.floor((oy - 40) / TS / CH)), c1 = Math.floor((oy + VH + 40) / TS / CH);
+    for (let ci = c0; ci <= c1; ci++) if (!chunks.has(ci) && ci * CH < ROWS) chunks.set(ci, buildChunk(ci));
+    for (const [ci, c] of chunks) { const vis = ci >= c0 - 1 && ci <= c1 + 1; c.g.visible = vis; if (!vis && Math.abs(ci - (c0 + c1) / 2) > 8) { root.remove(c.g); disposeG(c.g); chunks.delete(ci); continue; }
+      if (!vis) continue;
+      for (const o of c.objs) {
+        if (o.k === 'sway') o.m.rotation.z = Math.sin(D.t * 1.4 + o.ph) * 0.12;
+        else if (o.k === 'ore') { o.m.visible = o.o.alive; if (o.o.p > 0) o.m.position.x = o.o.x + Math.sin(D.t * 60) * 0.4; }
+        else if (o.k === 'chest') { o.m.material = o.o.open ? MAT_DIM : V3.MAT; o.m.scale.y = o.o.open ? 0.7 : 1 + Math.sin(D.t * 4) * 0.02; }
+        else if (o.k === 'ice') { o.m.visible = o.o.alive; o.m.position.set(o.o.x + (o.o.st === 1 ? rnd(-0.8, 0.8) : 0), -o.o.y, 0); }
+        else if (o.k === 'gey') { o.m.visible = o.o.on === 2; o.m.scale.x = o.m.scale.z = 0.8 + Math.sin(D.t * 20) * 0.15; }
+        else if (o.k === 'buoy') o.m.position.y = -o.o.y + Math.sin(D.t * 2 + o.o.x) * 1.2; } }
+    MAT_LAVA.color.setScalar(0.85 + Math.sin(D.t * 4) * 0.15);
+    // 물고기
+    const fr = Math.floor(D.t * 5) % 2, seen = new Set();
+    for (const f of D.fish) { if (f.gone) continue; if (Math.abs(f.y - P.y) > 360 && !f.hooked) continue; seen.add(f); const mm = fishMesh(f);
+      const still = f.st.sleep > 0 || f.st.freeze > 0 || f.st.stun > 0 || f.carcass; const puffed = f.sp.plan === 'puffer' && f.puff > 0;
+      mm.geometry = V3.fishGeo(f.sp, still ? 0 : fr, puffed ? 'puff' : undefined);
+      const tgt = f.dir > 0 ? 0 : Math.PI; mm.userData.ry += (tgt - mm.userData.ry) * Math.min(1, dt * 8);
+      mm.rotation.set(f.carcass ? Math.PI : 0, mm.userData.ry + Math.sin(f.t * 6) * (still ? 0 : 0.08), still ? 0 : clamp(-(f.vy || 0) / 140, -0.4, 0.4) * (f.dir > 0 ? 1 : -1));
+      mm.position.set(f.x + (f.state === 'tele' ? rnd(-1, 1) : 0), -f.y + (f.st.sleep > 0 ? Math.sin(D.t * 2) * 1 : 0), 0);
+      mm.material = f.flash > 0 ? V3.MAT_FLASH : V3.MAT;
+      if (f.st.freeze > 0) { if (!mm.userData.ice) { mm.userData.ice = iceBox.clone(); mm.add(mm.userData.ice); } mm.userData.ice.visible = true; mm.userData.ice.scale.set(f.sp.L + 4, f.sp.H + 4, Math.max(8, f.sp.H)); } else if (mm.userData.ice) mm.userData.ice.visible = false; }
+    for (const [f, mm] of fishM) if (!seen.has(f)) { scene.remove(mm); fishM.delete(f); }
+    // 보스
+    const bs = new Set(); for (const b of D.bosses) { bs.add(b); let mm = bossM.get(b); if (!mm) { mm = new THREE.Mesh(V3.bossGeo(b.id, 0), V3.MAT); mm.userData.ry = 0; scene.add(mm); bossM.set(b, mm); }
+      mm.geometry = V3.bossGeo(b.id, fr); const tgt = (b.id === 'greenland' || b.id === 'dunkle') && b.dir < 0 ? Math.PI : 0; mm.userData.ry += (tgt - mm.userData.ry) * Math.min(1, dt * 4); mm.rotation.y = mm.userData.ry;
+      mm.position.set(b.x, -b.y + (b.id === 'kraken' ? -11 : 0), -4); mm.material = b.flash > 0 ? V3.MAT_FLASH : V3.MAT; mm.scale.setScalar(b.st.freeze > 0 ? 1.02 : 1); }
+    for (const [b, mm] of bossM) if (!bs.has(b)) { scene.remove(mm); bossM.delete(b); }
+    // 다이버
+    if (!rig || rigSuit !== G.gear.suit) { if (rig) scene.remove(rig.g); rig = V3.makeDiver3(); rigSuit = G.gear.suit; scene.add(rig.g); }
+    const face = P.dir > 0 ? 0 : Math.PI; rig.g.userData.ry = rig.g.userData.ry == null ? face : rig.g.userData.ry + (face - rig.g.userData.ry) * Math.min(1, dt * 10);
+    rig.g.rotation.set(0, rig.g.userData.ry, clamp(-P.vy / 260, -0.35, 0.35) * (P.dir > 0 ? 1 : -1)); rig.g.position.set(P.x, -P.y, 2); rig.g.scale.setScalar(1.15);
+    rig.g.visible = !(P.inv > 0 && Math.floor(P.inv * 16) % 2);
+    const kick = Math.sin(P.kick * 1.6); rig.legA.rotation.z = kick * 0.35; rig.legB.rotation.z = -kick * 0.35; rig.arm2.rotation.z = 0.5 + Math.sin(P.kick) * 0.2;
+    let la = P.dir > 0 ? a : Math.PI - a; if (P.slot === 1 && P.swing > 0) { const M = MELEE[G.eq.melee]; const sa = P.swingA + (0.18 - P.swing) / 0.18 * M.arc - M.arc / 2; la = P.dir > 0 ? sa : Math.PI - sa; }
+    rig.arm.rotation.z = -la; const wk = P.slot + '|' + G.eq.tip + G.eq.melee + G.eq.gun + (D.spear ? 's' : ''); if (rig.wkey !== wk) { rig.wkey = wk; rig.wep.clear(); const wm = new THREE.Mesh(V3.weaponGeo(P.slot), V3.MAT); rig.wep.add(wm); if (P.slot === 0 && D.spear) wm.scale.set(0.62, 1, 1); }
+    rig.arm.rotation.x = 0;
+    // 작살
+    if (D.spear) { if (!spearM) { spearM = new THREE.Mesh(V3.boxesGeo([[0, -0.5, -0.5, 1, 1, 1, '#c8c8c8']]), V3.MAT); scene.add(spearM); } spearM.visible = true; const s = D.spear, hx = P.x + Math.cos(a) * 12, hy = P.y + Math.sin(a) * 12, L = Math.hypot(s.x - hx, s.y - hy);
+      spearM.position.set(hx, -hy, 4); spearM.scale.set(Math.max(1, L), 1, 1); spearM.rotation.set(0, 0, -Math.atan2(s.y - hy, s.x - hx)); } else if (spearM) spearM.visible = false;
+    // 드론
+    const ds = new Set(); for (const dr of D.drones) { ds.add(dr); let mm = droneM.get(dr); if (!mm) { mm = new THREE.Mesh(V3.cache('DRN', () => V3.boxesGeo([[-8, -2, -6, 16, 5, 12, '#e8eef4'], [-3, 3, -3, 6, 2, 6, '#ffd25e'], [-11, 3.5, -1, 6, 1, 2, '#3a3a3a'], [5, 3.5, -1, 6, 1, 2, '#3a3a3a'], [-2, -4, -2, 4, 2, 4, '#3a8ad0']])), V3.MAT); scene.add(mm); droneM.set(dr, mm); } mm.position.set(dr.x, -dr.y, 6); mm.rotation.y = D.t * 2; }
+    for (const [dr, mm] of droneM) if (!ds.has(dr)) { scene.remove(mm); droneM.delete(dr); }
+    // 입자·투사체
+    ibegin(IP); ibegin(IL);
+    for (const p of D.parts) { const al = Math.max(0, p.life / p.max); if (p.k === 'px') iadd(IP, p.x, p.y, 6, 2 * al + 0.6, 2 * al + 0.6, 2 * al + 0.6, p.c); else if (p.k === 'bub') iadd(IP, p.x, p.y, 8, 1.8, 1.8, 1.8, '#dff6ff'); else if (p.k === 'spark') iadd(IP, p.x, p.y, 8, 1, 3, 1, p.c); }
+    for (const p of D.proj) { const c = p.def.c || '#ffd25e';
+      if (p.k === 'bullet' || p.k === 'pellet') iadd(IP, p.x, p.y, 4, 4, 1.6, 1.6, c, -Math.atan2(p.vy, p.vx));
+      else if (p.k === 'grenade' || p.k === 'sticky') { iadd(IL, p.x, p.y, 4, 4, 4, 4, c); if (p.fuse > 0 && Math.floor(p.fuse * 10) % 2) iadd(IP, p.x, p.y - 3, 6, 1.5, 1.5, 1.5, '#ff2a2a'); }
+      else if (p.k === 'net') { const r = 4 + (0.55 - p.life) * 22; for (let i = 0; i < 12; i++) { const an = i / 12 * TAU; iadd(IL, p.x + Math.cos(an) * r, p.y + Math.sin(an) * r, 4, 1.2, 1.2, 1.2, c); } iadd(IL, p.x, p.y, 4, r * 2, 0.6, 0.6, c); iadd(IL, p.x, p.y, 4, 0.6, r * 2, 0.6, c); }
+      else if (p.k === 'dart') iadd(IL, p.x, p.y, 4, 5, 1.2, 1.2, c, -Math.atan2(p.vy, p.vx));
+      else if (p.k === 'wave') { for (let i = -4; i <= 4; i++) { const an = p.a + i * 0.2; iadd(IP, p.x - Math.cos(p.a) * p.r * 0.6 + Math.cos(an) * p.r, p.y - Math.sin(p.a) * p.r * 0.6 + Math.sin(an) * p.r, 6, 2, 2, 2, '#a8c0ff'); } } }
+    if (D.hp) for (const h of D.hp) iadd(h.kind === 'lava' ? IP : IL, h.x, h.y, 4, h.r + 1, h.r + 1, h.r + 1, h.c);
+    for (const b of D.bosses) for (const t of b.tel) if (t.k === 'col' && t.t <= 0) { for (let y = b.y; y < b.y + 190; y += 5) { const w = 11 - (y - b.y) / 190 * 6; iadd(IL, t.x + Math.sin(y * 0.08 + D.t * 6) * 2, y, 2, w, 5, w, (Math.floor(y / 5) % 3) ? BOSS.kraken.col[0] : '#e07a8a'); } }
+    iend(IP); iend(IL);
+    V3.R3.render(scene, V3.cam);
+  }
+  return {render, dirtyAt, reset, scene};
+})();
+// ---------- 다이빙 2D 덧그림 (글자·상태 아이콘·조준·어둠) ----------
+function drawDiveOverlay() {
+  ctx.clearRect(0, 0, VW, VH);
+  const P = D.P, ox = Math.round(D.cam.x), oy = Math.round(D.cam.y), m = Math.max(0, (D.cam.y + VH / 2) / PXM);
+  for (const b of D.bosses) for (const t of b.tel) { const al = t.t > 0 ? 0.16 + 0.14 * Math.sin(D.t * 20) : 0.28;
+    if (t.k === 'col' && t.t > 0) { ctx.fillStyle = `rgba(255,40,60,${al})`; ctx.fillRect(t.x - 12 - ox, b.y - oy, 24, 200); }
+    if (t.k === 'row') { ctx.fillStyle = t.t > 0 ? `rgba(255,40,60,${al})` : 'rgba(200,40,60,.55)'; ctx.fillRect(0, t.y - 10 - oy, VW, 20); }
+    if (t.k === 'line' && t.t > 0) { ctx.strokeStyle = `rgba(255,60,80,${al + 0.25})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(b.x - ox, b.y - oy); ctx.lineTo(b.x - ox + Math.cos(t.a) * 300, b.y - oy + Math.sin(t.a) * 300); ctx.stroke(); ctx.lineWidth = 1; }
+    if (t.k === 'geyser') { const x = t.x - ox, y = t.y - oy; if (t.t > 0) { ctx.fillStyle = `rgba(255,140,40,${al + 0.2})`; ctx.fillRect(x - 8, y - 6, 16, 6); } else { ctx.fillStyle = 'rgba(255,170,90,.55)'; ctx.fillRect(x - 9, y - 90, 18, 90); } } }
+  if (D.vort) for (const v of D.vort) { ctx.globalAlpha = Math.min(1, v.life) * 0.6; ctx.strokeStyle = '#bff3ff'; ctx.beginPath(); ctx.arc(v.x - ox, v.y - oy, v.r * (0.6 + 0.4 * Math.sin(D.t * 8 + v.x)), 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
+  for (const f of D.fish) { const x = f.x - ox, y = f.y - oy; if (x < -60 || x > VW + 60 || y < -40 || y > VH + 40) continue; const top = y - f.sp.H / 2 - 5;
+    if (f.carcass) { if (Math.floor(D.t * 3) % 2) { ctx.fillStyle = '#7cf3ff'; ctx.font = 'bold 7px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('E', x, top - 2); } continue; }
+    if (f.st.sleep > 0) { ctx.fillStyle = '#e8f0ff'; ctx.font = 'bold 7px sans-serif'; ctx.textAlign = 'left'; const k = (D.t * 1.5) % 1; ctx.globalAlpha = 1 - k; ctx.fillText('z', x + 4 + k * 4, top - k * 6); ctx.fillText('Z', x + 8 + k * 6, top - 4 - k * 8); ctx.globalAlpha = 1; }
+    if (f.st.stun > 0) for (let i = 0; i < 3; i++) { const an = D.t * 6 + i * TAU / 3; ctx.fillStyle = '#ffd25e'; ctx.fillRect(Math.round(x + Math.cos(an) * 7), Math.round(top + Math.sin(an) * 2), 2, 2); }
+    if (f.st.elec > 0) { ctx.strokeStyle = '#ffe94a'; ctx.beginPath(); let px = x - f.sp.L / 2; ctx.moveTo(px, y); for (let i = 0; i < 5; i++) { px += f.sp.L / 5; ctx.lineTo(px, y + rnd(-5, 5)); } ctx.stroke(); }
+    drawStatusIcons(f, x, top - 6);
+    if (f.hpShow > 0 && f.hp < f.max) { const w = Math.max(12, f.sp.L * 0.6); ctx.fillStyle = '#000'; ctx.fillRect(Math.round(x - w / 2), Math.round(top), w, 2); ctx.fillStyle = f.sp.big ? '#ff5a6a' : '#5ef2a0'; ctx.fillRect(Math.round(x - w / 2), Math.round(top), w * Math.max(0, f.hp / f.max), 2); }
+    if (f.sp.plan === 'angler') { const lx = x + (f.dir > 0 ? 1 : -1) * f.sp.L * 0.48; ctx.fillStyle = Math.floor(D.t * 4) % 2 ? 'rgba(255,248,192,.9)' : 'rgba(255,240,154,.7)'; ctx.fillRect(Math.round(lx) - 1, Math.round(y - f.sp.H / 2 - 5), 3, 3); } }
+  for (const b of D.bosses) { const x = b.x - ox, y = b.y - oy; if (b.st.stun > 0) for (let i = 0; i < 4; i++) { const an = D.t * 5 + i * TAU / 4; ctx.fillStyle = '#ffd25e'; ctx.fillRect(Math.round(x + Math.cos(an) * 18), Math.round(y - b.r - 6 + Math.sin(an) * 3), 2, 2); } drawStatusIcons(b, x, y - b.r - 14); }
+  ctx.strokeStyle = '#c8d4e0'; for (const dr of D.drones) { ctx.beginPath(); ctx.moveTo(dr.x - ox, dr.y - oy + 2); ctx.lineTo(dr.f.x - ox, dr.f.y - oy - 6); ctx.stroke(); }
+  if (D.spear) { const s = D.spear; ctx.strokeStyle = 'rgba(232,224,192,.85)'; ctx.beginPath(); ctx.moveTo(Math.round(P.x - ox), Math.round(P.y - oy)); ctx.lineTo(Math.round(s.x - ox), Math.round(s.y - oy)); ctx.stroke(); }
+  for (const p of D.parts) if (p.k === 'bolt' || p.k === 'slash' || p.k === 'ring' || p.k === 'steam') drawPart(p, ox, oy);
+  for (const k of D.inks) { ctx.globalAlpha = Math.min(1, k.life / 1) * 0.85; ctx.fillStyle = '#0a0612'; for (let i = 0; i < 7; i++) { const an = i / 7 * TAU + k.max; ctx.beginPath(); ctx.arc(k.x - ox + Math.cos(an) * k.r * 0.4, k.y - oy + Math.sin(an) * k.r * 0.4, k.r * 0.7, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1; }
+  if (m < 140) drawSeasonParts(1 - m / 140);
+  drawDark(m, ox, oy);
+  ctx.textAlign = 'center';
+  for (const t of D.texts) { ctx.globalAlpha = Math.min(1, t.life * 2); ctx.font = (t.big ? 'bold 9px' : '7px') + ' "Noto Sans KR",sans-serif'; ctx.fillStyle = '#000'; ctx.fillText(t.s, Math.round(t.x - ox) + 1, Math.round(t.y - oy) + 1); ctx.fillStyle = t.c; ctx.fillText(t.s, Math.round(t.x - ox), Math.round(t.y - oy)); } ctx.globalAlpha = 1;
+  if (!isTouch) { const a = aimAngle(); ctx.strokeStyle = 'rgba(255,80,80,.55)'; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(P.x - ox + Math.cos(a) * 14, P.y - oy + Math.sin(a) * 14); ctx.lineTo(P.x - ox + Math.cos(a) * 120, P.y - oy + Math.sin(a) * 120); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#ff5a5a'; ctx.fillRect(mouse.x - 1, mouse.y - 4, 2, 3); ctx.fillRect(mouse.x - 1, mouse.y + 2, 2, 3); ctx.fillRect(mouse.x - 4, mouse.y - 1, 3, 2); ctx.fillRect(mouse.x + 2, mouse.y - 1, 3, 2); }
+  if (P.slot === 1 && P.charge > 0) { ctx.strokeStyle = P.charge >= 0.8 ? '#ffe94a' : '#888'; ctx.beginPath(); ctx.arc(P.x - ox, P.y - oy, 13, -Math.PI / 2, -Math.PI / 2 + Math.min(1, P.charge / 0.8) * TAU); ctx.stroke(); }
+  D.bosses.filter(b => b.alive).forEach((b, i) => { const y = 30 + i * 16; ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(90, y, 300, 12); ctx.fillStyle = '#ff4a5a'; ctx.fillRect(92, y + 7, 296 * Math.max(0, b.hp / b.max), 3); ctx.fillStyle = '#fff'; ctx.font = 'bold 7px "Noto Sans KR",sans-serif'; ctx.textAlign = 'left'; ctx.fillText(b.name, 94, y + 6); });
+  if (D.flash > 0) { ctx.fillStyle = `rgba(255,40,60,${D.flash})`; ctx.fillRect(0, 0, VW, VH); }
+  if (P.o2 < gearO2() * 0.22 && Math.floor(D.t * 4) % 2) { ctx.strokeStyle = 'rgba(255,60,80,.6)'; ctx.lineWidth = 4; ctx.strokeRect(2, 2, VW - 4, VH - 4); ctx.lineWidth = 1; }
+}
+// ---------- 초밥집 3D 장면 ----------
+const SV3 = (() => {
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a1a12);
+  scene.add(new THREE.HemisphereLight(0xfff0dc, 0x3a2418, 0.75)); const sun = new THREE.DirectionalLight(0xfff4e0, 0.55); sun.position.set(-0.3, 0.8, 1); scene.add(sun);
+  const B = V3.boxesGeo, M = V3.MAT, Yb = y => -y;   // 화면 좌표 → 3D
+  const st = new THREE.Group(); scene.add(st);
+  const rb = (x0, y0, x1, y1, z0, z1, col) => [x0, -y1, z0, x1 - x0, y1 - y0, z1 - z0, col];
+  // 뒷벽 판자
+  const wall = []; for (let x = 0; x < VW; x += 24) { wall.push(rb(x, -20, x + 23, 142, -64, -56, (x / 24) % 2 ? '#62402a' : '#563620'), rb(x + 23, -20, x + 24, 142, -64, -55, '#3a2414')); } wall.push(rb(0, 60, VW, 64, -55, -52, '#4a2c18'));
+  st.add(new THREE.Mesh(B(wall), M));
+  // 창문 (계절 바다 풍경 텍스처)
+  const winC = document.createElement('canvas'); winC.width = 170; winC.height = 62; const winT = new THREE.CanvasTexture(winC); winT.magFilter = THREE.NearestFilter;
+  const win = new THREE.Mesh(new THREE.PlaneGeometry(170, 62), new THREE.MeshBasicMaterial({map: winT})); win.position.set(265, Yb(45), -58); st.add(win);
+  st.add(new THREE.Mesh(B([rb(176, 10, 354, 14, -57, -50, '#2a1a0a'), rb(176, 76, 354, 81, -57, -48, '#3a2410'), rb(176, 10, 180, 81, -57, -50, '#2a1a0a'), rb(350, 10, 354, 81, -57, -50, '#2a1a0a'), rb(263, 10, 267, 81, -57, -51, '#2a1a0a'), rb(172, 79, 358, 83, -57, -44, '#7a4a28')]), M));
+  // 등불
+  for (const lx of [120, 400]) { st.add(new THREE.Mesh(B([rb(lx - 1, 8, lx + 1, 20, -50, -48, '#2a1a0a'), rb(lx - 8, 20, lx + 8, 40, -54, -42, '#ff5a3a'), rb(lx - 9, 19, lx + 9, 21, -55, -41, '#3a1a0a'), rb(lx - 9, 39, lx + 9, 41, -55, -41, '#3a1a0a')]), M));
+    const gl = new THREE.Mesh(B([rb(lx - 6, 23, lx + 6, 37, -42, -41.5, '#ffd25e')]), V3.MAT_GLOW); st.add(gl); const pl2 = new THREE.PointLight(0xffb070, 0.6, 160, 1.5); pl2.position.set(lx, Yb(30), -20); st.add(pl2); }
+  // 메뉴판
+  const menuC = document.createElement('canvas'); menuC.width = 200; menuC.height = 112; const menuT = new THREE.CanvasTexture(menuC);
+  st.add(new THREE.Mesh(B([rb(368, 42, 476, 106, -56, -50, '#6a4020')]), M)); const menu = new THREE.Mesh(new THREE.PlaneGeometry(100, 56), new THREE.MeshLambertMaterial({map: menuT})); menu.position.set(422, Yb(74), -49.8); st.add(menu);
+  // 주방
+  st.add(new THREE.Mesh(B([rb(0, 96, 100, 142, -40, -6, '#b8bcc4'), rb(0, 96, 100, 99, -41, -5, '#d8dce4'), rb(6, 88, 30, 96, -36, -26, '#3a3a40'), rb(10, 84, 26, 88, -34, -28, '#5a5a62'), rb(40, 92, 64, 96, -30, -14, '#e8d8b8'), rb(66, 90, 92, 96, -36, -20, '#8a6a4a')]), M));
+  // 픽업대·통로·카운터·바닥·문
+  st.add(new THREE.Mesh(B([rb(68, 130, 112, 134, -4, 10, '#f4f4f4'), rb(96, 128, VW, 142, -46, 0, '#3a2618'), rb(96, 138, VW, 142, 0, 18, '#e0b07a'), rb(96, 142, VW, 182, 13, 18, '#8a5a30'), rb(0, 221, VW, 232, -30, 120, '#3a2a20'), rb(0, 182, VW, 221, -30, -26, '#2a1a12'), rb(462, 150, 480, 222, 16, 22, '#1a3a6a'), rb(463, 150, 467, 172, 22, 23, '#e8e8f0'), rb(469, 150, 473, 172, 22, 23, '#e8e8f0'), rb(475, 150, 479, 172, 22, 23, '#e8e8f0')]), M));
+  const slats = []; for (let x = 100; x < VW; x += 30) slats.push(rb(x, 142, x + 1, 182, 18, 19, '#6a3a1a')); for (let x = 0; x < VW; x += 20) slats.push(rb(x, 221, x + 10, 222, -30, 120, (x / 20) % 2 ? '#423024' : '#36261c')); st.add(new THREE.Mesh(B(slats), M));
+  // 동적 메시
+  const people = new Map(), dishes = []; let stoolG = null, stoolKey = '';
+  const sushiG = (id, prem) => V3.cache('S' + id + (prem ? 'p' : ''), () => { const g = V3.voxSprite(V3.withNoOutline(() => makeSushi(SP[id] || {id, col: BOSS[id].col, plan: id === 'lavacrab' ? 'crab' : id === 'kraken' ? 'octo' : 'shark'}, prem)), {maxT: 4, k: 1}); return g; });
+  const plateG = V3.cache('PLATE', () => B([[-9, -1, -7, 18, 2, 14, '#f4f4f4'], [-7, -1.6, -5, 14, 0.6, 10, '#d8d8d8']]));
+  const dirtyG = V3.cache('DIRTY', () => B([[-8, -1, -6, 16, 2, 12, '#d0d0d0'], [-3, 1, -1, 2, 1, 2, '#8a7a6a'], [2, 1, 2, 1.5, 1, 1.5, '#8a7a6a']]));
+  function person(key, pal, kind) { let p = people.get(key); if (!p) { p = V3.makeHuman(pal, kind); scene.add(p.g); people.set(key, p); } p.seen = true; return p; }
+  function animWalk(p, ph, moving) { const s = moving ? Math.sin(ph) * 0.7 : 0; p.legL.rotation.z = s; p.legR.rotation.z = -s; p.armL.rotation.z = -s * 0.8; p.armR.rotation.z = s * 0.8; }
+  function pool(i) { if (!dishes[i]) { const g = new THREE.Group(); const pm = new THREE.Mesh(plateG, M); const sm = new THREE.Mesh(sushiG('dodari'), M); sm.position.y = 6.5; g.add(pm); g.add(sm); scene.add(g); dishes[i] = {g, sm, pm}; } return dishes[i]; }
+  let lastBoard = 0;
+  function render(R, dt) {
+    V3.setCam(0, 0); const t = R.t, s = season();
+    if (winT.__s !== s) { const g = winC.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 62); const sc = [['#2a2a5a', '#ff9ac0'], ['#1a2a5a', '#ffb070'], ['#2a1a3a', '#ff7a3a'], ['#1a2a4a', '#a8c8e8']][s]; gr.addColorStop(0, sc[0]); gr.addColorStop(1, sc[1]); g.fillStyle = gr; g.fillRect(0, 0, 170, 62);
+      g.fillStyle = '#1a4a7a'; g.fillRect(0, 44, 170, 18); g.fillStyle = '#2a5a4a'; g.fillRect(20, 36, 50, 8); g.fillRect(30, 30, 26, 6); g.fillStyle = '#ffe0a0'; g.fillRect(120, 10, 8, 8); g.fillStyle = ['#ffb0d0', '#fffbe0', '#ff8a3a', '#ffffff'][s]; for (let i = 0; i < 26; i++) g.fillRect((i * 37) % 170, (i * 23) % 44, 2, 2); winT.needsUpdate = true; winT.__s = s; }
+    if (t - lastBoard > 0.5 || lastBoard > t) { lastBoard = t; const g = menuC.getContext('2d'); g.fillStyle = '#f0e0c0'; g.fillRect(0, 0, 200, 112); g.fillStyle = '#2a1a0a'; g.font = 'bold 15px "Noto Sans KR",sans-serif'; g.fillText('오늘의 메뉴', 10, 20);
+      G.menu.slice(0, 6).forEach((id, i) => { g.fillStyle = isSeasonal(id) ? '#c0301a' : '#2a1a0a'; g.font = '12px "Noto Sans KR",sans-serif'; g.fillText(`${dishName(id).slice(0, 8)}  ${R.stock[id] || 0}`, 10, 38 + i * 13); }); menuT.needsUpdate = true; }
+    for (const p of people.values()) p.seen = false;
+    // 의자 (좌석 수가 바뀌면 다시)
+    const sk = R.seats.map(s2 => s2.x).join(','); if (sk !== stoolKey) { if (stoolG) scene.remove(stoolG); stoolKey = sk; stoolG = new THREE.Mesh(B(R.seats.flatMap(s2 => [rb(s2.x - 7, 202, s2.x + 7, 206, 22, 36, '#7a4a2a'), rb(s2.x - 1, 206, s2.x + 1, 221, 28, 30, '#4a2a14')])), M); scene.add(stoolG); }
+    R.chefs.forEach((ch, i) => { const p = person('chef' + i, ['#101010', '#ffffff', '#f0c8a0', '#2a2a2a'], 'chef'); p.g.position.set(26 + i * 34 + 7, Yb(100), -24); p.g.rotation.y = -Math.PI / 2; const w = ch.cur ? Math.sin(t * 14) * 0.6 : 0; p.armL.rotation.z = -0.9 + w; p.armR.rotation.z = -0.9 - w; p.legL.rotation.z = p.legR.rotation.z = 0; });
+    const P = R.pl, pp = person('player', ['#1a1a2a', '#3a6ac8', '#f0c8a0', '#2a2a3a'], 'player'); pp.g.position.set(P.x, Yb(128), -14); const moving = (keys.KeyA || keys.KeyD || keys.ArrowLeft || keys.ArrowRight || R.target || (joy.on && Math.abs(joy.x) > 0.25));
+    const tgtR = moving ? (P.dir < 0 ? Math.PI : 0) : -Math.PI / 2; pp.g.userData.ry = pp.g.userData.ry == null ? tgtR : pp.g.userData.ry + (tgtR - pp.g.userData.ry) * Math.min(1, dt * 10); pp.g.rotation.y = pp.g.userData.ry; animWalk(pp, P.fr, moving);
+    if (R.hold.length) { pp.armL.rotation.z = pp.armR.rotation.z = -2.6; }
+    if (R.server) { const sv = R.server, sp2 = person('server', ['#3a2010', '#4a8a4a', '#f0c8a0', '#2a2a2a'], 'server'); sp2.g.position.set(sv.x, Yb(128), -26); sp2.g.rotation.y = sv.carry ? 0 : Math.PI; animWalk(sp2, t * 8, true); }
+    for (const c of R.custs) { const sit = c.state !== 'walk' && c.state !== 'leave'; const p = person(c, c.pal, c.vip ? 'vip' : 'guest'); p.g.position.set(c.x, Yb(sit ? 211 : 221), 30); p.g.rotation.y = sit ? -Math.PI / 2 : (c.state === 'leave' ? 0 : Math.PI); animWalk(p, c.fr, !sit);
+      if (sit) { p.legL.rotation.z = p.legR.rotation.z = 1.4; if (c.state === 'eat') { p.armL.rotation.z = -1.2 + Math.sin(t * 10) * 0.4; } } }
+    for (const [k, p] of people) if (!p.seen) { scene.remove(p.g); people.delete(k); }
+    // 접시
+    let di = 0; const showDish = (id, prem, x, y, z) => { const d = pool(di++); d.g.visible = true; d.sm.geometry = sushiG(id, prem); d.sm.visible = true; d.pm.geometry = plateG; d.g.position.set(x, Yb(y), z); d.g.rotation.y = 0; };
+    R.ready.slice(0, 4).forEach((d, i) => showDish(d.id, d.prem, 79 + (i % 2) * 18, 129 - Math.floor(i / 2) * 9, 2 + Math.floor(i / 2) * 2));
+    R.hold.forEach((d, i) => showDish(d.id, d.prem, P.x, 98 - i * 9, -14));
+    if (R.server && R.server.carry) showDish(R.server.carry.id, R.server.carry.prem, R.server.x, 98, -26);
+    for (const ch of R.chefs) if (ch.cur) showDish(ch.cur.id, false, 26 + R.chefs.indexOf(ch) * 34 + 7, 94, -12);
+    for (const c of R.custs) if (c.state === 'eat' && c.dish) showDish(c.dish.id, c.dish.prem, c.x, 136, 8);
+    for (const s2 of R.seats) if (s2.dirty) { const d = pool(di++); d.g.visible = true; d.sm.visible = false; d.pm.geometry = dirtyG; d.g.position.set(s2.x, Yb(137), 8); }
+    for (let i = di; i < dishes.length; i++) dishes[i].g.visible = false;
+    V3.R3.render(scene, V3.cam);
+  }
+  return {render, scene, sushiG};
+})();
+function drawServiceOverlay() {
+  ctx.clearRect(0, 0, VW, VH); const t = R.t;
+  R.chefs.forEach((ch, i) => { const cx = 26 + i * 34 + 7; if (ch.cur) { ctx.fillStyle = '#000'; ctx.fillRect(cx - 9, 66, 18, 3); ctx.fillStyle = '#5ef2a0'; ctx.fillRect(cx - 9, 66, 18 * (1 - ch.t / cookTime(ch.asst)), 3); }
+    if (ch.waitW && Math.floor(t * 4) % 2) { ctx.fillStyle = '#fff'; ctx.fillRect(cx - 13, 52, 26, 10); ctx.fillStyle = '#2a8a2a'; ctx.font = 'bold 7px "Noto Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('와사비!', cx, 60); } });
+  if (R.ready.length > 4) { ctx.fillStyle = '#fff'; ctx.font = '6px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('+' + (R.ready.length - 4), 106, 118); }
+  for (const st of R.seats) if (st.dirty && Math.floor(t * 2) % 2) { ctx.fillStyle = '#bff3ff'; ctx.font = 'bold 6px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('치우기', st.x, 128); }
+  for (const c of R.custs) if (c.state === 'wait' && c.order) { const bx = c.x - 12, by = 168; ctx.fillStyle = c.vip ? '#ffd25e' : '#ffffff'; ctx.fillRect(bx, by - 28, 24, 18); ctx.fillStyle = '#ffffff'; ctx.fillRect(bx + 1, by - 27, 22, 16); ctx.fillRect(c.x - 1, by - 10, 3, 3);
+    if (c.order.type === 'tea') { ctx.fillStyle = '#e8e8e8'; ctx.fillRect(bx + 7, by - 24, 10, 10); ctx.fillStyle = '#7aaa3a'; ctx.fillRect(bx + 8, by - 22, 8, 3); } else { const im = sushiSpr(c.order.id, c.vip); ctx.drawImage(im, bx + 3, by - 26); }
+    const k = c.pat / c.pmax; ctx.fillStyle = '#000'; ctx.fillRect(bx, by - 32, 24, 3); ctx.fillStyle = k > 0.5 ? '#5ef2a0' : k > 0.25 ? '#ffd25e' : '#ff5a6a'; ctx.fillRect(bx, by - 32, 24 * k, 3); }
+  for (const mm of R.msgs) { ctx.globalAlpha = Math.min(1, mm.life); ctx.font = 'bold 7px "Noto Sans KR",sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText(mm.s, mm.x + 1, mm.y + 1); ctx.fillStyle = mm.c; ctx.fillText(mm.s, mm.x, mm.y); } ctx.globalAlpha = 1;
+  const left = Math.max(0, R.dur - R.t); ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(4, 250, 150, 16); ctx.fillStyle = '#fff'; ctx.font = 'bold 8px "Noto Sans KR",sans-serif'; ctx.textAlign = 'left'; ctx.fillText(left > 0 ? `영업 종료까지 ${Math.ceil(left)}초 · 손님 ${R.served}` : '마지막 손님 응대 중…', 8, 261);
+}
+// ---------- 타이틀·아침 배경 3D ----------
+const MN3 = (() => {
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a9cc8); scene.fog = new THREE.Fog(0x2a9cc8, V3.CAMD, V3.CAMD + 500);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x203050, 0.85)); const sun = new THREE.DirectionalLight(0xfff8e8, 0.7); sun.position.set(-0.3, 1, 0.8); scene.add(sun);
+  const q = V3.Q(); for (let x = -40; x < VW + 40; x += 4) { const h = 22 + Math.sin(x * 0.03) * 10 + Math.sin(x * 0.11) * 4; for (let zz = -60; zz < 30; zz += 6) { const hh = h + Math.sin(zz * 0.2 + x * 0.05) * 4; const col = hash(x, zz, 1) > 0.5 ? '#c79a6a' : '#b8885a'; V3.box(q, x, -VH - 20, zz, x + 4, -VH + hh, zz + 6, col, 4 | 16 | 1 | 2); } }
+  scene.add(new THREE.Mesh(V3.geo(q), V3.MAT));
+  for (let i = 0; i < 22; i++) { const k = ['coral', 'coral', 'kelp', 'fan', 'anemone', 'coral'][i % 6], v = i % 4; const gg = V3.spriteGeo('D' + k + v, () => decoCanvas(k, v), {maxT: 2, k: 1}); const m = new THREE.Mesh(gg, V3.MAT); gg.computeBoundingBox(); m.position.set(10 + i * 22 + hash(i, 1, 1) * 10, -VH + 26 + gg.boundingBox.max.y - (hash(i, 2, 1) * 6), -40 + hash(i, 3, 1) * 50); m.scale.setScalar(1.4); scene.add(m); m.userData.sw = k === 'kelp' || k === 'anemone'; m.userData.ph = i; }
+  const fm = [];
+  function render(dt, t) { V3.setCam(0, 0); const s = season(); scene.background.set(SEASONS[s].water[1]); scene.fog.color.copy(scene.background);
+    if (!fm.length) for (const f of bgFish) { const m = new THREE.Mesh(V3.fishGeo(f.sp, 0), V3.MAT); m.scale.setScalar(1.6); scene.add(m); fm.push(m); }
+    const fr = Math.floor(t * 5) % 2; bgFish.forEach((f, i) => { f.x += f.v * dt; if (f.x < -40) f.x = VW + 30; if (f.x > VW + 40) f.x = -30; const m = fm[i]; m.geometry = V3.fishGeo(f.sp, fr); m.position.set(f.x, -(f.y + Math.sin(t + f.x * 0.02) * 3), -10 - i * 4); m.rotation.y = f.v < 0 ? Math.PI : 0; });
+    scene.children.forEach(o => { if (o.userData && o.userData.sw) o.rotation.z = Math.sin(t * 1.3 + o.userData.ph) * 0.1; });
+    V3.R3.render(scene, V3.cam); ctx.clearRect(0, 0, VW, VH);
+    if (Math.random() < 0.3) titleBub.push({x: rnd(0, VW), y: VH, v: rnd(15, 40)}); for (const b of titleBub) { b.y -= b.v * dt; ctx.strokeStyle = 'rgba(220,245,255,.6)'; ctx.strokeRect((b.x | 0) + 0.5, (b.y | 0) + 0.5, 2, 2); } while (titleBub.length > 60 || (titleBub[0] && titleBub[0].y < -5)) titleBub.shift(); }
+  return {render};
+})();
+// ---------- 도감·메뉴용 3D 사진 ----------
+const SNAP = (() => { let r = null, sc, cm; const keep = {};
+  function init() { if (r) return; const c = document.createElement('canvas'); r = new THREE.WebGLRenderer({canvas: c, antialias: true, alpha: true, preserveDrawingBuffer: true}); r.setPixelRatio(1); r.setClearColor(0, 0);
+    sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0x304060, 0.9)); const l = new THREE.DirectionalLight(0xffffff, 0.7); l.position.set(-0.4, 0.8, 1); sc.add(l); cm = new THREE.PerspectiveCamera(22, 2, 1, 4000); }
+  function shot(geo, w, h, yaw, pitch) { init(); r.setSize(w, h, false); cm.aspect = w / h; cm.updateProjectionMatrix(); geo.computeBoundingBox(); const bb = geo.boundingBox, cx = (bb.min.x + bb.max.x) / 2, cy = (bb.min.y + bb.max.y) / 2, cz = (bb.min.z + bb.max.z) / 2;
+    const m = new THREE.Mesh(geo, V3.MAT); const g = new THREE.Group(); m.position.set(-cx, -cy, -cz); g.add(m); g.rotation.y = yaw == null ? -0.45 : yaw; g.rotation.x = pitch == null ? 0.18 : pitch; sc.add(g);
+    const sx = bb.max.x - bb.min.x, sy = bb.max.y - bb.min.y; const fitH = Math.max(sy * 1.25, sx * 1.15 / (w / h)); const d = fitH / 2 / Math.tan(11 * Math.PI / 180); cm.position.set(0, 0, d + (bb.max.z - bb.min.z)); cm.lookAt(0, 0, 0);
+    r.render(sc, cm); sc.remove(g); return r.domElement; }
+  return {shot};
+})();
+function drawSnap(canvas, geo, w, h, sil, yaw) { canvas.width = w; canvas.height = h; const g = canvas.getContext('2d'); g.clearRect(0, 0, w, h); try { const im = SNAP.shot(geo, w, h, yaw); g.drawImage(im, 0, 0); if (sil) { g.globalCompositeOperation = 'source-in'; g.fillStyle = '#05070c'; g.fillRect(0, 0, w, h); g.globalCompositeOperation = 'source-over'; } } catch (e) {} }
+
 /* =========================== 7. UI · 입력 · 루프 =========================== */
 let MODE = 'none';
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
@@ -1557,7 +1986,7 @@ function showPrep() {
   $('shopUp').querySelectorAll('[data-shop]').forEach(b => b.onclick = () => { const k = b.dataset.shop, c = +b.dataset.c; if (G.gold < c) return; G.gold -= c; G.shop[k]++; AU.sfx('coin'); showPrep(); });
   showScreen('sPrep');
 }
-function fillSushiCanvases(root) { root.querySelectorAll('canvas[data-sushi]').forEach(c => { const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, c.width, c.height); g.drawImage(sushiSpr(c.dataset.sushi, (G.prem[c.dataset.sushi] || 0) > 0), 0, 0); }); }
+function fillSushiCanvases(root) { root.querySelectorAll('canvas[data-sushi]').forEach(c => { drawSnap(c, SV3.sushiG(c.dataset.sushi, (G.prem[c.dataset.sushi] || 0) > 0), 72, 52, false, -0.35); }); }
 function renderGearList(el) {
   el.innerHTML = Object.keys(GEAR).map(k => { const Gd = GEAR[k], l = G.gear[k], mx = l >= Gd.max, cost = mx ? 0 : Gd.cost(l), ore = mx ? {} : Gd.ore(l) || {}; return `<div class="it"><div class="t"><b>${Gd.n}</b><small>Lv.${l} · 현재 ${Gd.val(l)}${mx ? '' : ' → ' + Gd.val(l + 1)}</small></div><span class="cost">${mx ? '최대' : costTxt(cost, ore)}</span><button class="mb" data-gear="${k}" ${mx || !canPay(cost, ore) ? 'disabled' : ''}>강화</button></div>`; }).join('');
   el.querySelectorAll('[data-gear]').forEach(b => b.onclick = () => { const k = b.dataset.gear, Gd = GEAR[k], l = G.gear[k]; const cost = Gd.cost(l), ore = Gd.ore(l) || {}; if (!canPay(cost, ore)) return; pay(cost, ore); G.gear[k]++; AU.sfx('chest'); msg(`${Gd.n} Lv.${l + 1}!`); save(); renderGearList(el); });
@@ -1582,7 +2011,7 @@ function renderArm() {
       return `<div class="it ${own ? 'done' : ''}"><div class="t"><b style="color:${D0.c}">${D0.n}</b> <small style="display:inline">${kind === 'tip' ? '작살촉' : kind === 'melee' ? '근접' : '총기'}${from ? ' · ' + GUNS[from].n + ' 업그레이드' : ''}</small><small>${kind === 'tip' ? D0.d : kind === 'melee' ? meleeDesc(id) : gunDesc(id)}</small></div><span class="cost">${costTxt(gold, ore)}</span><button class="mb" data-buy="${kind}|${id}" ${own || need || !canPay(gold, ore) || !canShopNow() ? 'disabled' : ''}>${own ? '보유' : need ? '기본형 필요' : '제작'}</button></div>`; }).join('') + '</div>';
     B.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => { const [kind, id] = b.dataset.buy.split('|'), it = SHOP.find(s => s[0] === kind && s[1] === id); if (!canPay(it[2], it[3])) return; pay(it[2], it[3]); if (kind === 'tip') G.own.tips[id] = 1; else if (kind === 'melee') G.own.melee[id] = 1; else { G.own.guns[id] = 1; if (D) D.ammo[id] = GUNS[id].ammo; } AU.sfx('chest'); msg(`제작 완료! (무기고 → 장착)`); save(); renderArm(); });
   } else if (armTab === 'gear') { B.innerHTML = (canShopNow() ? '' : '<p style="color:var(--bad);font-size:12px">물속에서는 강화할 수 없어요.</p>') + '<div class="list" id="armGear"></div>'; renderGearList($('armGear')); if (!canShopNow()) $('armGear').querySelectorAll('button').forEach(b => b.disabled = true); }
-  else { B.innerHTML = '<div class="list">' + Object.keys(ORES).map(k => `<div class="it"><canvas data-ore="${k}" width="16" height="13"></canvas><div class="t"><b style="color:${ORES[k].c}">${ORES[k].n}</b><small>${['초입·중간수역', '초입·중간수역', '심해', '빙하·빙하통로·빙하지역', '빙하지역·열수구', '열수구'][Object.keys(ORES).indexOf(k)]}</small></div><b>${G.ores[k] || 0}</b></div>`).join('') + '</div>'; B.querySelectorAll('canvas[data-ore]').forEach(c => { const g = c.getContext('2d'); g.drawImage(makeOre(c.dataset.ore), 0, 0); }); }
+  else { B.innerHTML = '<div class="list">' + Object.keys(ORES).map(k => `<div class="it"><canvas data-ore="${k}" width="16" height="13"></canvas><div class="t"><b style="color:${ORES[k].c}">${ORES[k].n}</b><small>${['초입·중간수역', '초입·중간수역', '심해', '빙하·빙하통로·빙하지역', '빙하지역·열수구', '열수구'][Object.keys(ORES).indexOf(k)]}</small></div><b>${G.ores[k] || 0}</b></div>`).join('') + '</div>'; B.querySelectorAll('canvas[data-ore]').forEach(c => { drawSnap(c, V3.spriteGeo('O' + c.dataset.ore, () => makeOre(c.dataset.ore), {maxT: 4, k: 0.9}), 64, 52, false, -0.5); }); }
 }
 function meleeDesc(k) { return {knife: '기본 근접 · 강화할수록 광물 채집 속도·희귀 광석 증가', sleepHammer: '피해 낮음 · 높은 수면 누적 (중소형 3성 포획)', shockBaton: '전기 충격 · 마비 + 확률 기절', katana: '빠른 연속 베기 · 높은 확률 출혈', thunder: '꾹 눌러 차징 → 번개 낙뢰 범위 피해 + 기절', anchor: '묵직한 광역 타격 · 갑각류 껍질 파괴 · 대형 기절 · 얼음벽 파괴'}[k]; }
 function gunDesc(k) { return {rifle: '연사 · 기본 총기', deathRifle: '압도적 단발 화력 · 대형 어종 즉사 확률 (보스전)', thunderRifle: '전기 탄 · 마비/기절 확률 (보스전)', triple: '3갈래 산탄 · 근접 다단 히트', sniper: '장거리 관통 저격', deathSniper: '초장거리 다중 관통 · 장갑 관통 · 즉사 확률', grenade: '포물선 유탄 · 광역 폭발 · 얼음벽 파괴', sticky: '부착 후 폭발 · 갑각류·장갑 보스', iceGun: '냉기 탄 · 즉시 빙결', drain: '명중 시 산소 회복 · 대상 감속', net: '소형 어종 즉시 3성 포획', steelNet: '참다랑어·대게·킹크랩·중형 상어까지 즉시 3성 포획', dart: '중소형 어종 즉시 수면 → 드론 3성', dart2: '백상아리·청상아리·돗돔도 즉시 수면 → 드론 3성', module: 'R키로 4모듈 전환: 전격 기관총 · 철갑 저격 · 기절 산탄 · 수면 파동'}[k]; }
@@ -1599,7 +2028,7 @@ function renderDex() {
   $('dexGrid').innerHTML = list.map(s => { const d = G.dex[s.id]; if (!d) return `<div class="card lock"><canvas data-dex="${s.id}" data-sil="1"></canvas><b>???</b><small>${sN(s)} · ${zN(s)} (${s.dmin}~${s.dmax}m)</small><small>힌트: ${hintOf(s)}</small></div>`;
     return `<div class="card s${d.best}"><canvas data-dex="${s.id}"></canvas><b>${s.name}</b> <span style="color:${['', '#c07a3a', '#c9d4e2', '#ffd25e'][d.best]}">${'★'.repeat(d.best)}</span><small>${sN(s)} · ${zN(s)} ${s.dmin}~${s.dmax}m · 최대 ${s.size}</small><small>최고 기록 ${d.cm >= 100 ? (d.cm / 100).toFixed(1) + 'm' : d.cm + 'cm'} · ${d.n}마리 · ${['', '브론즈', '실버', '골드'][d.best]} 카드</small><small style="color:#cfe0f4">${s.desc}</small></div>`; }).join('');
   $('dexGrid').innerHTML += '<div class="card" style="grid-column:1/-1"><b>보스 기록</b>' + BOSSES.map(b => `<small>${G.S.boss[b.id] ? '<b style="color:var(--gold)">처치</b>' : '미처치'} · ${b.name} (${ZONES[b.zone].n} ${b.depth}m) — ${b.desc}</small>`).join('') + '</div>';
-  $('dexGrid').querySelectorAll('canvas[data-dex]').forEach(c => { const s = SP[c.dataset.dex], im = spr(s, 0), k = Math.min(4, Math.floor(Math.min(140 / im.width, 56 / im.height)) || 1); c.width = 150; c.height = 64; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; const src = c.dataset.sil ? silhouette(im) : im; g.drawImage(src, Math.round(75 - im.width * k / 2), Math.round(32 - im.height * k / 2), im.width * k, im.height * k); });
+  $('dexGrid').querySelectorAll('canvas[data-dex]').forEach(c => { const s = SP[c.dataset.dex]; drawSnap(c, V3.fishGeo(s, 0), 300, 128, !!c.dataset.sil); });
 }
 function hintOf(s) { return {school: '무리 지어 다녀요', bottom: '바닥에 붙어 있어요', crab: '바닥을 걸어 다니고 껍질이 단단해요', static: '움직이지 않아요', charge: '사납게 돌진해요', cruise: '아주 빠르게 지나가요', drift: '물결 따라 떠다녀요', ink: '먹물을 뿜어요', octobig: '거대하고 먹물을 뿜어요', lurk: '심해에서 느릿느릿', ambush: '숨어 있다가 덮쳐요', puffer: '몸을 부풀려요', swim: '평범하게 헤엄쳐요', flee: '다가가면 도망쳐요'}[s.beh] || ''; }
 // ---------------- 도전 과제 모달 ----------------
@@ -1664,9 +2093,9 @@ const titleBub = [];
 let last = performance.now(), T = 0;
 function loop(now) { let dt = Math.min(1 / 30, (now - last) / 1000); last = now; T += dt;
   const paused = modalOpen();
-  if (MODE === 'dive' && D) { if (!paused) updateDive(dt); if (D) drawDive(); }
-  else if (MODE === 'service' && R) { if (!paused) updateService(dt); if (R) drawService(); }
-  else drawMenuBG(dt, T);
+  if (MODE === 'dive' && D) { if (!paused) updateDive(dt); if (D) { DV.render(D, dt); drawDiveOverlay(); } }
+  else if (MODE === 'service' && R) { if (!paused) updateService(dt); if (R) { SV3.render(R, dt); drawServiceOverlay(); } }
+  else MN3.render(dt, T);
   hudT -= dt; if (hudT <= 0) { hudT = 0.1; updateHUD(); }
   requestAnimationFrame(loop); }
 // 시작

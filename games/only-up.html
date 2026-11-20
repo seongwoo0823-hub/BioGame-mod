@@ -826,33 +826,55 @@ function pistonLen(o,t){const q=((t+o.ph)%o.per)/o.per;if(q<0.35)return o.len*Ma
 function laserOn(o,t){const q=((t+o.ph)%o.per)/o.per;return q<o.on?2:(q>0.8?1:0);}
 function floatPos(o,t){return [o.x+Math.cos(t*o.spd+o.ph)*o.amp,o.z+Math.sin(t*o.spd*1.3+o.ph)*o.amp];}
 function cellPos(o,t){const k=0.5-0.5*Math.cos(t*o.spd+o.ph);return [o.x0+(o.x1-o.x0)*k,o.z0+(o.z1-o.z0)*k];}
+// 안전 통로: 맨 위부터 바닥까지 몸을 움직여 반드시 지나갈 수 있는 길 (고정 장애물은 이 길을 막지 않음)
+function fallGuide(y){const G=FALL.guide;if(!G)return [0,0];const k=Math.max(0,Math.min(G.n-1,Math.round(y)));return [G.x[k],G.z[k]];}
 function genFallWorld(){
   const F=FALL;F.specs=[];F.obs=[];F.buckets=new Map();const SR=STAGES[0].R,RW=SR-1.0,TOP=FALL_TOP();
   const add=o=>{F.obs.push(o);const b=Math.floor(o.y/8);if(!F.buckets.has(b))F.buckets.set(b,[]);F.buckets.get(b).push(o);};
-  // 출발 선반과 50층마다 체크포인트 선반
-  const ledge=(y,a)=>{const x=Math.cos(a)*(RW-1.0),z=Math.sin(a)*(RW-1.0);F.specs.push({k:'ledge',x,z,y,r:1.25});return {x,y,z};};
-  const a0=R(0,TAU);STAGES[STAGES.length-1].start=ledge(TOP,a0);
-  for(let zc=1;zc<10;zc++){const y=TOP-zc*50*F.FLH+2;STAGES[9-zc].start=ledge(y,R(0,TAU));}
-  for(let n=3;n<=F.N;n++){
-    const z=fallZone(n),t=(n-1)/(F.N-1),y0=TOP-(n-1)*F.FLH;
-    if(n%50===0||n%50===1)continue;              // 체크포인트 선반 근처는 비워 둠
+  const ledge=(y,a)=>{const x=Math.cos(a)*(RW-1.0),z=Math.sin(a)*(RW-1.0);F.specs.push({k:'ledge',x,z,y,r:1.25});return {x,y,z,a};};
+  const a0=R(0,TAU);const L0=ledge(TOP,a0);STAGES[STAGES.length-1].start={x:L0.x,y:L0.y,z:L0.z};const cps=[L0];
+  for(let zc=1;zc<10;zc++){const y=TOP-zc*50*F.FLH+2;const L=ledge(y,R(0,TAU));STAGES[9-zc].start={x:L.x,y:L.y,z:L.z};cps.push(L);}
+  // 경유점: 26m마다 무작위, 체크포인트 선반 높이에서는 선반 바로 안쪽
+  const wps=[];for(let y=TOP;y>-30;y-=26){const a=R(0,TAU),r=Math.sqrt(rng())*(RW-1.7);wps.push({y,x:Math.cos(a)*r,z:Math.sin(a)*r});}
+  for(const L of cps){const ix=Math.cos(L.a)*(RW-2.6),iz=Math.sin(L.a)*(RW-2.6);let best=0;for(let k=0;k<wps.length;k++)if(Math.abs(wps[k].y-L.y)<Math.abs(wps[best].y-L.y))best=k;wps[best]={y:L.y-1.5,x:ix,z:iz,cp:1};}
+  wps.sort((a,b)=>b.y-a.y);for(let k=wps.length-1;k>0;k--){const a=wps[k-1],b=wps[k];if(a.y-b.y<12&&!(a.cp&&b.cp))wps.splice(a.cp?k:k-1,1);}
+  // 기울기 제한: 낙하 속도(13)에 비해 옆으로 움직여야 하는 거리가 몸의 이동 속도 안에 들도록
+  const SL=0.26,lim=(p,q)=>{const d=Math.hypot(p.x-q.x,p.z-q.z),m=SL*Math.abs(p.y-q.y);if(d>m&&!p.cp){p.x=q.x+(p.x-q.x)*m/d;p.z=q.z+(p.z-q.z)*m/d;}};
+  for(let it=0;it<3;it++){for(let k=1;k<wps.length;k++)lim(wps[k],wps[k-1]);for(let k=wps.length-2;k>=0;k--)lim(wps[k],wps[k+1]);}const n=Math.ceil(TOP)+2;const gx=new Float32Array(n),gz=new Float32Array(n);
+  for(let y=0;y<n;y++){let k=0;while(k<wps.length-2&&wps[k+1].y>y)k++;const A=wps[k],B=wps[k+1]||A;const t=A.y===B.y?0:Math.max(0,Math.min(1,(A.y-y)/(A.y-B.y)));const e=t*t*(3-2*t);gx[y]=A.x+(B.x-A.x)*e;gz[y]=A.z+(B.z-A.z)*e;}
+  F.guide={x:gx,z:gz,n};
+  const lastDyn=[];const dynOk=y=>lastDyn.every(v=>Math.abs(v-y)>2.2);
+  for(let n2=3;n2<=F.N;n2++){
+    const z=fallZone(n2),y0=TOP-(n2-1)*F.FLH;
+    if(n2%50===0||n2%50===1)continue;
     const kinds=['wspike','wspike','float'];if(z>=1)kinds.push('blade');if(z>=2)kinds.push('membrane');if(z>=3)kinds.push('piston','piston');if(z>=4)kinds.push('laser');if(z>=5)kinds.push('cell','membrane');if(z>=7)kinds.push('blade','laser');
     const cnt=Math.max(1,Math.round(R(0.7,1.3)*(1+z*0.32)));
-    for(let k=0;k<cnt;k++){const kind=kinds[Math.floor(rng()*kinds.length)],y=y0-R(0.5,F.FLH-0.5);
-      if(kind==='wspike'){const m=RI(1,2+Math.floor(z/3));for(let q=0;q<m;q++)add({k:'wspike',a:R(0,TAU),y:y+R(-0.8,0.8),len:R(1.6,2.6+z*0.22),r:R(0.35,0.55)});}
-      else if(kind==='piston')add({k:'piston',a:R(0,TAU),y,len:R(2.5,3.6+z*0.15),w:R(0.6,0.9),per:R(1.8,2.8),ph:R(0,10)});
-      else if(kind==='float')add({k:'float',x:R(-RW*0.6,RW*0.6),z:R(-RW*0.6,RW*0.6),y,amp:R(0.8,1.8),spd:R(1.0,2.0),ph:R(0,TAU),r:R(0.35,0.5)});
-      else if(kind==='blade'){const two=rng()<0.35+z*0.04;add({k:'blade',x:two?0:R(-1.5,1.5),z:two?0:R(-1.5,1.5),y,len:two?RW-0.2:R(2.5,RW-0.4),two,spd:R(0.9,1.5+z*0.08)*(rng()<0.5?-1:1),ph:R(0,TAU),th:0.35});}
-      else if(kind==='membrane'){const nh=z>=7?1:RI(1,2),hs=[];const hr=Math.max(0.95,1.9-z*0.1);for(let q=0;q<nh;q++){const a=R(0,TAU),r=R(0,RW-hr-0.3);hs.push({x:Math.cos(a)*r,z:Math.sin(a)*r,r:hr});}
-        add({k:'membrane',y,holes:hs,rot:z>=6?R(0.25,0.6)*(rng()<0.5?-1:1):0});}
-      else if(kind==='laser'){const nb=RI(1,Math.min(4,1+Math.floor(z/3))),bs=[];const base=R(0,Math.PI);for(let q=0;q<nb;q++){const ang=base+q*Math.PI/nb+R(-0.15,0.15);bs.push({nx:Math.cos(ang),nz:Math.sin(ang),o:R(-RW*0.5,RW*0.5)});}
-        add({k:'laser',y,beams:bs,per:R(1.8,2.8),on:R(0.35,0.5),ph:R(0,10)});}
-      else if(kind==='cell'){const a=R(0,TAU),L=R(3,RW*1.4),cx=R(-1.5,1.5),cz=R(-1.5,1.5);add({k:'cell',x0:cx-Math.cos(a)*L/2,z0:cz-Math.sin(a)*L/2,x1:cx+Math.cos(a)*L/2,z1:cz+Math.sin(a)*L/2,y,spd:R(1.0,1.8),ph:R(0,TAU),r:0.7});}
+    for(let k=0;k<cnt;k++){const kind=kinds[Math.floor(rng()*kinds.length)],y=y0-R(0.5,F.FLH-0.5);const [cx,cz]=fallGuide(y);
+      const clearSeg=(ax,az,bx,bz,rad)=>segDist(cx,cz,ax,az,bx,bz)>rad+1.25;
+      if(kind==='wspike'){const m=RI(1,2+Math.floor(z/3));for(let q=0;q<m;q++){const a=R(0,TAU),yy=y+R(-0.8,0.8),[gx2,gz2]=fallGuide(yy),r=R(0.35,0.55);let len=R(1.6,2.6+z*0.22);const ca=Math.cos(a),sa=Math.sin(a);
+        while(len>0.8&&segDist(gx2,gz2,ca*SR,sa*SR,ca*(SR-len),sa*(SR-len))<r+1.3)len-=0.2;if(len>0.8)add({k:'wspike',a,y:yy,len,r});}}
+      else if(kind==='piston'){const a=R(0,TAU),w=R(0.6,0.9);let len=R(2.5,3.6+z*0.15);const ca=Math.cos(a),sa=Math.sin(a);while(len>1.2&&!clearSeg(ca*SR,sa*SR,ca*(SR-len),sa*(SR-len),w*0.5))len-=0.2;if(len>1.2)add({k:'piston',a,y,len,w,per:R(1.8,2.8),ph:R(0,10)});}
+      else if(kind==='float'){for(let at=0;at<12;at++){const x=R(-RW*0.7,RW*0.7),zz=R(-RW*0.7,RW*0.7),amp=R(0.8,1.6),r=R(0.35,0.5);if(Math.hypot(x,zz)>RW-0.6)continue;if(Math.hypot(x-cx,zz-cz)<amp+r+1.3)continue;add({k:'float',x,z:zz,y,amp,spd:R(1.0,2.0),ph:R(0,TAU),r});break;}}
+      else if(kind==='blade'){if(!dynOk(y))continue;const two=rng()<0.35+z*0.04;add({k:'blade',x:two?0:R(-1.5,1.5),z:two?0:R(-1.5,1.5),y,len:two?RW-0.2:R(2.5,RW-0.4),two,spd:R(0.9,1.5+z*0.08)*(rng()<0.5?-1:1),ph:R(0,TAU),th:0.35});lastDyn.push(y);}
+      else if(kind==='membrane'){const hs=[];const hr=Math.max(1.05,1.9-z*0.09);hs.push({x:cx,z:cz,r:hr});if(z<7&&rng()<0.5){for(let at=0;at<10;at++){const a=R(0,TAU),rr=R(0,RW-hr-0.3),hx=Math.cos(a)*rr,hz=Math.sin(a)*rr;if(Math.hypot(hx-cx,hz-cz)>hr*2.2){hs.push({x:hx,z:hz,r:hr});break;}}}
+        // 회전하는 막은 통로 쪽 구멍이 늘 열려 있도록, 회전 중심을 통로 위에 둠
+        add({k:'membrane',y,holes:hs,rot:z>=6?R(0.25,0.6)*(rng()<0.5?-1:1):0,cx,cz});lastDyn.push(y);}
+      else if(kind==='laser'){if(!dynOk(y))continue;const nb=RI(1,Math.min(4,1+Math.floor(z/3))),bs=[];const base=R(0,Math.PI);for(let q=0;q<nb;q++){const ang=base+q*Math.PI/nb+R(-0.15,0.15);bs.push({nx:Math.cos(ang),nz:Math.sin(ang),o:R(-RW*0.5,RW*0.5)});}
+        add({k:'laser',y,beams:bs,per:R(1.8,2.8),on:R(0.35,0.5),ph:R(0,10)});lastDyn.push(y);}
+      else if(kind==='cell'){for(let at=0;at<10;at++){const a=R(0,TAU),L=R(3,RW*1.4),mx=R(-1.5,1.5),mz=R(-1.5,1.5);const x0=mx-Math.cos(a)*L/2,z0=mz-Math.sin(a)*L/2,x1=mx+Math.cos(a)*L/2,z1=mz+Math.sin(a)*L/2;if(!clearSeg(x0,z0,x1,z1,0.7))continue;add({k:'cell',x0,z0,x1,z1,y,spd:R(1.0,1.8),ph:R(0,TAU),r:0.7});break;}}
     }
-    // 전류 소용돌이 (해롭지 않음, 옆으로 밀어 냄)
-    if(z>=5&&rng()<0.05)add({k:'current',y:y0-4,h:6,fx:R(-1,1),fz:R(-1,1)});
+    if(z>=5&&rng()<0.05){const yc=y0-4;if(!F.obs.some(o=>o.k==='membrane'&&Math.abs(o.y-yc)<14))add({k:'current',y:yc,h:6,fx:R(-1,1),fz:R(-1,1)});}
   }
+  if(lastDyn.length>40)lastDyn.length=40;
 }
+// 검증: 안전 통로를 따라 떨어질 때 고정 장애물에 닿는 곳이 없는지 (개발용)
+function fallValidate(){const bad=[];const F=FALL;for(let y=FALL_TOP()-1;y>1;y-=0.25){const [x,z]=fallGuide(y);for(const o of (F.buckets.get(Math.floor(y/8))||[])){
+    if(o.k==='wspike'){if(fallHitObs(o,x,y+0.3,z,0)||fallHitObs(o,x,y+0.95,z,0))bad.push([o.k,y]);}
+    else if(o.k==='piston'){const ca=Math.cos(o.a),sa=Math.sin(o.a),SR=STAGES[0].R;if(Math.abs(y+0.6-o.y)<o.w*0.5+0.7&&segDist(x,z,ca*SR,sa*SR,ca*(SR-o.len),sa*(SR-o.len))<o.w*0.5+0.4)bad.push(['piston',y]);}
+    else if(o.k==='float'){if(Math.abs(y+0.6-o.y)<0.9&&Math.hypot(x-o.x,z-o.z)<o.amp+o.r+0.4)bad.push(['float',y]);}
+    else if(o.k==='cell'){if(Math.abs(y+0.6-o.y)<1.1&&segDist(x,z,o.x0,o.z0,o.x1,o.z1)<o.r+0.4)bad.push(['cell',y]);}
+    else if(o.k==='membrane'&&Math.abs(y+0.6-o.y)<0.13){for(let t=0;t<12;t+=0.5){const ang=-o.rot*t,c=Math.cos(ang),s2=Math.sin(ang);const rx=(x-o.cx)*c-(z-o.cz)*s2+o.cx,rz=(x-o.cx)*s2+(z-o.cz)*c+o.cz;if(!o.holes.some(h=>Math.hypot(rx-h.x,rz-h.z)<h.r-0.32)){bad.push(['membrane-rot',y,t]);break;}}}}}
+  return bad;}
 function fallDown(py,ny){for(const sp of FALL.specs){if(Math.abs(sp.y-py)>2)continue;if(py>=sp.y-1e-4&&ny<sp.y&&Math.hypot(pl.x-sp.x,pl.z-sp.z)<sp.r)return sp.y;}return null;}
 function fallOnSpec(){return null;}
 // 몸통(두 점)을 지난 프레임 위치부터 지금까지 쓸어 보며 검사 (빠른 낙하에도 얇은 장애물을 놓치지 않음)
@@ -867,7 +889,7 @@ function fallHitObs(o,px,py,pz,t){const SR=STAGES[0].R;
 function fallTrapHit(){const t=elapsed,y1=pl.y,y0=Math.max(FALL.prevY,y1),b0=Math.floor(y1/8);let hitO=null;
   for(let b=b0-1;b<=Math.floor(y0/8)+1&&!hitO;b++){const L=FALL.buckets.get(b);if(!L)continue;
     for(const o of L){if(o.k==='current')continue;
-      if(o.k==='membrane'){if(y0+0.6>=o.y&&y1+0.6<o.y||Math.abs(y1+0.6-o.y)<0.25){const ang=-o.rot*t,c=Math.cos(ang),s2=Math.sin(ang);const rx=pl.x*c-pl.z*s2,rz=pl.x*s2+pl.z*c;let inHole=false;for(const h of o.holes)if(Math.hypot(rx-h.x,rz-h.z)<h.r-0.32)inHole=true;if(!inHole){hitO=o;break;}}continue;}
+      if(o.k==='membrane'){if(y0+0.6>=o.y&&y1+0.6<o.y||Math.abs(y1+0.6-o.y)<0.25){const ang=-o.rot*t,c=Math.cos(ang),s2=Math.sin(ang);const ox=o.cx||0,oz=o.cz||0,qx=pl.x-ox,qz=pl.z-oz,rx=qx*c-qz*s2+ox,rz=qx*s2+qz*c+oz;let inHole=false;for(const h of o.holes)if(Math.hypot(rx-h.x,rz-h.z)<h.r-0.32)inHole=true;if(!inHole){hitO=o;break;}}continue;}
       if(o.y<y1-1.5||o.y>y0+2.5)continue;
       for(let yy=y0;yy>=y1-1e-6;yy-=0.2){if(fallHitObs(o,pl.x,yy+0.3,pl.z,t)||fallHitObs(o,pl.x,yy+0.95,pl.z,t)){hitO=o;break;}if(y0-y1<0.2)break;}
       if(hitO)break;}}
@@ -901,9 +923,9 @@ function buildFallMeshes(){
     else if(o.k==='float'){m=floatT.clone();const s=o.r/0.32;m.scale.setScalar(s);m.position.set(o.x,o.y,o.z);}
     else if(o.k==='blade'){m=new THREE.Group();const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.6,10),hubM);m.add(hub);const arm=new THREE.Group();const L=o.two?o.len*2:o.len;const bar=new THREE.Mesh(new THREE.BoxGeometry(L,o.th*2,0.32),bladeM);bar.position.x=o.two?0:L/2;arm.add(bar);m.add(arm);o.arm=arm;m.position.set(o.x,o.y,o.z);}
     else if(o.k==='cell'){m=new THREE.Group();m.add(new THREE.Mesh(cellG,cellM));const nu=new THREE.Mesh(nucG,nucM);nu.position.set(0.22,0.15,0.22);m.add(nu);m.position.set(o.x0,o.y,o.z0);}
-    else if(o.k==='membrane'){m=new THREE.Group();const shp=new THREE.Shape();shp.absarc(0,0,SR+0.6,0,TAU,false);for(const h of o.holes){const hp=new THREE.Path();hp.absarc(h.x,-h.z,h.r,0,TAU,true);shp.holes.push(hp);}
+    else if(o.k==='membrane'){m=new THREE.Group();const ox=o.cx||0,oz=o.cz||0;const shp=new THREE.Shape();shp.absarc(-ox,oz,SR+0.6+(o.rot?Math.hypot(ox,oz):0),0,TAU,false);for(const h of o.holes){const hp=new THREE.Path();hp.absarc(h.x-ox,-(h.z-oz),h.r,0,TAU,true);shp.holes.push(hp);}
       const geo=new THREE.ExtrudeGeometry(shp,{depth:0.3,bevelEnabled:false,curveSegments:22});const d=new THREE.Mesh(geo,memM);d.rotation.x=-Math.PI/2;d.position.y=-0.15;m.add(d);
-      for(const h of o.holes){const rr=new THREE.Mesh(new THREE.RingGeometry(h.r,h.r+0.16,26),rimM);rr.rotation.x=-Math.PI/2;rr.position.set(h.x,0.17,h.z);m.add(rr);}m.position.y=o.y;}
+      for(const h of o.holes){const rr=new THREE.Mesh(new THREE.RingGeometry(h.r,h.r+0.16,26),rimM);rr.rotation.x=-Math.PI/2;rr.position.set(h.x-ox,0.17,h.z-oz);m.add(rr);}m.position.set(ox,o.y,oz);}
     else if(o.k==='laser'){m=new THREE.Group();o.bm=[];for(const b of o.beams){const half=Math.sqrt(Math.max(0.3,(SR-0.3)**2-b.o*b.o));const bm=new THREE.Mesh(new THREE.BoxGeometry(half*2,0.1,0.1),laserM.clone());bm.position.set(b.nx*b.o,0,b.nz*b.o);bm.rotation.y=Math.atan2(-b.nx,-b.nz);m.add(bm);o.bm.push(bm);}m.position.y=o.y;}
     else if(o.k==='current'){m=new THREE.Mesh(new THREE.CylinderGeometry(SR-0.5,SR-0.5,o.h,24,1,true),curM);m.position.y=o.y;}
     if(m){m.visible=false;o.g=m;F.root.add(m);}}
