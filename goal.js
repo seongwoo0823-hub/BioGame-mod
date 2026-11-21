@@ -16,14 +16,10 @@
     'only-up':       {tpl: '구간 {t}까지 올라가기', t: 3, unit: '구간', pre: true},
     'bio-strike':    {tpl: '생존 모드 점수 {t}점 넘기기', t: 3000, unit: '점'},
     'cell-frontier': {tpl: '한 지역에서 점수 {t}점 넘기기', t: 12000, unit: '점'},
-    'codon-glass':   {tpl: '혼자 하기 점수 {t}점 넘기기', t: 50, unit: '점'},
     'bio-tower':     {tpl: '연속 {t}승 하기', t: 2, unit: '연승'},
     'bio-pyramid':   {tpl: '피라미드 {t}단계까지 짓기', t: 3, unit: '단계'},
     'cell-raid':     {tpl: '{t}구역까지 도달하기', t: 3, unit: '구역', pre: true},
     'lab-forge':     {tpl: '실험기구를 +{t}까지 강화하기', t: 10, unit: '단계', pre: true},
-    'bio-board':     {tpl: '보드게임에서 AI를 {t}번 이기기', t: 1, unit: '승'},
-    'bio-ace':       {tpl: '스테이지 {t}까지 클리어하기', t: 2, unit: '스테이지'},
-    'bio-sports':    {tpl: '스포츠 종목에서 AI를 {t}번 이기기', t: 1, unit: '승'}
   };
   var DEF = {};
   function applyCfg(cfg) {

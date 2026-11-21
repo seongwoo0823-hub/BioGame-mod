@@ -397,7 +397,6 @@ const SRV_GAMES = {
   'cell-brawl':    {file: 'games/cell-brawl.html',    prefix: 'cellbrawl-v2-'},
   'bio-strike':    {file: 'games/bio-strike.html',    prefix: 'biostrike-v1-'},
   'bio-tower':     {file: 'games/bio-tower.html',     prefix: 'biotower-v1-'},
-  'codon-glass':   {file: 'games/codon-glass.html',   prefix: 'codonglass-v1-'},
 };
 const MAX_SRV_ROOMS = +process.env.SRV_ROOMS || +process.env.KART_ROOMS || 16;   // 측정 결과(i7-1255U: 카트 방 여유 22개)보다 낮게 잡음
 const srvRooms = new Map();   // 'game:code' → {game, code, worker, vc, players, playing, since}
