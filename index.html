@@ -381,6 +381,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     ['cell-frontier','세포 개척단','선을 그어 땅을 넓히는 아케이드','casual','','땅따먹기 아케이드 숨은그림 cell frontier'],
     ['bio-tower','바이오 타워','생물 조각 쌓기 대결','online casual','4','쌓기 타워 동물 물리 bio tower'],
     ['bio-pyramid','바이오 피라미드 타이쿤','양분을 모아 생명의 피라미드 쌓기 3D','casual','','타이쿤 방치 피라미드 펫 뽑기 양분 bio pyramid'],
+    ['immune-descent','이뮨 디센트','아이소메트릭 스프라이트 스태킹 액션 로그라이트 · 5층 심연 · 최종 보스 판데미아','action','','이뮨 디센트 면역 액션 로그라이트 하데스 T세포 보스 각인 immune descent'],
     ['cell-raid','생물의 번제','인체 6구역 방 탐험 로그라이크 슈터','action','','생물의 번제 세포 레이드 로그라이크 슈터 병원체 보스 인체 cell raid'],
     ['lab-forge','실험기구 강화하기','실험기구 30단계 강화·5개 광산 채굴·교수 전직 시뮬레이션','casual','','강화 채굴 실험기구 석사 뽑기 슬롯 대장간 시뮬레이션 lab forge'],
   ];
@@ -440,6 +441,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
       if(s.surv&&s.surv.wave)out.push(`생존 <b>${s.surv.wave}</b>웨이브`);return out.join(' · ');},
     'bio-tower'(){const s=get('bioTower');return s&&s.rounds?`<b>${s.wins||0}</b>승 · 최고 <b>${s.best||0}m</b>`:'';},
     'bio-pyramid'(){const s=get('bioPyramidSave');return s&&s.highestPyramidStage?`최고 <b>${s.highestPyramidStage}</b>단계 피라미드`:'';},
+    'immune-descent'(){const s=get('immuneDescent1');if(!s||!s.runs)return '';return s.clears?`클리어 <b>${s.clears}</b>회`:`최고 <b>${Math.min(5,(s.best||0)+1)}</b>층`;},
     'cell-raid'(){const s=get('cellRaidStats');if(!s||!s.runs)return '';return s.wins?`완주 <b>${s.wins}</b>회`:`최고 <b>${s.bestStage||1}</b>구역`;},
     'cell-frontier'(){const s=get('cellFrontier');if(!s||!s.clear)return '';const c=Object.values(s.clear);return c.length?`정복 <b>${c.length}</b>/16곳`:'';},
   };
