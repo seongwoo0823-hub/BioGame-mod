@@ -1,0 +1,2650 @@
+{
+ "assets": [
+  {
+   "category": "Karts",
+   "id": "K01_LeafRacer",
+   "name_ko": "리프 레이서 (엽록체)",
+   "glb": "Karts/K01_LeafRacer.glb",
+   "thumb": "thumbs/K01_LeafRacer.png",
+   "tris": 29640,
+   "size_kb": 968,
+   "bounds_min": [
+    -1.09,
+    -1.35,
+    -0.04
+   ],
+   "bounds_max": [
+    0.84,
+    1.22,
+    1.12
+   ],
+   "sockets": {
+    "Driver": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Balloon": [
+     0.0,
+     0.92,
+     0.72
+    ],
+    "Pet": [
+     -0.95,
+     0.15,
+     1.25
+    ]
+   }
+  },
+  {
+   "category": "Karts",
+   "id": "K02_LabRunner",
+   "name_ko": "랩 러너 (실험실)",
+   "glb": "Karts/K02_LabRunner.glb",
+   "thumb": "thumbs/K02_LabRunner.png",
+   "tris": 27088,
+   "size_kb": 925,
+   "bounds_min": [
+    -0.85,
+    -1.24,
+    -0.04
+   ],
+   "bounds_max": [
+    0.84,
+    1.22,
+    1.09
+   ],
+   "sockets": {
+    "Driver": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Balloon": [
+     0.0,
+     0.92,
+     0.72
+    ],
+    "Pet": [
+     -0.95,
+     0.15,
+     1.25
+    ]
+   }
+  },
+  {
+   "category": "Karts",
+   "id": "K03_CapsuleRocket",
+   "name_ko": "캡슐 로켓 (알약)",
+   "glb": "Karts/K03_CapsuleRocket.glb",
+   "thumb": "thumbs/K03_CapsuleRocket.png",
+   "tris": 21340,
+   "size_kb": 813,
+   "bounds_min": [
+    -0.85,
+    -1.24,
+    -0.04
+   ],
+   "bounds_max": [
+    0.84,
+    1.4,
+    0.96
+   ],
+   "sockets": {
+    "Driver": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Balloon": [
+     0.0,
+     0.92,
+     0.72
+    ],
+    "Pet": [
+     -0.95,
+     0.15,
+     1.25
+    ]
+   }
+  },
+  {
+   "category": "Karts",
+   "id": "K04_MitoCruiser",
+   "name_ko": "미토 크루저 (미토콘드리아)",
+   "glb": "Karts/K04_MitoCruiser.glb",
+   "thumb": "thumbs/K04_MitoCruiser.png",
+   "tris": 21736,
+   "size_kb": 807,
+   "bounds_min": [
+    -0.85,
+    -1.24,
+    -0.04
+   ],
+   "bounds_max": [
+    0.84,
+    1.22,
+    1.11
+   ],
+   "sockets": {
+    "Driver": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Balloon": [
+     0.0,
+     0.92,
+     0.72
+    ],
+    "Pet": [
+     -0.95,
+     0.15,
+     1.25
+    ]
+   }
+  },
+  {
+   "category": "Karts",
+   "id": "K05_VirusBuggy",
+   "name_ko": "바이러스 버기",
+   "glb": "Karts/K05_VirusBuggy.glb",
+   "thumb": "thumbs/K05_VirusBuggy.png",
+   "tris": 22480,
+   "size_kb": 824,
+   "bounds_min": [
+    -0.85,
+    -1.24,
+    -0.04
+   ],
+   "bounds_max": [
+    0.84,
+    1.34,
+    1.22
+   ],
+   "sockets": {
+    "Driver": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Balloon": [
+     0.0,
+     0.92,
+     0.72
+    ],
+    "Pet": [
+     -0.95,
+     0.15,
+     1.25
+    ]
+   }
+  },
+  {
+   "category": "Karts",
+   "id": "K06_NeuronStriker",
+   "name_ko": "뉴런 스트라이커",
+   "glb": "Karts/K06_NeuronStriker.glb",
+   "thumb": "thumbs/K06_NeuronStriker.png",
+   "tris": 24408,
+   "size_kb": 865,
+   "bounds_min": [
+    -0.85,
+    -1.24,
+    -0.04
+   ],
+   "bounds_max": [
+    0.84,
+    1.22,
+    1.22
+   ],
+   "sockets": {
+    "Driver": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Balloon": [
+     0.0,
+     0.92,
+     0.72
+    ],
+    "Pet": [
+     -0.95,
+     0.15,
+     1.25
+    ]
+   }
+  },
+  {
+   "category": "Karts",
+   "id": "K07_BacilloBus",
+   "name_ko": "바실로 버스 (박테리아)",
+   "glb": "Karts/K07_BacilloBus.glb",
+   "thumb": "thumbs/K07_BacilloBus.png",
+   "tris": 23024,
+   "size_kb": 868,
+   "bounds_min": [
+    -0.85,
+    -1.24,
+    -0.04
+   ],
+   "bounds_max": [
+    0.84,
+    2.35,
+    1.05
+   ],
+   "sockets": {
+    "Driver": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Balloon": [
+     0.0,
+     0.92,
+     0.72
+    ],
+    "Pet": [
+     -0.95,
+     0.15,
+     1.25
+    ]
+   }
+  },
+  {
+   "category": "Karts",
+   "id": "K08_FungiKart",
+   "name_ko": "펑기 카트 (버섯)",
+   "glb": "Karts/K08_FungiKart.glb",
+   "thumb": "thumbs/K08_FungiKart.png",
+   "tris": 22980,
+   "size_kb": 908,
+   "bounds_min": [
+    -0.85,
+    -1.24,
+    -0.04
+   ],
+   "bounds_max": [
+    0.84,
+    1.4,
+    1.26
+   ],
+   "sockets": {
+    "Driver": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Balloon": [
+     0.0,
+     0.92,
+     0.72
+    ],
+    "Pet": [
+     -0.95,
+     0.15,
+     1.25
+    ]
+   }
+  },
+  {
+   "category": "Karts",
+   "id": "K09_MicroscopeTurbo",
+   "name_ko": "마이크로스코프 터보",
+   "glb": "Karts/K09_MicroscopeTurbo.glb",
+   "thumb": "thumbs/K09_MicroscopeTurbo.png",
+   "tris": 22376,
+   "size_kb": 800,
+   "bounds_min": [
+    -0.85,
+    -1.27,
+    -0.04
+   ],
+   "bounds_max": [
+    0.84,
+    1.26,
+    1.23
+   ],
+   "sockets": {
+    "Driver": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Balloon": [
+     0.0,
+     0.92,
+     0.72
+    ],
+    "Pet": [
+     -0.95,
+     0.15,
+     1.25
+    ]
+   }
+  },
+  {
+   "category": "Karts",
+   "id": "K10_PollenBee",
+   "name_ko": "폴른 비 (꿀벌)",
+   "glb": "Karts/K10_PollenBee.glb",
+   "thumb": "thumbs/K10_PollenBee.png",
+   "tris": 24346,
+   "size_kb": 862,
+   "bounds_min": [
+    -1.07,
+    -1.24,
+    -0.04
+   ],
+   "bounds_max": [
+    1.07,
+    1.33,
+    1.23
+   ],
+   "sockets": {
+    "Driver": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Balloon": [
+     0.0,
+     0.92,
+     0.72
+    ],
+    "Pet": [
+     -0.95,
+     0.15,
+     1.25
+    ]
+   }
+  },
+  {
+   "category": "Characters",
+   "id": "C01_Chloe_GreenCell",
+   "name_ko": "클로이 (식물세포)",
+   "glb": "Characters/C01_Chloe_GreenCell.glb",
+   "thumb": "thumbs/C01_Chloe_GreenCell.png",
+   "tris": 15432,
+   "size_kb": 218,
+   "bounds_min": [
+    -0.52,
+    -0.54,
+    0.36
+   ],
+   "bounds_max": [
+    0.52,
+    0.57,
+    1.48
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Characters",
+   "id": "C02_Dex_DNA",
+   "name_ko": "덱스 (DNA)",
+   "glb": "Characters/C02_Dex_DNA.glb",
+   "thumb": "thumbs/C02_Dex_DNA.png",
+   "tris": 15260,
+   "size_kb": 276,
+   "bounds_min": [
+    -0.34,
+    -0.53,
+    0.18
+   ],
+   "bounds_max": [
+    0.49,
+    0.45,
+    1.46
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Characters",
+   "id": "C03_Ruby_RedBloodCell",
+   "name_ko": "루비 (적혈구)",
+   "glb": "Characters/C03_Ruby_RedBloodCell.glb",
+   "thumb": "thumbs/C03_Ruby_RedBloodCell.png",
+   "tris": 16608,
+   "size_kb": 214,
+   "bounds_min": [
+    -1.26,
+    -0.53,
+    0.4
+   ],
+   "bounds_max": [
+    0.49,
+    1.26,
+    1.42
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Characters",
+   "id": "C04_Zap_Neuron",
+   "name_ko": "잽 (뉴런)",
+   "glb": "Characters/C04_Zap_Neuron.glb",
+   "thumb": "thumbs/C04_Zap_Neuron.png",
+   "tris": 15360,
+   "size_kb": 270,
+   "bounds_min": [
+    -0.61,
+    -0.53,
+    0.36
+   ],
+   "bounds_max": [
+    0.59,
+    0.68,
+    1.69
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Characters",
+   "id": "C05_Vira_Virus",
+   "name_ko": "바이라 (바이러스)",
+   "glb": "Characters/C05_Vira_Virus.glb",
+   "thumb": "thumbs/C05_Vira_Virus.png",
+   "tris": 10556,
+   "size_kb": 208,
+   "bounds_min": [
+    -0.59,
+    -0.53,
+    0.41
+   ],
+   "bounds_max": [
+    0.6,
+    0.69,
+    1.46
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Characters",
+   "id": "C06_Leo_WhiteBloodCell",
+   "name_ko": "레오 (백혈구)",
+   "glb": "Characters/C06_Leo_WhiteBloodCell.glb",
+   "thumb": "thumbs/C06_Leo_WhiteBloodCell.png",
+   "tris": 12584,
+   "size_kb": 210,
+   "bounds_min": [
+    -0.48,
+    -0.54,
+    0.39
+   ],
+   "bounds_max": [
+    0.84,
+    0.54,
+    1.4
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Characters",
+   "id": "C07_Tardi_Tardigrade",
+   "name_ko": "타르디 (물곰)",
+   "glb": "Characters/C07_Tardi_Tardigrade.glb",
+   "thumb": "thumbs/C07_Tardi_Tardigrade.png",
+   "tris": 13244,
+   "size_kb": 230,
+   "bounds_min": [
+    -0.42,
+    -0.53,
+    0.24
+   ],
+   "bounds_max": [
+    0.42,
+    0.42,
+    1.5
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Pets",
+   "id": "P01_Moeba_Amoeba",
+   "name_ko": "모에바 (아메바)",
+   "glb": "Pets/P01_Moeba_Amoeba.glb",
+   "thumb": "thumbs/P01_Moeba_Amoeba.png",
+   "tris": 11944,
+   "size_kb": 168,
+   "bounds_min": [
+    -0.44,
+    -0.29,
+    -0.38
+   ],
+   "bounds_max": [
+    0.46,
+    0.29,
+    0.34
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Pets",
+   "id": "P02_Para_Paramecium",
+   "name_ko": "파라 (짚신벌레)",
+   "glb": "Pets/P02_Para_Paramecium.glb",
+   "thumb": "thumbs/P02_Para_Paramecium.png",
+   "tris": 9608,
+   "size_kb": 131,
+   "bounds_min": [
+    -0.24,
+    -0.34,
+    -0.24
+   ],
+   "bounds_max": [
+    0.24,
+    0.39,
+    0.24
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Pets",
+   "id": "P03_Fago_Phage",
+   "name_ko": "파고 (박테리오파지)",
+   "glb": "Pets/P03_Fago_Phage.glb",
+   "thumb": "thumbs/P03_Fago_Phage.png",
+   "tris": 6000,
+   "size_kb": 95,
+   "bounds_min": [
+    -0.29,
+    -0.25,
+    -0.44
+   ],
+   "bounds_max": [
+    0.29,
+    0.25,
+    0.35
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Pets",
+   "id": "P04_Dia_Diatom",
+   "name_ko": "디아 (규조류)",
+   "glb": "Pets/P04_Dia_Diatom.glb",
+   "thumb": "thumbs/P04_Dia_Diatom.png",
+   "tris": 5524,
+   "size_kb": 96,
+   "bounds_min": [
+    -0.27,
+    -0.09,
+    -0.27
+   ],
+   "bounds_max": [
+    0.27,
+    0.05,
+    0.27
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Pets",
+   "id": "P05_Glena_Euglena",
+   "name_ko": "글레나 (유글레나)",
+   "glb": "Pets/P05_Glena_Euglena.glb",
+   "thumb": "thumbs/P05_Glena_Euglena.png",
+   "tris": 6572,
+   "size_kb": 82,
+   "bounds_min": [
+    -0.12,
+    -0.14,
+    -0.32
+   ],
+   "bounds_max": [
+    0.12,
+    0.12,
+    0.75
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Pets",
+   "id": "P06_Jelly_Jellyfish",
+   "name_ko": "젤리 (해파리)",
+   "glb": "Pets/P06_Jelly_Jellyfish.glb",
+   "thumb": "thumbs/P06_Jelly_Jellyfish.png",
+   "tris": 13876,
+   "size_kb": 256,
+   "bounds_min": [
+    -0.28,
+    -0.28,
+    -0.46
+   ],
+   "bounds_max": [
+    0.28,
+    0.28,
+    0.22
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Pets",
+   "id": "P07_Lumi_Firefly",
+   "name_ko": "루미 (반딧불이)",
+   "glb": "Pets/P07_Lumi_Firefly.glb",
+   "thumb": "thumbs/P07_Lumi_Firefly.png",
+   "tris": 10916,
+   "size_kb": 159,
+   "bounds_min": [
+    -0.27,
+    -0.34,
+    -0.14
+   ],
+   "bounds_max": [
+    0.27,
+    0.39,
+    0.34
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Balloons",
+   "id": "B01_Heart",
+   "name_ko": "하트 풍선",
+   "glb": "Balloons/B01_Heart.glb",
+   "thumb": "thumbs/B01_Heart.png",
+   "tris": 8116,
+   "size_kb": 162,
+   "bounds_min": [
+    -0.29,
+    -0.17,
+    -0.0
+   ],
+   "bounds_max": [
+    0.29,
+    0.17,
+    1.62
+   ],
+   "sockets": {
+    "String": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "category": "Balloons",
+   "id": "B02_DoubleHelix",
+   "name_ko": "DNA 나선 풍선",
+   "glb": "Balloons/B02_DoubleHelix.glb",
+   "thumb": "thumbs/B02_DoubleHelix.png",
+   "tris": 3568,
+   "size_kb": 90,
+   "bounds_min": [
+    -0.83,
+    -0.83,
+    -0.01
+   ],
+   "bounds_max": [
+    0.83,
+    0.83,
+    1.9
+   ],
+   "sockets": {
+    "String": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "category": "Balloons",
+   "id": "B03_WaterMolecule",
+   "name_ko": "물 분자 풍선",
+   "glb": "Balloons/B03_WaterMolecule.glb",
+   "thumb": "thumbs/B03_WaterMolecule.png",
+   "tris": 8156,
+   "size_kb": 117,
+   "bounds_min": [
+    -0.38,
+    -0.24,
+    -0.0
+   ],
+   "bounds_max": [
+    0.38,
+    0.22,
+    1.67
+   ],
+   "sockets": {
+    "String": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "category": "Balloons",
+   "id": "B04_Cell",
+   "name_ko": "세포 풍선",
+   "glb": "Balloons/B04_Cell.glb",
+   "thumb": "thumbs/B04_Cell.png",
+   "tris": 3296,
+   "size_kb": 80,
+   "bounds_min": [
+    -0.28,
+    -0.28,
+    -0.0
+   ],
+   "bounds_max": [
+    0.28,
+    0.28,
+    1.63
+   ],
+   "sockets": {
+    "String": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "category": "Balloons",
+   "id": "B05_Mitochondria",
+   "name_ko": "미토콘드리아 풍선",
+   "glb": "Balloons/B05_Mitochondria.glb",
+   "thumb": "thumbs/B05_Mitochondria.png",
+   "tris": 17636,
+   "size_kb": 300,
+   "bounds_min": [
+    -0.48,
+    -0.3,
+    -0.0
+   ],
+   "bounds_max": [
+    0.48,
+    0.27,
+    1.62
+   ],
+   "sockets": {
+    "String": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "category": "Balloons",
+   "id": "B06_Virus",
+   "name_ko": "바이러스 풍선",
+   "glb": "Balloons/B06_Virus.glb",
+   "thumb": "thumbs/B06_Virus.png",
+   "tris": 8316,
+   "size_kb": 116,
+   "bounds_min": [
+    -0.35,
+    -0.35,
+    -0.0
+   ],
+   "bounds_max": [
+    0.36,
+    0.37,
+    1.72
+   ],
+   "sockets": {
+    "String": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "category": "Balloons",
+   "id": "B07_Leaf",
+   "name_ko": "나뭇잎 풍선",
+   "glb": "Balloons/B07_Leaf.glb",
+   "thumb": "thumbs/B07_Leaf.png",
+   "tris": 5940,
+   "size_kb": 140,
+   "bounds_min": [
+    -0.21,
+    -0.13,
+    -0.0
+   ],
+   "bounds_max": [
+    0.21,
+    0.11,
+    1.72
+   ],
+   "sockets": {
+    "String": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "category": "Environment",
+   "id": "E01_Coral_Branch",
+   "name_ko": "가지 산호",
+   "glb": "Environment/E01_Coral_Branch.glb",
+   "thumb": "thumbs/E01_Coral_Branch.png",
+   "tris": 7184,
+   "size_kb": 495,
+   "bounds_min": [
+    -0.75,
+    -0.75,
+    0.0
+   ],
+   "bounds_max": [
+    1.05,
+    0.85,
+    1.5
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E02_Coral_Brain",
+   "name_ko": "뇌 산호",
+   "glb": "Environment/E02_Coral_Brain.glb",
+   "thumb": "thumbs/E02_Coral_Brain.png",
+   "tris": 6836,
+   "size_kb": 471,
+   "bounds_min": [
+    -0.99,
+    -0.99,
+    0.0
+   ],
+   "bounds_max": [
+    0.99,
+    0.99,
+    0.78
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E03_Coral_Fan",
+   "name_ko": "부채 산호",
+   "glb": "Environment/E03_Coral_Fan.glb",
+   "thumb": "thumbs/E03_Coral_Fan.png",
+   "tris": 7456,
+   "size_kb": 513,
+   "bounds_min": [
+    -1.37,
+    -0.05,
+    0.0
+   ],
+   "bounds_max": [
+    1.38,
+    0.05,
+    1.98
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E04_Mushroom_Giant",
+   "name_ko": "거대 버섯",
+   "glb": "Environment/E04_Mushroom_Giant.glb",
+   "thumb": "thumbs/E04_Mushroom_Giant.png",
+   "tris": 7148,
+   "size_kb": 495,
+   "bounds_min": [
+    -1.32,
+    -1.32,
+    0.0
+   ],
+   "bounds_max": [
+    1.32,
+    1.32,
+    2.32
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E05_GlowMushroom_Cluster",
+   "name_ko": "발광 버섯 군락",
+   "glb": "Environment/E05_GlowMushroom_Cluster.glb",
+   "thumb": "thumbs/E05_GlowMushroom_Cluster.png",
+   "tris": 4920,
+   "size_kb": 120,
+   "bounds_min": [
+    -0.7,
+    -0.71,
+    -0.01
+   ],
+   "bounds_max": [
+    0.85,
+    0.6,
+    1.46
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E06_Kelp_Forest",
+   "name_ko": "켈프 숲",
+   "glb": "Environment/E06_Kelp_Forest.glb",
+   "thumb": "thumbs/E06_Kelp_Forest.png",
+   "tris": 2828,
+   "size_kb": 54,
+   "bounds_min": [
+    -0.71,
+    -0.97,
+    -0.01
+   ],
+   "bounds_max": [
+    0.74,
+    0.47,
+    4.1
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E07_Neuron_Tree",
+   "name_ko": "뉴런 나무",
+   "glb": "Environment/E07_Neuron_Tree.glb",
+   "thumb": "thumbs/E07_Neuron_Tree.png",
+   "tris": 12844,
+   "size_kb": 336,
+   "bounds_min": [
+    -1.83,
+    -1.49,
+    -0.03
+   ],
+   "bounds_max": [
+    1.77,
+    1.41,
+    3.34
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E08_Mitochondria_Island",
+   "name_ko": "미토콘드리아 공중섬",
+   "glb": "Environment/E08_Mitochondria_Island.glb",
+   "thumb": "thumbs/E08_Mitochondria_Island.png",
+   "tris": 15572,
+   "size_kb": 619,
+   "bounds_min": [
+    -4.25,
+    -3.75,
+    -4.25
+   ],
+   "bounds_max": [
+    4.25,
+    4.0,
+    2.7
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E09_Floating_Island_Waterfall",
+   "name_ko": "폭포 공중섬",
+   "glb": "Environment/E09_Floating_Island_Waterfall.glb",
+   "thumb": "thumbs/E09_Floating_Island_Waterfall.png",
+   "tris": 8536,
+   "size_kb": 531,
+   "bounds_min": [
+    -3.4,
+    -3.8,
+    -6.4
+   ],
+   "bounds_max": [
+    3.4,
+    3.2,
+    3.4
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E10_Volcano",
+   "name_ko": "화산",
+   "glb": "Environment/E10_Volcano.glb",
+   "thumb": "thumbs/E10_Volcano.png",
+   "tris": 12188,
+   "size_kb": 767,
+   "bounds_min": [
+    -5.95,
+    -5.95,
+    0.0
+   ],
+   "bounds_max": [
+    6.05,
+    5.8,
+    10.9
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E11_Rock_Cluster",
+   "name_ko": "바위 무리",
+   "glb": "Environment/E11_Rock_Cluster.glb",
+   "thumb": "thumbs/E11_Rock_Cluster.png",
+   "tris": 4208,
+   "size_kb": 291,
+   "bounds_min": [
+    -1.3,
+    -1.3,
+    0.0
+   ],
+   "bounds_max": [
+    1.6,
+    1.0,
+    1.5
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E12_Crystal_Cluster",
+   "name_ko": "단백질 결정",
+   "glb": "Environment/E12_Crystal_Cluster.glb",
+   "thumb": "thumbs/E12_Crystal_Cluster.png",
+   "tris": 494,
+   "size_kb": 23,
+   "bounds_min": [
+    -0.96,
+    -1.01,
+    -0.37
+   ],
+   "bounds_max": [
+    1.01,
+    0.7,
+    2.31
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E13_Pollen_Spores",
+   "name_ko": "꽃가루 포자",
+   "glb": "Environment/E13_Pollen_Spores.glb",
+   "thumb": "thumbs/E13_Pollen_Spores.png",
+   "tris": 4096,
+   "size_kb": 83,
+   "bounds_min": [
+    -1.32,
+    -1.3,
+    -0.12
+   ],
+   "bounds_max": [
+    1.58,
+    1.03,
+    1.32
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E14_Bubble_Cluster",
+   "name_ko": "물방울 무리",
+   "glb": "Environment/E14_Bubble_Cluster.glb",
+   "thumb": "thumbs/E14_Bubble_Cluster.png",
+   "tris": 8064,
+   "size_kb": 145,
+   "bounds_min": [
+    -1.21,
+    -0.93,
+    0.4
+   ],
+   "bounds_max": [
+    1.17,
+    1.0,
+    4.31
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E15_Giant_Leaf_Platform",
+   "name_ko": "거대 잎 플랫폼",
+   "glb": "Environment/E15_Giant_Leaf_Platform.glb",
+   "thumb": "thumbs/E15_Giant_Leaf_Platform.png",
+   "tris": 4008,
+   "size_kb": 100,
+   "bounds_min": [
+    -2.18,
+    -5.62,
+    -0.74
+   ],
+   "bounds_max": [
+    2.18,
+    4.01,
+    0.97
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E16_Giant_Cell_Dome",
+   "name_ko": "거대 세포 돔",
+   "glb": "Environment/E16_Giant_Cell_Dome.glb",
+   "thumb": "thumbs/E16_Giant_Cell_Dome.png",
+   "tris": 11256,
+   "size_kb": 208,
+   "bounds_min": [
+    -6.0,
+    -6.0,
+    -0.45
+   ],
+   "bounds_max": [
+    6.0,
+    6.0,
+    6.0
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E17_Giant_Virus",
+   "name_ko": "거대 바이러스",
+   "glb": "Environment/E17_Giant_Virus.glb",
+   "thumb": "thumbs/E17_Giant_Virus.png",
+   "tris": 10616,
+   "size_kb": 243,
+   "bounds_min": [
+    -3.36,
+    -3.38,
+    -0.39
+   ],
+   "bounds_max": [
+    3.42,
+    3.42,
+    6.39
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E18_Bacteria_Colony",
+   "name_ko": "박테리아 군집",
+   "glb": "Environment/E18_Bacteria_Colony.glb",
+   "thumb": "thumbs/E18_Bacteria_Colony.png",
+   "tris": 7600,
+   "size_kb": 180,
+   "bounds_min": [
+    -2.2,
+    -2.19,
+    -1.47
+   ],
+   "bounds_max": [
+    1.9,
+    1.55,
+    1.86
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E19_Moss_Ground_Tile",
+   "name_ko": "이끼 지형 타일",
+   "glb": "Environment/E19_Moss_Ground_Tile.glb",
+   "thumb": "thumbs/E19_Moss_Ground_Tile.png",
+   "tris": 12500,
+   "size_kb": 859,
+   "bounds_min": [
+    -2.0,
+    -2.0,
+    0.0
+   ],
+   "bounds_max": [
+    2.0,
+    2.0,
+    0.8
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E20_Sea_Anemone",
+   "name_ko": "말미잘",
+   "glb": "Environment/E20_Sea_Anemone.glb",
+   "thumb": "thumbs/E20_Sea_Anemone.png",
+   "tris": 8648,
+   "size_kb": 221,
+   "bounds_min": [
+    -0.69,
+    -0.6,
+    0.0
+   ],
+   "bounds_max": [
+    0.75,
+    0.77,
+    1.16
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E21_Blood_Stream_Cells",
+   "name_ko": "혈류 적혈구 무리",
+   "glb": "Environment/E21_Blood_Stream_Cells.glb",
+   "thumb": "thumbs/E21_Blood_Stream_Cells.png",
+   "tris": 20608,
+   "size_kb": 364,
+   "bounds_min": [
+    -1.56,
+    -4.45,
+    -0.17
+   ],
+   "bounds_max": [
+    1.59,
+    4.27,
+    2.24
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Lab",
+   "id": "L01_Microscope_Giant",
+   "name_ko": "거대 현미경",
+   "glb": "Lab/L01_Microscope_Giant.glb",
+   "thumb": "thumbs/L01_Microscope_Giant.png",
+   "tris": 2992,
+   "size_kb": 85,
+   "bounds_min": [
+    -1.2,
+    -1.3,
+    0.0
+   ],
+   "bounds_max": [
+    1.2,
+    1.98,
+    5.34
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Lab",
+   "id": "L02_Erlenmeyer_Tower",
+   "name_ko": "삼각 플라스크 타워",
+   "glb": "Lab/L02_Erlenmeyer_Tower.glb",
+   "thumb": "thumbs/L02_Erlenmeyer_Tower.png",
+   "tris": 3392,
+   "size_kb": 64,
+   "bounds_min": [
+    -1.37,
+    -1.37,
+    -0.05
+   ],
+   "bounds_max": [
+    1.37,
+    1.37,
+    3.0
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Lab",
+   "id": "L03_TestTube_Rack_Giant",
+   "name_ko": "거대 시험관 랙",
+   "glb": "Lab/L03_TestTube_Rack_Giant.glb",
+   "thumb": "thumbs/L03_TestTube_Rack_Giant.png",
+   "tris": 7476,
+   "size_kb": 399,
+   "bounds_min": [
+    -2.1,
+    -0.6,
+    0.0
+   ],
+   "bounds_max": [
+    2.1,
+    0.5,
+    2.9
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Lab",
+   "id": "L04_Petri_Dish_Platform",
+   "name_ko": "페트리 접시 플랫폼",
+   "glb": "Lab/L04_Petri_Dish_Platform.glb",
+   "thumb": "thumbs/L04_Petri_Dish_Platform.png",
+   "tris": 7100,
+   "size_kb": 131,
+   "bounds_min": [
+    -4.13,
+    -4.13,
+    -0.08
+   ],
+   "bounds_max": [
+    4.13,
+    4.13,
+    0.55
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Lab",
+   "id": "L05_Beaker_Bubbling",
+   "name_ko": "끓는 비커",
+   "glb": "Lab/L05_Beaker_Bubbling.glb",
+   "thumb": "thumbs/L05_Beaker_Bubbling.png",
+   "tris": 3456,
+   "size_kb": 67,
+   "bounds_min": [
+    -1.03,
+    -1.03,
+    -0.01
+   ],
+   "bounds_max": [
+    1.05,
+    1.03,
+    3.22
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Lab",
+   "id": "L06_Pipette_Giant",
+   "name_ko": "거대 피펫",
+   "glb": "Lab/L06_Pipette_Giant.glb",
+   "thumb": "thumbs/L06_Pipette_Giant.png",
+   "tris": 1400,
+   "size_kb": 29,
+   "bounds_min": [
+    -0.36,
+    -0.32,
+    -0.27
+   ],
+   "bounds_max": [
+    1.27,
+    0.32,
+    3.88
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Lab",
+   "id": "L07_Lab_Crate",
+   "name_ko": "실험실 상자",
+   "glb": "Lab/L07_Lab_Crate.glb",
+   "thumb": "thumbs/L07_Lab_Crate.png",
+   "tris": 3072,
+   "size_kb": 215,
+   "bounds_min": [
+    -0.48,
+    -0.48,
+    0.0
+   ],
+   "bounds_max": [
+    0.48,
+    0.48,
+    0.96
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Lab",
+   "id": "L08_Centrifuge",
+   "name_ko": "원심분리기",
+   "glb": "Lab/L08_Centrifuge.glb",
+   "thumb": "thumbs/L08_Centrifuge.png",
+   "tris": 5676,
+   "size_kb": 119,
+   "bounds_min": [
+    -1.06,
+    -1.06,
+    0.0
+   ],
+   "bounds_max": [
+    1.06,
+    1.06,
+    1.46
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Lab",
+   "id": "L09_Bunsen_Burner",
+   "name_ko": "분젠 버너",
+   "glb": "Lab/L09_Bunsen_Burner.glb",
+   "thumb": "thumbs/L09_Bunsen_Burner.png",
+   "tris": 560,
+   "size_kb": 15,
+   "bounds_min": [
+    -0.45,
+    -0.45,
+    0.0
+   ],
+   "bounds_max": [
+    0.71,
+    0.45,
+    1.96
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T01_Straight",
+   "name_ko": "직선 트랙 8m",
+   "glb": "Track/T01_Straight.glb",
+   "thumb": "thumbs/T01_Straight.png",
+   "tris": 5316,
+   "size_kb": 370,
+   "bounds_min": [
+    -4.4,
+    0.0,
+    -0.15
+   ],
+   "bounds_max": [
+    4.4,
+    8.0,
+    0.4
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T02_Curve90",
+   "name_ko": "90도 커브 트랙",
+   "glb": "Track/T02_Curve90.glb",
+   "thumb": "thumbs/T02_Curve90.png",
+   "tris": 10340,
+   "size_kb": 672,
+   "bounds_min": [
+    -8.0,
+    -0.0,
+    -0.03
+   ],
+   "bounds_max": [
+    4.4,
+    12.4,
+    0.4
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T03_Jump_Ramp",
+   "name_ko": "점프 램프",
+   "glb": "Track/T03_Jump_Ramp.glb",
+   "thumb": "thumbs/T03_Jump_Ramp.png",
+   "tris": 7368,
+   "size_kb": 509,
+   "bounds_min": [
+    -4.4,
+    0.0,
+    0.0
+   ],
+   "bounds_max": [
+    4.4,
+    6.0,
+    1.7
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T04_Boost_Pad",
+   "name_ko": "부스터 패드",
+   "glb": "Track/T04_Boost_Pad.glb",
+   "thumb": "thumbs/T04_Boost_Pad.png",
+   "tris": 228,
+   "size_kb": 13,
+   "bounds_min": [
+    -1.56,
+    -0.06,
+    0.0
+   ],
+   "bounds_max": [
+    1.56,
+    3.06,
+    0.1
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T05_StartFinish_Gate",
+   "name_ko": "출발/결승 게이트",
+   "glb": "Track/T05_StartFinish_Gate.glb",
+   "thumb": "thumbs/T05_StartFinish_Gate.png",
+   "tris": 5620,
+   "size_kb": 334,
+   "bounds_min": [
+    -5.51,
+    -0.81,
+    -0.05
+   ],
+   "bounds_max": [
+    5.51,
+    0.81,
+    5.4
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T06_Checkpoint_Ring",
+   "name_ko": "체크포인트 DNA 링",
+   "glb": "Track/T06_Checkpoint_Ring.glb",
+   "thumb": "thumbs/T06_Checkpoint_Ring.png",
+   "tris": 4880,
+   "size_kb": 107,
+   "bounds_min": [
+    -6.2,
+    -6.23,
+    -3.88
+   ],
+   "bounds_max": [
+    6.18,
+    6.14,
+    6.37
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T07_BloodVessel_Tunnel",
+   "name_ko": "혈관 터널",
+   "glb": "Track/T07_BloodVessel_Tunnel.glb",
+   "thumb": "thumbs/T07_BloodVessel_Tunnel.png",
+   "tris": 9896,
+   "size_kb": 229,
+   "bounds_min": [
+    -5.6,
+    -0.07,
+    -0.15
+   ],
+   "bounds_max": [
+    5.6,
+    10.07,
+    5.61
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T08_Membrane_Wall",
+   "name_ko": "세포막 방벽",
+   "glb": "Track/T08_Membrane_Wall.glb",
+   "thumb": "thumbs/T08_Membrane_Wall.png",
+   "tris": 19372,
+   "size_kb": 502,
+   "bounds_min": [
+    -3.13,
+    -0.29,
+    0.02
+   ],
+   "bounds_max": [
+    2.93,
+    0.29,
+    1.7
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T09_Bone_Bridge",
+   "name_ko": "뼈 다리",
+   "glb": "Track/T09_Bone_Bridge.glb",
+   "thumb": "thumbs/T09_Bone_Bridge.png",
+   "tris": 15120,
+   "size_kb": 273,
+   "bounds_min": [
+    -4.0,
+    -1.0,
+    -1.9
+   ],
+   "bounds_max": [
+    4.0,
+    11.0,
+    0.9
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T10_Direction_Sign",
+   "name_ko": "방향 표지판",
+   "glb": "Track/T10_Direction_Sign.glb",
+   "thumb": "thumbs/T10_Direction_Sign.png",
+   "tris": 224,
+   "size_kb": 13,
+   "bounds_min": [
+    -0.9,
+    -0.09,
+    0.0
+   ],
+   "bounds_max": [
+    0.9,
+    0.08,
+    2.7
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Gameplay",
+   "id": "G01_ItemBox_DNA",
+   "name_ko": "DNA 아이템 박스",
+   "glb": "Gameplay/G01_ItemBox_DNA.glb",
+   "thumb": "thumbs/G01_ItemBox_DNA.png",
+   "tris": 1560,
+   "size_kb": 53,
+   "bounds_min": [
+    -0.37,
+    -0.37,
+    0.23
+   ],
+   "bounds_max": [
+    0.37,
+    0.37,
+    0.97
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Gameplay",
+   "id": "G02_ATP_Coin",
+   "name_ko": "ATP 코인",
+   "glb": "Gameplay/G02_ATP_Coin.glb",
+   "thumb": "thumbs/G02_ATP_Coin.png",
+   "tris": 2132,
+   "size_kb": 40,
+   "bounds_min": [
+    -0.36,
+    -0.08,
+    0.24
+   ],
+   "bounds_max": [
+    0.36,
+    0.08,
+    0.96
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Gameplay",
+   "id": "G03_Oxygen_Bubble",
+   "name_ko": "산소 버블",
+   "glb": "Gameplay/G03_Oxygen_Bubble.glb",
+   "thumb": "thumbs/G03_Oxygen_Bubble.png",
+   "tris": 1456,
+   "size_kb": 29,
+   "bounds_min": [
+    -0.4,
+    -0.4,
+    0.3
+   ],
+   "bounds_max": [
+    0.4,
+    0.4,
+    1.1
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Gameplay",
+   "id": "G04_Bounce_Membrane",
+   "name_ko": "튕김 막 트램펄린",
+   "glb": "Gameplay/G04_Bounce_Membrane.glb",
+   "thumb": "thumbs/G04_Bounce_Membrane.png",
+   "tris": 3472,
+   "size_kb": 66,
+   "bounds_min": [
+    -1.51,
+    -1.51,
+    -0.02
+   ],
+   "bounds_max": [
+    1.51,
+    1.51,
+    0.65
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Gameplay",
+   "id": "G05_Virus_Mine",
+   "name_ko": "바이러스 지뢰",
+   "glb": "Gameplay/G05_Virus_Mine.glb",
+   "thumb": "thumbs/G05_Virus_Mine.png",
+   "tris": 2800,
+   "size_kb": 56,
+   "bounds_min": [
+    -0.53,
+    -0.38,
+    -0.12
+   ],
+   "bounds_max": [
+    0.53,
+    0.54,
+    0.96
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Gameplay",
+   "id": "G06_Enzyme_Gear",
+   "name_ko": "효소 회전 기어",
+   "glb": "Gameplay/G06_Enzyme_Gear.glb",
+   "thumb": "thumbs/G06_Enzyme_Gear.png",
+   "tris": 2768,
+   "size_kb": 106,
+   "bounds_min": [
+    -1.58,
+    -0.32,
+    0.0
+   ],
+   "bounds_max": [
+    1.58,
+    0.25,
+    3.37
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Gameplay",
+   "id": "G07_Slime_Puddle",
+   "name_ko": "끈적 점액 웅덩이",
+   "glb": "Gameplay/G07_Slime_Puddle.glb",
+   "thumb": "thumbs/G07_Slime_Puddle.png",
+   "tris": 9664,
+   "size_kb": 172,
+   "bounds_min": [
+    -1.35,
+    -1.15,
+    -0.12
+   ],
+   "bounds_max": [
+    1.35,
+    1.14,
+    0.2
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Gameplay",
+   "id": "G08_Cell_Bumper",
+   "name_ko": "세포 범퍼",
+   "glb": "Gameplay/G08_Cell_Bumper.glb",
+   "thumb": "thumbs/G08_Cell_Bumper.png",
+   "tris": 2684,
+   "size_kb": 52,
+   "bounds_min": [
+    -0.76,
+    -0.76,
+    0.0
+   ],
+   "bounds_max": [
+    0.76,
+    0.76,
+    1.4
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Gameplay",
+   "id": "G09_Pipette_Cone",
+   "name_ko": "피펫팁 콘",
+   "glb": "Gameplay/G09_Pipette_Cone.glb",
+   "thumb": "thumbs/G09_Pipette_Cone.png",
+   "tris": 776,
+   "size_kb": 21,
+   "bounds_min": [
+    -0.4,
+    -0.4,
+    0.0
+   ],
+   "bounds_max": [
+    0.4,
+    0.4,
+    1.05
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Gameplay",
+   "id": "G10_Antibody_Missile",
+   "name_ko": "항체 미사일",
+   "glb": "Gameplay/G10_Antibody_Missile.glb",
+   "thumb": "thumbs/G10_Antibody_Missile.png",
+   "tris": 690,
+   "size_kb": 16,
+   "bounds_min": [
+    -0.39,
+    -0.62,
+    0.4
+   ],
+   "bounds_max": [
+    0.39,
+    1.02,
+    0.6
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Gameplay",
+   "id": "G11_Shield_Bubble",
+   "name_ko": "방어막 버블",
+   "glb": "Gameplay/G11_Shield_Bubble.glb",
+   "thumb": "thumbs/G11_Shield_Bubble.png",
+   "tris": 3008,
+   "size_kb": 108,
+   "bounds_min": [
+    -1.63,
+    -1.63,
+    -0.62
+   ],
+   "bounds_max": [
+    1.63,
+    1.63,
+    2.62
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Gameplay",
+   "id": "G12_Physics_Block",
+   "name_ko": "물리 블록 (쌓기용)",
+   "glb": "Gameplay/G12_Physics_Block.glb",
+   "thumb": "thumbs/G12_Physics_Block.png",
+   "tris": 1200,
+   "size_kb": 86,
+   "bounds_min": [
+    -0.5,
+    -0.5,
+    0.0
+   ],
+   "bounds_max": [
+    0.5,
+    0.5,
+    1.0
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Gameplay",
+   "id": "G13_Pollen_Boulder",
+   "name_ko": "굴러오는 꽃가루 바위",
+   "glb": "Gameplay/G13_Pollen_Boulder.glb",
+   "thumb": "thumbs/G13_Pollen_Boulder.png",
+   "tris": 1720,
+   "size_kb": 36,
+   "bounds_min": [
+    -1.29,
+    -1.15,
+    -0.31
+   ],
+   "bounds_max": [
+    1.31,
+    1.13,
+    2.32
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T11_Chevron_Barrier",
+   "name_ko": "화살표 커브 방벽",
+   "glb": "Track/T11_Chevron_Barrier.glb",
+   "thumb": "thumbs/T11_Chevron_Barrier.png",
+   "tris": 12648,
+   "size_kb": 868,
+   "bounds_min": [
+    -3.0,
+    -0.2,
+    0.0
+   ],
+   "bounds_max": [
+    3.0,
+    0.33,
+    1.5
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T12_Start_Lights",
+   "name_ko": "출발 신호등",
+   "glb": "Track/T12_Start_Lights.glb",
+   "thumb": "thumbs/T12_Start_Lights.png",
+   "tris": 5088,
+   "size_kb": 124,
+   "bounds_min": [
+    -5.4,
+    -0.52,
+    0.0
+   ],
+   "bounds_max": [
+    5.4,
+    0.25,
+    7.05
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T13_Tire_Stack",
+   "name_ko": "타이어 더미",
+   "glb": "Track/T13_Tire_Stack.glb",
+   "thumb": "thumbs/T13_Tire_Stack.png",
+   "tris": 14000,
+   "size_kb": 962,
+   "bounds_min": [
+    -0.5,
+    -1.35,
+    0.05
+   ],
+   "bounds_max": [
+    1.5,
+    0.7,
+    1.1
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T14_Podium",
+   "name_ko": "시상대",
+   "glb": "Track/T14_Podium.glb",
+   "thumb": "thumbs/T14_Podium.png",
+   "tris": 30780,
+   "size_kb": 2111,
+   "bounds_min": [
+    -3.83,
+    -1.23,
+    0.0
+   ],
+   "bounds_max": [
+    3.8,
+    1.22,
+    1.82
+   ],
+   "sockets": {
+    "P1": [
+     0.0,
+     0.0,
+     1.8
+    ],
+    "P2": [
+     -2.6,
+     0.0,
+     1.35
+    ],
+    "P3": [
+     2.6,
+     0.0,
+     1.0
+    ]
+   }
+  },
+  {
+   "category": "Gameplay",
+   "id": "G14_ATP_Booster",
+   "name_ko": "ATP 부스터 캔",
+   "glb": "Gameplay/G14_ATP_Booster.glb",
+   "thumb": "thumbs/G14_ATP_Booster.png",
+   "tris": 1542,
+   "size_kb": 42,
+   "bounds_min": [
+    -0.31,
+    -0.31,
+    -0.33
+   ],
+   "bounds_max": [
+    0.31,
+    0.31,
+    1.22
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E22_Mushroom_House",
+   "name_ko": "버섯 마을 집",
+   "glb": "Environment/E22_Mushroom_House.glb",
+   "thumb": "thumbs/E22_Mushroom_House.png",
+   "tris": 18796,
+   "size_kb": 1292,
+   "bounds_min": [
+    -2.2,
+    -2.2,
+    0.0
+   ],
+   "bounds_max": [
+    2.2,
+    2.2,
+    3.9
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E23_Spectator_Stand",
+   "name_ko": "세포 관중석",
+   "glb": "Environment/E23_Spectator_Stand.glb",
+   "thumb": "thumbs/E23_Spectator_Stand.png",
+   "tris": 40816,
+   "size_kb": 2289,
+   "bounds_min": [
+    -5.2,
+    -0.2,
+    0.0
+   ],
+   "bounds_max": [
+    5.2,
+    3.8,
+    3.58
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Track",
+   "id": "T15_Banner_Arch",
+   "name_ko": "BIO KART 배너 아치",
+   "glb": "Track/T15_Banner_Arch.glb",
+   "thumb": "thumbs/T15_Banner_Arch.png",
+   "tris": 13860,
+   "size_kb": 953,
+   "bounds_min": [
+    -5.79,
+    -0.35,
+    0.0
+   ],
+   "bounds_max": [
+    5.76,
+    0.31,
+    6.6
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Sky",
+   "id": "S01_Cloud_Voxel",
+   "name_ko": "복셀 구름",
+   "glb": "Sky/S01_Cloud_Voxel.glb",
+   "thumb": "thumbs/S01_Cloud_Voxel.png",
+   "tris": 2852,
+   "size_kb": 199,
+   "bounds_min": [
+    -3.58,
+    -1.58,
+    0.3
+   ],
+   "bounds_max": [
+    3.68,
+    1.72,
+    2.72
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Sky",
+   "id": "S02_Sun_Cell",
+   "name_ko": "햇님 세포",
+   "glb": "Sky/S02_Sun_Cell.glb",
+   "thumb": "thumbs/S02_Sun_Cell.png",
+   "tris": 7632,
+   "size_kb": 130,
+   "bounds_min": [
+    -3.7,
+    -2.5,
+    -3.61
+   ],
+   "bounds_max": [
+    3.34,
+    2.5,
+    3.61
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Sky",
+   "id": "S03_Sky_DNA_Helix",
+   "name_ko": "하늘 DNA 나선",
+   "glb": "Sky/S03_Sky_DNA_Helix.glb",
+   "thumb": "thumbs/S03_Sky_DNA_Helix.png",
+   "tris": 10824,
+   "size_kb": 243,
+   "bounds_min": [
+    -3.58,
+    -5.89,
+    -0.77
+   ],
+   "bounds_max": [
+    3.54,
+    6.0,
+    14.88
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Sky",
+   "id": "S04_Floating_Chloroplast",
+   "name_ko": "떠있는 엽록체 섬",
+   "glb": "Sky/S04_Floating_Chloroplast.glb",
+   "thumb": "thumbs/S04_Floating_Chloroplast.png",
+   "tris": 9568,
+   "size_kb": 176,
+   "bounds_min": [
+    -4.0,
+    -2.4,
+    -6.04
+   ],
+   "bounds_max": [
+    4.2,
+    2.4,
+    2.05
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Sky",
+   "id": "S05_HotAir_Balloon_Cell",
+   "name_ko": "세포 열기구",
+   "glb": "Sky/S05_HotAir_Balloon_Cell.glb",
+   "thumb": "thumbs/S05_HotAir_Balloon_Cell.png",
+   "tris": 10850,
+   "size_kb": 171,
+   "bounds_min": [
+    -2.52,
+    -2.53,
+    0.0
+   ],
+   "bounds_max": [
+    2.52,
+    2.6,
+    7.0
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Sky",
+   "id": "S06_Bacteria_Blimp",
+   "name_ko": "박테리아 비행선",
+   "glb": "Sky/S06_Bacteria_Blimp.glb",
+   "thumb": "thumbs/S06_Bacteria_Blimp.png",
+   "tris": 11644,
+   "size_kb": 239,
+   "bounds_min": [
+    -1.61,
+    -4.34,
+    -1.92
+   ],
+   "bounds_max": [
+    1.58,
+    9.01,
+    1.5
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Sky",
+   "id": "S07_Brain_Planet",
+   "name_ko": "브레인 행성",
+   "glb": "Sky/S07_Brain_Planet.glb",
+   "thumb": "thumbs/S07_Brain_Planet.png",
+   "tris": 11666,
+   "size_kb": 277,
+   "bounds_min": [
+    -5.57,
+    -5.33,
+    -3.2
+   ],
+   "bounds_max": [
+    5.57,
+    5.33,
+    3.2
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Sky",
+   "id": "S08_Star_Neuron",
+   "name_ko": "별빛 뉴런",
+   "glb": "Sky/S08_Star_Neuron.glb",
+   "thumb": "thumbs/S08_Star_Neuron.png",
+   "tris": 3948,
+   "size_kb": 99,
+   "bounds_min": [
+    -4.24,
+    -4.31,
+    -4.31
+   ],
+   "bounds_max": [
+    3.98,
+    3.32,
+    3.42
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Sky",
+   "id": "S09_Moon_Cell",
+   "name_ko": "달 세포",
+   "glb": "Sky/S09_Moon_Cell.glb",
+   "thumb": "thumbs/S09_Moon_Cell.png",
+   "tris": 7940,
+   "size_kb": 131,
+   "bounds_min": [
+    -3.1,
+    -3.1,
+    -3.1
+   ],
+   "bounds_max": [
+    3.1,
+    3.1,
+    3.1
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Sky",
+   "id": "S10_Jellyfish_Giant",
+   "name_ko": "대왕 해파리",
+   "glb": "Sky/S10_Jellyfish_Giant.glb",
+   "thumb": "thumbs/S10_Jellyfish_Giant.png",
+   "tris": 16520,
+   "size_kb": 322,
+   "bounds_min": [
+    -2.5,
+    -2.55,
+    -6.76
+   ],
+   "bounds_max": [
+    2.5,
+    2.5,
+    2.4
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Sky",
+   "id": "S11_RBC_Swarm",
+   "name_ko": "적혈구 무리",
+   "glb": "Sky/S11_RBC_Swarm.glb",
+   "thumb": "thumbs/S11_RBC_Swarm.png",
+   "tris": 6144,
+   "size_kb": 12,
+   "bounds_min": [
+    -5.47,
+    -2.93,
+    -2.89
+   ],
+   "bounds_max": [
+    5.29,
+    3.08,
+    2.8
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Sky",
+   "id": "S12_Vessel_Ring",
+   "name_ko": "혈관 링 아치",
+   "glb": "Sky/S12_Vessel_Ring.glb",
+   "thumb": "thumbs/S12_Vessel_Ring.png",
+   "tris": 8440,
+   "size_kb": 199,
+   "bounds_min": [
+    -10.3,
+    -1.2,
+    -10.2
+   ],
+   "bounds_max": [
+    10.3,
+    1.2,
+    10.2
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E24_Giant_Flower",
+   "name_ko": "거대 꽃",
+   "glb": "Environment/E24_Giant_Flower.glb",
+   "thumb": "thumbs/E24_Giant_Flower.png",
+   "tris": 13768,
+   "size_kb": 291,
+   "bounds_min": [
+    -2.35,
+    -4.11,
+    -0.38
+   ],
+   "bounds_max": [
+    3.01,
+    4.57,
+    8.3
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E25_Ladybug_Rock",
+   "name_ko": "무당벌레 바위",
+   "glb": "Environment/E25_Ladybug_Rock.glb",
+   "thumb": "thumbs/E25_Ladybug_Rock.png",
+   "tris": 10908,
+   "size_kb": 149,
+   "bounds_min": [
+    -1.6,
+    -2.48,
+    -0.45
+   ],
+   "bounds_max": [
+    1.6,
+    2.2,
+    2.2
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E26_Chloroplast_Tree",
+   "name_ko": "엽록체 나무",
+   "glb": "Environment/E26_Chloroplast_Tree.glb",
+   "thumb": "thumbs/E26_Chloroplast_Tree.png",
+   "tris": 8640,
+   "size_kb": 196,
+   "bounds_min": [
+    -3.6,
+    -3.27,
+    -0.06
+   ],
+   "bounds_max": [
+    3.44,
+    3.58,
+    7.0
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E27_Hydrothermal_Vent",
+   "name_ko": "열수구 굴뚝",
+   "glb": "Environment/E27_Hydrothermal_Vent.glb",
+   "thumb": "thumbs/E27_Hydrothermal_Vent.png",
+   "tris": 13000,
+   "size_kb": 797,
+   "bounds_min": [
+    -2.8,
+    -2.64,
+    0.0
+   ],
+   "bounds_max": [
+    2.64,
+    2.64,
+    14.72
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E28_Starfish",
+   "name_ko": "불가사리",
+   "glb": "Environment/E28_Starfish.glb",
+   "thumb": "thumbs/E28_Starfish.png",
+   "tris": 11820,
+   "size_kb": 202,
+   "bounds_min": [
+    -2.31,
+    -1.99,
+    -0.16
+   ],
+   "bounds_max": [
+    2.31,
+    2.42,
+    0.78
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E29_Radiolarian",
+   "name_ko": "방산충 유리껍질",
+   "glb": "Environment/E29_Radiolarian.glb",
+   "thumb": "thumbs/E29_Radiolarian.png",
+   "tris": 2200,
+   "size_kb": 52,
+   "bounds_min": [
+    -3.38,
+    -2.93,
+    -0.67
+   ],
+   "bounds_max": [
+    2.82,
+    3.11,
+    5.07
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E30_Ammonite_Shell",
+   "name_ko": "암모나이트 껍데기",
+   "glb": "Environment/E30_Ammonite_Shell.glb",
+   "thumb": "thumbs/E30_Ammonite_Shell.png",
+   "tris": 4756,
+   "size_kb": 109,
+   "bounds_min": [
+    -3.61,
+    -0.93,
+    -2.84
+   ],
+   "bounds_max": [
+    5.44,
+    0.93,
+    6.63
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E31_Copepod",
+   "name_ko": "요각류 플랑크톤",
+   "glb": "Environment/E31_Copepod.glb",
+   "thumb": "thumbs/E31_Copepod.png",
+   "tris": 6464,
+   "size_kb": 156,
+   "bounds_min": [
+    -2.81,
+    -0.53,
+    0.13
+   ],
+   "bounds_max": [
+    2.81,
+    4.21,
+    2.03
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E32_Synapse_Tower",
+   "name_ko": "시냅스 타워",
+   "glb": "Environment/E32_Synapse_Tower.glb",
+   "thumb": "thumbs/E32_Synapse_Tower.png",
+   "tris": 6768,
+   "size_kb": 157,
+   "bounds_min": [
+    -2.18,
+    -2.09,
+    -0.05
+   ],
+   "bounds_max": [
+    2.18,
+    2.09,
+    8.5
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E33_Axon_Arch",
+   "name_ko": "축삭 아치",
+   "glb": "Environment/E33_Axon_Arch.glb",
+   "thumb": "thumbs/E33_Axon_Arch.png",
+   "tris": 4384,
+   "size_kb": 110,
+   "bounds_min": [
+    -11.56,
+    -1.95,
+    -10.97
+   ],
+   "bounds_max": [
+    12.37,
+    1.95,
+    12.19
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E34_Glow_Crystal_Neuron",
+   "name_ko": "빛나는 신경 결정",
+   "glb": "Environment/E34_Glow_Crystal_Neuron.glb",
+   "thumb": "thumbs/E34_Glow_Crystal_Neuron.png",
+   "tris": 4104,
+   "size_kb": 81,
+   "bounds_min": [
+    -3.74,
+    -1.9,
+    -1.96
+   ],
+   "bounds_max": [
+    3.73,
+    1.69,
+    5.45
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E35_Platelet_Cluster",
+   "name_ko": "혈소판 무리",
+   "glb": "Environment/E35_Platelet_Cluster.glb",
+   "thumb": "thumbs/E35_Platelet_Cluster.png",
+   "tris": 20200,
+   "size_kb": 323,
+   "bounds_min": [
+    -2.54,
+    -2.57,
+    -1.29
+   ],
+   "bounds_max": [
+    2.68,
+    2.59,
+    3.65
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E36_Heart_Valve_Gate",
+   "name_ko": "심장 판막 게이트",
+   "glb": "Environment/E36_Heart_Valve_Gate.glb",
+   "thumb": "thumbs/E36_Heart_Valve_Gate.png",
+   "tris": 10668,
+   "size_kb": 237,
+   "bounds_min": [
+    -8.39,
+    -1.59,
+    -1.0
+   ],
+   "bounds_max": [
+    8.39,
+    1.59,
+    14.0
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Environment",
+   "id": "E37_Capillary_Column",
+   "name_ko": "모세혈관 기둥",
+   "glb": "Environment/E37_Capillary_Column.glb",
+   "thumb": "thumbs/E37_Capillary_Column.png",
+   "tris": 5876,
+   "size_kb": 130,
+   "bounds_min": [
+    -1.78,
+    -1.78,
+    -0.52
+   ],
+   "bounds_max": [
+    1.78,
+    1.78,
+    10.0
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Lab",
+   "id": "L10_Robot_Arm",
+   "name_ko": "실험실 로봇 팔",
+   "glb": "Lab/L10_Robot_Arm.glb",
+   "thumb": "thumbs/L10_Robot_Arm.png",
+   "tris": 2404,
+   "size_kb": 48,
+   "bounds_min": [
+    -1.0,
+    -1.0,
+    0.0
+   ],
+   "bounds_max": [
+    1.0,
+    3.66,
+    4.1
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Lab",
+   "id": "L11_DNA_Monitor",
+   "name_ko": "DNA 분석 모니터",
+   "glb": "Lab/L11_DNA_Monitor.glb",
+   "thumb": "thumbs/L11_DNA_Monitor.png",
+   "tris": 9236,
+   "size_kb": 637,
+   "bounds_min": [
+    -2.6,
+    -0.3,
+    0.0
+   ],
+   "bounds_max": [
+    2.6,
+    0.9,
+    5.1
+   ],
+   "sockets": {}
+  },
+  {
+   "category": "Lab",
+   "id": "L12_Pipe_Network",
+   "name_ko": "실험실 배관",
+   "glb": "Lab/L12_Pipe_Network.glb",
+   "thumb": "thumbs/L12_Pipe_Network.png",
+   "tris": 2424,
+   "size_kb": 67,
+   "bounds_min": [
+    -1.62,
+    -0.5,
+    -0.01
+   ],
+   "bounds_max": [
+    4.62,
+    1.9,
+    5.4
+   ],
+   "sockets": {}
+  }
+ ],
+ "errors": [],
+ "conventions": {
+  "forward": "-Y (Blender) / +Z (glTF)",
+  "up": "+Z / +Y",
+  "units": "m",
+  "kart_sockets": "Driver at kart origin, Balloon, Pet; wheels *_Wheel_FL/FR/RL/RR spin about X",
+  "track_width_m": 8
+ }
+}

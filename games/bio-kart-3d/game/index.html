@@ -1,0 +1,156 @@
+﻿<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bio Kart Racing</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/build/three.module.js",
+               "three/addons/": "./vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<canvas id="speedlines"></canvas>
+<div id="vignette"></div>
+
+<!-- ======================= TITLE ======================= -->
+<section id="title" class="screen">
+  <div class="logo"><span class="l1">BIO</span><span class="l2">KART</span><span class="l3">RACING</span></div>
+  <p class="tag">세포 · DNA · 바이러스가 펼치는 생명과학 카트 레이스</p>
+  <div class="menu">
+    <button data-go="modes" class="big">게임 시작</button>
+    <button data-go="garage">차고</button>
+    <button data-go="settings">설정</button>
+    <button data-go="help">조작법</button>
+    <button onclick="location.href='../../bio-kart.html'">← 바이오 카트 (탑다운)</button>
+  </div>
+  <p class="foot">에셋: Blender 생성 라이브러리 · 엔진/타이어 녹음 사운드 + WebAudio 효과음 · 5개 테마 20개 트랙</p>
+</section>
+
+<!-- ======================= MODES ======================= -->
+<section id="modes" class="screen panel-screen">
+  <div class="panel wide">
+    <div class="ptitle"><button class="back" data-go="title">←</button>모드 선택</div>
+    <div class="modes">
+      <button class="mode m-speed" data-mode="speed"><b>스피드전</b><span>아이템 없이 드리프트로<br>ATP 부스터를 모아 질주!</span></button>
+      <button class="mode m-item" data-mode="item"><b>아이템전</b><span>DNA 박스에서 항체 미사일,<br>바이러스 지뢰를 얻어 역전!</span></button>
+      <button class="mode m-time" data-mode="time"><b>타임어택</b><span>혼자 달리며 최고 기록에<br>도전하세요</span></button>
+    </div>
+    <p class="tip">모드를 고르면 대기실로 이동합니다. 대기실에서 트랙 · 카트 · AI 인원을 정하고 시작하세요.</p>
+  </div>
+</section>
+
+<!-- ======================= WAITING ROOM ======================= -->
+<section id="lobby" class="screen">
+  <div class="lobby">
+    <div class="lb-top"><span class="lb-room">🧬 <b id="lbRoomName">함께 달려요!</b></span><span id="lbModeTxt" class="lb-mode"></span>
+      <div class="seg" id="lbMode"><button data-m="speed">스피드</button><button data-m="item">아이템</button><button data-m="time">타임어택</button></div>
+      <div class="seg" id="lbDiff"><button data-d="0.88">AI 쉬움</button><button data-d="0.95">보통</button><button data-d="1.02">어려움</button></div>
+      <button class="lb-exit" data-go="modes">나가기 ✕</button></div>
+    <div class="lb-body">
+      <nav class="lb-side">
+        <button id="lbStart" class="lb-start"><i>▶</i>시작</button>
+        <button data-gtab="kart"><i>🏎</i>카트</button>
+        <button data-gtab="driver"><i>🧫</i>캐릭터</button>
+        <button data-gtab="pet"><i>🦠</i>펫</button>
+        <button data-gtab="balloon"><i>🎈</i>풍선</button>
+        <button data-go="tracks"><i>🗺</i>트랙</button>
+        <button data-go="settings"><i>⚙</i>설정</button>
+      </nav>
+      <div class="lb-grid" id="lbGrid"></div>
+    </div>
+    <div class="lb-bottom">
+      <div class="lb-chat"><div id="lbChatLog"></div><input id="lbChatIn" maxlength="40" placeholder="채팅 입력 후 Enter"></div>
+      <div class="lb-status" id="lbStatus"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= TRACK PICKER ======================= -->
+<section id="tracks" class="screen panel-screen">
+  <div class="panel wide">
+    <div class="ptitle"><button class="back" data-go="lobby">←</button>트랙 선택 <small id="modeLabel"></small></div>
+    <div class="tabs themes" id="themeTabs"></div>
+    <div class="tracks" id="trackList"></div>
+    <div class="row end"><button id="trackOk" class="big">선택 완료</button></div>
+  </div>
+</section>
+
+<!-- ======================= GARAGE ======================= -->
+<section id="garage" class="screen">
+  <div class="garage-panel panel">
+    <div class="ptitle"><button class="back" id="garageBack">←</button>차고</div>
+    <div class="tabs" id="gTabs"></div>
+    <div class="ggrid" id="gGrid"></div>
+    <div class="gpick" id="gPick"></div>
+  </div>
+  <div class="garage-name" id="gName"></div>
+</section>
+
+<!-- ======================= SETTINGS / HELP ======================= -->
+<section id="settings" class="screen panel-screen">
+  <div class="panel">
+    <div class="ptitle"><button class="back" id="setBack">←</button>설정</div>
+    <label class="row">배경음악 <input type="range" id="volMusic" min="0" max="1" step="0.05"></label>
+    <label class="row">효과음 <input type="range" id="volSfx" min="0" max="1" step="0.05"></label>
+    <label class="row">그림자 <input type="checkbox" id="optShadow"></label>
+    <label class="row">후방 미러 <input type="checkbox" id="optMirror"></label>
+    <label class="row">속도선 효과 <input type="checkbox" id="optLines"></label>
+  </div>
+</section>
+<section id="help" class="screen panel-screen">
+  <div class="panel">
+    <div class="ptitle"><button class="back" data-go="title">←</button>조작법</div>
+    <table class="keys">
+      <tr><td><kbd>↑</kbd><kbd>W</kbd></td><td>가속</td></tr><tr><td><kbd>↓</kbd><kbd>S</kbd></td><td>브레이크 / 후진</td></tr>
+      <tr><td><kbd>←</kbd><kbd>→</kbd></td><td>조향</td></tr><tr><td><kbd>Shift</kbd><kbd>Space</kbd></td><td>드리프트 (게이지 충전 · 놓으면 순간 부스터)</td></tr>
+      <tr><td><kbd>Ctrl</kbd><kbd>Z</kbd></td><td>아이템 / 부스터 사용</td></tr><tr><td><kbd>C</kbd></td><td>카메라 변경</td></tr>
+      <tr><td><kbd>R</kbd></td><td>코스 복귀</td></tr><tr><td><kbd>Esc</kbd></td><td>일시정지</td></tr>
+    </table>
+    <p class="tip">부스터 게이지: 드리프트하면 빠르게 차고(약 1.5초), 고속 주행·ATP 코인·순간 부스터로도 찹니다. 가득 차면 ATP 부스터 획득!</p>
+    <p class="tip">팁: 앞차 바로 뒤에 붙으면 <b>DRAFT</b> 게이지가 차서 슬립스트림 가속! 부스터 패드·트램펄린도 활용하세요.</p>
+  </div>
+</section>
+
+<!-- ======================= LOADING ======================= -->
+<section id="loading" class="screen"><div class="loader"><div class="dna"></div><p id="loadText">불러오는 중…</p></div></section>
+
+<!-- ======================= HUD ======================= -->
+<section id="hud">
+  <div id="rankBig"><b id="rankNum">1</b><span id="rankTot">/8</span></div>
+  <ol id="rankList"></ol>
+  <div id="lapBox"><div><b id="lapNum">1</b><span id="lapTot">/3 LAP</span></div><div id="finalTag">FINAL</div>
+    <table><tr><td>LAP</td><td id="tLap">00:00.000</td></tr><tr><td>TIME</td><td id="tTotal">00:00.000</td></tr><tr><td>BEST</td><td id="tBest">--:--.---</td></tr></table></div>
+  <canvas id="minimap" width="220" height="220"></canvas>
+  <div id="gauge">
+    <svg viewBox="0 0 200 200"><circle class="bg" cx="100" cy="100" r="84"/><circle id="gArc" class="fg" cx="100" cy="100" r="84"/></svg>
+    <div class="num"><b id="spd">000</b><span>km/h</span></div><div id="draft">DRAFT</div>
+    <div id="draftBar"><i></i></div>
+  </div>
+  <div id="itemBar">
+    <div class="slots"><div class="slot" id="slot0"></div><div class="slot small" id="slot1"></div></div>
+    <div id="boostGauge"><i></i></div>
+    <div class="hint"><kbd>Ctrl</kbd> 사용 · <kbd>Shift</kbd> 드리프트</div>
+  </div>
+  <div id="center"></div>
+  <div id="notice"></div>
+  <div id="mirrorFrame"></div>
+</section>
+
+<!-- ======================= PAUSE / RESULTS ======================= -->
+<section id="pause" class="screen panel-screen"><div class="panel">
+  <div class="ptitle">일시정지</div>
+  <div class="menu"><button id="resume" class="big">계속하기</button><button id="restart">다시 시작</button><button id="quit">메인으로</button></div>
+</div></section>
+<section id="results" class="screen">
+  <div class="res-panel panel">
+    <div class="ptitle" id="resTitle">레이스 결과</div>
+    <table id="resTable"></table>
+    <div class="row end"><button id="resRetry" class="big">다시하기</button><button id="resTracks">대기실</button><button id="resMain" class="ghost">메인</button></div>
+  </div>
+</section>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
