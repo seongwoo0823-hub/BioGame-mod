@@ -8,6 +8,7 @@ import { AIDriver } from './ai.js';
 import { ItemSystem, ITEMS, rollItem } from './items.js';
 import { FX } from './fx.js';
 import { Audio } from './audio.js';
+import { NET } from './online.js';
 
 const $ = id => document.getElementById(id);
 const store = { get(k, d) { try { const v = localStorage.getItem('biokart_' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -56,7 +57,7 @@ let combo = Object.assign({ kart: 'K01_LeafRacer', driver: 'C01_Chloe_GreenCell'
 
 // ------------------------------------------------------------------ screens
 let screen = 'title', garageReturn = 'title';
-const MENU_SCREENS = ['title', 'modes', 'tracks', 'garage', 'settings', 'help', 'lobby'];
+const MENU_SCREENS = ['title', 'modes', 'tracks', 'garage', 'settings', 'help', 'lobby', 'online'];
 function show(name) {
   if (screen === 'lobby' && name !== 'lobby') stopLobby();
   screen = name;
@@ -65,6 +66,8 @@ function show(name) {
   if (name === 'garage') renderGarage();
   if (name === 'tracks') renderTracks();
   if (name === 'lobby') enterLobby();
+  if (name === 'online') renderOnline();
+  if (name === 'title' && NET.active) { NET.leave(); lobby.online = false; lobby.slots = null; }
   if (MENU_SCREENS.includes(name)) { renderer.toneMappingExposure = 1.05; if (!audio.bgmOn || audio.kind !== 'menu') audio.startMusic('menu'); setMenuCombo(); }
 }
 document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { audio.init(); audio.play('click'); if (b.dataset.go === 'garage' || b.dataset.go === 'settings') garageReturn = screen; show(b.dataset.go); }));
@@ -164,7 +167,7 @@ const randCombo = i => { const pool = cat => list(cat).map(a => a.id); const r =
 const lobby = { slots: null, timers: [] };
 function initLobby() {
   const names = [...AI_NAMES].sort(() => Math.random() - 0.5);
-  lobby.slots = Array.from({ length: 8 }, (_, i) => i === 0 ? { type: 'me', name: '나', color: COLORS[0], lv: 12 }
+  lobby.slots = Array.from({ length: 8 }, (_, i) => i === 0 ? { type: 'me', name: lobby.online ? ONL.nick : '나', id: NET.myId, color: COLORS[0], lv: 12 }
     : { type: 'ai', name: names[i - 1], combo: randCombo(i), color: COLORS[i], lv: 3 + Math.floor(Math.random() * 40), ready: false });
 }
 function lobbyChat(who, txt, sys = false) {
@@ -175,13 +178,15 @@ function stopLobby() { lobby.timers.forEach(clearTimeout); lobby.timers = []; }
 function enterLobby() {
   if (!lobby.slots) initLobby();
   stopLobby();
+  if (NET.role === 'guest') { renderLobby(true); return; }
+  if (lobby.online && race.mode === 'time') race.mode = 'speed';
   lobby.slots.forEach(s => s.ready = false);
   const def = TRACKS[race.trackIdx];
   $('lbChatLog').innerHTML = ''; lobbyChat('', `[알림] ${THEMES[def.theme].name} · ${def.name} 방에 입장했습니다.`, true);
   // AIs get ready one by one (and chat a bit)
   lobby.slots.forEach((s, i) => { if (s.type !== 'ai') return;
     lobby.timers.push(setTimeout(() => { s.ready = true; audio.play('ready'); renderLobby(); if (Math.random() < 0.5) { lobbyChat(s.name, CHAT[Math.floor(Math.random() * CHAT.length)]); } }, 500 + i * 380 + Math.random() * 600)); });
-  const idle = () => { lobby.timers.push(setTimeout(() => { const ai = lobby.slots.filter(s => s.type === 'ai'); if (ai.length && screen === 'lobby') { const s = ai[Math.floor(Math.random() * ai.length)]; lobbyChat(s.name, CHAT[Math.floor(Math.random() * CHAT.length)]); audio.play('chat'); } idle(); }, 6000 + Math.random() * 7000)); };
+  const idle = () => { if (lobby.online) return; lobby.timers.push(setTimeout(() => { const ai = lobby.slots.filter(s => s.type === 'ai'); if (ai.length && screen === 'lobby') { const s = ai[Math.floor(Math.random() * ai.length)]; lobbyChat(s.name, CHAT[Math.floor(Math.random() * CHAT.length)]); audio.play('chat'); } idle(); }, 6000 + Math.random() * 7000)); };
   idle();
   renderLobby(true);
 }
@@ -195,20 +200,22 @@ function renderLobby(full) {
   const slots = lobby.slots, grid = $('lbGrid');
   const slotHTML = (s, i) => {
     const off = tm && i > 0;
-    if (s.type === 'empty' || s.type === 'closed' || off) return `<div class="slotc ${off || s.type === 'closed' ? 'closed' : 'empty'}" data-i="${i}"><div class="sh"><span class="lv">-</span><span class="sb">${off ? '' : '<button class="add" title="AI 추가">+</button>'}</span></div>
-      <div class="nm">${off ? '타임어택' : s.type === 'closed' ? '닫힌 자리' : '빈 자리'}</div><div class="pv">${off ? '🔒' : '+ AI 초대'}</div></div>`;
-    const me = s.type === 'me', c = me ? combo : s.combo;
-    return `<div class="slotc ${me ? 'host me' : ''}" data-i="${i}"><div class="sh"><span class="lv">Lv.${s.lv}</span><span class="badge">${['🧬', '🦠', '🧫', '🔬', '🧪', '🌿', '🩸', '🧠'][i]}</span>
-      <span class="sb">${me ? '' : '<button class="add" title="카트 바꾸기">↻</button><button class="del" title="강퇴">✕</button>'}</span></div>
-      <div class="nm" style="border-left:5px solid #${s.color.toString(16).padStart(6, '0')}">${s.name}</div>
-      <div class="pv"><img alt="" data-por="${i}"><span class="kartname">${byId[c.kart]?.name_ko.split(' (')[0] || ''}</span>${me ? '<span class="hosttag">방 장</span>' : s.ready ? '<span class="ready">READY</span>' : ''}</div></div>`;
+    if (s.type === 'empty' || s.type === 'closed' || off) return `<div class="slotc ${off || s.type === 'closed' ? 'closed' : 'empty'}" data-i="${i}"><div class="sh"><span class="lv">-</span><span class="sb">${off || NET.role === 'guest' ? '' : '<button class="add" title="AI 추가">+</button>'}</span></div>
+      <div class="nm">${off ? '타임어택' : s.type === 'closed' ? '닫힌 자리' : '빈 자리'}</div><div class="pv">${off ? '혼자 달려요' : NET.role === 'guest' ? '대기 중' : lobby.online ? '친구 참가 대기 · AI 초대' : 'AI 초대'}</div></div>`;
+    const me = s.type === 'me', c = (me ? combo : s.combo) || combo, guest = NET.role === 'guest', isHostSlot = i === 0;
+    const btns = me || guest ? '' : s.type === 'net' ? '<button class="del" title="내보내기">✕</button>' : '<button class="add" title="카트 바꾸기">↻</button><button class="del" title="강퇴">✕</button>';
+    const tag = isHostSlot ? '<span class="hosttag">방장</span>' : s.ready ? '<span class="ready">READY</span>' : s.type === 'net' || me ? '<span class="wait">준비 중</span>' : '';
+    return `<div class="slotc ${me ? 'me' : ''} ${isHostSlot ? 'host' : ''} ${s.type === 'net' ? 'net' : ''}" data-i="${i}"><div class="sh"><span class="lv">${s.type === 'ai' ? 'AI' : 'Lv.' + s.lv}</span><span class="badge" style="background:#${s.color.toString(16).padStart(6, '0')}">${i + 1}</span>
+      <span class="sb">${btns}</span></div>
+      <div class="nm">${s.name}${me ? ' <small>(나)</small>' : ''}</div>
+      <div class="pv"><img alt="" data-por="${i}"><span class="kartname">${byId[c.kart]?.name_ko.split(' (')[0] || ''}</span>${tag}</div></div>`;
   };
   const trackHTML = `<div class="lb-track" id="lbTrack"><div class="tn">${def.name}</div><div class="tv"><canvas width="460" height="220"></canvas>
       <span class="diff">난이도 <i>${'●'.repeat(def.diff + 1)}${'○'.repeat(4 - def.diff)}</i></span><span class="theme">${th.icon} ${th.name}</span>
       <span class="info">${def.laps}바퀴 · ${def.desc}</span></div></div>`;
   grid.innerHTML = slotHTML(slots[0], 0) + slots.slice(1, 5).map((s, k) => slotHTML(s, k + 1)).join('') + trackHTML + slots.slice(5).map((s, k) => slotHTML(s, k + 5)).join('');
   setTimeout(() => drawTrackPreview(grid.querySelector('#lbTrack canvas'), trackObj(race.trackIdx)), 0);
-  $('lbTrack').onclick = () => { audio.play('click'); pickTheme = def.theme; show('tracks'); };
+  $('lbTrack').onclick = () => { if (NET.role === 'guest') return; audio.play('click'); pickTheme = def.theme; show('tracks'); };
   grid.querySelectorAll('.slotc').forEach(el => {
     const i = +el.dataset.i, s = slots[i];
     const add = el.querySelector('.add'), del = el.querySelector('.del'), pv = el.querySelector('.pv');
@@ -216,6 +223,9 @@ function renderLobby(full) {
       Object.assign(s, { type: 'ai', name: names[Math.floor(Math.random() * names.length)] || 'AI', combo: randCombo(i), color: COLORS[i], lv: 3 + Math.floor(Math.random() * 40), ready: false });
       audio.play('select'); lobbyChat('', `[알림] ${s.name} 님이 입장했습니다.`, true); renderLobby();
       lobby.timers.push(setTimeout(() => { s.ready = true; audio.play('ready'); renderLobby(); lobbyChat(s.name, '안녕하세요~ 레디!'); }, 900)); };
+    if (NET.role === 'guest') { if (s.type === 'me') pv.onclick = () => { gTab = 'kart'; garageReturn = 'lobby'; show('garage'); }; return; }
+    if (s.type === 'net' && del) del.onclick = e => { e.stopPropagation(); NET.sendTo(s.id, { t: 'deny', why: '방장이 내보냈어요.' }); NET.conns.delete(s.id); lobbyChat('', `[알림] ${s.name} 님을 내보냈습니다.`, true); Object.assign(s, { type: 'empty', id: null, ready: false }); renderLobby(); return; };
+    if (s.type === 'net') return;
     if (s.type === 'ai' && !tm) {
       if (add) add.onclick = e => { e.stopPropagation(); s.combo = randCombo(i + Math.floor(Math.random() * 10)); audio.play('click'); renderLobby(); };
       if (del) del.onclick = e => { e.stopPropagation(); lobbyChat('', `[알림] ${s.name} 님이 퇴장했습니다.`, true); s.type = 'empty'; audio.play('click'); renderLobby(); };
@@ -223,25 +233,97 @@ function renderLobby(full) {
     if (s.type === 'me') pv.onclick = () => { gTab = 'kart'; garageReturn = 'lobby'; show('garage'); };
   });
   grid.querySelectorAll('img[data-por]').forEach(img => { const s = slots[+img.dataset.por]; portraitOf(s.type === 'me' ? combo : s.combo).then(u => img.src = u); });
-  const racers = tm ? 1 : slots.filter(s => s.type === 'me' || s.type === 'ai').length, ready = slots.filter(s => s.type === 'ai').every(s => s.ready);
-  $('lbStatus').innerHTML = `모드: <b>${modeName[race.mode]}</b><br>트랙: <b>${def.name}</b> (${def.laps}바퀴)<br>참가: <b>${racers}명</b> · AI ${({ 0.88: '쉬움', 0.95: '보통', 1.02: '어려움' })[race.skill] || '보통'}<br>${tm ? '혼자 최고 기록에 도전!' : ready ? '<span style="color:#b6ff6a">✔ 모두 준비 완료! 시작을 누르세요</span>' : '다른 레이서 준비 중…'}`;
-  $('lbStart').classList.toggle('go', tm || ready);
+  const racers = tm ? 1 : slots.filter(s => s.type === 'me' || s.type === 'ai' || s.type === 'net').length, ready = slots.filter(s => s.type === 'ai' || s.type === 'net').every(s => s.ready);
+  const humans = slots.filter(s => s.type === 'net' || (s.type === 'me')).length, guest = NET.role === 'guest', mine = slots.find(s => s.type === 'me');
+  $('lbStatus').innerHTML = `${lobby.online ? `방 코드 <b class="code">${NET.code}</b> · 사람 <b>${humans}</b>명<br>` : ''}모드 <b>${modeName[race.mode]}</b> · 트랙 <b>${def.name}</b> (${def.laps}바퀴)<br>참가 <b>${racers}명</b> · AI ${({ 0.88: '쉬움', 0.95: '보통', 1.02: '어려움' })[race.skill] || '보통'}<br>${guest ? (mine && mine.ready ? '<span class="ok">준비 완료 · 방장이 시작하면 출발해요</span>' : '왼쪽 <b>준비</b>를 눌러 주세요') : tm ? '혼자 최고 기록에 도전!' : ready ? '<span class="ok">모두 준비 완료! 시작을 누르세요</span>' : '다른 레이서 준비 중…'}`;
+  $('lbStart').classList.toggle('go', guest ? !(mine && mine.ready) : tm || ready);
+  $('lbStart').innerHTML = guest ? `<i>${mine && mine.ready ? '■' : '▶'}</i>${mine && mine.ready ? '준비 취소' : '준비'}` : '<i>▶</i>시작';
+  document.querySelector('#lbMode [data-m="time"]').style.display = lobby.online ? 'none' : '';
+  if (guest) { const cs = JSON.stringify(combo); if (cs !== lobby.sentCombo) { lobby.sentCombo = cs; NET.toHost({ t: 'combo', combo }); } }
+  syncLobby();
 }
-document.querySelectorAll('#lbMode button').forEach(b => b.onclick = () => { race.mode = b.dataset.m; audio.play('click'); renderLobby(); });
-document.querySelectorAll('#lbDiff button').forEach(b => b.onclick = () => { race.skill = +b.dataset.d; audio.play('click'); renderLobby(); });
-$('lbStart').onclick = () => { audio.rev(); startRace(); };
+document.querySelectorAll('#lbMode button').forEach(b => b.onclick = () => { if (NET.role === 'guest') return; race.mode = b.dataset.m; audio.play('click'); renderLobby(); });
+document.querySelectorAll('#lbDiff button').forEach(b => b.onclick = () => { if (NET.role === 'guest') return; race.skill = +b.dataset.d; audio.play('click'); renderLobby(); });
+$('lbStart').onclick = () => {
+  if (NET.role === 'guest') { const me = lobby.slots.find(s => s.type === 'me'); if (me) { me.ready = !me.ready; NET.toHost({ t: 'ready', v: me.ready }); audio.play(me.ready ? 'ready' : 'click'); renderLobby(); } return; }
+  audio.rev(); startRace(); };
 $('lbChatIn').addEventListener('keydown', e => {
   e.stopPropagation(); if (e.key !== 'Enter' || !e.target.value.trim()) return;
-  lobbyChat('나', e.target.value.trim()); e.target.value = ''; audio.play('chat');
+  const txt = e.target.value.trim(); lobbyChat(lobby.online ? ONL.nick : '나', txt); e.target.value = ''; audio.play('chat');
+  if (lobby.online) { const m = { t: 'chat', name: ONL.nick, txt }; NET.role === 'host' ? NET.broadcast(m) : NET.toHost(m); return; }
   const ai = lobby.slots.filter(s => s.type === 'ai'); if (ai.length) lobby.timers.push(setTimeout(() => { const s = ai[Math.floor(Math.random() * ai.length)]; lobbyChat(s.name, ['ㅋㅋㅋ 좋아요', '오케이!', '저도요~', '빨리 시작해요!', 'ㅎㅎ 화이팅'][Math.floor(Math.random() * 5)]); audio.play('chat'); }, 900 + Math.random() * 1200));
 });
 
+
+// ------------------------------------------------------------------ online (방 만들기 · 코드로 참가)
+const ONL = { nick: store.get('nick', '레이서' + Math.floor(100 + Math.random() * 900)) };
+const slotId = (s, i) => s.type === 'ai' ? 'ai' + i : (s.id || 'p' + i);
+const pubSlots = () => lobby.slots.map((s, i) => ({ type: s.type === 'me' ? 'host' : s.type, id: s.type === 'ai' ? 'ai' + i : s.id || null, name: s.name, combo: s.type === 'me' ? combo : s.combo, color: s.color, lv: s.lv, ready: !!s.ready }));
+function syncLobby() { if (NET.role === 'host') NET.broadcast({ t: 'lobby', mode: race.mode, track: race.trackIdx, skill: race.skill, slots: pubSlots() }); }
+NET.log = h => { const el = $('onLog'); if (el) el.innerHTML = h; };
+function renderOnline() {
+  $('onNick').value = ONL.nick; $('onLog').innerHTML = NET.active ? NET.role === 'host' ? `방 코드 <b>${NET.code}</b>` : '연결 중…' : '방을 만들거나, 친구에게 받은 방 코드를 입력하세요.';
+  try { window.BioRelay && BioRelay.roomPanel && !renderOnline.done && (renderOnline.done = 1, BioRelay.roomPanel({ prefix: 'biokart3d-v1-', input: '#onCode', join: '#onJoin', box: $('onRooms') })); } catch (e) {}
+}
+const nickNow = () => { const v = ($('onNick').value || '').trim().slice(0, 10) || ONL.nick; ONL.nick = v; store.set('nick', v); return v; };
+$('onHost').onclick = async () => { audio.init(); audio.play('select'); const nick = nickNow(); lobby.online = true; lobby.slots = null; await NET.host(nick); if (race.mode === 'time') race.mode = 'speed'; initLobby(); show('lobby'); lobbyChat('', `[알림] 방 코드 ${NET.code} — 친구는 '온라인 대전 → 코드로 참가'에 이 코드를 입력하면 들어와요.`, true); };
+$('onJoin').onclick = async () => { audio.init(); audio.play('select'); const nick = nickNow(); lobby.online = true; lobby.slots = null; await NET.join($('onCode').value, nick, combo); };
+// 방장: 참가 요청 · 자리 배정
+NET.listen('join', (pid, m) => {
+  if (race.state !== 'menu' && race.state !== 'results') return '이미 경기 중이에요. 끝난 뒤 다시 참가하세요.';
+  if (!lobby.slots) initLobby();
+  if (lobby.slots.some(s => s.id === pid)) return null;
+  const i = lobby.slots.findIndex((s, k) => k > 0 && (s.type === 'empty' || s.type === 'ai'));
+  if (i < 0) return '방이 가득 찼어요 (최대 8명).';
+  Object.assign(lobby.slots[i], { type: 'net', id: pid, name: String(m.name || '친구').slice(0, 10), combo: m.combo && byId[m.combo.kart] ? m.combo : randCombo(i), lv: 1 + Math.floor(Math.random() * 30), ready: false });
+  return null;
+});
+NET.listen('joined', (pid) => { const s = lobby.slots.find(x => x.id === pid); if (s) { lobbyChat('', `[알림] ${s.name} 님이 입장했습니다.`, true); audio.play('ready'); } if (screen === 'lobby') renderLobby(); else syncLobby(); });
+NET.listen('left', pid => { if (!lobby.slots) return; const s = lobby.slots.find(x => x.id === pid); if (!s) return;
+  if (race.state === 'menu' || race.state === 'results') { lobbyChat('', `[알림] ${s.name} 님이 나갔습니다.`, true); Object.assign(s, { type: 'empty', id: null, ready: false }); if (screen === 'lobby') renderLobby(); else syncLobby(); }
+  else { const k = race.karts.find(x => x.netId === pid); if (k && !k.finished) { k.finished = true; k.finishTime = 9999; k.dnf = true; notice(`${k.name} 연결 끊김`, '#ffb020'); } } });
+NET.listen('combo', m => { const s = lobby.slots && lobby.slots.find(x => x.id === m.from); if (s && m.combo && byId[m.combo.kart]) { s.combo = m.combo; if (screen === 'lobby') renderLobby(); } });
+NET.listen('ready', m => { const s = lobby.slots && lobby.slots.find(x => x.id === m.from); if (s) { s.ready = !!m.v; if (s.ready) audio.play('ready'); if (screen === 'lobby') renderLobby(); else syncLobby(); } });
+NET.listen('chat', m => { if (screen === 'lobby') { lobbyChat(m.name, String(m.txt).slice(0, 40)); audio.play('chat'); } });
+// 참가자: 방장이 보낸 대기실 · 출발
+const applyLobby = m => { race.mode = m.mode; race.trackIdx = m.track; race.skill = m.skill;
+  lobby.slots = m.slots.map(s => Object.assign({}, s, { type: s.id === NET.myId ? 'me' : s.type === 'host' ? 'net' : s.type })); };
+NET.listen('welcome', () => { NET.log(`방 [${NET.code}]에 참가했어요!`); });
+NET.listen('lobby', m => { if (NET.role !== 'guest') return; const keepReady = lobby.slots && lobby.slots.find(s => s.type === 'me'); applyLobby(m); if (screen !== 'lobby' && race.state === 'menu') show('lobby'); else if (screen === 'lobby') renderLobby(); });
+NET.listen('start', m => { if (NET.role !== 'guest') return; applyLobby(m); startRace(m); });
+NET.listen('deny', m => { lobby.online = false; lobby.slots = null; if (screen !== 'online') show('online'); NET.log('참가할 수 없어요: ' + m.why); });
+NET.listen('lost', () => { lobby.online = false; lobby.slots = null; race.online = false; NET.leave(); race.state = 'menu'; show('online'); NET.log('방장과의 연결이 끊어졌어요.'); });
+// 레이스 중 상태 주고받기 (20회/초) — 다른 사람 카트는 받은 위치를 부드럽게 따라감
+const r2 = v => Math.round(v * 100) / 100;
+const packKart = k => [k.netId, r2(k.x), r2(k.y), r2(k.z), Math.round(k.heading * 1000) / 1000, r2(k.vx), r2(k.vz), r2(k.fwdSpeed || 0),
+  (k.boostT > 0 ? 1 : 0) | (k.drifting ? 2 : 0) | (k.spinT > 0 ? 4 : 0) | (k.trapT > 0 ? 8 : 0) | (k.shieldT > 0 ? 16 : 0) | (k.finished ? 32 : 0) | (k.grounded ? 0 : 64) | (k.slowT > 0 ? 128 : 0),
+  k.lap, Math.round(k.progress * 10) / 10, Math.round(k.s * 10) / 10, r2(k.finishTime || 0), r2(k.steer || 0), r2(k.driftDir || 0), k.boostKind || ''];
+NET.listen('ks', m => { if (!race.karts || !race.online) return; const now = performance.now();
+  for (const a of m.k || []) { const k = race.karts.find(x => x.netId === a[0]); if (!k || !k.remote) continue;
+    k.net = { x: a[1], y: a[2], z: a[3], h: a[4], vx: a[5], vz: a[6], sp: a[7], f: a[8], lap: a[9], pr: a[10], s: a[11], ft: a[12], st: a[13], dd: a[14], bk: a[15], at: now }; } });
+NET.listen('item', m => { if (!race.online || !world.items) return; const owner = race.karts.find(k => k.netId === m.from); if (!owner || !owner.remote) return;
+  const target = m.target ? race.karts.find(k => k.netId === m.target) : null; world.items.spawn(m, owner, target); events.emit('useItem', owner, m.type); });
+world.onItem = info => { if (!race.online) return; const m = Object.assign({ t: 'item' }, info); NET.role === 'host' ? NET.broadcast(m) : NET.toHost(m); };
+function netTick(dt) {
+  if (!race.online) return;
+  race.netAcc = (race.netAcc || 0) + dt;
+  if (race.netAcc >= 0.05) { race.netAcc = 0; const m = { t: 'ks', k: race.karts.filter(k => !k.remote).map(packKart) }; NET.role === 'host' ? NET.broadcast(m) : NET.toHost(m); }
+  const now = performance.now();
+  for (const k of race.karts) { const n = k.net; if (!k.remote || !n) continue;
+    const age = Math.min(0.25, (now - n.at) / 1000), a = Math.min(1, dt * 12);
+    const tx = n.x + n.vx * age, tz = n.z + n.vz * age;
+    if (Math.hypot(tx - k.x, tz - k.z) > 12) { k.x = tx; k.z = tz; k.y = n.y; } else { k.x += (tx - k.x) * a; k.z += (tz - k.z) * a; k.y += (n.y - k.y) * a; }
+    let dh = n.h - k.heading; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); k.heading += dh * a;
+    k.vx = n.vx; k.vz = n.vz; k.steer = n.st; k.driftDir = n.dd; k.boostKind = n.bk;
+    k.boostT = n.f & 1 ? 0.2 : 0; k.drifting = !!(n.f & 2); k.spinT = n.f & 4 ? 0.3 : 0; k.trapT = n.f & 8 ? 0.3 : 0; k.shieldT = n.f & 16 ? 0.3 : 0; k.grounded = !(n.f & 64); k.slowT = n.f & 128 ? 0.2 : 0;
+    k.lap = n.lap; k.progress = n.pr; k.s = n.s; if ((n.f & 32) && !k.finished) { k.finished = true; k.finishTime = n.ft; } }
+}
 // ------------------------------------------------------------------ input
 const keys = {};
 addEventListener('keydown', e => {
   keys[e.code] = true;
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight'].includes(e.code)) e.preventDefault();
-  if (e.code === 'Escape') { if (screen === 'race') { race.prevState = race.state; race.state = 'paused'; show('pause'); } else if (screen === 'pause') resume(); }
+  if (e.code === 'Escape') { if (screen === 'race') { race.prevState = race.state; if (!race.online) race.state = 'paused'; show('pause'); } else if (screen === 'pause') resume(); }
   if (screen === 'race') {
     if (e.code === 'KeyC') race.camMode = (race.camMode + 1) % 3;
     if (e.code === 'KeyR' && race.player && race.state === 'race') { const p = race.player; p.place(world.track, p.s, 0); p.lap = Math.max(p.lap, p.lap); }
@@ -258,7 +340,17 @@ function playerInput() {
 
 // ------------------------------------------------------------------ race setup
 let raceScene = null, sun = null;
-async function startRace() {
+async function startRace(netStart) {
+  if (netStart && netStart.type) netStart = null;   // 버튼 클릭 이벤트가 넘어온 경우
+  if (NET.role === 'guest' && !netStart) return;      // 참가자는 방장이 시작할 때까지 기다림
+  if (NET.role === 'host' && !netStart) {
+    const notReady = lobby.slots.filter(s => s.type === 'net' && !s.ready);
+    if (notReady.length) { lobbyChat('', `[알림] ${notReady.map(s => s.name).join(', ')} 님이 아직 준비하지 않았어요.`, true); audio.play('warn'); return; }
+    const ids = lobby.slots.map((s, i) => (s.type === 'me' || s.type === 'ai' || s.type === 'net') ? slotId(s, i) : null).filter(Boolean).sort(() => Math.random() - 0.5);
+    netStart = { t: 'start', mode: race.mode, track: race.trackIdx, skill: race.skill, slots: pubSlots(), grid: ids };
+    NET.broadcast(netStart); try { window.BioRelay && BioRelay.setInfo && BioRelay.setInfo(NET.peer, { name: ONL.nick + '의 방', playing: true }); } catch (e) {}
+  }
+  race.online = !!NET.role;
   audio.init(); audio.play('select'); show('loading');
   const def = TRACKS[race.trackIdx], th = THEMES[def.theme];
   $('loadText').textContent = `${th.icon} ${th.name} · ${def.name} 준비 중…`;
@@ -271,17 +363,21 @@ async function startRace() {
   world.fx = new FX(raceScene); world.items = new ItemSystem(world);
   // racers come from the waiting room slots
   if (!lobby.slots) initLobby();
-  const entrants = race.mode === 'time' ? [lobby.slots[0]] : lobby.slots.filter(s => s.type === 'me' || s.type === 'ai');
+  const entrants = race.mode === 'time' ? [lobby.slots[0]] : lobby.slots.filter(s => s.type === 'me' || s.type === 'ai' || s.type === 'net');
+  const entIds = entrants.map(s => slotId(s, lobby.slots.indexOf(s)));
   const n = entrants.length;
   const combos = entrants.map(s => s.type === 'me' ? combo : s.combo);
   await preload(combos.flatMap(c => [c.kart, c.driver, c.pet, c.balloon]));
   $('loadText').textContent = '트랙 오브젝트 · 하늘 배치 중…';
   await Promise.all([track.populate(race.mode), world.items.init()]);
   race.karts = await Promise.all(combos.map((c, i) => new Kart(world, c, entrants[i].name, entrants[i].color, entrants[i].type === 'me').build(raceScene)));
+  race.karts.forEach((k, i) => { const s = entrants[i]; k.netId = entIds[i]; k.remote = race.online && !(s.type === 'me' || (NET.role === 'host' && s.type === 'ai')); k.human = s.type !== 'ai'; });
   race.player = race.karts.find(k => k.isPlayer);
-  race.ais = race.karts.filter(k => !k.isPlayer).map((k, i, arr) => { k.ai = true; return new AIDriver(k, race.skill * (0.95 + (i / Math.max(1, arr.length - 1)) * 0.08)); });
-  // grid behind the start line (2 columns); player starts mid-pack unless alone
-  const order = race.karts.filter(k => !k.isPlayer); order.splice(Math.min(order.length, Math.floor(n * 0.6)), 0, race.player);
+  race.ais = race.karts.filter(k => !k.isPlayer && !k.remote && !k.human).map((k, i, arr) => { k.ai = true; return new AIDriver(k, race.skill * (0.95 + (i / Math.max(1, arr.length - 1)) * 0.08)); });
+  race.karts.forEach(k => { if (k.remote && !k.human) k.ai = true; });
+  // grid behind the start line (2 columns); player starts mid-pack unless alone (online: host decides the order)
+  let order = race.karts.filter(k => !k.isPlayer); order.splice(Math.min(order.length, Math.floor(n * 0.6)), 0, race.player);
+  if (netStart && netStart.grid) { const o2 = netStart.grid.map(id => race.karts.find(k => k.netId === id)).filter(Boolean); if (o2.length === race.karts.length) order = o2; }
   order.forEach((k, i) => { const row = Math.floor(i / 2), lat = (i % 2 ? -1 : 1) * 3.2 * (n > 1 ? 1 : 0); k.place(track, track.L - 7 - row * 6.5, lat); k.lap = -1; k.progress = -7 - row * 6.5; });
   race.t = 0; race.finishT = 0; race.state = 'countdown'; race.countdown = 4.0; race.lastCount = 5; race.useQueued = false;
   race.best[def.id] = store.get('best_' + def.id + '_' + race.mode, 0);
@@ -294,10 +390,11 @@ async function startRace() {
   audio.startMusic('race'); audio.setTempo(th.bpm); race.bpm = th.bpm;
   show('race');
 }
-$('resRetry').onclick = startRace; $('restart').onclick = startRace;
+$('resRetry').onclick = $('restart').onclick = () => { if (race.online) { race.state = 'menu'; show('lobby'); } else startRace(); };
 $('resTracks').onclick = () => { audio.play('click'); race.state = 'menu'; show('lobby'); };
 $('resMain').onclick = $('quit').onclick = () => { audio.play('click'); race.state = 'menu'; show('title'); };
-function resume() { race.state = race.prevState || 'race'; show('race'); }
+if ($('resRetry')) $('resRetry').textContent = '다시하기';
+function resume() { if (!race.online) race.state = race.prevState || 'race'; show('race'); }
 $('resume').onclick = resume;
 
 // ------------------------------------------------------------------ event reactions (fx + audio + HUD)
@@ -395,6 +492,11 @@ async function showResults() {
   race.podiumFront = podium.localToWorld(new THREE.Vector3(0, 3.2, 9));
   show('results');
   audio.play('finish');
+  try { if (window.BioGoal) { const P = race.player, place = sorted.indexOf(P) + 1, mn = { speed: '스피드전', item: '아이템전', time: '타임어택' }[race.mode];
+    BioGoal.result('bio-kart', P.finished && !P.dnf ? place : 0, { ok: !!P.finished && !P.dnf && place <= (BioGoal.GOALS['bio-kart'] ? BioGoal.GOALS['bio-kart'].t : 5), rankOnly: race.online || race.mode === 'time' ? false : undefined,
+      text: `[${def.name} · ${mn}${race.online ? ' · 온라인' : ''}] ${P.finished && !P.dnf ? place + '위 · ' + fmt(P.finishTime) : '미완주'}`,
+      rank: P.finished && !P.dnf ? { cat: def.name + ' · ' + mn, v: BioGoal.key([[P.finishTime * 1000, 1e9, -1]]), f: { time: Math.round(P.finishTime * 1000) / 1000, place: place + '위' } } : false }); } } catch (e) {}
+  if (NET.role === 'host') try { window.BioRelay && BioRelay.setInfo && BioRelay.setInfo(NET.peer, { name: ONL.nick + '의 방', playing: false }); } catch (e) {}
 }
 
 // ------------------------------------------------------------------ main loop
@@ -429,11 +531,12 @@ function stepRace(dt) {
   }
   if (race.state === 'race') {
     if (race.useQueued && p.items.length && !p.finished) world.items.use(p, race);
-    for (const k of race.karts) if (k.ai && k.input.use && k.items.length) world.items.use(k, race);
+    for (const k of race.karts) if (k.ai && !k.remote && k.input.use && k.items.length) world.items.use(k, race);
   }
   race.useQueued = false;
   if (race.state !== 'results') {
-    for (const k of race.karts) k.update(dt, race);
+    for (const k of race.karts) if (!k.remote) k.update(dt, race);
+    netTick(dt);
     collideKarts();
     pickups(dt);
     world.items.update(dt, race);
@@ -472,6 +575,7 @@ function pickups(dt) {
     it.obj.rotation.y += dt * (it.coin ? 3 : 1.4); it.obj.position.y = it.y + (it.coin ? 0.25 : 0.4) + Math.sin(T * 2.5 + it.ph) * 0.15;
     if (!it.obj.visible) continue;
     for (const k of race.karts) {
+      if (k.remote) continue;
       if ((k.x - it.x) ** 2 + (k.z - it.z) ** 2 < (it.coin ? 2.6 : 3.4) && Math.abs(k.y - it.y) < 2) {
         it.obj.visible = false; it.t = it.coin ? 8 : 3;
         if (it.coin) { k.gauge = Math.min(100, k.gauge + 20); if (isP(k)) audio.play('coin'); world.fx.ring(it.x, it.y + 0.6, it.z, 0xffd23a, 12); }

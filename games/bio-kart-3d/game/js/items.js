@@ -36,18 +36,27 @@ export class ItemSystem {
     if (type === 'booster') kart.boost('booster');
     else if (type === 'shield') kart.shieldT = 6;
     else if (type === 'mine' || type === 'slime') {
-      const p = behind(), id = type === 'mine' ? 'G05_Virus_Mine' : 'G07_Slime_Puddle';
-      const o = this.clone(id); o.position.set(p.x, p.y + 0.02, p.z); o.scale.setScalar(type === 'mine' ? 1.3 : 1.5);
-      this.entities.push({ type, obj: o, x: p.x, z: p.z, r: type === 'mine' ? 1.5 : 2.6, life: type === 'mine' ? 30 : 16, owner: kart, arm: 0.6 });
+      const p = behind(), info = { type, x: p.x, y: p.y, z: p.z };
+      this.spawn(info, kart, null); this.world.onItem && this.world.onItem(Object.assign({ from: kart.netId, target: null }, info));
     } else if (type === 'missile' || type === 'bubble') {
       const sorted = [...race.karts].sort((a, b) => b.progress - a.progress);
       let target = type === 'bubble' ? sorted[0] : sorted[sorted.indexOf(kart) - 1];
       if (!target || target === kart) target = null;
-      const id = type === 'missile' ? 'G10_Antibody_Missile' : 'G03_Oxygen_Bubble';
-      const o = this.clone(id); o.scale.setScalar(type === 'missile' ? 1.3 : 1.6);
-      const e = { type, obj: o, x: kart.x, y: kart.y + 0.8, z: kart.z, heading: kart.heading, speed: kart.speed + 30, target, owner: kart, life: 5, idx: kart.idx };
+      const info = { type, x: kart.x, y: kart.y + 0.8, z: kart.z, heading: kart.heading, speed: kart.speed + 30, idx: kart.idx };
+      this.spawn(info, kart, target); this.world.onItem && this.world.onItem(Object.assign({ from: kart.netId, target: target ? target.netId : null }, info));
+    }
+  }
+  // 아이템 실물 만들기 (내가 쓴 것 · 온라인으로 받은 다른 사람의 것 공통)
+  spawn(info, owner, target) {
+    const type = info.type, ev = this.world.events;
+    if (type === 'mine' || type === 'slime') {
+      const o = this.clone(type === 'mine' ? 'G05_Virus_Mine' : 'G07_Slime_Puddle'); o.position.set(info.x, info.y + 0.02, info.z); o.scale.setScalar(type === 'mine' ? 1.3 : 1.5);
+      this.entities.push({ type, obj: o, x: info.x, z: info.z, r: type === 'mine' ? 1.5 : 2.6, life: type === 'mine' ? 30 : 16, owner, arm: 0.6 });
+    } else if (type === 'missile' || type === 'bubble') {
+      const o = this.clone(type === 'missile' ? 'G10_Antibody_Missile' : 'G03_Oxygen_Bubble'); o.scale.setScalar(type === 'missile' ? 1.3 : 1.6);
+      const e = { type, obj: o, x: info.x, y: info.y, z: info.z, heading: info.heading, speed: info.speed, target, owner, life: 5, idx: info.idx ?? -1 };
       o.position.set(e.x, e.y, e.z); this.entities.push(e);
-      if (target) ev.emit('targeted', target, type, kart);
+      if (target) ev.emit('targeted', target, type, owner);
     }
   }
   update(dt, race) {
@@ -57,6 +66,7 @@ export class ItemSystem {
       if (e.type === 'mine' || e.type === 'slime') {
         e.arm -= dt; e.obj.rotation.y += dt * (e.type === 'mine' ? 1.5 : 0.2);
         if (e.arm <= 0) for (const k of race.karts) {
+          if (k.remote) continue;   // 다른 사람 카트는 그 사람 기기에서 판정
           if ((k.x - e.x) ** 2 + (k.z - e.z) ** 2 < e.r * e.r && k.grounded) {
             if (e.type === 'mine') { k.hit('spin', e.owner); ev.emit('explode', e.x, k.y + 0.5, e.z, 0xff4040); e.life = 0; break; }
             else { if (k.slowT <= 0 && k.shieldT <= 0) ev.emit('slime', k); if (k.shieldT <= 0) k.slowT = 1.2; }
@@ -77,7 +87,8 @@ export class ItemSystem {
         e.obj.position.set(e.x, e.y + (e.type === 'bubble' ? Math.sin(e.life * 8) * 0.2 : 0), e.z); e.obj.rotation.y = e.heading;
         ev.emit('trail', e);
         if (e.target && dist < 2.2 && Math.abs(e.target.y - e.y) < 2.5) {
-          if (e.target.hit(e.type === 'missile' ? 'launch' : 'trap', e.owner)) ev.emit('explode', e.x, e.y, e.z, e.type === 'missile' ? 0xff60c0 : 0x80e0ff);
+          if (e.target.remote) ev.emit('explode', e.x, e.y, e.z, e.type === 'missile' ? 0xff60c0 : 0x80e0ff);
+          else if (e.target.hit(e.type === 'missile' ? 'launch' : 'trap', e.owner)) ev.emit('explode', e.x, e.y, e.z, e.type === 'missile' ? 0xff60c0 : 0x80e0ff);
           e.life = 0;
         }
       }

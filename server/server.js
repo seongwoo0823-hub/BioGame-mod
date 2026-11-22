@@ -235,11 +235,9 @@ function roomsOf(prefix) {
 const json = (res, o) => { res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store'}); res.end(JSON.stringify(o)); };
 const server = http.createServer((req, res) => {
   let u; try { u = new URL(req.url, 'http://x'); } catch (e) { res.writeHead(400); res.end(); return; }
-  if (u.pathname === '/__status') { let rooms = 0; for (const c of peers.values()) if (c.named) rooms++; return json(res, {ok: true, name: 'bio-arcade-classroom', v: 5, peers: peers.size, clients: clients.size, links: links.size, rooms, srvRooms: srvRooms.size, kartRooms: kartRooms.size, srvGames: Object.keys(SRV_GAMES), served, up: Math.round((Date.now() - started) / 1000)}); }
+  if (u.pathname === '/__status') { let rooms = 0; for (const c of peers.values()) if (c.named) rooms++; return json(res, {ok: true, name: 'bio-arcade-classroom', v: 5, peers: peers.size, clients: clients.size, links: links.size, rooms, srvRooms: srvRooms.size, srvGames: Object.keys(SRV_GAMES), served, up: Math.round((Date.now() - started) / 1000)}); }
   if (u.pathname === '/__rooms') return json(res, {ok: true, rooms: roomsOf(u.searchParams.get('p') || '')});
   noteDevice(req);
-  if (u.pathname === '/__kart/new') return roomNew('bio-kart', req, res, u.searchParams);
-  if (u.pathname === '/__kart/list') return json(res, {ok: true, max: MAX_SRV_ROOMS, rooms: roomList().filter(r => r.game === 'bio-kart')});
   if (u.pathname === '/__room/new') return roomNew(String(u.searchParams.get('game') || ''), req, res, u.searchParams);
   if (u.pathname === '/__room/list') return json(res, {ok: true, max: MAX_SRV_ROOMS, games: Object.keys(SRV_GAMES), rooms: roomList()});
   if (u.pathname === '/__net') {
@@ -390,9 +388,8 @@ function drop(cid, from) {
 
 // ---------------------------------------------------------------- 서버 방장 (온라인 게임 7종: 서버가 판을 계산)
 //   학생이 '방 만들기'를 누르면 /__room/new?game=… 로 요청 → 이 컴퓨터가 방마다 일꾼을 띄워 방장 역할을 맡음.
-//   일꾼은 게임 코드를 그대로 돌리고(바이오 카트: kart-room.js, 나머지: game-room.js), 중계에는 보통 접속자와 같은 모양(VirtualClient)으로 붙음.
+//   일꾼은 게임 코드를 그대로 돌리고(game-room.js), 중계에는 보통 접속자와 같은 모양(VirtualClient)으로 붙음.
 const SRV_GAMES = {
-  'bio-kart':      {file: 'games/bio-kart.html',      prefix: 'biokart-p2p-v1-', worker: 'kart-room.js'},
   'bio-beat':      {file: 'games/bio-beat.html',      prefix: 'biobeat-v1-'},
   'cell-brawl':    {file: 'games/cell-brawl.html',    prefix: 'cellbrawl-v2-'},
   'bio-strike':    {file: 'games/bio-strike.html',    prefix: 'biostrike-v1-'},
@@ -400,7 +397,6 @@ const SRV_GAMES = {
 };
 const MAX_SRV_ROOMS = +process.env.SRV_ROOMS || +process.env.KART_ROOMS || 16;   // 측정 결과(i7-1255U: 카트 방 여유 22개)보다 낮게 잡음
 const srvRooms = new Map();   // 'game:code' → {game, code, worker, vc, players, playing, since}
-const kartRooms = {get size() { let n = 0; for (const r of srvRooms.values()) if (r.game === 'bio-kart') n++; return n; }};
 class VirtualClient {
   constructor(worker) {
     this.worker = worker; this.open = true; this.alive = true; this.virtual = true;
@@ -435,7 +431,6 @@ function roomNew(game, req, res, q) {
   const opts = {};
   for (const [k, v] of q) if (k !== 'game' && k !== 'code' && Object.keys(opts).length < 20) opts[k] = String(v).replace(/[<>]/g, '').slice(0, 40);
   opts.name = String(opts.name || '교실').slice(0, 20);
-  if (game === 'bio-kart') Object.assign(opts, {map: +opts.map || 0, mode: opts.mode === 'item' ? 'item' : 'speed', diff: Math.max(0, Math.min(2, +(opts.diff ?? 1))), ai: opts.ai !== '0', priv: opts.priv === '1'});
   let worker;
   try { worker = new Worker(path.join(__dirname, G.worker || 'game-room.js'), {workerData: {code, opts, file: G.file, game}, resourceLimits: {maxOldGenerationSizeMb: 384}}); }
   catch (e) { return json(res, {ok: false, reason: 'error'}); }

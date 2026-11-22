@@ -373,7 +373,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
   // 게임 목록: id, 제목, 한 줄 소개, 분류, 온라인 인원, 검색어
   const GAMES=[
     ['bio-beat','바이오 비트','생명과학 노래 43곡 리듬게임','online casual','2~4','리듬 음악 노래 퀴즈 세포 유전 생태 bio beat'],
-    ['bio-kart','바이오 카트','탑다운 스프라이트 스태킹 + 블렌더 3D 레이싱 모드 · 20개 트랙 · 8인 대기실','online casual','8','카트 레이싱 레이스 혈관 소화 bio kart'],
+    ['bio-kart','바이오 카트','3D 카트 레이싱 · 아이템전·스피드전 · 8인 온라인 대전','online casual','8','카트 레이싱 레이스 혈관 소화 bio kart'],
     ['biotro','바이오트로','세포 포커 덱빌딩 로그라이크','casual','','포커 카드 덱빌딩 로그라이크 조커 소기관 biotro'],
     ['cell-brawl','셀 브롤','면역세포 3D 난투','online action','6','난투 브롤 3D 면역 병원체 트로피 cell brawl'],
     ['only-up','온리 업','소화관·혈관·식물·심연 21층 오르기 + 추락 500층 내려가기 5맵 점프','casual','','플랫포머 점프 소화관 혈관 식물 뿌리 심연 시냅스 추락 내려가기 나노봇 only up only down'],
@@ -430,8 +430,8 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     'bio-beat'(){const r=get('biobeat_rec_v1');if(!r||typeof r!=='object')return '';
       const songs=new Set(Object.keys(r).filter(k=>k[0]!=='_'&&r[k]&&r[k].score>0).map(k=>k.replace(/_\d$/,'')));
       const out=[];if(songs.size)out.push(`클리어 <b>${songs.size}</b>곡`);const q=r._quiz;if(q&&q.t)out.push(`퀴즈 <b>${q.r}/${q.t}</b>`);return out.join(' · ');},
-    'bio-kart'(){const s=get('biokart');const b=s&&s.best;if(!b||typeof b!=='object')return '';
-      const v=Object.values(b).filter(x=>typeof x==='number'&&isFinite(x));if(!v.length)return '';return `최단 <b>${fmtT(Math.min(...v))}</b>`;},
+    'bio-kart'(){const v=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(/^biokart_best_/.test(k)){const x=+JSON.parse(localStorage.getItem(k));if(x>0&&isFinite(x))v.push(x);}}}catch(e){}
+      if(!v.length)return '';return `최고 랩 <b>${fmtT(Math.min(...v))}</b>`;},
     'biotro'(){const s=get('biotroStats');if(!s||!s.runs)return '';return `최고 앤티 <b>${s.bestAnte||1}</b>`;},
     'cell-brawl'(){const t=get('cellbrawl:trophies');if(!t||typeof t!=='object')return '';const v=Object.values(t).filter(x=>typeof x==='number'&&x>0);
       return v.length?`트로피 <b>${v.reduce((a,b)=>a+b,0)}</b>`:'';},
