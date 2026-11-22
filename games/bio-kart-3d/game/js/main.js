@@ -13,7 +13,7 @@ import { NET } from './online.js';
 const $ = id => document.getElementById(id);
 const store = { get(k, d) { try { const v = localStorage.getItem('biokart_' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
                 set(k, v) { try { localStorage.setItem('biokart_' + k, JSON.stringify(v)); } catch {} } };
-const settings = Object.assign({ music: 0.5, sfx: 0.8, shadow: true, mirror: true, lines: true }, store.get('settings', {}));
+const settings = Object.assign({ music: 0.5, sfx: 0.8, shadow: true, mirror: true, lines: true, autoGas: true }, store.get('settings', {}));
 const fmt = t => { if (!isFinite(t) || t <= 0) return '--:--.---'; const m = Math.floor(t / 60), s = t - m * 60; return `${String(m).padStart(2, '0')}:${s.toFixed(3).padStart(6, '0')}`; };
 const AI_NAMES = ['미토', '리보', '골지', '엔자임', '뉴클레오', '사이토', '플라즈마', '리소좀', '크로마틴', '펩티드'];
 const COLORS = [0xff9a1f, 0x40e8ff, 0x7dff5a, 0xff5ae0, 0xffe14a, 0xa070ff, 0xff4d4d, 0x3dd6a8];
@@ -60,7 +60,7 @@ let screen = 'title', garageReturn = 'title';
 const MENU_SCREENS = ['title', 'modes', 'tracks', 'garage', 'settings', 'help', 'lobby', 'online'];
 function show(name) {
   if (screen === 'lobby' && name !== 'lobby') stopLobby();
-  screen = name;
+  screen = name; document.body.dataset.screen = name; closeSheet();
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === name));
   $('hud').classList.toggle('on', ['race', 'pause'].includes(name));
   if (name === 'garage') renderGarage();
@@ -70,9 +70,9 @@ function show(name) {
   if (name === 'title' && NET.active) { NET.leave(); lobby.online = false; lobby.slots = null; }
   if (MENU_SCREENS.includes(name)) { renderer.toneMappingExposure = 1.05; if (!audio.bgmOn || audio.kind !== 'menu') audio.startMusic('menu'); setMenuCombo(); }
 }
-document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { audio.init(); audio.play('click'); if (b.dataset.go === 'garage' || b.dataset.go === 'settings') garageReturn = screen; show(b.dataset.go); }));
+document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { audio.init(); audio.play('click'); if (b.dataset.go === 'garage' || b.dataset.go === 'settings' || b.dataset.go === 'help') garageReturn = screen; show(b.dataset.go); }));
 $('garageBack').onclick = () => { audio.play('click'); show(garageReturn); };
-$('setBack').onclick = () => { audio.play('click'); show(garageReturn === 'lobby' ? 'lobby' : 'title'); };
+$('setBack').onclick = () => { audio.play('click'); show(['lobby', 'pause'].includes(garageReturn) ? garageReturn : 'title'); };
 document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { audio.play('select'); race.mode = b.dataset.mode; show('lobby'); });
 document.querySelectorAll('[data-gtab]').forEach(b => b.onclick = () => { audio.play('click'); gTab = b.dataset.gtab; garageReturn = 'lobby'; show('garage'); });
 addEventListener('pointerdown', () => audio.init(), { once: true });
@@ -323,7 +323,7 @@ const keys = {};
 addEventListener('keydown', e => {
   keys[e.code] = true;
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight'].includes(e.code)) e.preventDefault();
-  if (e.code === 'Escape') { if (screen === 'race') { race.prevState = race.state; if (!race.online) race.state = 'paused'; show('pause'); } else if (screen === 'pause') resume(); }
+  if (e.code === 'Escape') { if (screen === 'race') pauseRace(); else if (screen === 'pause') resume(); else if (sheetOpen()) closeSheet(); }
   if (screen === 'race') {
     if (e.code === 'KeyC') race.camMode = (race.camMode + 1) % 3;
     if (e.code === 'KeyR' && race.player && race.state === 'race') { const p = race.player; p.place(world.track, p.s, 0); p.lap = Math.max(p.lap, p.lap); }
@@ -333,10 +333,39 @@ addEventListener('keydown', e => {
 addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 function playerInput() {
-  return { throttle: (keys.ArrowUp || keys.KeyW ? 1 : 0) - (keys.ArrowDown || keys.KeyS ? 1 : 0),
-           steer: (keys.ArrowLeft || keys.KeyA ? 1 : 0) - (keys.ArrowRight || keys.KeyD ? 1 : 0),
-           drift: !!(keys.ShiftLeft || keys.ShiftRight || keys.Space), use: false };
+  const tk = TOUCH.k, autoGas = isTouch() && settings.autoGas && TOUCH.used;
+  const gas = keys.ArrowUp || keys.KeyW || tk.gas || (autoGas && !tk.brake), brake = keys.ArrowDown || keys.KeyS || tk.brake;
+  return { throttle: (gas ? 1 : 0) - (brake ? 1 : 0),
+           steer: (keys.ArrowLeft || keys.KeyA || tk.left ? 1 : 0) - (keys.ArrowRight || keys.KeyD || tk.right ? 1 : 0),
+           drift: !!(keys.ShiftLeft || keys.ShiftRight || keys.Space || tk.drift), use: false };
 }
+// ------------------------------------------------------------------ 기기 인식 · 메뉴 버튼 · 터치 조작
+const isTouch = () => document.documentElement.classList.contains('touch');
+function pauseRace() { if (screen !== 'race') return; race.prevState = race.state; if (!race.online) race.state = 'paused'; for (const k in TOUCH.k) TOUCH.k[k] = false; show('pause'); }
+const sheetOpen = () => $('gSheet').classList.contains('on');
+function closeSheet() { const sh = document.getElementById('gSheet'); if (sh) sh.classList.remove('on'); }
+function openSheet() { const inRoom = NET.active; $('shTitle').textContent = inRoom ? '메인 화면 (방 나가기)' : '메인 화면'; $('gSheet').classList.add('on'); }
+function goHub() { if (NET.active) NET.leave(); location.href = '../../../index.html'; }
+$('gMenu').onclick = e => { e.stopPropagation(); audio.init(); audio.play('click'); if (screen === 'race') pauseRace(); else sheetOpen() ? closeSheet() : openSheet(); };
+$('lbMenu').onclick = e => { e.stopPropagation(); audio.play('click'); openSheet(); };
+$('gSheet').addEventListener('click', e => { const b = e.target.closest('[data-sh]'); if (!b) { if (e.target.id === 'gSheet') closeSheet(); return; } audio.play('click');
+  const a = b.dataset.sh; closeSheet();
+  if (a === 'hub') goHub();
+  else if (a === 'title') { race.state = 'menu'; show('title'); }
+  else if (a === 'settings' || a === 'help') { garageReturn = screen === 'settings' || screen === 'help' ? garageReturn : screen; show(a); } });
+$('pHub').onclick = $('resHub').onclick = () => { audio.play('click'); goHub(); };
+$('helpBack').onclick = () => { audio.play('click'); show(['lobby', 'pause'].includes(garageReturn) ? garageReturn : 'title'); };
+const TOUCH = { k: { left: false, right: false, gas: false, brake: false, drift: false }, used: false };
+document.querySelectorAll('#touch [data-tk]').forEach(b => {
+  const k = b.dataset.tk;
+  const down = e => { e.preventDefault(); TOUCH.used = true; try { b.setPointerCapture(e.pointerId); } catch (_) {} b.classList.add('on'); audio.init();
+    if (k === 'item') { race.useQueued = true; return; } if (k === 'cam') { race.camMode = (race.camMode + 1) % 3; return; }
+    if (k === 'reset') { const p = race.player; if (p && race.state === 'race') p.place(world.track, p.s, 0); return; } TOUCH.k[k] = true; };
+  const up = e => { b.classList.remove('on'); if (k in TOUCH.k) TOUCH.k[k] = false; };
+  b.addEventListener('pointerdown', down); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('lostpointercapture', up);
+  b.addEventListener('contextmenu', e => e.preventDefault());
+});
+function syncTouchUI() { document.documentElement.classList.toggle('autogas', !!settings.autoGas); }
 
 // ------------------------------------------------------------------ race setup
 let raceScene = null, sun = null;
@@ -384,7 +413,7 @@ async function startRace(netStart) {
   $('rankTot').textContent = '/' + n; $('lapTot').textContent = `/${def.laps} LAP`; $('finalTag').style.display = 'none';
   $('tBest').textContent = fmt(race.best[def.id]); $('rankList').style.display = n > 1 ? '' : 'none';
   $('itemBar').style.display = ''; $('boostGauge').style.display = race.mode === 'item' ? 'none' : '';
-  $('mirrorFrame').style.display = settings.mirror ? 'block' : 'none';
+  $('mirrorFrame').style.display = settings.mirror && !isTouch() ? 'block' : 'none';
   updateSlots(true);
   renderer.shadowMap.enabled = settings.shadow;
   audio.startMusic('race'); audio.setTempo(th.bpm); race.bpm = th.bpm;
@@ -624,7 +653,7 @@ function renderRace(dt) {
   renderer.setViewport(0, 0, innerWidth, innerHeight); renderer.setScissorTest(false);
   renderer.render(raceScene, camera);
   // rear-view mirror (bottom-left inset)
-  if (settings.mirror && screen === 'race') {
+  if (settings.mirror && screen === 'race' && !isTouch()) {
     const w = Math.round(Math.min(300, innerWidth * 0.2)), h = Math.round(w * 9 / 16), x = 24, y = 24;
     rearCam.position.set(p.x + fx * 0.5, p.y + 2.0, p.z + fz * 0.5); rearCam.lookAt(p.x - fx * 20, p.y + 0.8, p.z - fz * 20);
     rearCam.aspect = w / h; rearCam.updateProjectionMatrix();
@@ -638,8 +667,13 @@ function renderMenu(dt) {
   if (menu.pet) menu.pet.position.y = 1.25 + Math.sin(menu.t * 2) * 0.12;
   const garageView = screen === 'garage';
   // title: kart sits low in frame under the logo/menu ; garage: kart on the left, panel on the right
-  camera.position.set(garageView ? -3.2 : 2.6, garageView ? 2.2 : 1.6, garageView ? -5.6 : -7.5); camera.lookAt(garageView ? -1.2 : -2.2, garageView ? 0.8 : 1.9, 0);
-  camera.fov = 50; camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  const portrait = innerWidth < innerHeight * 0.95;
+  if (portrait) {   // 세로 화면: 카트를 화면 위쪽 가운데에, 메뉴·차고 패널은 아래쪽에
+    camera.position.set(garageView ? -2.6 : 2.2, garageView ? 2.6 : 2.0, garageView ? -6.4 : -8.2); camera.lookAt(0, garageView ? -1.6 : -1.1, 0); camera.fov = 58;
+  } else {
+    camera.position.set(garageView ? -3.2 : 2.6, garageView ? 2.2 : 1.6, garageView ? -5.6 : -7.5); camera.lookAt(garageView ? -1.2 : -2.2, garageView ? 0.8 : 1.9, 0);
+    camera.fov = 50;
+  } camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
   renderer.setScissorTest(false); renderer.setViewport(0, 0, innerWidth, innerHeight);
   renderer.render(menu.scene, camera);
   world.fx?.update?.(0, 0);
@@ -648,7 +682,7 @@ requestAnimationFrame(frame);
 
 // ------------------------------------------------------------------ settings
 const bind = (id, key, prop = 'value') => { const el = $(id); el[prop] = settings[key]; el.oninput = el.onchange = () => { settings[key] = prop === 'checked' ? el.checked : +el.value; store.set('settings', settings); audio.setVolumes(settings.music, settings.sfx); renderer.shadowMap.enabled = settings.shadow; }; };
-bind('volMusic', 'music'); bind('volSfx', 'sfx'); bind('optShadow', 'shadow', 'checked'); bind('optMirror', 'mirror', 'checked'); bind('optLines', 'lines', 'checked');
+bind('volMusic', 'music'); bind('volSfx', 'sfx'); bind('optShadow', 'shadow', 'checked'); bind('optMirror', 'mirror', 'checked'); bind('optLines', 'lines', 'checked'); bind('optAutoGas', 'autoGas', 'checked'); $('optAutoGas').addEventListener('change', syncTouchUI); syncTouchUI();
 
 // ------------------------------------------------------------------ boot
 (async () => {
@@ -660,4 +694,4 @@ bind('volMusic', 'music'); bind('volSfx', 'sfx'); bind('optShadow', 'shadow', 'c
     show('title');
   } catch (e) { $('loadText').textContent = '로드 실패: ' + e.message + ' — bio_kart_assets 폴더에서 node serve.js 실행 후 /game/ 으로 접속하세요.'; console.error(e); }
 })();
-window.BK = { race, world, combo, lobby, TRACKS, startRace, show, keys, sim(sec, dt = 1 / 60) { for (let i = 0; i < sec / dt; i++) stepRace(dt); renderRace(dt); } };
+window.BK = { race, world, combo, lobby, TRACKS, startRace, show, keys, touch: TOUCH, input: () => playerInput(), sim(sec, dt = 1 / 60) { for (let i = 0; i < sec / dt; i++) stepRace(dt); renderRace(dt); } };

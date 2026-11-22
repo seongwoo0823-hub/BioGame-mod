@@ -4,13 +4,21 @@
 <meta charset="utf-8">
 <base href="bio-kart-3d/game/">
 <script src="../../../icons.js"></script>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<script>
+// 기기 인식: 휴대폰 · 태블릿 · PC (+ 터치 여부 · 세로 화면 · 낮은 화면) → <html> class 로 표시
+(function(){var d=document.documentElement;function f(){var w=innerWidth,h=innerHeight,mq=function(q){return window.matchMedia&&matchMedia(q).matches;};
+var touch=mq('(pointer:coarse)')||(navigator.maxTouchPoints>0&&!mq('(pointer:fine)'));var m=Math.min(w,h);
+var dev=touch?(m<600?'phone':'tablet'):(w<700||h<430?'phone':(w<1100?'tablet':'pc'));
+d.classList.remove('dev-phone','dev-tablet','dev-pc');d.classList.add('dev-'+dev);d.classList.toggle('touch',touch);d.classList.toggle('portrait',h>w);d.classList.toggle('short',h<560);}
+f();addEventListener('resize',f);addEventListener('orientationchange',function(){setTimeout(f,120);});})();
+</script>
 <title>바이오 카트 레이싱</title>
 <link rel="stylesheet" href="style.css">
 <style>
 /* 세련되고 심플한 UI (글라스 패널 · 얇은 선 · 차분한 색) */
 :root{--acc:#5eead4;--acc2:#38bdf8;--ink:#e8f0ff;--glass:rgba(12,18,36,.62);--line:rgba(255,255,255,.14)}
-body{font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif;letter-spacing:-.01em}
+body{font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif;letter-spacing:-.01em;word-break:keep-all;overflow-wrap:anywhere;-webkit-text-size-adjust:100%}
 #title{align-items:flex-start;justify-content:center;padding-left:7vw;background:linear-gradient(90deg,rgba(6,10,24,.78) 0%,rgba(6,10,24,.35) 42%,rgba(6,10,24,0) 70%)}
 .logo{transform:none;gap:10px;font-size:clamp(40px,6.4vw,84px);letter-spacing:-1px;text-shadow:none}
 .logo .l1{color:var(--acc)}.logo .l2{color:#fff}.logo .l3{color:var(--acc2);font-size:.42em;letter-spacing:.2em;font-weight:700}
@@ -69,6 +77,217 @@ svg.pg{vertical-align:-.15em}
 .lb-top .lb-room,.lb-top .lb-mode{color:var(--ink)}
 .seg{background:rgba(255,255,255,.06)!important}.seg button{color:var(--ink)!important}
 .lb-exit{border-radius:10px!important}
+
+/* =================== 공통 메뉴 버튼 · 메뉴 시트 =================== */
+:root{--sat:env(safe-area-inset-top,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);--sab:env(safe-area-inset-bottom,0px)}
+.ico{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+#gMenu{position:fixed;z-index:30;top:calc(12px + var(--sat));left:calc(12px + var(--sal));width:46px;height:46px;border-radius:14px;border:1px solid var(--line);background:rgba(10,16,34,.68);backdrop-filter:blur(10px);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+#gMenu:hover{background:rgba(30,42,72,.85)}
+#gMenu .i-pause{display:none}
+body[data-screen=race] #gMenu .i-menu{display:none}body[data-screen=race] #gMenu .i-pause{display:block}
+body[data-screen=loading] #gMenu,body[data-screen=lobby] #gMenu,body[data-screen=pause] #gMenu,body[data-screen=garage] #gMenu{display:none}
+#gSheet{position:fixed;inset:0;z-index:40;display:none;background:rgba(4,8,20,.5);backdrop-filter:blur(3px)}
+#gSheet.on{display:block}
+#gSheet .sh{position:absolute;top:calc(66px + var(--sat));left:calc(12px + var(--sal));width:min(280px,calc(100vw - 24px));background:rgba(14,20,40,.96);border:1px solid var(--line);border-radius:16px;padding:8px;box-shadow:0 20px 50px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:4px}
+#gSheet .sh b{font-size:12px;letter-spacing:.12em;opacity:.55;padding:6px 10px 2px}
+#gSheet button{display:flex;align-items:center;gap:12px;border:0;border-radius:11px;background:transparent;color:var(--ink);font-family:inherit;font-weight:700;font-size:16px;line-height:1.2;padding:13px 12px;cursor:pointer;text-align:left}
+#gSheet button:hover{background:rgba(255,255,255,.08)}
+#gSheet button.hub{color:var(--acc)}
+.lb-menu{border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.08);color:#fff;width:38px;height:34px;display:grid;place-items:center;cursor:pointer;flex:none}
+#title{padding-top:calc(70px + var(--sat))}
+#hud{padding:0}
+#rankBig{left:calc(72px + var(--sal))}#rankList{left:calc(24px + var(--sal))}#lapBox{right:calc(24px + var(--sar))}#minimap{right:calc(20px + var(--sar))}
+.only-touch{display:none}html.touch .only-touch{display:block}html.touch .row.only-touch{display:flex}html.touch table.only-touch{display:table}html.touch .only-key{display:none}
+.panel .row input[type=range]{width:min(260px,55%)}
+.panel .row input[type=checkbox]{width:22px;height:22px;accent-color:var(--acc)}
+.panel .row{font-weight:600}
+.back{display:grid;place-items:center;flex:none}
+
+/* =================== 터치 조작 (휴대폰 · 태블릿) =================== */
+#touch{position:fixed;inset:0;z-index:6;pointer-events:none;display:none;touch-action:none}
+html.touch body[data-screen=race] #touch{display:block}
+#touch button{pointer-events:auto;position:absolute;border:2px solid rgba(255,255,255,.55);background:rgba(10,18,40,.42);color:#fff;border-radius:50%;display:grid;place-items:center;font-family:inherit;font-weight:800;font-size:13px;line-height:1;backdrop-filter:blur(4px);touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+#touch button.on{background:rgba(94,234,212,.55);border-color:#fff;transform:scale(.94)}
+#touch button span{display:block;font-size:11px;margin-top:2px;opacity:.9}
+#touch .ico{width:30px;height:30px;stroke-width:2.6}
+#tLeft{left:calc(22px + var(--sal));bottom:calc(26px + var(--sab));width:92px;height:92px}
+#tRight{left:calc(128px + var(--sal));bottom:calc(26px + var(--sab));width:92px;height:92px}
+#tDrift{right:calc(22px + var(--sar));bottom:calc(26px + var(--sab));width:100px;height:100px;background:rgba(56,189,248,.35)!important}
+#tItem{right:calc(134px + var(--sar));bottom:calc(30px + var(--sab));width:80px;height:80px;background:rgba(255,154,31,.38)!important}
+#tBrake{right:calc(40px + var(--sar));bottom:calc(140px + var(--sab));width:64px;height:64px}
+#tGas{right:calc(118px + var(--sar));bottom:calc(122px + var(--sab));width:72px;height:72px;background:rgba(125,255,90,.3)!important}
+html.autogas #tGas{display:none!important}
+#tCam,#tReset{width:46px!important;height:46px!important;border-radius:14px!important;top:calc(12px + var(--sat));bottom:auto}
+#tCam{left:calc(66px + var(--sal))}#tReset{left:calc(118px + var(--sal))}
+#rotate{position:fixed;inset:0;z-index:50;display:none;background:rgba(6,10,24,.92);color:#fff;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;padding:24px;font-weight:700}
+#rotate .big{padding:12px 22px;border-radius:12px}
+html.dev-phone.touch.portrait body[data-screen=race]:not(.rot-ok) #rotate{display:flex}
+
+#touch button{white-space:nowrap;font-size:12px;letter-spacing:-.02em}
+.track b{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;line-height:1.3}
+.tracks .track .tbadge{white-space:nowrap;margin-left:0!important;font-size:10px;letter-spacing:.04em}
+.ggrid button{line-height:1.25;word-break:keep-all}
+.ggrid{align-content:start}
+.garage-name{background:rgba(6,10,24,.6);backdrop-filter:blur(6px);padding:8px 16px;border-radius:14px;text-shadow:none;font-size:clamp(18px,2.4vw,30px)}
+#pause .panel{width:min(400px,calc(100% - 24px))}
+html.portrait #title{justify-content:flex-end;padding-bottom:calc(36px + var(--sab));background:linear-gradient(180deg,rgba(6,10,24,0) 35%,rgba(6,10,24,.85) 68%)}
+html.portrait #title .foot{display:none}
+html.dev-tablet.portrait #garage{align-items:flex-end}html.dev-tablet.portrait .garage-panel{width:100%;height:50%}
+html.dev-tablet.portrait .garage-name{top:auto;bottom:calc(50% + 26px)}
+#onHost{flex:1;justify-content:center}#onJoin{flex:none}
+.panel input[type=range]{accent-color:var(--acc);height:28px}
+html.dev-phone.short .lb-side button{font-size:0;gap:0;justify-content:center}
+html.dev-phone.short .lb-side button i{font-size:19px}
+html.dev-phone.short .lb-side .lb-start{font-size:10px;gap:1px}html.dev-phone.short .lb-side .lb-start i{font-size:14px}
+html.dev-phone .slotc .pv img{object-fit:contain}
+html.dev-phone.short .panel-screen,html.dev-phone.short #results{padding-left:calc(64px + var(--sal))}
+html.dev-phone.short .panel-screen .panel,html.dev-phone.short #results .panel{width:calc(100% - 10px - var(--sar))}
+html.dev-phone.portrait .panel-screen,html.dev-phone.portrait #results{padding-top:calc(64px + var(--sat));align-items:flex-start}
+html.dev-phone.portrait .panel-screen .panel{max-height:calc(100% - 74px - var(--sat) - var(--sab))}
+html.dev-phone.short .track small{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+/* HUD 가독성: 밝은 배경에서도 보이게 */
+#gauge::before{content:"";position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle,rgba(6,12,30,.55) 0 55%,rgba(6,12,30,0) 72%)}
+#lapBox table{background:rgba(6,12,30,.45);border-radius:10px;padding:4px 2px}
+#rankBig,#lapBox>div:first-child{text-shadow:0 3px 0 rgba(0,0,0,.45),0 0 14px rgba(0,0,0,.35)}
+/* 터치 기기 레이스 HUD 배치 */
+html.touch #itemBar{top:calc(10px + var(--sat));bottom:auto}
+html.touch .hint{display:none}
+html.touch #gauge{left:50%;right:auto;transform:translateX(-50%);bottom:calc(8px + var(--sab));width:120px;height:120px}
+html.touch #gauge .num b{font-size:32px}html.touch #gauge .num span{font-size:11px}
+html.touch #draft{font-size:11px;bottom:14px}html.touch #draftBar{left:36px;right:36px;bottom:8px}
+html.touch #rankBig{left:calc(170px + var(--sal))}
+html.touch #rankList{top:auto;bottom:calc(140px + var(--sab));width:160px}
+html.touch #rankList li{height:20px;font-size:11px;margin-bottom:2px}
+html.touch #notice{top:auto;bottom:calc(150px + var(--sab))}
+
+/* =================== 휴대폰 =================== */
+html.dev-phone .panel{width:calc(100% - 20px - var(--sal) - var(--sar));padding:16px;border-radius:16px;max-height:calc(100% - 20px - var(--sat) - var(--sab))}
+html.dev-phone .ptitle{font-size:20px;margin-bottom:10px}
+html.dev-phone .back{width:40px;height:40px}
+html.dev-phone .tip{font-size:13px;line-height:1.55}
+html.dev-phone .menu button,html.dev-phone .row button{font-size:15px;padding:12px 16px;min-height:46px}
+html.dev-phone #online input{font-size:16px;min-height:46px}
+/* 휴대폰 타이틀 */
+html.dev-phone #title{padding:calc(68px + var(--sat)) 20px calc(16px + var(--sab)) calc(20px + var(--sal));background:linear-gradient(90deg,rgba(6,10,24,.82),rgba(6,10,24,.35) 70%,rgba(6,10,24,.1))}
+html.dev-phone .logo{font-size:clamp(34px,11vw,56px)}
+html.dev-phone #title .tag{font-size:13px;margin:2px 0 14px}
+html.dev-phone #title .menu{width:min(320px,100%)}
+html.dev-phone #title .foot{display:none}
+html.dev-phone.short #title{padding-top:calc(14px + var(--sat));padding-left:calc(76px + var(--sal))}
+html.dev-phone.short .logo{font-size:38px}
+html.dev-phone.short #title .tag{margin:0 0 10px}
+html.dev-phone.short #title .menu{display:grid;grid-template-columns:1fr 1fr;width:min(440px,60vw);gap:6px}
+html.dev-phone.short #title .menu button{min-height:42px;padding:9px 12px;font-size:14px}
+html.dev-phone.portrait #title{justify-content:flex-end;padding-bottom:calc(28px + var(--sab));background:linear-gradient(180deg,rgba(6,10,24,0) 30%,rgba(6,10,24,.85) 65%)}
+/* 휴대폰 모드 선택 */
+html.dev-phone .modes{gap:8px}
+html.dev-phone .mode{min-height:110px;padding:14px;border-radius:14px!important}
+html.dev-phone .mode b{font-size:19px}html.dev-phone .mode span{font-size:12px;line-height:1.4}
+html.dev-phone.short .modes{grid-template-columns:repeat(3,1fr)}
+html.dev-phone.short .mode{min-height:96px}
+html.dev-phone.short .mode span br{display:none}
+/* 휴대폰 트랙 */
+html.dev-phone .tracks{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+html.dev-phone .track{padding:8px;border-radius:12px}
+html.dev-phone .track canvas{max-height:84px}
+html.dev-phone .track b{font-size:15px}html.dev-phone .track small{font-size:11px}
+html.dev-phone .tabs button{padding:8px 12px;font-size:13px}
+/* 휴대폰 차고 */
+html.dev-phone #garage{padding:10px;padding-left:calc(10px + var(--sal));padding-right:calc(10px + var(--sar))}
+html.dev-phone .garage-panel{width:min(400px,52%);padding:12px}
+html.dev-phone .ggrid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}
+html.dev-phone .ggrid button{font-size:11px}
+html.dev-phone .garage-name{left:calc(16px + var(--sal));bottom:14px;font-size:20px;max-width:44%}
+html.dev-phone.portrait #garage{align-items:flex-end}
+html.dev-phone.portrait .garage-panel{width:100%;height:56%}
+html.dev-phone.portrait .garage-name{top:auto;bottom:calc(56% + 22px);max-width:90%;font-size:15px}
+/* 휴대폰 결과 */
+html.dev-phone #results{padding:10px;justify-content:center}
+html.dev-phone #resTable{font-size:13px}html.dev-phone #resTable td{padding:6px 8px}
+html.dev-phone .res-panel .row{gap:6px}html.dev-phone .res-panel .row button{flex:1;padding:10px 8px;font-size:14px}
+/* 휴대폰 레이스 HUD */
+html.dev-phone #rankBig b,html.dev-phone #lapBox b{font-size:44px}
+html.dev-phone #rankBig span,html.dev-phone #lapBox span{font-size:18px}
+html.dev-phone #rankBig{top:calc(4px + var(--sat))}
+html.dev-phone #lapBox{top:calc(4px + var(--sat))}
+html.dev-phone #lapBox table{font-size:11px;margin-left:30px;border-spacing:6px 0}
+html.dev-phone #finalTag{font-size:14px;left:34px;top:8px}
+html.dev-phone #rankList{display:none}
+html.dev-phone #minimap{width:104px;height:104px;top:calc(100px + var(--sat))}
+html.dev-phone .slot{width:54px;height:54px;border-width:2px}html.dev-phone .slot.small{width:40px;height:40px}
+html.dev-phone #boostGauge{width:150px;height:9px}
+html.dev-phone #center{font-size:54px}
+html.dev-phone #notice div{font-size:13px;padding:4px 10px}
+html.dev-phone #tLeft,html.dev-phone #tRight{width:80px;height:80px}
+html.dev-phone #tRight{left:calc(112px + var(--sal))}
+html.dev-phone #tDrift{width:88px;height:88px}
+html.dev-phone #tItem{width:70px;height:70px;right:calc(118px + var(--sar))}
+html.dev-phone #tBrake{width:56px;height:56px;bottom:calc(124px + var(--sab));right:calc(30px + var(--sar))}
+html.dev-phone #tGas{width:62px;height:62px;bottom:calc(108px + var(--sab));right:calc(104px + var(--sar))}
+html.dev-phone #gauge{width:96px;height:96px}html.dev-phone #gauge .num b{font-size:26px}
+html.dev-phone #draft,html.dev-phone #draftBar{display:none}
+html.dev-phone #rankBig{left:calc(172px + var(--sal))}
+html.dev-phone.short #center{top:36%}
+html.dev-phone.portrait #rankBig{left:calc(14px + var(--sal));top:calc(64px + var(--sat))}
+
+/* =================== 대기실: 태블릿 · 좁은 화면 =================== */
+html.dev-tablet .lobby,html.dev-phone .lobby{height:100%!important;max-height:100%}
+html.dev-tablet .lb-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:auto minmax(0,1fr) minmax(0,1fr)!important}
+html.dev-tablet .lb-track{grid-column:1/-1!important;order:-1;flex-direction:row!important;align-items:stretch;height:110px}
+html.dev-tablet .lb-track .tn{writing-mode:horizontal-tb;display:flex;align-items:center;justify-content:center;width:150px;flex:none}
+html.dev-tablet .lb-track .tv{flex:1}
+html.dev-tablet .lb-status{display:block!important;width:220px}
+html.dev-tablet .lb-side{width:76px}
+html.dev-tablet .lb-side button{font-size:12px;min-height:54px}
+/* 대기실: 휴대폰 */
+html.dev-phone #lobby{padding:0}
+html.dev-phone .lobby{border-radius:0!important;border:0;padding:6px;padding-left:calc(6px + var(--sal));padding-right:calc(6px + var(--sar));padding-bottom:calc(6px + var(--sab))}
+html.dev-phone .lb-top{padding:5px 6px;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+html.dev-phone .lb-top::-webkit-scrollbar{display:none}
+html.dev-phone .lb-room b{font-size:14px;white-space:nowrap}html.dev-phone .lb-mode{display:none}
+html.dev-phone .lb-top .seg{flex:none}
+html.dev-phone .lb-top .seg button{padding:6px 9px;font-size:12px;white-space:nowrap}
+html.dev-phone .lb-exit{padding:6px 10px;font-size:12px;white-space:nowrap;flex:none;margin-left:auto}
+html.dev-phone .lb-body{gap:6px;margin-top:6px}
+html.dev-phone .lb-side{width:58px;gap:4px}
+html.dev-phone .lb-side button{font-size:10px;padding:4px 2px;min-height:0;flex:1;border-radius:10px}
+html.dev-phone .lb-side button i{font-size:16px}
+html.dev-phone .lb-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:5px;padding:5px}
+html.dev-phone .lb-track{grid-column:span 2!important}
+html.dev-phone .lb-track .tn{font-size:12px;padding:3px}
+html.dev-phone .lb-track .diff,html.dev-phone .lb-track .theme{font-size:10px;padding:2px 5px}
+html.dev-phone .lb-track .info{display:none}
+html.dev-phone .slotc{padding:3px;gap:2px;border-radius:9px}
+html.dev-phone .slotc .sh{height:16px}
+html.dev-phone .slotc .lv{font-size:9px;padding:0 4px}
+html.dev-phone .slotc .badge{width:15px;height:15px;font-size:9px}
+html.dev-phone .slotc .sb button{width:16px;height:16px;font-size:10px;line-height:16px}
+html.dev-phone .slotc .nm{font-size:11px;padding:2px}
+html.dev-phone .slotc .kartname{display:none}
+html.dev-phone .slotc .ready{font-size:13px;bottom:3px;-webkit-text-stroke:1px #6a3a00;text-shadow:0 2px 0 #6a3a00}
+html.dev-phone .slotc .wait{font-size:10px;bottom:3px;padding:1px 6px}
+html.dev-phone .slotc.host .hosttag{font-size:10px;padding:1px 6px;top:22px;left:4px}
+html.dev-phone .slotc.empty .pv,html.dev-phone .slotc.closed .pv{font-size:10px}
+html.dev-phone .lb-bottom{height:auto;margin-top:6px;gap:6px}
+html.dev-phone #lbChatLog{height:20px;font-size:11px}
+html.dev-phone #lbChatIn{font-size:14px;padding:4px 8px}
+html.dev-phone .lb-chat{padding:4px 6px}
+html.dev-phone .lb-status{display:block!important;width:190px;font-size:11px;line-height:1.45;padding:6px 8px}
+/* 대기실: 휴대폰 세로 */
+html.dev-phone.portrait .lb-body{flex-direction:column}
+html.dev-phone.portrait .lb-side{flex-direction:row;width:auto;overflow-x:auto;flex:none}
+html.dev-phone.portrait .lb-side button{flex:1 1 0;min-width:0;min-height:50px;font-size:10px}
+html.dev-phone.portrait .lb-side{overflow:visible}
+html.dev-phone.portrait .lb-top{flex-wrap:wrap;overflow:visible;row-gap:6px}
+html.dev-phone.portrait .lb-room{flex:1 0 calc(100% - 52px);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.dev-phone.portrait .lb-room b{font-size:15px}
+html.dev-phone.portrait .lb-top .seg{flex:1 1 auto}
+html.dev-phone.portrait .lb-top .seg button{flex:1;padding:7px 4px}
+html.dev-phone.portrait .lb-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:150px minmax(0,1fr) minmax(0,1fr)!important}
+html.dev-phone.portrait .lb-track{grid-column:1/-1!important;order:-1}
+html.dev-phone.portrait .lb-bottom{flex-direction:column}
+html.dev-phone.portrait .lb-status{width:auto}
+html.dev-phone.portrait #lbChatLog{height:36px}
 </style>
 <script type="importmap">
 { "imports": { "three": "./vendor/three/build/three.module.js",
@@ -76,6 +295,36 @@ svg.pg{vertical-align:-.15em}
 </script>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/></symbol>
+<symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></symbol>
+<symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+<symbol id="i-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+<symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+<symbol id="i-reset" viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2-5M5 4v4h4"/></symbol>
+</defs></svg>
+<button id="gMenu" aria-label="메뉴"><svg class="ico i-menu"><use href="#i-menu"/></svg><svg class="ico i-pause"><use href="#i-pause"/></svg></button>
+<div id="gSheet"><div class="sh" role="menu"><b>메뉴</b>
+  <button data-sh="hub" class="hub"><svg class="ico"><use href="#i-grid"/></svg>게임 목록으로</button>
+  <button data-sh="title"><svg class="ico"><use href="#i-home"/></svg><span id="shTitle">메인 화면</span></button>
+  <button data-sh="settings"><svg class="ico"><use href="#i-gear"/></svg>설정</button>
+  <button data-sh="help"><svg class="ico"><use href="#i-help"/></svg>조작법</button>
+</div></div>
+<div id="touch" aria-hidden="true">
+  <button id="tLeft" data-tk="left"><svg class="ico"><use href="#i-left"/></svg></button>
+  <button id="tRight" data-tk="right"><svg class="ico"><use href="#i-right"/></svg></button>
+  <button id="tGas" data-tk="gas">가속</button>
+  <button id="tBrake" data-tk="brake">브레이크</button>
+  <button id="tItem" data-tk="item">아이템</button>
+  <button id="tDrift" data-tk="drift">드리프트</button>
+  <button id="tCam" data-tk="cam" aria-label="카메라"><svg class="ico" style="width:22px;height:22px"><use href="#i-cam"/></svg></button>
+  <button id="tReset" data-tk="reset" aria-label="코스 복귀"><svg class="ico" style="width:22px;height:22px"><use href="#i-reset"/></svg></button>
+</div>
+<div id="rotate"><svg class="ico" style="width:56px;height:56px"><use href="#i-reset"/></svg><div>기기를 <b>가로</b>로 돌리면 더 크게 달릴 수 있어요</div><button class="big" onclick="document.body.classList.add('rot-ok')">세로로 계속하기</button></div>
 <canvas id="speedlines"></canvas>
 <div id="vignette"></div>
 
@@ -112,9 +361,9 @@ svg.pg{vertical-align:-.15em}
   <div class="panel wide">
     <div class="ptitle"><button class="back" data-go="title">←</button>모드 선택</div>
     <div class="modes">
-      <button class="mode m-speed" data-mode="speed"><b>스피드전</b><span>아이템 없이 드리프트로<br>ATP 부스터를 모아 질주!</span></button>
-      <button class="mode m-item" data-mode="item"><b>아이템전</b><span>DNA 박스에서 항체 미사일,<br>바이러스 지뢰를 얻어 역전!</span></button>
-      <button class="mode m-time" data-mode="time"><b>타임어택</b><span>혼자 달리며 최고 기록에<br>도전하세요</span></button>
+      <button class="mode m-speed" data-mode="speed"><b>스피드전</b><span>아이템 없이 드리프트로 <br>ATP 부스터를 모아 질주!</span></button>
+      <button class="mode m-item" data-mode="item"><b>아이템전</b><span>DNA 박스에서 항체 미사일, <br>바이러스 지뢰를 얻어 역전!</span></button>
+      <button class="mode m-time" data-mode="time"><b>타임어택</b><span>혼자 달리며 최고 기록에 <br>도전하세요</span></button>
     </div>
     <p class="tip">모드를 고르면 대기실로 이동합니다. 대기실에서 트랙 · 카트 · AI 인원을 정하고 시작하세요.</p>
   </div>
@@ -123,7 +372,7 @@ svg.pg{vertical-align:-.15em}
 <!-- ======================= WAITING ROOM ======================= -->
 <section id="lobby" class="screen">
   <div class="lobby">
-    <div class="lb-top"><span class="lb-room">🧬 <b id="lbRoomName">함께 달려요!</b></span><span id="lbModeTxt" class="lb-mode"></span>
+    <div class="lb-top"><button class="lb-menu" id="lbMenu" aria-label="메뉴"><svg class="ico"><use href="#i-menu"/></svg></button><span class="lb-room">🧬 <b id="lbRoomName">함께 달려요!</b></span><span id="lbModeTxt" class="lb-mode"></span>
       <div class="seg" id="lbMode"><button data-m="speed">스피드</button><button data-m="item">아이템</button><button data-m="time">타임어택</button></div>
       <div class="seg" id="lbDiff"><button data-d="0.88">AI 쉬움</button><button data-d="0.95">보통</button><button data-d="1.02">어려움</button></div>
       <button class="lb-exit" data-go="modes">나가기 ✕</button></div>
@@ -174,14 +423,21 @@ svg.pg{vertical-align:-.15em}
     <label class="row">배경음악 <input type="range" id="volMusic" min="0" max="1" step="0.05"></label>
     <label class="row">효과음 <input type="range" id="volSfx" min="0" max="1" step="0.05"></label>
     <label class="row">그림자 <input type="checkbox" id="optShadow"></label>
-    <label class="row">후방 미러 <input type="checkbox" id="optMirror"></label>
+    <label class="row only-key">후방 미러 <input type="checkbox" id="optMirror"></label>
     <label class="row">속도선 효과 <input type="checkbox" id="optLines"></label>
+    <label class="row only-touch">터치 자동 가속 <input type="checkbox" id="optAutoGas"></label>
   </div>
 </section>
 <section id="help" class="screen panel-screen">
   <div class="panel">
-    <div class="ptitle"><button class="back" data-go="title">←</button>조작법</div>
-    <table class="keys">
+    <div class="ptitle"><button class="back" id="helpBack">←</button>조작법</div>
+    <table class="keys only-touch">
+      <tr><td>◀ ▶ 버튼</td><td>조향 (왼손)</td></tr><tr><td>드리프트</td><td>누르고 있으면 드리프트 · 놓으면 순간 부스터</td></tr>
+      <tr><td>아이템</td><td>아이템 / 부스터 사용</td></tr><tr><td>브레이크</td><td>감속 · 후진</td></tr>
+      <tr><td>왼쪽 위 버튼</td><td>일시정지 · 카메라 · 코스 복귀</td></tr>
+    </table>
+    <p class="tip only-touch">터치 기기에서는 기본으로 <b>자동 가속</b>이 켜져 있어요. 설정에서 끄면 가속 버튼이 나타나요.</p>
+    <table class="keys only-key">
       <tr><td><kbd>↑</kbd><kbd>W</kbd></td><td>가속</td></tr><tr><td><kbd>↓</kbd><kbd>S</kbd></td><td>브레이크 / 후진</td></tr>
       <tr><td><kbd>←</kbd><kbd>→</kbd></td><td>조향</td></tr><tr><td><kbd>Shift</kbd><kbd>Space</kbd></td><td>드리프트 (게이지 충전 · 놓으면 순간 부스터)</td></tr>
       <tr><td><kbd>Ctrl</kbd><kbd>Z</kbd></td><td>아이템 / 부스터 사용</td></tr><tr><td><kbd>C</kbd></td><td>카메라 변경</td></tr>
@@ -220,13 +476,13 @@ svg.pg{vertical-align:-.15em}
 <!-- ======================= PAUSE / RESULTS ======================= -->
 <section id="pause" class="screen panel-screen"><div class="panel">
   <div class="ptitle">일시정지</div>
-  <div class="menu"><button id="resume" class="big">계속하기</button><button id="restart">다시 시작</button><button id="quit">메인으로</button></div>
+  <div class="menu"><button id="resume" class="big">계속하기</button><button id="restart">다시 시작</button><button data-go="settings">설정</button><button id="quit">메인 화면</button><button id="pHub">게임 목록으로</button></div>
 </div></section>
 <section id="results" class="screen">
   <div class="res-panel panel">
     <div class="ptitle" id="resTitle">레이스 결과</div>
     <table id="resTable"></table>
-    <div class="row end"><button id="resRetry" class="big">다시하기</button><button id="resTracks">대기실</button><button id="resMain" class="ghost">메인</button></div>
+    <div class="row end"><button id="resRetry" class="big">다시하기</button><button id="resTracks">대기실</button><button id="resMain" class="ghost">메인</button><button id="resHub" class="ghost">게임 목록</button></div>
   </div>
 </section>
 
