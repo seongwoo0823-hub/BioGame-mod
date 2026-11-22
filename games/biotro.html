@@ -295,6 +295,22 @@ body.lowfx .ed::before,body.lowfx .shn::before,body.lowfx .ed-neg .ed{animation:
 @keyframes fanb{50%{translate:0 -6px}}
 body.lowfx .tfan img{animation:none}
 .seg button.on{box-shadow:inset 0 -2px 0 rgba(0,0,0,.25)}
+/* 도감 */
+.ctabs{display:flex;gap:6px;justify-content:center;margin:2px 0 8px}.ctabs button{border:0;border-radius:8px;padding:6px 14px;background:#2c2650;color:#cfc8f0;font:inherit;font-size:17px;cursor:pointer}.ctabs button.on{background:#3a6ad0;color:#fff}
+.cbody{max-height:min(58vh,520px);overflow:auto;padding-right:4px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px;margin-bottom:6px}
+.cgrid img{width:100%;border-radius:6px;cursor:pointer;transition:transform .1s}.cgrid img:hover{transform:translateY(-3px)}.cgrid img.on{outline:3px solid #ffd34a}
+.cdesc{position:sticky;top:0;z-index:2;background:#1c1836;border:2px solid #3a3260;border-radius:10px;padding:8px 10px;font-size:16px;line-height:1.35;min-height:58px;margin-bottom:6px}
+.clist{display:flex;flex-direction:column;gap:6px}.crow{display:flex;gap:10px;align-items:center;background:#1c1836;border-left:5px solid var(--dc);border-radius:8px;padding:6px 10px;font-size:15px;line-height:1.3;text-align:left}.crow img{width:40px;height:54px;flex:none}.crow b{font-weight:400;font-size:18px;color:#fff}
+/* 덱 선택 */
+.dkpick{display:flex;align-items:center;gap:10px;background:#1c1836;border:2px solid var(--dc);border-radius:12px;padding:8px 10px;box-shadow:0 0 0 3px rgba(0,0,0,.25) inset}
+.dkarr{flex:none;width:38px;height:64px;border-radius:10px;background:#2c2650;color:#fff;font-size:34px;line-height:1;border:0;cursor:pointer}
+.dkarr:hover{background:var(--dc)}
+.dkimg{flex:none;width:58px;height:78px;border-radius:6px;box-shadow:0 4px 0 rgba(0,0,0,.4)}
+.dkinfo{flex:1;min-width:0;text-align:left}
+.dkn{font-size:21px;color:#fff}.dkn small{font-size:13px;color:var(--dim)}
+.dkd{font-size:15px;color:#d8d4ee;line-height:1.3;min-height:40px}
+.dkdots{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}.dkdots i{width:7px;height:7px;border-radius:4px;background:#4a4470;cursor:pointer;transition:width .15s}
 </style>
 <link rel="manifest" href="../manifest.webmanifest?v=2">
 <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-v2-32.png">
@@ -350,6 +366,7 @@ body.lowfx .tfan img{animation:none}
     <div class="tmenu">
       <button class="btn big blue" id="tNew">새 게임</button>
       <button class="btn big green" id="tCont" hidden>이어하기</button>
+      <button class="btn big" id="tColl">조커 · 덱 도감</button>
       <button class="btn big" id="tHelp">게임 방법</button>
       <button class="btn big" id="tOpt">옵션</button>
     </div>
@@ -504,159 +521,201 @@ const J_=(id,n,o,rar,cost,d,h)=>Object.assign({id,n,o,rar,cost,d},h||{});
 const ranked=c=>!isStone(c);
 const JOKERS=[
  /* ---------------- 일반 ---------------- */
- J_('cyto','세포질','조커',1,2,'{m+4 배수}',{main:()=>({mult:4})}),
- J_('capsid','캡시드','탐욕스러운 조커',1,5,'점수 계산된 {D} 카드마다 {m+3 배수}',{card:(J,c)=>suitIs(c,'D')?{mult:3}:null}),
- J_('hemo','헤모글로빈','음욕의 조커',1,5,'점수 계산된 {H} 카드마다 {m+3 배수}',{card:(J,c)=>suitIs(c,'H')?{mult:3}:null}),
- J_('nucleolus','핵소체','분노하는 조커',1,5,'점수 계산된 {S} 카드마다 {m+3 배수}',{card:(J,c)=>suitIs(c,'S')?{mult:3}:null}),
- J_('chlorophyll','엽록소','탐식하는 조커',1,5,'점수 계산된 {C} 카드마다 {m+3 배수}',{card:(J,c)=>suitIs(c,'C')?{mult:3}:null}),
- J_('jolly','짝짓기','쾌활한 조커',1,3,'{h:pair}가 포함되면 {m+8 배수}',{main:(J,x)=>x.has.pair?{mult:8}:null}),
- J_('zany','삼중 결합','엉뚱한 조커',1,4,'{h:three}이 포함되면 {m+12 배수}',{main:(J,x)=>x.has.three?{mult:12}:null}),
- J_('mad','이중 나선','정신 나간 조커',1,4,'{h:two}가 포함되면 {m+10 배수}',{main:(J,x)=>x.has.two?{mult:10}:null}),
- J_('crazy','연쇄 반응','괴짜 조커',1,4,'{h:straight}가 포함되면 {m+12 배수}',{main:(J,x)=>x.has.straight?{mult:12}:null}),
- J_('droll','군체','교활한 조커',1,4,'{h:flush}가 포함되면 {m+10 배수}',{main:(J,x)=>x.has.flush?{mult:10}:null}),
- J_('sly','세포벽','악랄한 조커',1,3,'{h:pair}가 포함되면 {c+50 칩}',{main:(J,x)=>x.has.pair?{chips:50}:null}),
- J_('wily','각질층','영리한 조커',1,4,'{h:three}이 포함되면 {c+100 칩}',{main:(J,x)=>x.has.three?{chips:100}:null}),
- J_('clever','이중막','기만적인 조커',1,4,'{h:two}가 포함되면 {c+80 칩}',{main:(J,x)=>x.has.two?{chips:80}:null}),
- J_('devious','섬모 운동','간교한 조커',1,4,'{h:straight}가 포함되면 {c+100 칩}',{main:(J,x)=>x.has.straight?{chips:100}:null}),
- J_('crafty','편모','교묘한 조커',1,4,'{h:flush}가 포함되면 {c+80 칩}',{main:(J,x)=>x.has.flush?{chips:80}:null}),
- J_('half','단식 세포','하프 조커',1,5,'플레이한 카드가 3장 이하면 {m+20 배수}',{main:(J,x)=>x.cards.length<=3?{mult:20}:null}),
- J_('credit','기생 세균','신용카드',1,1,'최대 {$-$20}까지 빚을 질 수 있음'),
- J_('banner','지방 세포','깃발',1,5,'남은 버리기 1회당 {c+30 칩}',{main:()=>G.discards>0?{chips:30*G.discards}:null}),
- J_('summit','근지구력','신비의 정점',1,5,'남은 버리기가 0회이면 {m+15 배수}',{main:()=>G.discards===0?{mult:15}:null}),
- J_('eightball','8번 염색체','8번 공',1,5,'점수 계산된 8마다 {d1/4} 확률로 시약 카드 생성 (빈 슬롯 필요)',{cp:1,card:(J,c)=>ranked(c)&&c.r===8&&chance(1,4)&&mkCons('tarot')?{msg:'+시약'}:null}),
- J_('misprint','돌연변이 유전자','인쇄 오류',1,4,'{m+0~23 배수} (무작위)',{main:()=>({mult:Math.floor(R()*24)})}),
- J_('fist','근육 수축','들어올린 주먹',1,5,'손에 든 카드 중 가장 낮은 랭크의 2배를 {m배수}에 추가',{main:(J,x)=>{const h=x.held.filter(c=>ranked(c)&&!debuffed(c));if(!h.length)return null;let lo=h[0];for(const c of h)if(c.r<lo.r)lo=c;return {mult:2*rankChips(lo.r)};}}),
- J_('chaos','무작위 변이','혼돈의 광대',1,4,'상점마다 무료 리롤 1회'),
- J_('abstract','다세포 생물','추상화 조커',1,4,'보유한 조커 1장당 {m+3 배수} (현재 {m+#})',{main:()=>({mult:3*G.jokers.length}),cur:()=>3*(G?G.jokers.length:0)}),
- J_('delayed','휴면 포자','기다림 끝에 낙이 온다',1,4,'라운드 동안 버리기를 쓰지 않으면 남은 버리기 1회당 {$$2}',{cp:1,endRound:()=>G.discUsed===0?2*G.discards:0}),
- J_('gros','바나나 세포','그로 미셸',1,5,'{m+15 배수}, 라운드 종료 시 {d1/6} 확률로 멸종',{main:()=>({mult:15}),endRound:J=>{if(chance(1,6)){J.dead='멸종!';G.flags.gros=1;}return 0;}}),
- J_('even','짝수 염색체','짝수 짝꿍',1,4,'점수 계산된 짝수 랭크(10, 8, 6, 4, 2) 카드마다 {m+4 배수}',{card:(J,c)=>ranked(c)&&c.r<=10&&c.r%2===0?{mult:4}:null}),
- J_('odd','홀수 염색체','홀수 홀씨',1,4,'점수 계산된 홀수 랭크(A, 9, 7, 5, 3) 카드마다 {c+31 칩}',{card:(J,c)=>ranked(c)&&(c.r===14||(c.r<=9&&c.r%2===1))?{chips:31}:null}),
- J_('scholar','원핵생물','장학생',1,4,'점수 계산된 A마다 {c+20 칩}, {m+4 배수}',{card:(J,c)=>ranked(c)&&c.r===14?{chips:20,mult:4}:null}),
- J_('business','분비 세포','명함',1,4,'점수 계산된 그림 카드마다 {d1/2} 확률로 {$$2}',{cp:1,card:(J,c)=>isFace(c)&&chance(1,2)?{money:2}:null}),
- J_('supernova','공진화','초신성',1,5,'이번 런에서 플레이한 족보의 플레이 횟수만큼 {m+배수}',{main:(J,x)=>({mult:G.lv[x.type].played})}),
- J_('ridebus','단백질 합성','버스 탑승',1,6,'그림 카드 없이 핸드를 플레이할 때마다 {m+1 배수}, 그림 카드가 점수 계산되면 초기화 (현재 {m+#})',{before:(J,x)=>{J.v=x.scoring.some(c=>isFace(c)&&!debuffed(c))?0:(J.v||0)+1;},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
- J_('egg','혈소판','알',1,4,'라운드 종료 시 판매 가격 {$+$3} (현재 판매 {$$#})',{endRound:J=>{J.sb=(J.sb||0)+3;return 0;},cur:J=>sellPrice(J)}),
- J_('runner','근섬유','주자',1,5,'{h:straight}가 포함되면 칩 +15 영구 증가 (현재 {c+#})',{before:(J,x)=>{if(x.has.straight){J.v=(J.v||0)+15;return '강화!';}},main:J=>J.v?{chips:J.v}:null,cur:J=>J.v||0}),
- J_('icecream','글리코젠','아이스크림',1,5,'{c+#}, 핸드를 플레이할 때마다 칩 5 감소',{init:J=>{J.v=100;},main:J=>J.v>0?{chips:J.v}:null,after:J=>{J.v-=5;if(J.v<=0)J.dead='분해됨!';},cur:J=>J.v}),
- J_('splash','삼투 확산','물보라',1,3,'플레이한 모든 카드가 점수 계산에 포함됨'),
- J_('bluej','혈장','파란 조커',1,5,'덱에 남은 카드 1장당 {c+2 칩} (현재 {c+#})',{main:()=>({chips:2*(G.inRound?G.draw.length:G.deck.length)}),cur:()=>G?2*(G.inRound?G.draw.length:G.deck.length):104}),
- J_('faceless','가면 탈피','얼굴 없는 조커',1,4,'그림 카드를 한 번에 3장 이상 버리면 {$$5}',{cp:1,discard:(J,cards)=>cards.filter(isFace).length>=3?5:0}),
- J_('superpos','양자 터널','중첩',1,4,'플레이한 핸드에 A와 {h:straight}가 포함되면 시약 카드 생성',{cp:1,before:(J,x)=>x.has.straight&&x.cards.some(c=>ranked(c)&&c.r===14)&&mkCons('tarot')?'+시약':null}),
- J_('todo','일주기 리듬','할 일 목록',1,4,'{h:#}를 플레이하면 {$$4} (라운드마다 족보 변경)',{cp:1,before:(J,x)=>x.type===G.rv.todo?{money:4}:null,cur:()=>G?G.rv.todo:'pair'}),
- J_('cavendish','캐번디시 바나나','캐번디시',1,4,'{x×3 배수}, 라운드 종료 시 {d1/1000} 확률로 멸종',{main:()=>({xmult:3}),endRound:J=>{if(chance(1,1000))J.dead='멸종!';return 0;}}),
- J_('redcard','적혈구 생성','레드카드',1,5,'부스터 팩을 건너뛸 때마다 {m+3 배수} 증가 (현재 {m+#})',{packSkip:J=>{J.v=(J.v||0)+3;},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
- J_('square','정사각 세포','네모난 조커',1,4,'정확히 4장을 플레이하면 칩 +4 영구 증가 (현재 {c+#})',{before:(J,x)=>{if(x.cards.length===4){J.v=(J.v||0)+4;return '강화!';}},main:J=>J.v?{chips:J.v}:null,cur:J=>J.v||0}),
- J_('walkie','신호 전달','조무래기',1,4,'점수 계산된 10 또는 4마다 {c+10 칩}, {m+4 배수}',{card:(J,c)=>ranked(c)&&(c.r===10||c.r===4)?{chips:10,mult:4}:null}),
- J_('photo','형광 사진','사진',1,5,'첫 번째로 점수 계산된 그림 카드가 {x×2 배수}',{card:(J,c,x)=>c===x.photo?{xmult:2}:null}),
- J_('mailin','수용체 결합','우편 할인',1,4,'버린 #마다 {$$5} (라운드마다 랭크 변경)',{cp:1,discard:(J,cards)=>5*cards.filter(c=>ranked(c)&&c.r===G.rv.mail).length,cur:()=>G?rankLabel(G.rv.mail):'A'}),
- J_('hallu','환각','환각',1,4,'부스터 팩을 열 때 {d1/2} 확률로 시약 카드 생성',{cp:1,packOpen:()=>chance(1,2)&&mkCons('tarot')}),
- J_('fortune','유전자 예측','점쟁이',1,6,'이번 런에서 사용한 시약 카드 1장당 {m+1 배수} (현재 {m+#})',{main:()=>G.st.tarots?{mult:G.st.tarots}:null,cur:()=>G?G.st.tarots:0}),
- J_('juggler','엑소좀','저글러',1,4,'손패 크기 +1',{hs:1}),
- J_('drunkard','삼투압','술고래',1,4,'라운드마다 버리기 +1',{disc:1}),
- J_('golden','광합성 세균','황금 조커',1,6,'라운드 종료 시 {$$4} 획득',{cp:1,endRound:()=>4}),
- J_('popcorn','포도당','팝콘',1,5,'{m+#}, 라운드마다 배수 4 감소',{init:J=>{J.v=20;},main:J=>J.v>0?{mult:J.v}:null,endRound:J=>{J.v-=4;if(J.v<=0)J.dead='소화됨!';return 0;},cur:J=>J.v}),
- J_('smiley','행복 호르몬','웃는 얼굴',1,4,'점수 계산된 그림 카드마다 {m+5 배수}',{card:(J,c)=>isFace(c)?{mult:5}:null}),
- J_('scary','백신','무서운 얼굴',1,4,'점수 계산된 그림 카드마다 {c+30 칩}',{card:(J,c)=>isFace(c)?{chips:30}:null}),
- J_('ticket','ATP 합성효소','황금 티켓',1,5,'ATP 카드가 점수 계산되면 {$$4}',{cp:1,card:(J,c)=>c.enh==='gold'?{money:4}:null}),
- J_('swash','기생 해적','해적',1,4,'다른 조커들의 판매 가격 합만큼 {m+배수} (현재 {m+#})',{main:J=>{const v=G.jokers.filter(o=>o!==J).reduce((a,o)=>a+sellPrice(o),0);return v?{mult:v}:null;},cur:J=>G?G.jokers.filter(o=>o!==J).reduce((a,o)=>a+sellPrice(o),0):0}),
- J_('chad','연쇄 복제','매달린 종이 조각',1,4,'첫 번째로 점수 계산된 카드를 2번 더 발동',{retrig:(J,c,x)=>c===x.scoring[0]?2:0}),
- J_('moon','여왕벌','숫 더 문',1,5,'손에 든 Q마다 {m+13 배수}',{held:(J,c)=>ranked(c)&&c.r===12?{mult:13}:null}),
- J_('green','분해자','초록 조커',1,4,'핸드를 플레이할 때마다 {m+1 배수}, 버리기마다 {m-1 배수} (현재 {m+#})',{before:J=>{J.v=(J.v||0)+1;},discard:J=>{J.v=Math.max(0,(J.v||0)-1);return 0;},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
- J_('parking','휴식 세포','주차장',1,6,'손에 든 그림 카드마다 {d1/2} 확률로 {$$1}',{cp:1,held:(J,c)=>isFace(c)&&chance(1,2)?{money:1}:null}),
- J_('riffraff','무리 생활','오합지졸',1,6,'블라인드를 선택하면 일반 조커 최대 2장 생성',{cp:1,blind:()=>{let k=0;while(k<2&&G.jokers.length<jokerSlots()){G.jokers.push(newJoker(genJokerId(1)));k++;}return k?'+조커':null;}}),
+ J_('cyto','세포질','',1,2,'{m+4 배수}',{main:()=>({mult:4})}),
+ J_('capsid','캡시드','',1,5,'점수 계산된 {D} 카드마다 {m+3 배수}',{card:(J,c)=>suitIs(c,'D')?{mult:3}:null}),
+ J_('hemo','헤모글로빈','',1,5,'점수 계산된 {H} 카드마다 {m+3 배수}',{card:(J,c)=>suitIs(c,'H')?{mult:3}:null}),
+ J_('nucleolus','핵소체','',1,5,'점수 계산된 {S} 카드마다 {m+3 배수}',{card:(J,c)=>suitIs(c,'S')?{mult:3}:null}),
+ J_('chlorophyll','엽록소','',1,5,'점수 계산된 {C} 카드마다 {m+3 배수}',{card:(J,c)=>suitIs(c,'C')?{mult:3}:null}),
+ J_('jolly','짝짓기','',1,3,'{h:pair}가 포함되면 {m+8 배수}',{main:(J,x)=>x.has.pair?{mult:8}:null}),
+ J_('zany','삼중 결합','',1,4,'{h:three}이 포함되면 {m+12 배수}',{main:(J,x)=>x.has.three?{mult:12}:null}),
+ J_('mad','이중 나선','',1,4,'{h:two}가 포함되면 {m+10 배수}',{main:(J,x)=>x.has.two?{mult:10}:null}),
+ J_('crazy','연쇄 반응','',1,4,'{h:straight}가 포함되면 {m+12 배수}',{main:(J,x)=>x.has.straight?{mult:12}:null}),
+ J_('droll','군체','',1,4,'{h:flush}가 포함되면 {m+10 배수}',{main:(J,x)=>x.has.flush?{mult:10}:null}),
+ J_('sly','세포벽','',1,3,'{h:pair}가 포함되면 {c+50 칩}',{main:(J,x)=>x.has.pair?{chips:50}:null}),
+ J_('wily','각질층','',1,4,'{h:three}이 포함되면 {c+100 칩}',{main:(J,x)=>x.has.three?{chips:100}:null}),
+ J_('clever','이중막','',1,4,'{h:two}가 포함되면 {c+80 칩}',{main:(J,x)=>x.has.two?{chips:80}:null}),
+ J_('devious','섬모 운동','',1,4,'{h:straight}가 포함되면 {c+100 칩}',{main:(J,x)=>x.has.straight?{chips:100}:null}),
+ J_('crafty','편모','',1,4,'{h:flush}가 포함되면 {c+80 칩}',{main:(J,x)=>x.has.flush?{chips:80}:null}),
+ J_('half','단식 세포','',1,5,'플레이한 카드가 3장 이하면 {m+20 배수}',{main:(J,x)=>x.cards.length<=3?{mult:20}:null}),
+ J_('credit','기생 세균','',1,1,'최대 {$-$20}까지 빚을 질 수 있음'),
+ J_('banner','지방 세포','',1,5,'남은 버리기 1회당 {c+30 칩}',{main:()=>G.discards>0?{chips:30*G.discards}:null}),
+ J_('summit','근지구력','',1,5,'남은 버리기가 0회이면 {m+15 배수}',{main:()=>G.discards===0?{mult:15}:null}),
+ J_('eightball','8번 염색체','',1,5,'점수 계산된 8마다 {d1/4} 확률로 시약 카드 생성 (빈 슬롯 필요)',{cp:1,card:(J,c)=>ranked(c)&&c.r===8&&chance(1,4)&&mkCons('tarot')?{msg:'+시약'}:null}),
+ J_('misprint','돌연변이 유전자','',1,4,'{m+0~23 배수} (무작위)',{main:()=>({mult:Math.floor(R()*24)})}),
+ J_('fist','근육 수축','',1,5,'손에 든 카드 중 가장 낮은 랭크의 2배를 {m배수}에 추가',{main:(J,x)=>{const h=x.held.filter(c=>ranked(c)&&!debuffed(c));if(!h.length)return null;let lo=h[0];for(const c of h)if(c.r<lo.r)lo=c;return {mult:2*rankChips(lo.r)};}}),
+ J_('chaos','무작위 변이','',1,4,'상점마다 무료 리롤 1회'),
+ J_('abstract','다세포 생물','',1,4,'보유한 조커 1장당 {m+3 배수} (현재 {m+#})',{main:()=>({mult:3*G.jokers.length}),cur:()=>3*(G?G.jokers.length:0)}),
+ J_('delayed','휴면 포자','',1,4,'라운드 동안 버리기를 쓰지 않으면 남은 버리기 1회당 {$$2}',{cp:1,endRound:()=>G.discUsed===0?2*G.discards:0}),
+ J_('gros','바나나 세포','',1,5,'{m+15 배수}, 라운드 종료 시 {d1/6} 확률로 멸종',{main:()=>({mult:15}),endRound:J=>{if(chance(1,6)){J.dead='멸종!';G.flags.gros=1;}return 0;}}),
+ J_('even','짝수 염색체','',1,4,'점수 계산된 짝수 랭크(10, 8, 6, 4, 2) 카드마다 {m+4 배수}',{card:(J,c)=>ranked(c)&&c.r<=10&&c.r%2===0?{mult:4}:null}),
+ J_('odd','홀수 염색체','',1,4,'점수 계산된 홀수 랭크(A, 9, 7, 5, 3) 카드마다 {c+31 칩}',{card:(J,c)=>ranked(c)&&(c.r===14||(c.r<=9&&c.r%2===1))?{chips:31}:null}),
+ J_('scholar','원핵생물','',1,4,'점수 계산된 A마다 {c+20 칩}, {m+4 배수}',{card:(J,c)=>ranked(c)&&c.r===14?{chips:20,mult:4}:null}),
+ J_('business','분비 세포','',1,4,'점수 계산된 그림 카드마다 {d1/2} 확률로 {$$2}',{cp:1,card:(J,c)=>isFace(c)&&chance(1,2)?{money:2}:null}),
+ J_('supernova','공진화','',1,5,'이번 런에서 플레이한 족보의 플레이 횟수만큼 {m+배수}',{main:(J,x)=>({mult:G.lv[x.type].played})}),
+ J_('ridebus','단백질 합성','',1,6,'그림 카드 없이 핸드를 플레이할 때마다 {m+1 배수}, 그림 카드가 점수 계산되면 초기화 (현재 {m+#})',{before:(J,x)=>{J.v=x.scoring.some(c=>isFace(c)&&!debuffed(c))?0:(J.v||0)+1;},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
+ J_('egg','혈소판','',1,4,'라운드 종료 시 판매 가격 {$+$3} (현재 판매 {$$#})',{endRound:J=>{J.sb=(J.sb||0)+3;return 0;},cur:J=>sellPrice(J)}),
+ J_('runner','근섬유','',1,5,'{h:straight}가 포함되면 칩 +15 영구 증가 (현재 {c+#})',{before:(J,x)=>{if(x.has.straight){J.v=(J.v||0)+15;return '강화!';}},main:J=>J.v?{chips:J.v}:null,cur:J=>J.v||0}),
+ J_('icecream','글리코젠','',1,5,'{c+#}, 핸드를 플레이할 때마다 칩 5 감소',{init:J=>{J.v=100;},main:J=>J.v>0?{chips:J.v}:null,after:J=>{J.v-=5;if(J.v<=0)J.dead='분해됨!';},cur:J=>J.v}),
+ J_('splash','삼투 확산','',1,3,'플레이한 모든 카드가 점수 계산에 포함됨'),
+ J_('bluej','혈장','',1,5,'덱에 남은 카드 1장당 {c+2 칩} (현재 {c+#})',{main:()=>({chips:2*(G.inRound?G.draw.length:G.deck.length)}),cur:()=>G?2*(G.inRound?G.draw.length:G.deck.length):104}),
+ J_('faceless','가면 탈피','',1,4,'그림 카드를 한 번에 3장 이상 버리면 {$$5}',{cp:1,discard:(J,cards)=>cards.filter(isFace).length>=3?5:0}),
+ J_('superpos','양자 터널','',1,4,'플레이한 핸드에 A와 {h:straight}가 포함되면 시약 카드 생성',{cp:1,before:(J,x)=>x.has.straight&&x.cards.some(c=>ranked(c)&&c.r===14)&&mkCons('tarot')?'+시약':null}),
+ J_('todo','일주기 리듬','',1,4,'{h:#}를 플레이하면 {$$4} (라운드마다 족보 변경)',{cp:1,before:(J,x)=>x.type===G.rv.todo?{money:4}:null,cur:()=>G?G.rv.todo:'pair'}),
+ J_('cavendish','캐번디시 바나나','',1,4,'{x×3 배수}, 라운드 종료 시 {d1/1000} 확률로 멸종',{main:()=>({xmult:3}),endRound:J=>{if(chance(1,1000))J.dead='멸종!';return 0;}}),
+ J_('redcard','적혈구 생성','',1,5,'부스터 팩을 건너뛸 때마다 {m+3 배수} 증가 (현재 {m+#})',{packSkip:J=>{J.v=(J.v||0)+3;},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
+ J_('square','정사각 세포','',1,4,'정확히 4장을 플레이하면 칩 +4 영구 증가 (현재 {c+#})',{before:(J,x)=>{if(x.cards.length===4){J.v=(J.v||0)+4;return '강화!';}},main:J=>J.v?{chips:J.v}:null,cur:J=>J.v||0}),
+ J_('walkie','신호 전달','',1,4,'점수 계산된 10 또는 4마다 {c+10 칩}, {m+4 배수}',{card:(J,c)=>ranked(c)&&(c.r===10||c.r===4)?{chips:10,mult:4}:null}),
+ J_('photo','형광 사진','',1,5,'첫 번째로 점수 계산된 그림 카드가 {x×2 배수}',{card:(J,c,x)=>c===x.photo?{xmult:2}:null}),
+ J_('mailin','수용체 결합','',1,4,'버린 #마다 {$$5} (라운드마다 랭크 변경)',{cp:1,discard:(J,cards)=>5*cards.filter(c=>ranked(c)&&c.r===G.rv.mail).length,cur:()=>G?rankLabel(G.rv.mail):'A'}),
+ J_('hallu','환각','',1,4,'부스터 팩을 열 때 {d1/2} 확률로 시약 카드 생성',{cp:1,packOpen:()=>chance(1,2)&&mkCons('tarot')}),
+ J_('fortune','유전자 예측','',1,6,'이번 런에서 사용한 시약 카드 1장당 {m+1 배수} (현재 {m+#})',{main:()=>G.st.tarots?{mult:G.st.tarots}:null,cur:()=>G?G.st.tarots:0}),
+ J_('juggler','엑소좀','',1,4,'손패 크기 +1',{hs:1}),
+ J_('drunkard','삼투압','',1,4,'라운드마다 버리기 +1',{disc:1}),
+ J_('golden','광합성 세균','',1,6,'라운드 종료 시 {$$4} 획득',{cp:1,endRound:()=>4}),
+ J_('popcorn','포도당','',1,5,'{m+#}, 라운드마다 배수 4 감소',{init:J=>{J.v=20;},main:J=>J.v>0?{mult:J.v}:null,endRound:J=>{J.v-=4;if(J.v<=0)J.dead='소화됨!';return 0;},cur:J=>J.v}),
+ J_('smiley','행복 호르몬','',1,4,'점수 계산된 그림 카드마다 {m+5 배수}',{card:(J,c)=>isFace(c)?{mult:5}:null}),
+ J_('scary','백신','',1,4,'점수 계산된 그림 카드마다 {c+30 칩}',{card:(J,c)=>isFace(c)?{chips:30}:null}),
+ J_('ticket','ATP 합성효소','',1,5,'ATP 카드가 점수 계산되면 {$$4}',{cp:1,card:(J,c)=>c.enh==='gold'?{money:4}:null}),
+ J_('swash','기생 해적','',1,4,'다른 조커들의 판매 가격 합만큼 {m+배수} (현재 {m+#})',{main:J=>{const v=G.jokers.filter(o=>o!==J).reduce((a,o)=>a+sellPrice(o),0);return v?{mult:v}:null;},cur:J=>G?G.jokers.filter(o=>o!==J).reduce((a,o)=>a+sellPrice(o),0):0}),
+ J_('chad','연쇄 복제','',1,4,'첫 번째로 점수 계산된 카드를 2번 더 발동',{retrig:(J,c,x)=>c===x.scoring[0]?2:0}),
+ J_('moon','여왕벌','',1,5,'손에 든 Q마다 {m+13 배수}',{held:(J,c)=>ranked(c)&&c.r===12?{mult:13}:null}),
+ J_('green','분해자','',1,4,'핸드를 플레이할 때마다 {m+1 배수}, 버리기마다 {m-1 배수} (현재 {m+#})',{before:J=>{J.v=(J.v||0)+1;},discard:J=>{J.v=Math.max(0,(J.v||0)-1);return 0;},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
+ J_('parking','휴식 세포','',1,6,'손에 든 그림 카드마다 {d1/2} 확률로 {$$1}',{cp:1,held:(J,c)=>isFace(c)&&chance(1,2)?{money:1}:null}),
+ J_('riffraff','무리 생활','',1,6,'블라인드를 선택하면 일반 조커 최대 2장 생성',{cp:1,blind:()=>{let k=0;while(k<2&&G.jokers.length<jokerSlots()){G.jokers.push(newJoker(genJokerId(1)));k++;}return k?'+조커':null;}}),
  /* ---------------- 희귀 ---------------- */
- J_('stencil','빈 공간','조커 스텐실',2,8,'빈 조커 슬롯 1칸당 {x×1 배수} (자기 자신 포함, 현재 {x×#})',{main:()=>{const v=stencilX();return v>1?{xmult:v}:null;},cur:()=>G?stencilX():1}),
- J_('fourfing','사지 동물','네 개의 손가락',2,7,'{h:flush}와 {h:straight}를 4장으로 만들 수 있음'),
- J_('mime','거울 뉴런','마임',2,5,'손에 든 카드의 능력을 재발동',{retrigHeld:()=>1}),
- J_('dagger','세포 자멸 효소','의식용 단검',2,6,'블라인드를 선택하면 오른쪽 조커를 파괴하고 판매 가격의 2배를 영구 {m배수}로 추가 (현재 {m+#})',{blind:J=>{const i=G.jokers.indexOf(J),r=G.jokers[i+1];if(!r||r.et)return null;J.v=(J.v||0)+2*sellPrice(r);destroyJoker(r);return '흡수!';},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
- J_('marble','석회화','대리석 조커',2,6,'블라인드를 선택하면 덱에 화석 카드 1장 추가',{cp:1,blind:()=>{addToDeck(newCard(2+Math.floor(R()*13),pick(SUITS),'stone'));return '+화석';}}),
- J_('loyalty','면역 반복','도장 쿠폰',2,5,'핸드 6번마다 {x×4 배수} (남은 횟수 #)',{before:J=>{J.v=(J.v||0)+1;},main:J=>J.v&&J.v%6===0?{xmult:4}:null,cur:J=>J.v&&J.v%6===0?0:6-((J.v||0)%6)}),
- J_('dusk','일몰 주기','땅거미',2,5,'라운드의 마지막 핸드에서 점수 계산된 카드를 모두 재발동',{retrig:(J,c,x)=>x.last?1:0}),
- J_('fibo','피보나치 수열','피보나치',2,8,'점수 계산된 A, 2, 3, 5, 8마다 {m+8 배수}',{card:(J,c)=>ranked(c)&&[14,2,3,5,8].includes(c.r)?{mult:8}:null}),
- J_('steelj','외골격','강철 조커',2,7,'덱의 키틴 카드 1장당 {x×0.2 배수} (현재 {x×#})',{main:()=>{const n=G.deck.filter(c=>c.enh==='steel').length;return n?{xmult:1+.2*n}:null;},cur:()=>G?(1+.2*G.deck.filter(c=>c.enh==='steel').length).toFixed(1):'1.0'}),
- J_('hack','세포 분열','삼류',2,6,'점수 계산된 2, 3, 4, 5 카드를 재발동',{retrig:(J,c)=>ranked(c)&&c.r>=2&&c.r<=5?1:0}),
- J_('pareid','패턴 인식','변상증',2,5,'모든 카드를 그림 카드로 취급'),
- J_('space','방사선 돌연변이','우주 조커',2,5,'플레이한 족보의 레벨을 {d1/4} 확률로 올림',{cp:1,before:(J,x)=>{if(chance(1,4)){levelUp(x.type,1,true);return '레벨 업!';}}}),
- J_('burglar','도둑 세포','절도범',2,6,'블라인드를 선택하면 핸드 +3, 버리기를 모두 잃음',{cp:1,blind:()=>{G.hands+=3;G.discards=0;return '+3 핸드';}}),
- J_('board','어둠 적응','칠판',2,6,'손에 든 카드가 모두 {S} 또는 {C}이면 {x×3 배수}',{main:(J,x)=>x.held.every(c=>suitIs(c,'S')||suitIs(c,'C'))?{xmult:3}:null}),
- J_('sixth','여섯째 감각','육감',2,6,'라운드 첫 핸드가 6 한 장이면 그 카드를 파괴하고 변이 카드 생성',{cp:1,before:(J,x)=>{if(x.first&&x.cards.length===1&&ranked(x.cards[0])&&x.cards[0].r===6){x.kill.add(x.cards[0]);mkCons('spectral');return '+변이';}}}),
- J_('constell','적응 방산','별자리',2,6,'소기관 카드를 사용할 때마다 {x×0.1 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},consUsed:(J,d)=>{if(d.kind==='planet')J.v=(J.v||1)+.1;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(1)}),
- J_('hiker','이동 세포','도보 여행자',2,5,'점수 계산된 카드는 칩 +5를 영구히 얻음',{}),
- J_('sharp','독립의 법칙','아바위꾼',2,6,'이번 라운드에 이미 플레이한 족보면 {x×3 배수}',{main:(J,x)=>x.repeat?{xmult:3}:null}),
- J_('madness','암세포 증식','광기',2,7,'스몰·빅 블라인드를 선택하면 {x×0.5 배수} 증가, 무작위 조커 1장 파괴 (현재 {x×#})',{init:J=>{J.v=1;},blind:J=>{if(G.blind===2)return null;J.v+=.5;const o=G.jokers.filter(k=>k!==J&&!k.et);if(o.length)destroyJoker(pick(o));return '증식!';},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(1)}),
- J_('seance','영혼 교신','교령회',2,6,'{h:sflush}를 플레이하면 변이 카드 생성',{cp:1,before:(J,x)=>x.type==='sflush'&&mkCons('spectral')?'+변이':null}),
- J_('vampire','흡혈 박쥐','뱀파이어',2,7,'강화된 카드가 점수 계산되면 강화를 흡수해 {x×0.1 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},before:(J,x)=>{let n=0;for(const c of x.scoring){if(c.enh&&c.enh!=='stone'&&!debuffed(c)){c.enh=null;n++;}}if(n){J.v+=.1*n;return '흡수!';}},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(1)}),
- J_('shortcut','시냅스 도약','지름길',2,7,'{h:straight}를 1랭크씩 건너뛰어 만들 수 있음 (예: 10 8 6 5 3)'),
- J_('hologram','면역 기억','홀로그램',2,7,'덱에 카드가 추가될 때마다 {x×0.25 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(2)}),
- J_('cloud','9번 염색체','클라우드 9',2,7,'라운드 종료 시 덱의 9 1장당 {$$1} (현재 {$$#})',{cp:1,endRound:()=>G.deck.filter(c=>ranked(c)&&c.r===9).length,cur:()=>G?G.deck.filter(c=>ranked(c)&&c.r===9).length:4}),
- J_('rocket','세포 추진','로켓',2,6,'라운드 종료 시 {$$#}, 보스 블라인드를 이길 때마다 지급액 {$+$2}',{cp:1,init:J=>{J.v=1;},endRound:J=>J.v,bossBeaten:J=>{J.v+=2;},cur:J=>J.v||1}),
- J_('midas','ATP 축적','미다스 가면',2,7,'플레이한 그림 카드가 점수 계산되면 ATP 카드가 됨',{before:(J,x)=>{let n=0;x.scoring.forEach(c=>{if(isFace(c)&&!debuffed(c)){c.enh='gold';n++;}});return n?'ATP!':null;}}),
- J_('luchador','면역 회피','루차도르',2,5,'판매하면 현재 보스 블라인드의 능력을 무효화',{sold:()=>{if(G.inRound&&G.blind===2&&!G.bossOff){disableBoss();}}}),
- J_('giftcard','영양 공유','상품권',2,6,'라운드 종료 시 모든 조커와 소모품의 판매 가격 {$+$1}',{endRound:()=>{G.jokers.forEach(o=>o.sb=(o.sb||0)+1);G.cons.forEach(o=>o.sb=(o.sb||0)+1);return 0;}}),
- J_('turtle','종자 저장','검은콩',2,6,'손패 크기 +#, 라운드마다 1 감소',{init:J=>{J.v=5;},hsf:J=>J.v||0,endRound:J=>{J.v--;if(J.v<=0)J.dead='소진!';return 0;},cur:J=>J.v}),
- J_('erosion','골다공증','침식',2,6,'덱이 52장보다 적은 1장마다 {m+4 배수} (현재 {m+#})',{main:()=>{const n=Math.max(0,52-G.deck.length);return n?{mult:4*n}:null;},cur:()=>G?4*Math.max(0,52-G.deck.length):0}),
- J_('tomoon','복리 성장','폭등 기원',2,5,'라운드 종료 시 $5마다 이자 {$$1} 추가'),
- J_('stonej','화석층','석재 조커',2,6,'덱의 화석 카드 1장당 {c+25 칩} (현재 {c+#})',{main:()=>{const n=G.deck.filter(isStone).length;return n?{chips:25*n}:null;},cur:()=>G?25*G.deck.filter(isStone).length:0}),
- J_('luckycat','돌연변이 고양이','행운의 고양이',2,6,'돌연변이 카드가 발동할 때마다 {x×0.25 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},lucky:J=>{J.v+=.25;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(2)}),
- J_('bull','영양 저장','황소',2,6,'보유한 $1마다 {c+2 칩} (현재 {c+#})',{main:()=>G.money>0?{chips:2*G.money}:null,cur:()=>G?Math.max(0,2*G.money):0}),
- J_('dietcola','포도당 음료','다이어트 콜라',2,6,'판매하면 무료 더블 태그 획득',{sold:()=>{gainTag({id:'double'});}}),
- J_('trading','세포 교환','트레이딩 카드',2,6,'라운드 첫 버리기가 1장이면 그 카드를 파괴하고 {$$3}',{discard:(J,cards)=>{if(G.discUsed===1&&cards.length===1){destroyCard(cards[0]);return 3;}return 0;}}),
- J_('flash','기억 세포','암기용 카드',2,5,'상점을 리롤할 때마다 {m+2 배수} 증가 (현재 {m+#})',{reroll:J=>{J.v=(J.v||0)+2;},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
- J_('trousers','이중 세포막','여벌 바지',2,6,'{h:two}가 포함되면 배수 +2 영구 증가 (현재 {m+#})',{before:(J,x)=>{if(x.has.two){J.v=(J.v||0)+2;return '강화!';}},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
- J_('ramen','소화 효소','라면',2,6,'{x×#}, 카드를 버릴 때마다 ×0.01 감소',{init:J=>{J.v=2;},discard:(J,cards)=>{J.v=+(J.v-.01*cards.length).toFixed(2);if(J.v<=1)J.dead='소화 끝!';return 0;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||2).toFixed(2)}),
- J_('seltzer','탄산 탈수효소','탄산수',2,6,'다음 핸드 #번 동안 점수 계산된 카드를 모두 재발동',{init:J=>{J.v=10;},retrig:()=>1,after:J=>{J.v--;if(J.v<=0)J.dead='김 빠짐!';},cur:J=>J.v}),
- J_('castle','세포 성벽','성',2,6,'버린 {#} 카드 1장마다 칩 +3 영구 증가 (라운드마다 문양 변경, 현재 {c+@})',{discard:(J,cards)=>{const n=cards.filter(c=>suitIs(c,G.rv.castle)).length;J.v=(J.v||0)+3*n;return 0;},main:J=>J.v?{chips:J.v}:null,cur:J=>G?G.rv.castle:'S',cur2:J=>J.v||0}),
- J_('bones','골수','해골 아저씨',2,5,'점수가 목표의 25% 이상이면 패배를 막고 스스로 파괴'),
- J_('acrobat','최후의 수축','곡예사',2,6,'라운드의 마지막 핸드에서 {x×3 배수}',{main:(J,x)=>x.last?{xmult:3}:null}),
- J_('sock','신경 전달','희극과 비극',2,6,'점수 계산된 그림 카드를 재발동',{retrig:(J,c)=>isFace(c)?1:0}),
- J_('troub','노래하는 새','음유시인',2,6,'손패 크기 +2, 라운드마다 핸드 -1',{hs:2,hands:-1}),
- J_('cert','세포 인증서','증명서',2,6,'라운드를 시작하면 무작위 인장이 찍힌 카드 1장을 손패에 추가',{cp:1,blind:()=>{const c=newCard(2+Math.floor(R()*13),pick(SUITS));c.seal=pick(SEAL_IDS);c.fresh=true;addToDeck(c);G.hand.push(c);return '+카드';}}),
- J_('smeared','혼합 염색','문질러진 조커',2,7,'{H}와 {D}를 같은 문양으로, {S}와 {C}를 같은 문양으로 취급'),
- J_('throwback','진화의 흔적','회상',2,6,'이번 런에서 건너뛴 블라인드 1개당 {x×0.25 배수} (현재 {x×#})',{main:()=>G.st.skips?{xmult:1+.25*G.st.skips}:null,cur:()=>G?(1+.25*G.st.skips).toFixed(2):'1.00'}),
- J_('roughgem','광물 결정','원석',2,7,'점수 계산된 {D} 카드마다 {$$1}',{cp:1,card:(J,c)=>suitIs(c,'D')?{money:1}:null}),
- J_('bloodst','혈액 결정','혈석',2,7,'점수 계산된 {H} 카드마다 {d1/2} 확률로 {x×1.5 배수}',{card:(J,c)=>suitIs(c,'H')&&chance(1,2)?{xmult:1.5}:null}),
- J_('arrow','가시 세포','화살촉',2,7,'점수 계산된 {S} 카드마다 {c+50 칩}',{card:(J,c)=>suitIs(c,'S')?{chips:50}:null}),
- J_('onyx','엽록 결정','흑마노',2,7,'점수 계산된 {C} 카드마다 {m+7 배수}',{card:(J,c)=>suitIs(c,'C')?{mult:7}:null}),
- J_('glassj','유리 해면','유리 조커',2,6,'유리 카드가 파괴될 때마다 {x×0.75 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},destroyed:(J,cards)=>{const n=cards.filter(c=>c.enh==='glass').length;if(n)J.v+=.75*n;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(2)}),
- J_('showman','공생 쇼','쇼맨',2,5,'같은 조커와 소모품이 상점과 팩에 여러 번 등장할 수 있음'),
- J_('flower','꽃가루','화분',2,6,'점수 계산된 카드에 {D}·{C}·{H}·{S}가 모두 있으면 {x×3 배수}',{main:(J,x)=>{const sc=x.scoring.filter(c=>!debuffed(c));return ['D','C','H','S'].every(s=>sc.some(c=>suitIs(c,s)))?{xmult:3}:null;}}),
- J_('merry','폭식 세포','즐거운 앤디',2,7,'라운드마다 버리기 +3, 손패 크기 -1',{disc:3,hs:-1}),
- J_('oops','확률 증폭','이런, 모두 6이야!',2,4,'모든 확률이 2배'),
- J_('idol','표지 단백질','우상',2,6,'점수 계산된 {#}마다 {x×2 배수} (라운드마다 카드 변경)',{card:(J,c)=>ranked(c)&&c.r===G.rv.idol.r&&suitIs(c,G.rv.idol.s)?{xmult:2}:null,cur:()=>G?G.rv.idol.s+'|'+rankLabel(G.rv.idol.r):'S|A'}),
- J_('seeing','복시','이중시',2,6,'점수 계산된 카드에 {C}와 다른 문양 카드가 함께 있으면 {x×2 배수}',{main:(J,x)=>{const sc=x.scoring.filter(c=>!debuffed(c)&&ranked(c));const cl=sc.find(c=>suitIs(c,'C'));return cl&&sc.some(c=>c!==cl&&SUITS.some(s=>s!=='C'&&suitIs(c,s)))?{xmult:2}:null;}}),
- J_('matador','면역 반격','투우사',2,7,'플레이한 핸드가 보스 블라인드의 능력을 발동시키면 {$$8}',{cp:1,main:(J,x)=>x.bossTrig?{money:8}:null}),
- J_('satellite','위성 세포','인공위성',2,6,'라운드 종료 시 이번 런에서 사용한 소기관 카드 종류 1개당 {$$1} (현재 {$$#})',{cp:1,endRound:()=>G.st.planetSet.length,cur:()=>G?G.st.planetSet.length:0}),
- J_('cartom','시약 합성','카드 점술가',2,6,'블라인드를 선택하면 시약 카드 생성 (빈 슬롯 필요)',{cp:1,blind:()=>mkCons('tarot')?'+시약':null}),
- J_('astro','세포 관찰자','천문학자',2,8,'상점의 소기관 카드와 소기관 팩이 무료'),
- J_('bootstr','자가 증식','자수성가',2,7,'보유한 $5마다 {m+2 배수} (현재 {m+#})',{main:()=>{const n=Math.floor(Math.max(0,G.money)/5);return n?{mult:2*n}:null;},cur:()=>G?2*Math.floor(Math.max(0,G.money)/5):0}),
+ J_('stencil','빈 공간','',2,8,'빈 조커 슬롯 1칸당 {x×1 배수} (자기 자신 포함, 현재 {x×#})',{main:()=>{const v=stencilX();return v>1?{xmult:v}:null;},cur:()=>G?stencilX():1}),
+ J_('fourfing','사지 동물','',2,7,'{h:flush}와 {h:straight}를 4장으로 만들 수 있음'),
+ J_('mime','거울 뉴런','',2,5,'손에 든 카드의 능력을 재발동',{retrigHeld:()=>1}),
+ J_('dagger','세포 자멸 효소','',2,6,'블라인드를 선택하면 오른쪽 조커를 파괴하고 판매 가격의 2배를 영구 {m배수}로 추가 (현재 {m+#})',{blind:J=>{const i=G.jokers.indexOf(J),r=G.jokers[i+1];if(!r||r.et)return null;J.v=(J.v||0)+2*sellPrice(r);destroyJoker(r);return '흡수!';},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
+ J_('marble','석회화','',2,6,'블라인드를 선택하면 덱에 화석 카드 1장 추가',{cp:1,blind:()=>{addToDeck(newCard(2+Math.floor(R()*13),pick(SUITS),'stone'));return '+화석';}}),
+ J_('loyalty','면역 반복','',2,5,'핸드 6번마다 {x×4 배수} (남은 횟수 #)',{before:J=>{J.v=(J.v||0)+1;},main:J=>J.v&&J.v%6===0?{xmult:4}:null,cur:J=>J.v&&J.v%6===0?0:6-((J.v||0)%6)}),
+ J_('dusk','일몰 주기','',2,5,'라운드의 마지막 핸드에서 점수 계산된 카드를 모두 재발동',{retrig:(J,c,x)=>x.last?1:0}),
+ J_('fibo','피보나치 수열','',2,8,'점수 계산된 A, 2, 3, 5, 8마다 {m+8 배수}',{card:(J,c)=>ranked(c)&&[14,2,3,5,8].includes(c.r)?{mult:8}:null}),
+ J_('steelj','외골격','',2,7,'덱의 키틴 카드 1장당 {x×0.2 배수} (현재 {x×#})',{main:()=>{const n=G.deck.filter(c=>c.enh==='steel').length;return n?{xmult:1+.2*n}:null;},cur:()=>G?(1+.2*G.deck.filter(c=>c.enh==='steel').length).toFixed(1):'1.0'}),
+ J_('hack','세포 분열','',2,6,'점수 계산된 2, 3, 4, 5 카드를 재발동',{retrig:(J,c)=>ranked(c)&&c.r>=2&&c.r<=5?1:0}),
+ J_('pareid','패턴 인식','',2,5,'모든 카드를 그림 카드로 취급'),
+ J_('space','방사선 돌연변이','',2,5,'플레이한 족보의 레벨을 {d1/4} 확률로 올림',{cp:1,before:(J,x)=>{if(chance(1,4)){levelUp(x.type,1,true);return '레벨 업!';}}}),
+ J_('burglar','도둑 세포','',2,6,'블라인드를 선택하면 핸드 +3, 버리기를 모두 잃음',{cp:1,blind:()=>{G.hands+=3;G.discards=0;return '+3 핸드';}}),
+ J_('board','어둠 적응','',2,6,'손에 든 카드가 모두 {S} 또는 {C}이면 {x×3 배수}',{main:(J,x)=>x.held.every(c=>suitIs(c,'S')||suitIs(c,'C'))?{xmult:3}:null}),
+ J_('sixth','여섯째 감각','',2,6,'라운드 첫 핸드가 6 한 장이면 그 카드를 파괴하고 변이 카드 생성',{cp:1,before:(J,x)=>{if(x.first&&x.cards.length===1&&ranked(x.cards[0])&&x.cards[0].r===6){x.kill.add(x.cards[0]);mkCons('spectral');return '+변이';}}}),
+ J_('constell','적응 방산','',2,6,'소기관 카드를 사용할 때마다 {x×0.1 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},consUsed:(J,d)=>{if(d.kind==='planet')J.v=(J.v||1)+.1;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(1)}),
+ J_('hiker','이동 세포','',2,5,'점수 계산된 카드는 칩 +5를 영구히 얻음',{}),
+ J_('sharp','독립의 법칙','',2,6,'이번 라운드에 이미 플레이한 족보면 {x×3 배수}',{main:(J,x)=>x.repeat?{xmult:3}:null}),
+ J_('madness','암세포 증식','',2,7,'스몰·빅 블라인드를 선택하면 {x×0.5 배수} 증가, 무작위 조커 1장 파괴 (현재 {x×#})',{init:J=>{J.v=1;},blind:J=>{if(G.blind===2)return null;J.v+=.5;const o=G.jokers.filter(k=>k!==J&&!k.et);if(o.length)destroyJoker(pick(o));return '증식!';},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(1)}),
+ J_('seance','영혼 교신','',2,6,'{h:sflush}를 플레이하면 변이 카드 생성',{cp:1,before:(J,x)=>x.type==='sflush'&&mkCons('spectral')?'+변이':null}),
+ J_('vampire','흡혈 박쥐','',2,7,'강화된 카드가 점수 계산되면 강화를 흡수해 {x×0.1 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},before:(J,x)=>{let n=0;for(const c of x.scoring){if(c.enh&&c.enh!=='stone'&&!debuffed(c)){c.enh=null;n++;}}if(n){J.v+=.1*n;return '흡수!';}},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(1)}),
+ J_('shortcut','시냅스 도약','',2,7,'{h:straight}를 1랭크씩 건너뛰어 만들 수 있음 (예: 10 8 6 5 3)'),
+ J_('hologram','면역 기억','',2,7,'덱에 카드가 추가될 때마다 {x×0.25 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(2)}),
+ J_('cloud','9번 염색체','',2,7,'라운드 종료 시 덱의 9 1장당 {$$1} (현재 {$$#})',{cp:1,endRound:()=>G.deck.filter(c=>ranked(c)&&c.r===9).length,cur:()=>G?G.deck.filter(c=>ranked(c)&&c.r===9).length:4}),
+ J_('rocket','세포 추진','',2,6,'라운드 종료 시 {$$#}, 보스 블라인드를 이길 때마다 지급액 {$+$2}',{cp:1,init:J=>{J.v=1;},endRound:J=>J.v,bossBeaten:J=>{J.v+=2;},cur:J=>J.v||1}),
+ J_('midas','ATP 축적','',2,7,'플레이한 그림 카드가 점수 계산되면 ATP 카드가 됨',{before:(J,x)=>{let n=0;x.scoring.forEach(c=>{if(isFace(c)&&!debuffed(c)){c.enh='gold';n++;}});return n?'ATP!':null;}}),
+ J_('luchador','면역 회피','',2,5,'판매하면 현재 보스 블라인드의 능력을 무효화',{sold:()=>{if(G.inRound&&G.blind===2&&!G.bossOff){disableBoss();}}}),
+ J_('giftcard','영양 공유','',2,6,'라운드 종료 시 모든 조커와 소모품의 판매 가격 {$+$1}',{endRound:()=>{G.jokers.forEach(o=>o.sb=(o.sb||0)+1);G.cons.forEach(o=>o.sb=(o.sb||0)+1);return 0;}}),
+ J_('turtle','종자 저장','',2,6,'손패 크기 +#, 라운드마다 1 감소',{init:J=>{J.v=5;},hsf:J=>J.v||0,endRound:J=>{J.v--;if(J.v<=0)J.dead='소진!';return 0;},cur:J=>J.v}),
+ J_('erosion','골다공증','',2,6,'덱이 52장보다 적은 1장마다 {m+4 배수} (현재 {m+#})',{main:()=>{const n=Math.max(0,52-G.deck.length);return n?{mult:4*n}:null;},cur:()=>G?4*Math.max(0,52-G.deck.length):0}),
+ J_('tomoon','복리 성장','',2,5,'라운드 종료 시 $5마다 이자 {$$1} 추가'),
+ J_('stonej','화석층','',2,6,'덱의 화석 카드 1장당 {c+25 칩} (현재 {c+#})',{main:()=>{const n=G.deck.filter(isStone).length;return n?{chips:25*n}:null;},cur:()=>G?25*G.deck.filter(isStone).length:0}),
+ J_('luckycat','돌연변이 고양이','',2,6,'돌연변이 카드가 발동할 때마다 {x×0.25 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},lucky:J=>{J.v+=.25;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(2)}),
+ J_('bull','영양 저장','',2,6,'보유한 $1마다 {c+2 칩} (현재 {c+#})',{main:()=>G.money>0?{chips:2*G.money}:null,cur:()=>G?Math.max(0,2*G.money):0}),
+ J_('dietcola','포도당 음료','',2,6,'판매하면 무료 더블 태그 획득',{sold:()=>{gainTag({id:'double'});}}),
+ J_('trading','세포 교환','',2,6,'라운드 첫 버리기가 1장이면 그 카드를 파괴하고 {$$3}',{discard:(J,cards)=>{if(G.discUsed===1&&cards.length===1){destroyCard(cards[0]);return 3;}return 0;}}),
+ J_('flash','기억 세포','',2,5,'상점을 리롤할 때마다 {m+2 배수} 증가 (현재 {m+#})',{reroll:J=>{J.v=(J.v||0)+2;},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
+ J_('trousers','이중 세포막','',2,6,'{h:two}가 포함되면 배수 +2 영구 증가 (현재 {m+#})',{before:(J,x)=>{if(x.has.two){J.v=(J.v||0)+2;return '강화!';}},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
+ J_('ramen','소화 효소','',2,6,'{x×#}, 카드를 버릴 때마다 ×0.01 감소',{init:J=>{J.v=2;},discard:(J,cards)=>{J.v=+(J.v-.01*cards.length).toFixed(2);if(J.v<=1)J.dead='소화 끝!';return 0;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||2).toFixed(2)}),
+ J_('seltzer','탄산 탈수효소','',2,6,'다음 핸드 #번 동안 점수 계산된 카드를 모두 재발동',{init:J=>{J.v=10;},retrig:()=>1,after:J=>{J.v--;if(J.v<=0)J.dead='김 빠짐!';},cur:J=>J.v}),
+ J_('castle','세포 성벽','',2,6,'버린 {#} 카드 1장마다 칩 +3 영구 증가 (라운드마다 문양 변경, 현재 {c+@})',{discard:(J,cards)=>{const n=cards.filter(c=>suitIs(c,G.rv.castle)).length;J.v=(J.v||0)+3*n;return 0;},main:J=>J.v?{chips:J.v}:null,cur:J=>G?G.rv.castle:'S',cur2:J=>J.v||0}),
+ J_('bones','골수','',2,5,'점수가 목표의 25% 이상이면 패배를 막고 스스로 파괴'),
+ J_('acrobat','최후의 수축','',2,6,'라운드의 마지막 핸드에서 {x×3 배수}',{main:(J,x)=>x.last?{xmult:3}:null}),
+ J_('sock','신경 전달','',2,6,'점수 계산된 그림 카드를 재발동',{retrig:(J,c)=>isFace(c)?1:0}),
+ J_('troub','노래하는 새','',2,6,'손패 크기 +2, 라운드마다 핸드 -1',{hs:2,hands:-1}),
+ J_('cert','세포 인증서','',2,6,'라운드를 시작하면 무작위 인장이 찍힌 카드 1장을 손패에 추가',{cp:1,blind:()=>{const c=newCard(2+Math.floor(R()*13),pick(SUITS));c.seal=pick(SEAL_IDS);c.fresh=true;addToDeck(c);G.hand.push(c);return '+카드';}}),
+ J_('smeared','혼합 염색','',2,7,'{H}와 {D}를 같은 문양으로, {S}와 {C}를 같은 문양으로 취급'),
+ J_('throwback','진화의 흔적','',2,6,'이번 런에서 건너뛴 블라인드 1개당 {x×0.25 배수} (현재 {x×#})',{main:()=>G.st.skips?{xmult:1+.25*G.st.skips}:null,cur:()=>G?(1+.25*G.st.skips).toFixed(2):'1.00'}),
+ J_('roughgem','광물 결정','',2,7,'점수 계산된 {D} 카드마다 {$$1}',{cp:1,card:(J,c)=>suitIs(c,'D')?{money:1}:null}),
+ J_('bloodst','혈액 결정','',2,7,'점수 계산된 {H} 카드마다 {d1/2} 확률로 {x×1.5 배수}',{card:(J,c)=>suitIs(c,'H')&&chance(1,2)?{xmult:1.5}:null}),
+ J_('arrow','가시 세포','',2,7,'점수 계산된 {S} 카드마다 {c+50 칩}',{card:(J,c)=>suitIs(c,'S')?{chips:50}:null}),
+ J_('onyx','엽록 결정','',2,7,'점수 계산된 {C} 카드마다 {m+7 배수}',{card:(J,c)=>suitIs(c,'C')?{mult:7}:null}),
+ J_('glassj','유리 해면','',2,6,'유리 카드가 파괴될 때마다 {x×0.75 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},destroyed:(J,cards)=>{const n=cards.filter(c=>c.enh==='glass').length;if(n)J.v+=.75*n;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(2)}),
+ J_('showman','공생 쇼','',2,5,'같은 조커와 소모품이 상점과 팩에 여러 번 등장할 수 있음'),
+ J_('flower','꽃가루','',2,6,'점수 계산된 카드에 {D}·{C}·{H}·{S}가 모두 있으면 {x×3 배수}',{main:(J,x)=>{const sc=x.scoring.filter(c=>!debuffed(c));return ['D','C','H','S'].every(s=>sc.some(c=>suitIs(c,s)))?{xmult:3}:null;}}),
+ J_('merry','폭식 세포','',2,7,'라운드마다 버리기 +3, 손패 크기 -1',{disc:3,hs:-1}),
+ J_('oops','확률 증폭','',2,4,'모든 확률이 2배'),
+ J_('idol','표지 단백질','',2,6,'점수 계산된 {#}마다 {x×2 배수} (라운드마다 카드 변경)',{card:(J,c)=>ranked(c)&&c.r===G.rv.idol.r&&suitIs(c,G.rv.idol.s)?{xmult:2}:null,cur:()=>G?G.rv.idol.s+'|'+rankLabel(G.rv.idol.r):'S|A'}),
+ J_('seeing','복시','',2,6,'점수 계산된 카드에 {C}와 다른 문양 카드가 함께 있으면 {x×2 배수}',{main:(J,x)=>{const sc=x.scoring.filter(c=>!debuffed(c)&&ranked(c));const cl=sc.find(c=>suitIs(c,'C'));return cl&&sc.some(c=>c!==cl&&SUITS.some(s=>s!=='C'&&suitIs(c,s)))?{xmult:2}:null;}}),
+ J_('matador','면역 반격','',2,7,'플레이한 핸드가 보스 블라인드의 능력을 발동시키면 {$$8}',{cp:1,main:(J,x)=>x.bossTrig?{money:8}:null}),
+ J_('satellite','위성 세포','',2,6,'라운드 종료 시 이번 런에서 사용한 소기관 카드 종류 1개당 {$$1} (현재 {$$#})',{cp:1,endRound:()=>G.st.planetSet.length,cur:()=>G?G.st.planetSet.length:0}),
+ J_('cartom','시약 합성','',2,6,'블라인드를 선택하면 시약 카드 생성 (빈 슬롯 필요)',{cp:1,blind:()=>mkCons('tarot')?'+시약':null}),
+ J_('astro','세포 관찰자','',2,8,'상점의 소기관 카드와 소기관 팩이 무료'),
+ J_('bootstr','자가 증식','',2,7,'보유한 $5마다 {m+2 배수} (현재 {m+#})',{main:()=>{const n=Math.floor(Math.max(0,G.money)/5);return n?{mult:2*n}:null;},cur:()=>G?2*Math.floor(Math.max(0,G.money)/5):0}),
  /* ---------------- 레어 ---------------- */
- J_('dnaj','DNA 복제','DNA',3,8,'라운드 첫 핸드가 카드 1장이면 그 카드를 영구 복제해 손패에 추가',{cp:1,before:(J,x)=>{if(x.first&&x.cards.length===1){const c=cloneCard(x.cards[0]);c.fresh=true;addToDeck(c);G.hand.push(c);return '복제!';}}}),
- J_('vagabond','떠돌이 세포','방랑자',3,8,'보유 금액이 $4 이하일 때 핸드를 플레이하면 시약 카드 생성',{cp:1,before:()=>G.money<=4&&mkCons('tarot')?'+시약':null}),
- J_('baron','혈당 조절자','남작',3,8,'손에 든 K마다 {x×1.5 배수}',{held:(J,c)=>ranked(c)&&c.r===13?{xmult:1.5}:null}),
- J_('obelisk','항생제 내성','오벨리스크',3,8,'가장 많이 플레이한 족보가 아닌 핸드를 연속으로 낼 때마다 {x×0.2 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},before:(J,x)=>{if(x.type===x.mp&&G.lv[x.mp].played>0)J.v=1;else J.v+=.2;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(1)}),
- J_('baseball','공생 군단','야구 카드',3,8,'희귀 조커마다 {x×1.5 배수}'),
- J_('ancient','고대 세균','고대 조커',3,8,'점수 계산된 {#} 카드마다 {x×1.5 배수} (라운드마다 문양 변경)',{card:(J,c)=>suitIs(c,G.rv.ancient)?{xmult:1.5}:null,cur:()=>G?G.rv.ancient:'S'}),
- J_('campfire','세포 소각','캠프파이어',3,9,'카드를 판매할 때마다 {x×0.25 배수} 증가, 보스를 이기면 초기화 (현재 {x×#})',{init:J=>{J.v=1;},anySold:J=>{J.v+=.25;},bossBeaten:J=>{J.v=1;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(2)}),
- J_('blueprint','바이러스 복제','청사진',3,10,'오른쪽 조커의 능력을 복사',{copy:'right'}),
- J_('wee','미세 세포','조그마한 조커',3,8,'점수 계산된 2마다 칩 +8 영구 증가 (현재 {c+#})',{card:(J,c)=>{if(ranked(c)&&c.r===2){J.v=(J.v||0)+8;return {msg:'강화!'};}},main:J=>J.v?{chips:J.v}:null,cur:J=>J.v||0}),
- J_('hitroad','이동 신호','여행 출발',3,8,'이번 라운드에 버린 J 1장마다 {x×0.5 배수} (현재 {x×#})',{init:J=>{J.v=1;},discard:(J,cards)=>{J.v+=.5*cards.filter(c=>ranked(c)&&c.r===11).length;return 0;},endRound:J=>{J.v=1;return 0;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(1)}),
- J_('duo','이배체','듀오',3,8,'{h:pair}가 포함되면 {x×2 배수}',{main:(J,x)=>x.has.pair?{xmult:2}:null}),
- J_('trio','삼배체','트리오',3,8,'{h:three}이 포함되면 {x×3 배수}',{main:(J,x)=>x.has.three?{xmult:3}:null}),
- J_('family','사배체','가족',3,8,'{h:four}가 포함되면 {x×4 배수}',{main:(J,x)=>x.has.four?{xmult:4}:null}),
- J_('order','염기 서열','결사단',3,8,'{h:straight}가 포함되면 {x×3 배수}',{main:(J,x)=>x.has.straight?{xmult:3}:null}),
- J_('tribe','종 분화','패거리',3,8,'{h:flush}가 포함되면 {x×2 배수}',{main:(J,x)=>x.has.flush?{xmult:2}:null}),
- J_('stuntman','극한 생물','스턴트맨',3,7,'{c+250 칩}, 손패 크기 -2',{hs:-2,main:()=>({chips:250})}),
- J_('invisible','투명 세포','투명 조커',3,8,'라운드 2개를 지난 뒤 판매하면 무작위 조커 1장을 복제 (현재 #/2)',{endRound:J=>{J.v=(J.v||0)+1;return 0;},sold:J=>{if((J.v||0)>=2){const o=G.jokers.filter(k=>k!==J);if(o.length){const s=pick(o);const c=newJoker(s.id,s.ed==='neg'?null:s.ed);c.v=s.v;G.jokers.push(c);toast(JD[s.id].n+' 복제!');}}},cur:J=>Math.min(2,J.v||0)}),
- J_('brainstorm','대뇌 피질','브레인스토밍',3,10,'가장 왼쪽 조커의 능력을 복사',{copy:'left'}),
- J_('license','분화 면허','운전면허증',3,7,'덱에 강화된 카드가 16장 이상이면 {x×3 배수} (현재 #장)',{main:()=>G.deck.filter(c=>c.enh).length>=16?{xmult:3}:null,cur:()=>G?G.deck.filter(c=>c.enh).length:0}),
- J_('burnt','세포 연소','타버린 조커',3,8,'라운드 첫 버리기에 버린 카드의 족보 레벨을 올림',{discard:(J,cards)=>{if(G.discUsed===1){levelUp(evalHand(cards).type,1,true);}return 0;}}),
+ J_('dnaj','DNA 복제','',3,8,'라운드 첫 핸드가 카드 1장이면 그 카드를 영구 복제해 손패에 추가',{cp:1,before:(J,x)=>{if(x.first&&x.cards.length===1){const c=cloneCard(x.cards[0]);c.fresh=true;addToDeck(c);G.hand.push(c);return '복제!';}}}),
+ J_('vagabond','떠돌이 세포','',3,8,'보유 금액이 $4 이하일 때 핸드를 플레이하면 시약 카드 생성',{cp:1,before:()=>G.money<=4&&mkCons('tarot')?'+시약':null}),
+ J_('baron','혈당 조절자','',3,8,'손에 든 K마다 {x×1.5 배수}',{held:(J,c)=>ranked(c)&&c.r===13?{xmult:1.5}:null}),
+ J_('obelisk','항생제 내성','',3,8,'가장 많이 플레이한 족보가 아닌 핸드를 연속으로 낼 때마다 {x×0.2 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},before:(J,x)=>{if(x.type===x.mp&&G.lv[x.mp].played>0)J.v=1;else J.v+=.2;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(1)}),
+ J_('baseball','공생 군단','',3,8,'희귀 조커마다 {x×1.5 배수}'),
+ J_('ancient','고대 세균','',3,8,'점수 계산된 {#} 카드마다 {x×1.5 배수} (라운드마다 문양 변경)',{card:(J,c)=>suitIs(c,G.rv.ancient)?{xmult:1.5}:null,cur:()=>G?G.rv.ancient:'S'}),
+ J_('campfire','세포 소각','',3,9,'카드를 판매할 때마다 {x×0.25 배수} 증가, 보스를 이기면 초기화 (현재 {x×#})',{init:J=>{J.v=1;},anySold:J=>{J.v+=.25;},bossBeaten:J=>{J.v=1;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(2)}),
+ J_('blueprint','바이러스 복제','',3,10,'오른쪽 조커의 능력을 복사',{copy:'right'}),
+ J_('wee','미세 세포','',3,8,'점수 계산된 2마다 칩 +8 영구 증가 (현재 {c+#})',{card:(J,c)=>{if(ranked(c)&&c.r===2){J.v=(J.v||0)+8;return {msg:'강화!'};}},main:J=>J.v?{chips:J.v}:null,cur:J=>J.v||0}),
+ J_('hitroad','이동 신호','',3,8,'이번 라운드에 버린 J 1장마다 {x×0.5 배수} (현재 {x×#})',{init:J=>{J.v=1;},discard:(J,cards)=>{J.v+=.5*cards.filter(c=>ranked(c)&&c.r===11).length;return 0;},endRound:J=>{J.v=1;return 0;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(1)}),
+ J_('duo','이배체','',3,8,'{h:pair}가 포함되면 {x×2 배수}',{main:(J,x)=>x.has.pair?{xmult:2}:null}),
+ J_('trio','삼배체','',3,8,'{h:three}이 포함되면 {x×3 배수}',{main:(J,x)=>x.has.three?{xmult:3}:null}),
+ J_('family','사배체','',3,8,'{h:four}가 포함되면 {x×4 배수}',{main:(J,x)=>x.has.four?{xmult:4}:null}),
+ J_('order','염기 서열','',3,8,'{h:straight}가 포함되면 {x×3 배수}',{main:(J,x)=>x.has.straight?{xmult:3}:null}),
+ J_('tribe','종 분화','',3,8,'{h:flush}가 포함되면 {x×2 배수}',{main:(J,x)=>x.has.flush?{xmult:2}:null}),
+ J_('stuntman','극한 생물','',3,7,'{c+250 칩}, 손패 크기 -2',{hs:-2,main:()=>({chips:250})}),
+ J_('invisible','투명 세포','',3,8,'라운드 2개를 지난 뒤 판매하면 무작위 조커 1장을 복제 (현재 #/2)',{endRound:J=>{J.v=(J.v||0)+1;return 0;},sold:J=>{if((J.v||0)>=2){const o=G.jokers.filter(k=>k!==J);if(o.length){const s=pick(o);const c=newJoker(s.id,s.ed==='neg'?null:s.ed);c.v=s.v;G.jokers.push(c);toast(JD[s.id].n+' 복제!');}}},cur:J=>Math.min(2,J.v||0)}),
+ J_('brainstorm','대뇌 피질','',3,10,'가장 왼쪽 조커의 능력을 복사',{copy:'left'}),
+ J_('license','분화 면허','',3,7,'덱에 강화된 카드가 16장 이상이면 {x×3 배수} (현재 #장)',{main:()=>G.deck.filter(c=>c.enh).length>=16?{xmult:3}:null,cur:()=>G?G.deck.filter(c=>c.enh).length:0}),
+ J_('burnt','세포 연소','',3,8,'라운드 첫 버리기에 버린 카드의 족보 레벨을 올림',{discard:(J,cards)=>{if(G.discUsed===1){levelUp(evalHand(cards).type,1,true);}return 0;}}),
  /* ---------------- 전설 ---------------- */
- J_('canio','카니오','카니오',4,20,'그림 카드가 파괴될 때마다 {x×1 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},destroyed:(J,cards)=>{const n=cards.filter(isFace).length;if(n)J.v+=n;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>J.v||1}),
- J_('triboulet','트리불레','트리불레',4,20,'점수 계산된 K와 Q마다 {x×2 배수}',{card:(J,c)=>ranked(c)&&(c.r===12||c.r===13)?{xmult:2}:null}),
- J_('yorick','요릭','요릭',4,20,'카드를 23장 버릴 때마다 {x×1 배수} 증가 (현재 {x×#}, 남은 카드 @장)',{init:J=>{J.v=1;J.n=23;},discard:(J,cards)=>{J.n-=cards.length;while(J.n<=0){J.v+=1;J.n+=23;}return 0;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>J.v||1,cur2:J=>J.n==null?23:J.n}),
- J_('chicot','치코','치코',4,20,'모든 보스 블라인드의 능력을 무효화'),
- J_('perkeo','페르케오','페르케오',4,20,'상점을 나갈 때 무작위 소모품 1장의 네거티브 복제본 생성',{shopEnd:()=>{if(!G.cons.length)return;const k=pick(G.cons);G.cons.push({uid:uid(),id:k.id,neg:1});toast('페르케오: '+CONS[k.id].n+' 복제');}}),
+ J_('canio','공통 조상 루카','',4,20,'그림 카드가 파괴될 때마다 {x×1 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},destroyed:(J,cards)=>{const n=cards.filter(isFace).length;if(n)J.v+=n;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>J.v||1}),
+ J_('triboulet','미토콘드리아 이브','',4,20,'점수 계산된 K와 Q마다 {x×2 배수}',{card:(J,c)=>ranked(c)&&(c.r===12||c.r===13)?{xmult:2}:null}),
+ J_('yorick','불멸 세포주','',4,20,'카드를 23장 버릴 때마다 {x×1 배수} 증가 (현재 {x×#}, 남은 카드 @장)',{init:J=>{J.v=1;J.n=23;},discard:(J,cards)=>{J.n-=cards.length;while(J.n<=0){J.v+=1;J.n+=23;}return 0;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>J.v||1,cur2:J=>J.n==null?23:J.n}),
+ J_('chicot','곰벌레','',4,20,'모든 보스 블라인드의 능력을 무효화'),
+ J_('perkeo','원시 수프','',4,20,'상점을 나갈 때 무작위 소모품 1장의 네거티브 복제본 생성',{shopEnd:()=>{if(!G.cons.length)return;const k=pick(G.cons);G.cons.push({uid:uid(),id:k.id,neg:1});toast('페르케오: '+CONS[k.id].n+' 복제');}}),
+ /* ---------------- 바이오 확장 (오리지널) ---------------- */
+ J_('ribosome','리보솜','',1,4,'점수 계산된 2·3·4·5마다 {c+15 칩}',{card:(J,c)=>ranked(c)&&c.r<=5?{chips:15}:null}),
+ J_('lysosome','리소좀','',1,5,'카드를 버릴 때마다 1장당 {c+3 칩} 영구 증가 (현재 {c+#})',{discard:(J,cards)=>{J.v=(J.v||0)+3*cards.length;return 0;},main:J=>J.v?{chips:J.v}:null,cur:J=>J.v||0}),
+ J_('golgi','골지체','',1,4,'카드를 정확히 4장 플레이하면 {m+12 배수}',{main:(J,x)=>x.cards.length===4?{mult:12}:null}),
+ J_('vacuole','액포','',1,4,'손에 남은 카드 1장당 {c+8 칩}',{main:(J,x)=>x.held.length?{chips:8*x.held.length}:null}),
+ J_('centriole','중심체','',1,4,'카드를 2장 또는 4장 플레이하면 {m+7 배수}',{main:(J,x)=>x.cards.length===2||x.cards.length===4?{mult:7}:null}),
+ J_('peroxisome','퍼옥시좀','',1,5,'점수 계산된 강화 카드마다 {m+4 배수}',{card:(J,c)=>c.enh&&c.enh!=='stone'?{mult:4}:null}),
+ J_('cilia','섬모','',1,4,'라운드 마지막 핸드에 {c+120 칩}',{main:(J,x)=>x.last?{chips:120}:null}),
+ J_('mucus','점액층','',1,4,'라운드 첫 핸드에 {m+10 배수}',{main:(J,x)=>x.first?{mult:10}:null}),
+ J_('saliva','침샘','',1,4,'버리기를 할 때마다 {d1/3} 확률로 {$$2}',{cp:1,discard:()=>chance(1,3)?2:0}),
+ J_('yeast','효모','',1,5,'라운드 종료 시 돈을 주고, 매 라운드 {$$1}씩 늘어남 (최대 $6, 현재 {$$#})',{cp:1,endRound:J=>{J.v=Math.min(6,(J.v||0)+1);return J.v;},cur:J=>J.v||0}),
+ J_('neuron','신경 세포','',1,4,'점수 계산된 A·K마다 {c+20 칩}',{card:(J,c)=>ranked(c)&&(c.r===14||c.r===13)?{chips:20}:null}),
+ J_('tear','눈물샘','',1,4,'플레이한 카드에 {H}가 있으면 {c+50 칩}',{main:(J,x)=>x.cards.some(c=>suitIs(c,'H'))?{chips:50}:null}),
+ J_('pollen','꽃가루관','',1,5,'손에 남은 {C} 카드마다 {m+3 배수}',{held:(J,c)=>suitIs(c,'C')?{mult:3}:null}),
+ J_('spore','포자 낭','',1,5,'라운드가 끝날 때마다 {c+12 칩} 성장 (현재 {c+#})',{endRound:J=>{J.v=(J.v||0)+12;return 0;},main:J=>J.v?{chips:J.v}:null,cur:J=>J.v||0}),
+ J_('napump','나트륨 펌프','',1,5,'핸드마다 {c+60 칩}과 {m+8 배수}를 번갈아 줌',{main:J=>{J.t=!J.t;return J.t?{chips:60}:{mult:8};}}),
+ J_('osmo','삼투 조절','',1,4,'남은 핸드 수가 남은 버리기 수와 같으면 {m+14 배수}',{main:()=>G.hands===G.discards?{mult:14}:null}),
+ J_('villi','융털','',1,5,'점수 계산된 {D}마다 {c+30 칩}',{card:(J,c)=>suitIs(c,'D')?{chips:30}:null}),
+ J_('platelet2','혈액 응고','',1,4,'플레이한 카드가 모두 같은 색(빨강/검정)이면 {m+9 배수}',{main:(J,x)=>{const red=c=>suitIs(c,'H')||suitIs(c,'D'),blk=c=>suitIs(c,'S')||suitIs(c,'C');const r=x.cards.filter(ranked);return r.length&&(r.every(red)||r.every(blk))?{mult:9}:null;}}),
+ J_('mitosis','체세포 분열','',2,7,'같은 숫자 카드가 2장 이상 점수 계산되면 그중 첫 카드를 재발동',{retrig:(J,c,x)=>ranked(c)&&x.scoring.filter(o=>ranked(o)&&o.r===c.r).length>=2&&x.scoring.find(o=>ranked(o)&&o.r===c.r)===c?1:0}),
+ J_('meiosis','감수 분열','',2,7,'카드를 5장 플레이하면 점수 계산된 가장 낮은 카드를 2번 재발동',{retrig:(J,c,x)=>{if(x.cards.length!==5||!ranked(c))return 0;const r=x.scoring.filter(ranked);let lo=r[0];for(const o of r)if(o.r<lo.r)lo=o;return lo===c?2:0;}}),
+ J_('antibody','항체','',2,7,'보스 블라인드에서 {x×2 배수}',{main:()=>G.blind===2?{xmult:2}:null}),
+ J_('catalyst','효소 촉매','',2,6,'같은 족보를 연달아 낼 때마다 {m+3 배수} 증가, 다른 족보면 초기화 (현재 {m+#})',{before:(J,x)=>{J.v=x.type===J.lt?(J.v||0)+3:3;J.lt=x.type;},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
+ J_('insulin','인슐린','',2,6,'보유 금액이 $20 이상이면 {x×1.5 배수}',{main:()=>G.money>=20?{xmult:1.5}:null}),
+ J_('stemcell','다능성 세포','',2,7,'블라인드를 선택할 때 시약 카드 생성 (빈 슬롯 필요)',{cp:1,blind:()=>mkCons('tarot')?'+시약':null}),
+ J_('symbiont','공생 세균','',2,6,'보유한 일반 조커 1장당 {m+4 배수} (현재 {m+#})',{main:()=>{const n=G.jokers.filter(J=>JD[J.id].rar===1).length;return n?{mult:4*n}:null;},cur:()=>G?4*G.jokers.filter(J=>JD[J.id].rar===1).length:0}),
+ J_('adrenaline','아드레날린','',2,7,'라운드 마지막 핸드에 {x×2 배수}',{main:(J,x)=>x.last?{xmult:2}:null}),
+ J_('telomere','텔로미어','',2,7,'{x×# 배수}, 핸드를 플레이할 때마다 0.1씩 감소',{init:J=>{J.v=3;},main:J=>J.v>1?{xmult:J.v}:null,after:J=>{J.v=Math.round((J.v-.1)*10)/10;if(J.v<=1)J.dead='소진!';},cur:J=>(J.v||3).toFixed(1)}),
+ J_('apoptosis','세포 자멸사','',2,6,'카드가 파괴될 때마다 1장당 {m+4 배수} 증가 (현재 {m+#})',{destroyed:(J,cards)=>{J.v=(J.v||0)+4*cards.length;},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
+ J_('photosyn','명반응','',2,6,'점수 계산된 빨강 카드마다 {c+12 칩}, 검정 카드마다 {m+2 배수}',{card:(J,c)=>suitIs(c,'H')||suitIs(c,'D')?{chips:12}:suitIs(c,'S')||suitIs(c,'C')?{mult:2}:null}),
+ J_('macrophage','대식세포','',2,6,'버린 그림 카드 1장당 {m+1 배수} 영구 증가 (현재 {m+#})',{discard:(J,cards)=>{J.v=(J.v||0)+cards.filter(isFace).length;return 0;},main:J=>J.v?{mult:J.v}:null,cur:J=>J.v||0}),
+ J_('heartbeat','심장 박동','',2,6,'핸드마다 {m+3}→{m+6}→{m+9}→{m+12} 배수를 차례로 줌 (다음 {m+#})',{before:J=>{J.v=(J.v||0)%4+1;},main:J=>({mult:3*(J.v||1)}),cur:J=>3*((J.v||0)%4+1)}),
+ J_('chromatid','자매 염색분체','',2,6,'손에 남은 같은 숫자 카드 쌍마다 {m+5 배수}',{main:(J,x)=>{const m={};x.held.filter(ranked).forEach(c=>m[c.r]=(m[c.r]||0)+1);const n=Object.values(m).reduce((a,v)=>a+Math.floor(v/2),0);return n?{mult:5*n}:null;}}),
+ J_('plasmid','플라스미드','',2,6,'상점을 리롤할 때마다 {c+10 칩} 영구 증가 (현재 {c+#})',{reroll:J=>{J.v=(J.v||0)+10;},main:J=>J.v?{chips:J.v}:null,cur:J=>J.v||0}),
+ J_('neural','신경망','',2,7,'손패 크기 1장당 {m+2 배수} (현재 {m+#})',{main:()=>({mult:2*handSize()}),cur:()=>G?2*handSize():16}),
+ J_('crispr','유전자 가위','',3,8,'점수 계산된 첫 번째 카드가 {x×2 배수}',{card:(J,c,x)=>c===x.scoring.find(o=>!debuffed(o))?{xmult:2}:null}),
+ J_('prion','프리온','',3,8,'핸드를 플레이할 때마다 {x×0.1 배수} 증가, 버리기를 하면 증가분이 절반으로 (현재 {x×#})',{init:J=>{J.v=1;},before:J=>{J.v=Math.round((J.v+.1)*100)/100;},discard:J=>{J.v=Math.round((1+(J.v-1)/2)*100)/100;return 0;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(2)}),
+ J_('selection','자연 선택','',3,8,'보스 블라인드를 이길 때마다 {x×0.5 배수} 증가 (현재 {x×#})',{init:J=>{J.v=1;},bossBeaten:J=>{J.v+=.5;},main:J=>J.v>1?{xmult:J.v}:null,cur:J=>(J.v||1).toFixed(1)}),
+ J_('genome','게놈 지도','',3,8,'이번 런에서 플레이한 서로 다른 족보 1종당 {x×0.25 배수} (현재 {x×#})',{main:()=>{const n=HANDS.filter(h=>G.lv[h.id].played>0).length;return n?{xmult:1+.25*n}:null;},cur:()=>G?(1+.25*HANDS.filter(h=>G.lv[h.id].played>0).length).toFixed(2):'1.00'}),
+ J_('virion','바이러스 입자','',3,8,'점수 계산된 카드마다 {d1/3} 확률로 {x×1.3 배수}',{card:()=>chance(1,3)?{xmult:1.3}:null}),
+ J_('gaia','가이아 생물권','',4,20,'보유한 조커 1장당 {x×0.5 배수} (현재 {x×#})',{main:()=>({xmult:1+.5*G.jokers.length}),cur:()=>G?(1+.5*G.jokers.length).toFixed(1):'1.0'}),
+ J_('cambrian','캄브리아 대폭발','',4,20,'라운드 첫 핸드에 {x×4 배수}',{main:(J,x)=>x.first?{xmult:4}:null}),
 ];
 const JD={};JOKERS.forEach(j=>JD[j.id]=j);
 const RAR={1:{n:'일반',col:'#3a7ae0'},2:{n:'희귀',col:'#2fae58'},3:{n:'레어',col:'#e0453f'},4:{n:'전설',col:'#9a4ae8'}};
@@ -894,8 +953,8 @@ function cardURL(c){
     drawSeal(g,c.seal);
   });
 }
-const backURL=()=>url('back',g=>{const W=CW*SS,H=CH*SS;frame(g,'#123e48','#06181c');
-  for(let j=4;j<H-4;j++)for(let i=3;i<W-3;i++)if((i+j)%8===0||(i-j+800)%8===0)F(g,i,j,1,1,'#1b5866');
+const backURL=(dk)=>{dk=dk||(G&&G.dk)||'basic';const bd=DK[dk]||DK.basic,bc=dk==='basic'?'#123e48':shade(bd.col,-.55),gc=dk==='basic'?'#1b5866':shade(bd.col,-.3);return url('back'+(dk==='basic'?'':dk),g=>{const W=CW*SS,H=CH*SS;frame(g,bc,shade(bc,-.6));
+  for(let j=4;j<H-4;j++)for(let i=3;i<W-3;i++)if((i+j)%8===0||(i-j+800)%8===0)F(g,i,j,1,1,gc);
   F(g,7,7,W-14,1,'#d8b050');F(g,7,H-8,W-14,1,'#d8b050');F(g,7,7,1,H-14,'#d8b050');F(g,W-8,7,1,H-14,'#d8b050');
   [[3,3],[CW-5,3],[3,CH-5],[CW-5,CH-5]].forEach(([x,y])=>{P(g,x,y,2,2,'#d8b050');F(g,x*2,y*2,1,1,'#fff6c8');});
   for(let y=14;y<H-14;y++){const a=y*.2,x1=32+Math.sin(a)*14,x2=32-Math.sin(a)*14,fr=Math.cos(a)>0;
@@ -903,7 +962,7 @@ const backURL=()=>url('back',g=>{const W=CW*SS,H=CH*SS;frame(g,'#123e48','#06181
     F(g,Math.round(x1)-3,y,7,1,'rgba(122,240,216,.12)');F(g,Math.round(x2)-3,y,7,1,'rgba(255,138,176,.12)');}
   for(let y=14;y<H-14;y++){const a=y*.2,x1=32+Math.sin(a)*14,x2=32-Math.sin(a)*14,fr=Math.cos(a)>0;
     F(g,Math.round(x1)-1,y,3,1,fr?'#7af0d8':'#2a9a90');F(g,Math.round(x2)-1,y,3,1,fr?'#ff8ab0':'#a03a6a');if(fr){F(g,Math.round(x1)-1,y,1,1,'#e0fff8');F(g,Math.round(x2)-1,y,1,1,'#ffe0ec');}}
-  circ(g,16,22,4,'#0c2e36');ring(g,16,22,4,'#d8b050');P(g,15,21,2,2,'#ffd34a');F(g,30,42,1,1,'#fff');bevel(g,.6);});
+  circ(g,16,22,4,'#0c2e36');ring(g,16,22,4,'#d8b050');P(g,15,21,2,2,'#ffd34a');F(g,30,42,1,1,'#fff');bevel(g,.6);});};
 
 /* ---------- 조커 그림 ---------- */
 const X_=(g,x,y,c)=>{line(g,x-3,y-4,x+3,y+4,c,2);line(g,x+3,y-4,x-3,y+4,c,2);};
@@ -969,7 +1028,17 @@ const ART={
  dnaj:g=>{for(let y=6;y<=38;y++){const a=y*.36,x1=16+Math.sin(a)*9,x2=16-Math.sin(a)*9;if(y%4===0)line(g,x1,y,x2,y,'#fff2a8');P(g,x1-1,y,3,1,'#e0a020');P(g,x2-1,y,3,1,'#ffd34a');}},
 };
 const ART_ALIAS={moon:'queen'};
-const JART={credit:['card','#ffd34a','#3a6ad0'],eightball:['eight','#fff','#2a2340'],chaos:['dice','#fff','#e0453f'],gros:['banana','#ffe04a','#3a8a3a'],business:['card','#2a2340','#e8dcc0'],
+const JART={
+ ribosome:['dna','#ffd34a','#5a3a8a'],lysosome:['trash','#fff','#c0405a'],golgi:['wave','#ffb3d0','#5a2a6a'],vacuole:['drop','#bff0ff','#2a6a8a'],centriole:['X','#ffd34a','#3a3a5a'],
+ peroxisome:['orb','#c8ffb0','#2a6a3a'],cilia:['wave','#fff','#3a8ae8'],mucus:['drop','#d8ff9a','#4a7a2a'],saliva:['mouth','#ff8ab0','#5a1a3a'],yeast:['bean','#f0d8a0','#7a5a2a'],
+ neuron:['bolt','#ffd34a','#2a2a6a'],tear:['drop','#8ad8ff','#e0453f'],pollen:['flower','#ffe04a','#3a7a3a'],spore:['plus','#c8a0ff','#3a2a5a'],napump:['swap','#fff','#d0603a'],
+ osmo:['double','#8ae0ff','#1a4a6a'],villi:['hand','#ffd0a8','#c04a3a'],platelet2:['heart','#fff','#a0202a'],mitosis:['double','#3fcf6a','#1a3a2a'],meiosis:['swap','#ff9ac0','#3a1a4a'],
+ antibody:['needle','#fff','#3a6ad0'],catalyst:['flask','#7aff9a','#1a5a3a'],insulin:['needle','#ffd34a','#5a3a1a'],stemcell:['orb','#fff','#3fb8a0'],symbiont:['cat','#fff','#4a8a5a'],
+ adrenaline:['bolt','#fff','#e0453f'],telomere:['dna','#ff8a3a','#2a1a3a'],apoptosis:['skull','#ffb3d0','#3a1a2a'],photosyn:['sun','#ffe04a','#2f9a4a'],macrophage:['mouth','#fff','#7a4ac0'],
+ heartbeat:['heart','#ff4a5a','#2a0a1a'],chromatid:['X','#ff9ac0','#3a2a6a'],plasmid:['orb','#ffd34a','#c04a7a'],neural:['spiral','#8ae0ff','#1a1a4a'],crispr:['dagger','#7af0d8','#1a2a3a'],
+ prion:['spiral','#ff6a6a','#2a0a0a'],selection:['crown','#3fcf6a','#1a2a1a'],genome:['dna','#8ad8ff','#1a2a5a'],virion:['tumor','#c08aff','#1a0a2a'],
+ gaia:['leaf','#7aff9a','#0a3a2a'],cambrian:['fish','#ffd34a','#0a2a4a'],
+credit:['card','#ffd34a','#3a6ad0'],eightball:['eight','#fff','#2a2340'],chaos:['dice','#fff','#e0453f'],gros:['banana','#ffe04a','#3a8a3a'],business:['card','#2a2340','#e8dcc0'],
  faceless:['mask','#fff','#7a4ac0'],superpos:['A','#fff','#3a6ad0'],todo:['clock','#2a2340','#ffd34a'],cavendish:['banana','#ffe04a','#1f5a2a'],redcard:['card','#fff','#e0303f'],
  square:['square','#3a6ad0','#cfe6ff'],walkie:['bolt','#ffd34a','#3a3a5a'],photo:['camera','#2a2340','#ff9ac0'],mailin:['mail','#e0453f','#e8dcc0'],hallu:['spiral','#c08aff','#2a1a40'],
  fortune:['eye','#ffd34a','#5a2a8a'],smiley:['smile','#2a2340','#ffd34a'],ticket:['ticket','#a86a00','#ffd34a'],swash:['skull','#fff','#2a2340'],chad:['card','#2a2340','#c8d0e0'],
@@ -1118,6 +1187,28 @@ function destroyCards(list){
 const destroyCard=c=>destroyCards([c]);
 function newJoker(id,ed){const J={uid:uid(),id,ed:ed||null};if(JD[id].init)JD[id].init(J);return J;}
 function destroyJoker(J,force){if(J.et&&!force)return false;markExit('j'+J.uid,'burn');const i=G.jokers.indexOf(J);if(i>=0)G.jokers.splice(i,1);if(G.disabledJ===J.uid)G.disabledJ=null;}
+/* ---------- 시작 덱 (런 시작 전에 고름) ---------- */
+const DECKS=[
+ {id:'basic',n:'기본 세포 덱',col:'#2f8f96',d:'특별한 효과 없음 · 52장 표준 구성'},
+ {id:'rbc',n:'적혈구 덱',col:'#d23a3a',d:'라운드마다 {m+1 버리기}'},
+ {id:'plasma',n:'혈장 덱',col:'#3a6ad0',d:'라운드마다 {c+1 핸드}'},
+ {id:'corpus',n:'황체 덱',col:'#d8a020',d:'시작 자금 {$+$10}'},
+ {id:'chloro',n:'엽록체 덱',col:'#2f9a4a',d:'라운드 끝에 남은 핸드당 {$$2}, 남은 버리기당 {$$1}\n이자를 받지 않음'},
+ {id:'melano',n:'멜라닌 덱',col:'#3a3048',d:'조커 슬롯 +1\n라운드마다 핸드 -1'},
+ {id:'enzyme',n:'효소 덱',col:'#8a4ad0',d:'시험관 꽂이 바우처와 시약 카드 2장으로 시작'},
+ {id:'mito',n:'미토콘드리아 덱',col:'#d0603a',d:'망원경 바우처로 시작\n소모품 슬롯 -1'},
+ {id:'virus',n:'바이러스 덱',col:'#1a8a8a',d:'변이 팩이 훨씬 자주 등장\n변이 카드 1장으로 시작'},
+ {id:'anucle',n:'무핵 덱',col:'#8a7a6a',d:'그림 카드(J·Q·K) 없이 40장으로 시작'},
+ {id:'hetero',n:'이형 접합 덱',col:'#c04a7a',d:'{S} 26장 + {H} 26장으로 시작'},
+ {id:'cycle',n:'세포 주기 덱',col:'#4a5ad0',d:'시약 상인 · 소기관 상인 · 추가 배양 접시 바우처로 시작'},
+ {id:'polyp',n:'다배체 덱',col:'#d07ab0',d:'손패 크기 +2\n조커 슬롯 -1'},
+ {id:'twin',n:'쌍둥이 덱',col:'#5a8ae0',d:'보스 블라인드를 이길 때마다 더블 태그 획득'},
+ {id:'homeo',n:'항상성 덱',col:'#a85ad8',d:'점수 계산 직전에 칩과 배수를 똑같이 맞춤\n블라인드 요구 점수 ×2'},
+ {id:'mutant',n:'돌연변이 덱',col:'#e07a2a',d:'모든 카드의 숫자와 무늬가 무작위'},
+ {id:'stem',n:'줄기세포 덱',col:'#3fb8a0',d:'무작위 일반 조커 1장과 네거티브 희귀 조커 1장으로 시작\n상점 리롤 비용 +$1'},
+];
+const DK={};DECKS.forEach(d=>DK[d.id]=d);
+const deckOn=id=>!!G&&(G.dk||'basic')===id;
 const STAKES=[
  {n:'흰색 판돈',col:'#f0f0f0',d:'기본 난이도'},
  {n:'빨간색 판돈',col:'#e0453f',d:'스몰 블라인드 클리어 보상이 없음'},
@@ -1136,7 +1227,7 @@ function anteBase(a){if(a<1)return 100;const A=ANTE_T[stake()>=6?2:stake()>=3?1:
 const blindDef=i=>i===0?SMALL:i===1?BIG:BOSS_BY[G.boss];
 const bossDisabled=()=>!!G&&(G.bossOff||hasJ('chicot'));
 const blindMult=i=>i===0?1:i===1?1.5:(bossDisabled()?Math.min(2,BOSS_BY[G.boss].mult||2):(BOSS_BY[G.boss].mult||2));
-const blindReq=i=>{const v=anteBase(G.ante)*blindMult(i);return isFinite(v)?Math.floor(v):Infinity;};
+const blindReq=i=>{const v=anteBase(G.ante)*blindMult(i)*(deckOn('homeo')?2:1);return isFinite(v)?Math.floor(v):Infinity;};
 const blindReward=i=>i===0?(stake()>=2?0:3):i===1?4:(BOSS_BY[G.boss].fin?8:5);
 const bossOn=id=>!!G&&G.inRound&&G.blind===2&&G.boss===id&&!bossDisabled();
 const jokerSlots=()=>G.jSlots+G.jokers.filter(J=>J.ed==='neg').length;
@@ -1158,7 +1249,7 @@ function mkCons(kind,id,neg){
   G.cons.push({uid:uid(),id:id||pick(pool).id,neg:neg?1:0});return true;
 }
 
-function newRun(st){
+function newRun(st,dk){
   UID=1;
   G={v:2,ante:1,round:0,money:4,deck:[],draw:[],hand:[],played:[],packHand:null,jokers:[],cons:[],vouchers:[],tags:[],lv:{},
     blind:0,bst:['','',''],boss:null,bossSeen:[],skipTags:[],voucherOffer:null,voucherBought:false,dirUsed:false,
@@ -1166,10 +1257,30 @@ function newRun(st){
     stake:st||1,baseHands:4,baseDisc:(st||1)>=5?2:3,hs:8,jSlots:5,cSlots:2,shopSlots:2,sort:'rank',juggle:0,verdant:false,disabledJ:null,houseFirst:false,fishFlip:false,
     shop:null,reroll:5,freeRR:0,pack:null,packQueue:[],packFrom:'shop',lastCon:null,lastHand:null,cash:null,flags:{},rv:null,
     st:{hands:0,discUnused:0,skips:0,best:0,planets:0,tarots:0,planetSet:[]},won:false,over:false};
-  for(const s of SUITS)for(let r=2;r<=14;r++)G.deck.push(newCard(r,s));
+  G.dk=DK[dk]?dk:'basic';
+  for(const s of SUITS)for(let r=2;r<=14;r++){
+    if(G.dk==='anucle'&&r>=11&&r<=13)continue;
+    if(G.dk==='hetero')G.deck.push(newCard(r,s==='C'?'S':s==='D'?'H':s));
+    else if(G.dk==='mutant')G.deck.push(newCard(2+Math.floor(R()*13),pick(SUITS)));
+    else G.deck.push(newCard(r,s));}
   HANDS.forEach(h=>G.lv[h.id]={lv:1,played:0});
+  applyDeck();
   rollRV();setupAnte();
   const S=stats();S.runs++;saveStats(S);
+}
+function applyDeck(){
+  switch(G.dk){
+    case 'rbc':G.baseDisc++;break;
+    case 'plasma':G.baseHands++;break;
+    case 'corpus':G.money+=10;break;
+    case 'melano':G.jSlots++;G.baseHands--;break;
+    case 'enzyme':G.vouchers.push('crystal');G.cSlots++;mkCons('tarot');mkCons('tarot');break;
+    case 'mito':G.vouchers.push('telescope');G.cSlots=Math.max(1,G.cSlots-1);break;
+    case 'virus':mkCons('spectral');break;
+    case 'cycle':G.vouchers.push('tarotm','planetm','overstock');break;
+    case 'polyp':G.hs+=2;G.jSlots--;break;
+    case 'stem':{G.reroll++;const c=JOKERS.filter(j=>j.rar===1),u=JOKERS.filter(j=>j.rar===2);G.jokers.push(newJoker(pick(c).id));G.jokers.push(newJoker(pick(u).id,'neg'));break;}
+  }
 }
 function setupAnte(){G.blind=0;G.bst=['','',''];G.boss=pickBoss();G.skipTags=[rollTag(),rollTag()];G.voucherOffer=rollVoucher();G.voucherBought=false;G.dirUsed=false;
   const S=stats();if(G.ante>S.bestAnte){S.bestAnte=G.ante;saveStats(S);}uMax('ante',G.ante);uBlind('small');uBlind('big');uBlind(G.boss);}
@@ -1374,6 +1485,7 @@ async function scoreHand(ev,repeat,mp,bossTrig){
   }
   // ⑤ 천문대 바우처 (모든 조커 뒤)
   if(G.vouchers.includes('observ'))for(const K of G.cons){const d=CONS[K.id];if(d.kind==='planet'&&d.hand===ev.type)await addEff(S,{xmult:1.5},EL('k'+K.uid));}
+  if(deckOn('homeo')){const a=(S.c+S.m)/2;S.c=a;S.m=a;pop($('#vMult'),'균형!','t');sfx('xmult');setCM(Math.floor(a),Math.floor(a));await sleep(420);}
   let total=Math.floor(S.c*S.m);if(isNaN(total))total=Infinity;
   SCORING=false;
   return {total,kill:x.kill};
@@ -1452,7 +1564,8 @@ async function winRound(saved){
   BUSY=true;clearUI();sfx(G.blind===2?'bossWin':'win');bigText(saved?'골수 덕분에 생존!':'블라인드 클리어!','#7aff9a');blindBlast(G.blind===2);sweepToDeck(G.hand);
   G.bst[G.blind]='done';
   const items=[[blindDef(G.blind).n+' 클리어'+(blindReward(G.blind)?'':' (빨간색 판돈: 보상 없음)'),blindReward(G.blind)]];
-  if(G.hands>0)items.push([`남은 핸드 ${G.hands}개 ($1씩)`,G.hands]);
+  const hv=deckOn('chloro')?2:1;if(G.hands>0)items.push([`남은 핸드 ${G.hands}개 ($${hv}씩)`,G.hands*hv]);
+  if(deckOn('chloro')&&G.discards>0)items.push([`남은 버리기 ${G.discards}회 ($1씩)`,G.discards]);
   const mime=cntJ('mime');let gold=0;
   for(const c of G.hand){if(debuffed(c))continue;const reps=1+(c.seal==='red'?1:0)+mime;
     if(c.enh==='gold')gold+=3*reps;
@@ -1461,7 +1574,7 @@ async function winRound(saved){
   G.jokers.forEach((J,i)=>{const r=resolveJ(i);if(!r||!r.d.endRound||G.disabledJ===J.uid)return;if(r.J!==J&&!r.d.cp)return;const m=r.d.endRound(r.J);if(m>0)items.push([JD[J.id].n+(r.J!==J?' (복사)':''),m]);});
   for(const J of G.jokers){if(J.rent)items.push([JD[J.id].n+' 대여료',-3]);if(J.per>0){J.per--;if(J.per===0){J.perished=1;}}}
   const cap=G.vouchers.includes('moneytree')?20:G.vouchers.includes('seed')?10:5,base=Math.floor(Math.max(0,G.money)/5);
-  const interest=Math.min(cap,base)+cntJ('tomoon')*base;
+  const interest=deckOn('chloro')?0:Math.min(cap,base)+cntJ('tomoon')*base;
   if(interest>0)items.push([`이자 ($5당 $1, 최대 $${cap})`,interest]);
   G.intRun=base>=cap?(G.intRun||0)+1:0;uMax('intRun',G.intRun);
   G.st.discUnused+=G.discards;G.juggle=0;
@@ -1477,6 +1590,7 @@ function cashOut(){
   {const cb=$('#cashBtn');if(cb&&G.cash.total>0)coinsTo(ctr(cb),ctr($('#vMoney')),Math.max(4,G.cash.total*2),()=>bumpEl($('#vMoney'),.6));}
   G.money+=G.cash.total;sfx('cash');G.cash=null;clearHandName();
   if(G.blind===2){
+    if(deckOn('twin')){gainTag({id:'double'});toast('쌍둥이 덱: 더블 태그 획득');}
     for(const J of G.jokers){const f=JD[J.id].bossBeaten;if(f)f(J);}
     const inv=G.tags.filter(t=>t.id==='invest').length;if(inv){G.money+=25*inv;G.tags=G.tags.filter(t=>t.id!=='invest');toast(`투자 태그: +$${25*inv}`);}
     const wasFinal=G.ante===8&&!G.won;
@@ -1576,7 +1690,7 @@ function shopItem(){
   return {kind:'planet',id:pick(planetPool()).id,price:hasJ('astro')?0:disc(3)};
 }
 function genPack(){
-  const pk=wpick([['standard',4],['arcana',4],['celestial',4],['buffoon',1.2],['spectral',.6]],x=>x[1])[0];
+  const pk=wpick([['standard',4],['arcana',4],['celestial',4],['buffoon',1.2],['spectral',deckOn('virus')?3.5:.6]],x=>x[1])[0];
   const size=wpick([['normal',4],['jumbo',2],['mega',.5]],x=>x[1])[0];
   return {kind:'pack',pk,size,price:pk==='celestial'&&hasJ('astro')?0:disc(PSIZE[size].cost)};
 }
@@ -1999,7 +2113,7 @@ function tipCard(c){if(c.fd)return null;let h=`<h4>${isStone(c)?'화석 카드':
   if(c.enh&&c.enh!=='stone')h+=`<br><b>${ENH[c.enh].n}</b>: ${fmtDesc(ENH[c.enh].d)}`;if(c.ed)h+=`<br><b>${EDS[c.ed].n}</b>: ${fmtDesc(EDS[c.ed].d)}`;if(c.seal)h+=`<br><b>${SEALS[c.seal].n}</b>: ${fmtDesc(SEALS[c.seal].d)}`;
   if(debuffed(c))h+=`<br><span class="tm">디버프: 점수 계산 안 됨</span>`;return h+'</div>';}
 function tipJoker(id,J,ed){const d=JD[id];const tmp=J||{uid:0,id};if(!J&&d.init)d.init(tmp);const cur=d.cur?d.cur(tmp):null,cur2=d.cur2?d.cur2(tmp):null;
-  let h=`<h4>${d.n}</h4><div class="d">${fmtDesc(d.d,cur,cur2)}</div><div class="tg">${chipTag(RAR[d.rar].n,RAR[d.rar].col)}${ed?chipTag(EDS[ed].n,EDS[ed].col):''}</div><div style="text-align:center;font-size:14px" class="tdim">원작: ${d.o}</div>`;
+  let h=`<h4>${d.n}</h4><div class="d">${fmtDesc(d.d,cur,cur2)}</div><div class="tg">${chipTag(RAR[d.rar].n,RAR[d.rar].col)}${ed?chipTag(EDS[ed].n,EDS[ed].col):''}</div>`;
   if(J&&J.et)h+=`<div class="d" style="margin-top:4px"><b>영구</b>: 판매하거나 파괴할 수 없음</div>`;
   if(J&&J.per!=null)h+=`<div class="d" style="margin-top:4px"><b>소멸성</b>: ${J.perished?'<span class="tm">디버프됨 (효과 없음)</span>':J.per+'라운드 뒤 디버프'}</div>`;
   if(J&&J.rent)h+=`<div class="d" style="margin-top:4px"><b>대여</b>: 라운드 종료 시 {$}3 지불</div>`.replace('{$}','$');
@@ -2170,7 +2284,7 @@ function modal(html){$('#mbox').innerHTML=html;$('#modal').classList.remove('hid
 function closeModal(){$('#modal').classList.add('hidden');}
 function runInfo(){
   if(!G)return;const rows=HANDS.filter(h=>!h.hidden||G.lv[h.id].played>0).reverse().map(h=>{const v=handVal(h.id);return `<tr><td>${h.n}</td><td><span class="lv">lv.${G.lv[h.id].lv}</span></td><td class="cmv"><b class="chips">${fmt(v.c)}</b> × <b class="mult">${fmt(v.m)}</b></td><td style="color:var(--dim)">${G.lv[h.id].played}회</td></tr>`;}).join('');
-  modal(`<h2>런 정보</h2><p style="text-align:center"><b style="color:${STAKES[stake()-1].col};font-weight:400">● ${STAKES[stake()-1].n}</b></p><table class="htab"><tr><th>족보</th><th>레벨</th><th>칩 × 배수</th><th>플레이</th></tr>${rows}</table>
+  modal(`<h2>런 정보</h2><p style="text-align:center"><b style="color:${(DK[G.dk]||DK.basic).col};font-weight:400">■ ${(DK[G.dk]||DK.basic).n}</b> · <b style="color:${STAKES[stake()-1].col};font-weight:400">● ${STAKES[stake()-1].n}</b><br><small class="tdim">${fmtDesc((DK[G.dk]||DK.basic).d).replace(/<br>/g,' · ')}</small></p><table class="htab"><tr><th>족보</th><th>레벨</th><th>칩 × 배수</th><th>플레이</th></tr>${rows}</table>
     <h3>바우처 (보유 ${new Set(G.vouchers).size}/${VOUCHERS.length})</h3><div class="vgrid">${voucherRows()}</div>
     <h3>대기 중인 태그</h3><div class="vlist">${G.tags.length?G.tags.map(t=>`<span>${TAG_BY[t.id].n}</span>`).join(''):'<span>없음</span>'}</div>
     <div class="mb"><button class="btn" data-m="deck">덱 보기</button><button class="btn blue" data-m="close">닫기</button></div>`);
@@ -2210,6 +2324,9 @@ function optModal(){
   $('#oMus').oninput=e=>{OPT.music=+e.target.value;if(AU.mus)AU.mus.gain.value=OPT.music*.55;saveOpt();};
 }
 $('#modal').addEventListener('click',e=>{
+  const ct=e.target.closest('[data-ctab]');if(ct){COLL_SEL=null;sfx('click');collModal(ct.dataset.ctab);return;}
+  const cj=e.target.closest('[data-cj]');if(cj){COLL_SEL=cj.dataset.cj;sfx('hover');const sc=$('#mbox .cbody')?$('#mbox .cbody').scrollTop:0;collModal('j');const nb=$('#mbox .cbody');if(nb)nb.scrollTop=sc;return;}
+  const dkb=e.target.closest('[data-deck],[data-deckat]');if(dkb){const i=DECKS.findIndex(d=>d.id===DK_SEL),n=DECKS.length;const ni=dkb.dataset.deckat!=null?+dkb.dataset.deckat:(i+(+dkb.dataset.deck)+n)%n;DK_SEL=DECKS[ni].id;try{localStorage.setItem('biotroDeck',DK_SEL);}catch(err){}sfx('click');stakeModal();return;}
   const sk=e.target.closest('[data-stake]');if(sk){STK_SEL=+sk.dataset.stake;try{localStorage.setItem('biotroStake',STK_SEL);}catch(err){}sfx('click');stakeModal();return;}
   const sp=e.target.closest('[data-sp]');if(sp){OPT.speed=+sp.dataset.sp;saveOpt();optModal();return;}
   const fx=e.target.closest('[data-fx]');if(fx){OPT.fx=+fx.dataset.fx;saveOpt();applyFxOpt();if(!fxOn())setFlame(0);sfx('click');optModal();return;}
@@ -2217,7 +2334,7 @@ $('#modal').addEventListener('click',e=>{
   const b=e.target.closest('[data-m]');if(!b){if(e.target.id==='modal'&&G&&G.phase!=='over')closeModal();return;}
   const m=b.dataset.m;sfx('click');
   if(m==='close')closeModal();else if(m==='deck')deckView();else if(m==='help')helpModal();
-  else if(m==='new'){stakeModal();}else if(m==='go'){startNew(STK_SEL);}else if(m==='title'){closeModal();showTitle();}
+  else if(m==='new'){stakeModal();}else if(m==='go'){startNew(STK_SEL,DK_SEL);}else if(m==='title'){closeModal();showTitle();}
   else if(m==='abandon'){if(confirm('이번 런을 포기할까요? 진행 상황이 사라집니다.')){try{localStorage.removeItem('biotroRun');}catch(err){}G=null;closeModal();showTitle();}}
 });
 
@@ -2226,12 +2343,12 @@ function showTitle(){
   if(G&&!G.over)save();
   $('#title').classList.remove('hidden');ST.classList.add('ttl');clearUI();BG.mood='title';
   const has=!!localStorage.getItem('biotroRun');$('#tCont').hidden=!has;
-  const S=stats();$('#tStat').textContent=S.runs?`플레이 ${S.runs}회 · 승리 ${S.wins}회 · 최고 앤티 ${S.bestAnte} · 최고 핸드 ${fmt(S.bestHand)}점`:'발라트로에서 영감을 받은 생명과학 포커 로그라이크';
+  const S=stats();$('#tStat').textContent=S.runs?`플레이 ${S.runs}회 · 승리 ${S.wins}회 · 최고 앤티 ${S.bestAnte} · 최고 핸드 ${fmt(S.bestHand)}점`:'생명과학 포커 로그라이크';
   const f=$('#tfan');f.innerHTML='';[[14,'S'],[13,'H'],[12,'C'],[11,'D'],[10,'S']].forEach(([r,s],i)=>{const im=new Image();im.src=i===2?jokerURL('mad'):cardURL({r,s,enh:i===4?'gold':null});im.style.left=(i*80+10)+'px';im.style.top=(Math.abs(i-2)*8+8)+'px';im.style.transform=`rotate(${(i-2)*7}deg)`;f.appendChild(im);});
 }
 function hideTitle(){$('#title').classList.add('hidden');ST.classList.remove('ttl');}
-function startNew(st){closeModal();newRun(st);hideTitle();clearHandName();$('#rScore').textContent='0';render();save();sfx('select');}
-function continueRun(){if(!load()){toast('저장된 게임이 없습니다');return;}hideTitle();clearHandName();if(G.phase==='over'){showTitle();return;}render();sfx('select');}
+function startNew(st,dk){closeModal();newRun(st,dk);$('#deckImg').src=backURL();hideTitle();clearHandName();$('#rScore').textContent='0';render();save();sfx('select');}
+function continueRun(){if(!load()){toast('저장된 게임이 없습니다');return;}$('#deckImg').src=backURL();hideTitle();clearHandName();if(G.phase==='over'){showTitle();return;}render();sfx('select');}
 
 /* =========================================================
    소리 — 효과음 + 생성형 배경음악 (화면마다 분위기 전환)
@@ -2407,14 +2524,33 @@ $('#bInfo').onclick=()=>{auInit();sfx('click');runInfo();};$('#bOpt').onclick=()
 $('#deckPile').onclick=()=>{auInit();sfx('click');deckView();};
 $('#tNew').onclick=()=>{auInit();if(localStorage.getItem('biotroRun')&&!confirm('저장된 런이 있어요. 새 게임을 시작하면 사라집니다. 계속할까요?'))return;stakeModal();};
 let STK_SEL=Math.max(1,+(localStorage.getItem('biotroStake')||1));
+let DK_SEL=(()=>{try{const v=localStorage.getItem('biotroDeck');return DK[v]?v:'basic';}catch(e){return 'basic';}})();
 function stakeModal(){
   const S=stats();
   const rows=STAKES.map((t,i)=>`<button data-stake="${i+1}" style="width:100%;text-align:left;border-radius:8px;padding:4px 10px;border-bottom:2px solid #2e2850;${STK_SEL===i+1?'background:#3a3260;':''}">
     <span style="display:flex;align-items:center;gap:10px;line-height:1.2;font-size:19px"><img class="px" style="width:28px;height:28px" src="${chipURL(t.col,'star')}" alt=""><span><b style="font-weight:400">${t.n}</b>${S.stakeWin>i?' <span class="gold" style="font-size:15px">✔ 클리어</span>':''}<br><small style="color:var(--dim);font-size:14px">${i?'이전 판돈 효과 + ':''}${t.d}</small></span></span></button>`).join('');
-  modal(`<h2>판돈 선택</h2><div style="display:flex;flex-direction:column;gap:4px">${rows}</div>
-   <div class="mb"><button class="btn big blue" data-m="go">${STAKES[STK_SEL-1].n}으로 시작</button><button class="btn big" data-m="close">취소</button></div>`);
+  const D=DK[DK_SEL]||DK.basic,di=DECKS.indexOf(D);
+  const deckRow=`<div class="dkpick" style="--dc:${D.col}"><button class="dkarr" data-deck="-1" aria-label="이전 덱">‹</button>
+    <img class="px dkimg" src="${backURL(D.id)}" alt=""><div class="dkinfo"><div class="dkn">${D.n} <small>${di+1}/${DECKS.length}</small></div><div class="dkd">${fmtDesc(D.d)}</div>
+    <div class="dkdots">${DECKS.map((x,i)=>`<i data-deckat="${i}" style="${i===di?'background:'+x.col+';width:16px':''}"></i>`).join('')}</div></div>
+    <button class="dkarr" data-deck="1" aria-label="다음 덱">›</button></div>`;
+  modal(`<h2>덱 선택</h2>${deckRow}<h3 style="margin:10px 0 4px">판돈</h3><div style="display:flex;flex-direction:column;gap:4px">${rows}</div>
+   <div class="mb"><button class="btn big blue" data-m="go">${D.n} · ${STAKES[STK_SEL-1].n}으로 시작</button><button class="btn big" data-m="close">취소</button></div>`);
 }
-$('#tCont').onclick=()=>{auInit();continueRun();};$('#tHelp').onclick=()=>{auInit();helpModal();};$('#tOpt').onclick=()=>{auInit();optModal();};
+$('#tCont').onclick=()=>{auInit();continueRun();};$('#tColl').onclick=()=>{auInit();sfx('click');collModal('j');};
+let COLL_TAB='j',COLL_SEL=null;
+function collModal(tab){COLL_TAB=tab||COLL_TAB;
+  const tabs=`<div class="ctabs"><button class="${COLL_TAB==='j'?'on':''}" data-ctab="j">조커 ${JOKERS.length}장</button><button class="${COLL_TAB==='d'?'on':''}" data-ctab="d">시작 덱 ${DECKS.length}종</button></div>`;
+  let body='';
+  if(COLL_TAB==='j'){
+    body=[1,2,3,4].map(r=>{const L=JOKERS.filter(j=>j.rar===r);return `<h3 style="color:${RAR[r].col}">${RAR[r].n} <small>${L.length}장</small></h3><div class="cgrid">${L.map(j=>`<img class="px${COLL_SEL===j.id?' on':''}" data-cj="${j.id}" src="${jokerURL(j.id)}" alt="${j.n}" title="${j.n}">`).join('')}</div>`;}).join('');
+    const d=COLL_SEL&&JD[COLL_SEL];
+    body=`<div class="cdesc">${d?`<b style="color:${RAR[d.rar].col}">${d.n}</b> <small>${RAR[d.rar].n} · $${d.cost}</small><br>${fmtDesc(d.d,d.cur?(()=>{const t={uid:0,id:d.id};if(d.init)d.init(t);try{return d.cur(t);}catch(e){return '';}})():'')}`:'조커를 누르면 효과가 보여요'}</div>`+body;
+  }else{
+    body=`<div class="clist">${DECKS.map(d=>`<div class="crow" style="--dc:${d.col}"><img class="px" src="${backURL(d.id)}" alt=""><div><b>${d.n}</b><br>${fmtDesc(d.d)}</div></div>`).join('')}</div>`;
+  }
+  modal(`<h2>도감</h2>${tabs}<div class="cbody">${body}</div><div class="mb"><button class="btn big" data-m="close">닫기</button></div>`);
+}$('#tHelp').onclick=()=>{auInit();helpModal();};$('#tOpt').onclick=()=>{auInit();optModal();};
 $('#act').addEventListener('pointerdown',e=>e.stopPropagation());
 ST.addEventListener('pointerover',e=>{const t=e.target.closest('.card,button,.bopt');if(t&&t!==UI.hov){UI.hov=t;if(e.pointerType==='mouse')sfx('hover');}else if(!t)UI.hov=null;});
 ST.addEventListener('pointerdown',e=>{auInit();if(!e.target.closest('#act,#modal,.card,button'))clearUI();});
