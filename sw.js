@@ -1,14 +1,14 @@
 /* BIO ARCADE 서비스 워커: 처음 접속할 때 전체 게임을 저장해 두고, 이후에는 오프라인에서도 실행. */
-const VERSION = 'biogame-hub-v126-thumbs4';
+const VERSION = 'biogame-hub-v127-immune-line';
 const FONT_CACHE = 'bio-arcade-fonts';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './games/bio-beat.html', './games/bio-kart.html',
   './games/biotro.html',
-  './games/cell-brawl.html', './games/only-up.html', './games/bio-strike.html', './ilog.js', './goal.js', './icons.js', './device.js', './rank.js', './net.js', './lyric-audio.js', './games/cell-frontier.html', './games/bio-tower.html', './games/bio-pyramid.html', './games/bio-pyramid/tw.css', './games/cell-raid.html', './games/lab-forge.html', './vendor/peerjs.min.js', './games/cell-raid/engine.js', './games/cell-raid/data.js', './games/cell-raid/world.js', './games/cell-raid/art.js', './games/cell-raid/props.js', './games/cell-raid/chars.js', './games/cell-raid/game.js', './games/cell-raid/ui.js', './vendor/matter.min.js',
+  './games/cell-brawl.html', './games/only-up.html', './games/immune-line.html', './games/bio-strike.html', './ilog.js', './goal.js', './icons.js', './device.js', './rank.js', './net.js', './lyric-audio.js', './games/cell-frontier.html', './games/bio-tower.html', './games/bio-pyramid.html', './games/bio-pyramid/tw.css', './games/cell-raid.html', './games/lab-forge.html', './vendor/peerjs.min.js', './games/cell-raid/engine.js', './games/cell-raid/data.js', './games/cell-raid/world.js', './games/cell-raid/art.js', './games/cell-raid/props.js', './games/cell-raid/chars.js', './games/cell-raid/game.js', './games/cell-raid/ui.js', './vendor/matter.min.js',
   './assets/bio-beat.jpg', './assets/bio-kart.jpg',
   './assets/biotro.jpg',
-  './assets/cell-brawl.jpg', './assets/only-up.jpg', './assets/lab-forge.jpg', './assets/bio-strike.jpg', './assets/cell-frontier.jpg', './assets/bio-tower.jpg', './assets/bio-pyramid.jpg', './assets/cell-raid.jpg', './icons/icon-online-192.png', './icons/icon-online-512.png', './icons/icon-lan-192.png', './icons/icon-wifi-192.png',
+  './assets/cell-brawl.jpg', './assets/only-up.jpg', './assets/lab-forge.jpg', './assets/immune-line.jpg', './assets/bio-strike.jpg', './assets/cell-frontier.jpg', './assets/bio-tower.jpg', './assets/bio-pyramid.jpg', './assets/cell-raid.jpg', './icons/icon-online-192.png', './icons/icon-online-512.png', './icons/icon-lan-192.png', './icons/icon-wifi-192.png',
   './icons/icon-v2-192.png', './icons/icon-v2-512.png', './icons/icon-v2-maskable-512.png',
   './icons/apple-touch-icon-v2.png', './icons/favicon-v2-32.png',
   './vendor/three.min.js', './vendor/peerjs.min.js',

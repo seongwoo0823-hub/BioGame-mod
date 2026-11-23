@@ -1,0 +1,1436 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>면역 방어선 · IMMUNE LINE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#fff;--navy:#1d2350;--glass:rgba(20,26,64,.82);--line:rgba(255,255,255,.16);--acc:#5eead4;--gold:#ffd23a;--red:#ff5a6a;
+  --sat:env(safe-area-inset-top,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);--sab:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#ff9fb0;color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;word-break:keep-all;overflow-wrap:anywhere;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block}
+button{font-family:inherit;cursor:pointer;color:inherit}
+.scr{position:fixed;inset:0;z-index:5;display:none}
+.scr.on{display:flex}
+.btn{border:0;border-radius:14px;padding:12px 22px;min-height:46px;font-weight:900;font-size:16px;background:rgba(255,255,255,.14);color:#fff;box-shadow:inset 0 -4px 0 rgba(0,0,0,.2)}
+.btn:hover{background:rgba(255,255,255,.22)}
+.btn.big{background:linear-gradient(180deg,#7dffb0,#2fcf7a);color:#073a22;box-shadow:inset 0 -5px 0 #1f9a58,0 6px 18px rgba(47,207,122,.35)}
+.btn.danger{background:#c83a4a;margin-top:12px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+h1,h2,h3,.bh{font-family:'Black Han Sans',sans-serif;font-weight:400;letter-spacing:.01em}
+/* 메뉴 버튼 · 시트 */
+#gMenu{position:fixed;z-index:30;top:calc(10px + var(--sat));left:calc(10px + var(--sal));width:46px;height:46px;border-radius:14px;border:1px solid var(--line);background:rgba(20,26,64,.7);backdrop-filter:blur(8px);display:grid;place-items:center}
+#gMenu svg{width:22px;height:22px;stroke:#fff;stroke-width:2.4;fill:none;stroke-linecap:round}
+#gMenu .ip{display:none}body[data-screen=battle] #gMenu .im{display:none}body[data-screen=battle] #gMenu .ip{display:block}
+#sheet{position:fixed;inset:0;z-index:40;display:none;background:rgba(10,12,30,.45)}#sheet.on{display:block}
+#sheet .sh{position:absolute;top:calc(64px + var(--sat));left:calc(10px + var(--sal));width:min(260px,calc(100vw - 20px));background:rgba(20,26,64,.96);border:1px solid var(--line);border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:4px}
+#sheet button{border:0;background:transparent;text-align:left;padding:13px 12px;border-radius:10px;font-weight:700;font-size:16px}#sheet button:hover{background:rgba(255,255,255,.08)}
+/* 타이틀 */
+#title{flex-direction:column;align-items:center;justify-content:flex-end;padding:0 16px calc(28px + var(--sab));background:linear-gradient(180deg,rgba(20,10,40,0) 30%,rgba(20,10,40,.55) 78%)}
+.logo{text-align:center;margin-bottom:10px}
+.logo h1{margin:0;font-size:clamp(46px,9vw,96px);line-height:1;color:#fff;text-shadow:0 5px 0 #b02a4a,0 10px 24px rgba(80,0,40,.4);-webkit-text-stroke:2px #7a1a3a}
+.logo .en{font-family:'Black Han Sans';font-size:clamp(16px,2.6vw,26px);letter-spacing:.35em;color:var(--gold);text-shadow:0 2px 0 #7a4a00}
+#tStat{opacity:.9;font-weight:700;margin:6px 0 16px;text-shadow:0 1px 4px #000a;text-align:center}
+.tmenu{display:grid;grid-template-columns:repeat(4,auto);gap:8px}
+.tmenu .btn.big{grid-column:span 4;font-size:22px;padding:14px 40px}
+/* 공통 패널 화면 */
+.panel{margin:auto;width:min(1080px,calc(100% - 20px));max-height:calc(100% - 20px - var(--sat) - var(--sab));overflow:auto;background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:18px;backdrop-filter:blur(10px);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.ph{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-left:52px}.ph h2{margin:0;font-size:26px}.ph .sp{margin-left:auto;font-weight:700;opacity:.8;font-size:14px}
+/* 월드 지도 */
+#worlds{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.world{border-radius:16px;padding:12px;background:linear-gradient(160deg,var(--w1),var(--w2));color:#1d1430;box-shadow:inset 0 -5px 0 rgba(0,0,0,.18)}
+.world h3{margin:0;font-size:20px}.world p{margin:2px 0 8px;font-size:12px;font-weight:700;opacity:.75}
+.stgs{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.stg{border:0;border-radius:10px;background:#fff;color:#1d1430;padding:6px 2px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15)}
+.stg b{font-family:'Black Han Sans';font-weight:400;font-size:16px}.stg span{font-size:10px;color:#e0a000;font-weight:900}
+.stg.boss{background:#ffe0e6}.stg.lock{opacity:.5}
+.mapfoot{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}.mapfoot small{display:block;font-size:11px;opacity:.8}
+/* 카드 고르기 */
+#deckSlots{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.slot{width:62px;height:74px;border-radius:10px;background:rgba(255,255,255,.08);border:2px dashed rgba(255,255,255,.25);position:relative}
+.slot.full{border:2px solid var(--acc);background:#fff2;padding:0}.slot img{width:100%;height:56px;object-fit:contain}.slot b{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-family:'Black Han Sans';font-weight:400;color:var(--gold)}
+#deckAll{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.pickc{display:grid;grid-template-columns:44px 1fr;grid-template-rows:auto auto;align-items:center;column-gap:8px;text-align:left;border:2px solid transparent;border-radius:12px;background:rgba(255,255,255,.08);padding:5px 8px}
+.pickc img{grid-row:span 2;width:44px;height:44px;object-fit:contain}.pickc b{font-size:14px}.pickc small{font-size:11px;opacity:.8}
+.pickc .lk{grid-row:span 2;width:44px;height:44px;display:grid;place-items:center;font-style:normal;font-size:22px;opacity:.5;background:rgba(255,255,255,.08);border-radius:8px}
+.pickc.on{border-color:var(--acc);background:rgba(94,234,212,.18)}.pickc.lock{opacity:.35}
+.deckSide{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.foe{display:flex;flex-direction:column;align-items:center;width:64px}.foe img{width:48px;height:48px;object-fit:contain}.foe small{font-size:10px;text-align:center}
+#deckTip{font-size:13px;opacity:.85}
+.deckBar{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+/* 도감 */
+.tabs{display:flex;gap:6px}.tabs button{border:0;border-radius:10px;padding:8px 16px;background:rgba(255,255,255,.1);font-weight:700}.tabs button.on{background:var(--acc);color:#073a3a}
+.cxwrap{display:grid;grid-template-columns:1fr 300px;gap:12px;margin-top:10px}
+#codexGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px;align-content:start}
+.cx{border:2px solid transparent;border-radius:12px;background:rgba(255,255,255,.08);padding:4px;display:flex;flex-direction:column;align-items:center}
+.cx img{width:56px;height:56px;object-fit:contain}.cx i{width:56px;height:56px;display:grid;place-items:center;font-style:normal;font-size:28px;opacity:.4}.cx small{font-size:11px;text-align:center;line-height:1.2}
+.cx.on{border-color:var(--acc)}.cx.lock{opacity:.5}
+#codexInfo{background:rgba(255,255,255,.06);border-radius:14px;padding:12px;font-size:14px;line-height:1.55}
+#codexInfo img{width:120px;height:120px;display:block;margin:0 auto;object-fit:contain}#codexInfo h3{text-align:center;margin:4px 0;font-size:22px}
+#codexInfo .st{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-bottom:6px}#codexInfo .st span{background:rgba(255,255,255,.12);border-radius:8px;padding:2px 8px;font-size:12px;font-weight:700}
+.bossT{background:#ff5a6a!important}
+/* 결과 */
+#result{align-items:center;justify-content:center;background:rgba(10,8,30,.5)}
+#resBox{width:min(440px,calc(100% - 24px));text-align:center}
+#resBox h2{font-size:34px;margin:0 0 6px}.stars{font-size:52px;letter-spacing:6px}.stars i{font-style:normal;color:rgba(255,255,255,.2)}.stars i.on{color:var(--gold);text-shadow:0 3px 0 #a06a00}
+.big{font-family:'Black Han Sans';font-size:30px;margin:6px 0}
+.unlock{display:flex;gap:10px;align-items:center;background:rgba(94,234,212,.15);border:2px solid var(--acc);border-radius:14px;padding:8px;text-align:left;margin:10px 0;animation:pop .5s}
+.unlock img{width:72px;height:72px}.unlock small{color:var(--acc);font-weight:900;display:block}.unlock b{font-size:20px;display:block}.unlock span{font-size:13px;opacity:.85}
+.btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}.tip{font-size:13px;opacity:.85}
+/* 전투 HUD */
+#hud{position:fixed;inset:0;z-index:6;pointer-events:none;display:none}#hud.on{display:block}
+#hud>*{pointer-events:auto}
+#topbar{position:absolute;top:calc(8px + var(--sat));left:calc(64px + var(--sal));right:calc(10px + var(--sar));display:flex;gap:8px;align-items:flex-start}
+#atpBox{flex:none;width:78px;height:92px;border-radius:14px;background:var(--glass);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center}
+#atpBox i{width:30px;height:34px;background:linear-gradient(180deg,#fff6b0,#ffd23a);clip-path:polygon(50% 0,100% 30%,100% 70%,50% 100%,0 70%,0 30%);display:block;filter:drop-shadow(0 2px 0 #a06a00)}
+#atp{font-family:'Black Han Sans';font-size:26px;line-height:1.1;color:var(--gold)}
+#cards{display:flex;gap:6px;background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:6px;overflow-x:auto;scrollbar-width:none;max-width:100%}
+#cards::-webkit-scrollbar{display:none}
+.card{position:relative;flex:none;width:66px;height:80px;border:0;border-radius:10px;background:linear-gradient(180deg,#fff,#e4ecf8);color:#1d1430;padding:0;overflow:hidden;box-shadow:inset 0 -4px 0 #b8c4dc;touch-action:none}
+.card img{width:58px;height:50px;object-fit:contain;margin-top:3px;pointer-events:none}
+.card b{position:absolute;left:0;right:0;bottom:15px;font-family:'Black Han Sans';font-weight:400;font-size:15px;color:#b07a00}
+.card em{position:absolute;left:0;right:0;bottom:2px;font-style:normal;font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+.card .cd{position:absolute;left:0;right:0;top:0;height:0;background:rgba(20,26,64,.55)}
+.card.poor{filter:grayscale(.8);opacity:.75}.card.wait img{opacity:.6}
+.card.sel{outline:3px solid var(--gold);transform:translateY(-3px)}
+.card.tool{background:linear-gradient(180deg,#ffe0e6,#ffc0cc)}.card.tool b{color:#a02040;bottom:16px;font-size:13px}
+.digIco{display:block;width:34px;height:34px;margin:8px auto 0;border-radius:50%;background:radial-gradient(circle at 40% 40%,#ff8aa0,#c0304a);box-shadow:inset 0 -3px 0 rgba(0,0,0,.2)}
+.shake{animation:shake .3s}@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+#waveBox{flex:none;margin-left:auto;min-width:170px;background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:8px 10px}
+#stageName{font-size:12px;font-weight:700;opacity:.85;white-space:nowrap}
+#waveTxt{font-family:'Black Han Sans';font-size:16px}
+.wbar{position:relative;height:10px;border-radius:5px;background:rgba(255,255,255,.15);margin-top:4px;overflow:visible}
+#waveFill{height:100%;width:0;border-radius:5px;background:linear-gradient(90deg,#7dffb0,#ff5a6a);transition:width .5s}
+#waveFlags i{position:absolute;top:-5px;width:4px;height:20px;margin-left:-2px;background:#fff;border-radius:2px}#waveFlags i::after{content:'';position:absolute;left:4px;top:0;border:6px solid transparent;border-left:9px solid #ff5a6a}
+#waveFlags i.on::after{border-left-color:#7dffb0}
+.wbtns{display:flex;gap:6px;margin-top:6px}.wbtns button{flex:1;border:0;border-radius:9px;padding:6px;min-height:36px;background:rgba(255,255,255,.14);font-weight:900}
+#hint{position:absolute;left:50%;transform:translateX(-50%);top:calc(116px + var(--sat));background:#fff;color:#1d1430;font-weight:900;padding:10px 16px;border-radius:14px;box-shadow:0 6px 0 rgba(0,0,0,.15);animation:bob 1.2s infinite;display:none;white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis}
+@keyframes bob{50%{transform:translate(-50%,-4px)}}
+#banner{position:fixed;z-index:9;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);font-family:'Black Han Sans';font-size:clamp(28px,6vw,60px);text-shadow:0 4px 0 #000a,0 0 20px #0008;opacity:0;pointer-events:none;white-space:nowrap}
+#banner.go{animation:ban 2.4s}@keyframes ban{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}20%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-60%) scale(1)}}
+#flash,#dark,#fever{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0}#flash.go{animation:fl .5s}@keyframes fl{0%{opacity:.6}100%{opacity:0}}
+#dark{background:radial-gradient(circle at 30% 50%,rgba(10,0,30,.2),rgba(10,0,30,.95));transition:opacity .4s}
+#fever{background:radial-gradient(circle,transparent 50%,rgba(255,90,40,.7));transition:opacity .4s}
+#intro{position:fixed;z-index:8;right:calc(10px + var(--sar));bottom:calc(12px + var(--sab));display:flex;gap:8px;align-items:center;background:#fff;color:#1d1430;border-radius:14px;padding:8px 12px;max-width:min(360px,80vw);opacity:0;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#intro img{width:52px;height:52px}#intro small{color:#e0405a;font-weight:900;display:block}#intro b{display:block}#intro span{font-size:12px}
+#intro.go{animation:intro 4s}@keyframes intro{0%{opacity:0;transform:translateY(20px)}10%,85%{opacity:1;transform:none}100%{opacity:0}}
+.pop{position:fixed;z-index:9;font-family:'Black Han Sans';font-size:20px;pointer-events:none;transform:translateX(-50%);animation:popup .8s forwards;text-shadow:0 2px 0 #000a}@keyframes popup{to{opacity:0;margin-top:-30px}}
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.05)}100%{transform:scale(1)}}
+/* 일시정지 · 모달 */
+.ov{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(10,8,30,.55);backdrop-filter:blur(3px)}.ov.on{display:flex}
+.ovb{width:min(400px,calc(100% - 24px));background:rgba(20,26,64,.96);border:1px solid var(--line);border-radius:18px;padding:18px;max-height:calc(100% - 24px);overflow:auto}
+.ovb h2{margin:0 0 10px}.ovb .col{display:flex;flex-direction:column;gap:8px}.ovb p{line-height:1.6;font-size:14px}.keys{opacity:.7;font-size:12px!important}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;font-weight:700}.row input[type=range]{width:50%;accent-color:var(--acc)}.row input[type=checkbox]{width:22px;height:22px;accent-color:var(--acc)}
+#err{position:fixed;z-index:99;left:10px;right:10px;bottom:10px;background:#c83a4a;padding:10px;border-radius:10px;display:none}
+#rotate{position:fixed;inset:0;z-index:25;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(20,10,40,.92);text-align:center;padding:20px;font-weight:700}
+html.dev-phone.is-portrait body[data-screen=battle]:not(.rot-ok) #rotate{display:flex}
+/* ===== 기기별 배치 ===== */
+/* 카드 왼쪽 세로 배치 (터치 가로 · 휴대폰 가로) */
+html.cards-left #topbar{left:calc(64px + var(--sal))}
+html.cards-left #cards{position:fixed;left:calc(8px + var(--sal));top:calc(62px + var(--sat));bottom:calc(8px + var(--sab));flex-direction:column;overflow-y:auto;overflow-x:hidden;width:auto;max-width:none}
+html.cards-left .card{width:62px;height:66px}
+html.cards-left #atpBox{position:fixed;left:calc(84px + var(--sal));top:calc(8px + var(--sat));width:auto;height:46px;flex-direction:row;gap:6px;padding:0 12px}
+html.cards-left #atpBox i{width:22px;height:26px}html.cards-left #atp{font-size:24px}
+html.cards-left #hint{top:calc(64px + var(--sat))}
+html.dev-phone .panel{padding:12px;border-radius:16px}html.dev-phone .ph{padding-left:50px}html.dev-phone .ph h2{font-size:20px}
+html.dev-phone .cxwrap{grid-template-columns:1fr}
+html.dev-phone #waveBox{min-width:130px;padding:6px 8px}html.dev-phone #stageName{display:none}
+html.dev-phone .tmenu{grid-template-columns:repeat(2,1fr)}html.dev-phone .tmenu .btn.big{grid-column:span 2}
+html.dev-phone .logo h1{font-size:clamp(38px,11vw,64px)}
+html.dev-phone.is-landscape #title{justify-content:center;align-items:flex-start;padding-left:calc(72px + var(--sal));background:linear-gradient(90deg,rgba(20,10,40,.6),rgba(20,10,40,0) 60%)}
+html.dev-phone.is-landscape .logo{text-align:left}html.dev-phone.is-landscape #tStat{text-align:left}
+html.dev-phone .card em{display:none}html.dev-phone .card b{bottom:4px}
+html.dev-phone #cards .card{width:56px;height:58px}html.dev-phone #cards .card img{width:48px;height:42px}
+html.dev-phone .digIco{width:28px;height:28px;margin-top:6px}
+html.dev-phone.is-portrait #topbar{flex-wrap:wrap}html.dev-phone.is-portrait #cards{order:3;width:100%}
+@media (max-height:500px){html.cards-left #cards .card{height:46px;width:54px}html.cards-left #cards .card img{height:30px;width:42px;margin-top:2px}html.cards-left #cards .card b{bottom:1px;font-size:12px}html.cards-left .digIco{width:22px;height:22px;margin-top:4px}html.cards-left .card em{display:none}html.cards-left #cards{gap:4px;padding:4px}}html.cards-left .card img{height:40px;width:50px}html.cards-left .card b{bottom:13px;font-size:14px}
+</style>
+</head>
+<body data-screen="title">
+<canvas id="gl"></canvas>
+<div id="dark"></div><div id="fever"></div><div id="flash"></div>
+<button id="gMenu" aria-label="메뉴"><svg class="im" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="ip" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg></button>
+<div id="sheet"><div class="sh">
+  <button data-act="hub">게임 목록으로</button><button data-act="title">메인 화면</button><button data-act="opt">설정</button><button data-act="help">게임 방법</button><button data-act="codex">도감</button>
+</div></div>
+
+<section id="title" class="scr">
+  <div class="logo"><h1>면역 방어선</h1><div class="en">IMMUNE LINE</div></div>
+  <div id="tStat"></div>
+  <div class="tmenu"><button class="btn big" data-act="start">시작하기</button><button class="btn" data-act="codex">도감</button><button class="btn" data-act="help">게임 방법</button><button class="btn" data-act="opt">설정</button><button class="btn" data-act="hub">게임 목록</button></div>
+</section>
+<section id="map" class="scr"><div class="panel">
+  <div class="ph"><h2>월드 지도</h2><span class="sp" id="mapStat"></span></div>
+  <div id="worlds"></div>
+  <div class="mapfoot"><button class="btn" id="endlessBtn" data-act="endless">무한 모드</button><button class="btn" data-act="codex">도감</button><button class="btn" data-act="title">메인 화면</button></div>
+</div></section>
+<section id="deck" class="scr"><div class="panel">
+  <div class="ph"><h2 id="deckTitle">세포 고르기</h2></div>
+  <div id="deckSlots"></div>
+  <div id="deckAll"></div>
+  <h3 style="margin:12px 0 0;font-size:16px">이번에 나오는 병원체</h3>
+  <div class="deckSide" id="deckFoes"></div>
+  <p id="deckTip"></p>
+  <div class="deckBar"><button class="btn" data-act="map">뒤로</button><button class="btn big" id="deckGo" data-act="go">전투 시작</button></div>
+</div></section>
+<section id="codex" class="scr"><div class="panel">
+  <div class="ph"><h2>도감</h2><div class="tabs" style="margin-left:auto"><button data-tab="cells">면역세포</button><button data-tab="foes">병원체</button></div></div>
+  <div class="cxwrap"><div id="codexGrid"></div><div id="codexInfo"></div></div>
+  <div class="btns"><button class="btn" data-act="map">월드 지도</button><button class="btn" data-act="title">메인 화면</button></div>
+</div></section>
+<section id="result" class="scr"><div class="ovb" id="resBox"></div></section>
+
+<div id="hud">
+  <div id="topbar">
+    <div id="atpBox"><i></i><span id="atp">50</span></div>
+    <div id="cards"></div>
+    <div id="waveBox"><div id="stageName"></div><div id="waveTxt">웨이브 0</div><div class="wbar"><div id="waveFill"></div><div id="waveFlags"></div></div>
+      <div class="wbtns"><button id="speedBtn" data-act="speed" aria-label="게임 속도">×1</button><button data-act="pause" aria-label="일시정지">Ⅱ</button></div></div>
+  </div>
+  <div id="hint"></div>
+</div>
+<div id="banner"></div>
+<div id="intro"></div>
+<div id="pause" class="ov"><div class="ovb"><h2>일시정지</h2><div class="col">
+  <button class="btn big" data-act="resume">계속하기</button><button class="btn" data-act="restart">다시 시작</button><button class="btn" data-act="opt">설정</button><button class="btn" data-act="help">게임 방법</button><button class="btn" data-act="map">월드 지도</button><button class="btn" data-act="hub">게임 목록으로</button>
+</div></div></div>
+<div id="modal" class="ov"><div class="ovb" id="modalBox"></div></div>
+<div id="rotate"><div style="font-size:44px">📱↻</div><div>기기를 <b>가로</b>로 돌리면 보드가 더 크게 보여요</div><button class="btn big" onclick="document.body.classList.add('rot-ok')">세로로 계속하기</button></div>
+<div id="err"></div>
+
+<script src="../device.js"></script>
+<script src="../icons.js"></script>
+<script src="../vendor/three.min.js"></script>
+<script>
+'use strict';
+/* =========================================================
+   면역 방어선 (IMMUNE LINE) — 면역세포로 병원체를 막는 복셀 레인 디펜스
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* ---------------- 면역세포 16종 ---------------- */
+const CELLS = {
+  mito:   { name: '미토콘드리아', cost: 50,  cd: 7.5, hp: 300,  kind: 'producer', every: 24, first: 7, give: 25, col: '#ff9a3c',
+            role: '자원', desc: '24초마다 ATP 25를 만들어요.', fact: '세포 호흡으로 포도당의 에너지를 ATP로 바꾸는 세포 소기관이에요. 자기만의 DNA를 가지고 있어요.' },
+  neutro: { name: '호중구', cost: 100, cd: 7.5, hp: 300,  kind: 'shooter', rate: 1.4, dmg: 20, proj: 'granule', col: '#7cc8ff',
+            role: '기본 사격', desc: '1.4초마다 과립 탄으로 20 피해.', fact: '백혈구의 절반 이상을 차지하고, 감염 부위에 가장 먼저 도착해 세균을 잡아먹어요.' },
+  barrier:{ name: '상피 장벽', cost: 50,  cd: 30,  hp: 4000, kind: 'wall', col: '#f2b48a',
+            role: '벽', desc: '체력 4000의 단단한 벽.', fact: '피부와 점막의 상피세포는 촘촘히 붙어 병원체가 들어오지 못하게 막는 1차 방어선이에요.' },
+  bcell:  { name: 'B세포', cost: 175, cd: 7.5, hp: 300,  kind: 'shooter', rate: 1.5, dmg: 20, proj: 'antibody', slow: { f: 0.5, t: 3 }, col: '#ff8ac4',
+            role: '감속 사격', desc: '항체 탄 20 피해 + 3초간 50% 느려짐.', fact: 'B세포가 만든 항체는 병원체 표면에 달라붙어 움직임을 막고, 식세포가 잘 먹도록 표시해요(옵소닌화).' },
+  macro:  { name: '대식세포', cost: 150, cd: 30,  hp: 300,  kind: 'eater', range: 1.25, digest: 42, col: '#a77bff',
+            role: '포식', desc: '바로 앞 병원체를 통째로 삼켜요(보스 제외). 소화 42초.', fact: '대식세포는 병원체를 세포막으로 감싸 삼킨 뒤 리소좀 효소로 분해해요(식세포 작용).' },
+  comp:   { name: '보체 폭발', cost: 150, cd: 50,  hp: 300,  kind: 'bomb', fuse: 1, dmg: 1800, col: '#ff5a4a',
+            role: '1회 폭발', desc: '1초 뒤 3×3칸에 1800 피해.', fact: '보체 단백질이 차례로 활성화되면 막 공격 복합체가 생겨 세균 막에 구멍을 뚫어요.' },
+  memb:   { name: '기억 B세포', cost: 200, cd: 7.5, hp: 300,  kind: 'shooter', rate: 1.4, dmg: 20, proj: 'antibody', shots: 2, col: '#ff6fb0',
+            role: '2연사', desc: '1.4초마다 항체 탄 2발.', fact: '한 번 만난 항원을 기억하는 B세포라서 2차 면역 반응은 1차보다 빠르고 강해요. 백신의 원리예요.' },
+  mast:   { name: '비만세포', cost: 125, cd: 20,  hp: 300,  kind: 'aura', rate: 3, rad: 1.6, dmg: 10, slow: { f: 0.7, t: 2 }, col: '#ffd84a',
+            role: '범위 감속', desc: '3초마다 주변에 히스타민 구름(10 피해 + 감속).', fact: '히스타민을 분비해 혈관을 넓히고 염증 반응을 일으켜요. 알레르기 반응의 주인공이기도 해요.' },
+  killer: { name: '킬러 T세포', cost: 125, cd: 15,  hp: 600,  kind: 'melee', rate: 0.9, dmg: 60, range: 1.15, col: '#3d6bd6',
+            role: '근접 강타', desc: '바로 앞 병원체에 60 피해(바이러스 2배).', fact: '감염된 세포를 찾아내 퍼포린과 그랜자임으로 스스로 죽게(세포 자멸) 만드는 세포독성 T세포예요.' },
+  nk:     { name: 'NK세포', cost: 75,  cd: 35,  hp: 300,  kind: 'assassin', range: 2.2, dmg: 1500, reload: 14, col: '#9a5cff',
+            role: '즉시 처치', desc: '2칸 안의 병원체에게 순간 이동해 1500 피해.', fact: '미리 배우지 않아도 MHC I을 숨긴 비정상 세포를 바로 공격하는 자연살해세포예요.' },
+  eos:    { name: '호산구', cost: 175, cd: 10,  hp: 300,  kind: 'shooter', rate: 2, dmg: 30, proj: 'pierce', pierce: true, col: '#ff7a4a',
+            role: '관통 사격', desc: '관통 탄 30 피해(기생충 3배).', fact: '기생충처럼 너무 커서 삼킬 수 없는 적에게 독성 과립을 뿜어 공격하는 백혈구예요.' },
+  plate:  { name: '혈소판 응고막', cost: 125, cd: 30, hp: 2000, kind: 'shield', col: '#ff5d6c',
+            role: '보호막', desc: '다른 세포 위에 겹쳐 놓는 보호막(체력 2000).', fact: '상처가 나면 혈소판이 뭉치고 피브린 그물이 엉겨 혈액을 굳혀 구멍을 막아요.' },
+  dend:   { name: '수지상세포', cost: 150, cd: 25,  hp: 300,  kind: 'buffer', buff: 0.3, reach: 3, col: '#7ee07a',
+            role: '강화', desc: '같은 줄 오른쪽 3칸 안 세포의 공격력 +30%.', fact: '병원체 조각(항원)을 T세포에게 보여 주어 적응 면역 반응을 시작시키는 세포예요.' },
+  ifn:    { name: '인터페론', cost: 100, cd: 40,  hp: 0,    kind: 'spell', target: 'lane', dmg: 300, col: '#6fd8ff',
+            role: '줄 정화', desc: '한 줄의 바이러스에 300 피해 + 10초간 분열 정지.', fact: '바이러스에 감염된 세포가 이웃 세포에게 "조심해!" 하고 보내는 경보 단백질이에요.' },
+  cilia:  { name: '섬모 상피', cost: 100, cd: 20,  hp: 1200, kind: 'pusher', rate: 4, range: 2, push: 1, col: '#ffa8c8',
+            role: '밀어내기', desc: '4초마다 앞 2칸의 병원체를 1칸 밀어내요.', fact: '기도 표면의 섬모가 파도처럼 움직여 먼지와 세균이 섞인 점액을 밖으로 내보내요.' },
+  fever:  { name: '발열 반응', cost: 250, cd: 90,  hp: 0,    kind: 'spell', target: 'all', col: '#ff6a3a',
+            role: '전체 기술', desc: '6초간 모든 병원체 40% 느려짐 + 받는 피해 25%↑.', fact: '체온이 오르면 병원체의 증식은 느려지고 면역세포는 더 활발해져요.' },
+};
+const CELL_ORDER = ['mito', 'neutro', 'barrier', 'bcell', 'comp', 'macro', 'memb', 'mast', 'killer', 'nk', 'cilia', 'plate', 'eos', 'dend', 'ifn', 'fever'];
+const START_CELLS = ['neutro', 'mito', 'barrier'];
+
+/* ---------------- 병원체 14종 + 보스 5종 ---------------- */
+const FOES = {
+  cold:   { name: '감기 바이러스', hp: 200, armor: 0, speed: 0.20, dps: 100, tags: ['virus'], pts: 1, r: 0.32, desc: '가장 흔한 병원체. 뒤뚱뒤뚱 걸어와요.', fact: '감기는 리노바이러스 등 200종이 넘는 바이러스가 일으켜요. 그래서 감기 백신을 만들기 어려워요.' },
+  flag:   { name: '깃발 바이러스', hp: 200, armor: 0, speed: 0.28, dps: 100, tags: ['virus'], pts: 1, r: 0.32, desc: '대규모 웨이브의 선두에서 깃발을 들어요.', fact: '감염 초기에 바이러스 수가 폭발적으로 늘어나는 시기를 "증식기"라고 해요.' },
+  capsid: { name: '캡시드 바이러스', hp: 200, armor: 370, speed: 0.20, dps: 100, tags: ['virus'], pts: 2, r: 0.34, desc: '단백질 껍질(캡시드)이 깨질 때까지 단단해요.', fact: '바이러스의 유전 물질은 캡시드라는 단백질 껍질에 싸여 보호받아요.' },
+  ecoli:  { name: '대장균', hp: 260, armor: 0, speed: 0.45, dps: 80, tags: ['bacteria'], pts: 2, r: 0.34, rush: true, desc: '편모로 빠르게 달려오다가 처음 부딪히면 느려져요.', fact: '대부분의 대장균은 장 속에서 무해하게 살지만, 일부 균주는 심한 식중독을 일으켜요.' },
+  phage:  { name: '박테리오파지', hp: 300, armor: 0, speed: 0.25, dps: 100, tags: ['virus'], pts: 3, r: 0.32, jump: true, desc: '처음 만난 세포를 한 번 뛰어넘어요.', fact: '박테리오파지는 세균만 감염시키는 바이러스예요. 다리 같은 꼬리 섬유로 세균에 달라붙어요.' },
+  tb:     { name: '결핵균', hp: 200, armor: 800, speed: 0.15, dps: 100, tags: ['bacteria'], pts: 5, r: 0.36, slowRes: 0.5, desc: '두꺼운 왁스 외막 때문에 아주 단단하고 감속이 절반만 들어요.', fact: '결핵균은 미콜산이라는 기름진 세포벽을 가져서 대식세포 안에서도 살아남을 수 있어요.' },
+  spore:  { name: '곰팡이 포자', hp: 300, armor: 0, speed: 0.20, dps: 100, tags: ['fungus'], pts: 3, r: 0.34, split: 2, desc: '쓰러지면 작은 포자 2개로 나뉘어요.', fact: '곰팡이는 아주 작은 포자를 퍼뜨려 번식해요. 칸디다는 몸속에 사는 대표적인 곰팡이예요.' },
+  sporelet:{ name: '작은 포자', hp: 80, armor: 0, speed: 0.30, dps: 50, tags: ['fungus'], pts: 0, r: 0.22, hidden: true, desc: '곰팡이 포자에서 나온 작은 포자.', fact: '' },
+  toxin:  { name: '독소 세균', hp: 250, armor: 0, speed: 0.18, dps: 60, tags: ['bacteria'], pts: 3, r: 0.34, ranged: { range: 3, rate: 2, dmg: 40 }, desc: '3칸 앞 세포에게 독소를 쏴요.', fact: '파상풍균·보툴리누스균처럼 독소를 내뿜는 세균은 균보다 독소가 더 위험할 때가 많아요.' },
+  malaria:{ name: '말라리아 원충', hp: 350, armor: 0, speed: 0.22, dps: 100, tags: ['protist'], pts: 3, r: 0.32, hide: { every: 6, t: 2 }, desc: '6초마다 2초 동안 숨어서 피해를 받지 않아요.', fact: '말라리아 원충은 모기를 통해 옮고, 적혈구 안에 숨어서 면역계를 피해요.' },
+  worm:   { name: '회충', hp: 1400, armor: 0, speed: 0.12, dps: 200, tags: ['parasite'], pts: 7, r: 0.42, desc: '길고 느리지만 체력이 아주 많아요.', fact: '회충은 사람 장 속에 사는 기생충으로 30cm까지 자라요. 호산구가 주로 맞서요.' },
+  hiv:    { name: 'HIV', hp: 300, armor: 0, speed: 0.20, dps: 100, tags: ['virus'], pts: 5, r: 0.3, disable: { t: 6, tT: 12 }, desc: '닿은 세포를 6초 동안 무력화해요(T세포는 12초).', fact: 'HIV는 보조 T세포를 감염시켜 면역계 전체를 약하게 만드는 바이러스예요.' },
+  noro:   { name: '노로바이러스', hp: 60, armor: 0, speed: 0.35, dps: 40, tags: ['virus'], pts: 3, r: 0.22, swarm: 5, desc: '작은 바이러스 5마리가 떼로 몰려와요.', fact: '노로바이러스는 겨우 10~100개만 있어도 감염될 만큼 전염력이 강해요.' },
+  cancer: { name: '암세포', hp: 500, armor: 0, speed: 0.15, dps: 120, tags: ['infect'], pts: 5, r: 0.38, divide: { every: 14, gen: 2 }, desc: '14초마다 분열해서 수가 늘어나요.', fact: '암세포는 세포 분열을 멈추는 신호를 무시하고 끝없이 분열해요. NK세포와 T세포가 찾아 없애요.' },
+  prion:  { name: '프리온', hp: 450, armor: 0, speed: 0.18, dps: 80, tags: ['protein'], pts: 4, r: 0.32, noSlow: true, abRes: 0.5, desc: '단백질이라 감속을 받지 않고 항체 피해가 절반이에요.', fact: '프리온은 유전 물질이 없는 잘못 접힌 단백질로, 정상 단백질까지 잘못 접히게 만들어요.' },
+  // 보스
+  superflu: { name: '슈퍼 인플루엔자', hp: 3400, armor: 0, speed: 0.10, dps: 300, tags: ['virus'], boss: 1, r: 0.8, wide: 2, summon: { every: 8, type: 'cold', n: 3 }, desc: '두 줄을 차지하는 거대 바이러스. 감기 바이러스를 불러요.', fact: '인플루엔자는 표면 단백질(H, N)이 잘 변해서 해마다 새 백신이 필요해요.' },
+  biofilm:  { name: '바이오필름 군체', hp: 4800, armor: 0, speed: 0.08, dps: 300, tags: ['bacteria'], boss: 2, r: 0.8, slime: true, summon: { every: 16, type: 'spore', n: 2 }, desc: '점액 막으로 그 줄 세포를 느리게 해요. 섬모 상피가 막을 걷어내요.', fact: '세균이 점액 속에 모여 사는 바이오필름은 항생제와 면역세포를 막는 방패가 돼요.' },
+  queen:    { name: '기생충 여왕', hp: 6400, armor: 0, speed: 0.10, dps: 300, tags: ['parasite'], boss: 3, r: 0.8, burrow: { every: 10, t: 1.5 }, summon: { every: 15, type: 'worm', n: 1 }, desc: '땅속으로 숨어 다른 줄로 옮기고 회충을 낳아요.', fact: '기생충은 숙주의 면역 반응을 약하게 만드는 물질을 내보내 오래 살아남아요.' },
+  latent:   { name: '잠복 바이러스 군주', hp: 7200, armor: 0, speed: 0.10, dps: 300, tags: ['virus'], boss: 4, r: 0.8, dark: { every: 12, n: 2, t: 6 }, summon: { every: 10, type: 'hiv', n: 1 }, desc: '어둠을 퍼뜨려 세포 2개를 무력화해요.', fact: '헤르페스처럼 신경세포에 숨어 있다가 면역이 약해지면 다시 나타나는 바이러스가 있어요.' },
+  pandemia: { name: '판데미아', hp: 12000, armor: 0, speed: 0.09, dps: 400, tags: ['virus', 'infect'], boss: 5, r: 0.9, phases: true, summon: { every: 7, type: 'capsid', n: 2 }, desc: '3단계로 변이하는 최종 보스.', fact: '판데믹은 새로운 병원체가 전 세계로 퍼지는 대유행이에요. 백신과 면역이 함께 막아요.' },
+};
+const FOE_ORDER = ['cold', 'flag', 'capsid', 'ecoli', 'phage', 'tb', 'spore', 'toxin', 'malaria', 'worm', 'hiv', 'noro', 'cancer', 'prion', 'superflu', 'biofilm', 'queen', 'latent', 'pandemia'];
+
+/* ---------------- 월드 · 스테이지 ---------------- */
+const WORLDS = [
+  { name: '혈관 거리', sub: '낮 · 적혈구가 흐르는 혈관', tiles: ['#f7a1a8', '#ef8c96'], ground: '#c9566a', sky: ['#ffd0d6', '#ff9fb0'], fog: '#ffc4cc', lanes: 5, skyAtp: true, music: 0 },
+  { name: '폐포 언덕', sub: '바람이 부는 공기주머니', tiles: ['#bfe6ff', '#a9dbfb'], ground: '#6aa8d8', sky: ['#e8f7ff', '#9fd4ff'], fog: '#d8f0ff', lanes: 5, skyAtp: true, wind: [1, 3], music: 1 },
+  { name: '장 융털 숲', sub: '점막 웅덩이가 있는 장 속', tiles: ['#c9ec8f', '#b6e07a'], ground: '#7aa84a', sky: ['#f4ffd8', '#c8ec9a'], fog: '#e4f6c4', lanes: 5, skyAtp: true, puddles: [3, 7], music: 2 },
+  { name: '림프절 밤', sub: '안개 낀 6줄 밤, ATP가 드물게 떨어져요', tiles: ['#3b4a8c', '#34417d'], ground: '#232c5c', sky: ['#1a2050', '#0c1030'], fog: '#1a2050', lanes: 6, skyAtp: true, skyRate: 15, night: true, fogCols: 3, music: 3 },
+  { name: '뇌 장벽 요새', sub: '혈뇌장벽이 배치를 막아요', tiles: ['#c8b6e8', '#b9a5df'], ground: '#7a68a8', sky: ['#efe6ff', '#c4b0ec'], fog: '#e2d8f8', lanes: 5, skyAtp: true, walls: true, music: 4 },
+];
+// 각 스테이지: 등장 병원체, 웨이브 수, 깃발 웨이브, 해금 카드, 보스
+const STAGES = [
+  { id: '1-1', pool: ['cold'], waves: 6, flags: [6], unlock: 'bcell', tut: true, diff: 0.60 },
+  { id: '1-2', pool: ['cold'], waves: 7, flags: [7], unlock: 'comp', diff: 0.75 },
+  { id: '1-3', pool: ['cold', 'capsid'], waves: 8, flags: [4, 8], unlock: 'macro', diff: 0.85 },
+  { id: '1-4', pool: ['cold', 'capsid', 'ecoli'], waves: 9, flags: [5, 9], unlock: 'memb', diff: 0.95 },
+  { id: '1-5', pool: ['cold', 'capsid', 'ecoli'], waves: 8, flags: [8], unlock: 'mast', boss: 'superflu', diff: 1.00 },
+  { id: '2-1', pool: ['cold', 'capsid', 'phage'], waves: 9, flags: [5, 9], unlock: 'killer', diff: 1.05 },
+  { id: '2-2', pool: ['cold', 'phage', 'tb'], waves: 10, flags: [5, 10], unlock: 'nk', diff: 1.10 },
+  { id: '2-3', pool: ['capsid', 'ecoli', 'tb'], waves: 10, flags: [5, 10], unlock: 'cilia', diff: 1.15 },
+  { id: '2-4', pool: ['cold', 'phage', 'spore', 'tb'], waves: 11, flags: [6, 11], unlock: 'plate', diff: 1.20 },
+  { id: '2-5', pool: ['capsid', 'spore', 'tb'], waves: 9, flags: [9], unlock: 'eos', boss: 'biofilm', diff: 1.25 },
+  { id: '3-1', pool: ['cold', 'capsid', 'toxin'], waves: 10, flags: [5, 10], unlock: 'dend', diff: 1.28 },
+  { id: '3-2', pool: ['ecoli', 'toxin', 'malaria'], waves: 11, flags: [6, 11], unlock: 'ifn', diff: 1.31 },
+  { id: '3-3', pool: ['capsid', 'malaria', 'spore', 'toxin'], waves: 11, flags: [6, 11], unlock: 'fever', diff: 1.33 },
+  { id: '3-4', pool: ['cold', 'malaria', 'worm', 'tb'], waves: 12, flags: [4, 8, 12], diff: 1.36 },
+  { id: '3-5', pool: ['capsid', 'worm', 'toxin'], waves: 10, flags: [10], boss: 'queen', diff: 1.39 },
+  { id: '4-1', pool: ['cold', 'capsid', 'hiv'], waves: 11, flags: [6, 11], diff: 1.39 },
+  { id: '4-2', pool: ['phage', 'hiv', 'tb'], waves: 12, flags: [6, 12], diff: 1.42 },
+  { id: '4-3', pool: ['cold', 'noro', 'hiv', 'spore'], waves: 12, flags: [4, 8, 12], diff: 1.44 },
+  { id: '4-4', pool: ['noro', 'worm', 'malaria', 'hiv'], waves: 13, flags: [5, 9, 13], diff: 1.47 },
+  { id: '4-5', pool: ['capsid', 'hiv', 'noro'], waves: 10, flags: [10], boss: 'latent', diff: 1.50 },
+  { id: '5-1', pool: ['capsid', 'cancer', 'tb'], waves: 12, flags: [6, 12], diff: 1.52 },
+  { id: '5-2', pool: ['phage', 'cancer', 'toxin', 'malaria'], waves: 13, flags: [5, 9, 13], diff: 1.55 },
+  { id: '5-3', pool: ['capsid', 'prion', 'noro', 'cancer'], waves: 13, flags: [5, 9, 13], diff: 1.58 },
+  { id: '5-4', pool: ['tb', 'prion', 'worm', 'hiv', 'cancer'], waves: 14, flags: [5, 10, 14], diff: 1.61 },
+  { id: '5-5', pool: ['capsid', 'prion', 'cancer', 'hiv'], waves: 10, flags: [10], boss: 'pandemia', diff: 1.66 },
+];
+STAGES.forEach((s, i) => { s.idx = i; s.world = Math.floor(i / 5); });
+const slotsFor = w => w >= 4 ? 8 : w >= 2 ? 7 : 6;
+
+const TIPS = [
+  '백혈구는 피 1μL에 4,000~10,000개나 있어요.', '적혈구에는 핵이 없어서 산소를 더 많이 실을 수 있어요.', '항체는 Y자 모양 단백질이고, 양 팔 끝으로 항원을 붙잡아요.',
+  '백신은 약하게 만든 항원을 미리 보여 주어 기억세포를 만들게 해요.', '바이러스는 스스로 번식하지 못하고 숙주 세포 안에서만 늘어나요.', '세균은 핵막이 없는 원핵생물이에요.',
+  '항생제는 세균에는 듣지만 바이러스에는 듣지 않아요.', '열이 나는 것은 면역계가 병원체와 싸우고 있다는 신호예요.', '림프절이 붓는 것은 그 안에서 면역세포가 늘어나고 있기 때문이에요.',
+  '피부는 우리 몸에서 가장 큰 기관이자 1차 방어선이에요.', '위산(pH 1~2)은 음식과 함께 들어온 세균을 죽여요.', '눈물과 침 속의 라이소자임은 세균의 세포벽을 녹여요.',
+  '선천 면역은 태어날 때부터 있고, 적응 면역은 병원체를 만나며 배워요.', 'T세포는 가슴샘(흉선)에서 성숙해요.', 'B세포는 골수에서 만들어지고 성숙해요.',
+  '보조 T세포는 B세포와 킬러 T세포가 일하도록 신호를 보내요.', '대식세포는 수명이 몇 달이나 돼요.', '호중구는 수명이 하루 정도로 아주 짧아요.',
+  '알레르기는 해롭지 않은 물질에 면역계가 지나치게 반응하는 거예요.', '자가 면역 질환은 면역계가 자기 몸을 공격하는 병이에요.', 'HIV는 보조 T세포(CD4)를 공격해요.',
+  '말라리아는 해마다 수십만 명의 목숨을 앗아 가는 질병이에요.', '결핵은 공기로 옮는 세균 감염병이에요.', '곰팡이는 세균과 달리 핵이 있는 진핵생물이에요.',
+  '프리온은 유전 물질 없이 단백질만으로 병을 일으켜요.', '암세포도 원래는 우리 몸의 정상 세포였어요.', 'NK세포는 암세포를 감시하는 순찰대예요.',
+  '수지상세포는 피부·점막에서 항원을 붙잡아 림프절로 가져가요.', '혈소판은 핵이 없는 세포 조각이에요.', '인터페론은 바이러스 증식을 막는 단백질이에요.',
+  '기도의 섬모는 1분에 1000번 넘게 움직여요.', '히스타민은 혈관을 넓혀 면역세포가 빨리 도착하게 도와요.', '보체는 30가지가 넘는 혈장 단백질의 모임이에요.',
+  '1차 면역 반응보다 2차 면역 반응이 훨씬 빠르고 강해요.', '모유에는 아기를 지켜 주는 항체가 들어 있어요(수동 면역).', '집단 면역은 많은 사람이 면역을 가져 감염 확산을 막는 거예요.',
+  '장 속에는 약 38조 마리의 세균이 함께 살아요.', '좋은 장내 세균은 나쁜 세균이 자리 잡지 못하게 막아요.', '바이러스 크기는 대부분 20~300nm로 세균보다 훨씬 작아요.',
+  '파스퇴르와 코흐는 미생물이 병을 일으킨다는 것을 밝혔어요.', '제너는 우두를 이용해 최초의 백신을 만들었어요.',
+];
+
+/* =========================================================
+   복셀 모델 생성기 — 블록 격자 → 보이는 면만 합친 지오메트리 1개
+   ========================================================= */
+const VS = 0.072;   // 블록 1개 크기(월드 단위)
+class Vox {
+  constructor() { this.m = new Map(); }
+  k(x, y, z) { return x + ',' + y + ',' + z; }
+  set(x, y, z, c) { x = Math.round(x); y = Math.round(y); z = Math.round(z); if (c == null) this.m.delete(this.k(x, y, z)); else this.m.set(this.k(x, y, z), c); return this; }
+  get(x, y, z) { return this.m.get(this.k(x, y, z)); }
+  box(x, y, z, w, h, d, c) { for (let i = 0; i < w; i++) for (let j = 0; j < h; j++) for (let l = 0; l < d; l++) this.set(x + i, y + j, z + l, c); return this; }
+  ell(cx, cy, cz, rx, ry, rz, c, f) {
+    for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) for (let z = Math.floor(cz - rz); z <= Math.ceil(cz + rz); z++) {
+      const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 + ((z - cz) / rz) ** 2;
+      if (d <= 1.0) this.set(x, y, z, typeof c === 'function' ? c(x, y, z, d) : c);
+    }
+    return this;
+  }
+  front(x, y) { let best = null; for (const key of this.m.keys()) { const [a, b, c] = key.split(',').map(Number); if (a === x && b === y && (best === null || c > best)) best = c; } return best; }
+  paint(x, y, c, dz = 0) { const z = this.front(x, y); if (z !== null) this.set(x, y, z + dz, c); return this; }
+  // 눈 한 쌍: 흰자 2×3 + 검은 동공 + 하이라이트, mood: 'cute' | 'angry' | 'brave' | 'sleepy'
+  eyes(cy, gap = 2, mood = 'cute', size = 1) {
+    for (const s of [-1, 1]) {
+      const x0 = s < 0 ? -gap - 1 : gap;
+      if (mood === 'sleepy') { this.paint(x0, cy, '#1d1a2a'); this.paint(x0 + 1, cy, '#1d1a2a'); continue; }
+      for (let i = 0; i < 2; i++) for (let j = 0; j < 2 + size; j++) this.paint(x0 + i, cy + j - 1, '#ffffff');
+      this.paint(x0 + (s < 0 ? 1 : 0), cy - 1 + (size > 1 ? 1 : 0), '#1d1a2a'); this.paint(x0 + (s < 0 ? 1 : 0), cy + (size > 1 ? 1 : 0), '#1d1a2a');
+      if (mood === 'angry' || mood === 'brave') { const b = cy + 1 + size; this.paint(x0, b + (mood === 'angry' ? (s < 0 ? 0 : 1) : 0), '#1d1a2a'); this.paint(x0 + 1, b + (mood === 'angry' ? (s < 0 ? 1 : 0) : 0), '#1d1a2a'); }
+    }
+    return this;
+  }
+  blush(cy, gap = 4) { this.paint(-gap - 1, cy, '#ff7f9f'); this.paint(gap, cy, '#ff7f9f'); return this; }
+  geometry(scale = VS) {
+    const pos = [], col = [], nor = [], tmp = new THREE.Color();
+    const F = [ // 방향, 법선, 네 꼭짓점, 밝기
+      [[1, 0, 0], [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]], 0.80], [[-1, 0, 0], [[0, 0, 1], [0, 1, 1], [0, 1, 0], [0, 0, 0]], 0.80],
+      [[0, 1, 0], [[0, 1, 1], [1, 1, 1], [1, 1, 0], [0, 1, 0]], 1.0], [[0, -1, 0], [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], 0.55],
+      [[0, 0, 1], [[1, 0, 1], [1, 1, 1], [0, 1, 1], [0, 0, 1]], 0.92], [[0, 0, -1], [[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0]], 0.70],
+    ];
+    let minY = Infinity;
+    for (const key of this.m.keys()) { const y = +key.split(',')[1]; if (y < minY) minY = y; }
+    for (const [key, c] of this.m) {
+      const [x, y, z] = key.split(',').map(Number);
+      const n = ((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) >>> 0, jit = 1 + ((n % 100) / 100 - 0.5) * 0.07;
+      tmp.set(c);
+      for (const [d, vs, sh] of F) {
+        if (this.m.has(this.k(x + d[0], y + d[1], z + d[2]))) continue;
+        const q = vs.map(v => [(x + v[0] - 0.5) * scale, (y - minY + v[1]) * scale, (z + v[2] - 0.5) * scale]);
+        for (const i of [0, 1, 2, 0, 2, 3]) { pos.push(...q[i]); nor.push(...d); col.push(clamp(tmp.r * sh * jit, 0, 1), clamp(tmp.g * sh * jit, 0, 1), clamp(tmp.b * sh * jit, 0, 1)); }
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    g.computeBoundingSphere();
+    return g;
+  }
+}
+// 돌기 달린 공 (바이러스)
+function spikes(v, cx, cy, cz, r, n, col, len = 2) {
+  for (let i = 0; i < n; i++) {
+    const t = Math.acos(1 - 2 * (i + 0.5) / n), p = Math.PI * (1 + Math.sqrt(5)) * i;
+    const dx = Math.sin(t) * Math.cos(p), dy = Math.cos(t), dz = Math.sin(t) * Math.sin(p);
+    for (let s = 0; s <= len; s++) v.set(cx + dx * (r + s), cy + dy * (r + s), cz + dz * (r + s), s === len ? col : shadeHex(col, -0.25));
+  }
+}
+function shadeHex(hex, k) { const c = new THREE.Color(hex); if (k < 0) c.multiplyScalar(1 + k); else c.lerp(new THREE.Color('#fff'), k); return '#' + c.getHexString(); }
+
+/* ---------------- 모델 도면 ---------------- */
+const MODELS = {
+  mito: () => { const v = new Vox(); v.ell(0, 4, 0, 6.5, 3.6, 3.6, '#ff9a3c');
+    for (let x = -4; x <= 4; x += 2) for (let y = 2; y <= 6; y++) if ((x + y) % 4 !== 0) v.paint(x, y, '#e0661e');
+    v.eyes(5, 2, 'cute'); v.blush(3, 4); return v; },
+  neutro: () => { const v = new Vox(); v.ell(0, 5, 0, 4.6, 4.6, 4.6, '#8fd2ff');
+    v.ell(-1, 8, -1, 2, 1.4, 2, '#9b6bd8'); v.ell(2, 8, 0, 1.6, 1.2, 1.6, '#9b6bd8');
+    v.eyes(5, 2, 'brave'); v.paint(0, 2, '#2a3a5a'); v.paint(1, 2, '#2a3a5a');
+    v.box(-7, 3, 0, 2, 2, 2, '#ffffff'); v.box(5, 4, 1, 2, 2, 2, '#ffffff'); return v; },
+  barrier: () => { const v = new Vox(); v.box(-5, 0, -2, 10, 11, 5, '#f2b48a');
+    for (let y = 0; y < 11; y++) for (let x = -5; x < 5; x++) { if (y % 3 === 2 || (x + (Math.floor(y / 3) % 2 ? 2 : 0)) % 5 === 0) v.set(x, y, 2, '#d08a62'); }
+    v.eyes(7, 2, 'cute'); v.blush(5, 4); return v; },
+  bcell: () => { const v = new Vox(); v.ell(0, 5, 0, 4.6, 4.6, 4.6, '#ff9ccd');
+    for (const s of [-1, 1]) { const x = s * 2; v.box(x, 9, 0, 1, 3, 1, '#ffd84a'); v.set(x - 1, 12, 0, '#ffd84a'); v.set(x + 1, 12, 0, '#ffd84a'); v.set(x - 2, 13, 0, '#ffd84a'); v.set(x + 2, 13, 0, '#ffd84a'); }
+    v.eyes(5, 2, 'cute'); v.blush(3, 4); return v; },
+  macro: () => { const v = new Vox(); v.ell(0, 5, 0, 6.5, 5.2, 5.5, '#b48cff');
+    v.ell(-7, 3, 1, 2.5, 2, 2, '#b48cff'); v.ell(7, 4, 1, 2.5, 2, 2, '#b48cff');
+    v.eyes(6, 2, 'brave', 2); for (let x = -2; x <= 2; x++) v.paint(x, 2, '#5a2a8a'); return v; },
+  comp: () => { const v = new Vox(); v.ell(0, 4, 0, 4, 4, 4, (x, y, z) => ((x + y + z) & 1) ? '#ff5a4a' : '#ffad3a');
+    v.box(0, 8, 0, 1, 2, 1, '#5a3a2a'); v.set(0, 10, 0, '#fff27a'); v.eyes(4, 1, 'angry'); return v; },
+  memb: () => { const v = MODELS.bcell(); v.set(0, 9, 0, '#ffd84a'); v.box(0, 10, 0, 1, 3, 1, '#ffd84a');
+    for (let x = -4; x <= 3; x++) v.paint(x, 7, '#2a2a3a', 1); v.recolor && 0; return v; },
+  mast: () => { const v = new Vox(); v.ell(0, 5, 0, 4.8, 4.6, 4.6, (x, y, z) => ((x * 7 + y * 13 + z * 5) % 9 === 0) ? '#8a4ad0' : '#ffdf5a');
+    v.eyes(5, 2, 'cute'); v.blush(3, 4); return v; },
+  killer: () => { const v = new Vox(); v.ell(0, 5, 0, 4.4, 5, 4.4, '#4a78e0');
+    for (let x = -5; x <= 5; x++) for (let z = -5; z <= 5; z++) if (v.get(x, 8, z)) v.set(x, 8, z, '#ff3b4a');
+    v.eyes(5, 2, 'brave'); v.box(-8, 3, 2, 3, 3, 3, '#ffffff'); v.box(5, 3, 2, 3, 3, 3, '#ffffff'); return v; },
+  nk: () => { const v = new Vox(); v.ell(0, 5, 0, 4.2, 4.8, 4.2, '#a874ff');
+    for (const [x, y] of [[1, 9], [0, 8], [1, 7], [0, 6], [-1, 6], [0, 5]]) v.paint(x, y, '#ffe14a');
+    v.eyes(4, 2, 'angry'); return v; },
+  eos: () => { const v = new Vox(); v.ell(0, 5, 0, 4.6, 4.6, 4.6, (x, y, z) => ((x * 5 + y * 3 + z * 11) % 7 === 0) ? '#ffd0a0' : '#ff7a4a');
+    v.eyes(5, 2, 'brave'); return v; },
+  plate: () => { const v = new Vox(); v.ell(0, 3, 0, 5, 2.4, 5, '#ff6a78'); for (let x = -4; x <= 4; x += 2) v.paint(x, 3, '#ffd0d6'); v.eyes(3, 2, 'cute'); return v; },
+  dend: () => { const v = new Vox(); v.ell(0, 5, 0, 3.6, 3.6, 3.6, '#8ae886');
+    for (const [dx, dy, dz] of [[1, 1, 0], [-1, 1, 0], [1, -0.4, 0], [-1, -0.4, 0], [0, 1, 1], [0, 1, -1], [0.7, 0.7, 0.7], [-0.7, 0.7, -0.7]])
+      for (let s = 3; s < 8; s++) v.set(dx * s, 5 + dy * s, dz * s, s > 6 ? '#c8ff9a' : '#5cc85a');
+    v.eyes(5, 1, 'cute'); return v; },
+  ifn: () => { const v = new Vox(); v.box(0, 0, 0, 1, 12, 1, '#c0c8d8'); v.box(1, 7, 0, 6, 5, 1, '#6fd8ff'); v.box(3, 9, 1, 2, 1, 1, '#ffffff'); return v; },
+  cilia: () => { const v = new Vox(); v.box(-4, 0, -2, 9, 6, 5, '#ffb3cf');
+    for (let x = -4; x <= 4; x++) for (let z = -2; z <= 2; z += 2) { const h = 2 + ((x + z + 10) % 3); v.box(x, 6, z, 1, h, 1, '#ff7aa8'); }
+    v.eyes(3, 2, 'cute'); return v; },
+  fever: () => { const v = new Vox(); v.box(-1, 2, 0, 3, 11, 3, '#f4f6ff'); v.box(0, 2, 1, 1, 8, 1, '#ff4a3a'); v.ell(0, 1, 1, 2.6, 2.6, 2.6, '#ff4a3a'); return v; },
+  // ---- 병원체 ----
+  cold: (s = 1) => { const v = new Vox(); v.ell(0, 4, 0, 3.6, 3.6, 3.6, '#7ee05a'); spikes(v, 0, 4, 0, 3.6, 12, '#ff5a6a', 2); v.eyes(4, 1, 'angry'); v.paint(0, 2, '#2a4a1a'); return v; },
+  flag: () => { const v = MODELS.cold(); v.box(5, 0, 0, 1, 14, 1, '#7a5a3a'); v.box(6, 9, 0, 6, 4, 1, '#ff3b4a'); v.box(8, 10, 1, 2, 2, 1, '#ffffff'); return v; },
+  capsid: () => MODELS.cold(),
+  capsidArmor: () => { const v = new Vox(); for (let x = -5; x <= 5; x++) for (let z = -5; z <= 5; z++) for (let y = 5; y <= 9; y++) { const d = Math.abs(x) + Math.abs(z) + Math.abs(y - 5) * 1.4; if (d <= 6.2 && d >= 4.6) v.set(x, y, z, (x + z + y) % 3 ? '#a8b0c0' : '#8a92a4'); } return v; },
+  ecoli: () => { const v = new Vox(); v.box(-5, 2, -2, 10, 4, 4, '#c98a52'); v.box(-6, 3, -1, 1, 2, 2, '#c98a52'); v.box(5, 3, -1, 1, 2, 2, '#c98a52');
+    for (let i = 0; i < 7; i++) v.set(6 + i, 4 + Math.round(Math.sin(i * 1.2) * 1.5), 0, '#6a4a2a'); v.eyes(4, 1, 'angry'); return v; },
+  phage: () => { const v = new Vox(); for (let x = -3; x <= 3; x++) for (let y = 9; y <= 15; y++) for (let z = -3; z <= 3; z++) if (Math.abs(x) + Math.abs(y - 12) * 0.6 + Math.abs(z) <= 4.2) v.set(x, y, z, '#7a8ae0');
+    v.box(0, 4, 0, 1, 5, 1, '#c0c8e0'); for (const [dx, dz] of [[1, 1], [-1, 1], [1, -1], [-1, -1], [1.4, 0], [-1.4, 0]]) for (let s = 0; s < 4; s++) v.set(dx * s, 4 - s, dz * s, '#5a6ab0');
+    v.eyes(12, 1, 'angry'); return v; },
+  tb: () => { const v = new Vox(); v.box(-4, 2, -2, 8, 4, 4, '#8a7a6a'); v.eyes(4, 1, 'sleepy'); return v; },
+  tbArmor: () => { const v = new Vox(); v.box(-6, 0, -4, 12, 8, 8, '#f4f0e4'); for (let x = -5; x <= 4; x++) for (let y = 1; y <= 6; y++) for (let z = -3; z <= 2; z++) v.set(x, y, z, null);
+    for (let x = -6; x < 6; x++) for (let y = 0; y < 8; y++) if ((x * 3 + y * 5) % 7 === 0) v.set(x, y, 3, '#d8d0bc'); v.eyes(4, 2, 'angry'); return v; },
+  spore: () => { const v = new Vox(); v.ell(0, 4, 0, 4, 4, 4, (x, y, z) => ((x + y * 2 + z) % 3 === 0) ? '#3a9a4a' : '#5cc86a'); spikes(v, 0, 4, 0, 4, 16, '#bff0a0', 1); v.eyes(4, 1, 'angry'); return v; },
+  sporelet: () => { const v = new Vox(); v.ell(0, 2.5, 0, 2.4, 2.4, 2.4, '#7ad87a'); v.eyes(3, 1, 'angry', 0); return v; },
+  toxin: () => { const v = new Vox(); v.box(-4, 2, -2, 8, 5, 4, '#9a4ad0'); v.box(-5, 3, -1, 1, 3, 2, '#9a4ad0'); v.box(4, 3, -1, 1, 3, 2, '#9a4ad0');
+    v.eyes(5, 1, 'angry'); v.paint(0, 3, '#5aff6a'); v.paint(-1, 3, '#5aff6a'); v.set(0, 1, 2, '#5aff6a'); return v; },
+  malaria: () => { const v = new Vox(); for (let x = -5; x <= 5; x++) for (let y = 0; y <= 8; y++) for (let z = -2; z <= 2; z++) { const a = Math.hypot(x, y - 4), b = Math.hypot(x - 2, y - 5); if (a <= 5 && b > 3.6) v.set(x, y, z, '#ff8ab0'); }
+    v.paint(-3, 5, '#ffffff'); v.paint(-3, 4, '#1d1a2a'); v.paint(-1, 6, '#ffffff'); v.paint(-1, 5, '#1d1a2a'); return v; },
+  worm: () => { const v = new Vox(); for (let i = 0; i < 7; i++) v.ell(i * 3.2 - 6, 3 + Math.sin(i * 0.9) * 0.6, 0, 2.6, 2.6, 2.6, i === 0 ? '#ffc8a0' : (i % 2 ? '#f0b088' : '#ffc8a0'));
+    for (const s of [-1, 1]) { v.set(-8, 4, s, '#1d1a2a'); } v.set(-9, 3, 0, '#8a2a2a'); return v; },
+  hiv: () => { const v = new Vox(); v.ell(0, 3.5, 0, 3, 3, 3, '#b8bcc8'); spikes(v, 0, 3.5, 0, 3, 10, '#ffd84a', 1); v.eyes(4, 1, 'angry', 0); return v; },
+  noro: () => { const v = new Vox(); v.ell(0, 2.5, 0, 2.4, 2.4, 2.4, '#5aa8ff'); spikes(v, 0, 2.5, 0, 2.4, 6, '#2a5ab0', 1); v.eyes(3, 1, 'angry', 0); return v; },
+  cancer: () => { const v = new Vox(); v.ell(0, 4.5, 0, 4.5, 4.5, 4.5, '#b8304a'); for (const [x, y, z] of [[3, 7, 2], [-4, 6, 1], [2, 2, 3], [-2, 8, -2], [4, 4, -2]]) v.ell(x, y, z, 1.8, 1.8, 1.8, '#8a1a32');
+    v.eyes(5, 2, 'angry'); return v; },
+  prion: () => { const v = new Vox(); const pts = [[-4, 1], [-2, 3], [0, 1], [2, 3], [4, 1], [3, 5], [1, 7], [-1, 5], [-3, 7]]; for (let i = 0; i < pts.length - 1; i++) { const [a, b] = pts[i], [c, d] = pts[i + 1]; for (let t = 0; t <= 1; t += 0.12) v.box(Math.round(lerp(a, c, t)), Math.round(lerp(b, d, t)), -1, 2, 2, 3, i % 2 ? '#a090c8' : '#8070b0'); }
+    v.eyes(4, 1, 'sleepy'); return v; },
+  superflu: () => { const v = new Vox(); v.ell(0, 9, 0, 8.5, 8.5, 8.5, '#5ad0c8'); spikes(v, 0, 9, 0, 8.5, 22, '#ff4a7a', 3); v.eyes(10, 3, 'angry', 2);
+    for (let x = -4; x <= 4; x++) v.paint(x, 5, '#1d4a4a'); v.box(-4, 18, -1, 9, 2, 3, '#ffd23a'); for (const x of [-4, 0, 4]) v.box(x, 20, 0, 1, 2, 1, '#ffd23a'); return v; },
+  biofilm: () => { const v = new Vox(); v.ell(0, 5, 0, 10, 7, 7, (x, y, z) => ((x * 3 + y * 7 + z) % 11 === 0) ? '#c98a52' : ((x + y + z) % 5 === 0 ? '#5a7a3a' : '#7aa04a'));
+    v.eyes(8, 3, 'angry', 2); for (let x = -5; x <= 5; x++) v.paint(x, 4, '#2a3a1a'); return v; },
+  queen: () => { const v = new Vox(); for (let i = 0; i < 6; i++) v.ell(i * 5 - 4, 6 + Math.sin(i) * 1, 0, 4.6 - i * 0.3, 4.6 - i * 0.3, 4.6 - i * 0.3, i % 2 ? '#e8a07a' : '#ffbe94');
+    v.eyes(8, 2, 'angry', 2); v.box(-8, 11, -1, 8, 2, 3, '#ffd23a'); for (const x of [-8, -5, -2]) v.box(x, 13, 0, 1, 2, 1, '#ffd23a'); return v; },
+  latent: () => { const v = new Vox(); v.ell(0, 9, 0, 8.5, 8.5, 8.5, '#3a2a6a'); spikes(v, 0, 9, 0, 8.5, 18, '#b06aff', 3);
+    for (const s of [-1, 1]) v.box(s < 0 ? -5 : 2, 10, 8, 3, 2, 1, '#ff3a5a'); return v; },
+  pandemia: () => { const v = new Vox(); v.ell(0, 10, 0, 9.5, 9.5, 9.5, (x, y, z) => ((x * 5 + y * 3 + z * 7) % 13 === 0) ? '#ffd23a' : '#d0305a'); spikes(v, 0, 10, 0, 9.5, 28, '#7a2aff', 3);
+    v.eyes(11, 3, 'angry', 2); for (let x = -5; x <= 5; x++) v.paint(x, 6, '#2a0a1a'); v.box(-5, 20, -1, 11, 2, 3, '#ffd23a'); for (const x of [-5, -2, 1, 4]) v.box(x, 22, 0, 1, 3, 1, '#ffd23a'); return v; },
+  atp: () => { const v = new Vox(); for (let x = -3; x <= 3; x++) for (let y = 0; y <= 6; y++) for (let z = -1; z <= 1; z++) if (Math.abs(x) + Math.abs(y - 3) * 0.7 <= 3.4) v.set(x, y, z, (Math.abs(x) + Math.abs(y - 3)) < 1.5 ? '#fff6b0' : '#ffd23a'); return v; },
+  pulse: () => { const v = new Vox(); v.box(-3, 0, -3, 6, 2, 6, '#3a6ad0'); v.ell(0, 5, 0, 3, 3.5, 3, '#5ab8ff'); v.box(-1, 8, -1, 2, 2, 2, '#bff0ff'); return v; },
+};
+const FOE_SCALE = { superflu: 1, biofilm: 1, queen: 1, latent: 1, pandemia: 1 };
+const GEO = {};
+function geo(name) { return GEO[name] || (GEO[name] = MODELS[name]().geometry()); }
+
+/* =========================================================
+   전투 시뮬레이션 (그래픽과 분리 — 1/60초 고정 스텝)
+   ========================================================= */
+const DT = 1 / 60;
+let S = null;   // 현재 전투 상태
+function newBattle(stage, deck, seed) {
+  const W = WORLDS[stage.world], L = W.lanes;
+  const rnd = mulberry32(seed || (Date.now() & 0xffffff));
+  S = {
+    stage, W, L, deck, rnd, t: 0, atp: stage.tut ? 150 : W.skyRate ? 100 : 50, uid: 1, events: [], over: null,
+    grid: Array.from({ length: L }, () => Array.from({ length: 9 }, () => ({ cell: 0, shield: 0 }))),
+    cells: new Map(), foes: new Map(), shots: [], drops: [],
+    cardCd: Object.fromEntries(deck.map(k => [k, 0])), pulses: Array(L).fill(1), sweeps: [],
+    wave: 0, waveT: stage.tut ? 9999 : 24, waveFoes: new Set(), spawnQ: [], skyT: 6, feverT: 0, darkT: 0,
+    blocked: new Set(), puddle: new Set(), lastLanes: [], killed: 0, stats: { placed: 0, pulsesUsed: 0 }, endless: !!stage.endless, warnT: 0,
+  };
+  // 첫 카드는 재충전 없이 바로 쓸 수 있게(상피 장벽처럼 재충전이 긴 카드만 처음에 대기)
+  for (const k of deck) S.cardCd[k] = CELLS[k].cd >= 25 ? Math.min(CELLS[k].cd, 12) : 0;
+  if (W.puddles) for (let l = 0; l < L; l++) for (const c of W.puddles) S.puddle.add(l + ':' + c);
+  if (W.walls) { const r = mulberry32(stage.idx * 977 + 13); let n = 5 + (stage.idx % 3); while (n > 0) { const l = Math.floor(r() * L), c = 2 + Math.floor(r() * 7); const k = l + ':' + c; if (!S.blocked.has(k)) { S.blocked.add(k); n--; } } }
+  S.totalWaves = stage.endless ? Infinity : stage.waves;
+  return S;
+}
+const ev = (type, o) => S.events.push(Object.assign({ type }, o || {}));
+const cx = c => c + 0.5;
+const foeInLane = (f, l) => f.lane === l || (f.wide && f.lane + 1 === l);
+function foesIn(l) { const out = []; for (const f of S.foes.values()) if (!f.dead && foeInLane(f, l)) out.push(f); return out; }
+const targetable = f => !f.dead && !(f.hideT > 0) && !(f.burrowT > 0) && !(f.jumpT > 0);
+
+/* ---------------- 배치 · 제거 ---------------- */
+function canPlace(type, lane, col) {
+  const d = CELLS[type]; if (!d) return false;
+  if (d.kind === 'spell') return d.target === 'all' || (lane >= 0 && lane < S.L);
+  if (lane < 0 || lane >= S.L || col < 0 || col > 8) return false;
+  const key = lane + ':' + col; if (S.blocked.has(key) || S.puddle.has(key)) return false;
+  const tile = S.grid[lane][col];
+  if (d.kind === 'shield') return !!tile.cell && !tile.shield;
+  return !tile.cell;
+}
+function cardReady(type) { return S.cardCd[type] <= 0 && S.atp >= CELLS[type].cost; }
+function place(type, lane, col) {
+  if (!cardReady(type) || !canPlace(type, lane, col)) return false;
+  const d = CELLS[type]; S.atp -= d.cost; S.cardCd[type] = d.cd; S.stats.placed++;
+  if (d.kind === 'spell') { castSpell(type, lane); return true; }
+  const c = { id: S.uid++, type, lane, col, x: cx(col), hp: d.hp, maxHp: d.hp, t: d.kind === 'producer' ? d.first : (d.kind === 'shooter' ? 0.6 : 0), state: '', disabled: 0, born: S.t };
+  if (d.kind === 'bomb') c.t = d.fuse;
+  if (d.kind === 'assassin') c.t = 0.3;
+  S.cells.set(c.id, c);
+  if (d.kind === 'shield') S.grid[lane][col].shield = c.id; else S.grid[lane][col].cell = c.id;
+  ev('place', { id: c.id, lane, col });
+  if (S.stage.tut && S.waveT > 100 && type === 'neutro') S.waveT = 8;
+  return true;
+}
+function removeCell(c, why) {
+  if (!c || c.dead) return; c.dead = true; S.cells.delete(c.id);
+  const tile = S.grid[c.lane][c.col]; if (tile.cell === c.id) tile.cell = 0; if (tile.shield === c.id) tile.shield = 0;
+  ev('cellGone', { id: c.id, lane: c.lane, col: c.col, why });
+}
+function dig(lane, col) {   // 세포 자멸 신호: 보호막 먼저, 그다음 세포
+  const tile = S.grid[lane] && S.grid[lane][col]; if (!tile) return false;
+  const id = tile.shield || tile.cell; if (!id) return false;
+  removeCell(S.cells.get(id), 'dig'); return true;
+}
+function castSpell(type, lane) {
+  if (type === 'fever') { S.feverT = 6; ev('fever'); return; }
+  if (type === 'ifn') {
+    for (const f of foesIn(lane)) { f.stopDivT = 10; if (f.tags.includes('virus') || f.tags.includes('infect')) hurt(f, CELLS.ifn.dmg, 'ifn'); }
+    ev('ifn', { lane });
+  }
+}
+
+/* ---------------- 피해 ---------------- */
+function hurt(f, amt, src) {
+  if (f.dead || f.hideT > 0 || f.burrowT > 0) return 0;
+  if (S.feverT > 0) amt *= 1.25;
+  if (f.resist && f.resist.includes(src)) amt *= 0.25;
+  if (f.def.abRes && (src === 'bcell' || src === 'memb')) amt *= f.def.abRes;
+  f.flash = 0.08;
+  if (f.armor > 0) { const a = Math.min(f.armor, amt); f.armor -= a; amt -= a; if (f.armor <= 0) ev('armorBreak', { id: f.id }); }
+  f.hp -= amt;
+  if (f.hp <= 0) killFoe(f, src);
+  return amt;
+}
+function killFoe(f, src) {
+  if (f.dead) return; f.dead = true; S.killed++;
+  ev('foeDie', { id: f.id, type: f.type, x: f.x, lane: f.lane, boss: !!f.def.boss, src });
+  if (f.def.split) for (let i = 0; i < f.def.split; i++) spawnFoe('sporelet', f.lane, f.x + i * 0.35, { noWave: false, wave: f.wave });
+}
+function slow(f, s) {
+  if (f.def.noSlow) return;
+  let fac = s.f; if (f.def.slowRes) fac = 1 - (1 - fac) * f.def.slowRes;
+  if (f.slowT <= 0 || fac <= f.slowF) { f.slowF = fac; } f.slowT = Math.max(f.slowT, s.t);
+}
+function hurtTile(lane, col, amt) {
+  const tile = S.grid[lane][col]; const id = tile.shield || tile.cell; if (!id) return;
+  const c = S.cells.get(id); if (!c) return;
+  c.hp -= amt; c.flash = 0.08; if (c.hp <= 0) removeCell(c, 'eaten');
+}
+
+/* ---------------- 병원체 생성 ---------------- */
+function spawnFoe(type, lane, x, o = {}) {
+  const d = FOES[type];
+  if (d.wide && lane > S.L - 2) lane = S.L - 2;
+  const f = { id: S.uid++, type, def: d, lane, x: x == null ? 10.4 : x, hp: d.hp * (o.hpMul || 1), maxHp: d.hp * (o.hpMul || 1), armor: d.armor, maxArmor: d.armor, tags: d.tags,
+    slowT: 0, slowF: 1, eatT: 0, eating: 0, hideT: 0, cycT: d.hide ? d.hide.every : 0, jumped: false, jumpT: 0, rushed: false, gen: o.gen || 0,
+    sumT: d.summon ? d.summon.every * 0.6 : 0, divT: d.divide ? d.divide.every : 0, stopDivT: 0, shotT: 1, wide: d.wide ? true : false, phase: 1, resist: null,
+    burT: d.burrow ? d.burrow.every : 0, burrowT: 0, darkT: d.dark ? d.dark.every * 0.7 : 0, bob: S.rnd() * 6, flash: 0, wave: o.wave || S.wave, ops: 0 };
+  S.foes.set(f.id, f);
+  if (!o.noWave) S.waveFoes.add(f.id);
+  ev('foeSpawn', { id: f.id, type });
+  if (d.boss) ev('boss', { id: f.id, type });
+  return f;
+}
+function pickLane() {
+  let l, tries = 0;
+  do { l = Math.floor(S.rnd() * S.L); tries++; } while (tries < 8 && S.lastLanes.includes(l));
+  S.lastLanes.push(l); if (S.lastLanes.length > Math.min(2, S.L - 2)) S.lastLanes.shift();
+  return l;
+}
+function buildWave(i) {   // i: 0부터
+  const st = S.stage, flag = st.endless ? (i + 1) % 10 === 0 : st.flags.includes(i + 1);
+  let pool = st.pool;
+  if (st.endless) { const all = ['cold', 'capsid', 'ecoli', 'phage', 'tb', 'spore', 'toxin', 'malaria', 'worm', 'hiv', 'noro', 'cancer', 'prion']; pool = all.slice(0, Math.min(all.length, 2 + Math.floor(i / 3))); }
+  const diff = st.endless ? 1 + i * 0.07 : st.diff;
+  pool = ['cold', ...pool.filter(k => k !== 'cold')];
+  if (i < 2) pool = ['cold'];
+  let budget = (1 + i * 0.5) * diff; if (flag) budget = budget * 2 + 2;
+  if (st.tut && i < 2) budget = 1;
+  const list = [];
+  if (flag) list.push('flag');
+  let guard = 0;
+  while (budget > 0.4 && guard++ < 80) {
+    // 앞쪽(먼저 소개된) 병원체가 더 자주, 새 병원체는 웨이브가 진행될수록 자주
+    const prog = (i + 1) / (st.waves || 12); const w = pool.map((k, j) => j === 0 ? 3.2 - prog * 1.6 : Math.max(0.3, prog * 2.6 * (1 - j * 0.1)));
+    let r = S.rnd() * w.reduce((a, b) => a + b, 0), pick = pool[0];
+    for (let j = 0; j < pool.length; j++) { r -= w[j]; if (r <= 0) { pick = pool[j]; break; } }
+    const cost = FOES[pick].pts || 1; if (cost > budget + 0.6 && pick !== pool[0]) continue;
+    list.push(pick); budget -= cost;
+  }
+  if (!st.endless && st.boss && i + 1 === st.waves) list.unshift(st.boss);
+  if (st.endless && (i + 1) % 15 === 0) list.unshift(['superflu', 'biofilm', 'queen', 'latent'][Math.floor((i + 1) / 15 - 1) % 4]);
+  const spread = flag ? 9 : 6;
+  list.forEach((type, k) => {
+    const at = S.t + (k === 0 ? 0 : S.rnd() * spread) + (flag ? 3.5 : 0);
+    if (FOES[type].swarm) { const l = pickLane(); for (let s = 0; s < FOES[type].swarm; s++) S.spawnQ.push({ at: at + s * 0.25, type, lane: l, x: 10.4 + (s % 2) * 0.3 }); }
+    else S.spawnQ.push({ at, type, lane: FOES[type].boss ? Math.max(0, Math.floor(S.L / 2) - (FOES[type].wide ? 1 : 0)) : pickLane() });
+  });
+  S.spawnQ.sort((a, b) => a.at - b.at);
+  if (flag) { S.warnT = 3.5; ev('bigWave'); }
+  ev('wave', { i, flag });
+}
+
+/* ---------------- 한 스텝 ---------------- */
+function step() {
+  if (!S || S.over) return;
+  const dt = DT; S.t += dt;
+  for (const k in S.cardCd) if (S.cardCd[k] > 0) S.cardCd[k] = Math.max(0, S.cardCd[k] - dt);
+  if (S.feverT > 0) S.feverT -= dt; if (S.darkT > 0) S.darkT -= dt; if (S.warnT > 0) S.warnT -= dt;
+  // 하늘 ATP
+  if (S.W.skyAtp) { S.skyT -= dt; if (S.skyT <= 0) { S.skyT = (S.W.skyRate || 8) + S.rnd() * 3; dropAtp(0.6 + S.rnd() * 7.8, Math.floor(S.rnd() * S.L), 25, true); } }
+  // 웨이브 진행
+  if (S.stage.tut && S.waveT > 100 && S.t > 40) S.waveT = 5;
+  if (S.wave < S.totalWaves) {
+    S.waveT -= dt;
+    let alive = 0; for (const id of S.waveFoes) { const f = S.foes.get(id); if (f && !f.dead) alive++; }
+    if (S.wave > 0 && alive === 0 && S.spawnQ.length === 0 && S.waveT > 5) S.waveT = 5;
+    if (S.waveT <= 0) { S.waveFoes.clear(); buildWave(S.wave); S.wave++; S.waveT = Math.max(18, 28 - S.wave * 0.6) + (S.stage.flags && S.stage.flags.includes(S.wave + 1) ? 8 : 0); }
+  }
+  while (S.spawnQ.length && S.spawnQ[0].at <= S.t) { const q = S.spawnQ.shift(); spawnFoe(q.type, q.lane, q.x); }
+  stepCells(dt); stepFoes(dt); stepShots(dt); stepDrops(dt); stepSweeps(dt);
+  // 정리 (스텝 끝에 한꺼번에)
+  for (const [id, f] of S.foes) if (f.dead) S.foes.delete(id);
+  S.shots = S.shots.filter(s => !s.dead);
+  // 승리 판정
+  if (S.wave >= S.totalWaves && S.spawnQ.length === 0 && S.foes.size === 0) { S.over = 'win'; ev('win'); }
+}
+function hasCilia(lane) { for (const c of S.cells.values()) if (c.lane === lane && c.type === 'cilia') return true; return false; }
+function slimed(lane) { for (const f of S.foes.values()) if (!f.dead && f.def.slime && foeInLane(f, lane)) return !hasCilia(lane); return false; }
+function dendBuff(c) { for (const o of S.cells.values()) if (o.type === 'dend' && o.lane === c.lane && o.col < c.col && c.col - o.col <= CELLS.dend.reach && !(o.disabled > 0)) return 1 + CELLS.dend.buff; return 1; }
+function stepCells(dt) {
+  for (const c of S.cells.values()) {
+    if (c.dead) continue; const d = CELLS[c.type];
+    if (c.flash > 0) c.flash -= dt;
+    if (c.disabled > 0) { c.disabled -= dt; continue; }
+    const rateMul = slimed(c.lane) ? 2 : 1;
+    switch (d.kind) {
+      case 'producer': c.t -= dt; if (c.t <= 0) { c.t = d.every; dropAtp(c.x + 0.2, c.lane, d.give, false); ev('produce', { id: c.id }); } break;
+      case 'shooter': {
+        c.t -= dt; if (c.t > 0) break;
+        const any = foesIn(c.lane).some(f => targetable(f) && f.x > c.x - 0.1 && f.x < 9.9);
+        if (!any) { c.t = 0; break; }
+        c.t = d.rate * rateMul;
+        const dmg = d.dmg * dendBuff(c), n = d.shots || 1;
+        for (let k = 0; k < n; k++) S.shots.push({ kind: d.proj, src: c.type, lane: c.lane, x: c.x + 0.25 - k * 0.3, dmg, slow: d.slow, pierce: !!d.pierce, hit: d.pierce ? new Set() : null, speed: (S.W.wind && S.W.wind.includes(c.lane)) ? 6 : 5 });
+        ev('shoot', { id: c.id, kind: d.proj });
+        break; }
+      case 'eater':
+        if (c.state === 'digest') { c.t -= dt; if (c.t <= 0) { c.state = ''; ev('digestDone', { id: c.id }); } break; }
+        for (const f of foesIn(c.lane)) if (targetable(f) && !f.def.boss && f.x - c.x >= -0.1 && f.x - c.x <= d.range) {
+          c.state = 'digest'; c.t = d.digest * (f.ops > 0 ? 0.5 : 1); f.dead = true; S.killed++; ev('eat', { id: c.id, foe: f.id, x: f.x, lane: c.lane }); break; }
+        break;
+      case 'bomb': c.t -= dt; if (c.t <= 0) {
+        for (const f of S.foes.values()) if (!f.dead && Math.abs(f.lane - c.lane) <= 1 + (f.wide ? 1 : 0) && Math.abs(f.x - c.x) <= 1.6) hurt(f, d.dmg, 'comp');
+        ev('boom', { x: c.x, lane: c.lane }); removeCell(c, 'boom'); } break;
+      case 'aura': c.t -= dt; if (c.t <= 0) {
+        let hit = false;
+        for (const f of S.foes.values()) if (targetable(f) && Math.abs(f.lane - c.lane) <= 1 && Math.abs(f.x - c.x) <= d.rad) { hurt(f, d.dmg, 'mast'); slow(f, d.slow); hit = true; }
+        c.t = hit ? d.rate * rateMul : 0.3; if (hit) ev('cloud', { id: c.id, x: c.x, lane: c.lane }); } break;
+      case 'melee': {
+        c.t -= dt; if (c.t > 0) break;
+        let tg = null; for (const f of foesIn(c.lane)) if (targetable(f) && f.x - c.x >= -0.25 && f.x - c.x <= d.range && (!tg || f.x < tg.x)) tg = f;
+        if (!tg) break;
+        let r = d.rate * rateMul; const left = S.grid[c.lane][c.col - 1]; if (left && left.cell && S.cells.get(left.cell) && S.cells.get(left.cell).type === 'dend') r *= 0.8;
+        c.t = r; hurt(tg, d.dmg * dendBuff(c) * ((tg.tags.includes('virus') || tg.tags.includes('infect')) ? 2 : 1), 'killer'); ev('punch', { id: c.id, x: tg.x, lane: c.lane });
+        break; }
+      case 'assassin': {
+        c.t -= dt; if (c.t > 0) break;
+        let tg = null; for (const f of foesIn(c.lane)) if (targetable(f) && f.x - c.x >= -0.2 && f.x - c.x <= d.range && (!tg || f.x < tg.x)) tg = f;
+        if (!tg) { c.t = 0.2; break; }
+        hurt(tg, d.dmg, 'nk'); c.t = d.reload; ev('blink', { id: c.id, x: tg.x, lane: c.lane });
+        break; }
+      case 'pusher': c.t -= dt; if (c.t <= 0) {
+        let pushed = false;
+        for (const f of foesIn(c.lane)) if (!f.dead && !f.def.boss && f.x - c.x >= -0.2 && f.x - c.x <= d.range) { f.x = Math.min(10.3, f.x + d.push); f.eating = 0; pushed = true; }
+        c.t = pushed ? d.rate * rateMul : 0.3; if (pushed) ev('push', { id: c.id, lane: c.lane, x: c.x }); } break;
+    }
+  }
+}
+// 앞을 막는 칸 찾기 (같은 줄, 내 왼쪽 0~0.6칸)
+function blocker(f, lane) {
+  const row = S.grid[lane]; let best = -1;
+  for (let col = 8; col >= 0; col--) { const t = row[col]; if (!t.cell && !t.shield) continue; const gap = f.x - cx(col); if (gap >= -0.15 && gap <= 0.48 + (f.def.r - 0.3) * 0.8) { best = col; break; } }
+  return best;
+}
+function stepFoes(dt) {
+  for (const f of S.foes.values()) {
+    if (f.dead) continue; const d = f.def;
+    if (f.flash > 0) f.flash -= dt; if (f.slowT > 0) { f.slowT -= dt; if (f.slowT <= 0) f.slowF = 1; }
+    if (f.ops > 0) f.ops -= dt; if (f.stopDivT > 0) f.stopDivT -= dt;
+    f.bob += dt;
+    // 특수 행동
+    if (d.hide) { f.cycT -= dt; if (f.hideT > 0) f.hideT -= dt; else if (f.cycT <= 0) { f.hideT = d.hide.t; f.cycT = d.hide.every; ev('hide', { id: f.id }); } }
+    if (d.divide && f.gen < d.divide.gen && !(f.stopDivT > 0)) { f.divT -= dt; if (f.divT <= 0) { f.divT = d.divide.every; const n = spawnFoe(f.type, f.lane, Math.min(10.4, f.x + 0.7), { gen: f.gen + 1, hpMul: 0.6, noWave: false, wave: f.wave }); f.gen++; ev('divide', { id: f.id, nid: n.id }); } }
+    if (d.summon) { f.sumT -= dt; if (f.sumT <= 0) { f.sumT = d.summon.every * (f.phase === 3 ? 0.6 : 1);
+      const n = f.phase === 3 ? S.L : d.summon.n; const type = f.phase >= 2 && f.type === 'pandemia' ? (S.rnd() < 0.5 ? 'cancer' : 'capsid') : d.summon.type;
+      for (let k = 0; k < n; k++) spawnFoe(type, f.phase === 3 ? k : pickLane(), Math.min(10.4, f.x + 0.8 + S.rnd() * 0.6), { noWave: false, wave: f.wave });
+      ev('summon', { id: f.id }); } }
+    if (d.burrow) { if (f.burrowT > 0) { f.burrowT -= dt; if (f.burrowT <= 0) { f.lane = Math.floor(S.rnd() * S.L); ev('surface', { id: f.id }); } } else { f.burT -= dt; if (f.burT <= 0) { f.burT = d.burrow.every; f.burrowT = d.burrow.t; f.eating = 0; ev('burrow', { id: f.id }); } } }
+    if (d.dark) { f.darkT -= dt; if (f.darkT <= 0) { f.darkT = d.dark.every; S.darkT = 3; const arr = [...S.cells.values()].filter(c => !c.dead); for (let k = 0; k < d.dark.n && arr.length; k++) { const c = arr.splice(Math.floor(S.rnd() * arr.length), 1)[0]; c.disabled = d.dark.t; } ev('dark'); } }
+    if (d.phases) { const p = f.hp / f.maxHp; if (f.phase === 1 && p < 0.66) { f.phase = 2; const shooters = ['neutro', 'bcell', 'memb', 'eos', 'killer', 'mast']; f.resist = [shooters.splice(Math.floor(S.rnd() * shooters.length), 1)[0], shooters.splice(Math.floor(S.rnd() * shooters.length), 1)[0]]; ev('phase', { id: f.id, phase: 2, resist: f.resist }); }
+      if (f.phase === 2 && p < 0.33) { f.phase = 3; ev('phase', { id: f.id, phase: 3 }); } }
+    if (f.burrowT > 0) continue;
+    // 점프 중 (박테리오파지)
+    if (f.jumpT > 0) { f.jumpT -= dt; f.x -= 1.5 * dt / 0.8; continue; }
+    // 막힘 확인 (넓은 보스는 두 줄 모두)
+    let bl = -1, blLane = f.lane;
+    const lanes = f.wide ? [f.lane, f.lane + 1] : [f.lane];
+    for (const l of lanes) { const b = blocker(f, l); if (b >= 0 && (bl < 0 || b > bl)) { bl = b; blLane = l; } }
+    if (bl >= 0) {
+      if (d.jump && !f.jumped) { f.jumped = true; f.jumpT = 0.8; ev('jump', { id: f.id }); continue; }
+      if (d.rush && !f.rushed) f.rushed = true;
+      const tile = S.grid[blLane][bl], cid = tile.shield || tile.cell;
+      if (f.eating !== cid) { f.eating = cid; const c = S.cells.get(tile.cell); if (d.disable && c) { c.disabled = Math.max(c.disabled, c.type === 'killer' ? d.disable.tT : d.disable.t); ev('disable', { id: c.id }); } }
+      if (!(f.hideT > 0) || true) { hurtTile(blLane, bl, d.dps * dt * (f.slowT > 0 ? f.slowF : 1)); if (f.wide && blLane !== f.lane) {} }
+      f.eatT += dt; if (f.eatT > 0.5) { f.eatT = 0; ev('chomp', { id: f.id }); }
+      continue;
+    }
+    f.eating = 0;
+    // 원거리 (독소 세균)
+    if (d.ranged) {
+      let near = -1; for (let col = 8; col >= 0; col--) { const t = S.grid[f.lane][col]; if ((t.cell || t.shield) && cx(col) < f.x && f.x - cx(col) <= d.ranged.range) { near = col; break; } }
+      if (near >= 0 && f.x < 9.6) { f.shotT -= dt; if (f.shotT <= 0) { f.shotT = d.ranged.rate; S.shots.push({ enemy: true, lane: f.lane, x: f.x - 0.3, dmg: d.ranged.dmg, speed: -3, kind: 'toxin' }); ev('spit', { id: f.id }); } continue; }
+    }
+    // 이동
+    let sp = d.speed; if (d.rush && f.rushed) sp = 0.2;
+    if (f.phase === 3) sp *= 2.5;
+    sp *= (f.slowT > 0 ? f.slowF : 1) * (S.feverT > 0 ? 0.6 : 1);
+    const col = Math.floor(f.x); if (S.puddle.has(f.lane + ':' + col)) sp *= 0.7;
+    f.x -= sp * dt;
+    if (f.x < -0.35) reachEnd(f);
+  }
+}
+function reachEnd(f) {
+  for (const l of (f.wide ? [f.lane, f.lane + 1] : [f.lane])) {
+    if (S.pulses[l]) { S.pulses[l] = 0; S.stats.pulsesUsed++; S.sweeps.push({ lane: l, x: -0.6 }); ev('pulse', { lane: l, foe: f.type }); }
+    else if (!S.sweeps.some(s => s.lane === l)) { S.over = 'lose'; ev('lose', { lane: l, foe: f.type }); return; }
+  }
+}
+function stepSweeps(dt) {
+  for (const s of S.sweeps) {
+    s.x += 7 * dt;
+    for (const f of S.foes.values()) if (!f.dead && foeInLane(f, s.lane) && f.x <= s.x + 0.3) {
+      if (f.def.boss) { if (!f.swept) { f.swept = true; hurt(f, 1500, 'pulse'); f.x = Math.min(10.3, f.x + 2.5); } }
+      else { f.dead = true; S.killed++; ev('foeDie', { id: f.id, type: f.type, x: f.x, lane: f.lane, src: 'pulse' }); }
+    }
+  }
+  S.sweeps = S.sweeps.filter(s => s.x < 11);
+  for (const f of S.foes.values()) if (f.swept && !S.sweeps.some(s => foeInLane(f, s.lane))) f.swept = false;
+}
+function stepShots(dt) {
+  for (const s of S.shots) {
+    if (s.dead) continue;
+    s.x += s.speed * dt;
+    if (s.enemy) {
+      const col = Math.floor(s.x); if (col < 0 || col > 8 || !S.grid[s.lane]) { s.dead = col > 8 ? false : true; if (col < 0) continue; if (col > 8) continue; continue; }
+      const t = S.grid[s.lane][col]; if ((t.cell || t.shield) && Math.abs(cx(col) - s.x) < 0.3) { hurtTile(s.lane, col, s.dmg); s.dead = true; ev('splat', { x: s.x, lane: s.lane, c: '#5aff6a' }); }
+      continue;
+    }
+    if (s.x > 10.6) { s.dead = true; continue; }
+    for (const f of S.foes.values()) {
+      if (!targetable(f) || !foeInLane(f, s.lane) || Math.abs(f.x - s.x) > f.def.r + 0.14) continue;
+      if (s.hit && s.hit.has(f.id)) continue;
+      let dmg = s.dmg; if (s.kind === 'pierce' && f.tags.includes('parasite')) dmg *= 3;
+      hurt(f, dmg, s.src); if (s.slow) { slow(f, s.slow); f.ops = 6; }
+      ev('hit', { x: s.x, lane: s.lane, kind: s.kind });
+      if (s.hit) s.hit.add(f.id); else { s.dead = true; break; }
+    }
+  }
+}
+function dropAtp(x, lane, val, sky) { S.drops.push({ id: S.uid++, x, lane, val, sky, y: sky ? 6 : 0.6, vy: sky ? -1.2 : 3.2, floor: 0.45, ttl: sky ? 11 : 9, got: false, gt: 0 }); }
+function stepDrops(dt) {
+  for (const p of S.drops) {
+    if (p.got) { p.gt += dt; continue; }
+    if (p.sky) { p.y = Math.max(p.floor, p.y + p.vy * dt); } else { p.vy -= 9 * dt; p.y += p.vy * dt; if (p.y < p.floor) { p.y = p.floor; p.vy = 0; } }
+    p.ttl -= dt;
+    if (OPT.auto && S.t - (p.born || (p.born = S.t)) > 0.6 && p.y <= p.floor + 0.01) collect(p);
+  }
+  S.drops = S.drops.filter(p => !(p.ttl <= 0 && !p.got) && !(p.got && p.gt > 0.6));
+}
+function collect(p) { if (p.got) return; p.got = true; S.atp += p.val; ev('collect', { val: p.val }); }
+function stars() { const u = S.stats.pulsesUsed; return u === 0 ? 3 : u === 1 ? 2 : 1; }
+
+/* =========================================================
+   렌더링 — 장면 · 보드 · 유닛 동기화 · 효과
+   ========================================================= */
+const R = {};
+function initRender() {
+  const canvas = $('#gl');
+  const dev = window.BioDevice || { maxDpr: 2, type: 'pc' };
+  R.renderer = new THREE.WebGLRenderer({ canvas, antialias: dev.type === 'pc', powerPreference: 'high-performance' });
+  R.renderer.setPixelRatio(Math.min(devicePixelRatio || 1, dev.maxDpr || 2));
+  R.renderer.shadowMap.enabled = OPT.shadow; R.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  R.scene = new THREE.Scene();
+  R.camera = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
+  R.mat = new THREE.MeshLambertMaterial({ vertexColors: true });
+  R.matFlash = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  R.matGhost = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, opacity: 0.5, depthWrite: false });
+  R.hemi = new THREE.HemisphereLight(0xffffff, 0x8a6a9a, 0.75); R.scene.add(R.hemi);
+  R.sun = new THREE.DirectionalLight(0xfff2dc, 0.85); R.sun.position.set(-4, 12, 8); R.sun.castShadow = true;
+  const sz = dev.type === 'phone' ? 512 : 1024; R.sun.shadow.mapSize.set(sz, sz);
+  Object.assign(R.sun.shadow.camera, { left: -9, right: 9, top: 7, bottom: -7, near: 1, far: 40 }); R.sun.shadow.bias = -0.0015;
+  R.scene.add(R.sun); R.scene.add(R.sun.target);
+  R.world = new THREE.Group(); R.scene.add(R.world);
+  R.board = new THREE.Group(); R.world.add(R.board);
+  R.units = new THREE.Group(); R.world.add(R.units);
+  R.meshes = new Map();   // id → { g:Group, body:Mesh, armor?:Mesh }
+  // 투사체 · 파티클 · ATP (인스턴스)
+  const cube = new THREE.BoxGeometry(1, 1, 1);
+  R.shotMesh = new THREE.InstancedMesh(cube, new THREE.MeshLambertMaterial({ color: 0xffffff }), 320); R.shotMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); R.shotMesh.count = 0; R.world.add(R.shotMesh);
+  R.fxMesh = new THREE.InstancedMesh(cube, new THREE.MeshLambertMaterial({ color: 0xffffff }), 600); R.fxMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); R.fxMesh.count = 0; R.world.add(R.fxMesh);
+  R.shotMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(320 * 3), 3);
+  R.fxMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(600 * 3), 3);
+  R.shotMesh.frustumCulled = R.fxMesh.frustumCulled = false;
+  R.atpGeo = geo('atp'); R.drops = new Map();
+  R.fx = []; R.dummy = new THREE.Object3D(); R.col = new THREE.Color();
+  R.ghost = null; R.hover = new THREE.Mesh(new THREE.BoxGeometry(1, 0.06, 1), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 })); R.hover.visible = false; R.world.add(R.hover);
+  R.ray = new THREE.Raycaster(); R.plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.2);
+  R.shake = 0;
+  addEventListener('resize', fitView); fitView();
+}
+const laneZ = l => (l - (S.L - 1) / 2) * 1.0;
+function fitView() {
+  if (!R.renderer) return;
+  const w = innerWidth, h = innerHeight; R.renderer.setSize(w, h, false); R.camera.aspect = w / h;
+  const L = S ? S.L : 5, tilt = 56 * Math.PI / 180, h2 = document.documentElement;
+  const left = h2.classList.contains('cards-left'), phoneP = h2.classList.contains('dev-phone') && h > w;
+  // 화면에서 보드가 들어갈 영역 (NDC): 위쪽은 HUD, 왼쪽은 카드 열을 비워 둠
+  const top = 1 - 2 * ((phoneP ? 200 : left ? 64 : 116) / h), bot = -0.96, lft = left ? -1 + 2 * (84 / w) : -0.97, rgt = 0.97;
+  const corners = [[-1.1, -L / 2 - 0.1], [10.6, -L / 2 - 0.1], [-1.1, L / 2 + 0.1], [10.6, L / 2 + 0.1]];
+  const v = new THREE.Vector3(), place = (cxw, dist) => { R.camera.position.set(cxw, Math.sin(tilt) * dist, Math.cos(tilt) * dist); R.camera.lookAt(cxw, 0, 0); R.camera.updateMatrixWorld(); R.camera.updateProjectionMatrix(); };
+  const look = new THREE.Vector3(4.75, 0, 0), ray = new THREE.Raycaster(), gp = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.2), hit = new THREE.Vector3();
+  const put = d => { R.camera.position.set(look.x, Math.sin(tilt) * d, look.z + Math.cos(tilt) * d); R.camera.lookAt(look); R.camera.updateMatrixWorld(); R.camera.updateProjectionMatrix(); };
+  const box = () => { let a = 9, b = -9, c = 9, e = -9; for (const [x, z] of corners) { v.set(x, 0.2, z).project(R.camera); a = Math.min(a, v.x); b = Math.max(b, v.x); c = Math.min(c, v.y); e = Math.max(e, v.y); } return [a, b, c, e]; };
+  const toGround = (nx, ny) => { ray.setFromCamera({ x: nx, y: ny }, R.camera); return ray.ray.intersectPlane(gp, hit) ? hit.clone() : null; };
+  let d = 20;
+  for (let pass = 0; pass < 4; pass++) {
+    let lo = 3, hi = 90;
+    for (let it = 0; it < 24; it++) { const mid = (lo + hi) / 2; put(mid); const [a, b, c, e] = box(); if (b - a <= rgt - lft && e - c <= top - bot) hi = mid; else lo = mid; }
+    d = hi; put(d);
+    const [a, b, c, e] = box(), p1 = toGround((a + b) / 2, (c + e) / 2), p2 = toGround((lft + rgt) / 2, (top + bot) / 2);
+    if (p1 && p2) { look.x += p1.x - p2.x; look.z += p1.z - p2.z; }
+  }
+  put(d);
+  if (R.scene.fog) { R.scene.fog.near = d + 4; R.scene.fog.far = d + 30; }
+  R.camera.far = d + 80; R.camera.updateProjectionMatrix();
+}
+function clearGroup(g) { while (g.children.length) { const o = g.children.pop(); o.traverse(n => { if (n.geometry && !n.geometry.userData.keep) n.geometry.dispose(); }); } }
+/* ---------------- 보드 · 배경 ---------------- */
+function buildBoard() {
+  clearGroup(R.board); clearGroup(R.units); R.meshes.clear(); R.drops.forEach(m => R.world.remove(m)); R.drops.clear(); R.fx.length = 0;
+  const W = S.W, L = S.L;
+  R.scene.background = new THREE.Color(W.sky[1]);
+  R.scene.fog = new THREE.Fog(W.fog, 18, 40);
+  R.hemi.intensity = W.night ? 0.45 : 0.75; R.sun.intensity = W.night ? 0.45 : 0.85; R.sun.color.set(W.night ? 0x9ab0ff : 0xfff2dc);
+  // 타일 (체크무늬)
+  const tileGeo = new THREE.BoxGeometry(0.98, 0.2, 0.98);
+  const tiles = new THREE.InstancedMesh(tileGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), L * 9);
+  tiles.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(L * 9 * 3), 3);
+  let i = 0;
+  for (let l = 0; l < L; l++) for (let c = 0; c < 9; c++) {
+    const key = l + ':' + c, pud = S.puddle.has(key), wall = S.blocked.has(key);
+    R.dummy.position.set(cx(c), pud ? 0.02 : 0.1, laneZ(l)); R.dummy.scale.set(1, pud ? 0.4 : 1, 1); R.dummy.updateMatrix(); tiles.setMatrixAt(i, R.dummy.matrix);
+    R.col.set(pud ? '#8ad0c0' : W.tiles[(l + c) & 1]); tiles.setColorAt(i, R.col); i++;
+    if (wall) { const m = new THREE.Mesh(geo('wallBlock'), R.mat); m.position.set(cx(c), 0.2, laneZ(l)); m.castShadow = m.receiveShadow = true; R.board.add(m); }
+  }
+  tiles.receiveShadow = true; R.board.add(tiles);
+  // 받침 지면 (계단식 떠 있는 섬)
+  const gm = new THREE.MeshLambertMaterial({ color: W.ground });
+  for (let k = 0; k < 3; k++) { const b = new THREE.Mesh(new THREE.BoxGeometry(11.6 - k * 0.6, 0.5, L + 1.2 - k * 0.5), gm); b.position.set(4.3, -0.25 - k * 0.5, 0); b.receiveShadow = true; R.board.add(b); }
+  // 왼쪽 림프 순환 펄스 장치
+  R.pulseMeshes = [];
+  for (let l = 0; l < L; l++) { const m = new THREE.Mesh(geo('pulse'), R.mat); m.position.set(-0.55, 0.2, laneZ(l)); m.castShadow = true; R.board.add(m); R.pulseMeshes.push(m); }
+  // 배경 소품
+  const bg = new THREE.Group(); R.board.add(bg); R.bgProps = [];
+  const prop = WORLD_PROPS[S.stage.world] || WORLD_PROPS[0];
+  const rr = mulberry32(S.stage.world * 31 + 7);
+  for (let k = 0; k < 16; k++) { const name = prop[k % prop.length]; const m = new THREE.Mesh(geo(name), R.mat); const sx = -2 + rr() * 14, sz = -L / 2 - 1.2 - rr() * 3.5; m.position.set(sx, -0.1 - (sz < -L / 2 - 2.5 ? 0.6 : 0), sz); m.rotation.y = rr() * 6; m.scale.setScalar(0.9 + rr() * 0.8); m.castShadow = true; bg.add(m); R.bgProps.push(m); }
+  for (let k = 0; k < 6; k++) { const m = new THREE.Mesh(geo(prop[k % prop.length]), R.mat); m.position.set(10.6 + rr() * 1.5, -0.1, -L / 2 + rr() * L); m.scale.setScalar(0.7 + rr() * 0.5); bg.add(m); }
+  // 안개 (림프절)
+  if (W.fogCols) { const fg = new THREE.Mesh(new THREE.BoxGeometry(W.fogCols + 1.4, 1.4, L + 0.6), new THREE.MeshLambertMaterial({ color: 0x8a9ad8, transparent: true, opacity: 0.55, depthWrite: false })); fg.position.set(9 - W.fogCols / 2 + 0.6, 0.7, 0); R.board.add(fg); R.fogMesh = fg; } else R.fogMesh = null;
+  R.sun.target.position.set(4.5, 0, 0);
+  fitView();
+}
+const WORLD_PROPS = [['rbcProp', 'vesselPillar', 'plasmaBubble'], ['alveolus', 'plasmaBubble', 'vesselPillar'], ['villus', 'mushProp', 'plasmaBubble'], ['lymphLight', 'vesselPillar', 'villus'], ['neuron', 'vesselPillar', 'plasmaBubble']];
+Object.assign(MODELS, {
+  wallBlock: () => new Vox().box(-6, 0, -6, 13, 8, 13, '#8a7aa8').box(-5, 8, -5, 11, 2, 11, '#a898c8'),
+  rbcProp: () => { const v = new Vox(); v.ell(0, 3, 0, 7, 3, 7, '#e8404f'); v.ell(0, 5, 0, 4, 1.5, 4, null); v.ell(0, 4.6, 0, 4.2, 1, 4.2, '#c8303f'); return v; },
+  vesselPillar: () => new Vox().box(-3, 0, -3, 7, 26, 7, '#ff8f9a').box(-4, 26, -4, 9, 3, 9, '#ffb0b8'),
+  plasmaBubble: () => new Vox().ell(0, 6, 0, 4, 4, 4, '#fff1b8'),
+  alveolus: () => { const v = new Vox(); for (const [x, z] of [[0, 0], [6, 2], [-5, 3], [2, -5]]) v.ell(x, 6, z, 4.5, 4.5, 4.5, '#ffc4d6'); v.box(0, 0, 0, 2, 6, 2, '#ff9fb8'); return v; },
+  villus: () => new Vox().ell(0, 9, 0, 3, 9, 3, '#ffa0a8').ell(0, 17, 0, 3.2, 2.5, 3.2, '#ffb8c0'),
+  mushProp: () => new Vox().box(-1, 0, -1, 3, 6, 3, '#f4ecd8').ell(0, 7, 0, 5, 2.6, 5, (x, y, z) => (x * x + z * z) % 7 === 0 ? '#ffffff' : '#ff6a5a'),
+  lymphLight: () => new Vox().box(0, 0, 0, 1, 10, 1, '#5a6aa8').ell(0, 12, 0, 2.5, 2.5, 2.5, '#9fe8ff'),
+  neuron: () => { const v = new Vox(); v.ell(0, 5, 0, 3.5, 3.5, 3.5, '#b48ae8'); for (const [dx, dy, dz] of [[1, 1, 0], [-1, 1, 0.4], [0.4, 1, -1], [-0.6, 0.2, 1]]) for (let s = 3; s < 10; s++) v.set(dx * s, 5 + dy * s, dz * s, '#d0b0ff'); return v; },
+});
+/* ---------------- 유닛 메쉬 ---------------- */
+function unitMesh(id, type, isFoe) {
+  const g = new THREE.Group(); const body = new THREE.Mesh(geo(type), R.mat); body.castShadow = true; g.add(body);
+  const rec = { g, body, type, foe: isFoe, born: performance.now() };
+  if (type === 'capsid') { rec.armor = new THREE.Mesh(geo('capsidArmor'), R.mat); rec.armor.castShadow = true; g.add(rec.armor); }
+  if (type === 'tb') { rec.armor = new THREE.Mesh(geo('tbArmor'), R.mat); rec.armor.castShadow = true; g.add(rec.armor); }
+  if (isFoe) g.rotation.y = -0.55; else g.rotation.y = type === 'barrier' || type === 'cilia' ? 0.25 : 0.55;
+  R.units.add(g); R.meshes.set(id, rec); return rec;
+}
+function shieldMesh() { const m = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.78, 0.86), new THREE.MeshLambertMaterial({ color: 0xff5d6c, transparent: true, opacity: 0.38, depthWrite: false })); m.userData.keepMat = false; return m; }
+function syncUnits(now, alpha) {
+  const seen = new Set();
+  for (const c of S.cells.values()) {
+    seen.add(c.id); let r = R.meshes.get(c.id);
+    if (!r) { r = c.type === 'plate' ? (() => { const g = new THREE.Group(); const m = shieldMesh(); g.add(m); R.units.add(g); const rec = { g, body: m, type: 'plate', foe: false, born: performance.now() }; R.meshes.set(c.id, rec); return rec; })() : unitMesh(c.id, c.type, false); }
+    const age = (now - r.born) / 1000, build = clamp(age / 0.25, 0, 1);
+    r.g.position.set(c.x, c.type === 'plate' ? 0.6 : 0.2, laneZ(c.lane));
+    let sx = 1, sy = build, lean = 0;
+    const d = CELLS[c.type];
+    if (c.type !== 'plate') {
+      const breathe = Math.sin(now / 420 + c.id) * 0.03; sy *= 1 + breathe; sx *= 1 - breathe * 0.6;
+      if (d.kind === 'shooter' && c.t > d.rate - 0.12) lean = 0.12;
+      if (d.kind === 'melee' && c.t > d.rate - 0.15) lean = 0.3;
+      if (c.type === 'macro' && c.state === 'digest') { sx *= 1.12; sy *= 0.9; }
+      if (c.type === 'comp') { const k = 1 + Math.sin(now / 60) * 0.08; sx *= k; sy *= k; }
+    } else { sy = build * (0.5 + 0.5 * c.hp / c.maxHp); }
+    r.body.scale.set(sx, sy, sx); r.body.position.x = lean * 0.4;
+    r.body.material = c.flash > 0 ? R.matFlash : (c.type === 'plate' ? r.body.material : R.mat);
+    if (c.type !== 'plate') r.body.material = c.flash > 0 ? R.matFlash : R.mat;
+    r.g.visible = true;
+    if (c.disabled > 0) r.g.rotation.z = Math.sin(now / 90) * 0.06; else r.g.rotation.z = 0;
+  }
+  for (const f of S.foes.values()) {
+    if (f.dead) continue; seen.add(f.id); let r = R.meshes.get(f.id); if (!r) r = unitMesh(f.id, f.type, true);
+    const hop = Math.abs(Math.sin(f.bob * (f.def.boss ? 3 : 5.5)));
+    const eating = f.eating ? 1 : 0;
+    let y = 0.2 + (eating ? 0 : hop * (f.def.boss ? 0.08 : 0.14));
+    if (f.jumpT > 0) y += Math.sin((1 - f.jumpT / 0.8) * Math.PI) * 1.1;
+    const z = f.wide ? (laneZ(f.lane) + laneZ(f.lane + 1)) / 2 : laneZ(f.lane);
+    r.g.position.set(f.x, y, z);
+    const sq = eating ? 1 + Math.sin(f.bob * 14) * 0.08 : 1 + (hop < 0.15 ? 0.12 : -0.05);
+    const base = f.def.boss ? 1 : (f.gen ? 0.85 : 1);
+    r.body.scale.set(base * sq, base * (2 - sq), base * sq);
+    r.body.material = f.flash > 0 ? R.matFlash : (f.hideT > 0 || f.burrowT > 0 ? R.matGhost : R.mat);
+    r.g.visible = !(f.burrowT > 0 && f.burrowT < f.def.burrow.t - 0.3);
+    if (r.armor) r.armor.visible = f.armor > 0;
+    r.g.rotation.x = f.phase === 3 ? Math.sin(now / 50) * 0.05 : 0;
+  }
+  for (const [id, r] of R.meshes) if (!seen.has(id)) { R.units.remove(r.g); if (r.type === 'plate') r.body.geometry.dispose(); R.meshes.delete(id); }
+}
+/* ---------------- 투사체 · ATP · 효과 ---------------- */
+const SHOT_COL = { granule: '#ff8ab4', antibody: '#ffd84a', pierce: '#ff8a3a', toxin: '#5aff6a' };
+function syncShots(now) {
+  let n = 0; const m = R.shotMesh;
+  for (const s of S.shots) { if (s.dead || n >= 320) continue;
+    const big = s.kind === 'pierce' ? [0.32, 0.1, 0.1] : s.kind === 'antibody' ? [0.16, 0.16, 0.16] : [0.14, 0.14, 0.14];
+    R.dummy.position.set(s.x, 0.62 + Math.sin(now / 80 + s.x * 3) * 0.02, laneZ(s.lane)); R.dummy.rotation.set(now / 200, now / 150, 0); R.dummy.scale.set(...big); R.dummy.updateMatrix();
+    m.setMatrixAt(n, R.dummy.matrix); R.col.set(SHOT_COL[s.kind] || '#fff'); m.setColorAt(n, R.col); n++; }
+  m.count = n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  // ATP
+  const live = new Set();
+  for (const p of S.drops) { live.add(p.id); let mm = R.drops.get(p.id);
+    if (!mm) { mm = new THREE.Mesh(R.atpGeo, R.mat); mm.castShadow = true; R.world.add(mm); R.drops.set(p.id, mm); }
+    const z = laneZ(clamp(p.lane, 0, S.L - 1)) + 0.25;
+    if (p.got) { const t = Math.min(1, p.gt / 0.5); mm.position.set(lerp(p.x, -1.5, t), lerp(p.y, 4, t), lerp(z, -S.L / 2 - 1, t)); mm.scale.setScalar(1 - t * 0.6); }
+    else { mm.position.set(p.x, p.y + Math.sin(now / 300 + p.id) * 0.05, z); mm.scale.setScalar(p.ttl < 2 ? (Math.sin(now / 60) > 0 ? 1 : 0.6) : 1); }
+    mm.rotation.y = now / 500 + p.id;
+    p.wx = mm.position.x; p.wy = mm.position.y; p.wz = mm.position.z; }
+  for (const [id, mm] of R.drops) if (!live.has(id)) { R.world.remove(mm); R.drops.delete(id); }
+  // 펄스 장치 · 쓸기 물결
+  R.pulseMeshes.forEach((m, l) => { m.visible = !!S.pulses[l] || S.sweeps.some(s => s.lane === l); });
+  for (const s of S.sweeps) for (let k = 0; k < 3; k++) burst(s.x, 0.4, laneZ(s.lane), '#9fe8ff', 1, 0.6, 0.12);
+}
+function burst(x, y, z, col, n, sp, size, life) {
+  for (let i = 0; i < n; i++) { if (R.fx.length > 580) R.fx.shift();
+    R.fx.push({ x, y, z, vx: (Math.random() - 0.5) * sp * 2, vy: Math.random() * sp * 2 + sp * 0.5, vz: (Math.random() - 0.5) * sp * 2, s: size * (0.6 + Math.random() * 0.8), life: life || 0.7 + Math.random() * 0.4, t: 0, c: col, rx: Math.random() * 6 }); }
+}
+function stepFx(dt) {
+  let n = 0; const m = R.fxMesh;
+  for (const p of R.fx) { p.t += dt; p.vy -= 9 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; if (p.y < 0.25) { p.y = 0.25; p.vy *= -0.35; p.vx *= 0.7; p.vz *= 0.7; } p.rx += dt * 5; }
+  R.fx = R.fx.filter(p => p.t < p.life);
+  for (const p of R.fx) { const k = 1 - Math.max(0, (p.t - p.life * 0.6) / (p.life * 0.4)); R.dummy.position.set(p.x, p.y, p.z); R.dummy.rotation.set(p.rx, p.rx * 0.7, 0); R.dummy.scale.setScalar(p.s * k); R.dummy.updateMatrix(); m.setMatrixAt(n, R.dummy.matrix); R.col.set(p.c); m.setColorAt(n, R.col); n++; }
+  m.count = n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true;
+}
+const FOE_COL = { cold: '#7ee05a', flag: '#7ee05a', capsid: '#a8b0c0', ecoli: '#c98a52', phage: '#7a8ae0', tb: '#f4f0e4', spore: '#5cc86a', sporelet: '#7ad87a', toxin: '#9a4ad0', malaria: '#ff8ab0', worm: '#ffc8a0', hiv: '#b8bcc8', noro: '#5aa8ff', cancer: '#b8304a', prion: '#a090c8', superflu: '#5ad0c8', biofilm: '#7aa04a', queen: '#ffbe94', latent: '#3a2a6a', pandemia: '#d0305a' };
+function handleEvents() {
+  for (const e of S.events) {
+    const z = e.lane != null ? laneZ(clamp(e.lane, 0, S.L - 1)) : 0;
+    switch (e.type) {
+      case 'hit': burst(e.x, 0.6, z, SHOT_COL[e.kind] || '#fff', 3, 1.2, 0.07, 0.35); SND.hit(); break;
+      case 'foeDie': { const r = R.meshes.get(e.id); const col = FOE_COL[e.type] || '#fff'; burst(e.x, 0.6, z, col, e.boss ? 60 : 14, e.boss ? 3 : 1.8, e.boss ? 0.2 : 0.11, 1.1); if (e.boss) { R.shake = 0.6; SND.boom(); } else SND.die(); break; }
+      case 'eat': burst(e.x, 0.6, z, '#b48cff', 10, 1.4, 0.1); SND.chomp(); break;
+      case 'boom': for (let k = -1; k <= 1; k++) burst(e.x, 0.5, laneZ(clamp(e.lane + k, 0, S.L - 1)), k ? '#ffad3a' : '#ff5a4a', 22, 3, 0.16, 0.9); R.shake = 0.35; SND.boom(); break;
+      case 'cloud': for (let k = -1; k <= 1; k++) burst(e.x, 0.5, laneZ(clamp(e.lane + k, 0, S.L - 1)), '#c8f08a', 6, 1.0, 0.18, 0.8); SND.puff(); break;
+      case 'punch': burst(e.x, 0.6, z, '#ffffff', 5, 1.5, 0.08, 0.3); SND.punch(); break;
+      case 'blink': burst(e.x, 0.6, z, '#b07aff', 16, 2, 0.1, 0.6); SND.zap(); break;
+      case 'push': for (let k = 0; k < 8; k++) burst(e.x + 0.4 + k * 0.2, 0.4, z, '#ffc0d8', 1, 0.5, 0.08, 0.5); SND.whoosh(); break;
+      case 'shoot': SND.shoot(); break;
+      case 'place': { const c = S.cells.get(e.id); burst(cx(e.col), 0.3, laneZ(e.lane), '#ffffff', 8, 1.2, 0.08, 0.5); SND.place(); break; }
+      case 'cellGone': burst(cx(e.col), 0.5, laneZ(e.lane), e.why === 'dig' ? '#c0c0d0' : '#ff8a9a', 10, 1.4, 0.1); if (e.why === 'eaten') SND.crunch(); break;
+      case 'collect': SND.coin(); popText('+' + e.val, '#ffd23a'); break;
+      case 'armorBreak': { const f = S.foes.get(e.id); if (f) burst(f.x, 0.8, laneZ(f.lane), f.type === 'tb' ? '#f4f0e4' : '#a8b0c0', 14, 1.8, 0.12); SND.crack(); break; }
+      case 'pulse': SND.pulse(); R.shake = 0.25; break;
+      case 'bigWave': UI.banner('대규모 감염이 몰려와요!', '#ff5a6a'); SND.siren(); break;
+      case 'boss': UI.banner(FOES[e.type].name + ' 등장!', '#ffd23a'); R.shake = 0.5; SND.boss(); break;
+      case 'ifn': for (let x = 0; x < 10; x += 0.5) burst(x, 0.5, z, '#6fd8ff', 1, 0.8, 0.12, 0.8); SND.zap(); break;
+      case 'fever': UI.flash('#ff7a3a'); SND.fever(); break;
+      case 'splat': burst(e.x, 0.5, z, e.c, 6, 1, 0.08); break;
+      case 'disable': { const c = S.cells.get(e.id); if (c) burst(c.x, 0.9, laneZ(c.lane), '#8a8aa0', 8, 0.8, 0.08); SND.crack(); break; }
+      case 'dark': UI.flash('#1a0a3a'); SND.boss(); break;
+      case 'phase': UI.banner(e.phase === 2 ? '판데미아 변이! ' + (e.resist || []).map(k => CELLS[k].name).join('·') + ' 저항' : '판데미아 폭주!', '#ff5a8a'); R.shake = 0.5; SND.boss(); break;
+      case 'produce': { const c = S.cells.get(e.id); if (c) burst(c.x, 0.8, laneZ(c.lane), '#ffd23a', 6, 1, 0.08); break; }
+      case 'divide': SND.puff(); break;
+      case 'jump': SND.whoosh(); break;
+      case 'win': UI.endBattle('win'); break;
+      case 'lose': UI.endBattle('lose'); break;
+      case 'wave': UI.waveBar(); break;
+    }
+  }
+  S.events.length = 0;
+}
+/* ---------------- 화면 좌표 → 칸 ---------------- */
+function pickTile(px, py) {
+  const r = R.renderer.domElement.getBoundingClientRect();
+  const v = new THREE.Vector2(((px - r.left) / r.width) * 2 - 1, -((py - r.top) / r.height) * 2 + 1);
+  R.ray.setFromCamera(v, R.camera); const p = new THREE.Vector3(); if (!R.ray.ray.intersectPlane(R.plane, p)) return null;
+  const col = Math.floor(p.x), lane = Math.round(p.z + (S.L - 1) / 2);
+  return { col, lane, x: p.x, z: p.z, inside: col >= 0 && col <= 8 && lane >= 0 && lane < S.L };
+}
+function pickDrop(px, py) {
+  const r = R.renderer.domElement.getBoundingClientRect(); let best = null, bd = (window.BioDevice && BioDevice.touch ? 46 : 34) ** 2;
+  for (const p of S.drops) { if (p.got || p.wx == null) continue; const v = new THREE.Vector3(p.wx, p.wy + 0.2, p.wz).project(R.camera);
+    const sx = r.left + (v.x + 1) / 2 * r.width, sy = r.top + (1 - v.y) / 2 * r.height, d = (sx - px) ** 2 + (sy - py) ** 2; if (d < bd) { bd = d; best = p; } }
+  return best;
+}
+function popText(txt, col) { const el = document.createElement('div'); el.className = 'pop'; el.textContent = txt; el.style.color = col; const a = $('#atpBox').getBoundingClientRect(); el.style.left = (a.left + a.width / 2) + 'px'; el.style.top = (a.bottom + 4) + 'px'; document.body.appendChild(el); setTimeout(() => el.remove(), 800); }
+/* ---------------- 아이콘 (카드 · 도감) ---------------- */
+const ICON = {};
+function makeIcons() {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const r = new THREE.WebGLRenderer({ canvas: c, alpha: true, antialias: true, preserveDrawingBuffer: true }); r.setClearColor(0, 0);
+  const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff, 0x8a7aa0, 0.85)); const dl = new THREE.DirectionalLight(0xffffff, 0.7); dl.position.set(2, 4, 5); sc.add(dl);
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
+  const list = [...CELL_ORDER, ...FOE_ORDER.filter(k => k !== 'sporelet')];
+  for (const k of list) {
+    const g = new THREE.Group(); g.add(new THREE.Mesh(geo(k), R.mat)); if (k === 'capsid') g.add(new THREE.Mesh(geo('capsidArmor'), R.mat)); if (k === 'tb') g.add(new THREE.Mesh(geo('tbArmor'), R.mat));
+    g.rotation.y = CELLS[k] ? 0.5 : -0.5; sc.add(g);
+    const b = new THREE.Box3().setFromObject(g), ctr = b.getCenter(new THREE.Vector3()), sz = b.getSize(new THREE.Vector3());
+    const d = Math.max(sz.x, sz.y) / (2 * Math.tan(15 * Math.PI / 180)) * 1.15;
+    cam.position.set(ctr.x, ctr.y + d * 0.35, ctr.z + d); cam.lookAt(ctr); r.render(sc, cam);
+    ICON[k] = c.toDataURL(); sc.remove(g);
+  }
+  r.dispose();
+}
+
+/* =========================================================
+   저장 · 설정 · 소리 · 화면(UI) · 입력 · 메인 루프
+   ========================================================= */
+const SAVE_KEY = 'immuneLine1';
+let SAVE = { v: 1, cleared: {}, deck: [], endlessBest: 0, seen: {}, opt: {} };
+try { const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (raw && typeof raw === 'object') SAVE = Object.assign(SAVE, raw); } catch (e) {}
+if (!SAVE.cleared || typeof SAVE.cleared !== 'object') SAVE.cleared = {};
+const OPT = Object.assign({ music: 0.5, sfx: 0.8, shadow: !(window.BioDevice && BioDevice.lowPower), auto: false, speed: 1 }, SAVE.opt || {});
+function save() { SAVE.opt = OPT; try { localStorage.setItem(SAVE_KEY, JSON.stringify(SAVE)); } catch (e) {} }
+function unlockedCells() { const u = [...START_CELLS]; for (const s of STAGES) if (SAVE.cleared[s.id] && s.unlock && !u.includes(s.unlock)) u.push(s.unlock); return CELL_ORDER.filter(k => u.includes(k)); }
+const stageOpen = i => i === 0 || !!SAVE.cleared[STAGES[i - 1].id];
+const clearedCount = () => STAGES.filter(s => SAVE.cleared[s.id]).length;
+
+/* ---------------- 소리 (Web Audio 합성) ---------------- */
+const SND = (() => {
+  let ac = null, mg, sg, last = {}, mus = null;
+  function init() { if (ac) { if (ac.state === 'suspended') ac.resume(); return; } try { ac = new (window.AudioContext || window.webkitAudioContext)(); mg = ac.createGain(); sg = ac.createGain(); mg.connect(ac.destination); sg.connect(ac.destination); vol(); } catch (e) { ac = null; } }
+  function vol() { if (!ac) return; mg.gain.value = OPT.music * 0.35; sg.gain.value = OPT.sfx * 0.5; }
+  function tone(f, d, type = 'square', v = 0.2, f2, dest) { if (!ac) return; const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t + d); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0008, t + d); o.connect(g); g.connect(dest || sg); o.start(t); o.stop(t + d + 0.02); }
+  function noise(d, v = 0.2, lp = 2000) { if (!ac) return; const t = ac.currentTime, n = ac.createBufferSource(), b = ac.createBuffer(1, Math.ceil(ac.sampleRate * d), ac.sampleRate), a = b.getChannelData(0); for (let i = 0; i < a.length; i++) a[i] = Math.random() * 2 - 1; n.buffer = b; const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; const g = ac.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0008, t + d); n.connect(f); f.connect(g); g.connect(sg); n.start(t); }
+  const th = (k, ms) => { const n = performance.now(); if (last[k] && n - last[k] < ms) return false; last[k] = n; return true; };
+  const S2 = {
+    init, vol,
+    hit: () => th('hit', 45) && tone(900, 0.05, 'triangle', 0.08, 500),
+    shoot: () => th('shoot', 70) && tone(520, 0.06, 'square', 0.04, 760),
+    die: () => th('die', 60) && (noise(0.18, 0.12, 1400), tone(420, 0.18, 'square', 0.06, 110)),
+    boom: () => { noise(0.5, 0.3, 700); tone(120, 0.4, 'sawtooth', 0.15, 40); },
+    chomp: () => tone(200, 0.12, 'square', 0.12, 80),
+    crunch: () => th('cr', 80) && noise(0.12, 0.15, 900),
+    puff: () => th('pf', 120) && noise(0.25, 0.08, 600),
+    punch: () => th('pu', 60) && (noise(0.06, 0.15, 2500), tone(160, 0.08, 'square', 0.1, 70)),
+    zap: () => tone(1200, 0.2, 'sawtooth', 0.07, 200),
+    whoosh: () => th('wh', 100) && noise(0.22, 0.08, 3000),
+    place: () => { tone(660, 0.07, 'square', 0.08, 990); setTimeout(() => tone(990, 0.06, 'square', 0.06), 50); },
+    coin: () => { tone(988, 0.06, 'square', 0.07); setTimeout(() => tone(1318, 0.12, 'square', 0.07), 60); },
+    crack: () => th('ck', 80) && noise(0.1, 0.18, 4000),
+    pulse: () => { tone(220, 0.6, 'sine', 0.2, 880); noise(0.6, 0.12, 1500); },
+    siren: () => { for (let i = 0; i < 4; i++) setTimeout(() => tone(i % 2 ? 660 : 880, 0.25, 'square', 0.08), i * 260); },
+    boss: () => { tone(110, 0.8, 'sawtooth', 0.15, 55); setTimeout(() => tone(82, 0.8, 'sawtooth', 0.12, 41), 300); },
+    fever: () => { tone(300, 0.5, 'sawtooth', 0.1, 900); },
+    click: () => tone(700, 0.04, 'square', 0.05),
+    deny: () => tone(180, 0.12, 'square', 0.08, 120),
+    win: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, 0.25, 'square', 0.1), i * 120)),
+    lose: () => [392, 330, 262, 196].forEach((f, i) => setTimeout(() => tone(f, 0.35, 'triangle', 0.12), i * 180)),
+    // 배경음악: 월드마다 다른 4마디 반복 (멜로디 + 베이스 + 드럼)
+    music(world, on) {
+      if (mus) { clearInterval(mus.id); mus = null; } if (!on || !ac) return;
+      const SC = [[0, 2, 4, 7, 9], [0, 2, 5, 7, 9], [0, 3, 5, 7, 10], [0, 2, 3, 7, 8], [0, 1, 5, 7, 8]][world % 5];
+      const root = [60, 62, 57, 55, 58][world % 5], tempo = [128, 116, 120, 96, 136][world % 5], wave = ['square', 'triangle', 'square', 'sine', 'sawtooth'][world % 5];
+      const r = mulberry32(world * 99 + 3), mel = Array.from({ length: 16 }, () => r() < 0.7 ? SC[Math.floor(r() * SC.length)] + (r() < 0.25 ? 12 : 0) : null);
+      const bass = [0, 0, 5, 3]; let i = 0; const stepMs = 60000 / tempo / 2;
+      mus = { id: setInterval(() => {
+        if (!ac || ac.state !== 'running' || document.hidden) return;
+        const m = mel[i % 16], mf = n => 440 * Math.pow(2, (n - 69) / 12);
+        if (m != null) tone(mf(root + 12 + m), 0.16, wave, 0.05, null, mg);
+        if (i % 4 === 0) tone(mf(root - 12 + bass[Math.floor(i / 16) % 4]), 0.32, 'triangle', 0.12, null, mg);
+        if (i % 4 === 0) { const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.12); g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.14); o.connect(g); g.connect(mg); o.start(t); o.stop(t + 0.16); }
+        if (i % 4 === 2 && S && S.wave > 0) { const t = ac.currentTime, n = ac.createBufferSource(), b = ac.createBuffer(1, 2205, 44100), a = b.getChannelData(0); for (let k = 0; k < a.length; k++) a[k] = (Math.random() * 2 - 1) * (1 - k / a.length); n.buffer = b; const g = ac.createGain(); g.gain.value = 0.08; n.connect(g); g.connect(mg); n.start(t); }
+        i++;
+      }, stepMs) };
+    },
+  };
+  return S2;
+})();
+
+/* ---------------- 화면 · UI ---------------- */
+const UI = { screen: 'title', sel: null, paused: false, deck: [], stageIdx: 0, drag: null, tut: 0 };
+function show(id) {
+  UI.screen = id; document.body.dataset.screen = id;
+  document.querySelectorAll('.scr').forEach(e => e.classList.toggle('on', e.id === id));
+  $('#hud').classList.toggle('on', id === 'battle');
+  closeSheet();
+}
+UI.banner = (txt, col) => { const b = $('#banner'); b.textContent = txt; b.style.color = col || '#fff'; b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); };
+UI.flash = col => { const f = $('#flash'); f.style.background = col; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); };
+UI.waveBar = () => {
+  if (!S) return; const el = $('#waveFill');
+  if (S.endless) { $('#waveTxt').textContent = '웨이브 ' + S.wave; el.style.width = '100%'; return; }
+  el.style.width = (S.wave / S.totalWaves * 100) + '%'; $('#waveTxt').textContent = `웨이브 ${S.wave}/${S.totalWaves}`;
+  $('#waveFlags').innerHTML = S.stage.flags.map(f => `<i style="left:${f / S.totalWaves * 100}%" class="${S.wave >= f ? 'on' : ''}"></i>`).join('');
+};
+function hudCards() {
+  const bar = $('#cards'); bar.innerHTML = '';
+  for (const k of UI.deck) { const d = CELLS[k];
+    const b = document.createElement('button'); b.className = 'card'; b.dataset.k = k; b.setAttribute('aria-label', d.name + ' ' + d.cost + ' ATP');
+    b.innerHTML = `<img src="${ICON[k]}" alt=""><b>${d.cost}</b><span class="cd"></span><em>${d.name}</em>`;
+    bar.appendChild(b); }
+  const dig = document.createElement('button'); dig.className = 'card tool'; dig.dataset.k = 'dig'; dig.setAttribute('aria-label', '세포 자멸 신호 (세포 제거)');
+  dig.innerHTML = `<i class="digIco"></i><b>제거</b><em>세포 자멸</em>`; bar.appendChild(dig);
+}
+function updHud() {
+  if (!S) return;
+  $('#atp').textContent = Math.floor(S.atp);
+  document.querySelectorAll('#cards .card').forEach(b => { const k = b.dataset.k; if (k === 'dig') { b.classList.toggle('sel', UI.sel === 'dig'); return; }
+    const d = CELLS[k], cd = S.cardCd[k] || 0; b.querySelector('.cd').style.height = (cd / d.cd * 100) + '%';
+    b.classList.toggle('poor', S.atp < d.cost); b.classList.toggle('wait', cd > 0); b.classList.toggle('sel', UI.sel === k); });
+  $('#dark').style.opacity = S.darkT > 0 ? Math.min(0.6, S.darkT * 0.4) : 0;
+  $('#fever').style.opacity = S.feverT > 0 ? 0.35 : 0;
+  // 튜토리얼
+  if (S.stage.tut) {
+    const hint = $('#hint');
+    if (UI.tut === 0 && S.stats.placed > 0) UI.tut = 1;
+    if (UI.tut === 1 && S.atp >= 75 && S.t > 10) UI.tut = 2;
+    if (UI.tut === 2 && [...S.cells.values()].some(c => c.type === 'mito')) UI.tut = 3;
+    const msgs = ['👆 호중구 카드를 누르고, 보드의 칸을 눌러 배치하세요', '✨ 하늘에서 떨어지는 ATP를 눌러서 모으세요', '🔋 미토콘드리아를 놓으면 ATP가 계속 생겨요', ''];
+    if (S.wave >= 3) UI.tut = 3;
+    hint.textContent = msgs[UI.tut] || ''; hint.style.display = msgs[UI.tut] ? 'block' : 'none';
+    if (S.waveT > 100 && S.t > 40) S.waveT = 5;
+  } else $('#hint').style.display = 'none';
+}
+function selectCard(k) {
+  if (!S || S.over) return;
+  if (k === 'dig') { UI.sel = UI.sel === 'dig' ? null : 'dig'; SND.click(); return; }
+  if (!CELLS[k]) return;
+  if (!cardReady(k)) { SND.deny(); const b = document.querySelector(`.card[data-k="${k}"]`); if (b) { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); } return; }
+  UI.sel = UI.sel === k ? null : k; SND.click();
+  if (UI.sel && CELLS[k].target === 'all') { place(k, 0, 0); UI.sel = null; }
+}
+function tryAt(px, py) {
+  if (!S || S.over || UI.paused) return false;
+  const p = pickDrop(px, py); if (p && !UI.drag) { collect(p); return true; }
+  if (!UI.sel) return false;
+  const t = pickTile(px, py); if (!t) return false;
+  if (UI.sel === 'dig') { if (t.inside && dig(t.lane, t.col)) { SND.crunch(); UI.sel = null; } return true; }
+  const d = CELLS[UI.sel];
+  if (d.kind === 'spell' && d.target === 'lane') { if (t.lane >= 0 && t.lane < S.L && place(UI.sel, t.lane, 0)) UI.sel = null; else SND.deny(); return true; }
+  if (t.inside && place(UI.sel, t.lane, t.col)) { UI.sel = null; return true; }
+  SND.deny(); return true;
+}
+function updGhost(px, py) {
+  if (!S || !UI.sel || px == null) { R.hover.visible = false; if (R.ghost) R.ghost.visible = false; return; }
+  const t = pickTile(px, py); if (!t || !(t.lane >= 0 && t.lane < S.L)) { R.hover.visible = false; if (R.ghost) R.ghost.visible = false; return; }
+  const d = UI.sel === 'dig' ? null : CELLS[UI.sel];
+  if (d && d.kind === 'spell') { R.hover.visible = true; R.hover.scale.set(9, 1, 1); R.hover.position.set(4.5, 0.23, laneZ(t.lane)); R.hover.material.color.set('#6fd8ff'); if (R.ghost) R.ghost.visible = false; return; }
+  if (!t.inside) { R.hover.visible = false; if (R.ghost) R.ghost.visible = false; return; }
+  const ok = UI.sel === 'dig' ? !!(S.grid[t.lane][t.col].cell || S.grid[t.lane][t.col].shield) : canPlace(UI.sel, t.lane, t.col);
+  R.hover.visible = true; R.hover.scale.set(1, 1, 1); R.hover.position.set(cx(t.col), 0.23, laneZ(t.lane)); R.hover.material.color.set(ok ? (UI.sel === 'dig' ? '#ffb0b0' : '#ffffff') : '#ff4a5a');
+  if (UI.sel !== 'dig' && d.kind !== 'shield') {
+    if (!R.ghost || R.ghost.userData.k !== UI.sel) { if (R.ghost) R.world.remove(R.ghost); R.ghost = new THREE.Mesh(geo(UI.sel), R.matGhost); R.ghost.userData.k = UI.sel; R.ghost.rotation.y = 0.55; R.world.add(R.ghost); }
+    R.ghost.visible = ok; R.ghost.position.set(cx(t.col), 0.2, laneZ(t.lane));
+  } else if (R.ghost) R.ghost.visible = false;
+}
+/* ---------------- 전투 시작 · 끝 ---------------- */
+function startBattle(stage, deck) {
+  UI.deck = deck; UI.sel = null; UI.paused = false; UI.tut = 0; UI.ended = false;
+  newBattle(stage, deck, (stage.idx || 0) * 7919 + (Date.now() % 100000));
+  buildBoard(); hudCards(); UI.waveBar(); show('battle');
+  $('#stageName').textContent = stage.endless ? '무한 모드' : `${stage.id} · ${WORLDS[stage.world].name}`;
+  SND.music(stage.world, true);
+  UI.banner(stage.endless ? '무한 모드 시작!' : `${stage.id} ${WORLDS[stage.world].name}`, '#fff');
+}
+UI.endBattle = function (res) {
+  if (UI.ended) return; UI.ended = true;
+  setTimeout(() => {
+    const st = S.stage, win = res === 'win';
+    let html = '', unlock = null, stars0 = 0;
+    if (st.endless) {
+      const w = Math.max(0, S.wave - 1); if (w > (SAVE.endlessBest || 0)) SAVE.endlessBest = w; save();
+      html = `<h2>무한 모드 종료</h2><p class="big">${w}웨이브 버팀</p><p>최고 기록 ${SAVE.endlessBest}웨이브 · 처치 ${S.killed}</p>`;
+      if (window.BioGoal) BioGoal.result('immune-line', clearedCount(), { text: `무한 모드 ${w}웨이브`, rank: { v: BioGoal.key([[clearedCount(), 100, 1], [w, 1e4, 1]]), f: { stages: clearedCount(), wave: w } } });
+    } else if (win) {
+      const s = stars(); stars0 = SAVE.cleared[st.id] || 0; if (s > stars0) SAVE.cleared[st.id] = s;
+      if (!stars0 && st.unlock) unlock = st.unlock;
+      save();
+      html = `<h2>방어 성공!</h2><div class="stars">${[1, 2, 3].map(i => `<i class="${i <= s ? 'on' : ''}">★</i>`).join('')}</div>
+        <p>처치 ${S.killed} · 림프 펄스 사용 ${S.stats.pulsesUsed}회 · ${Math.floor(S.t / 60)}분 ${Math.floor(S.t % 60)}초</p>
+        ${unlock ? `<div class="unlock"><img src="${ICON[unlock]}" alt=""><div><small>새 면역세포 합류!</small><b>${CELLS[unlock].name}</b><span>${CELLS[unlock].desc}</span></div></div>` : ''}`;
+      if (window.BioGoal) BioGoal.result('immune-line', clearedCount(), { text: `${clearedCount()}개 스테이지 클리어`, rank: { v: BioGoal.key([[clearedCount(), 100, 1], [SAVE.endlessBest || 0, 1e4, 1]]), f: { stages: clearedCount(), wave: SAVE.endlessBest || 0 } } });
+    } else {
+      html = `<h2>방어선이 뚫렸어요</h2><p>${FOES[S.foes.size ? [...S.foes.values()][0].type : 'cold'].name} 등이 몸속 깊이 들어왔어요.</p><p class="tip">💡 ${TIPS[Math.floor(Math.random() * TIPS.length)]}</p>`;
+    }
+    const next = !st.endless && win && st.idx + 1 < STAGES.length;
+    html += `<div class="btns">${next ? '<button class="btn big" data-act="next">다음 스테이지</button>' : ''}${!win || st.endless ? '<button class="btn big" data-act="retry">다시 도전</button>' : ''}<button class="btn" data-act="map">월드 지도</button></div>`;
+    $('#resBox').innerHTML = html; show('result'); win ? SND.win() : SND.lose(); SND.music(0, false);
+  }, res === 'win' ? 900 : 1200);
+};
+/* ---------------- 월드 지도 · 카드 고르기 ---------------- */
+function renderMap() {
+  const box = $('#worlds'); box.innerHTML = '';
+  WORLDS.forEach((w, wi) => {
+    const sec = document.createElement('section'); sec.className = 'world'; sec.style.setProperty('--w1', w.tiles[0]); sec.style.setProperty('--w2', w.ground);
+    let btns = '';
+    for (let k = 0; k < 5; k++) { const i = wi * 5 + k, s = STAGES[i], open = stageOpen(i), st = SAVE.cleared[s.id] || 0;
+      btns += `<button class="stg ${open ? '' : 'lock'} ${s.boss ? 'boss' : ''}" data-i="${i}" ${open ? '' : 'disabled'} aria-label="스테이지 ${s.id}"><b>${s.id}</b><span>${open ? (st ? '★'.repeat(st) + '☆'.repeat(3 - st) : (s.boss ? '보스' : '도전')) : '🔒'}</span></button>`; }
+    sec.innerHTML = `<h3>${wi + 1}. ${w.name}</h3><p>${w.sub}</p><div class="stgs">${btns}</div>`;
+    box.appendChild(sec);
+  });
+  const endOpen = !!SAVE.cleared['3-5'];
+  $('#endlessBtn').disabled = !endOpen; $('#endlessBtn').innerHTML = endOpen ? `무한 모드 <small>최고 ${SAVE.endlessBest || 0}웨이브</small>` : '무한 모드 <small>3-5 클리어 후</small>';
+  $('#mapStat').textContent = `클리어 ${clearedCount()}/25 · 면역세포 ${unlockedCells().length}/16`;
+}
+function openDeck(stage) {
+  UI.stage = stage; const slots = slotsFor(stage.world), un = unlockedCells();
+  let deck = (SAVE.deck || []).filter(k => un.includes(k)).slice(0, slots);
+  if (un.length <= slots) deck = [...un]; else for (const k of un) if (deck.length < slots && !deck.includes(k)) deck.push(k);
+  UI.pick = deck; UI.slots = slots; renderDeck(); show('deck');
+}
+function renderDeck() {
+  const st = UI.stage, un = unlockedCells();
+  $('#deckTitle').textContent = st.endless ? '무한 모드 — 세포 고르기' : `${st.id} ${WORLDS[st.world].name} — 세포 고르기`;
+  $('#deckSlots').innerHTML = Array.from({ length: UI.slots }, (_, i) => { const k = UI.pick[i]; return k ? `<button class="slot full" data-k="${k}"><img src="${ICON[k]}" alt=""><b>${CELLS[k].cost}</b></button>` : '<div class="slot"></div>'; }).join('');
+  $('#deckAll').innerHTML = CELL_ORDER.map(k => { const ok = un.includes(k), on = UI.pick.includes(k);
+    return `<button class="pickc ${ok ? '' : 'lock'} ${on ? 'on' : ''}" data-k="${k}" ${ok ? '' : 'disabled'}>${ok ? `<img src="${ICON[k]}" alt="">` : '<i class="lk">?</i>'}${ok ? `<b>${CELLS[k].name}</b><small>${CELLS[k].cost} ATP · ${CELLS[k].role}</small>` : '<b>???</b><small>잠김</small>'}</button>`; }).join('');
+  const pool = st.endless ? ['cold', 'capsid', 'ecoli', 'phage', 'tb', 'spore'] : [...st.pool, ...(st.boss ? [st.boss] : [])];
+  $('#deckFoes').innerHTML = pool.map(k => `<span class="foe"><img src="${ICON[k]}" alt=""><small>${FOES[k].name}</small></span>`).join('');
+  $('#deckTip').textContent = '💡 ' + TIPS[Math.floor(Math.random() * TIPS.length)];
+  $('#deckGo').disabled = UI.pick.length === 0;
+}
+/* ---------------- 도감 ---------------- */
+function renderCodex(tab, sel) {
+  UI.codexTab = tab = tab || UI.codexTab || 'cells';
+  const un = unlockedCells(), list = tab === 'cells' ? CELL_ORDER : FOE_ORDER.filter(k => k !== 'sporelet');
+  const known = k => tab === 'cells' ? un.includes(k) : !!SAVE.seen[k];
+  document.querySelectorAll('#codex .tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  $('#codexGrid').innerHTML = list.map(k => `<button class="cx ${known(k) ? '' : 'lock'} ${k === sel ? 'on' : ''}" data-k="${k}">${known(k) ? `<img src="${ICON[k]}" alt="">` : '<i>?</i>'}<small>${known(k) ? (CELLS[k] || FOES[k]).name : '???'}</small></button>`).join('');
+  const k = sel || list.find(known);
+  if (!k || !known(k)) { $('#codexInfo').innerHTML = '<p>아직 만나지 못했어요.</p>'; return; }
+  const d = CELLS[k] || FOES[k];
+  const stats = CELLS[k] ? `<span>비용 ${d.cost} ATP</span><span>재충전 ${d.cd}초</span>${d.hp ? `<span>체력 ${d.hp}</span>` : ''}<span>${d.role}</span>`
+    : `<span>체력 ${d.hp}${d.armor ? ' + 방어 ' + d.armor : ''}</span><span>속도 ${d.speed}</span>${d.boss ? '<span class="bossT">보스</span>' : ''}`;
+  $('#codexInfo').innerHTML = `<img src="${ICON[k]}" alt=""><h3>${d.name}</h3><div class="st">${stats}</div><p><b>게임 능력</b> ${d.desc}</p><p><b>실제 생물학</b> ${d.fact}</p>`;
+}
+/* ---------------- 메뉴 시트 · 모달 ---------------- */
+function openSheet() { $('#sheet').classList.add('on'); }
+function closeSheet() { const s = $('#sheet'); if (s) s.classList.remove('on'); }
+function pauseBattle(on) {
+  UI.paused = on; $('#pause').classList.toggle('on', on);
+  if (on) { UI.sel = null; updGhost(); }
+}
+function modal(html) { $('#modalBox').innerHTML = html + '<div class="btns"><button class="btn" data-act="closeModal">닫기</button></div>'; $('#modal').classList.add('on'); }
+function optModal() {
+  modal(`<h2>설정</h2>
+    <label class="row">배경음악 <input type="range" id="oMus" min="0" max="1" step="0.05" value="${OPT.music}"></label>
+    <label class="row">효과음 <input type="range" id="oSfx" min="0" max="1" step="0.05" value="${OPT.sfx}"></label>
+    <label class="row">ATP 자동 수집 <input type="checkbox" id="oAuto" ${OPT.auto ? 'checked' : ''}></label>
+    <label class="row">그림자 (끄면 더 부드러움) <input type="checkbox" id="oShadow" ${OPT.shadow ? 'checked' : ''}></label>
+    <button class="btn danger" data-act="reset">진행 기록 지우기</button>`);
+  $('#oMus').oninput = e => { OPT.music = +e.target.value; SND.vol(); save(); };
+  $('#oSfx').oninput = e => { OPT.sfx = +e.target.value; SND.vol(); save(); };
+  $('#oAuto').onchange = e => { OPT.auto = e.target.checked; save(); };
+  $('#oShadow').onchange = e => { OPT.shadow = e.target.checked; R.renderer.shadowMap.enabled = OPT.shadow; R.renderer.shadowMap.needsUpdate = true; R.scene.traverse(o => { if (o.material) o.material.needsUpdate = true; }); save(); };
+}
+function helpModal() {
+  modal(`<h2>게임 방법</h2>
+    <p>🦠 오른쪽에서 병원체가 몰려와요. 왼쪽 끝에 닿지 않게 <b>면역세포</b>를 배치해서 막으세요.</p>
+    <p>✨ <b>ATP</b>로 세포를 배치해요. 하늘에서 떨어지는 ATP를 누르거나, <b>미토콘드리아</b>를 놓아 모으세요.</p>
+    <p>🃏 위(또는 왼쪽)의 카드를 누른 다음 칸을 누르면 배치돼요. 카드를 끌어다 놓아도 돼요. 카드는 쓰고 나면 잠시 재충전돼요.</p>
+    <p>🌊 줄마다 한 번, 병원체가 끝에 닿으면 <b>림프 순환 펄스</b>가 줄을 쓸어 줘요. 펄스가 없는 줄이 뚫리면 패배!</p>
+    <p>⭐ 펄스를 하나도 안 쓰면 별 3개, 1개 쓰면 별 2개예요. 스테이지를 깰 때마다 새 면역세포가 합류해요.</p>
+    <p class="keys">PC 단축키: 숫자 1~8 카드 선택 · Space 일시정지 · F 속도 · Esc 취소</p>`);
+}
+/* ---------------- 타이틀 장식 장면 ---------------- */
+function showcase() {
+  newBattle(STAGES[0], ['neutro'], 1); S.demo = true; buildBoard();
+  const put = (k, l, c) => { const id = S.uid++; S.cells.set(id, { id, type: k, lane: l, col: c, x: cx(c), hp: 300, maxHp: 300, t: 9, state: '', disabled: 0 }); S.grid[l][c].cell = id; };
+  put('mito', 0, 0); put('neutro', 1, 1); put('bcell', 2, 1); put('killer', 3, 2); put('barrier', 2, 4); put('macro', 4, 1); put('mast', 0, 2); put('dend', 3, 0);
+  for (const [k, l, x] of [['cold', 1, 7.5], ['capsid', 2, 8.6], ['ecoli', 3, 6.8], ['phage', 0, 8.2], ['spore', 4, 7.6], ['cold', 4, 9.2]]) { const f = spawnFoe(k, l, x, { noWave: true }); f.speed0 = 0; }
+}
+/* ---------------- 입력 ---------------- */
+let lastPt = null;
+function bindInput() {
+  const cv = $('#gl');
+  cv.addEventListener('pointerdown', e => { SND.init(); if (UI.screen !== 'battle') return; lastPt = [e.clientX, e.clientY]; tryAt(e.clientX, e.clientY); updGhost(e.clientX, e.clientY); });
+  addEventListener('pointermove', e => { if (UI.screen !== 'battle') return; lastPt = [e.clientX, e.clientY]; if (e.pointerType === 'mouse' || UI.drag) updGhost(e.clientX, e.clientY); });
+  $('#cards').addEventListener('pointerdown', e => { const b = e.target.closest('.card'); if (!b) return; e.preventDefault(); SND.init(); const k = b.dataset.k; const before = UI.sel; selectCard(k); if (UI.sel) UI.drag = { k, id: e.pointerId, moved: false, x: e.clientX, y: e.clientY, was: before === k }; });
+  addEventListener('pointermove', e => { if (!UI.drag) return; if (Math.hypot(e.clientX - UI.drag.x, e.clientY - UI.drag.y) > 14) UI.drag.moved = true; });
+  addEventListener('pointerup', e => {
+    const d = UI.drag; UI.drag = null; if (!d) return;
+    if (d.moved && e.target === $('#gl')) { tryAt(e.clientX, e.clientY); if (!UI.sel) updGhost(); }
+  });
+  addEventListener('keydown', e => {
+    if (UI.screen !== 'battle') { if (e.key === 'Escape') closeSheet(); return; }
+    if (e.key >= '1' && e.key <= '9') { const k = UI.deck[+e.key - 1]; if (k) selectCard(k); }
+    else if (e.key === ' ') { e.preventDefault(); pauseBattle(!UI.paused); }
+    else if (e.key === 'f' || e.key === 'F') toggleSpeed();
+    else if (e.key === 'Escape') { if (UI.sel) { UI.sel = null; updGhost(); } else pauseBattle(!UI.paused); }
+    else if (e.key === 'q' || e.key === 'Q') selectCard('dig');
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && UI.screen === 'battle' && !UI.paused && S && !S.over) pauseBattle(true); });
+  document.addEventListener('click', e => {
+    const a = e.target.closest('[data-act]'); if (!a) return; SND.init(); SND.click(); const act = a.dataset.act;
+    const acts = {
+      start: () => { renderMap(); show('map'); },
+      codex: () => { renderCodex('cells'); show('codex'); }, help: helpModal, opt: optModal,
+      hub: () => { location.href = '../index.html'; }, title: () => { pauseBattle(false); SND.music(0, false); showcase(); show('title'); },
+      map: () => { pauseBattle(false); SND.music(0, false); renderMap(); show('map'); },
+      next: () => openDeck(STAGES[S.stage.idx + 1]), retry: () => openDeck(S.stage),
+      resume: () => pauseBattle(false), restart: () => { pauseBattle(false); startBattle(S.stage, UI.deck); },
+      endless: () => openDeck({ id: '∞', endless: true, world: 0, idx: 99, flags: [], pool: [] }),
+      go: () => { SAVE.deck = [...UI.pick]; save(); startBattle(UI.stage, [...UI.pick]); },
+      closeModal: () => $('#modal').classList.remove('on'),
+      reset: () => { if (confirm('진행 기록을 모두 지울까요?')) { SAVE = { v: 1, cleared: {}, deck: [], endlessBest: 0, seen: {}, opt: OPT }; save(); $('#modal').classList.remove('on'); renderMap(); } },
+      speed: toggleSpeed, pause: () => pauseBattle(true),
+    };
+    if (acts[act]) acts[act]();
+  });
+  $('#gMenu').addEventListener('click', () => { SND.init(); SND.click(); if (UI.screen === 'battle' && S && !S.over) pauseBattle(true); else $('#sheet').classList.toggle('on'); });
+  $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
+  $('#worlds').addEventListener('click', e => { const b = e.target.closest('.stg'); if (!b || b.disabled) return; SND.click(); openDeck(STAGES[+b.dataset.i]); });
+  $('#deckAll').addEventListener('click', e => { const b = e.target.closest('.pickc'); if (!b || b.disabled) return; const k = b.dataset.k; const i = UI.pick.indexOf(k);
+    if (i >= 0) UI.pick.splice(i, 1); else if (UI.pick.length < UI.slots) UI.pick.push(k); else { SND.deny(); return; } SND.click(); renderDeck(); });
+  $('#deckSlots').addEventListener('click', e => { const b = e.target.closest('.slot.full'); if (!b) return; UI.pick.splice(UI.pick.indexOf(b.dataset.k), 1); SND.click(); renderDeck(); });
+  $('#codex').addEventListener('click', e => { const t = e.target.closest('.tabs button'); if (t) { renderCodex(t.dataset.tab); return; } const b = e.target.closest('.cx'); if (b && !b.classList.contains('lock')) renderCodex(UI.codexTab, b.dataset.k); });
+}
+function toggleSpeed() { OPT.speed = OPT.speed === 1 ? 2 : 1; save(); $('#speedBtn').textContent = '×' + OPT.speed; }
+/* ---------------- 메인 루프 ---------------- */
+let lastT = performance.now(), acc = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
+  if (!S) return;
+  if (UI.screen === 'battle' && !UI.paused && !S.demo) {
+    acc += dt * OPT.speed; let n = 0; const maxN = 5 * OPT.speed;
+    while (acc >= DT && n < maxN) { step(); acc -= DT; n++; }
+    if (n >= maxN) acc = 0;
+    for (const f of S.foes.values()) if (!SAVE.seen[f.type] && !f.def.hidden) { SAVE.seen[f.type] = 1; save(); if (!f.def.boss) intro(f.type); }
+    handleEvents(); updHud();
+  } else if (S.demo) { for (const f of S.foes.values()) f.bob += dt; }
+  if (S) { syncUnits(now, 0); syncShots(now); }
+  stepFx(dt);
+  if (R.shake > 0) { R.shake = Math.max(0, R.shake - dt); R.world.position.set((Math.random() - 0.5) * R.shake * 0.3, 0, (Math.random() - 0.5) * R.shake * 0.3); } else R.world.position.set(0, 0, 0);
+  if (UI.screen === 'title' && S.demo) { const t = now / 1000; R.world.rotation.y = Math.sin(t * 0.25) * 0.06; } else R.world.rotation.y = 0;
+  if (UI.drag && UI.drag.moved && lastPt) updGhost(lastPt[0], lastPt[1]);
+  R.renderer.render(R.scene, R.camera);
+}
+function intro(type) { const d = FOES[type], el = $('#intro'); el.innerHTML = `<img src="${ICON[type]}" alt=""><div><small>새 병원체 발견!</small><b>${d.name}</b><span>${d.desc}</span></div>`; el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); }
+/* ---------------- 시작 ---------------- */
+function boot() {
+  try {
+    initRender(); makeIcons(); bindInput(); showcase(); show('title');
+    $('#speedBtn').textContent = '×' + OPT.speed;
+    $('#tStat').textContent = clearedCount() ? `클리어 ${clearedCount()}/25 · 무한 모드 최고 ${SAVE.endlessBest || 0}웨이브` : '면역세포를 배치해 몸속을 지키는 디펜스 게임';
+    const sync = () => { const h = document.documentElement, touch = h.classList.contains('is-touch'), land = innerWidth > innerHeight;
+      h.classList.toggle('cards-left', (touch && land) || (h.classList.contains('dev-phone') && land)); fitView(); };
+    addEventListener('resize', sync); sync();
+    requestAnimationFrame(frame);
+  } catch (e) { console.error(e); $('#err').textContent = '시작 오류: ' + e.message; $('#err').style.display = 'block'; }
+}
+window.IL = { get S() { return S; }, step, place, startBattle, STAGES, CELLS, FOES, UI, collect, show, SAVE: () => SAVE };
+boot();
+
+</script>
+<script src="../goal.js"></script>
+<script src="../rank.js"></script>
+<script src="../ilog.js"></script>
+</body>
+</html>
