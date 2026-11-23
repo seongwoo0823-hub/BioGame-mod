@@ -7,7 +7,6 @@
 | --- | --- | --- |
 | BIO BEAT | 4키 리듬게임 (생명과학 노래 43곡 · 레벨 1~20 · 롱노트 콤보 · 음원 분석 채보, OX 퀴즈) | `games/bio-beat.html` |
 | 바이오 카트 레이서 | 3D 카트 레이싱 (블렌더 에셋 · 8인 대기실 · 온라인 대전) | `games/bio-kart.html` |
-| 이뮨 디센트 IMMUNE DESCENT | 아이소메트릭 스프라이트 스태킹 액션 로그라이트 (5층 · 적 30 · 중간보스 10 · 보스 6 · 각인 30 · 무기 3, 설계서 docs/immune-descent-prompt.md) | `games/immune-descent.html` |
 | BIOTRO · 세포 포커 | 포커 덱빌딩 로그라이크 | `games/biotro.html` |
 | 셀 브롤 : 면역 대작전 | 3D 실시간 난투 (3대3 · 생존) | `games/cell-brawl.html` |
 | ONLY UP : 거꾸로 소화 대탈출 | 3D 점프 플랫포머 | `games/only-up.html` |
