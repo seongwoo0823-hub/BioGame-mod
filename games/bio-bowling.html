@@ -7,174 +7,275 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
-:root{--glass:rgba(16,28,52,.78);--line:rgba(255,255,255,.18);--acc:#36d1c4;--gold:#ffd23a;--red:#ff5a6a;--sat:env(safe-area-inset-top,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);--sab:env(safe-area-inset-bottom,0px)}
+:root{--ink:#fff;--panel:rgba(18,16,48,.86);--panel2:rgba(255,255,255,.08);--line:rgba(255,255,255,.14);--acc:#ffd23a;--acc2:#3ee6c8;--pink:#ff5aa8;--red:#ff4d5e;
+  --sat:env(safe-area-inset-top,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);--sab:env(safe-area-inset-bottom,0px);
+  --fd:'Black Han Sans','Noto Sans KR',system-ui,sans-serif;--fb:'Noto Sans KR',system-ui,sans-serif}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;overflow:hidden;background:#1a2440;color:#fff;font-family:'Noto Sans KR',system-ui,sans-serif;word-break:keep-all;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#140f32;color:var(--ink);font-family:var(--fb);word-break:keep-all;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
 canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block}
-button{font-family:inherit;color:inherit;cursor:pointer}
-.bh{font-family:'Black Han Sans',sans-serif;font-weight:400}
-.btn{border:0;border-radius:14px;padding:12px 20px;min-height:46px;font-weight:900;font-size:16px;background:rgba(255,255,255,.16);box-shadow:inset 0 -4px 0 rgba(0,0,0,.22)}
-.btn.big{background:linear-gradient(180deg,#5ff0de,#22b8aa);color:#06302c;box-shadow:inset 0 -5px 0 #168a80,0 6px 18px rgba(34,184,170,.4);font-size:20px}
-#gMenu{position:fixed;z-index:30;top:calc(10px + var(--sat));left:calc(10px + var(--sal));width:46px;height:46px;border-radius:14px;border:1px solid var(--line);background:rgba(16,28,52,.75);display:grid;place-items:center}
-#gMenu svg{width:22px;height:22px;stroke:#fff;stroke-width:2.4;fill:none;stroke-linecap:round}
-#sheet{position:fixed;inset:0;z-index:40;display:none;background:rgba(5,10,25,.45)}#sheet.on{display:block}
-#sheet .sh{position:absolute;top:calc(64px + var(--sat));left:calc(10px + var(--sal));width:min(250px,calc(100vw - 20px));background:rgba(16,28,52,.96);border:1px solid var(--line);border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:4px}
-#sheet button{border:0;background:transparent;text-align:left;padding:13px 12px;border-radius:10px;font-weight:700;font-size:16px}#sheet button:hover{background:rgba(255,255,255,.08)}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.fd{font-family:var(--fd);font-weight:400}
+.gb{position:relative;border-radius:16px;padding:12px 22px;min-height:50px;font-family:var(--fd);font-size:19px;letter-spacing:.01em;color:#fff;background:linear-gradient(180deg,#5b5ce8,#3a33b8);box-shadow:inset 0 -5px 0 rgba(0,0,0,.28),inset 0 2px 0 rgba(255,255,255,.25),0 4px 0 #1c1458;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.gb:active{transform:translateY(3px);box-shadow:inset 0 -2px 0 rgba(0,0,0,.28),0 1px 0 #1c1458}
+.gb.y{background:linear-gradient(180deg,#ffe25a,#ffb21a);color:#3a2200;text-shadow:0 1px 0 rgba(255,255,255,.5);box-shadow:inset 0 -5px 0 rgba(160,80,0,.45),inset 0 2px 0 rgba(255,255,255,.6),0 4px 0 #8a4a00}
+.gb.g{background:linear-gradient(180deg,#5ff0c8,#18b890);box-shadow:inset 0 -5px 0 rgba(0,80,60,.45),inset 0 2px 0 rgba(255,255,255,.4),0 4px 0 #0a5a48}
+.gb.d{background:linear-gradient(180deg,#3a3570,#26214e);box-shadow:inset 0 -4px 0 rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.12),0 3px 0 #120e30;font-size:16px}
+.gb small{font-size:12px;font-family:var(--fb);font-weight:700;opacity:.85}
+.gb:disabled{filter:grayscale(.8);opacity:.5}
+#gMenu{position:fixed;z-index:30;top:calc(10px + var(--sat));left:calc(10px + var(--sal));width:48px;height:48px;border-radius:15px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;backdrop-filter:blur(8px)}
+#gMenu svg{width:22px;height:22px;stroke:#fff;stroke-width:2.6;fill:none;stroke-linecap:round}
+#sheet{position:fixed;inset:0;z-index:40;display:none;background:rgba(8,6,24,.5)}#sheet.on{display:block}
+#sheet .sh{position:absolute;top:calc(66px + var(--sat));left:calc(10px + var(--sal));width:min(250px,calc(100vw - 20px));background:#1d1946;border:1px solid var(--line);border-radius:18px;padding:8px;display:flex;flex-direction:column;gap:2px;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+#sheet button{background:transparent;text-align:left;padding:13px 14px;border-radius:12px;font-weight:700;font-size:16px}#sheet button:hover{background:rgba(255,255,255,.08)}
 .scr{position:fixed;inset:0;z-index:10;display:none}.scr.on{display:flex}
-#title{flex-direction:column;align-items:center;justify-content:flex-end;padding:0 16px calc(30px + var(--sab));background:linear-gradient(180deg,rgba(10,20,40,0) 35%,rgba(10,20,40,.7) 80%)}
-#title h1{margin:0;font-family:'Black Han Sans';font-weight:400;font-size:clamp(46px,10vw,100px);line-height:1;text-shadow:0 5px 0 #1a6a8a,0 10px 26px rgba(0,0,0,.4);-webkit-text-stroke:2px #0d3a52}
-#title .en{font-family:'Black Han Sans';letter-spacing:.4em;color:var(--gold);font-size:clamp(14px,2.4vw,24px);margin:4px 0 6px}
-#tStat{opacity:.9;font-weight:700;margin-bottom:16px;text-align:center;text-shadow:0 1px 4px #000}
-.tmenu{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.tmenu .big{min-width:220px}
-.ov{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(5,10,25,.55)}.ov.on{display:flex}
-.box{width:min(460px,calc(100% - 24px));max-height:calc(100% - 24px);overflow:auto;background:rgba(16,28,52,.96);border:1px solid var(--line);border-radius:18px;padding:18px}
-.box h2{margin:0 0 10px;font-family:'Black Han Sans';font-weight:400;font-size:28px}.box p{line-height:1.6;font-size:14px}
-.btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
-.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
-.dx{display:flex;gap:10px;align-items:center;background:rgba(255,255,255,.07);border-radius:12px;padding:8px}
-.dx i{flex:none;width:40px;height:40px;border-radius:50%;box-shadow:inset -4px -5px 0 rgba(0,0,0,.25),0 0 0 2px #fff3}
-.dx b{display:block;font-size:15px}.dx small{font-size:12px;opacity:.85;line-height:1.35;display:block}
-.box.wide{width:min(860px,calc(100% - 24px))}
-.box h3{margin:14px 0 6px;font-size:16px}
-.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;font-weight:700}.row input[type=range]{width:50%;accent-color:var(--acc)}
-/* HUD */
+#title{flex-direction:column;align-items:center;justify-content:flex-end;padding:0 16px calc(26px + var(--sab));background:linear-gradient(180deg,rgba(20,15,50,0) 30%,rgba(20,15,50,.85) 82%)}
+.logo{text-align:center;margin-bottom:8px;filter:drop-shadow(0 8px 0 rgba(0,0,0,.25))}
+.logo .k{font-family:var(--fd);font-size:clamp(54px,11vw,118px);line-height:.95;color:#fff;-webkit-text-stroke:3px #2a1270;paint-order:stroke;text-shadow:0 6px 0 #2a1270,0 0 30px rgba(255,90,168,.5)}
+.logo .k b{font-weight:400;color:var(--acc)}
+.logo .e{font-family:var(--fd);letter-spacing:.42em;color:var(--acc2);font-size:clamp(14px,2.4vw,22px);margin-top:6px;text-shadow:0 2px 0 #0a2a40}
+#tStat{font-weight:700;margin:4px 0 16px;opacity:.9;text-align:center;font-size:14px}
+.tmenu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:min(620px,100%)}
+.tmenu .wide{grid-column:span 3}
+.tsub{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.ov{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(8,6,24,.6);padding:12px}.ov.on{display:flex}
+.box{width:min(480px,100%);max-height:100%;overflow:auto;background:linear-gradient(180deg,#25205a,#1a1644);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.box.wide{width:min(900px,100%)}
+.box h2{margin:0 0 12px;font-family:var(--fd);font-weight:400;font-size:30px;letter-spacing:.01em}
+.box h3{margin:16px 0 8px;font-size:15px;color:var(--acc2);letter-spacing:.04em}
+.box p{line-height:1.65;font-size:14px;margin:8px 0}
+.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+.fld{display:flex;flex-direction:column;gap:6px;margin:10px 0}.fld label{font-size:13px;font-weight:700;opacity:.85}
+.fld input{font:700 18px var(--fb);padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:rgba(0,0,0,.25);color:#fff;outline:none;user-select:text;-webkit-user-select:text}
+.fld input:focus{border-color:var(--acc2)}
+#onCode{text-transform:uppercase;letter-spacing:.3em;text-align:center}
+.plist{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.pl{display:flex;align-items:center;gap:10px;background:var(--panel2);border-radius:12px;padding:8px 12px;font-weight:700}
+.pl i{width:14px;height:14px;border-radius:50%;flex:none}.pl small{margin-left:auto;opacity:.7;font-size:12px}
+.code{font-family:var(--fd);font-size:44px;letter-spacing:.25em;text-align:center;color:var(--acc);margin:6px 0}
+.note{font-size:12px!important;opacity:.75}
+.seg{display:flex;background:rgba(0,0,0,.25);border-radius:12px;padding:4px;gap:4px}.seg button{flex:1;background:transparent;border-radius:9px;padding:9px;font-weight:900}.seg button.on{background:var(--acc2);color:#063a30}
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.dx{display:flex;gap:12px;align-items:flex-start;background:var(--panel2);border-radius:16px;padding:10px}
+.dx img{flex:none;width:72px;height:72px;border-radius:12px;background:radial-gradient(circle at 50% 40%,#3c3680,#1d1946)}
+.dx b{display:block;font-size:16px;font-family:var(--fd);font-weight:400;letter-spacing:.02em}.dx small{display:block;font-size:12.5px;line-height:1.45;opacity:.9;margin-top:2px}.dx .f{opacity:.6}
+.stat{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}.stat span{font-size:11px;font-weight:900;background:rgba(255,255,255,.1);border-radius:6px;padding:1px 6px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;font-weight:700}.row input[type=range]{width:55%;accent-color:var(--acc2)}
 #hud{position:fixed;inset:0;z-index:6;pointer-events:none;display:none}#hud.on{display:block}
 #hud .pe{pointer-events:auto}
-#pins{position:absolute;top:calc(10px + var(--sat));left:calc(64px + var(--sal));background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:8px 10px}
-#pins .nm{font-weight:900;font-size:13px;margin-bottom:4px;color:var(--acc)}
-#pinDia{display:block}
-#board{position:absolute;top:calc(10px + var(--sat));right:calc(10px + var(--sar));background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:6px;display:flex;gap:2px;max-width:calc(100% - 220px);overflow-x:auto;scrollbar-width:none}
-#board::-webkit-scrollbar{display:none}
-.fr{flex:none;width:44px;background:rgba(255,255,255,.92);color:#162040;border-radius:6px;text-align:center;overflow:hidden}
-.fr.cur{outline:3px solid var(--gold)}.fr .n{font-size:10px;font-weight:900;background:#2a4a7a;color:#fff}.fr .rr{display:flex;height:18px;border-bottom:1px solid #c8d4e8}.fr .rr span{flex:1;font-weight:900;font-size:13px;line-height:18px;border-left:1px solid #c8d4e8}.fr .rr span:first-child{border-left:0}
-.fr .c{font-family:'Black Han Sans';font-size:16px;height:22px;line-height:22px}.fr.f10{width:60px}
-#ballCard{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(12px + var(--sab));display:flex;gap:10px;align-items:center;background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:8px 14px 8px 8px;max-width:min(560px,calc(100% - 20px))}
-#ballCard i{flex:none;width:44px;height:44px;border-radius:50%;box-shadow:inset -5px -6px 0 rgba(0,0,0,.25),0 0 0 3px #fff4}
-#ballCard b{font-size:16px;display:block}#ballCard small{font-size:12px;opacity:.9;display:block;line-height:1.35}
-#ctrl{position:absolute;right:calc(12px + var(--sar));bottom:calc(84px + var(--sab));display:grid;grid-template-columns:repeat(2,58px);gap:8px}
-#ctrl button{width:58px;height:58px;border-radius:16px;border:1px solid var(--line);background:var(--glass);font-size:22px;font-weight:900;touch-action:none}
-#ctrl button small{display:block;font-size:10px;font-weight:700;opacity:.85}
-#hint{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(84px + var(--sab));font-weight:900;font-size:15px;text-shadow:0 2px 6px #000;white-space:nowrap;animation:bob 1.3s infinite}
-@keyframes bob{50%{transform:translate(-50%,-5px)}}
-#power{position:absolute;left:calc(14px + var(--sal));bottom:calc(84px + var(--sab));width:22px;height:160px;border-radius:12px;background:rgba(0,0,0,.4);border:2px solid #fff6;overflow:hidden;display:none}
-#power i{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(0deg,#3ad07a,#ffd23a,#ff5a3a)}
-#spinTag{position:absolute;left:calc(44px + var(--sal));bottom:calc(84px + var(--sab));font-weight:900;font-size:13px;background:var(--glass);border-radius:10px;padding:4px 8px;display:none}
-#banner{position:fixed;z-index:9;left:50%;top:40%;transform:translate(-50%,-50%);font-family:'Black Han Sans';font-size:clamp(40px,10vw,110px);opacity:0;pointer-events:none;white-space:nowrap;text-shadow:0 6px 0 rgba(0,0,0,.35)}
-#banner.go{animation:ban 1.8s}@keyframes ban{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}25%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
-.pop{position:fixed;z-index:8;font-weight:900;font-size:15px;pointer-events:none;transform:translate(-50%,-50%);text-shadow:0 2px 0 #000,0 0 8px #000;animation:popup 1.1s forwards;white-space:nowrap}@keyframes popup{to{opacity:0;margin-top:-40px}}
-#pip{position:absolute;border:3px solid #fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.4);pointer-events:none;display:none}
-#pip span{position:absolute;left:6px;top:4px;font-size:11px;font-weight:900;background:rgba(0,0,0,.5);border-radius:6px;padding:1px 6px}
-#rotate{position:fixed;inset:0;z-index:25;display:none}
+.glass{background:var(--panel);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(8px);box-shadow:0 6px 18px rgba(0,0,0,.25)}
+#turn{position:absolute;top:calc(10px + var(--sat));left:calc(68px + var(--sal));padding:7px 14px 7px 8px;display:flex;align-items:center;gap:10px;height:48px}
+#turn i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-family:var(--fd);font-style:normal;font-size:17px;color:#1a1040;flex:none}
+#turn b{font-family:var(--fd);font-weight:400;font-size:17px;display:block;line-height:1.1;white-space:nowrap}#turn small{font-size:12px;font-weight:700;opacity:.8;white-space:nowrap}
+#score{position:absolute;top:calc(10px + var(--sat));right:calc(10px + var(--sar));padding:6px;max-width:calc(100% - 290px);overflow-x:auto;scrollbar-width:none}
+#score::-webkit-scrollbar{display:none}
+#score table{border-collapse:separate;border-spacing:2px;font-variant-numeric:tabular-nums}
+#score td,#score th{background:rgba(255,255,255,.93);color:#1a1440;text-align:center;min-width:30px;padding:0;font-weight:900;font-size:12px;border-radius:5px;height:21px}
+#score th{background:#3a33b8;color:#fff;font-size:10px;height:16px}
+#score th:first-child{background:transparent}
+#score td.nm{background:transparent;text-align:left;padding:0 6px 0 2px;min-width:0;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+#score tr.me td:not(.nm){box-shadow:inset 0 0 0 2px var(--acc)}
+#score td.tot{background:var(--acc);font-family:var(--fd);font-weight:400;font-size:15px;min-width:38px}
+#score .rr{display:flex;height:100%}#score .rr span{flex:1;line-height:21px;border-left:1px solid #c8cbe8;min-width:14px}#score .rr span:first-child{border-left:0}
+#score td.cur{background:#fff3b0}
+#pinsBox{position:absolute;top:calc(68px + var(--sat));left:calc(10px + var(--sal));padding:8px}
+#pinDia{display:block;width:128px;height:98px}
+#pinTags{display:flex;flex-direction:column;gap:3px;margin-top:6px;max-width:150px}
+#pinTags span{font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px}#pinTags i{width:10px;height:10px;border-radius:50%;flex:none;box-shadow:0 0 0 1.5px #fff8}
+#pip{position:absolute;border:3px solid rgba(255,255,255,.9);border-radius:16px;box-shadow:0 8px 22px rgba(0,0,0,.45);pointer-events:none;display:none;overflow:hidden}
+#pip span{position:absolute;left:8px;top:6px;font-size:11px;font-weight:900;background:rgba(20,15,50,.7);border-radius:7px;padding:2px 8px}
+#ballCard{position:absolute;left:calc(10px + var(--sal));bottom:calc(10px + var(--sab));width:min(300px,calc(100% - 20px));padding:10px;display:flex;gap:10px;align-items:center}
+#ballCard img{flex:none;width:66px;height:66px;border-radius:14px;background:radial-gradient(circle at 50% 40%,#4a44a0,#231e58)}
+#ballCard b{font-family:var(--fd);font-weight:400;font-size:18px;display:block;letter-spacing:.02em}#ballCard small{display:block;font-size:12px;line-height:1.4;opacity:.92}
+.tagc{font-family:var(--fb);font-size:11px;font-weight:900;color:#1a1040;border-radius:6px;padding:1px 6px;vertical-align:3px}
+.bars{display:grid;grid-template-columns:auto 1fr;gap:2px 6px;margin-top:5px;font-size:10px;font-weight:900;align-items:center}
+.bars u{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden;text-decoration:none}.bars u i{display:block;height:100%;background:var(--acc2);border-radius:3px}
+#pad{position:absolute;right:calc(12px + var(--sar));bottom:calc(12px + var(--sab));display:flex;align-items:flex-end;gap:12px}
+.pg{display:flex;flex-direction:column;gap:6px;align-items:center}
+.pg .lab{font-size:11px;font-weight:900;opacity:.85;letter-spacing:.05em;text-shadow:0 1px 2px #000}
+.pg .pair{display:flex;gap:6px}
+.mv{display:grid;grid-template-columns:auto auto;gap:6px 6px;justify-items:center}
+.mv .lab{grid-column:span 2}
+.ib{width:54px;height:54px;border-radius:16px;font-size:22px;font-weight:900;background:linear-gradient(180deg,#3a3570,#26214e);box-shadow:inset 0 -4px 0 rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.14),0 3px 0 #120e30;touch-action:none;display:grid;place-items:center}
+.ib:active{transform:translateY(2px)}
+.ib svg{width:24px;height:24px;stroke:#fff;stroke-width:2.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+#curve{display:flex;gap:4px;background:rgba(18,16,48,.8);border:1px solid var(--line);border-radius:14px;padding:4px}
+#curve button{width:40px;height:46px;border-radius:10px;background:transparent;font-weight:900;font-size:15px;display:grid;place-items:center}
+#curve button.on{background:var(--acc2);color:#063a30}
+#curve svg{width:22px;height:22px;stroke:currentColor;stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+#throwWrap{position:relative;width:124px;height:124px;display:grid;place-items:center}
+#throwWrap svg.ring{position:absolute;inset:0;pointer-events:none;transform:rotate(-90deg);width:100%;height:100%}
+#throwWrap .rb{fill:none;stroke:rgba(10,8,30,.75);stroke-width:13}
+#throwWrap .rz{fill:none;stroke:rgba(62,230,200,.6);stroke-width:13}
+#throwWrap .rf{fill:none;stroke:url(#pgrad);stroke-width:9;stroke-linecap:round}
+#throwBtn{position:relative;z-index:1;width:92px;height:92px;border-radius:50%;font-family:var(--fd);font-size:20px;line-height:1.05;color:#3a2200;background:radial-gradient(circle at 50% 35%,#fff08a,#ffb21a 70%);box-shadow:inset 0 -6px 0 rgba(160,80,0,.45),inset 0 3px 0 rgba(255,255,255,.7),0 5px 0 #8a4a00,0 0 24px rgba(255,210,58,.45);touch-action:none}
+#throwBtn small{display:block;font-family:var(--fb);font-weight:900;font-size:10px;opacity:.8;margin-top:2px}
+#throwBtn.hold{transform:scale(.93)}
+#pwTxt{position:absolute;pointer-events:none;z-index:2;top:-24px;left:-20px;right:-20px;text-align:center;font-family:var(--fd);font-size:18px;text-shadow:0 2px 0 #000,0 0 6px #000}
+#wait{position:absolute;left:50%;bottom:calc(24px + var(--sab));transform:translateX(-50%);padding:12px 20px;font-weight:900;display:none;white-space:nowrap}
+#hint{position:absolute;left:50%;top:calc(70px + var(--sat));transform:translateX(-50%);padding:8px 14px;font-weight:700;font-size:13px;white-space:nowrap;display:none;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis}
+#banner{position:fixed;z-index:9;left:50%;top:38%;transform:translate(-50%,-50%);font-family:var(--fd);font-size:clamp(46px,11vw,120px);opacity:0;pointer-events:none;white-space:nowrap;-webkit-text-stroke:3px #2a1270;paint-order:stroke;text-shadow:0 7px 0 #2a1270}
+#banner.go{animation:ban 1.9s}@keyframes ban{0%{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(-6deg)}14%{opacity:1;transform:translate(-50%,-50%) scale(1.15) rotate(2deg)}24%{transform:translate(-50%,-50%) scale(1) rotate(0)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-60%)}}
+.pop{position:fixed;z-index:8;font-family:var(--fd);font-size:20px;pointer-events:none;transform:translate(-50%,-50%);-webkit-text-stroke:2px #1a1040;paint-order:stroke;animation:popup 1.2s forwards;white-space:nowrap}@keyframes popup{20%{transform:translate(-50%,-50%) scale(1.15)}to{opacity:0;margin-top:-46px}}
+#toast{position:fixed;z-index:22;left:50%;top:calc(80px + var(--sat));transform:translateX(-50%);padding:10px 16px;font-weight:700;display:none;max-width:calc(100% - 20px)}
 #err{position:fixed;z-index:99;left:10px;right:10px;bottom:10px;background:#c83a4a;padding:10px;border-radius:10px;display:none}
-html.small #board .fr{width:34px}html.small .fr.f10{width:46px}html.small .fr .c{font-size:13px}html.small .fr .rr span{font-size:11px}
-html.small #ballCard{padding:6px 10px 6px 6px}html.small #ballCard i{width:36px;height:36px}html.small #ballCard small{font-size:11px}
-html.portrait #board{left:calc(10px + var(--sal));right:calc(10px + var(--sar));top:calc(62px + var(--sat));max-width:none}
-html.portrait #pins{top:calc(122px + var(--sat));left:calc(10px + var(--sal))}
-html.portrait #hint{bottom:calc(150px + var(--sab))}
-html.small:not(.portrait) #ctrl{bottom:calc(10px + var(--sab));grid-template-columns:repeat(4,50px)}html.small:not(.portrait) #ctrl button{width:50px;height:50px}
-html.small:not(.portrait) #ballCard{left:calc(14px + var(--sal));transform:none;max-width:calc(100% - 260px)}
-html.small:not(.portrait) #hint{bottom:calc(76px + var(--sab))}
+/* 가로 화면: 휘기 위 · 위치/방향 아래 · 던지기 오른쪽 */
+html:not(.portrait) #pad{display:grid;grid-template-columns:auto auto;column-gap:12px;row-gap:6px;align-items:end}
+html:not(.portrait) #pad .cv{grid-column:1;grid-row:1}html:not(.portrait) #pad .mv{grid-column:1;grid-row:2;grid-template-columns:repeat(4,auto)}
+html:not(.portrait) #pad>.pg:last-child{grid-column:2;grid-row:1/3}
+html:not(.portrait) .mv>:nth-child(1){grid-area:1/1/2/3}html:not(.portrait) .mv>:nth-child(2){grid-area:2/1}html:not(.portrait) .mv>:nth-child(3){grid-area:2/2}
+html:not(.portrait) .mv>:nth-child(4){grid-area:1/3/2/5}html:not(.portrait) .mv>:nth-child(5){grid-area:2/3}html:not(.portrait) .mv>:nth-child(6){grid-area:2/4}
+/* 세로 화면 (휴대폰) */
+html.portrait #score{left:calc(10px + var(--sal));right:calc(10px + var(--sar));top:calc(66px + var(--sat));max-width:none}
+html.portrait #ballCard{bottom:auto;top:var(--rowY,140px);left:calc(10px + var(--sal));width:auto;right:calc(128px + var(--sar));padding:7px;gap:8px}
+html.portrait #ballCard img{width:46px;height:46px}html.portrait .bars{display:none}html.portrait #ballCard b{font-size:16px}html.portrait #ballCard small{font-size:11px;line-height:1.35}
+html.portrait #pinsBox{top:var(--rowY,140px);left:auto;right:calc(10px + var(--sar));padding:5px}
+html.portrait #pinDia{width:104px;height:80px}html.portrait #pinTags{display:none}
+html.portrait #pad{left:calc(8px + var(--sal));right:calc(8px + var(--sar));flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:flex-end}
+html.portrait #pad .cv{order:-1;width:100%}html.portrait #pad .cv .lab{display:none}
+html.portrait #curve{width:100%}html.portrait #curve button{flex:1;width:auto;height:42px}
+html.portrait .mv .lab{display:none}html.portrait .ib{width:50px;height:50px}
+html.portrait #throwWrap{width:112px;height:112px}html.portrait #throwBtn{width:84px;height:84px;font-size:19px}
+/* 낮은 가로 화면 (휴대폰 가로) */
+html.short #turn{height:42px;padding:4px 10px 4px 5px}html.short #turn i{width:30px;height:30px}html.short #gMenu{width:42px;height:42px}
+html.short #pinsBox{top:calc(58px + var(--sat));padding:5px}html.short #pinDia{width:88px;height:67px}html.short #pinTags{display:none}
+html.short #ballCard{width:220px;padding:6px}html.short #ballCard img{width:42px;height:42px}html.short .bars{display:none}html.short #ballCard small{font-size:10.5px}html.short #ballCard b{font-size:15px}
+html.portrait .tmenu .gb{font-size:17px;padding:10px 8px}
+html.short #pad{gap:8px}html.short .pg .lab{display:none}
+html.short #throwWrap{width:100px;height:100px}html.short #throwBtn{width:76px;height:76px;font-size:17px}html.short #throwBtn small{display:none}html.short .ib{width:44px;height:44px}html.short #curve button{width:32px;height:40px}
+html.short #score td,html.short #score th{min-width:22px;font-size:11px;height:18px}html.short #score .rr span{line-height:18px;min-width:11px}html.short #score th{height:14px}
 </style>
 </head>
-<body data-screen="title">
+<body>
 <canvas id="gl"></canvas>
 <button id="gMenu" aria-label="메뉴"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
 <div id="sheet"><div class="sh">
   <button data-act="hub">게임 목록으로</button><button data-act="title">메인 화면</button><button data-act="dex">도감</button><button data-act="help">게임 방법</button><button data-act="opt">설정</button>
 </div></div>
+
 <section id="title" class="scr on">
-  <h1>바이오 볼링</h1><div class="en">BIO BOWLING</div>
+  <div class="logo"><div class="k">바이오 <b>볼링</b></div><div class="e">IMMUNE STRIKE LANES</div></div>
   <div id="tStat"></div>
-  <div class="tmenu"><button class="btn big" data-act="play">10프레임 게임</button><button class="btn" data-act="practice">자유 연습</button><button class="btn" data-act="dex">도감</button><button class="btn" data-act="help">게임 방법</button></div>
-</section>
-<div id="hud">
-  <div id="pins"><div class="nm" id="frameNm">1프레임</div><canvas id="pinDia" width="140" height="108"></canvas></div>
-  <div id="board" class="pe"></div>
-  <div id="pip"><span>병원체 핀</span></div>
-  <div id="hint">위로 밀어서 던지기!</div>
-  <div id="power"><i></i></div><div id="spinTag"></div>
-  <div id="ballCard"><i id="ballIco"></i><div><b id="ballName"></b><small id="ballDesc"></small></div></div>
-  <div id="ctrl" class="pe">
-    <button data-c="rotL" aria-label="왼쪽으로 방향">↺<small>방향</small></button><button data-c="rotR" aria-label="오른쪽으로 방향">↻<small>방향</small></button>
-    <button data-c="left" aria-label="왼쪽으로 이동">◀<small>이동</small></button><button data-c="right" aria-label="오른쪽으로 이동">▶<small>이동</small></button>
+  <div class="tmenu">
+    <button class="gb y wide" data-act="solo">혼자 하기</button>
+    <button class="gb" data-act="local">같이 하기<br><small>한 기기 2~4명</small></button>
+    <button class="gb g" data-act="online">온라인 대전<br><small>최대 4명</small></button>
+    <button class="gb d" data-act="practice">자유 연습<br><small>점수 없이</small></button>
   </div>
+  <div class="tsub"><button class="gb d" data-act="dex">도감</button><button class="gb d" data-act="help">게임 방법</button><button class="gb d" data-act="hub">게임 목록</button></div>
+</section>
+
+<div id="hud">
+  <div id="turn" class="glass"><i id="turnIco">1</i><div><b id="turnName">나</b><small id="turnSub">1프레임 · 1구</small></div></div>
+  <div id="score" class="glass pe"></div>
+  <div id="pinsBox" class="glass"><canvas id="pinDia" width="256" height="196"></canvas><div id="pinTags"></div></div>
+  <div id="pip"><span>병원체 핀</span></div>
+  <div id="hint" class="glass"></div>
+  <div id="ballCard" class="glass"><img id="ballImg" alt=""><div style="min-width:0"><b id="ballName"></b><small id="ballDesc"></small><div class="bars" id="ballBars"></div></div></div>
+  <div id="pad" class="pe">
+    <div class="pg mv"><span class="lab">위치</span>
+      <button class="ib" data-c="left" aria-label="왼쪽으로 이동"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="ib" data-c="right" aria-label="오른쪽으로 이동"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      <span class="lab">방향</span>
+      <button class="ib" data-c="rotL" aria-label="화살표를 왼쪽으로 돌리기"><svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 1 3 5.7"/><path d="M5 6v6h6"/></svg></button>
+      <button class="ib" data-c="rotR" aria-label="화살표를 오른쪽으로 돌리기"><svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 0-3 5.7"/><path d="M19 6v6h-6"/></svg></button></div>
+    <div class="pg cv"><span class="lab">휘기</span><div id="curve">
+      <button data-cv="-1" aria-label="왼쪽으로 크게 휘기"><svg viewBox="0 0 24 24"><path d="M17 21C17 12 13 6 6 4"/><path d="M6 9V4h5"/></svg></button>
+      <button data-cv="-0.5" aria-label="왼쪽으로 조금 휘기"><svg viewBox="0 0 24 24"><path d="M14 21c0-7-1-12-4-16"/><path d="M7 8l3-4 3 3"/></svg></button>
+      <button data-cv="0" class="on" aria-label="곧게"><svg viewBox="0 0 24 24"><path d="M12 21V4"/><path d="M8 8l4-4 4 4"/></svg></button>
+      <button data-cv="0.5" aria-label="오른쪽으로 조금 휘기"><svg viewBox="0 0 24 24"><path d="M10 21c0-7 1-12 4-16"/><path d="M11 7l3-3 3 4"/></svg></button>
+      <button data-cv="1" aria-label="오른쪽으로 크게 휘기"><svg viewBox="0 0 24 24"><path d="M7 21C7 12 11 6 18 4"/><path d="M13 4h5v5"/></svg></button></div></div>
+    <div class="pg"><div id="throwWrap"><span id="pwTxt"></span>
+      <svg class="ring" viewBox="0 0 124 124"><defs><linearGradient id="pgrad" x1="0" x2="1"><stop offset="0" stop-color="#3ee6c8"/><stop offset=".7" stop-color="#ffd23a"/><stop offset="1" stop-color="#ff4d5e"/></linearGradient></defs>
+        <circle class="rb" cx="62" cy="62" r="54"/><circle class="rz" id="ringZone" cx="62" cy="62" r="54"/><circle class="rf" id="ringFill" cx="62" cy="62" r="54"/></svg>
+      <button id="throwBtn" aria-label="누르고 있으면 힘이 차고, 떼면 던져요">던지기<small>꾹 눌러 힘 조절</small></button></div></div>
+  </div>
+  <div id="wait" class="glass"></div>
 </div>
 <div id="banner"></div>
+<div id="toast" class="glass"></div>
 <div id="modal" class="ov"><div class="box" id="modalBox"></div></div>
 <div id="err"></div>
 
 <script src="../device.js"></script>
+<script src="../net.js"></script>
+<script src="../vendor/peerjs.min.js"></script>
 <script src="../vendor/three.min.js"></script>
 <script>
 'use strict';
 /* =========================================================
-   바이오 볼링 — 면역세포 볼링공으로 병원체 핀 쓰러뜨리기
+   바이오 볼링 — 면역세포 볼링공으로 병원체 핀을 쓰러뜨려요
    ========================================================= */
 const $ = s => document.querySelector(s);
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
-const rand = (a, b) => a + Math.random() * (b - a);
-const pick = a => a[Math.floor(Math.random() * a.length)];
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let RNG = mulberry32(1);   // 투구 물리는 시드 난수 → 온라인에서 모두 같은 장면
+const rand = (a, b) => a + RNG() * (b - a);
+const pickR = a => a[Math.floor(Math.random() * a.length)];
 
-/* ---------------- 규격 (미터 단위) ---------------- */
-const LANE_W = 1.05, HALF = LANE_W / 2, GUT = 0.12, HEAD_Z = 18.29, PIN_GAP = 0.305;
-const PIN_R = 0.061, PIN_H = 0.38, DECK_END = HEAD_Z + 1.05;
+/* ---------------- 규격 (미터) ---------------- */
+const LANE_W = 1.05, HALF = LANE_W / 2, GUT = 0.12, HEAD_Z = 18.29, PIN_GAP = 0.305, PIN_R = 0.061, DECK_END = HEAD_Z + 1.05;
 const PIN_POS = (() => { const p = []; for (let r = 0; r < 4; r++) for (let i = 0; i <= r; i++) p.push([(i - r / 2) * PIN_GAP, HEAD_Z + r * PIN_GAP * 0.866]); return p; })();
-// 볼링 번호(1~10): 1번이 앞, 7·8·9·10번이 뒷줄
+const PLAYER_COL = ['#ffd23a', '#3ee6c8', '#ff5aa8', '#8a8aff'];
+
 /* ---------------- 면역세포 볼링공 8종 ---------------- */
 const BALLS = {
-  neutro: { name: '호중구', col: '#7cc8ff', col2: '#9a6ad8', r: 0.109, m: 7, speedMul: 1.15, desc: '빠른 공! 던지는 속도가 15% 빨라요.', fact: '백혈구 중 가장 많고 감염 부위에 가장 먼저 달려가요.' },
-  macro:  { name: '대식세포', col: '#b48cff', col2: '#6a3ab0', r: 0.128, m: 11, desc: '크고 무거운 공. 부딪힌 핀은 무조건 쓰러져요.', fact: '병원체를 통째로 삼키는 거대한 식세포예요.' },
-  nk:     { name: 'NK세포', col: '#a874ff', col2: '#ffe14a', r: 0.109, m: 7, desc: '첫 핀에 닿으면 가까운 핀 2개에 번개를 쏴요.', fact: '배우지 않아도 이상한 세포를 바로 처치하는 자연살해세포예요.' },
-  comp:   { name: '보체', col: '#ff6a4a', col2: '#ffd23a', r: 0.105, m: 6.5, desc: '첫 핀에 닿으면 펑! 주변 핀을 날려요.', fact: '보체 단백질은 세균 막에 구멍을 뚫는 막 공격 복합체를 만들어요.' },
-  killer: { name: '킬러 T세포', col: '#4a78e0', col2: '#ff3b4a', r: 0.109, m: 7, pierce: 3, desc: '핀 3개를 부딪쳐도 속도가 줄지 않고 뚫고 나가요.', fact: '감염된 세포를 찾아 퍼포린으로 제거하는 세포독성 T세포예요.' },
-  bcell:  { name: 'B세포', col: '#ff9ccd', col2: '#ffd84a', r: 0.109, m: 7, desc: '항체를 뿌려 모든 핀이 더 잘 쓰러지게 해요.', fact: '항체로 병원체에 표시를 달아 다른 면역세포가 공격하게 도와요.' },
-  dend:   { name: '수지상세포', col: '#7ee07a', col2: '#3a9a4a', r: 0.109, m: 7, guide: true, desc: '1번 핀 옆 "포켓"으로 공이 저절로 휘어 들어가요.', fact: '항원을 T세포에게 보여 주며 면역 반응의 길을 안내해요.' },
-  mast:   { name: '비만세포', col: '#ffd84a', col2: '#9a4ad0', r: 0.109, m: 7, cloud: true, desc: '지나간 길에 히스타민 구름! 근처 핀이 흔들려 쓰러져요.', fact: '히스타민을 분비해 염증 반응을 일으키는 세포예요.' },
+  neutro: { name: '호중구', col: '#5cc8ff', col2: '#3a7ae0', r: 0.109, m: 7, speedMul: 1.15, stat: [5, 3, 3], tag: '스피드', desc: '가장 빠른 공. 던지는 속도가 15% 빨라요.', fact: '백혈구의 절반 이상을 차지하고 감염 부위에 가장 먼저 도착해요.' },
+  macro:  { name: '대식세포', col: '#b07aff', col2: '#5a2aa8', r: 0.13, m: 11, speedMul: 0.92, stat: [2, 5, 2], tag: '파워', desc: '크고 무거운 공. 부딪힌 핀은 무조건 삼켜서 쓰러뜨려요.', fact: '병원체를 통째로 삼키는 거대한 식세포예요.' },
+  nk:     { name: 'NK세포', col: '#8a5cff', col2: '#ffe14a', r: 0.109, m: 7, stat: [4, 3, 3], tag: '번개', desc: '첫 핀에 닿으면 가장 가까운 핀 2개에 번개를 쏴요.', fact: '배우지 않아도 이상한 세포를 바로 처치하는 자연살해세포예요.' },
+  comp:   { name: '보체', col: '#ff5a3a', col2: '#ffd23a', r: 0.105, m: 6.5, stat: [3, 3, 3], tag: '폭발', desc: '첫 핀에 닿으면 펑! 주변 핀을 날려 버려요.', fact: '보체 단백질은 세균 막에 구멍을 뚫는 막 공격 복합체를 만들어요.' },
+  killer: { name: '킬러 T세포', col: '#3a6ae8', col2: '#ff3b4a', r: 0.109, m: 7, pierce: 3, stat: [4, 4, 2], tag: '관통', desc: '핀 3개까지 속도가 줄지 않고 뚫고 나가요.', fact: '감염된 세포를 찾아 퍼포린으로 제거하는 세포독성 T세포예요.' },
+  bcell:  { name: 'B세포', col: '#ff7ac0', col2: '#ffd84a', r: 0.109, m: 7, stat: [3, 3, 3], tag: '항체', desc: '던지자마자 항체를 뿌려 모든 핀이 잘 쓰러지게 해요.', fact: '항체로 병원체에 표시를 달아 다른 면역세포가 공격하게 도와요.' },
+  dend:   { name: '수지상세포', col: '#5ee07a', col2: '#2a8a4a', r: 0.109, m: 7, guide: true, stat: [3, 3, 5], tag: '유도', desc: '1번 핀 옆 "포켓"으로 공이 스스로 길을 찾아 휘어 들어가요.', fact: '항원을 T세포에게 보여 주며 면역 반응의 길을 안내해요.' },
+  mast:   { name: '비만세포', col: '#ffcf3a', col2: '#9a4ad0', r: 0.109, m: 7, cloud: true, stat: [3, 3, 3], tag: '구름', desc: '핀 앞에서 히스타민 구름을 터뜨려 근처 핀을 흔들어 쓰러뜨려요.', fact: '히스타민을 분비해 염증 반응을 일으키는 세포예요.' },
 };
 const BALL_KEYS = Object.keys(BALLS);
 /* ---------------- 병원체 핀 6종 ---------------- */
 const PINS = {
-  cold:   { name: '감기 바이러스', col: '#7ee05a', m: 1.5, th: 0.7, desc: '평범한 핀이에요.', fact: '감기는 200종이 넘는 바이러스가 일으켜요.' },
-  tb:     { name: '결핵균', col: '#c9b8a0', m: 2.6, th: 1.15, desc: '두꺼운 왁스 껍질 때문에 무겁고 잘 안 쓰러져요.', fact: '결핵균은 기름진 세포벽으로 자신을 보호해요.' },
-  capsid: { name: '캡시드 바이러스', col: '#a8b0c8', m: 1.6, th: 0.75, armor: true, desc: '단백질 껍질이 있어 첫 충돌은 껍질만 깨져요.', fact: '바이러스의 유전 물질은 캡시드라는 단백질 껍질에 싸여 있어요.' },
-  spore:  { name: '곰팡이 포자', col: '#5cc86a', m: 1.4, th: 0.62, burst: true, desc: '쓰러지면 포자가 터져 옆 핀을 밀어요.', fact: '곰팡이는 포자를 퍼뜨려 번식해요.' },
-  ecoli:  { name: '대장균', col: '#d8955a', m: 0.9, th: 0.5, desc: '가볍고 미끄러워서 멀리 튕겨 나가요.', fact: '대장균은 편모로 헤엄쳐 다녀요.' },
-  hiv:    { name: 'HIV', col: '#c0c4d4', m: 1.5, th: 0.7, nullify: true, desc: '공에 닿으면 공의 특수 능력을 꺼 버려요.', fact: 'HIV는 면역세포를 공격해 면역계를 약하게 만들어요.' },
+  cold:   { name: '감기 바이러스', col: '#6ee04a', col2: '#ff4d5e', m: 1.5, th: 0.7, desc: '평범한 핀. 머리의 돌기 왕관이 특징이에요.', fact: '감기는 200종이 넘는 바이러스가 일으켜요.' },
+  tb:     { name: '결핵균', col: '#d8c09a', col2: '#fff4dc', m: 2.6, th: 1.15, desc: '왁스 갑옷 때문에 무겁고 잘 안 쓰러져요.', fact: '결핵균은 기름진 세포벽으로 자신을 보호해요.' },
+  capsid: { name: '캡시드 바이러스', col: '#9aa4c4', col2: '#e0e6ff', m: 1.6, th: 0.75, armor: true, desc: '단백질 투구를 써서 첫 충돌은 투구만 깨져요.', fact: '바이러스의 유전 물질은 캡시드라는 단백질 껍질에 싸여 있어요.' },
+  spore:  { name: '곰팡이 포자', col: '#48c86a', col2: '#c8ff9a', m: 1.4, th: 0.62, burst: true, desc: '쓰러지면 포자가 펑 터져 옆 핀을 밀어요.', fact: '곰팡이는 포자를 퍼뜨려 번식해요.' },
+  ecoli:  { name: '대장균', col: '#e0904a', col2: '#7a4a2a', m: 0.9, th: 0.5, slide: true, desc: '가볍고 미끄러워서 멀리 튕겨 나가요.', fact: '대장균은 편모로 헤엄쳐 다녀요.' },
+  hiv:    { name: 'HIV', col: '#b8b0e0', col2: '#ffd23a', m: 1.5, th: 0.7, nullify: true, desc: '공에 닿으면 공의 특수 능력을 꺼 버려요.', fact: 'HIV는 면역세포를 공격해 면역계를 약하게 만들어요.' },
 };
 const PIN_KEYS = Object.keys(PINS);
 
 /* ---------------- 저장 ---------------- */
-let SAVE = { best: 0, games: 0, strikes: 0 };
-try { const s = JSON.parse(localStorage.getItem('bioBowling1') || 'null'); if (s && typeof s === 'object') SAVE = Object.assign(SAVE, s); } catch (e) {}
-const OPT = Object.assign({ sfx: 0.8 }, SAVE.opt || {});
-const save = () => { SAVE.opt = OPT; try { localStorage.setItem('bioBowling1', JSON.stringify(SAVE)); } catch (e) {} };
+let SAVE = { best: 0, games: 0, strikes: 0, nick: '' };
+try { const s = JSON.parse(localStorage.getItem('bioBowling2') || 'null'); if (s && typeof s === 'object') SAVE = Object.assign(SAVE, s); } catch (e) {}
+const OPT = Object.assign({ sfx: 0.8, music: 0.5 }, SAVE.opt || {});
+const save = () => { SAVE.opt = OPT; try { localStorage.setItem('bioBowling2', JSON.stringify(SAVE)); } catch (e) {} };
 
 /* ---------------- 소리 ---------------- */
 const SND = (() => {
-  let ac = null, g = null, roll = null;
-  const init = () => { if (ac) { if (ac.state === 'suspended') ac.resume(); return; } try { ac = new (window.AudioContext || window.webkitAudioContext)(); g = ac.createGain(); g.gain.value = OPT.sfx * 0.6; g.connect(ac.destination); } catch (e) { ac = null; } };
-  const tone = (f, d, type = 'square', v = 0.15, f2) => { if (!ac) return; const t = ac.currentTime, o = ac.createOscillator(), a = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t + d); a.gain.setValueAtTime(v, t); a.gain.exponentialRampToValueAtTime(0.001, t + d); o.connect(a); a.connect(g); o.start(t); o.stop(t + d + 0.02); };
+  let ac = null, g = null, mg = null, roll = null, mus = null;
+  const init = () => { if (ac) { if (ac.state === 'suspended') ac.resume(); return; } try { ac = new (window.AudioContext || window.webkitAudioContext)(); g = ac.createGain(); mg = ac.createGain(); g.connect(ac.destination); mg.connect(ac.destination); vol(); music(); } catch (e) { ac = null; } };
+  const vol = () => { if (g) { g.gain.value = OPT.sfx * 0.6; mg.gain.value = OPT.music * 0.22; } };
+  const tone = (f, d, type = 'square', v = 0.15, f2, dest) => { if (!ac) return; const t = ac.currentTime, o = ac.createOscillator(), a = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t + d); a.gain.setValueAtTime(v, t); a.gain.exponentialRampToValueAtTime(0.001, t + d); o.connect(a); a.connect(dest || g); o.start(t); o.stop(t + d + 0.02); };
   const noise = (d, v = 0.2, lp = 2000, hp = 0) => { if (!ac) return; const t = ac.currentTime, n = ac.createBufferSource(), b = ac.createBuffer(1, Math.ceil(ac.sampleRate * d), ac.sampleRate), a = b.getChannelData(0); for (let i = 0; i < a.length; i++) a[i] = Math.random() * 2 - 1; n.buffer = b; const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; const x = ac.createGain(); x.gain.setValueAtTime(v, t); x.gain.exponentialRampToValueAtTime(0.001, t + d); n.connect(f); if (hp) { const h = ac.createBiquadFilter(); h.type = 'highpass'; h.frequency.value = hp; f.connect(h); h.connect(x); } else f.connect(x); x.connect(g); n.start(t); };
+  function music() { if (!ac || mus) return; const sc = [0, 3, 5, 7, 10], root = 50; let i = 0; const r = mulberry32(7), mel = Array.from({ length: 32 }, () => r() < 0.6 ? sc[Math.floor(r() * 5)] + (r() < 0.3 ? 12 : 0) : null), mf = n => 440 * Math.pow(2, (n - 69) / 12);
+    mus = setInterval(() => { if (!ac || ac.state !== 'running' || document.hidden) return; const m = mel[i % 32]; if (m != null) tone(mf(root + 24 + m), 0.14, 'triangle', 0.06, null, mg);
+      if (i % 4 === 0) tone(mf(root + [0, 0, 5, 3][Math.floor(i / 8) % 4]), 0.28, 'square', 0.05, null, mg);
+      if (i % 8 === 4) { const t = ac.currentTime, n = ac.createBufferSource(), b = ac.createBuffer(1, 2205, 44100), a = b.getChannelData(0); for (let k = 0; k < a.length; k++) a[k] = (Math.random() * 2 - 1) * (1 - k / a.length); n.buffer = b; const x = ac.createGain(); x.gain.value = 0.12; n.connect(x); x.connect(mg); n.start(t); }
+      if (i % 4 === 0) { const t = ac.currentTime, o = ac.createOscillator(), a = ac.createGain(); o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.12); a.gain.setValueAtTime(0.3, t); a.gain.exponentialRampToValueAtTime(0.001, t + 0.14); o.connect(a); a.connect(mg); o.start(t); o.stop(t + 0.15); }
+      i++; }, 60000 / 112 / 2); }
   let lastClack = 0;
   return {
-    init, vol() { if (g) g.gain.value = OPT.sfx * 0.6; },
+    init, vol,
     rollStart() { if (!ac) return; this.rollStop(); const n = ac.createBufferSource(), b = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate), a = b.getChannelData(0); let l = 0; for (let i = 0; i < a.length; i++) { l = l * 0.97 + (Math.random() * 2 - 1) * 0.03; a[i] = l * 6; } n.buffer = b; n.loop = true; const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 260; const x = ac.createGain(); x.gain.value = 0.5; n.connect(f); f.connect(x); x.connect(g); n.start(); roll = { n, x }; },
-    rollVol(v) { if (roll) roll.x.gain.value = v; },
-    rollStop() { if (roll) { try { roll.n.stop(); } catch (e) {} roll = null; } },
-    clack(v = 1) { const now = performance.now(); if (now - lastClack < 25) return; lastClack = now; noise(0.12 + v * 0.1, 0.12 + v * 0.25, 4500, 900); tone(rand(500, 900), 0.06, 'triangle', 0.08 * v); },
-    gutter() { noise(0.6, 0.15, 400); },
-    zap() { tone(1400, 0.25, 'sawtooth', 0.08, 200); },
-    boom() { noise(0.5, 0.35, 900); tone(130, 0.4, 'sawtooth', 0.14, 40); },
-    shell() { noise(0.1, 0.2, 6000, 2000); },
-    strike() { [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => tone(f, 0.2, 'square', 0.1), i * 80)); },
+    rollVol(v) { if (roll) roll.x.gain.value = v; }, rollStop() { if (roll) { try { roll.n.stop(); } catch (e) {} roll = null; } },
+    clack(v = 1) { const now = performance.now(); if (now - lastClack < 25) return; lastClack = now; noise(0.12 + v * 0.1, 0.12 + v * 0.25, 4500, 900); tone(500 + Math.random() * 400, 0.06, 'triangle', 0.08 * v); },
+    gutter() { noise(0.6, 0.15, 400); }, zap() { tone(1400, 0.25, 'sawtooth', 0.08, 200); },
+    boom() { noise(0.5, 0.35, 900); tone(130, 0.4, 'sawtooth', 0.14, 40); }, shell() { noise(0.1, 0.2, 6000, 2000); },
+    strike() { [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => tone(f, 0.2, 'square', 0.1), i * 80)); noise(1.2, 0.08, 3000, 800); },
     spare() { [659, 880, 1175].forEach((f, i) => setTimeout(() => tone(f, 0.2, 'square', 0.1), i * 90)); },
-    click() { tone(700, 0.04, 'square', 0.05); },
-    throw() { noise(0.15, 0.15, 1200); },
+    click() { tone(700, 0.04, 'square', 0.05); }, throw() { noise(0.15, 0.15, 1200); },
   };
 })();
 
-/* ---------------- 점수 계산 (표준 볼링 규칙) ---------------- */
+/* ---------------- 점수 (표준 볼링) ---------------- */
+const mk = v => v == null ? '' : v === 0 ? '-' : String(v);
 function scoreFrames(rolls) {
   const fr = []; let i = 0, total = 0;
   for (let f = 0; f < 10; f++) {
@@ -182,60 +283,85 @@ function scoreFrames(rolls) {
     if (i >= rolls.length) { fr.push(r); continue; }
     if (f < 9) {
       if (rolls[i] === 10) { r.marks = ['', 'X']; if (rolls[i + 2] != null) { total += 10 + rolls[i + 1] + rolls[i + 2]; r.cum = total; } i += 1; }
-      else {
-        const a = rolls[i], b = rolls[i + 1]; r.marks = [mk(a), b == null ? '' : (a + b === 10 ? '/' : mk(b))];
-        if (b != null) { if (a + b === 10) { if (rolls[i + 2] != null) { total += 10 + rolls[i + 2]; r.cum = total; } } else { total += a + b; r.cum = total; } }
-        i += 2;
-      }
+      else { const a = rolls[i], b = rolls[i + 1]; r.marks = [mk(a), b == null ? '' : (a + b === 10 ? '/' : mk(b))];
+        if (b != null) { if (a + b === 10) { if (rolls[i + 2] != null) { total += 10 + rolls[i + 2]; r.cum = total; } } else { total += a + b; r.cum = total; } } i += 2; }
     } else {
       const a = rolls[i], b = rolls[i + 1], c = rolls[i + 2];
       r.marks = [a === 10 ? 'X' : mk(a)];
       if (b != null) r.marks.push(a === 10 ? (b === 10 ? 'X' : mk(b)) : (a + b === 10 ? '/' : mk(b)));
-      if (c != null) r.marks.push((a === 10 && b !== 10) ? (b + c === 10 ? '/' : mk(c)) : (c === 10 ? 'X' : (a !== 10 && a + b === 10) ? (c === 10 ? 'X' : mk(c)) : mk(c)));
-      const done = b != null && (a + b < 10 ? true : c != null);
-      if (done) { total += a + b + (c || 0); r.cum = total; }
+      if (c != null) r.marks.push((a === 10 && b !== 10) ? (b + c === 10 ? '/' : mk(c)) : (c === 10 ? 'X' : mk(c)));
+      if (b != null && (a + b < 10 || c != null)) { total += a + b + (c || 0); r.cum = total; }
     }
     fr.push(r);
   }
   return { frames: fr, total };
 }
-const mk = v => v == null ? '' : v === 0 ? '-' : String(v);
+// 굴림 기록 → 지금 몇 프레임 몇 번째 공인지, 끝났는지, 핀을 새로 세울지
+function frameState(rolls) {
+  let i = 0;
+  for (let f = 0; f < 9; f++) {
+    if (i >= rolls.length) return { frame: f, roll: 0, done: false, reset: true };
+    if (rolls[i] === 10) { i++; continue; }
+    if (i + 1 >= rolls.length) return { frame: f, roll: 1, done: false, reset: false };
+    i += 2;
+  }
+  const r = rolls.slice(i);
+  if (r.length === 0) return { frame: 9, roll: 0, done: false, reset: true };
+  if (r.length === 1) return { frame: 9, roll: 1, done: false, reset: r[0] === 10 };
+  if (r.length === 2) { if (r[0] === 10 || r[0] + r[1] === 10) return { frame: 9, roll: 2, done: false, reset: r[0] === 10 ? r[1] === 10 : true }; return { frame: 9, roll: 2, done: true }; }
+  return { frame: 9, roll: 3, done: true };
+}
 
 /* ---------------- 게임 상태 ---------------- */
-const G = { mode: 'game', rolls: [], frame: 0, roll: 0, phase: 'title', pins: [], ball: null, pos: 0, ang: 0, curBall: 'neutro', nextBall: null, layout: [], t: 0, settle: 0, gutter: false, spin: 0, power: 0, charging: false, chDir: 1, events: [] };
-function rollBall() { G.curBall = pick(BALL_KEYS); }
-function newLayout() { G.layout = PIN_POS.map(() => { const r = Math.random(); return r < 0.4 ? 'cold' : pick(PIN_KEYS); }); }
-function setupPins(keepStanding) {
-  if (!keepStanding) { newLayout(); G.pins = PIN_POS.map((p, i) => mkPin(i, p)); }
-  else { G.pins.forEach(p => { if (p.down) p.gone = true; else { p.x = PIN_POS[p.i][0]; p.z = PIN_POS[p.i][1]; p.vx = p.vz = 0; p.wob = 0; } }); }
+const G = { mode: 'solo', players: [], cur: 0, phase: 'title', pins: [], ball: null, pos: 0, ang: 0, curve: 0, curBall: 'neutro', layout: [], t: 0, gutter: false, power: 0, charging: false, chDir: 1, events: [], practice: { roll: 0 }, pendingRes: null, waitRes: false };
+const meIdx = () => G.mode === 'online' ? G.players.findIndex(p => p.id === NET.myId) : G.cur;
+const myTurn = () => G.mode !== 'online' || (G.players[G.cur] && G.players[G.cur].id === NET.myId);
+function newLayout() { return PIN_POS.map(() => Math.random() < 0.38 ? 'cold' : pickR(PIN_KEYS)); }
+function mkPin(i, type) { const p = PIN_POS[i]; return { i, type, x: p[0], z: p[1], vx: 0, vz: 0, down: false, gone: false, armor: !!PINS[type].armor, fallT: 0, tdir: 0, wob: 0, spin: 0, counted: false, opson: false }; }
+function resetPins(layout) { G.layout = layout; G.pins = layout.map((t, i) => mkPin(i, t)); }
+function keepPins() { G.pins.forEach(p => { if (p.down) p.gone = true; else { p.x = PIN_POS[p.i][0]; p.z = PIN_POS[p.i][1]; p.vx = p.vz = 0; p.wob = 0; p.opson = false; } }); }
+
+function startGame(mode, players) {
+  G.mode = mode; G.cur = 0; G.pos = 0; G.ang = 0; G.curve = 0; G.practice = { roll: 0 }; G.pendingRes = null; G.waitRes = false;
+  G.players = players.map((p, i) => ({ id: p.id || 'p' + i, name: p.name, col: PLAYER_COL[i % 4], rolls: [], gone: false }));
+  G.phase = 'wait'; show('play'); drawScore(); setCurveUI(); setScreen(mode === 'practice' ? 'PRACTICE' : 'READY', '#3ee6c8');
+  beginTurn(true);
 }
-function mkPin(i, p) { const t = G.layout[i], d = PINS[t]; return { i, type: t, x: p[0], z: p[1], vx: 0, vz: 0, down: false, gone: false, armor: !!d.armor, tilt: 0, tdir: 0, fallT: 0, wob: 0, spin: 0, counted: false, opson: false, rot: Math.random() * 6 }; }
-function startGame(mode) {
-  G.mode = mode; G.rolls = []; G.frame = 0; G.roll = 0; G.pos = 0; G.ang = 0; G.spin = 0;
-  setupPins(false); rollBall(); buildPinMeshes(); resetBall(); G.phase = 'aim'; show('play'); updHud(); drawBoard();
-  banner(mode === 'game' ? '1프레임' : '자유 연습', '#fff');
+// 차례 시작: 공·핀 정하기 (온라인에서는 던지는 사람 기기가 정해서 알려 줌)
+function beginTurn(reset) {
+  G.phase = 'wait'; updTurnUI();
+  if (G.mode === 'online') { if (myTurn()) { const setup = { t: 'setup', ball: pickR(BALL_KEYS), layout: reset ? newLayout() : null, cur: G.cur }; NET.send(setup); applySetup(setup); } else showWait(`${G.players[G.cur].name}의 차례를 기다리는 중…`); return; }
+  applySetup({ ball: pickR(BALL_KEYS), layout: reset ? newLayout() : null });
 }
-function resetBall() {
-  const d = BALLS[G.curBall];
-  G.ball = { x: G.pos, z: 0.1, vx: 0, vz: 0, r: d.r, m: d.m, spinRot: 0, ax: 0, rx: 0, hits: 0, used: false, nulled: false, inGutter: false, done: false, trail: [] };
-  setBallMesh(); G.gutter = false;
-  if (G.curBall === 'bcell') { /* 항체: 던질 때 효과 */ }
+function applySetup(s) {
+  G.curBall = s.ball;
+  if (s.layout) resetPins(s.layout); else keepPins();
+  buildPins(); resetBall(); G.phase = 'aim'; updTurnUI(); updBallCard(); drawPinDia();
+  const mine = myTurn(); $('#pad').style.display = mine ? '' : 'none'; showWait(mine ? '' : `${G.players[G.cur].name}의 차례예요`);
+  if (mine) { hint('화살표 방향을 정하고, 던지기 버튼을 꾹 눌렀다 떼세요'); if (G.mode === 'local') banner(G.players[G.cur].name + ' 차례', G.players[G.cur].col); }
+  if (G.mode !== 'practice') setScreen(G.players[G.cur].name.slice(0, 6), G.players[G.cur].col);
 }
-function throwBall(speed, spin) {
+function resetBall() { const d = BALLS[G.curBall]; G.ball = { x: G.pos, z: 0.1, vx: 0, vz: 0, r: d.r, m: d.m, spin: 0, hits: 0, used: false, nulled: false, inGutter: false, done: false }; G.gutter = false; setBallMesh(); }
+const powerSpeed = p => 4.4 + p * 5.0;
+const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / 0.5;   // 대략 정규분포 (-3~3)
+// 손 떨림: 초록 구간(75~92%)에서 놓으면 거의 그대로, 벗어날수록 방향이 흔들려요
+function throwParams(power) { const d = BALLS[G.curBall], off = power < 0.75 ? 0.75 - power : power > 0.92 ? power - 0.92 : 0;
+  const ang = clamp(G.ang + gauss() * (0.0028 + off * 0.035), -0.07, 0.07), pos = clamp(G.pos + gauss() * 0.012, -HALF + 0.11, HALF - 0.11);
+  return { pos, ang, speed: powerSpeed(power) * (d.speedMul || 1), spin: G.curve, seed: Math.floor(Math.random() * 1e9) }; }
+function doThrow(tp, remote) {
   if (G.phase !== 'aim') return;
-  const d = BALLS[G.curBall];
-  speed = clamp(speed, 4.2, 9.6) * (d.speedMul || 1);
-  G.ball.vx = Math.sin(G.ang) * speed; G.ball.vz = Math.cos(G.ang) * speed; G.ball.spin = clamp(spin, -1, 1);
-  G.phase = 'roll'; G.t = 0; G.settle = 0; SND.throw(); SND.rollStart();
+  RNG = mulberry32(tp.seed);
+  G.pos = tp.pos; G.ang = tp.ang; G.ball.x = tp.pos;
+  G.ball.vx = Math.sin(tp.ang) * tp.speed; G.ball.vz = Math.cos(tp.ang) * tp.speed; G.ball.spin = tp.spin;
+  G.phase = 'roll'; G.t = 0; SND.throw(); SND.rollStart(); hint('');
   if (G.curBall === 'bcell') { G.pins.forEach(p => { if (!p.down && !p.gone) p.opson = true; }); popAt(G.ball.x, 0.4, 2, '항체 발사!', '#ffd84a'); }
-  $('#hint').style.display = 'none';
+  if (G.mode === 'online' && !remote) NET.send({ t: 'throw', tp, cur: G.cur });
 }
-/* ---------------- 물리 (2D 평면 + 핀 넘어짐) ---------------- */
+/* ---------------- 물리 ---------------- */
 const DT = 1 / 240;
 function knock(p, imp, dirx, dirz, src) {
   if (p.down || p.gone) return false;
-  const d = PINS[p.type]; let th = d.th * (p.opson ? 0.6 : 1);
-  if (src === 'macro') th = 0;
+  const d = PINS[p.type]; let th = d.th * (p.opson ? 0.6 : 1); if (src === 'macro') th = 0;
   if (p.armor && imp > 0.15) { p.armor = false; ev('shell', p); if (imp < th * 2 && src !== 'macro') { p.wob = 0.6; return false; } }
   if (imp >= th) { const sc = imp * 0.35; p.vx += rand(-sc, sc); p.down = true; p.fallT = 0; p.tdir = Math.atan2(dirx, dirz); ev('fall', p, imp); if (d.burst) ev('burst', p); return true; }
   if (imp > th * 0.35) p.wob = Math.min(1, p.wob + imp / th);
@@ -244,486 +370,693 @@ function knock(p, imp, dirx, dirz, src) {
 function stepPhys() {
   const b = G.ball, bd = BALLS[G.curBall];
   if (!b.done) {
-    // 회전(훅): 레인 뒤쪽 1/3에서 강하게 휨
-    const hook = b.z > HEAD_Z * 0.5 ? 1 : 0.18;
-    let ax = (b.spin || 0) * 0.85 * hook;
+    const hook = b.z > HEAD_Z * 0.5 ? 1 : 0.18; let ax = (b.spin || 0) * 0.85 * hook;
     if (bd.guide && !b.nulled && b.z > 6 && b.z < HEAD_Z) { const tx = (b.spin || 0) >= 0 ? -0.07 : 0.07; ax += clamp((tx - b.x) * 1.1 - b.vx * 0.7, -0.7, 0.7); }
     if (!b.inGutter) b.vx += ax * DT;
-    b.vz -= 0.18 * DT;
-    b.x += b.vx * DT; b.z += b.vz * DT;
-    if (!b.inGutter && Math.abs(b.x) > HALF - 0.01 && b.z < HEAD_Z - 0.3) { b.inGutter = true; b.vx = 0; b.x = Math.sign(b.x) * (HALF + GUT / 2); ev('gutter'); }
+    b.vz -= 0.18 * DT; b.x += b.vx * DT; b.z += b.vz * DT;
+    if (!b.inGutter && Math.abs(b.x) > HALF - 0.01 && b.z < HEAD_Z - 0.3) { b.inGutter = true; b.vx = 0; ev('gutter'); }
     if (b.inGutter) b.x = Math.sign(b.x) * (HALF + GUT / 2);
-    if (bd.cloud && !b.nulled && b.z > HEAD_Z - 0.5 && !b.cloudDone) { b.cloudDone = true; ev('cloud', b); }
+    if (bd.cloud && !b.nulled && b.z > HEAD_Z - 0.5 && !b.cloudDone) { b.cloudDone = true; ev('cloud', { x: b.x, z: b.z }); }
     if (b.z > DECK_END + 0.6 || b.vz < 0.3) b.done = true;
   }
-  // 공 ↔ 핀
   if (!b.done && !b.inGutter) for (const p of G.pins) {
     if (p.gone) continue;
     const dx = p.x - b.x, dz = p.z - b.z, dist = Math.hypot(dx, dz), md = b.r + PIN_R;
     if (dist < md && dist > 1e-6) {
       const nx = dx / dist, nz = dz / dist, rel = (b.vx - p.vx) * nx + (b.vz - p.vz) * nz;
       if (rel > 0) {
-        const pm = PINS[p.type].m, j = (1.7 * rel) / (1 / b.m + 1 / pm);
-        const pierce = bd.pierce && !b.nulled && b.hits < bd.pierce;
+        const pm = PINS[p.type].m, j = (1.7 * rel) / (1 / b.m + 1 / pm), pierce = bd.pierce && !b.nulled && b.hits < bd.pierce;
         if (!pierce) { b.vx -= j / b.m * nx; b.vz -= j / b.m * nz; }
-        p.vx += j / pm * nx; p.vz += j / pm * nz;
-        const imp = j / pm; b.hits++;
+        p.vx += j / pm * nx; p.vz += j / pm * nz; b.hits++;
         if (PINS[p.type].nullify && !b.nulled && !b.used) { b.nulled = true; ev('nullify', p); }
-        knock(p, imp, nx, nz, (G.curBall === 'macro' && !b.nulled) ? 'macro' : 'ball');
+        knock(p, j / pm, nx, nz, (G.curBall === 'macro' && !b.nulled) ? 'macro' : 'ball');
         if (!p.down) { p.vx *= 0.15; p.vz *= 0.15; }
-        ev('clack', p, imp);
+        ev('clack', p, j / pm);
         if (!b.used && !b.nulled) { b.used = true; ability(p); }
       }
       const push = md - dist; p.x += nx * push; p.z += nz * push;
     }
   }
-  // 핀 ↔ 핀
   const ps = G.pins;
   for (let a = 0; a < ps.length; a++) { const p = ps[a]; if (p.gone) continue;
-    for (let c = a + 1; c < ps.length; c++) { const q = ps[c]; if (q.gone) continue;
-      if (!p.down && !q.down) continue;
-      const dx = q.x - p.x, dz = q.z - p.z, dist = Math.hypot(dx, dz), md = PIN_R * 2 + (p.down || q.down ? 0.07 : 0);
+    for (let c = a + 1; c < ps.length; c++) { const q = ps[c]; if (q.gone || (!p.down && !q.down)) continue;
+      const dx = q.x - p.x, dz = q.z - p.z, dist = Math.hypot(dx, dz), md = PIN_R * 2 + 0.07;
       if (dist < md && dist > 1e-6) {
         const nx = dx / dist, nz = dz / dist, rel = (p.vx - q.vx) * nx + (p.vz - q.vz) * nz;
         if (rel > 0) { const m1 = PINS[p.type].m, m2 = PINS[q.type].m, j = (1.32 * rel) / (1 / m1 + 1 / m2);
           p.vx -= j / m1 * nx; p.vz -= j / m1 * nz; q.vx += j / m2 * nx; q.vz += j / m2 * nz;
-          if (!q.down) { if (!knock(q, j / m2, nx, nz)) { q.vx *= 0.15; q.vz *= 0.15; } }
-          if (!p.down) { if (!knock(p, j / m1, -nx, -nz)) { p.vx *= 0.15; p.vz *= 0.15; } }
+          if (!q.down && !knock(q, j / m2, nx, nz)) { q.vx *= 0.15; q.vz *= 0.15; }
+          if (!p.down && !knock(p, j / m1, -nx, -nz)) { p.vx *= 0.15; p.vz *= 0.15; }
           if (j > 0.3) ev('clack', q, j / m2 * 0.6); }
         const push = (md - dist) / 2; p.x -= nx * push; p.z -= nz * push; q.x += nx * push; q.z += nz * push;
       } } }
-  // 핀 이동
   for (const p of ps) { if (p.gone) continue;
-    if (p.down) { p.fallT += DT; const sp = Math.hypot(p.vx, p.vz); const f = (PINS[p.type] === PINS.ecoli ? 1.2 : 2.6) * DT; if (sp > f) { p.vx -= p.vx / sp * f; p.vz -= p.vz / sp * f; } else p.vx = p.vz = 0; p.spin += sp * DT * 8; }
+    if (p.down) { p.fallT += DT; const sp = Math.hypot(p.vx, p.vz), f = (PINS[p.type].slide ? 1.2 : 2.6) * DT; if (sp > f) { p.vx -= p.vx / sp * f; p.vz -= p.vz / sp * f; } else p.vx = p.vz = 0; p.spin += sp * DT * 6; }
     else { p.vx *= 0.9; p.vz *= 0.9; if (p.wob > 0) p.wob = Math.max(0, p.wob - DT * 0.9); }
     p.x += p.vx * DT; p.z += p.vz * DT;
     if (p.z > DECK_END + 0.1 || Math.abs(p.x) > HALF + GUT || p.z < HEAD_Z - 1.4) { if (!p.down) { p.down = true; p.fallT = 0; ev('fall', p, 0); } p.gone = p.z > DECK_END + 0.4 || Math.abs(p.x) > HALF + GUT + 0.1; }
   }
 }
 function ability(p) {
-  const k = G.curBall, b = G.ball;
+  const k = G.curBall;
   if (k === 'nk') { const near = G.pins.filter(q => !q.down && !q.gone && q !== p).sort((a, c) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(c.x - p.x, c.z - p.z)).slice(0, 2);
     for (const q of near) { const dx = q.x - p.x, dz = q.z - p.z, d = Math.hypot(dx, dz) || 1; q.vx += dx / d * 1.6; q.vz += dz / d * 1.6 + 0.4; knock(q, 9, dx / d, dz / d); ev('zap', q, 0, p); } }
   if (k === 'comp') { ev('boom', p); for (const q of G.pins) { if (q.gone || q === p) continue; const dx = q.x - p.x, dz = q.z - p.z, d = Math.hypot(dx, dz); if (d < 0.34) { const f = (0.34 - d) / 0.34 * 3 + 0.6; q.vx += dx / (d || 1) * f; q.vz += dz / (d || 1) * f; knock(q, f, dx, dz); } } }
 }
 function ev(type, p, v, q) { G.events.push({ type, p, v, q }); }
 function burstSpore(p) { for (const q of G.pins) { if (q.gone || q === p || q.down) continue; const dx = q.x - p.x, dz = q.z - p.z, d = Math.hypot(dx, dz); if (d < 0.36) { q.vx += dx / d * 1.1; q.vz += dz / d * 1.1; knock(q, 0.9, dx, dz); } } }
-function histamine(b) { let n = 0; for (const q of G.pins) { if (q.gone || q.down) continue; if (Math.abs(q.x - b.x) < 0.3) { q.wob = 1; if (Math.random() < 0.55) { knock(q, 9, rand(-0.5, 0.5), 1); q.vz += 0.5; n++; } } } return n; }
+function histamine(b) { for (const q of G.pins) { if (q.gone || q.down) continue; if (Math.abs(q.x - b.x) < 0.3) { q.wob = 1; if (RNG() < 0.55) { knock(q, 9, rand(-0.5, 0.5), 1); q.vz += 0.5; } } } }
 function settled() { return G.ball.done && G.pins.every(p => p.gone || Math.hypot(p.vx, p.vz) < 0.04) && G.pins.every(p => p.gone || !p.down || p.fallT > 0.6); }
+// 효과 이벤트 중 물리에 영향을 주는 것은 소리·그림과 상관없이 바로 처리 (온라인 일치)
+function physEvents() { for (const e of G.events) { if (e.done) continue; if (e.type === 'burst') { burstSpore(e.p); e.phys = 1; } if (e.type === 'cloud') { histamine(e.p); e.phys = 1; } if (e.type === 'gutter') G.gutter = true; e.done = true; } }
 
-/* ---------------- 투구 끝 처리 ---------------- */
-function endRoll() {
-  SND.rollStop();
+/* ---------------- 투구 끝 ---------------- */
+function pinSnapshot() { return G.pins.map(p => [p.down || p.gone ? 1 : 0, +p.x.toFixed(4), +p.z.toFixed(4), p.armor ? 1 : 0]); }
+function applySnapshot(s) { s.forEach((a, i) => { const p = G.pins[i]; if (!p) return; if (a[0] && !p.down) { p.down = true; p.fallT = 1; } if (!a[0]) { p.down = false; p.gone = false; p.x = a[1]; p.z = a[2]; p.wob = 0; } p.armor = !!a[3]; }); }
+function finishRoll() {
+  // 온라인: 던진 사람 기기가 결과를 정해서 모두에게 알려 줌
+  if (G.mode === 'online') { if (myTurn()) { const res = { t: 'result', snap: pinSnapshot(), cur: G.cur, gutter: G.gutter }; NET.send(res); endRoll(res); } else { G.waitRes = true; showWait('결과 기다리는 중…'); } return; }
+  endRoll(null);
+}
+function endRoll(res) {
+  if (G.phase === 'over') return;
+  SND.rollStop(); G.phase = 'count'; G.waitRes = false; showWait('');
+  if (res && res.snap) { applySnapshot(res.snap); G.gutter = res.gutter; }
   const standingBefore = G.pins.filter(p => !p.counted).length;
-  const fallen = G.pins.filter(p => (p.down || p.gone) && !p.counted);
-  fallen.forEach(p => p.counted = true);
-  const n = fallen.length;
+  const fallen = G.pins.filter(p => (p.down || p.gone) && !p.counted); fallen.forEach(p => p.counted = true);
+  const n = fallen.length, all = G.pins.every(p => p.counted);
+  drawPinDia();
   if (G.mode === 'practice') {
-    const all = G.pins.every(p => p.counted);
-    if (G.roll === 0 && all) { banner('스트라이크!', '#ffd23a'); SND.strike(); SAVE.strikes++; save(); }
-    else if (G.roll === 1 && all) { banner('스페어!', '#5ff0de'); SND.spare(); }
-    else if (n === 0) banner(G.gutter ? '거터…' : '0핀', '#ff8a9a'); else popCenter(n + '핀!');
-    const next = (G.roll === 0 && !all) ? 1 : 0;
-    nextRoll(next === 1 ? 'keep' : 'reset', next); return;
+    const first = G.practice.roll === 0;
+    if (first && all) celebrate('strike'); else if (!first && all) celebrate('spare'); else if (n === 0) banner(G.gutter ? '거터…' : '0핀', '#ff8aa0'); else popCenter(n + '핀!');
+    G.practice.roll = first && !all ? 1 : 0; return setTimeout(() => beginTurn(G.practice.roll === 0), 1700);
   }
-  G.rolls.push(n);
-  const s = scoreFrames(G.rolls); drawBoard();
-  const all = G.pins.every(p => p.counted);
-  // 표시
-  if (all && (G.roll === 0 || (G.frame === 9 && G.roll > 0 && standingBefore === 10))) { banner('스트라이크!', '#ffd23a'); SND.strike(); SAVE.strikes++; save(); }
-  else if (all) { banner('스페어!', '#5ff0de'); SND.spare(); }
-  else if (n === 0) banner(G.gutter ? '거터…' : '0핀', '#ff8a9a');
-  else popCenter(n + '핀!');
-  // 다음 투구 결정
-  if (G.frame < 9) {
-    if (G.roll === 0 && !all) return nextRoll('keep', 1);
-    G.frame++; return nextRoll('reset', 0);
-  }
-  // 10프레임
-  const r = G.rolls.slice(-(G.roll + 1));
-  if (G.roll === 0) return nextRoll(all ? 'reset' : 'keep', 1);
-  if (G.roll === 1) {
-    const a = r[0], b = r[1];
-    if (a === 10 || a + b === 10) return nextRoll(all ? 'reset' : 'keep', 2);
-    return finish();
-  }
-  return finish();
-}
-function nextRoll(mode, roll) {
-  G.phase = 'wait';
+  const P = G.players[G.cur], st0 = frameState(P.rolls); P.rolls.push(n); drawScore();
+  if (all && standingBefore === 10) celebrate('strike');
+  else if (all) celebrate('spare'); else if (n === 0) { banner(G.gutter ? '거터…' : '0핀', '#ff8aa0'); setScreen(G.gutter ? 'GUTTER' : 'MISS', '#ff8aa0'); } else { popCenter(n + '핀!'); setScreen(n + ' PINS', '#ffffff'); }
+  const st = frameState(P.rolls);
   setTimeout(() => {
-    G.roll = roll;
-    if (mode === 'reset') setupPins(false); else setupPins(true);
-    buildPinMeshes(); rollBall(); resetBall(); G.phase = 'aim'; updHud(); drawBoard();
-    if (roll === 0 && G.mode === 'game') banner((G.frame + 1) + '프레임', '#fff');
-    $('#hint').style.display = '';
-  }, 1700);
+    if (G.phase === 'over' || G.mode === 'title') return;
+    if (st.done || st.roll === 0) {   // 이 사람 프레임 끝 → 다음 사람
+      const next = nextPlayer(); if (next < 0) return finishGame();
+      G.cur = next; beginTurn(true);
+    } else beginTurn(st.reset);
+  }, 1800);
+  return st0;
 }
-function finish() {
-  G.phase = 'over';
-  const tot = scoreFrames(G.rolls).total; const best = tot > SAVE.best; if (best) SAVE.best = tot; SAVE.games++; save();
-  if (window.BioGoal) try { BioGoal.result('bio-bowling', tot, { text: tot + '점' }); } catch (e) {}
-  setTimeout(() => modal(`<h2>게임 끝!</h2><p class="bh" style="font-size:56px;text-align:center;margin:6px 0;color:#ffd23a">${tot}점</p><p style="text-align:center">${best ? '🎉 최고 기록 갱신!' : '최고 기록 ' + SAVE.best + '점'}</p>
-    <div class="btns"><button class="btn big" data-act="play">다시 하기</button><button class="btn" data-act="title">메인 화면</button></div>`, true), 1800);
+function nextPlayer() {
+  const live = G.players.map((p, i) => ({ p, i, st: frameState(p.rolls) })).filter(o => !o.p.gone && !o.st.done);
+  if (!live.length) return -1;
+  const minF = Math.min(...live.map(o => o.st.frame)), n = G.players.length;
+  for (let k = 1; k <= n; k++) { const i = (G.cur + k) % n, o = live.find(x => x.i === i); if (o && o.st.frame === minF) return i; }
+  return live[0].i;
+}
+function celebrate(kind) {
+  if (kind === 'strike') { banner('스트라이크!', '#ffd23a'); SND.strike(); R.cheer = 2.4; R.shake = 0.3; fxConfetti(); if (myTurn()) { SAVE.strikes++; save(); } setScreen('STRIKE!', '#ffd23a'); }
+  else { banner('스페어!', '#3ee6c8'); SND.spare(); R.cheer = 1.4; setScreen('SPARE!', '#3ee6c8'); }
+}
+function finishGame() {
+  G.phase = 'over'; showWait(''); $('#pad').style.display = 'none'; $('#turnSub').textContent = '경기 끝'; setScreen('GAME!', '#ff5aa8');
+  const rows = G.players.map(p => ({ p, t: scoreFrames(p.rolls).total })).sort((a, b) => b.t - a.t);
+  const me = G.players[meIdx()] || G.players[0], myTot = scoreFrames(me.rolls).total, best = myTot > SAVE.best && G.mode !== 'local';
+  if (best) SAVE.best = myTot; SAVE.games++; save();
+  if (window.BioGoal && G.mode !== 'local') try { BioGoal.result('bio-bowling', myTot, { text: myTot + '점' }); } catch (e) {}
+  const list = rows.map((r, i) => `<div class="pl"><span class="fd" style="width:22px">${i + 1}</span><i style="background:${r.p.col}"></i>${esc(r.p.name)}${r.p.gone ? ' (나감)' : ''}<small class="fd" style="font-size:20px;opacity:1">${r.t}</small></div>`).join('');
+  const multi = G.players.length > 1;
+  setTimeout(() => modal(`<h2>${multi ? (G.mode === 'online' && rows[0].p === me ? '우승!' : esc(rows[0].p.name) + ' 우승!') : '게임 끝!'}</h2>
+    ${multi ? `<div class="plist">${list}</div>` : `<p class="fd" style="font-size:64px;text-align:center;margin:0;color:var(--acc)">${myTot}</p>`}
+    <p style="text-align:center">${best ? '최고 기록 갱신!' : '최고 기록 ' + SAVE.best + '점'}</p>
+    <div class="btns">${G.mode === 'online' ? (NET.role === 'host' ? '<button class="gb y" data-act="again">다시 하기</button>' : '<p class="note">방장이 다시 시작할 수 있어요</p>') : '<button class="gb y" data-act="again">다시 하기</button>'}<button class="gb d" data-act="title">메인 화면</button></div>`, true), 1900);
 }
 
 /* =========================================================
-   그래픽 (three.js)
+   그래픽 — 카툰(툰) 질감 3D
    ========================================================= */
-const R = {};
-function canvasTex(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.anisotropy = 4; t.encoding = THREE.sRGBEncoding; return t; }
+const R = { cheer: 0, shake: 0, fx: [] };
+let TOON, OUT;
+function toon(col, o) { return new THREE.MeshToonMaterial(Object.assign({ color: col, gradientMap: TOON }, o || {})); }
+function outline(mesh, s = 1.06) { const o = new THREE.Mesh(mesh.geometry, OUT); o.scale.setScalar(s); mesh.add(o); return mesh; }
+function cTex(w, h, draw, rep) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); } return t; }
 function initGfx() {
-  const dev = window.BioDevice || { maxDpr: 2, type: 'pc' };
+  const dev = window.BioDevice || { maxDpr: 2 };
   R.r = new THREE.WebGLRenderer({ canvas: $('#gl'), antialias: true });
   R.r.setPixelRatio(Math.min(devicePixelRatio || 1, dev.maxDpr || 2));
-  R.r.shadowMap.enabled = true; R.r.shadowMap.type = THREE.PCFSoftShadowMap;
-  R.r.outputEncoding = THREE.sRGBEncoding; R.r.toneMapping = THREE.ACESFilmicToneMapping; R.r.toneMappingExposure = 1.0;
-  R.scene = new THREE.Scene(); R.scene.background = new THREE.Color('#1c2a4a'); R.scene.fog = new THREE.Fog('#1c2a4a', 30, 60);
-  R.cam = new THREE.PerspectiveCamera(40, 1, 0.05, 120); R.pipCam = new THREE.PerspectiveCamera(30, 1.6, 0.05, 50);
-  R.scene.add(new THREE.HemisphereLight(0xffffff, 0x5a4a6a, 0.7));
-  const key = new THREE.DirectionalLight(0xfff4e0, 0.9); key.position.set(2, 8, -3); key.target.position.set(0, 0, 10); key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -3, right: 3, top: 14, bottom: -14, near: 1, far: 40 }); key.shadow.bias = -0.0008;
-  R.scene.add(key, key.target);
-  const deckLight = new THREE.SpotLight(0xffffff, 1.6, 12, 0.6, 0.5); deckLight.position.set(0, 3.2, HEAD_Z - 2); deckLight.target.position.set(0, 0, HEAD_Z + 0.4); deckLight.castShadow = true; deckLight.shadow.mapSize.set(1024, 1024); R.scene.add(deckLight, deckLight.target);
-  buildAlley();
+  R.r.shadowMap.enabled = true; R.r.shadowMap.type = THREE.PCFSoftShadowMap; R.r.outputEncoding = THREE.sRGBEncoding;
+  TOON = new THREE.DataTexture(new Uint8Array([95, 175, 245]), 3, 1, THREE.LuminanceFormat); TOON.minFilter = TOON.magFilter = THREE.NearestFilter; TOON.needsUpdate = true;
+  OUT = new THREE.MeshBasicMaterial({ color: '#1a1040', side: THREE.BackSide });
+  R.scene = new THREE.Scene(); R.scene.background = new THREE.Color('#1c1446'); R.scene.fog = new THREE.Fog('#1c1446', 26, 48);
+  R.cam = new THREE.PerspectiveCamera(46, 1, 0.04, 120); R.pipCam = new THREE.PerspectiveCamera(30, 1.6, 0.04, 40);
+  R.scene.add(new THREE.HemisphereLight('#d0dcff', '#4a3a7a', 0.42));
+  const key = new THREE.DirectionalLight('#fff0dc', 0.62); key.position.set(3, 9, -2); key.target.position.set(0, 0, 9); key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -4, right: 4, top: 14, bottom: -14, near: 1, far: 40 }); key.shadow.bias = -0.0008; R.scene.add(key, key.target);
+  const deck = new THREE.SpotLight('#fff8ec', 0.9, 10, 0.6, 0.6); deck.position.set(0, 2.8, HEAD_Z - 1.6); deck.target.position.set(0, 0, HEAD_Z + 0.4); deck.castShadow = true; deck.shadow.mapSize.set(1024, 1024); R.scene.add(deck, deck.target);
+  const rimL = new THREE.PointLight('#ff5aa8', 0.45, 7); rimL.position.set(-2.4, 1.5, HEAD_Z - 1); const rimR = new THREE.PointLight('#3ee6c8', 0.45, 7); rimR.position.set(2.4, 1.5, HEAD_Z - 1); R.scene.add(rimL, rimR);
+  buildArena();
   R.pinGroup = new THREE.Group(); R.scene.add(R.pinGroup);
-  R.ballMesh = new THREE.Group(); R.scene.add(R.ballMesh);
+  R.ballG = new THREE.Group(); R.scene.add(R.ballG);
   R.aim = buildAim(); R.scene.add(R.aim);
-  R.fx = []; R.fxGeo = new THREE.SphereGeometry(1, 6, 5);
-  R.camPos = new THREE.Vector3(0, 1.3, -2.6); R.camLook = new THREE.Vector3(0, 0.2, 14);
-  R.shake = 0;
+  R.fxGeo = new THREE.IcosahedronGeometry(1, 0);
+  R.camPos = new THREE.Vector3(0, 0.7, HEAD_Z - 4); R.camLook = new THREE.Vector3(0, 0.1, HEAD_Z);
   addEventListener('resize', resize); resize();
 }
-function woodTex(light) {
-  return canvasTex(256, 1024, (g, w, h) => {
-    const n = 14; for (let i = 0; i < n; i++) { const x = i * w / n; const base = light ? [236, 196, 140] : [214, 160, 100]; const k = (i % 3) * 8 + Math.random() * 10;
-      g.fillStyle = `rgb(${base[0] - k},${base[1] - k},${base[2] - k})`; g.fillRect(x, 0, w / n + 1, h);
-      for (let y = 0; y < h; y += 4) { g.fillStyle = `rgba(120,70,30,${Math.random() * 0.06})`; g.fillRect(x, y, w / n, 2); } g.fillStyle = 'rgba(90,50,20,.25)'; g.fillRect(x, 0, 1, h); }
-  });
+/* ---------------- 볼링장 (몸속 경기장) ---------------- */
+function buildArena() {
+  const s = R.scene, L = DECK_END + 0.3, LEN = L + 4.5, MZ = (L - 4.5) / 2;
+  const woodT = cTex(256, 1024, (g, w, h) => { const n = 12; for (let i = 0; i < n; i++) { const x = i * w / n, k = (i % 2) * 14 + (i % 3) * 6; g.fillStyle = `rgb(${250 - k},${196 - k},${120 - k})`; g.fillRect(x, 0, w / n + 1, h);
+      for (let y = 0; y < h; y += 3) { g.fillStyle = `rgba(160,90,30,${Math.random() * 0.07})`; g.fillRect(x + 2, y, w / n - 4, 2); } g.fillStyle = 'rgba(120,60,20,.35)'; g.fillRect(x, 0, 2, h); }
+    const gl = g.createLinearGradient(0, 0, w, 0); gl.addColorStop(0, 'rgba(255,255,255,0)'); gl.addColorStop(0.5, 'rgba(255,255,255,.22)'); gl.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gl; g.fillRect(w * 0.3, 0, w * 0.4, h); }, [1, 6]);
+  const lane = new THREE.Mesh(new THREE.PlaneGeometry(LANE_W, LEN), toon('#ffffff', { map: woodT })); lane.rotation.x = -Math.PI / 2; lane.position.set(0, 0, MZ); lane.receiveShadow = true; s.add(lane);
+  const mm = new THREE.MeshBasicMaterial({ color: '#d84a2a' });
+  for (let i = -3; i <= 3; i++) { const tri = new THREE.Mesh(new THREE.CircleGeometry(0.04, 3), mm); tri.rotation.x = -Math.PI / 2; tri.rotation.z = Math.PI / 2; tri.position.set(i * 0.13, 0.002, 4.6 + Math.abs(i) * 0.3); s.add(tri);
+    const dot = new THREE.Mesh(new THREE.CircleGeometry(0.013, 10), mm); dot.rotation.x = -Math.PI / 2; dot.position.set(i * 0.13, 0.002, 2.2); s.add(dot); }
+  const foul = new THREE.Mesh(new THREE.PlaneGeometry(LANE_W + GUT * 2, 0.025), new THREE.MeshBasicMaterial({ color: '#ff3b4a' })); foul.rotation.x = -Math.PI / 2; foul.position.set(0, 0.003, 0); s.add(foul);
+  for (const [x, z] of PIN_POS) { const d = new THREE.Mesh(new THREE.CircleGeometry(0.032, 14), new THREE.MeshBasicMaterial({ color: '#c88a4a' })); d.rotation.x = -Math.PI / 2; d.position.set(x, 0.002, z); s.add(d); }
+  const gutM = toon('#5a5aa0', { side: THREE.DoubleSide }), divM = toon('#2e2870');
+  const laneSet = (off, kk) => {
+    for (const sx of [-1, 1]) {
+      const gut = new THREE.Mesh(new THREE.CylinderGeometry(GUT / 2, GUT / 2, LEN, 14, 1, true, Math.PI / 2, Math.PI), gutM); gut.rotation.x = Math.PI / 2; gut.position.set(off + sx * (HALF + GUT / 2), 0, MZ); gut.receiveShadow = true; s.add(gut);
+      const div = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.14, LEN), divM); div.position.set(off + sx * (HALF + GUT + 0.09), 0.07, MZ); div.receiveShadow = true; s.add(div);
+      const neon = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.025, LEN), new THREE.MeshBasicMaterial({ color: (kk + (sx > 0 ? 1 : 0)) % 2 ? '#3ee6c8' : '#ff5aa8' })); neon.position.set(off + sx * (HALF + GUT + 0.09), 0.145, MZ); s.add(neon);
+    } };
+  laneSet(0, 0);
+  const apT = cTex(256, 256, (g, w, h) => { for (let i = 0; i < 8; i++) { const k = (i % 2) * 10; g.fillStyle = `rgb(${200 - k},${130 - k},${80 - k})`; g.fillRect(i * w / 8, 0, w / 8 + 1, h); g.fillStyle = 'rgba(80,40,10,.4)'; g.fillRect(i * w / 8, 0, 2, h); } }, [2, 1]);
+  const ap = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 6), toon('#fff', { map: apT })); ap.rotation.x = -Math.PI / 2; ap.position.set(0, -0.001, -3); ap.receiveShadow = true; s.add(ap);
+  const carT = cTex(512, 512, (g, w, h) => { g.fillStyle = '#2a1f68'; g.fillRect(0, 0, w, h); const cols = ['#ff5aa8', '#3ee6c8', '#ffd23a', '#8a7aff']; const r0 = mulberry32(3);
+    for (let i = 0; i < 60; i++) { const x = r0() * w, y = r0() * h, r = 8 + r0() * 22; g.strokeStyle = cols[i % 4]; g.lineWidth = 4; g.globalAlpha = 0.55; g.beginPath(); g.arc(x, y, r, 0, 7); g.stroke(); g.globalAlpha = 0.35; g.fillStyle = cols[(i + 1) % 4]; g.beginPath(); g.arc(x + r * 0.2, y - r * 0.1, r * 0.35, 0, 7); g.fill(); } g.globalAlpha = 1; }, [6, 10]);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(24, 46), toon('#fff', { map: carT })); floor.rotation.x = -Math.PI / 2; floor.position.set(0, -0.03, 10); floor.receiveShadow = true; s.add(floor);
+  // 옆 레인들 (핀이 서 있는 다른 경기장)
+  const pinProto = pinMesh('cold', true), LS = LANE_W + GUT * 2 + 0.36;
+  for (const sx of [-1, 1]) for (let k = 1; k <= 2; k++) { const off = sx * k * LS;
+    const l2 = lane.clone(); l2.position.x = off; s.add(l2); laneSet(off, k);
+    PIN_POS.forEach(([x, z]) => { const p = pinProto.clone(); p.position.set(off + x, 0, z); p.rotation.y = Math.PI; s.add(p); }); }
+  // 핀 기계 (세포막 아치) + 전광판
+  const hood = new THREE.Mesh(new THREE.BoxGeometry(9, 1.1, 1.2), toon('#3a2a9a')); hood.position.set(0, 1.2, DECK_END + 0.4); s.add(hood);
+  for (let k = -2; k <= 2; k++) { const ax = k * LS, arch = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.08, 10, 30, Math.PI), toon(k === 0 ? '#ff5aa8' : '#5a4ad8')); arch.position.set(ax, 0.62, DECK_END - 0.1); s.add(arch);
+    for (let b = 0; b < 9; b++) { const a = b / 8 * Math.PI, bl = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), new THREE.MeshBasicMaterial({ color: b % 2 ? '#ffd23a' : '#ffffff' })); bl.position.set(ax + Math.cos(a) * 0.72, 0.62 + Math.sin(a) * 0.72, DECK_END - 0.18); s.add(bl); } }
+  const pit = new THREE.Mesh(new THREE.BoxGeometry(9, 0.35, 1.3), new THREE.MeshBasicMaterial({ color: '#0a0620' })); pit.position.set(0, -0.17, DECK_END + 0.7); s.add(pit);
+  const backC = document.createElement('canvas'); backC.width = 1024; backC.height = 256; R.screenC = backC; R.screenT = new THREE.CanvasTexture(backC); R.screenT.encoding = THREE.sRGBEncoding;
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.8), new THREE.MeshBasicMaterial({ map: R.screenT })); scr.position.set(0, 2.25, DECK_END + 0.15); scr.rotation.y = Math.PI; s.add(scr);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.98, 0.1), toon('#1a1040')); frame.position.set(0, 2.25, DECK_END + 0.22); s.add(frame);
+  setScreen('BIO BOWL', '#3ee6c8');
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(26, 7), toon('#24185e')); wall.position.set(0, 2.5, DECK_END + 1.4); wall.rotation.y = Math.PI; s.add(wall);
+  const decoCols = ['#ff5aa8', '#3ee6c8', '#ffd23a', '#8a7aff'];
+  for (let i = 0; i < 7; i++) { const x = -10 + i * 3.3; if (Math.abs(x) < 2.2) continue; const y = 2.6 + (i % 2) * 0.8;
+    const c = new THREE.Mesh(new THREE.SphereGeometry(0.55 + (i % 3) * 0.15, 20, 14), toon(decoCols[i % 4])); c.scale.z = 0.4; c.position.set(x, y, DECK_END + 1.3); s.add(outline(c, 1.05));
+    const nuc = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 10), toon(decoCols[(i + 2) % 4])); nuc.position.set(x + 0.1, y + 0.05, DECK_END + 1.05); nuc.scale.z = 0.5; s.add(nuc); }
+  // 옆 벽: 거대한 혈관 튜브 + 흘러가는 적혈구
+  R.rbcs = [];
+  for (const sx of [-1, 1]) {
+    const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 46, 20, 1, true), new THREE.MeshToonMaterial({ color: '#ff6a88', gradientMap: TOON, transparent: true, opacity: 0.38, side: THREE.DoubleSide, depthWrite: false }));
+    tube.rotation.x = Math.PI / 2; tube.position.set(sx * 6.4, 3.0, 10); s.add(tube);
+    const rbcG = new THREE.TorusGeometry(0.16, 0.08, 8, 18), rbcM = toon('#e8304a');
+    for (let k = 0; k < 14; k++) { const r = new THREE.Mesh(rbcG, rbcM); r.position.set(sx * 6.4 + (Math.random() - 0.5) * 0.4, 3.0 + (Math.random() - 0.5) * 0.4, -12 + k * 3.3); r.rotation.set(Math.random() * 3, Math.random() * 3, 0); s.add(r); R.rbcs.push(r); }
+  }
+  // 관중석 (세포 친구들)
+  const crowdN = 96;
+  R.crowd = new THREE.InstancedMesh(new THREE.SphereGeometry(0.22, 14, 10), toon('#ffffff'), crowdN); R.crowdEye = new THREE.InstancedMesh(new THREE.SphereGeometry(0.055, 8, 6), new THREE.MeshBasicMaterial({ color: '#ffffff' }), crowdN * 2);
+  R.crowdPup = new THREE.InstancedMesh(new THREE.SphereGeometry(0.03, 6, 5), new THREE.MeshBasicMaterial({ color: '#1a1040' }), crowdN * 2);
+  R.crowdData = []; const ccols = ['#ff7ac0', '#5cc8ff', '#ffd23a', '#7ee07a', '#b07aff', '#ff8a5a', '#3ee6c8'];
+  for (let i = 0; i < crowdN; i++) { const side = i % 2 ? 1 : -1, row = Math.floor(i / 2) % 3, col = Math.floor(i / 6);
+    R.crowdData.push({ x: side * (4.4 + row * 0.6), y: 0.4 + row * 0.45, z: 3 + col * 1.0 + (row % 2) * 0.4, side, ph: Math.random() * 6 }); R.crowd.setColorAt(i, new THREE.Color(ccols[i % ccols.length])); }
+  R.crowd.instanceColor.needsUpdate = true; s.add(R.crowd, R.crowdEye, R.crowdPup);
+  for (const sx of [-1, 1]) for (let row = 0; row < 3; row++) { const hgt = 0.18 + row * 0.45, st = new THREE.Mesh(new THREE.BoxGeometry(0.6, hgt, 18), toon('#3a2e88')); st.position.set(sx * (4.4 + row * 0.6), hgt / 2, 11.5); st.receiveShadow = true; s.add(st); }
+  // 천장 조명 링 · 떠다니는 거품
+  for (let z = 1, k = 0; z < 20; z += 3.2, k++) { const ring = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.05, 6, 40), new THREE.MeshBasicMaterial({ color: k % 2 ? '#3ee6c8' : '#ff5aa8' })); ring.rotation.x = Math.PI / 2; ring.position.set(0, 3.6, z); s.add(ring); }
+  R.bubbles = []; const bm = new THREE.MeshBasicMaterial({ color: '#c8f0ff', transparent: true, opacity: 0.25 });
+  for (let i = 0; i < 40; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.04 + Math.random() * 0.08, 8, 6), bm); b.position.set((Math.random() - 0.5) * 12, Math.random() * 4, Math.random() * 22); s.add(b); R.bubbles.push(b); }
 }
-function buildAlley() {
-  const s = R.scene, L = DECK_END + 0.3;
-  // 레인 (나무)
-  const lt = woodTex(true); lt.wrapS = lt.wrapT = THREE.RepeatWrapping; lt.repeat.set(1, 6);
-  const lane = new THREE.Mesh(new THREE.PlaneGeometry(LANE_W, L + 4.5), new THREE.MeshStandardMaterial({ map: lt, roughness: 0.35, metalness: 0.05 }));
-  lane.rotation.x = -Math.PI / 2; lane.position.set(0, 0, (L - 4.5) / 2); lane.receiveShadow = true; s.add(lane);
-  // 화살표·점·파울선
-  const marks = new THREE.Group(); s.add(marks);
-  const m = new THREE.MeshBasicMaterial({ color: '#b8452a' });
-  for (let i = -3; i <= 3; i++) { const tri = new THREE.Mesh(new THREE.CircleGeometry(0.035, 3), m); tri.rotation.x = -Math.PI / 2; tri.rotation.z = Math.PI / 2; tri.position.set(i * 0.13, 0.002, 4.6 + Math.abs(i) * 0.3); marks.add(tri);
-    const dot = new THREE.Mesh(new THREE.CircleGeometry(0.012, 10), m); dot.rotation.x = -Math.PI / 2; dot.position.set(i * 0.13, 0.002, 2.2); marks.add(dot); }
-  const foul = new THREE.Mesh(new THREE.PlaneGeometry(LANE_W + GUT * 2 + 1, 0.02), new THREE.MeshBasicMaterial({ color: '#c82a3a' })); foul.rotation.x = -Math.PI / 2; foul.position.set(0, 0.003, 0); s.add(foul);
-  // 핀 놓이는 자리 표시
-  for (const [x, z] of PIN_POS) { const d = new THREE.Mesh(new THREE.CircleGeometry(0.03, 12), new THREE.MeshBasicMaterial({ color: '#c9925a' })); d.rotation.x = -Math.PI / 2; d.position.set(x, 0.002, z); s.add(d); }
-  // 거터
-  const gm = new THREE.MeshStandardMaterial({ color: '#5a6478', roughness: 0.5, metalness: 0.4, side: THREE.DoubleSide });
-  for (const sx of [-1, 1]) { const gut = new THREE.Mesh(new THREE.CylinderGeometry(GUT / 2, GUT / 2, L + 0.5, 12, 1, true, 0, Math.PI), gm); gut.rotation.x = Math.PI / 2; gut.rotation.y = 0; gut.rotation.z = Math.PI; gut.position.set(sx * (HALF + GUT / 2), 0.0, L / 2 - 0.2); gut.receiveShadow = true; s.add(gut);
-    // 칸막이 (분리대)
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, L + 0.4), new THREE.MeshStandardMaterial({ color: '#2a3550', roughness: 0.4, metalness: 0.3 })); cap.position.set(sx * (HALF + GUT + 0.08), 0.06, L / 2 - 0.2); cap.castShadow = cap.receiveShadow = true; s.add(cap);
-    const strip = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.02, L + 0.4), new THREE.MeshBasicMaterial({ color: '#36d1c4' })); strip.position.set(sx * (HALF + GUT + 0.08), 0.125, L / 2 - 0.2); s.add(strip); }
-  // 어프로치 (밝은 나무)
-  const at = woodTex(false); const ap = new THREE.Mesh(new THREE.PlaneGeometry(6, 5), new THREE.MeshStandardMaterial({ map: at, roughness: 0.5 })); ap.rotation.x = -Math.PI / 2; ap.position.set(0, -0.001, -2.5); ap.receiveShadow = true; s.add(ap);
-  // 옆 레인들 (분위기)
-  for (const sx of [-1, 1]) for (let k = 1; k <= 2; k++) { const off = sx * k * (LANE_W + GUT * 2 + 0.32);
-    const l2 = lane.clone(); l2.position.x = off; s.add(l2);
-    for (const g2 of [-1, 1]) { const c2 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, L + 0.4), new THREE.MeshStandardMaterial({ color: '#2a3550' })); c2.position.set(off + g2 * (HALF + GUT + 0.08), 0.06, L / 2 - 0.2); s.add(c2); }
-    for (const [x, z] of PIN_POS) { const p = new THREE.Mesh(pinGeo(), new THREE.MeshStandardMaterial({ color: '#f4f0e8', roughness: 0.35 })); p.position.set(off + x, 0, z); s.add(p); } }
-  // 핀 덱 · 피트 · 뒷벽
-  const pit = new THREE.Mesh(new THREE.BoxGeometry(LANE_W + GUT * 2 + 0.4, 0.3, 1.2), new THREE.MeshStandardMaterial({ color: '#0c1020' })); pit.position.set(0, -0.15, DECK_END + 0.65); s.add(pit);
-  const wallTex = canvasTex(1024, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#203a6a'); gr.addColorStop(1, '#101c3a'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
-    for (let i = 0; i < 40; i++) { g.fillStyle = `hsla(${170 + Math.random() * 60},80%,70%,.15)`; g.beginPath(); g.arc(Math.random() * w, Math.random() * h, 6 + Math.random() * 24, 0, 7); g.fill(); }
-    g.font = "bold 120px 'Black Han Sans', sans-serif"; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#36d1c4'; g.fillText('BIO BOWL', w / 2, h / 2 + 6); });
-  const wall = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.2), new THREE.MeshBasicMaterial({ map: wallTex })); wall.position.set(0, 1.6, DECK_END + 1.4); wall.rotation.y = Math.PI; s.add(wall);
-  const mask = new THREE.Mesh(new THREE.BoxGeometry(9, 0.5, 0.1), new THREE.MeshStandardMaterial({ color: '#1a2440' })); mask.position.set(0, 0.95, DECK_END + 0.9); s.add(mask);
-  // 바닥 · 천장 조명
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(14, 40), new THREE.MeshStandardMaterial({ color: '#2a2440', roughness: 0.9 })); floor.rotation.x = -Math.PI / 2; floor.position.set(0, -0.02, 10); s.add(floor);
-  for (let z = 2; z < 20; z += 4) { const lamp = new THREE.Mesh(new THREE.BoxGeometry(4, 0.05, 0.3), new THREE.MeshBasicMaterial({ color: '#cfe8ff' })); lamp.position.set(0, 3.4, z); s.add(lamp); }
+function setScreen(txt, col) {
+  const c = R.screenC; if (!c) return; const g = c.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, c.height); gr.addColorStop(0, '#120a3a'); gr.addColorStop(1, '#2a1a70'); g.fillStyle = gr; g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = 'rgba(255,255,255,.05)'; for (let x = 0; x < c.width; x += 8) for (let y = 0; y < c.height; y += 8) g.fillRect(x, y, 5, 5);
+  g.font = "150px 'Black Han Sans', sans-serif"; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 14; g.strokeStyle = '#000'; g.strokeText(txt, c.width / 2, c.height / 2 + 8); g.fillStyle = col; g.fillText(txt, c.width / 2, c.height / 2 + 8);
+  if (R.screenT) R.screenT.needsUpdate = true;
 }
+/* 굵은 3D 화살표 + 예상 경로 점선 */
 function buildAim() {
-  const g = new THREE.Group(), m = new THREE.MeshBasicMaterial({ color: '#ff6a2a', transparent: true, opacity: 0.85, depthWrite: false });
-  for (let i = 0; i < 9; i++) { const d = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.14), m); d.rotation.x = -Math.PI / 2; d.position.set(0, 0.006, 0.5 + i * 0.36); g.add(d); }
-  const head = new THREE.Mesh(new THREE.CircleGeometry(0.09, 3), m); head.rotation.x = -Math.PI / 2; head.rotation.z = -Math.PI / 2; head.position.set(0, 0.006, 3.9); g.add(head);
+  const g = new THREE.Group();
+  const shape = new THREE.Shape(); shape.moveTo(-0.05, 0); shape.lineTo(0.05, 0); shape.lineTo(0.05, 0.9); shape.lineTo(0.13, 0.9); shape.lineTo(0, 1.2); shape.lineTo(-0.13, 0.9); shape.lineTo(-0.05, 0.9); shape.closePath();
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.025, bevelEnabled: false });
+  const arrow = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: '#ffd23a' })); arrow.rotation.x = Math.PI / 2; arrow.position.set(0, 0.045, 0.42); arrow.scale.set(0.75, 1, 1);
+  const ao = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: '#1a1040' })); ao.scale.set(1.3, 1.07, 1); ao.position.set(0, -0.03, 0.012); arrow.add(ao);
+  g.add(arrow); R.arrow = arrow;
+  const dotG = new THREE.SphereGeometry(0.024, 8, 6); R.pathDots = [];
+  for (let i = 0; i < 28; i++) { const d = new THREE.Mesh(dotG, new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.9 })); d.visible = false; R.scene.add(d); R.pathDots.push(d); }
   return g;
 }
-let _pinGeo = null;
-function pinGeo() {
-  if (_pinGeo) return _pinGeo;
-  const prof = [[0.0, 0], [0.026, 0], [0.034, 0.02], [0.056, 0.07], [0.061, 0.12], [0.052, 0.18], [0.034, 0.235], [0.022, 0.26], [0.024, 0.29], [0.031, 0.32], [0.029, 0.355], [0.017, 0.375], [0.0, 0.38]];
-  _pinGeo = new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), 24); _pinGeo.computeVertexNormals(); return _pinGeo;
+function predictPath(show) {   // 핀 없이 공 길만 계산해서 점선으로 보여 줘요
+  if (!show) { R.pathDots.forEach(d => d.visible = false); return; }
+  const bd = BALLS[G.curBall], sp = powerSpeed(0.8) * (bd.speedMul || 1);
+  let x = G.pos, z = 0.1, vx = Math.sin(G.ang) * sp, vz = Math.cos(G.ang) * sp; const pts = [];
+  for (let t = 0; t < 5 && z < HEAD_Z + 0.2; t += 1 / 60) {
+    const hook = z > HEAD_Z * 0.5 ? 1 : 0.18; let ax = G.curve * 0.85 * hook;
+    if (bd.guide && z > 6) { const tx = G.curve >= 0 ? -0.07 : 0.07; ax += clamp((tx - x) * 1.1 - vx * 0.7, -0.7, 0.7); }
+    vx += ax / 60; vz -= 0.18 / 60; x += vx / 60; z += vz / 60; pts.push([x, z]); if (Math.abs(x) > HALF) break; }
+  const ph = (performance.now() / 600) % 1;
+  R.pathDots.forEach((d, i) => { const k = Math.floor(((i + ph) / R.pathDots.length) * (pts.length - 1)), p = pts[k]; d.visible = !!p; if (p) { d.position.set(p[0], 0.025, p[1]); d.material.color.set(Math.abs(p[0]) > HALF - 0.03 ? '#ff4d5e' : '#ffffff'); } });
 }
-// 병원체 핀 텍스처 (몸 색 + 얼굴 + 무늬)
-const PIN_TEX = {};
-function pinTex(type) {
-  if (PIN_TEX[type]) return PIN_TEX[type];
-  const d = PINS[type];
-  return PIN_TEX[type] = canvasTex(256, 256, (g, w, h) => {
-    g.fillStyle = '#f7f4ee'; g.fillRect(0, 0, w, h);
-    g.fillStyle = d.col; g.fillRect(0, h * 0.18, w, h * 0.5);          // 몸통 띠
-    g.fillStyle = 'rgba(0,0,0,.12)'; for (let i = 0; i < 30; i++) { g.beginPath(); g.arc(Math.random() * w, h * 0.2 + Math.random() * h * 0.46, 3 + Math.random() * 6, 0, 7); g.fill(); }
-    if (type === 'cold' || type === 'hiv' || type === 'capsid') { g.fillStyle = type === 'hiv' ? '#ffd23a' : '#ff5a6a'; for (let i = 0; i < 16; i++) { g.beginPath(); g.arc((i * 37) % w, h * (0.22 + (i % 3) * 0.17), 7, 0, 7); g.fill(); } }
-    if (type === 'tb') { g.strokeStyle = '#fff'; g.lineWidth = 6; for (let y = h * 0.22; y < h * 0.66; y += 18) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } }
-    if (type === 'ecoli') { g.strokeStyle = '#7a4a2a'; g.lineWidth = 4; for (let i = 0; i < 6; i++) { g.beginPath(); g.moveTo(i * 44, h * 0.66); for (let k = 0; k < 6; k++) g.lineTo(i * 44 + k * 6, h * 0.7 + (k % 2) * 8); g.stroke(); } }
-    // 얼굴 (앞쪽 = 텍스처 가운데 쪽 1/4 지점)
-    for (const cx of [w * 0.25 - 14, w * 0.25 + 14]) { g.fillStyle = '#fff'; g.beginPath(); g.ellipse(cx, h * 0.36, 9, 12, 0, 0, 7); g.fill(); g.fillStyle = '#1a1428'; g.beginPath(); g.ellipse(cx + 1, h * 0.37, 5, 7, 0, 0, 7); g.fill(); }
-    g.strokeStyle = '#1a1428'; g.lineWidth = 4; g.beginPath(); g.moveTo(w * 0.25 - 26, h * 0.27); g.lineTo(w * 0.25 - 6, h * 0.3); g.moveTo(w * 0.25 + 26, h * 0.27); g.lineTo(w * 0.25 + 6, h * 0.3); g.stroke();
-    g.beginPath(); g.arc(w * 0.25, h * 0.5, 9, 0.15 * Math.PI, 0.85 * Math.PI, true); g.stroke();
-    g.fillStyle = '#c8202f'; g.fillRect(0, h * 0.74, w, 8); g.fillRect(0, h * 0.78 + 4, w, 8);   // 목 줄무늬
-  });
+/* ---------------- 병원체 핀 캐릭터 ---------------- */
+const GEO = {};
+function pinProfile(type) {
+  if (type === 'tb') return [[0, 0], [0.034, 0], [0.046, 0.03], [0.05, 0.12], [0.048, 0.2], [0.04, 0.26], [0.034, 0.3], [0.036, 0.34], [0.026, 0.37], [0, 0.38]];
+  if (type === 'ecoli') return [[0, 0], [0.03, 0], [0.05, 0.03], [0.06, 0.1], [0.06, 0.2], [0.052, 0.27], [0.044, 0.31], [0.04, 0.35], [0.024, 0.375], [0, 0.38]];
+  const base = [[0.0, 0], [0.028, 0], [0.036, 0.02], [0.058, 0.07], [0.063, 0.12], [0.055, 0.18], [0.036, 0.235], [0.024, 0.26], [0.026, 0.29], [0.034, 0.32], [0.031, 0.355], [0.018, 0.375], [0.0, 0.38]];
+  if (type === 'spore') return base.map(([r, y]) => [r * (y > 0.24 ? 1.15 : 1.03), y]);
+  return base;
 }
-function buildPinMeshes() {
+const profR = (type, y) => { const pr = pinProfile(type); for (let i = 1; i < pr.length; i++) if (pr[i][1] >= y) { const [r0, y0] = pr[i - 1], [r1, y1] = pr[i]; return r0 + (r1 - r0) * ((y - y0) / ((y1 - y0) || 1)); } return 0; };
+function pinGeo(type) { if (GEO['pin' + type]) return GEO['pin' + type]; const g = new THREE.LatheGeometry(pinProfile(type).map(([r, y]) => new THREE.Vector2(r, y)), 22); g.computeVertexNormals(); return GEO['pin' + type] = g; }
+function eye(r, look = 0) { const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), new THREE.MeshBasicMaterial({ color: '#ffffff' })));
+  const p = new THREE.Mesh(new THREE.SphereGeometry(r * 0.58, 10, 8), new THREE.MeshBasicMaterial({ color: '#1a1040' })); p.position.set(look * r * 0.2, -r * 0.05, r * 0.55); g.add(p);
+  const h = new THREE.Mesh(new THREE.SphereGeometry(r * 0.2, 6, 5), new THREE.MeshBasicMaterial({ color: '#ffffff' })); h.position.set(-r * 0.2, r * 0.25, r * 0.95); g.add(h); return g; }
+function brow(w, rot) { const b = new THREE.Mesh(new THREE.BoxGeometry(w, w * 0.3, w * 0.25), new THREE.MeshBasicMaterial({ color: '#1a1040' })); b.rotation.z = rot; return b; }
+function mouth(r, kind) {
+  if (kind === 'o') { const m = new THREE.Mesh(new THREE.SphereGeometry(r * 0.5, 10, 8), new THREE.MeshBasicMaterial({ color: '#5a0a24' })); m.scale.z = 0.4; return m; }
+  const m = new THREE.Mesh(new THREE.TorusGeometry(r, r * 0.28, 6, 14, kind === 'smirk' ? Math.PI * 0.7 : Math.PI), new THREE.MeshBasicMaterial({ color: '#1a1040' })); m.rotation.z = Math.PI + (kind === 'smirk' ? 0.4 : 0); return m;
+}
+function pinMesh(type, simple) {
+  const d = PINS[type], grp = new THREE.Group(), body = new THREE.Group(); grp.add(body);
+  const pm = new THREE.Mesh(pinGeo(type), toon(d.col)); pm.castShadow = true; body.add(outline(pm, 1.07));
+  for (const y of [0.262, 0.282]) { const st = new THREE.Mesh(new THREE.TorusGeometry(profR(type, y) + 0.002, 0.006, 6, 18), toon('#ff3b4a')); st.rotation.x = Math.PI / 2; st.position.y = y; body.add(st); }
+  if (simple) return grp;
+  const fy = 0.15, fz = profR(type, fy) - 0.004, look = type === 'ecoli' ? 1 : 0;
+  for (const sx of [-1, 1]) { const e = eye(type === 'hiv' ? 0.017 : 0.015, look); e.position.set(sx * 0.021, fy + 0.012, fz); body.add(e);
+    if (type !== 'spore') { const b = brow(0.022, sx * (type === 'tb' ? 0.0 : -0.45)); b.position.set(sx * 0.021, fy + 0.038, fz + 0.002); body.add(b); } }
+  const mo = mouth(0.012, type === 'spore' ? 'o' : type === 'cold' ? 'smirk' : 'grin'); mo.position.set(0, fy - 0.025, profR(type, fy - 0.025) - 0.001); body.add(mo);
+  if (type === 'cold') for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2, st = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.03, 5), toon('#ffffff')); st.position.set(Math.cos(a) * 0.04, 0.335, Math.sin(a) * 0.04); st.rotation.z = -Math.cos(a) * 0.9; st.rotation.x = Math.sin(a) * 0.9; body.add(st);
+      const k = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 6), toon(d.col2)); k.position.set(Math.cos(a) * 0.053, 0.347, Math.sin(a) * 0.053); body.add(k); }
+  if (type === 'hiv') for (let i = 0; i < 18; i++) { const a = i * 2.4, y = 0.05 + (i % 9) * 0.035; if (Math.sin(a) > 0.45 && y > 0.09 && y < 0.2) continue; const r = profR(type, y) + 0.003;
+      const k = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 6), toon(d.col2)); k.position.set(Math.cos(a) * r, y, Math.sin(a) * r); body.add(k); }
+  if (type === 'tb') for (let i = 0; i < 5; i++) { const y = 0.04 + i * 0.045; if (y > 0.11 && y < 0.19) continue; const w = new THREE.Mesh(new THREE.TorusGeometry(profR(type, y) + 0.003, 0.007, 6, 18), toon(d.col2)); w.rotation.x = Math.PI / 2; w.position.y = y; body.add(w); }
+  if (type === 'capsid') { const h = new THREE.Mesh(new THREE.IcosahedronGeometry(0.062, 0), toon(d.col2, { flatShading: true })); h.position.y = 0.318; h.scale.set(1, 0.9, 1); h.castShadow = true; outline(h, 1.08); body.add(h); grp.userData.shell = h;
+    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.014, 0.02), toon('#5a6aa0')); visor.position.set(0, -0.03, 0.05); h.add(visor); }
+  if (type === 'spore') for (let i = 0; i < 26; i++) { const a = i * 2.39996, y = 0.03 + (i / 26) * 0.33; if (Math.sin(a) > 0.5 && y > 0.09 && y < 0.2) continue; const r = profR(type, y); const k = new THREE.Mesh(new THREE.SphereGeometry(0.009 + (i % 3) * 0.003, 6, 5), toon(d.col2)); k.position.set(Math.cos(a) * r, y, Math.sin(a) * r); body.add(k); }
+  if (type === 'ecoli') { const pts = []; for (let i = 0; i <= 12; i++) pts.push(new THREE.Vector3(Math.sin(i * 0.9) * 0.025, 0.05 + i * 0.006, -0.058 - i * 0.012));
+    const fl = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.005, 5), toon(d.col2)); body.add(fl); grp.userData.flag = fl;
+    for (let i = 0; i < 12; i++) { const a = Math.PI + (i / 12 - 0.5) * 3.6, y = 0.06 + (i % 6) * 0.04, rr = profR(type, y), hair = new THREE.Mesh(new THREE.CylinderGeometry(0.002, 0.002, 0.022, 4), toon(d.col2)); hair.position.set(Math.cos(a) * (rr + 0.009), y, Math.sin(a) * (rr + 0.009)); hair.rotation.z = Math.PI / 2; hair.rotation.y = -a; body.add(hair); } }
+  return grp;
+}
+function buildPins() {
   while (R.pinGroup.children.length) R.pinGroup.remove(R.pinGroup.children[0]);
-  for (const p of G.pins) {
-    const grp = new THREE.Group();
-    const body = new THREE.Mesh(pinGeo(), new THREE.MeshStandardMaterial({ map: pinTex(p.type), roughness: 0.3, metalness: 0.0, emissive: new THREE.Color('#ffffff'), emissiveIntensity: 0.06 }));
-    body.castShadow = true; body.rotation.y = Math.PI * 1.5; grp.add(body);
-    const out = new THREE.Mesh(pinGeo(), new THREE.MeshBasicMaterial({ color: '#10142a', side: THREE.BackSide })); out.scale.set(1.09, 1.025, 1.09); out.position.y = -0.004; grp.add(out);
-    if (p.armor) { const sh = new THREE.Mesh(new THREE.IcosahedronGeometry(0.075, 0), new THREE.MeshStandardMaterial({ color: '#c8d0e4', roughness: 0.3, metalness: 0.4, flatShading: true, transparent: true, opacity: 0.82 })); sh.position.y = 0.13; sh.scale.y = 1.25; grp.add(sh); p.shellMesh = sh; }
-    if (p.type === 'spore') for (let i = 0; i < 8; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 5), new THREE.MeshStandardMaterial({ color: '#c8ff9a' })); const a = i / 8 * Math.PI * 2; b.position.set(Math.cos(a) * 0.058, 0.1 + (i % 2) * 0.05, Math.sin(a) * 0.058); grp.add(b); }
-    if (p.opson) grp.add(opsonRing());
-    grp.userData.p = p; p.mesh = grp; R.pinGroup.add(grp);
-    if (p.gone) grp.visible = false;
-  }
+  for (const p of G.pins) { const m = pinMesh(p.type); p.mesh = m; R.pinGroup.add(m);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.009, 6, 22), new THREE.MeshBasicMaterial({ color: '#ffd84a' })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.02; ring.visible = false; m.add(ring); p.ring = ring; }
   syncPins();
 }
-function opsonRing() { const r = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.008, 6, 20), new THREE.MeshBasicMaterial({ color: '#ffd84a' })); r.rotation.x = Math.PI / 2; r.position.y = 0.02; r.name = 'ops'; return r; }
-// 면역세포 공 텍스처
-const BALL_TEX = {};
-function ballTex(k) {
-  if (BALL_TEX[k]) return BALL_TEX[k];
-  const d = BALLS[k];
-  return BALL_TEX[k] = canvasTex(512, 256, (g, w, h) => {
-    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, shade(d.col, 0.25)); gr.addColorStop(1, shade(d.col, -0.2)); g.fillStyle = gr; g.fillRect(0, 0, w, h);
-    g.fillStyle = 'rgba(255,255,255,.12)'; for (let i = 0; i < 40; i++) { g.beginPath(); g.arc(Math.random() * w, Math.random() * h, 3 + Math.random() * 8, 0, 7); g.fill(); }
-    g.fillStyle = d.col2; for (let i = 0; i < 3; i++) { g.beginPath(); g.ellipse(w * 0.62 + i * 26, h * 0.5 + (i % 2 ? 18 : -14), 22, 16, i, 0, 7); g.fill(); }  // 핵
-    if (k === 'bcell') { g.strokeStyle = '#ffd84a'; g.lineWidth = 6; for (let i = 0; i < 6; i++) { const x = 40 + i * 80, y = i % 2 ? 50 : 200; g.beginPath(); g.moveTo(x, y + 20); g.lineTo(x, y); g.lineTo(x - 12, y - 14); g.moveTo(x, y); g.lineTo(x + 12, y - 14); g.stroke(); } }
-    if (k === 'nk') { g.fillStyle = '#ffe14a'; for (let i = 0; i < 5; i++) { const x = 30 + i * 100; g.beginPath(); g.moveTo(x, 40); g.lineTo(x + 20, 40); g.lineTo(x + 8, 70); g.lineTo(x + 24, 70); g.lineTo(x - 4, 110); g.lineTo(x + 6, 78); g.lineTo(x - 8, 78); g.fill(); } }
-    if (k === 'killer') { g.fillStyle = '#ff3b4a'; g.fillRect(0, h * 0.18, w, 16); }
-    // 얼굴 (공 앞면)
-    const fx = w * 0.25; for (const cx of [fx - 22, fx + 22]) { g.fillStyle = '#fff'; g.beginPath(); g.ellipse(cx, h * 0.45, 14, 18, 0, 0, 7); g.fill(); g.fillStyle = '#1a1428'; g.beginPath(); g.ellipse(cx + 2, h * 0.47, 8, 11, 0, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(cx - 2, h * 0.42, 3, 0, 7); g.fill(); }
-    g.strokeStyle = '#1a1428'; g.lineWidth = 5; g.beginPath(); g.arc(fx, h * 0.6, 14, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
-    g.fillStyle = 'rgba(255,110,140,.5)'; g.beginPath(); g.ellipse(fx - 40, h * 0.58, 10, 6, 0, 0, 7); g.ellipse(fx + 40, h * 0.58, 10, 6, 0, 0, 7); g.fill();
-  });
+/* ---------------- 면역세포 공 캐릭터 ---------------- */
+function ballMesh(k) {
+  const d = BALLS[k], r = d.r, grp = new THREE.Group(), body = new THREE.Group(); grp.add(body);
+  const sph = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 22), toon(d.col)); sph.castShadow = true; body.add(outline(sph, 1.05));
+  const hl = new THREE.Mesh(new THREE.SphereGeometry(r * 0.22, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.75 })); hl.position.set(-r * 0.45, r * 0.55, r * 0.55); hl.scale.set(1, 0.6, 0.4); body.add(hl);
+  for (let i = 0; i < 3; i++) { const n = new THREE.Mesh(new THREE.SphereGeometry(r * 0.32, 10, 8), toon(d.col2)); const a = 2.6 + i * 0.5; n.position.set(Math.sin(a) * r * 0.82, (i - 1) * r * 0.35, Math.cos(a) * r * 0.82); n.scale.set(1, 1, 0.45); n.lookAt(0, 0, 0); body.add(n); }
+  const mood = { neutro: 'grin', macro: 'grin', nk: 'smirk', comp: 'grin', killer: 'smirk', bcell: 'grin', dend: 'grin', mast: 'o' }[k];
+  for (const sx of [-1, 1]) { const e = eye(r * 0.2); e.position.set(sx * r * 0.32, r * 0.18, r * 0.82); body.add(e);
+    if (k !== 'mast' && k !== 'bcell' && k !== 'dend') { const b = brow(r * 0.32, sx * (k === 'nk' || k === 'killer' || k === 'comp' ? 0.5 : -0.25)); b.position.set(sx * r * 0.32, r * 0.48, r * 0.8); body.add(b); }
+    if (k === 'mast') { const lid = new THREE.Mesh(new THREE.SphereGeometry(r * 0.215, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), toon(d.col)); lid.position.copy(e.position); lid.rotation.x = -0.25; body.add(lid); }
+    const ck = new THREE.Mesh(new THREE.SphereGeometry(r * 0.1, 8, 6), new THREE.MeshBasicMaterial({ color: '#ff6a9a', transparent: true, opacity: 0.6 })); ck.position.set(sx * r * 0.52, -r * 0.08, r * 0.78); ck.scale.z = 0.3; body.add(ck); }
+  const mo = mouth(r * 0.2, mood); mo.position.set(0, -r * 0.2, r * 0.95); body.add(mo);
+  if (k === 'killer') { const band = new THREE.Mesh(new THREE.TorusGeometry(r * 0.92, r * 0.1, 8, 30), toon('#ff3b4a')); band.rotation.x = Math.PI / 2 - 0.25; band.position.y = r * 0.38; body.add(band);
+    const knot = new THREE.Mesh(new THREE.BoxGeometry(r * 0.3, r * 0.5, r * 0.08), toon('#ff3b4a')); knot.position.set(0, r * 0.3, -r * 0.98); knot.rotation.z = 0.6; body.add(knot); }
+  if (k === 'nk') for (const sx of [-1, 1]) { const sh = new THREE.Shape(); sh.moveTo(0, 0.5); sh.lineTo(0.25, 0.5); sh.lineTo(0.08, 0.1); sh.lineTo(0.3, 0.1); sh.lineTo(-0.15, -0.6); sh.lineTo(0, -0.1); sh.lineTo(-0.2, -0.1); sh.closePath();
+      const bolt = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.08, bevelEnabled: false }), toon(d.col2)); bolt.scale.setScalar(r * 0.7); bolt.position.set(sx * r * 0.98, 0, 0); bolt.rotation.y = sx * Math.PI / 2; body.add(outline(bolt, 1.12)); }
+  if (k === 'bcell') for (const sx of [-1, 1]) { const g = new THREE.Group(); const stem = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.07, r * 0.07, r * 0.6, 6), toon(d.col2)); stem.position.y = r * 0.3; g.add(stem);
+      for (const s2 of [-1, 1]) { const arm = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.06, r * 0.06, r * 0.42, 6), toon(d.col2)); arm.position.set(s2 * r * 0.13, r * 0.72, 0); arm.rotation.z = -s2 * 0.6; g.add(arm); }
+      g.position.set(sx * r * 0.45, r * 0.78, 0); g.rotation.z = -sx * 0.35; body.add(g); }
+  if (k === 'dend') for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, c = new THREE.Mesh(new THREE.ConeGeometry(r * 0.13, r * 0.55, 6), toon(i % 2 ? d.col2 : '#c8ff9a')); const dir = new THREE.Vector3(Math.cos(a), 0.35 + (i % 3) * 0.25, Math.sin(a)).normalize(); if (dir.z > 0.6) continue; c.position.copy(dir.clone().multiplyScalar(r * 1.05)); c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); body.add(c); }
+  if (k === 'macro') for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2 + 0.4, bl = new THREE.Mesh(new THREE.SphereGeometry(r * 0.3, 12, 8), toon(d.col)); bl.position.set(Math.cos(a) * r * 0.85, -r * 0.1 + (i % 2) * r * 0.25, Math.sin(a) * r * 0.85); if (bl.position.z > r * 0.5) continue; body.add(outline(bl, 1.06)); }
+  if (k === 'comp') { for (let i = 0; i < 3; i++) { const ring = new THREE.Mesh(new THREE.TorusGeometry(r * 1.0, r * 0.05, 6, 28), toon(d.col2)); ring.rotation.y = i * 1.05 + 0.5; body.add(ring); }
+    const fuse = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.08, r * 0.08, r * 0.4, 6), toon('#5a3a2a')); fuse.position.y = r * 1.1; body.add(fuse);
+    const spark = new THREE.Mesh(new THREE.IcosahedronGeometry(r * 0.18, 0), new THREE.MeshBasicMaterial({ color: '#fff27a' })); spark.position.y = r * 1.35; body.add(spark); grp.userData.spark = spark; }
+  if (k === 'mast') for (let i = 0; i < 16; i++) { const a = i * 2.4, y = Math.cos(i * 1.7) * 0.8, rr = Math.sqrt(1 - y * y), g = new THREE.Mesh(new THREE.SphereGeometry(r * 0.1, 6, 5), toon(d.col2)); g.position.set(Math.cos(a) * rr * r * 0.99, y * r * 0.99, Math.sin(a) * rr * r * 0.99); if (g.position.z > r * 0.5) continue; body.add(g); }
+  if (k === 'neutro') for (const sx of [-1, 1]) { const fin = new THREE.Mesh(new THREE.ConeGeometry(r * 0.22, r * 0.6, 4), toon('#ffffff')); fin.position.set(sx * r * 0.95, r * 0.1, -r * 0.2); fin.rotation.z = -sx * Math.PI / 2; fin.rotation.y = sx * 0.4; body.add(outline(fin, 1.1)); }
+  grp.userData.body = body; return grp;
 }
-function shade(hex, k) { const c = new THREE.Color(hex); if (k < 0) c.multiplyScalar(1 + k); else c.lerp(new THREE.Color('#fff'), k); return '#' + c.getHexString(); }
 function setBallMesh() {
-  while (R.ballMesh.children.length) R.ballMesh.remove(R.ballMesh.children[0]);
+  while (R.ballG.children.length) R.ballG.remove(R.ballG.children[0]);
+  const m = ballMesh(G.curBall); R.ballG.add(m); R.ball = m;
   const d = BALLS[G.curBall];
-  const sph = new THREE.Mesh(new THREE.SphereGeometry(d.r, 40, 28), new THREE.MeshStandardMaterial({ map: ballTex(G.curBall), roughness: 0.18, metalness: 0.05, emissive: new THREE.Color(d.col), emissiveIntensity: 0.12 }));
-  sph.castShadow = true; R.ballMesh.add(sph); R.ballSph = sph;
-  const ring = new THREE.Mesh(new THREE.RingGeometry(d.r * 1.15, d.r * 1.45, 32), new THREE.MeshBasicMaterial({ color: d.col, transparent: true, opacity: 0.55, depthWrite: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = -d.r + 0.004; R.ballMesh.add(ring); R.ballRing = ring;
-  R.ballQ = new THREE.Quaternion();
-  const ic = $('#ballIco'); ic.style.background = `radial-gradient(circle at 35% 30%, ${shade(d.col, 0.4)}, ${d.col} 55%, ${shade(d.col, -0.35)})`;
-  $('#ballName').textContent = d.name + ' 볼'; $('#ballDesc').textContent = d.desc;
+  const ring = new THREE.Mesh(new THREE.RingGeometry(d.r * 1.25, d.r * 1.6, 32), new THREE.MeshBasicMaterial({ color: d.col, transparent: true, opacity: 0.65, depthWrite: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = -d.r + 0.005; R.ballG.add(ring); R.ballRing = ring;
 }
 function syncPins() {
+  const now = performance.now();
   for (const p of G.pins) { const m = p.mesh; if (!m) continue;
-    m.visible = !p.gone || p.z < DECK_END + 0.6;
-    if (p.gone && Math.abs(p.x) > HALF + GUT + 0.2) m.visible = false;
-    let tilt = 0; if (p.down) tilt = Math.min(Math.PI / 2 * 0.98, p.fallT * 9); else if (p.wob > 0) tilt = Math.sin(performance.now() / 55) * p.wob * 0.12;
-    const yOff = p.down ? Math.sin(Math.min(1, p.fallT * 9 / (Math.PI / 2)) * Math.PI / 2) * PIN_R * 0.9 : 0;
-    m.position.set(p.x, p.gone && p.z > DECK_END ? -0.25 : yOff * 0, p.z);
-    const dir = p.down ? p.tdir : 0.6;
-    m.rotation.set(0, 0, 0); m.rotateY(dir); m.rotateX(tilt); m.rotateY(-dir + (p.down ? p.spin : 0) * 0);
-    if (p.down) { m.rotation.order = 'YXZ'; m.rotation.set(tilt, dir + p.spin, 0); m.position.y = PIN_R * 0.9 * Math.sin(tilt) * 0.95; }
-    if (p.shellMesh) p.shellMesh.visible = p.armor;
-    const ops = m.getObjectByName('ops'); if (p.opson && !ops && !p.down) m.add(opsonRing()); if (ops) ops.visible = !p.down;
+    m.visible = !(p.gone && (p.z > DECK_END + 0.5 || Math.abs(p.x) > HALF + GUT + 0.15));
+    m.rotation.order = 'YXZ';
+    if (p.down) { const tilt = Math.min(Math.PI / 2 * 0.98, p.fallT * 9); m.rotation.set(tilt, p.tdir + p.spin, 0); m.position.set(p.x, PIN_R * 0.8 * Math.sin(tilt), p.z); }
+    else { const tilt = p.wob > 0 ? Math.sin(now / 55) * p.wob * 0.12 : 0; m.rotation.set(tilt, Math.PI + Math.sin(now / 700 + p.i) * 0.15, 0); m.position.set(p.x, Math.abs(Math.sin(now / 320 + p.i * 1.3)) * 0.004, p.z); }
+    if (p.gone && p.z > DECK_END) m.position.y = -0.25;
+    if (m.userData.shell) m.userData.shell.visible = p.armor;
+    if (m.userData.flag) m.userData.flag.rotation.z = Math.sin(now / 150 + p.i) * 0.3;
+    if (p.ring) p.ring.visible = p.opson && !p.down;
   }
 }
+const _ax = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _e = new THREE.Euler();
 function syncBall(dt) {
-  const b = G.ball, d = BALLS[G.curBall];
-  const y = b.inGutter ? d.r - GUT * 0.35 : d.r;
-  R.ballMesh.position.set(b.x, y, b.z);
+  const b = G.ball, d = BALLS[G.curBall]; if (!R.ball) return;
+  R.ballG.position.set(b.x, b.inGutter ? d.r - GUT * 0.35 : d.r, b.z);
   const sp = Math.hypot(b.vx, b.vz);
-  if (sp > 0.01) { const axis = new THREE.Vector3(b.vz, 0, -b.vx).normalize(); const q = new THREE.Quaternion().setFromAxisAngle(axis, sp * dt / d.r); R.ballSph.quaternion.premultiply(q); }
-  else if (G.phase === 'aim') { R.ballSph.quaternion.slerp(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2 + G.ang, 0)), 0.2); R.ballSph.position.y = Math.abs(Math.sin(performance.now() / 300)) * 0.01; }
+  if (G.phase === 'roll' && sp > 0.01) { _ax.set(b.vz, 0, -b.vx).normalize(); R.ball.quaternion.premultiply(_q.setFromAxisAngle(_ax, sp * dt / d.r)); R.ball.position.y = 0; }
+  else if (G.phase === 'aim' || G.phase === 'wait' || G.phase === 'title') { const t = performance.now() / 1000; _q2.setFromEuler(_e.set(0, G.ang + Math.sin(t * 2) * 0.15, 0)); R.ball.quaternion.slerp(_q2, 0.15); R.ball.position.y = Math.abs(Math.sin(t * 3)) * 0.012; }
+  if (R.ball.userData.spark) R.ball.userData.spark.scale.setScalar(0.8 + Math.random() * 0.5);
   R.ballRing.visible = G.phase === 'aim';
-  R.ballMesh.visible = !(b.done && b.z > DECK_END + 0.4);
+  R.ballG.visible = !(b.done && b.z > DECK_END + 0.4);
 }
-function fxBurst(x, y, z, col, n, sp, size = 0.012) {
-  for (let i = 0; i < n; i++) { if (R.fx.length > 260) { const o = R.fx.shift(); R.scene.remove(o.m); }
-    const m = new THREE.Mesh(R.fxGeo, new THREE.MeshBasicMaterial({ color: col, transparent: true }));
-    m.scale.setScalar(size * rand(0.6, 1.4)); m.position.set(x, y, z); R.scene.add(m);
-    R.fx.push({ m, vx: rand(-1, 1) * sp, vy: rand(0.3, 1.2) * sp, vz: rand(-1, 1) * sp, t: 0, life: rand(0.5, 0.9) }); }
+function fxBurst(x, y, z, col, n, sp, size = 0.014) {
+  for (let i = 0; i < n; i++) { if (R.fx.length > 300) { const o = R.fx.shift(); R.scene.remove(o.m); o.m.material.dispose(); }
+    const m = new THREE.Mesh(R.fxGeo, new THREE.MeshBasicMaterial({ color: col, transparent: true })); m.scale.setScalar(size * (0.6 + Math.random() * 0.8)); m.position.set(x, y, z); R.scene.add(m);
+    R.fx.push({ m, vx: (Math.random() * 2 - 1) * sp, vy: (0.3 + Math.random()) * sp, vz: (Math.random() * 2 - 1) * sp, t: 0, life: 0.5 + Math.random() * 0.5, rot: Math.random() * 8 }); }
 }
-function zapLine(a, b) { const pts = []; const n = 7; for (let i = 0; i <= n; i++) { const t = i / n; pts.push(new THREE.Vector3(a.x + (b.x - a.x) * t + (i % n ? rand(-0.03, 0.03) : 0), 0.22 + (i % n ? rand(-0.03, 0.05) : 0), a.z + (b.z - a.z) * t)); }
-  const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: '#ffe14a', transparent: true })); R.scene.add(l); R.fx.push({ m: l, vx: 0, vy: 0, vz: 0, t: 0, life: 0.35, line: true }); }
+function fxConfetti() { const cols = ['#ffd23a', '#ff5aa8', '#3ee6c8', '#8a8aff', '#ffffff']; for (let i = 0; i < 70; i++) fxBurst((Math.random() - 0.5) * 1.6, 0.9 + Math.random() * 0.6, HEAD_Z + Math.random() * 0.8, cols[i % 5], 1, 0.8, 0.02); }
+function zapLine(a, b) { const pts = []; for (let i = 0; i <= 7; i++) { const t = i / 7, mid = i % 7 !== 0; pts.push(new THREE.Vector3(a.x + (b.x - a.x) * t + (mid ? (Math.random() - 0.5) * 0.06 : 0), 0.22 + (mid ? Math.random() * 0.06 : 0), a.z + (b.z - a.z) * t)); }
+  const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: '#ffe14a', transparent: true })); R.scene.add(l); R.fx.push({ m: l, t: 0, life: 0.35, line: true }); }
 function stepFx(dt) {
-  for (const f of R.fx) { f.t += dt; if (!f.line) { f.vy -= 4 * dt; f.m.position.x += f.vx * dt; f.m.position.y = Math.max(0.005, f.m.position.y + f.vy * dt); f.m.position.z += f.vz * dt; } f.m.material.opacity = 1 - f.t / f.life; }
+  for (const f of R.fx) { f.t += dt; if (!f.line) { f.vy -= 4 * dt; f.m.position.x += f.vx * dt; f.m.position.y = Math.max(0.005, f.m.position.y + f.vy * dt); f.m.position.z += f.vz * dt; f.m.rotation.x += f.rot * dt; f.m.rotation.y += f.rot * dt; } f.m.material.opacity = 1 - f.t / f.life; }
   for (const f of R.fx) if (f.t >= f.life) { R.scene.remove(f.m); if (f.line) f.m.geometry.dispose(); f.m.material.dispose(); }
   R.fx = R.fx.filter(f => f.t < f.life);
 }
 function handleEvents() {
-  for (const e of G.events) {
-    const p = e.p;
+  for (const e of G.events) { const p = e.p;
     switch (e.type) {
-      case 'clack': SND.clack(clamp(e.v || 0.5, 0.2, 1.5)); break;
-      case 'fall': fxBurst(p.x, 0.15, p.z, PINS[p.type].col, 6, 0.6); break;
-      case 'shell': SND.shell(); fxBurst(p.x, 0.15, p.z, '#c8d0e4', 10, 0.8, 0.014); popAt(p.x, 0.45, p.z, '껍질 깨짐!', '#c8d0e4'); break;
-      case 'burst': burstSpore(p); fxBurst(p.x, 0.12, p.z, '#c8ff9a', 18, 1.2, 0.01); popAt(p.x, 0.45, p.z, '포자 폭발!', '#c8ff9a'); break;
-      case 'gutter': G.gutter = true; SND.gutter(); break;
-      case 'nullify': popAt(p.x, 0.5, p.z, 'HIV가 능력을 막았어요!', '#ff8a9a'); SND.shell(); R.ballSph.material.emissiveIntensity = 0; break;
-      case 'zap': zapLine(e.q, p); SND.zap(); fxBurst(p.x, 0.2, p.z, '#ffe14a', 8, 0.8); break;
-      case 'boom': SND.boom(); R.shake = 0.35; fxBurst(p.x, 0.12, p.z, '#ff6a4a', 30, 1.6, 0.016); fxBurst(p.x, 0.12, p.z, '#ffd23a', 20, 1.2, 0.012); popAt(p.x, 0.5, p.z, '보체 폭발!', '#ffad3a'); break;
-      case 'cloud': { const n = histamine(e.p); fxBurst(e.p.x, 0.15, HEAD_Z + 0.4, '#d8ff8a', 26, 0.7, 0.03); popAt(e.p.x, 0.5, HEAD_Z, '히스타민!', '#ffd84a'); break; }
+      case 'clack': SND.clack(clamp(e.v || 0.5, 0.2, 1.5)); if (G.ball.hits === 1 && !G.ball.nulled && !G.ball.firstPop) { G.ball.firstPop = true; if (G.curBall === 'killer') popAt(p.x, 0.5, p.z, '관통!', '#7aa8ff'); if (G.curBall === 'macro') popAt(p.x, 0.5, p.z, '꿀꺽!', '#c8a8ff'); } break;
+      case 'fall': fxBurst(p.x, 0.15, p.z, PINS[p.type].col, 7, 0.7); break;
+      case 'shell': SND.shell(); fxBurst(p.x, 0.3, p.z, PINS.capsid.col2, 12, 0.9, 0.018); popAt(p.x, 0.45, p.z, '투구 깨짐!', '#e0e6ff'); break;
+      case 'burst': fxBurst(p.x, 0.12, p.z, '#c8ff9a', 20, 1.2, 0.012); popAt(p.x, 0.45, p.z, '포자 폭발!', '#c8ff9a'); break;
+      case 'gutter': SND.gutter(); break;
+      case 'nullify': popAt(p.x, 0.5, p.z, 'HIV가 능력을 막았어요!', '#ff8aa0'); SND.shell(); break;
+      case 'zap': zapLine(e.q, p); SND.zap(); fxBurst(p.x, 0.2, p.z, '#ffe14a', 8, 0.8); if (!G.ball.zapPop) { G.ball.zapPop = true; popAt(p.x, 0.5, p.z, 'NK 번개!', '#ffe14a'); } break;
+      case 'boom': SND.boom(); R.shake = 0.35; fxBurst(p.x, 0.12, p.z, '#ff6a4a', 30, 1.6, 0.02); fxBurst(p.x, 0.12, p.z, '#ffd23a', 20, 1.2, 0.015); popAt(p.x, 0.5, p.z, '보체 폭발!', '#ffad3a'); break;
+      case 'cloud': fxBurst(p.x, 0.15, HEAD_Z + 0.4, '#d8ff8a', 28, 0.7, 0.035); popAt(p.x, 0.5, HEAD_Z, '히스타민!', '#ffd84a'); break;
     }
-    if (e.type === 'clack' && G.curBall === 'nk' && G.ball.used && !G.ball.zapPop) { G.ball.zapPop = true; popAt(p.x, 0.5, p.z, 'NK 번개!', '#ffe14a'); }
-    if (e.type === 'clack' && G.curBall === 'killer' && !G.ball.nulled && G.ball.hits === 1) popAt(p.x, 0.5, p.z, '관통!', '#7aa8ff');
-    if (e.type === 'clack' && G.curBall === 'macro' && !G.ball.nulled && G.ball.hits === 1) popAt(p.x, 0.5, p.z, '포식!', '#c8a8ff');
   }
   G.events.length = 0;
 }
-/* ---------------- 카메라 · 화면 맞춤 ---------------- */
+/* ---------------- 카메라 · 화면 크기 ---------------- */
 function resize() {
   const w = innerWidth, h = innerHeight; R.r.setSize(w, h, false); R.cam.aspect = w / h;
-  // 세로 화면에서도 레인 폭이 보이도록 시야각을 넓힘
-  R.cam.fov = clamp(46 / Math.min(1, R.cam.aspect / 1.2), 46, 78); R.cam.updateProjectionMatrix();
-  const html = document.documentElement; html.classList.toggle('portrait', h > w); html.classList.toggle('small', Math.min(w, h) < 500);
-  const pip = $('#pip'), pw = h > w ? Math.min(w - 20, 340) : (h < 500 ? clamp(w * 0.22, 160, 200) : clamp(w * 0.26, 200, 360)), ph = pw / 1.6;
-  R.pip = { w: pw, h: ph, x: h > w ? (w - pw) / 2 : w - pw - 12, y: h > w ? 282 : 78 };
-  if (h <= w) R.pip.y = (h < 500 ? 68 : 92);
-  Object.assign(pip.style, { width: pw + 'px', height: ph + 'px', left: R.pip.x + 'px', top: R.pip.y + 'px' });
+  R.cam.fov = clamp(46 / Math.min(1, R.cam.aspect / 1.2), 46, 80); R.cam.updateProjectionMatrix();
+  const html = document.documentElement, portrait = h > w * 1.05, short = !portrait && h < 520;
+  html.classList.toggle('portrait', portrait); html.classList.toggle('short', short);
+  const sc = $('#score').getBoundingClientRect(), scVis = $('#score').style.display !== 'none' && sc.height > 0;
+  if (portrait) html.style.setProperty('--rowY', ((scVis ? sc.bottom : 66) + 8) + 'px');
+  let pw, x, y;
+  if (portrait) { const row = $('#ballCard').getBoundingClientRect(), pb = $('#pinsBox').getBoundingClientRect(); pw = Math.min(w - 20, 300); x = (w - pw) / 2; y = Math.max(row.bottom || 0, pb.bottom || 0, scVis ? sc.bottom : 66) + 8; }
+  else { pw = short ? clamp(w * 0.22, 150, 200) : clamp(w * 0.24, 200, 320); x = w - pw - 10; y = (scVis ? sc.bottom : 60) + 8; }
+  const ph = pw / 1.7; R.pip = { w: pw, h: ph, x, y };
+  Object.assign($('#pip').style, { width: pw + 'px', height: ph + 'px', left: x + 'px', top: y + 'px' });
   R.pipCam.aspect = pw / ph; R.pipCam.updateProjectionMatrix();
 }
+const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3();
 function updCam(dt) {
-  const b = G.ball; let pos, look;
-  if (G.phase === 'aim' || G.phase === 'title') { pos = new THREE.Vector3(G.pos * 0.7, 0.62, -1.9); look = new THREE.Vector3(G.pos * 0.3, 0.05, 7); }
-  else { const z = Math.min(b.z, HEAD_Z - 3.2); pos = new THREE.Vector3(b.x * 0.5, 0.95 + Math.max(0, (b.z - 10) * 0.03), z - 2.0); look = new THREE.Vector3(b.x * 0.3, 0.15, Math.min(z + 6, HEAD_Z + 0.5));
-    if (b.z > HEAD_Z - 4 || b.done) { pos = new THREE.Vector3(0, 1.1, HEAD_Z - 3.6); look = new THREE.Vector3(0, 0.1, HEAD_Z + 0.35); } }
-  if (G.phase === 'title') { const t = performance.now() / 4000; pos = new THREE.Vector3(Math.sin(t) * 0.8, 0.7, HEAD_Z - 3.2); look = new THREE.Vector3(0, 0.15, HEAD_Z + 0.4); }
-  const k = 1 - Math.pow(0.002, dt); R.camPos.lerp(pos, k); R.camLook.lerp(look, k);
-  R.cam.position.copy(R.camPos); if (R.shake > 0) { R.shake -= dt; R.cam.position.x += rand(-1, 1) * R.shake * 0.05; R.cam.position.y += rand(-1, 1) * R.shake * 0.05; }
+  const b = G.ball, por = R.cam.aspect < 0.9;
+  if (G.phase === 'title' || !b) { const t = performance.now() / 5000; _v1.set(Math.sin(t) * 1.2, 0.75 + Math.sin(t * 1.3) * 0.15, HEAD_Z - 3.4); _v2.set(0, 0.2, HEAD_Z + 0.4); }
+  else if (G.phase === 'aim' || (G.phase === 'wait' && b.z < 1)) { _v1.set(G.pos * 0.7, por ? 1.05 : 0.85, por ? -2.2 : -1.75); _v2.set(G.pos * 0.3 + Math.sin(G.ang) * 4, por ? -0.35 : -0.3, 7); }
+  else { const z = Math.min(b.z, HEAD_Z - 3.2); _v1.set(b.x * 0.5, 0.95 + Math.max(0, (b.z - 10) * 0.03), z - 2.0); _v2.set(b.x * 0.3, 0.15, Math.min(z + 6, HEAD_Z + 0.5));
+    if (b.z > HEAD_Z - 4 || b.done) { _v1.set(0, por ? 1.25 : 1.0, HEAD_Z - (por ? 3.6 : 3.2)); _v2.set(0, 0.1, HEAD_Z + 0.35); } }
+  const k = 1 - Math.pow(0.002, dt); R.camPos.lerp(_v1, k); R.camLook.lerp(_v2, k);
+  R.cam.position.copy(R.camPos); if (R.shake > 0) { R.shake -= dt; R.cam.position.x += (Math.random() - 0.5) * R.shake * 0.08; R.cam.position.y += (Math.random() - 0.5) * R.shake * 0.08; }
   R.cam.lookAt(R.camLook);
-  R.pipCam.position.set(0, 0.85, HEAD_Z - 2.3); R.pipCam.lookAt(0, 0.12, HEAD_Z + 0.42);
+  R.pipCam.position.set(0, 0.8, HEAD_Z - 2.2); R.pipCam.lookAt(0, 0.13, HEAD_Z + 0.42);
+}
+const _m4 = new THREE.Matrix4(), _cq = new THREE.Quaternion(), _sv = new THREE.Vector3(), _pv = new THREE.Vector3(), _ov = new THREE.Vector3(), _one = new THREE.Vector3(1, 1, 1), _ce = new THREE.Euler();
+function animArena(dt, now) {
+  for (const r of R.rbcs) { r.position.z += dt * 1.6; if (r.position.z > 34) r.position.z = -12; r.rotation.x += dt * 0.8; }
+  for (const b of R.bubbles) { b.position.y += dt * 0.15; if (b.position.y > 4) b.position.y = 0; }
+  if (R.cheer > 0) R.cheer -= dt;
+  R.crowdData.forEach((c, i) => { const ch = R.cheer > 0, jump = ch ? Math.abs(Math.sin(now / 130 + c.ph)) * 0.25 : Math.abs(Math.sin(now / 600 + c.ph)) * 0.04;
+    _pv.set(c.x, c.y + 0.22 + jump, c.z); const sq = 1 + (ch ? Math.sin(now / 130 + c.ph) * 0.08 : 0); _sv.set(1 / sq, sq, 1 / sq); _cq.setFromEuler(_ce.set(0, -c.side * 0.9, 0));
+    _m4.compose(_pv, _cq, _sv); R.crowd.setMatrixAt(i, _m4);
+    for (const e of [-1, 1]) { const j = i * 2 + (e > 0 ? 1 : 0); _ov.set(e * 0.08, 0.06, 0.19).applyQuaternion(_cq).add(_pv); _m4.compose(_ov, _cq, _one); R.crowdEye.setMatrixAt(j, _m4);
+      _ov.add(_sv.set(0, 0, 0.035).applyQuaternion(_cq)); _m4.compose(_ov, _cq, _one); R.crowdPup.setMatrixAt(j, _m4); } });
+  R.crowd.instanceMatrix.needsUpdate = R.crowdEye.instanceMatrix.needsUpdate = R.crowdPup.instanceMatrix.needsUpdate = true;
+}
+/* ---------------- 아이콘 (도감 · 볼 카드) ---------------- */
+const ICON = {};
+function makeIcons() {
+  const c = document.createElement('canvas'); c.width = c.height = 160;
+  const r = new THREE.WebGLRenderer({ canvas: c, alpha: true, antialias: true, preserveDrawingBuffer: true }); r.setClearColor(0, 0); r.outputEncoding = THREE.sRGBEncoding;
+  const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight('#ffffff', '#8a7ac0', 1.35)); const dl = new THREE.DirectionalLight('#fff', 0.7); dl.position.set(2, 3, 4); sc.add(dl);
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.01, 10);
+  const one = (key, obj) => { sc.add(obj); const bx = new THREE.Box3().setFromObject(obj), ctr = bx.getCenter(new THREE.Vector3()), sz = bx.getSize(new THREE.Vector3()); const dd = Math.max(sz.x, sz.y) / (2 * Math.tan(15 * Math.PI / 180)) * 1.2; cam.position.set(ctr.x, ctr.y + dd * 0.12, ctr.z + dd); cam.lookAt(ctr); r.render(sc, cam); ICON[key] = c.toDataURL(); sc.remove(obj); };
+  for (const k of BALL_KEYS) { const m = ballMesh(k); m.rotation.y = 0.35; one('b_' + k, m); }
+  for (const k of PIN_KEYS) { const m = pinMesh(k); m.rotation.y = 0.3; one('p_' + k, m); }
+  r.dispose();
 }
 /* ---------------- HUD ---------------- */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function drawPinDia() {
-  const c = $('#pinDia'), g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height);
-  const pos = [[70, 94], [52, 68], [88, 68], [34, 42], [70, 42], [106, 42], [16, 16], [52, 16], [88, 16], [124, 16]];
-  // 핀 번호: 1~10 (뒷줄 7~10이 위쪽)
-  const order = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-  G.pins.forEach((p, i) => { const [x, y] = pos[i]; const up = !p.down && !p.gone;
-    g.beginPath(); g.arc(x + 0, y, 11, 0, 7); g.fillStyle = up ? PINS[p.type].col : 'rgba(255,255,255,.12)'; g.fill(); g.lineWidth = 2; g.strokeStyle = up ? '#fff' : 'rgba(255,255,255,.25)'; g.stroke();
-    if (up && p.armor) { g.strokeStyle = '#c8d0e4'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 14, 0, 7); g.stroke(); }
-    g.fillStyle = up ? '#10142a' : 'rgba(255,255,255,.4)'; g.font = 'bold 11px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(i + 1, x, y + 1); });
+  const c = $('#pinDia'), g = c.getContext('2d'); g.setTransform(2, 0, 0, 2, 0, 0); g.clearRect(0, 0, 128, 98);
+  const pos = [[64, 86], [48, 62], [80, 62], [32, 38], [64, 38], [96, 38], [16, 14], [48, 14], [80, 14], [112, 14]];
+  G.pins.forEach((p, i) => { const [x, y] = pos[i], up = !p.down && !p.gone;
+    g.beginPath(); g.arc(x, y, 11, 0, 7); g.fillStyle = up ? PINS[p.type].col : 'rgba(255,255,255,.1)'; g.fill(); g.lineWidth = 2.5; g.strokeStyle = up ? '#fff' : 'rgba(255,255,255,.22)'; g.stroke();
+    if (up && p.armor) { g.strokeStyle = PINS.capsid.col2; g.lineWidth = 2; g.beginPath(); g.arc(x, y, 14, 0, 7); g.stroke(); }
+    g.fillStyle = up ? '#1a1040' : 'rgba(255,255,255,.35)'; g.font = '900 11px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(i + 1, x, y + 1); });
+  const cnt = {}; G.pins.forEach(p => { if (!p.down && !p.gone) cnt[p.type] = (cnt[p.type] || 0) + 1; });
+  $('#pinTags').innerHTML = Object.entries(cnt).map(([k, n]) => `<span><i style="background:${PINS[k].col}"></i>${PINS[k].name} ×${n}</span>`).join('');
 }
-function drawBoard() {
-  const s = scoreFrames(G.rolls), el = $('#board');
-  if (G.mode === 'practice') { el.style.display = 'none'; return; } el.style.display = '';
-  el.innerHTML = s.frames.map((f, i) => { const n = i === 9 ? 3 : 2, marks = i === 9 ? f.marks : (f.marks.length ? f.marks : ['', '']);
-    const cells = Array.from({ length: n }, (_, k) => `<span>${marks[k] || ''}</span>`).join('');
-    return `<div class="fr ${i === 9 ? 'f10' : ''} ${i === G.frame && G.phase !== 'over' ? 'cur' : ''}"><div class="n">${i + 1}</div><div class="rr">${cells}</div><div class="c">${f.cum ?? ''}</div></div>`; }).join('');
-  const cur = el.querySelector('.cur'); if (cur) cur.scrollIntoView({ inline: 'center', block: 'nearest' });
+function drawScore() {
+  const el = $('#score'); if (G.mode === 'practice') { el.style.display = 'none'; return; } el.style.display = '';
+  const head = `<tr><th></th>${Array.from({ length: 10 }, (_, i) => `<th>${i + 1}</th>`).join('')}<th>합계</th></tr>`;
+  const rows = G.players.map((P, pi) => { const s = scoreFrames(P.rolls), st = frameState(P.rolls);
+    const cells = s.frames.map((f, i) => { const n = i === 9 ? 3 : 2, marks = f.marks.length ? f.marks : [];
+      return `<td class="${pi === G.cur && st.frame === i && G.phase !== 'over' ? 'cur' : ''}"><div class="rr">${Array.from({ length: n }, (_, k) => `<span>${marks[k] || ''}</span>`).join('')}</div></td>`; }).join('');
+    return `<tr class="${pi === G.cur && G.phase !== 'over' ? 'me' : ''}"><td class="nm" style="color:${P.col}">${esc(P.name)}</td>${cells}<td class="tot">${s.total}</td></tr>`; }).join('');
+  el.innerHTML = `<table>${head}${rows}</table>`;
+  resize();
 }
-function updHud() {
-  $('#frameNm').textContent = G.mode === 'practice' ? '자유 연습' : `${G.frame + 1}프레임 · ${G.roll + 1}구`;
-  drawPinDia();
+function updTurnUI() {
+  const P = G.players[G.cur]; if (!P) return;
+  const st = frameState(P.rolls);
+  $('#turnIco').style.background = P.col; $('#turnIco').textContent = G.mode === 'practice' ? '연' : (G.cur + 1);
+  $('#turnName').textContent = G.mode === 'practice' ? '자유 연습' : P.name + (G.mode === 'online' && P.id === NET.myId ? ' (나)' : '');
+  $('#turnSub').textContent = G.mode === 'practice' ? (G.practice.roll ? '2구 (남은 핀)' : '1구') : `${Math.min(10, st.frame + 1)}프레임 · ${st.roll + 1}구`;
+  drawScore();
 }
-function popAt(x, y, z, txt, col) {
-  const v = new THREE.Vector3(x, y, z).project(R.cam); if (v.z > 1) return;
-  const el = document.createElement('div'); el.className = 'pop'; el.textContent = txt; el.style.color = col;
-  el.style.left = clamp((v.x + 1) / 2 * innerWidth, 80, innerWidth - 80) + 'px'; el.style.top = clamp((1 - v.y) / 2 * innerHeight, 120, innerHeight - 140) + 'px'; document.body.appendChild(el); setTimeout(() => el.remove(), 1100);
+function updBallCard() {
+  const d = BALLS[G.curBall]; $('#ballImg').src = ICON['b_' + G.curBall] || '';
+  $('#ballName').innerHTML = `${d.name} 볼 <span class="tagc" style="background:${d.col}">${d.tag}</span>`;
+  $('#ballDesc').textContent = d.desc;
+  $('#ballBars').innerHTML = ['속도', '무게', '조절'].map((n, i) => `<span>${n}</span><u><i style="width:${d.stat[i] * 20}%"></i></u>`).join('');
 }
-function popCenter(txt) { const el = document.createElement('div'); el.className = 'pop'; el.textContent = txt; el.style.color = '#fff'; el.style.fontSize = '34px'; el.style.left = '50%'; el.style.top = '40%'; document.body.appendChild(el); setTimeout(() => el.remove(), 1100); }
+function popAt(x, y, z, txt, col) { const v = new THREE.Vector3(x, y, z).project(R.cam); if (v.z > 1) return; const el = document.createElement('div'); el.className = 'pop'; el.textContent = txt; el.style.color = col;
+  el.style.left = clamp((v.x + 1) / 2 * innerWidth, 90, innerWidth - 90) + 'px'; el.style.top = clamp((1 - v.y) / 2 * innerHeight, 130, innerHeight - 160) + 'px'; document.body.appendChild(el); setTimeout(() => el.remove(), 1200); }
+function popCenter(txt) { const el = document.createElement('div'); el.className = 'pop'; el.textContent = txt; el.style.color = '#fff'; el.style.fontSize = '42px'; el.style.left = '50%'; el.style.top = '40%'; document.body.appendChild(el); setTimeout(() => el.remove(), 1200); }
 function banner(txt, col) { const b = $('#banner'); b.textContent = txt; b.style.color = col; b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); }
-function show(id) { document.body.dataset.screen = id; $('#title').classList.toggle('on', id === 'title'); $('#hud').classList.toggle('on', id === 'play'); $('#sheet').classList.remove('on'); }
-function modal(html, noClose) { $('#modalBox').innerHTML = html + (noClose ? '' : '<div class="btns"><button class="btn" data-act="close">닫기</button></div>'); $('#modal').classList.add('on'); }
+function hint(t) { const h = $('#hint'); h.textContent = t; h.style.display = t ? 'block' : 'none'; clearTimeout(hint.t); if (t) hint.t = setTimeout(() => h.style.display = 'none', 4000); }
+function showWait(t) { const w = $('#wait'); w.textContent = t; w.style.display = t ? 'block' : 'none'; }
+function toast(t) { const el = $('#toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = 'none', 2600); }
+function show(id) { document.body.dataset.screen = id; $('#title').classList.toggle('on', id === 'title'); $('#hud').classList.toggle('on', id === 'play'); $('#sheet').classList.remove('on'); $('#modal').classList.remove('on'); setTimeout(resize, 0); }
+function modal(html, noClose, wide) { $('#modalBox').onclick = null; $('#modalBox').innerHTML = html + (noClose ? '' : '<div class="btns"><button class="gb d" data-act="close">닫기</button></div>'); $('#modalBox').classList.toggle('wide', !!wide); $('#modal').classList.add('on'); $('#sheet').classList.remove('on'); }
+function setCurveUI() { document.querySelectorAll('#curve button').forEach(b => b.classList.toggle('on', +b.dataset.cv === G.curve)); }
 function dexModal() {
-  const ball = k => { const d = BALLS[k]; return `<div class="dx"><i style="background:radial-gradient(circle at 35% 30%, ${shade(d.col, 0.4)}, ${d.col} 55%, ${shade(d.col, -0.35)})"></i><div><b>${d.name} 볼</b><small>${d.desc}</small><small style="opacity:.65">🔬 ${d.fact}</small></div></div>`; };
-  const pin = k => { const d = PINS[k]; return `<div class="dx"><i style="border-radius:40% 40% 30% 30%;background:linear-gradient(180deg,#f7f4ee 18%,${d.col} 18% 70%,#f7f4ee 70%)"></i><div><b>${d.name} 핀</b><small>${d.desc}</small><small style="opacity:.65">🔬 ${d.fact}</small></div></div>`; };
-  $('#modalBox').parentElement; modal(`<h2>도감</h2><h3>면역세포 볼링공 · 투구마다 무작위로 나와요</h3><div class="dex">${BALL_KEYS.map(ball).join('')}</div><h3>병원체 핀 · 프레임마다 무작위로 섞여요</h3><div class="dex">${PIN_KEYS.map(pin).join('')}</div>`);
-  $('#modalBox').classList.add('wide');
+  const bs = BALL_KEYS.map(k => { const d = BALLS[k]; return `<div class="dx"><img src="${ICON['b_' + k]}" alt=""><div><b>${d.name} 볼</b><div class="stat"><span style="background:${d.col};color:#1a1040">${d.tag}</span><span>속도 ${'●'.repeat(d.stat[0])}</span><span>무게 ${'●'.repeat(d.stat[1])}</span></div><small>${d.desc}</small><small class="f">${d.fact}</small></div></div>`; }).join('');
+  const ps = PIN_KEYS.map(k => { const d = PINS[k]; return `<div class="dx"><img src="${ICON['p_' + k]}" alt=""><div><b>${d.name} 핀</b><small>${d.desc}</small><small class="f">${d.fact}</small></div></div>`; }).join('');
+  modal(`<h2>도감</h2><h3>면역세포 볼링공 — 투구마다 무작위로 나와요</h3><div class="dex">${bs}</div><h3>병원체 핀 — 판마다 무작위로 섞여요</h3><div class="dex">${ps}</div>`, false, true);
 }
 function helpModal() {
   modal(`<h2>게임 방법</h2>
-  <p>🎳 <b>던지기</b>: 화면을 <b>아래에서 위로 쓱 밀어요</b>. 빠르게 밀수록 공이 빨라요. 비스듬히(오른쪽·왼쪽으로) 밀면 공이 그쪽으로 <b>휘어요</b>.</p>
-  <p>↔ <b>위치·방향</b>: 화면을 옆으로 끌거나 오른쪽 아래 ◀ ▶ 버튼으로 서는 위치를, ↺ ↻ 버튼으로 던질 방향을 정해요. 주황 화살표가 방향이에요.</p>
-  <p>⌨ <b>키보드</b>: ← → 위치, A·D 방향, Q·E 회전(휘기), <b>스페이스를 누르고 있다가 떼면</b> 던져요(막대가 높을 때 떼면 빨라요).</p>
-  <p>🧬 투구마다 <b>면역세포 볼링공</b>이 무작위로 나오고, 핀은 <b>병원체</b>가 섞여 있어요. 공과 핀의 능력은 도감에서 볼 수 있어요.</p>
-  <p>⭐ 점수는 실제 볼링과 같아요. 스트라이크(X)는 다음 두 번, 스페어(/)는 다음 한 번 쓰러뜨린 핀 수가 더해져요.</p>`);
-  $('#modalBox').classList.remove('wide');
+  <p><b>1. 조준</b> — <b>위치</b> ◀ ▶ 로 서는 자리를, <b>방향</b> 버튼으로 노란 화살표를 돌려요. 흰 점선은 공이 굴러갈 길이에요 (빨간 점 = 거터 위험).</p>
+  <p><b>2. 휘기</b> — 공을 왼쪽·오른쪽으로 얼마나 휘게 할지 골라요. 1번 핀 바로 옆 "포켓"에 맞히면 스트라이크가 잘 나와요.</p>
+  <p><b>3. 던지기</b> — <b>던지기 버튼을 꾹 누르면</b> 둥근 힘 게이지가 차올랐다 내려가요. 원하는 힘에서 손을 떼면 던져요. 초록 구간(75~92%)이 가장 좋아요. 너무 세게 던지면 방향이 살짝 흔들려요.</p>
+  <p><b>PC</b> — ← → 위치, A·D 방향, Q·E 휘기, <b>스페이스를 누르고 있다가 떼기</b>.</p>
+  <p><b>면역세포 공</b>은 투구마다 무작위로 나오고, 핀에는 <b>병원체</b>가 섞여요. 능력은 도감에서 확인하세요.</p>
+  <p><b>점수</b>는 실제 볼링과 같아요. 스트라이크(X)는 다음 두 번, 스페어(/)는 다음 한 번 쓰러뜨린 핀 수가 더해져요.</p>`);
 }
-function optModal() { modal(`<h2>설정</h2><label class="row">효과음 <input type="range" id="oSfx" min="0" max="1" step="0.05" value="${OPT.sfx}"></label><button class="btn" data-act="resetRec">기록 지우기</button>`); $('#modalBox').classList.remove('wide');
-  $('#oSfx').oninput = e => { OPT.sfx = +e.target.value; SND.vol(); save(); }; }
+function optModal() { modal(`<h2>설정</h2><label class="row">효과음 <input type="range" id="oSfx" min="0" max="1" step="0.05" value="${OPT.sfx}"></label><label class="row">배경 음악 <input type="range" id="oMus" min="0" max="1" step="0.05" value="${OPT.music}"></label>`);
+  $('#oSfx').oninput = e => { OPT.sfx = +e.target.value; SND.vol(); save(); }; $('#oMus').oninput = e => { OPT.music = +e.target.value; SND.vol(); save(); }; }
+function localModal() {
+  let n = 2; const names = ['선수 1', '선수 2', '선수 3', '선수 4'];
+  const draw = () => { modal(`<h2>같이 하기</h2><p class="note">한 기기로 돌아가며 던져요.</p><div class="seg">${[2, 3, 4].map(k => `<button data-n="${k}" class="${k === n ? 'on' : ''}">${k}명</button>`).join('')}</div>
+    ${Array.from({ length: n }, (_, i) => `<div class="fld"><label for="ln${i}" style="color:${PLAYER_COL[i]}">${i + 1}번 선수</label><input id="ln${i}" maxlength="8" value="${esc(names[i])}"></div>`).join('')}
+    <div class="btns"><button class="gb y" id="lgo">시작</button><button class="gb d" data-act="close">취소</button></div>`, true);
+    $('#modalBox').onclick = e => { const b = e.target.closest('[data-n]'); if (b) { for (let i = 0; i < n; i++) names[i] = ($('#ln' + i).value || names[i]).trim(); n = +b.dataset.n; draw(); }
+      if (e.target.id === 'lgo') { const ps = Array.from({ length: n }, (_, i) => ({ name: ($('#ln' + i).value || names[i]).trim().slice(0, 8) || names[i] })); startGame('local', ps); } }; };
+  draw();
+}
+
+/* =========================================================
+   온라인 (PeerJS / 교실 서버 중계, 같은 브라우저 탭은 BroadcastChannel)
+   ========================================================= */
+const NET = (() => {
+  const PREFIX = 'biobowl-v1-', BC = 'biobowl-bc-v1-', VER = 1;
+  const genCode = () => { const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 4; i++) s += c[Math.floor(Math.random() * c.length)]; return s; };
+  const opts = () => ({ debug: 0, config: { iceServers: [{ urls: ['stun:stun.l.google.com:19302'] }, { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' }] } });
+  const N = { role: null, code: '', myId: 'b' + Math.random().toString(36).slice(2, 10), peer: null, hostConn: null, bc: null, conns: new Map(), seen: new Map(), lastHost: 0, players: [], on: {}, started: false };
+  N.listen = (t, f) => (N.on[t] = N.on[t] || []).push(f);
+  N.emit = (t, m) => (N.on[t] || []).forEach(f => f(m));
+  function openPeer(id) { return new Promise((ok, no) => { if (!window.Peer) return no(new Error('no-peer')); let p; try { p = id ? new Peer(id, opts()) : new Peer(opts()); } catch (e) { return no(e); }
+    const wait = window.BioRelay && BioRelay.wait ? BioRelay.wait(9000) : 9000;
+    const to = setTimeout(() => { try { p.destroy(); } catch (e) {} no(new Error('timeout')); }, typeof wait === 'number' ? wait : 9000);
+    p.on('open', () => { clearTimeout(to); ok(p); }); p.on('error', e => { clearTimeout(to); no(e); }); }); }
+  function openBc(code) { try { N.bc = new BroadcastChannel(BC + code); N.bc.onmessage = e => { const m = e.data; if (!m) return;
+      if (N.role === 'host' && m.from && m.from !== N.myId) onHost(m, null);
+      else if (N.role === 'guest' && !m.from && (!m.to || m.to === N.myId) && m.src !== N.myId) onGuest(m); }; } catch (e) { N.bc = null; } }
+  const sendC = (c, m) => { if (c && c.open) try { c.send(m); } catch (e) {} };
+  function broadcast(m, except) { for (const [pid, c] of N.conns) if (pid !== except) sendC(c, m); if (N.bc) try { N.bc.postMessage(m); } catch (e) {} }
+  function sendTo(pid, m) { const c = N.conns.get(pid); if (c) sendC(c, m); else if (N.bc) try { N.bc.postMessage(Object.assign({ to: pid }, m)); } catch (e) {} }
+  function toHost(m) { m.from = N.myId; if (N.hostConn && N.hostConn.open) sendC(N.hostConn, m); if (N.bc) try { N.bc.postMessage(m); } catch (e) {} }
+  N.send = m => { if (N.role === 'host') broadcast(m); else if (N.role === 'guest') toHost(Object.assign({}, m)); };
+  N.host = async nick => {
+    N.leave(); N.role = 'host'; N.players = [{ id: N.myId, name: nick }];
+    for (let k = 0; k < 3 && !N.peer; k++) { N.code = genCode(); try { N.peer = await openPeer(PREFIX + N.code); } catch (e) { if (!(e && e.type === 'unavailable-id')) break; } }
+    if (!N.code) N.code = genCode(); openBc(N.code);
+    if (N.peer) { N.peer.on('connection', c => { c.on('data', m => onHost(m, c)); c.on('close', () => { if (c.pid) drop(c.pid); }); }); try { if (window.BioRelay && BioRelay.setInfo) BioRelay.setInfo(N.peer, { name: nick + '의 볼링장', playing: false }); } catch (e) {} }
+    N.online = !!N.peer; N.emit('lobby'); return N.code;
+  };
+  function onHost(m, c) {
+    if (!m || !m.t) return; const pid = m.from; if (!pid) return; N.seen.set(pid, performance.now());
+    const reply = r => c ? sendC(c, r) : sendTo(pid, r);
+    if (m.t === 'hello') {
+      if (m.v !== VER) return reply({ t: 'deny', why: '게임 버전이 달라요. 새로고침해 주세요.' });
+      if (c) { c.pid = pid; N.conns.set(pid, c); }
+      if (!N.players.find(p => p.id === pid)) {
+        if (N.started) return reply({ t: 'deny', why: '이미 게임이 시작됐어요.' });
+        if (N.players.length >= 4) return reply({ t: 'deny', why: '방이 가득 찼어요 (최대 4명).' });
+        N.players.push({ id: pid, name: String(m.name || '선수').slice(0, 8) }); }
+      broadcast({ t: 'lobby', players: N.players, code: N.code }); N.emit('lobby'); return;
+    }
+    if (m.t === 'bye') return drop(pid);
+    if (m.t === 'ping') return;
+    if (!N.players.find(p => p.id === pid)) return;
+    const r = Object.assign({}, m); delete r.from; r.src = pid;
+    N.emit(m.t, r); broadcast(r, pid);
+  }
+  function drop(pid) { N.conns.delete(pid); N.seen.delete(pid); const i = N.players.findIndex(p => p.id === pid); if (i >= 0) { N.players.splice(i, 1); broadcast({ t: 'lobby', players: N.players, code: N.code }); broadcast({ t: 'left', id: pid }); N.emit('left', { id: pid }); N.emit('lobby'); } }
+  N.join = async (code, nick) => {
+    N.leave(); code = String(code || '').trim().toUpperCase(); if (!/^[A-Z0-9]{3,6}$/.test(code)) { toast('방 코드를 확인하세요'); return; }
+    N.code = code; N.role = 'guest'; openBc(code);
+    const hello = () => toHost({ t: 'hello', v: VER, name: nick }); hello();
+    openPeer().then(p => { if (N.role !== 'guest') { try { p.destroy(); } catch (e) {} return; } N.peer = p; N.hostConn = p.connect(PREFIX + code, { reliable: true }); N.hostConn.on('open', hello); N.hostConn.on('data', onGuest); N.hostConn.on('close', () => { if (N.role === 'guest') N.emit('lost', {}); }); }).catch(() => {});
+    setTimeout(() => { if (N.role === 'guest' && !N.lastHost) { toast(`방 [${code}]을 찾지 못했어요`); N.leave(); N.emit('fail', {}); } }, 12000);
+  };
+  function onGuest(m) { if (!m || !m.t) return; if (m.src === N.myId) return; N.lastHost = performance.now(); if (m.t === 'deny') { toast('참가할 수 없어요: ' + m.why); N.leave(); N.emit('fail', {}); return; } if (m.t === 'lobby') { N.players = m.players; N.emit('lobby'); return; } N.emit(m.t, m); }
+  N.leave = () => { if (N.role === 'guest') toHost({ t: 'bye' }); if (N.role === 'host') broadcast({ t: 'deny', why: '방장이 방을 닫았어요.' }); try { if (N.peer) N.peer.destroy(); } catch (e) {} try { if (N.bc) N.bc.close(); } catch (e) {}
+    N.peer = null; N.hostConn = null; N.bc = null; N.conns.clear(); N.seen.clear(); N.role = null; N.code = ''; N.lastHost = 0; N.players = []; N.started = false; };
+  setInterval(() => { if (N.role === 'guest') toHost({ t: 'ping' }); if (N.role === 'host') { const now = performance.now(); for (const [pid, t] of N.seen) if (now - t > 15000) drop(pid); } }, 3000);
+  addEventListener('beforeunload', () => N.leave());
+  return N;
+})();
+function onlineModal() {
+  const nick = (SAVE.nick || '선수' + Math.floor(Math.random() * 90 + 10)).slice(0, 8);
+  modal(`<h2>온라인 대전</h2><div class="fld"><label for="onNick">닉네임</label><input id="onNick" maxlength="8" value="${esc(nick)}"></div>
+    <div class="btns" style="margin-top:6px"><button class="gb y" id="onHost" style="flex:1">방 만들기</button></div>
+    <div class="fld"><label for="onCode">친구 방 코드</label><input id="onCode" maxlength="6" placeholder="ABCD" autocomplete="off"></div>
+    <div class="btns" style="margin-top:0"><button class="gb g" id="onJoin" style="flex:1">코드로 참가</button></div>
+    <p class="note">2~4명. 방장이 시작하면 차례대로 한 프레임씩 던져요.</p>`);
+}
+function lobbyModal() {
+  if (!NET.role) return;
+  const host = NET.role === 'host';
+  modal(`<h2>대기실</h2>${host ? `<p class="note" style="text-align:center">친구에게 이 코드를 알려 주세요</p><div class="code">${NET.code}</div>${NET.online === false ? '<p class="note" style="text-align:center">인터넷 서버에 연결하지 못했어요. 지금은 같은 브라우저의 다른 탭에서만 들어올 수 있어요.</p>' : ''}` : `<p style="text-align:center">방 <b class="fd" style="color:var(--acc);letter-spacing:.2em">${NET.code}</b></p>`}
+    <div class="plist">${NET.players.map((p, i) => `<div class="pl"><i style="background:${PLAYER_COL[i]}"></i>${esc(p.name)}${p.id === NET.myId ? ' (나)' : ''}<small>${i === 0 ? '방장' : ''}</small></div>`).join('') || '<div class="pl">연결 중…</div>'}</div>
+    <div class="btns">${host ? `<button class="gb y" data-act="netStart" ${NET.players.length < 2 ? 'disabled' : ''}>시작 (${NET.players.length}명)</button>` : '<p class="note">방장이 시작하기를 기다리는 중…</p>'}<button class="gb d" data-act="netLeave">나가기</button></div>`, true);
+}
+function hostStart() { if (NET.role !== 'host' || NET.players.length < 2) return; NET.started = true; const m = { t: 'start', players: NET.players.map(p => ({ id: p.id, name: p.name })) }; NET.send(m); startGame('online', m.players); }
+NET.listen('lobby', () => { if (document.body.dataset.screen !== 'play') lobbyModal(); });
+NET.listen('start', m => { NET.started = true; startGame('online', m.players); });
+NET.listen('setup', m => { if (G.mode !== 'online' || G.phase === 'over') return; G.cur = m.cur; applySetup(m); });
+NET.listen('throw', m => { if (G.mode !== 'online' || G.phase !== 'aim') return; doThrow(m.tp, true); });
+NET.listen('result', m => { if (G.mode !== 'online') return; if (G.waitRes) { G.cur = m.cur; endRoll(m); } else G.pendingRes = m; });
+NET.listen('left', m => { const p = G.players.find(q => q.id === m.id); if (!p || G.mode !== 'online') return; p.gone = true; toast(`${p.name}님이 나갔어요`); drawScore();
+  if (G.players[G.cur] === p && G.phase !== 'over') { G.pendingRes = null; G.waitRes = false; SND.rollStop(); const n = nextPlayer(); if (n < 0) finishGame(); else { G.cur = n; beginTurn(true); } }
+  else if (G.players.filter(q => !q.gone).length < 1) finishGame(); });
+NET.listen('lost', () => { toast('방장과 연결이 끊겼어요'); });
+NET.listen('fail', () => { if (document.body.dataset.screen !== 'play') onlineModal(); });
 
 /* ---------------- 입력 ---------------- */
-let drag = null;
+function act(c) { if (G.phase !== 'aim' || !myTurn() || G.charging) return;
+  if (c === 'left') G.pos = clamp(G.pos - 0.03, -HALF + 0.13, HALF - 0.13); if (c === 'right') G.pos = clamp(G.pos + 0.03, -HALF + 0.13, HALF - 0.13);
+  if (c === 'rotL') G.ang = clamp(G.ang - 0.004, -0.05, 0.05); if (c === 'rotR') G.ang = clamp(G.ang + 0.004, -0.05, 0.05);
+  G.ang = Math.round(G.ang * 1000) / 1000; G.ball.x = G.pos; }
+function startCharge() { if (G.phase !== 'aim' || !myTurn() || G.charging) return; SND.init(); G.charging = true; G.power = 0; G.chT0 = performance.now(); $('#throwBtn').classList.add('hold'); hint(''); }
+function updPower() { const ph = ((performance.now() - G.chT0) / 1050) % 2; G.power = ph < 1 ? ph : 2 - ph; }   // 1.05초에 가득 → 다시 내려감 (실제 시간 기준)
+function releaseCharge() { if (!G.charging) return; updPower(); G.charging = false; $('#throwBtn').classList.remove('hold'); if (G.power < 0.05) { setRing(0); $('#pwTxt').textContent = ''; return; }
+  const p = G.power; $('#pwTxt').textContent = Math.round(p * 100) + '%' + (p >= 0.75 && p <= 0.92 ? ' 좋아요!' : p > 0.92 ? ' 너무 셈!' : p < 0.6 ? ' 약해요' : ''); setTimeout(() => { if (!G.charging) { $('#pwTxt').textContent = ''; setRing(0); } }, 1500);
+  doThrow(throwParams(p)); }
+const RING_LEN = 2 * Math.PI * 54;
+function setRing(p) { $('#ringFill').style.strokeDasharray = `${RING_LEN * p} ${RING_LEN}`; }
+function setCurve(v) { if (G.phase !== 'aim' || !myTurn()) return; G.curve = v; setCurveUI(); SND.click(); }
 function bindInput() {
-  const cv = $('#gl');
-  cv.addEventListener('pointerdown', e => { SND.init(); if (G.phase !== 'aim') return; drag = { x: e.clientX, y: e.clientY, x0: e.clientX, t: performance.now(), mode: null, pts: [[e.clientX, e.clientY, performance.now()]] }; });
-  addEventListener('pointermove', e => { if (!drag || G.phase !== 'aim') return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.pts.push([e.clientX, e.clientY, performance.now()]); if (drag.pts.length > 12) drag.pts.shift();
-    if (!drag.mode && Math.hypot(e.clientX - drag.x0, e.clientY - (drag.pts[0][1])) > 12) drag.mode = Math.abs(e.clientX - drag.x0) > Math.abs(e.clientY - drag.pts[0][1]) * 1.3 ? 'move' : 'throw';
-    if (drag.mode === 'move') { G.pos = clamp(G.pos + dx / Math.min(innerWidth, 700) * 1.1, -HALF + 0.13, HALF - 0.13); G.ball.x = G.pos; }
-    drag.x = e.clientX; drag.y = e.clientY; });
-  addEventListener('pointerup', e => { if (!drag) return; const d = drag; drag = null; if (G.phase !== 'aim' || d.mode !== 'throw') return;
-    const p0 = d.pts[0], p1 = [e.clientX, e.clientY, performance.now()], dy = p0[1] - p1[1], dt = Math.max(30, p1[2] - p0[2]);
-    if (dy < 40) return;
-    const pxms = dy / dt, speed = 4.4 + clamp((pxms - 0.35) / 2.2, 0, 1) * 5.0, spin = clamp((p1[0] - p0[0]) / dy * 1.8, -1, 1);
-    throwBall(speed, spin); });
-  // 버튼 (누르고 있으면 계속)
-  let hold = null;
-  document.querySelectorAll('#ctrl button').forEach(b => { b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); SND.init(); act(b.dataset.c); clearInterval(hold); hold = setInterval(() => act(b.dataset.c), 90); }); });
-  addEventListener('pointerup', () => clearInterval(hold)); addEventListener('pointercancel', () => clearInterval(hold));
+  const z = $('#ringZone'); z.style.strokeDasharray = `${RING_LEN * 0.17} ${RING_LEN}`; z.style.strokeDashoffset = `${-RING_LEN * 0.75}`; setRing(0);
+  const tb = $('#throwBtn');
+  tb.addEventListener('pointerdown', e => { e.preventDefault(); try { tb.setPointerCapture(e.pointerId); } catch (_) {} startCharge(); });
+  tb.addEventListener('pointerup', releaseCharge); tb.addEventListener('pointercancel', releaseCharge); tb.addEventListener('lostpointercapture', releaseCharge);
+  tb.addEventListener('contextmenu', e => e.preventDefault());
+  let hold = null, holdT = null;
+  const stopHold = () => { clearInterval(hold); clearTimeout(holdT); };
+  document.querySelectorAll('#pad .ib').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); SND.init(); act(b.dataset.c); stopHold(); holdT = setTimeout(() => hold = setInterval(() => act(b.dataset.c), 60), 260); }));
+  ['pointerup', 'pointercancel', 'blur'].forEach(t => addEventListener(t, stopHold));
+  $('#curve').addEventListener('click', e => { const b = e.target.closest('[data-cv]'); if (b) setCurve(+b.dataset.cv); });
   const keys = {};
-  addEventListener('keydown', e => { if (keys[e.code]) return; keys[e.code] = true; SND.init();
-    if (G.phase !== 'aim') return;
-    if (e.code === 'ArrowLeft') act('left'); if (e.code === 'ArrowRight') act('right');
-    if (e.code === 'KeyA') act('rotL'); if (e.code === 'KeyD') act('rotR');
-    if (e.code === 'KeyQ') { G.spin = clamp(G.spin - 0.25, -1, 1); spinTag(); } if (e.code === 'KeyE') { G.spin = clamp(G.spin + 0.25, -1, 1); spinTag(); }
-    if (e.code === 'Space') { e.preventDefault(); G.charging = true; G.power = 0; G.chDir = 1; $('#power').style.display = 'block'; } });
-  addEventListener('keyup', e => { keys[e.code] = false; if (e.code === 'Space' && G.charging) { G.charging = false; $('#power').style.display = 'none'; throwBall(4.4 + G.power * 5.0, G.spin); } });
-  const repeat = () => { if (G.phase === 'aim') { if (keys.ArrowLeft) act('left'); if (keys.ArrowRight) act('right'); if (keys.KeyA) act('rotL'); if (keys.KeyD) act('rotR'); } };
-  setInterval(repeat, 90);
-  document.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a) return; SND.init(); SND.click(); const k = a.dataset.act;
-    if (k === 'play') { $('#modal').classList.remove('on'); startGame('game'); } else if (k === 'practice') { $('#modal').classList.remove('on'); startGame('practice'); }
-    else if (k === 'title') { $('#modal').classList.remove('on'); G.phase = 'title'; SND.rollStop(); show('title'); titleStat(); }
-    else if (k === 'hub') location.href = '../index.html'; else if (k === 'dex') dexModal(); else if (k === 'help') helpModal(); else if (k === 'opt') optModal();
+  addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if (e.code === 'Space') e.preventDefault(); if (keys[e.code]) return; keys[e.code] = true; SND.init();
+    if (e.code === 'Space') startCharge();
+    if (e.code === 'KeyQ') setCurve(clamp(G.curve - 0.5, -1, 1)); if (e.code === 'KeyE') setCurve(clamp(G.curve + 0.5, -1, 1));
+    if (e.code === 'Escape') $('#modal').classList.remove('on'); });
+  addEventListener('keyup', e => { keys[e.code] = false; if (e.code === 'Space') releaseCharge(); });
+  setInterval(() => { if (keys.ArrowLeft) act('left'); if (keys.ArrowRight) act('right'); if (keys.KeyA) act('rotL'); if (keys.KeyD) act('rotR'); }, 60);
+  document.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a || a.disabled) return; SND.init(); SND.click(); const k = a.dataset.act;
+    const me = (SAVE.nick || '나').slice(0, 8);
+    if (k === 'solo') startGame('solo', [{ name: me }]);
+    else if (k === 'practice') startGame('practice', [{ name: me }]);
+    else if (k === 'local') localModal();
+    else if (k === 'online') onlineModal();
+    else if (k === 'again') { if (G.mode === 'online') hostStart(); else startGame(G.mode, G.players.map(p => ({ name: p.name }))); }
+    else if (k === 'title') { if (NET.role) NET.leave(); G.phase = 'title'; G.mode = 'title'; SND.rollStop(); G.charging = false; show('title'); titleStat(); setScreen('BIO BOWL', '#3ee6c8'); }
+    else if (k === 'hub') { if (NET.role) NET.leave(); location.href = '../index.html'; }
+    else if (k === 'dex') dexModal(); else if (k === 'help') helpModal(); else if (k === 'opt') optModal();
     else if (k === 'close') $('#modal').classList.remove('on');
-    else if (k === 'resetRec') { if (confirm('기록을 지울까요?')) { SAVE = { best: 0, games: 0, strikes: 0 }; save(); titleStat(); $('#modal').classList.remove('on'); } } });
+    else if (k === 'netStart') hostStart();
+    else if (k === 'netLeave') { NET.leave(); $('#modal').classList.remove('on'); }
+  });
+  $('#modal').addEventListener('click', async e => {
+    const id = e.target.id; if (id !== 'onHost' && id !== 'onJoin') return;
+    const nick = ($('#onNick').value || '').trim().slice(0, 8) || '선수'; SAVE.nick = nick; save(); e.target.disabled = true;
+    if (id === 'onHost') { e.target.textContent = '방 만드는 중…'; await NET.host(nick); lobbyModal(); }
+    else { const code = $('#onCode').value; e.target.textContent = '연결 중…'; await NET.join(code, nick); if (NET.role) lobbyModal(); else { e.target.disabled = false; e.target.textContent = '코드로 참가'; } } });
   $('#gMenu').addEventListener('click', () => { SND.init(); $('#sheet').classList.toggle('on'); });
   $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') $('#sheet').classList.remove('on'); });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) SND.rollStop(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { SND.rollStop(); releaseCharge(); } });
 }
-function act(c) { if (G.phase !== 'aim') return;
-  if (c === 'left') G.pos = clamp(G.pos - 0.03, -HALF + 0.13, HALF - 0.13); if (c === 'right') G.pos = clamp(G.pos + 0.03, -HALF + 0.13, HALF - 0.13);
-  if (c === 'rotL') G.ang = clamp(G.ang - 0.006, -0.05, 0.05); if (c === 'rotR') G.ang = clamp(G.ang + 0.006, -0.05, 0.05);
-  G.ball.x = G.pos; }
-function spinTag() { const t = $('#spinTag'); t.style.display = 'block'; t.textContent = G.spin === 0 ? '회전 없음' : (G.spin < 0 ? '◀ 왼쪽으로 휨 ' : '오른쪽으로 휨 ▶ ') + Math.round(Math.abs(G.spin) * 100) + '%'; }
 function titleStat() { $('#tStat').textContent = SAVE.games ? `최고 ${SAVE.best}점 · ${SAVE.games}게임 · 스트라이크 ${SAVE.strikes}번` : '면역세포 볼링공으로 병원체 핀을 쓰러뜨려요!'; }
 
 /* ---------------- 메인 루프 ---------------- */
 let last = performance.now();
+function rollTick(dt) {
+  for (let i = 0, n = Math.round(dt / DT); i < n; i++) { stepPhys(); physEvents(); }
+  G.t += dt; handleEvents(); SND.rollVol(G.ball.done ? 0 : clamp(Math.hypot(G.ball.vx, G.ball.vz) / 9, 0.1, 0.6));
+  if (G.ball.done && !G.ball.doneT) G.ball.doneT = G.t;
+  if ((G.ball.done && settled() && G.t - G.ball.doneT > 0.8) || G.t > 12) {
+    G.phase = 'count';
+    setTimeout(() => { if (G.mode === 'online' && G.pendingRes) { const m = G.pendingRes; G.pendingRes = null; G.cur = m.cur; endRoll(m); } else finishRoll(); }, 350);
+  }
+  drawPinDia();
+}
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (G.phase === 'roll') {
-    for (let i = 0, n = Math.round(dt / DT); i < n; i++) stepPhys();
-    G.t += dt; handleEvents();
-    SND.rollVol(G.ball.done ? 0 : clamp(Math.hypot(G.ball.vx, G.ball.vz) / 9, 0.1, 0.6));
-    if (G.ball.done && !G.ball.doneT) G.ball.doneT = G.t;
-    if ((G.ball.done && settled() && G.t - G.ball.doneT > 0.8) || G.t > 12) { G.phase = 'count'; setTimeout(endRoll, 350); }
-    drawPinDia();
-  }
-  if (G.charging) { G.power += G.chDir * dt * 1.1; if (G.power > 1) { G.power = 1; G.chDir = -1; } if (G.power < 0) { G.power = 0; G.chDir = 1; } $('#power i').style.height = (G.power * 100) + '%'; }
+  const raw = (now - last) / 1000, dt = Math.min(0.05, raw); last = now;
+  if (G.phase === 'roll') rollTick(Math.min(0.1, raw));
+  if (G.charging) { updPower(); setRing(G.power); $('#pwTxt').textContent = Math.round(G.power * 100) + '%'; }
   if (G.ball) { syncBall(dt); syncPins(); }
-  R.aim.visible = G.phase === 'aim'; if (R.aim.visible) { R.aim.position.set(G.pos, 0, 0); R.aim.rotation.y = G.ang; }
-  stepFx(dt); updCam(dt);
-  // 본 화면
+  const aim = G.phase === 'aim' && myTurn() && document.body.dataset.screen === 'play';
+  R.aim.visible = aim; if (aim) { R.aim.position.set(G.pos, 0, 0); R.aim.rotation.y = G.ang; const s = 1 + Math.sin(now / 200) * 0.06; R.arrow.scale.set(0.75 * s, s, 1); }
+  predictPath(aim);
+  animArena(dt, now); stepFx(dt); updCam(dt);
   const w = innerWidth, h = innerHeight;
   R.r.setScissorTest(false); R.r.setViewport(0, 0, w, h); R.r.render(R.scene, R.cam);
-  // 핀 확대 화면 (조준할 때)
   const showPip = G.phase === 'aim' && document.body.dataset.screen === 'play';
   $('#pip').style.display = showPip ? 'block' : 'none';
   if (showPip) { const p = R.pip; R.r.setScissorTest(true); R.r.setScissor(p.x, h - p.y - p.h, p.w, p.h); R.r.setViewport(p.x, h - p.y - p.h, p.w, p.h); R.r.render(R.scene, R.pipCam); R.r.setScissorTest(false); }
 }
+// 탭이 가려져도 굴러가던 공은 끝까지 계산 (온라인에서 다른 사람이 기다리지 않게)
+let hidLast = 0;
+setInterval(() => { if (!document.hidden || G.phase !== 'roll') { hidLast = 0; return; } const now = performance.now(); if (hidLast) { let t = Math.min(2, (now - hidLast) / 1000); while (t > 0 && G.phase === 'roll') { rollTick(Math.min(0.1, t)); t -= 0.1; } } hidLast = now; }, 200);
 /* ---------------- 시작 ---------------- */
 try {
-  initGfx(); bindInput(); setupPins(false); buildPinMeshes(); rollBall(); resetBall(); titleStat(); show('title');
+  initGfx(); makeIcons(); bindInput();
+  resetPins(newLayout()); buildPins(); G.curBall = 'macro'; resetBall(); G.ball.x = 0; G.ball.z = HEAD_Z - 1.2; titleStat(); show('title');
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (G.phase === 'title') setScreen('BIO BOWL', '#3ee6c8'); });
   requestAnimationFrame(frame);
 } catch (e) { console.error(e); $('#err').textContent = '시작 오류: ' + e.message; $('#err').style.display = 'block'; }
-window.BB = { G, throwBall, startGame, scoreFrames, stepPhys, endRoll, R,
-  // 시험용: 화면 없이 한 번 던져서 쓰러진 핀 수 반환
-  sim(ball, pos, ang, speed, spin, layout) { const keep = G.phase; G.curBall = ball; setupPins(false); if (layout) { G.layout = layout; G.pins = PIN_POS.map((q, i) => mkPin(i, q)); } G.pos = pos; G.ang = ang; resetBall(); G.phase = 'aim'; throwBall(speed, spin); SND.rollStop();
-    let t = 0; while (t < 12) { stepPhys(); handleEvents(); t += DT; if (G.ball.done && settled()) break; } G.phase = keep; return G.pins.filter(q => q.down || q.gone).length; } };
+window.BB = { G, NET, R, rollTick, hostStart, doThrow, throwParams, startGame, scoreFrames, frameState, stepPhys, applySetup, nextPlayer,
+  sim(ball, pos, ang, speed, spin, layout) { const mode = G.mode; G.mode = 'sim'; G.curBall = ball; resetPins(layout || newLayout()); G.pos = pos; G.ang = ang; resetBall(); G.phase = 'aim'; doThrow({ pos, ang, speed, spin, seed: Math.floor(Math.random() * 1e9) }, true); SND.rollStop();
+    let t = 0; while (t < 12) { stepPhys(); physEvents(); t += DT; if (G.ball.done && settled()) break; } G.events.length = 0; G.phase = 'count'; G.mode = mode; return G.pins.filter(q => q.down || q.gone).length; } };
 </script>
 <script src="../goal.js"></script>
 <script src="../ilog.js"></script>
