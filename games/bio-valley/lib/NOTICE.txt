@@ -1,0 +1,3 @@
+paperkit-2d.js, paperkit-3d.js, paper-motion.js, paper-sound.js
+from the "papercraft" skill by xikhar (MIT License), copied unchanged.
+three.js r187 (MIT License) lives in ../../../vendor/three-r187/.
