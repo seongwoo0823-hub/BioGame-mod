@@ -220,6 +220,7 @@ const PLAYER_COL = ['#ffd23a', '#3ee6c8', '#ff5aa8', '#8a8aff'];
 
 /* ---------------- 면역세포 볼링공 8종 ---------------- */
 const BALLS = {
+  plain:  { name: '일반', col: '#2c3c9c', col2: '#7a4ad8', r: 0.109, m: 7.2, plain: true, stat: [3, 3, 3], tag: '기본', desc: '특수 능력이 없는 보통 볼링공. 무게가 안정적이라 똑바로 잘 굴러가요.', fact: '실제 볼링공은 손가락 구멍이 3개 있고, 무게는 보통 2.7~7.3kg이에요.' },
   neutro: { name: '호중구', col: '#5cc8ff', col2: '#3a7ae0', r: 0.109, m: 7, speedMul: 1.15, stat: [5, 3, 3], tag: '스피드', desc: '가장 빠른 공. 던지는 속도가 15% 빨라요.', fact: '백혈구의 절반 이상을 차지하고 감염 부위에 가장 먼저 도착해요.' },
   macro:  { name: '대식세포', col: '#b07aff', col2: '#5a2aa8', r: 0.13, m: 11, speedMul: 0.92, stat: [2, 5, 2], tag: '파워', desc: '크고 무거운 공. 부딪힌 핀은 무조건 삼켜서 쓰러뜨려요.', fact: '병원체를 통째로 삼키는 거대한 식세포예요.' },
   nk:     { name: 'NK세포', col: '#8a5cff', col2: '#ffe14a', r: 0.109, m: 7, stat: [4, 3, 3], tag: '번개', desc: '첫 핀에 닿으면 가장 가까운 핀 2개에 번개를 쏴요.', fact: '배우지 않아도 이상한 세포를 바로 처치하는 자연살해세포예요.' },
@@ -232,6 +233,7 @@ const BALLS = {
 const BALL_KEYS = Object.keys(BALLS);
 /* ---------------- 병원체 핀 6종 ---------------- */
 const PINS = {
+  plain:  { name: '일반', col: '#f7f5ef', col2: '#d8203a', m: 1.55, th: 0.72, plain: true, desc: '특수 능력이 없는 보통 볼링핀이에요.', fact: '볼링핀은 단단한 단풍나무로 만들고, 높이는 약 38cm예요.' },
   cold:   { name: '감기 바이러스', col: '#6ee04a', col2: '#ff4d5e', m: 1.5, th: 0.7, desc: '평범한 핀. 머리의 돌기 왕관이 특징이에요.', fact: '감기는 200종이 넘는 바이러스가 일으켜요.' },
   tb:     { name: '결핵균', col: '#d8c09a', col2: '#fff4dc', m: 2.6, th: 1.15, desc: '왁스 갑옷 때문에 무겁고 잘 안 쓰러져요.', fact: '결핵균은 기름진 세포벽으로 자신을 보호해요.' },
   capsid: { name: '캡시드 바이러스', col: '#9aa4c4', col2: '#e0e6ff', m: 1.6, th: 0.75, armor: true, desc: '단백질 투구를 써서 첫 충돌은 투구만 깨져요.', fact: '바이러스의 유전 물질은 캡시드라는 단백질 껍질에 싸여 있어요.' },
@@ -240,6 +242,9 @@ const PINS = {
   hiv:    { name: 'HIV', col: '#b8b0e0', col2: '#ffd23a', m: 1.5, th: 0.7, nullify: true, desc: '공에 닿으면 공의 특수 능력을 꺼 버려요.', fact: 'HIV는 면역세포를 공격해 면역계를 약하게 만들어요.' },
 };
 const PIN_KEYS = Object.keys(PINS);
+const SP_BALLS = BALL_KEYS.filter(k => !BALLS[k].plain), SP_PINS = PIN_KEYS.filter(k => !PINS[k].plain);
+// 일반 공·핀이 더 자주 나와요 (공 60% · 핀 62%)
+const pickBall = () => Math.random() < 0.6 ? 'plain' : pickR(SP_BALLS);
 
 /* ---------------- 저장 ---------------- */
 let SAVE = { best: 0, games: 0, strikes: 0, nick: '' };
@@ -316,7 +321,7 @@ function frameState(rolls) {
 const G = { mode: 'solo', players: [], cur: 0, phase: 'title', pins: [], ball: null, pos: 0, ang: 0, curve: 0, curBall: 'neutro', layout: [], t: 0, gutter: false, power: 0, charging: false, chDir: 1, events: [], practice: { roll: 0 }, pendingRes: null, waitRes: false };
 const meIdx = () => G.mode === 'online' ? G.players.findIndex(p => p.id === NET.myId) : G.cur;
 const myTurn = () => G.mode !== 'online' || (G.players[G.cur] && G.players[G.cur].id === NET.myId);
-function newLayout() { return PIN_POS.map(() => Math.random() < 0.38 ? 'cold' : pickR(PIN_KEYS)); }
+function newLayout() { return PIN_POS.map(() => Math.random() < 0.62 ? 'plain' : pickR(SP_PINS)); }
 function mkPin(i, type) { const p = PIN_POS[i]; return { i, type, x: p[0], z: p[1], vx: 0, vz: 0, down: false, gone: false, armor: !!PINS[type].armor, fallT: 0, tdir: 0, wob: 0, spin: 0, counted: false, opson: false }; }
 function resetPins(layout) { G.layout = layout; G.pins = layout.map((t, i) => mkPin(i, t)); }
 function keepPins() { G.pins.forEach(p => { if (p.down) p.gone = true; else { p.x = PIN_POS[p.i][0]; p.z = PIN_POS[p.i][1]; p.vx = p.vz = 0; p.wob = 0; p.opson = false; } }); }
@@ -330,8 +335,8 @@ function startGame(mode, players) {
 // 차례 시작: 공·핀 정하기 (온라인에서는 던지는 사람 기기가 정해서 알려 줌)
 function beginTurn(reset) {
   G.phase = 'wait'; updTurnUI();
-  if (G.mode === 'online') { if (myTurn()) { const setup = { t: 'setup', ball: pickR(BALL_KEYS), layout: reset ? newLayout() : null, cur: G.cur }; NET.send(setup); applySetup(setup); } else showWait(`${G.players[G.cur].name}의 차례를 기다리는 중…`); return; }
-  applySetup({ ball: pickR(BALL_KEYS), layout: reset ? newLayout() : null });
+  if (G.mode === 'online') { if (myTurn()) { const setup = { t: 'setup', ball: pickBall(), layout: reset ? newLayout() : null, cur: G.cur }; NET.send(setup); applySetup(setup); } else showWait(`${G.players[G.cur].name}의 차례를 기다리는 중…`); return; }
+  applySetup({ ball: pickBall(), layout: reset ? newLayout() : null });
 }
 function applySetup(s) {
   G.curBall = s.ball;
@@ -635,9 +640,9 @@ function mouth(r, kind) {
 }
 function pinMesh(type, simple) {
   const d = PINS[type], grp = new THREE.Group(), body = new THREE.Group(); grp.add(body);
-  const pm = new THREE.Mesh(pinGeo(type), toon(d.col)); pm.castShadow = true; body.add(outline(pm, 1.07));
-  for (const y of [0.262, 0.282]) { const st = new THREE.Mesh(new THREE.TorusGeometry(profR(type, y) + 0.002, 0.006, 6, 18), toon('#ff3b4a')); st.rotation.x = Math.PI / 2; st.position.y = y; body.add(st); }
-  if (simple) return grp;
+  const pm = new THREE.Mesh(pinGeo(type), d.plain ? new THREE.MeshPhongMaterial({ color: d.col, shininess: 90, specular: 0x666666 }) : toon(d.col)); pm.castShadow = true; body.add(outline(pm, 1.07));
+  for (const y of (d.plain ? [0.258, 0.286] : [0.262, 0.282])) { const st = new THREE.Mesh(new THREE.TorusGeometry(profR(type, y) + 0.002, d.plain ? 0.0075 : 0.006, 6, 18), d.plain ? new THREE.MeshPhongMaterial({ color: d.col2, shininess: 80 }) : toon('#ff3b4a')); st.rotation.x = Math.PI / 2; st.position.y = y; body.add(st); }
+  if (simple || d.plain) return grp;
   const fy = 0.15, fz = profR(type, fy) - 0.004, look = type === 'ecoli' ? 1 : 0;
   for (const sx of [-1, 1]) { const e = eye(type === 'hiv' ? 0.017 : 0.015, look); e.position.set(sx * 0.021, fy + 0.012, fz); body.add(e);
     if (type !== 'spore') { const b = brow(0.022, sx * (type === 'tb' ? 0.0 : -0.45)); b.position.set(sx * 0.021, fy + 0.038, fz + 0.002); body.add(b); } }
@@ -662,8 +667,23 @@ function buildPins() {
   syncPins();
 }
 /* ---------------- 면역세포 공 캐릭터 ---------------- */
+let MARBLE = null;
+function marbleTex() { if (MARBLE) return MARBLE; const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d'), rr = mulberry32(42);
+  g.fillStyle = '#22307e'; g.fillRect(0, 0, 256, 128);
+  for (let i = 0; i < 26; i++) { g.strokeStyle = ['rgba(120,80,220,.55)', 'rgba(60,140,255,.45)', 'rgba(255,255,255,.18)', 'rgba(20,20,60,.6)'][i % 4]; g.lineWidth = 3 + rr() * 9; g.beginPath(); let x = rr() * 256, y = rr() * 128; g.moveTo(x, y);
+    for (let k = 0; k < 5; k++) { const x2 = x + (rr() - 0.3) * 120, y2 = y + (rr() - 0.5) * 60; g.quadraticCurveTo((x + x2) / 2 + (rr() - 0.5) * 50, (y + y2) / 2 + (rr() - 0.5) * 40, x2, y2); x = x2; y = y2; } g.stroke(); }
+  MARBLE = new THREE.CanvasTexture(c); MARBLE.wrapS = THREE.RepeatWrapping; if (THREE.sRGBEncoding) MARBLE.encoding = THREE.sRGBEncoding; return MARBLE; }
+function plainBallMesh(d) {
+  const r = d.r, grp = new THREE.Group(), body = new THREE.Group(); grp.add(body);
+  const sph = new THREE.Mesh(new THREE.SphereGeometry(r, 36, 24), new THREE.MeshPhongMaterial({ map: marbleTex(), shininess: 110, specular: 0x8a8aa8 })); sph.castShadow = true; body.add(outline(sph, 1.04));
+  // 손가락 구멍 3개 (앞쪽 위)
+  const hm = new THREE.MeshBasicMaterial({ color: '#07081a' });
+  for (const [a, b, s] of [[-0.32, 0.42, 1], [0.32, 0.42, 1], [0, -0.05, 1.18]]) { const hole = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.13 * s, r * 0.13 * s, r * 0.06, 14), hm); const dir = new THREE.Vector3(a, b, 0.86).normalize(); hole.position.copy(dir.clone().multiplyScalar(r * 0.985)); hole.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); body.add(hole); }
+  grp.userData.body = body; return grp;
+}
 function ballMesh(k) {
   const d = BALLS[k], r = d.r, grp = new THREE.Group(), body = new THREE.Group(); grp.add(body);
+  if (d.plain) return plainBallMesh(d);
   const sph = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 22), toon(d.col)); sph.castShadow = true; body.add(outline(sph, 1.05));
   const hl = new THREE.Mesh(new THREE.SphereGeometry(r * 0.22, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.75 })); hl.position.set(-r * 0.45, r * 0.55, r * 0.55); hl.scale.set(1, 0.6, 0.4); body.add(hl);
   for (let i = 0; i < 3; i++) { const n = new THREE.Mesh(new THREE.SphereGeometry(r * 0.32, 10, 8), toon(d.col2)); const a = 2.6 + i * 0.5; n.position.set(Math.sin(a) * r * 0.82, (i - 1) * r * 0.35, Math.cos(a) * r * 0.82); n.scale.set(1, 1, 0.45); n.lookAt(0, 0, 0); body.add(n); }
