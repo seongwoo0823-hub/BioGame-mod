@@ -383,6 +383,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     ['bio-pyramid','바이오 피라미드 타이쿤','양분을 모아 생명의 피라미드 쌓기 3D','casual','','타이쿤 방치 피라미드 펫 뽑기 양분 bio pyramid'],
     ['cell-raid','생물의 번제','인체 6구역 방 탐험 로그라이크 슈터','action','','생물의 번제 세포 레이드 로그라이크 슈터 병원체 보스 인체 cell raid'],
     ['lab-forge','실험기구 강화하기','실험기구 30단계 강화·5개 광산 채굴·교수 전직 시뮬레이션','casual','','강화 채굴 실험기구 석사 뽑기 슬롯 대장간 시뮬레이션 lab forge'],
+    ['bio-bowling','바이오 볼링','면역세포 볼링공으로 병원체 핀 쓰러뜨리기 3D · 힘 게이지 투구 · 같이 하기·온라인 4명','online casual','4','볼링 스트라이크 면역세포 병원체 3D bio bowling'],
     ['immune-line','면역 방어선','면역세포를 배치해 병원체를 막는 복셀 레인 디펜스 · 5월드 25스테이지 · 무한 모드','casual','','디펜스 면역 백혈구 바이러스 세균 타워 immune line'],
   ];
   const ic=n=>window.BioIcon?BioIcon.svg(n):'';
@@ -436,6 +437,7 @@ footer{margin-top:28px;text-align:center;font-size:12.5px;color:var(--dim)}
     'cell-brawl'(){const t=get('cellbrawl:trophies');if(!t||typeof t!=='object')return '';const v=Object.values(t).filter(x=>typeof x==='number'&&x>0);
       return v.length?`트로피 <b>${v.reduce((a,b)=>a+b,0)}</b>`:'';},
     'lab-forge'(){const s=get('labForgeSave');return s&&s.best>1?`최고 <b>+${s.best}</b> 강화`:'';},
+    'bio-bowling'(){const s=get('bioBowling2');return s&&s.games?`최고 <b>${s.best}</b>점 · 스트라이크 <b>${s.strikes||0}</b>번`:'';},
     'immune-line'(){const s=get('immuneLine1');if(!s||!s.cleared)return '';const n=Object.keys(s.cleared).length;return n?`클리어 <b>${n}</b>/25`:'';},
     'only-up'(){const ss=['','_blood','_plant','_abyss','_fall'].map(k=>get('onlyupBioStats'+k)).filter(x=>x&&x.clears);if(ss.length){const c=ss.reduce((a,x)=>a+x.clears,0),b=Math.min(...ss.map(x=>x.best>0?x.best:1e9));return `탈출 <b>${c}</b>회 · <b>${ss.length}</b>/5맵`+(b<1e9?` · 최고 <b>${Math.floor(b/60)}분 ${(b%60).toFixed(1)}초</b>`:'');}const p=get('onlyupBio');return p&&p.cp>0?`<b>${p.cp+1}</b>/7 구간`:'';},
     'bio-strike'(){const s=get('bioStrike');if(!s||typeof s!=='object')return '';const out=[];if(s.cleared)out.push(`스토리 <b>${s.cleared}</b>/5장`);

@@ -15,6 +15,7 @@
 | 바이오 타워 BIO TOWER | 물리 탑 쌓기 대결 (조각 48종 · 멈추면 고정 · 온라인 최대 4명 · CPU · 한 기기) | `games/bio-tower.html` |
 | 바이오 피라미드 타이쿤 | 3D 생명과학 타이쿤 (펫 뽑기 · 온천 · 엔딩) | `games/bio-pyramid.html` |
 | 실험기구 강화하기 | 3D 복셀 실험기구 30단계 강화·채굴 시뮬레이션 (광산 5 · 석사 펫 7 · 지원금 슬롯 · 보호권 · 자동 강화) | `games/lab-forge.html` |
+| 바이오 볼링 BIO BOWLING | 면역세포 볼링공(8종)으로 병원체 핀(6종)을 쓰러뜨리는 3D 볼링 (화살표 조준 · 힘 게이지 · 휘기 · 한 기기 2~4명 · 온라인 4명) | `games/bio-bowling.html` |
 | 면역 방어선 IMMUNE LINE | 면역세포를 배치해 병원체를 막는 복셀 레인 디펜스 (면역세포 16 · 병원체 14 · 보스 5 · 5월드 25스테이지 · 무한 모드 · 설계서 docs/immune-line-prompt.md) | `games/immune-line.html` |
 | 생물의 번제 BIO OFFERING | 방 탐험 로그라이크 슈터 (6구역 · 병원체 40 · 보스 21 · 아이템 138) | `games/cell-raid.html` |
 
