@@ -19,6 +19,7 @@
     'bio-tower':     {tpl: '연속 {t}승 하기', t: 2, unit: '연승'},
     'bio-pyramid':   {tpl: '피라미드 {t}단계까지 짓기', t: 3, unit: '단계'},
     'cell-raid':     {tpl: '{t}구역까지 도달하기', t: 3, unit: '구역', pre: true},
+    'bio-omok':      {tpl: 'AI {t}단계(1 쉬움·2 보통·3 어려움) 이기기', t: 2, unit: '단계'},
     'bio-bowling':   {tpl: '{t}점 이상 내기', t: 120, unit: '점'},
     'immune-line':   {tpl: '스테이지 {t}개 클리어하기', t: 5, unit: '개'},
     'lab-forge':     {tpl: '실험기구를 +{t}까지 강화하기', t: 10, unit: '단계', pre: true},
