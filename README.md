@@ -17,6 +17,7 @@
 | 실험기구 강화하기 | 3D 복셀 실험기구 30단계 강화·채굴 시뮬레이션 (광산 5 · 석사 펫 7 · 지원금 슬롯 · 보호권 · 자동 강화) | `games/lab-forge.html` |
 | 바이오 오목 BIO OMOK | 면역 vs 병원체 진영 오목 (진영별 특수 돌 5개 · 짝꿍 능력 밸런스 · AI 3단계 · 같이 하기 · 온라인 1:1 · 생각 시간 1~5분) | `games/bio-omok.html` |
 | 바이오 볼링 BIO BOWLING | 면역세포 볼링공(8종)으로 병원체 핀(6종)을 쓰러뜨리는 3D 볼링 (화살표 조준 · 힘 게이지 · 휘기 · 한 기기 2~4명 · 온라인 4명) | `games/bio-bowling.html` |
+| 바이오 포격전 BIO BARRAGE | 면역팀 vs 병원체팀 턴제 포격전 (옆 시점 3D · 부서지는 지형 · 무기 16종 · 바람 · AI 3단계 · 같이 하기 · 온라인 4명) | `games/bio-barrage.html` |
 | 면역 방어선 IMMUNE LINE | 면역세포를 배치해 병원체를 막는 복셀 레인 디펜스 (면역세포 16 · 병원체 14 · 보스 5 · 5월드 25스테이지 · 무한 모드 · 설계서 docs/immune-line-prompt.md) | `games/immune-line.html` |
 | 생물의 번제 BIO OFFERING | 방 탐험 로그라이크 슈터 (6구역 · 병원체 40 · 보스 21 · 아이템 138) | `games/cell-raid.html` |
 
