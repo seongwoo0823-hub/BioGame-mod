@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>바이오 오목</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#fff;--panel:rgba(18,16,48,.88);--panel2:rgba(255,255,255,.08);--line:rgba(255,255,255,.14);--acc:#ffd23a;--acc2:#3ee6c8;--imm:#3ec8ff;--pat:#ff4d8a;
+  --sat:env(safe-area-inset-top,0px);--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);--sab:env(safe-area-inset-bottom,0px);
+  --fd:'Black Han Sans','Noto Sans KR',system-ui,sans-serif;--fb:'Noto Sans KR',system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#140f32;color:var(--ink);font-family:var(--fb);word-break:keep-all;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.fd{font-family:var(--fd);font-weight:400}
+.gb{position:relative;border-radius:16px;padding:12px 22px;min-height:50px;font-family:var(--fd);font-size:19px;color:#fff;background:linear-gradient(180deg,#5b5ce8,#3a33b8);box-shadow:inset 0 -5px 0 rgba(0,0,0,.28),inset 0 2px 0 rgba(255,255,255,.25),0 4px 0 #1c1458;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.gb:active{transform:translateY(3px);box-shadow:inset 0 -2px 0 rgba(0,0,0,.28),0 1px 0 #1c1458}
+.gb.y{background:linear-gradient(180deg,#ffe25a,#ffb21a);color:#3a2200;text-shadow:0 1px 0 rgba(255,255,255,.5);box-shadow:inset 0 -5px 0 rgba(160,80,0,.45),inset 0 2px 0 rgba(255,255,255,.6),0 4px 0 #8a4a00}
+.gb.g{background:linear-gradient(180deg,#5ff0c8,#18b890);box-shadow:inset 0 -5px 0 rgba(0,80,60,.45),inset 0 2px 0 rgba(255,255,255,.4),0 4px 0 #0a5a48}
+.gb.d{background:linear-gradient(180deg,#3a3570,#26214e);box-shadow:inset 0 -4px 0 rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.12),0 3px 0 #120e30;font-size:16px}
+.gb small{font-size:12px;font-family:var(--fb);font-weight:700;opacity:.85}
+.gb:disabled{filter:grayscale(.8);opacity:.5}
+#gMenu{position:fixed;z-index:30;top:calc(10px + var(--sat));left:calc(10px + var(--sal));width:46px;height:46px;border-radius:15px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center}
+#gMenu svg{width:22px;height:22px;stroke:#fff;stroke-width:2.6;fill:none;stroke-linecap:round}
+#sheet{position:fixed;inset:0;z-index:40;display:none;background:rgba(8,6,24,.5)}#sheet.on{display:block}
+#sheet .sh{position:absolute;top:calc(64px + var(--sat));left:calc(10px + var(--sal));width:min(250px,calc(100vw - 20px));background:#1d1946;border:1px solid var(--line);border-radius:18px;padding:8px;display:flex;flex-direction:column;gap:2px;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+#sheet button{background:transparent;text-align:left;padding:13px 14px;border-radius:12px;font-weight:700;font-size:16px}#sheet button:hover{background:rgba(255,255,255,.08)}
+body:not([data-screen=play]) #sheet [data-act=resign]{display:none}
+.scr{position:fixed;inset:0;z-index:10;display:none}.scr.on{display:flex}
+#title{flex-direction:column;align-items:center;justify-content:flex-end;padding:0 16px calc(26px + var(--sab));background:linear-gradient(180deg,rgba(20,15,50,0) 30%,rgba(20,15,50,.88) 80%)}
+.logo{text-align:center;margin-bottom:8px;filter:drop-shadow(0 8px 0 rgba(0,0,0,.25))}
+.logo .k{font-family:var(--fd);font-size:clamp(54px,11vw,118px);line-height:.95;color:#fff;-webkit-text-stroke:3px #2a1270;paint-order:stroke;text-shadow:0 6px 0 #2a1270,0 0 30px rgba(62,200,255,.45)}
+.logo .k b{font-weight:400;color:var(--pat)}
+.logo .e{font-family:var(--fd);letter-spacing:.32em;color:var(--acc2);font-size:clamp(13px,2.2vw,20px);margin-top:6px;text-shadow:0 2px 0 #0a2a40}
+#tStat{font-weight:700;margin:4px 0 16px;opacity:.9;text-align:center;font-size:14px}
+.tmenu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:min(560px,100%)}
+.tmenu .wide{grid-column:span 2}
+.tsub{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.ov{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(8,6,24,.6);padding:12px}.ov.on{display:flex}
+.box{width:min(500px,100%);max-height:100%;overflow:auto;background:linear-gradient(180deg,#25205a,#1a1644);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.box.wide{width:min(920px,100%)}
+.box h2{margin:0 0 12px;font-family:var(--fd);font-weight:400;font-size:30px}
+.box h3{margin:16px 0 8px;font-size:15px;color:var(--acc2);letter-spacing:.04em}
+.box p{line-height:1.65;font-size:14px;margin:8px 0}
+.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+.fld{display:flex;flex-direction:column;gap:6px;margin:10px 0}.fld>label,.lab2{font-size:13px;font-weight:700;opacity:.85}
+.fld input{font:700 18px var(--fb);padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:rgba(0,0,0,.25);color:#fff;outline:none;user-select:text;-webkit-user-select:text}
+.fld input:focus{border-color:var(--acc2)}
+#onCode{text-transform:uppercase;letter-spacing:.3em;text-align:center}
+.seg{display:flex;background:rgba(0,0,0,.25);border-radius:12px;padding:4px;gap:4px}.seg button{flex:1;background:transparent;border-radius:9px;padding:9px 4px;font-weight:900;font-size:14px}.seg button.on{background:var(--acc2);color:#063a30}
+.facs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fac{background:var(--panel2);border:3px solid transparent;border-radius:18px;padding:12px 8px;text-align:center;font-weight:900}
+.fac img{width:84px;height:84px;display:block;margin:0 auto 4px}
+.fac b{display:block;font-family:var(--fd);font-weight:400;font-size:22px}.fac small{display:block;font-size:11.5px;opacity:.8;line-height:1.4;margin-top:2px}
+.fac.on.imm{border-color:var(--imm);background:rgba(62,200,255,.14)}.fac.on.pat{border-color:var(--pat);background:rgba(255,77,138,.14)}
+.fac .mini{display:flex;justify-content:center;gap:2px;margin-top:6px}.fac .mini img{width:26px;height:26px;margin:0}
+.plist{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.pl{display:flex;align-items:center;gap:10px;background:var(--panel2);border-radius:12px;padding:8px 12px;font-weight:700}
+.pl i{width:14px;height:14px;border-radius:50%;flex:none}.pl small{margin-left:auto;opacity:.75;font-size:12px}
+.code{font-family:var(--fd);font-size:44px;letter-spacing:.25em;text-align:center;color:var(--acc);margin:6px 0}
+.note{font-size:12px!important;opacity:.75}
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.dx{display:flex;gap:12px;align-items:flex-start;background:var(--panel2);border-radius:16px;padding:10px}
+.dx img{flex:none;width:66px;height:66px;border-radius:12px;background:radial-gradient(circle at 50% 40%,#3c3680,#1d1946)}
+.dx b{display:block;font-size:16px;font-family:var(--fd);font-weight:400}.dx small{display:block;font-size:12.5px;line-height:1.45;opacity:.92;margin-top:2px}.dx .f{opacity:.6}
+.tg{display:inline-block;font-size:11px;font-weight:900;border-radius:6px;padding:1px 6px;color:#1a1040;margin-right:4px;vertical-align:2px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;font-weight:700}.row input[type=range]{width:55%;accent-color:var(--acc2)}
+table.bal{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}table.bal td,table.bal th{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left}table.bal th{color:var(--acc2)}
+/* 대전 HUD */
+#hud{position:fixed;inset:0;z-index:6;pointer-events:none;display:none}#hud.on{display:block}
+#hud .pe,#hud button{pointer-events:auto}
+.glass{background:var(--panel);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(8px);box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.pc{position:absolute;padding:10px;display:flex;flex-direction:column;gap:8px;transition:box-shadow .2s,border-color .2s}
+.pc.turn{border-color:var(--fc);box-shadow:0 0 0 3px var(--fc),0 0 26px var(--fc)}
+.ph{display:flex;align-items:center;gap:8px;min-width:0}
+.ph img{width:44px;height:44px;flex:none;border-radius:12px;background:rgba(255,255,255,.08)}
+.ph .nm{min-width:0;flex:1}.ph b{display:block;font-family:var(--fd);font-weight:400;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ph small{display:block;font-size:11.5px;font-weight:900;color:var(--fc)}
+.clk{font-family:var(--fd);font-size:26px;font-variant-numeric:tabular-nums;background:rgba(0,0,0,.35);border-radius:10px;padding:2px 10px;min-width:82px;text-align:center}
+.clk.low{color:#ff6a7a;animation:blink 1s infinite}@keyframes blink{50%{opacity:.55}}
+.tray{display:flex;flex-direction:column;gap:5px}
+.sp{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:2px solid transparent;border-radius:12px;padding:4px 8px 4px 4px;text-align:left;font-weight:900;font-size:13px;position:relative}
+.sp img{width:34px;height:34px;flex:none}
+.sp .t{display:flex;flex-direction:column;line-height:1.15}.sp .t small{font-size:10.5px;opacity:.75;font-weight:700}
+.sp.sel{border-color:var(--acc);background:rgba(255,210,58,.18)}
+.sp.used{opacity:.32;filter:grayscale(1)}.sp.used::after{content:'사용함';position:absolute;right:8px;font-size:10px;font-weight:900}
+.sp.lock::after{content:attr(data-lock);position:absolute;right:6px;top:4px;font-size:9.5px;font-weight:900;background:rgba(0,0,0,.55);padding:1px 5px;border-radius:6px}
+.sp:disabled{cursor:default}
+#spInfo{position:absolute;left:50%;transform:translateX(-50%);padding:10px 12px 10px 14px;display:none;align-items:center;gap:10px;max-width:min(560px,calc(100% - 20px));width:max-content}
+#spInfo b{font-family:var(--fd);font-weight:400;font-size:16px;color:var(--acc)}#spInfo span{font-size:12.5px;font-weight:700;line-height:1.4}
+#spInfo button{flex:none}
+.mini-b{background:rgba(255,255,255,.12);border-radius:10px;padding:8px 12px;font-weight:900;font-size:13px}
+#confirm{position:absolute;left:50%;transform:translateX(-50%);display:none;gap:8px}
+#wait{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:12px 20px;font-weight:900;display:none;white-space:nowrap}
+#banner{position:fixed;z-index:9;left:50%;top:40%;transform:translate(-50%,-50%);font-family:var(--fd);font-size:clamp(40px,9vw,100px);opacity:0;pointer-events:none;white-space:nowrap;-webkit-text-stroke:3px #2a1270;paint-order:stroke;text-shadow:0 7px 0 #2a1270}
+#banner.go{animation:ban 1.8s}@keyframes ban{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}14%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}24%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-60%)}}
+.pop{position:fixed;z-index:8;font-family:var(--fd);font-size:20px;pointer-events:none;transform:translate(-50%,-50%);-webkit-text-stroke:2px #1a1040;paint-order:stroke;animation:popup 1.3s forwards;white-space:nowrap}@keyframes popup{20%{transform:translate(-50%,-50%) scale(1.15)}to{opacity:0;margin-top:-46px}}
+#toast{position:fixed;z-index:22;left:50%;top:calc(70px + var(--sat));transform:translateX(-50%);padding:10px 16px;font-weight:700;display:none;max-width:calc(100% - 20px)}
+#err{position:fixed;z-index:99;left:10px;right:10px;bottom:10px;background:#c83a4a;padding:10px;border-radius:10px;display:none}
+/* 가로: 왼쪽·오른쪽 카드 */
+html:not(.portrait) .pc{top:calc(66px + var(--sat));bottom:calc(10px + var(--sab));width:206px;overflow:auto;scrollbar-width:none}
+html:not(.portrait) .pc.L{left:calc(10px + var(--sal))}html:not(.portrait) .pc.R{right:calc(10px + var(--sar))}
+html:not(.portrait) .pc.R{top:calc(10px + var(--sat))}
+html.short .pc{width:168px;padding:7px;gap:5px}html.short .ph img{width:34px;height:34px}html.short .ph b{font-size:15px}html.short .clk{font-size:21px;min-width:66px}
+html.short .sp{padding:2px 6px 2px 2px;font-size:12px}html.short .sp img{width:28px;height:28px}html.short .sp .t small{display:none}html.short .tray{gap:3px}
+/* 세로: 위·아래 카드 */
+html.portrait .pc{left:calc(8px + var(--sal));right:calc(8px + var(--sar));padding:8px}
+html.portrait .pc.R{top:calc(62px + var(--sat))}html.portrait .pc.L{bottom:calc(8px + var(--sab))}
+html.portrait .pc .tray{flex-direction:row;gap:4px}
+html.portrait .sp{flex:1;flex-direction:column;gap:2px;padding:4px 2px;text-align:center;font-size:11px;min-width:0}
+html.portrait .sp .t small{display:none}html.portrait .sp img{width:32px;height:32px}
+html.portrait .sp .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+html.portrait .sp.used::after{right:auto;left:50%;transform:translateX(-50%);top:14px;background:rgba(0,0,0,.6);padding:1px 4px;border-radius:5px}
+html.portrait .sp.lock::after{right:2px;top:2px}
+html.portrait .pc.R .sp{padding:2px}html.portrait .pc.R .sp img{width:24px;height:24px}html.portrait .pc.R .sp .t{display:none}
+html.portrait .pc.R .ph img{width:36px;height:36px}html.portrait .pc.R{gap:5px}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<button id="gMenu" aria-label="메뉴"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+<div id="sheet"><div class="sh">
+  <button data-act="hub">게임 목록으로</button><button data-act="title">메인 화면</button><button data-act="resign">기권하기</button><button data-act="dex">도감</button><button data-act="help">게임 방법</button><button data-act="opt">설정</button>
+</div></div>
+
+<section id="title" class="scr on">
+  <div class="logo"><div class="k">바이오 <b>오목</b></div><div class="e">IMMUNE vs PATHOGEN</div></div>
+  <div id="tStat"></div>
+  <div class="tmenu">
+    <button class="gb y wide" data-act="solo">혼자 하기<br><small>AI와 대결 · 쉬움 / 보통 / 어려움</small></button>
+    <button class="gb" data-act="local">같이 하기<br><small>한 기기 2명</small></button>
+    <button class="gb g" data-act="online">온라인 대전<br><small>방 코드로 1:1</small></button>
+  </div>
+  <div class="tsub"><button class="gb d" data-act="dex">도감</button><button class="gb d" data-act="help">게임 방법</button><button class="gb d" data-act="hub">게임 목록</button></div>
+</section>
+
+<div id="hud">
+  <div id="card0" class="pc glass"></div>
+  <div id="card1" class="pc glass"></div>
+  <div id="spInfo" class="glass"><div><b id="spName"></b><br><span id="spDesc"></span></div><button class="mini-b" id="spCancel">취소</button></div>
+  <div id="confirm"><button class="gb y" id="cfOk">여기에 두기</button><button class="gb d" id="cfNo">취소</button></div>
+  <div id="wait" class="glass"></div>
+</div>
+<div id="banner"></div>
+<div id="toast" class="glass"></div>
+<div id="modal" class="ov"><div class="box" id="modalBox"></div></div>
+<div id="err"></div>
+
+<script src="../device.js"></script>
+<script src="../net.js"></script>
+<script src="../vendor/peerjs.min.js"></script>
+<script src="../vendor/three.min.js"></script>
+<script>
+'use strict';
+/*LOGIC-START*/
+/* =========================================================
+   바이오 오목 — 규칙 · AI (화면과 분리, 시험 스크립트에서 그대로 실행)
+   ========================================================= */
+const N = 15, NN = N * N;
+const DIRS8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]], DIRS4 = [[1, 0], [-1, 0], [0, 1], [0, -1]], LINES = [[1, 0], [0, 1], [1, 1], [1, -1]];
+const idx = (x, y) => y * N + x, inb = (x, y) => x >= 0 && y >= 0 && x < N && y < N;
+const LOCK = [4, 1];   // 먼저 두는 쪽은 자기 3수, 나중에 두는 쪽은 1수를 둔 뒤부터 특수 돌 사용 가능 (선공 이점 보정)
+const BLOCK_TURNS = 2;
+const FACS = {
+  immune:   { name: '면역', full: '면역 진영', col: '#3ec8ff', normal: { name: '백혈구 돌', col: '#f2f7ff', col2: '#7ab8ff' } },
+  pathogen: { name: '병원체', full: '병원체 진영', col: '#ff4d8a', normal: { name: '병원균 돌', col: '#7b3ad6', col2: '#7ee04a' } },
+};
+// 특수 돌: 면역·병원체 같은 칸(등급)끼리 같은 힘을 갖도록 설계 — 시뮬레이션으로 확인
+const ORTH = [[1, 0], [-1, 0], [0, 1], [0, -1]], DIAG = [[1, 1], [-1, -1], [1, -1], [-1, 1]];
+// 특수 돌: 같은 줄(짝꿍)끼리 모양만 45° 돌린 같은 능력 — 면역은 십자(+), 병원체는 대각선(×) 방향으로 작용해요
+const SPEC = {
+  immune: [
+    { id: 'macro', tier: 1, name: '대식세포', act: '포식', need: 'orth2Enemy', col: '#b07aff', col2: '#6a3ac8', desc: '놓은 뒤, 상하좌우 2칸 안의 상대 돌 1개를 삼켜 없애요.', fact: '대식세포는 병원체를 통째로 삼켜 소화해요.' },
+    { id: 'neutro', tier: 2, name: '호중구', act: '돌진', need: null, col: '#5cc8ff', col2: '#ffffff', desc: '놓는 순간, 상하좌우로 붙은 상대 돌을 2칸씩 밀어내요.', fact: '호중구는 감염 부위로 가장 먼저 달려가는 백혈구예요.' },
+    { id: 'antibody', tier: 3, name: '항체', act: '그물', need: null, col: '#ffd84a', col2: '#ff9a3a', desc: '상하좌우 2칸(최대 8칸)이 항체 그물로 덮여 상대가 2턴 동안 그 칸에 돌을 못 놓아요.', fact: '항체는 병원체에 달라붙어 움직이지 못하게 해요.' },
+    { id: 'memory', tier: 4, name: '기억 B세포', act: '복제', need: 'orth1Empty', col: '#7ee0a0', col2: '#ffd23a', desc: '놓은 뒤, 상하좌우로 붙은 빈칸에 내 돌을 하나 더 놓아요. (추가 돌로 바로 4목·5목은 못 만들어요)', fact: '기억세포는 같은 병원체가 다시 오면 빠르게 수를 늘려요.' },
+    { id: 'vaccine', tier: 5, name: '백신', act: '방패', need: null, col: '#e8f4ff', col2: '#3a8aff', desc: '이 돌과 상하좌우 2칸 안의 내 돌이 영원히 모든 능력에 면역이 돼요. (없애기·밀기 무효)', fact: '백신은 몸이 병원체를 미리 기억하게 해 줘요.' },
+  ],
+  pathogen: [
+    { id: 'lysis', tier: 1, name: '용균 파지', act: '터뜨리기', need: 'diag2Enemy', col: '#ff5a7a', col2: '#ffd0da', desc: '놓은 뒤, 대각선 2칸 안의 상대 돌 1개를 터뜨려 없애요.', fact: '박테리오파지는 세균 속에서 불어나 세균을 터뜨려요.' },
+    { id: 'flagella', tier: 2, name: '대장균', act: '튕기기', need: null, col: '#e0904a', col2: '#7a4a2a', desc: '놓는 순간, 대각선으로 붙은 상대 돌을 2칸씩 튕겨 내요.', fact: '대장균은 꼬리 같은 편모를 돌려 헤엄쳐요.' },
+    { id: 'toxin', tier: 3, name: '독소', act: '독 안개', need: null, col: '#9be04a', col2: '#4a8a1a', desc: '대각선 2칸(최대 8칸)에 독이 퍼져 상대가 2턴 동안 그 칸에 돌을 못 놓아요.', fact: '어떤 세균은 독소를 내뿜어 주변 세포를 망가뜨려요.' },
+    { id: 'spore', tier: 4, name: '곰팡이 포자', act: '번식', need: 'diag1Empty', col: '#48c86a', col2: '#c8ff9a', desc: '놓은 뒤, 대각선으로 붙은 빈칸에 내 돌을 하나 더 놓아요. (추가 돌로 바로 4목·5목은 못 만들어요)', fact: '곰팡이는 포자를 날려 멀리까지 퍼져요.' },
+    { id: 'biofilm', tier: 5, name: '바이오필름', act: '점액막', need: null, col: '#4ad0c0', col2: '#1a7a70', desc: '이 돌과 대각선 2칸 안의 내 돌이 영원히 모든 능력에 면역이 돼요. (없애기·밀기 무효)', fact: '세균은 끈적한 막을 만들어 약과 면역세포를 막아요.' },
+  ],
+};
+const SPMAP = {}; for (const f in SPEC) SPEC[f].forEach(s => { s.fac = f; SPMAP[s.id] = s; });
+const DISRUPT = { macro: 1, lysis: 1, neutro: 1, flagella: 1 };
+
+function newState(fac0, first) {
+  return { b: new Int8Array(NN), k: new Array(NN).fill(''), sh: new Uint8Array(NN), blP: new Int8Array(NN).fill(-1), blT: new Int16Array(NN),
+    used: [[], []], spPly: [-9, -9], fac: [fac0, fac0 === 'immune' ? 'pathogen' : 'immune'], turn: first, first, ply: 0, winner: -1, winLine: null, last: -1, ev: [] };
+}
+function cloneS(s) { return { b: s.b.slice(), k: s.k.slice(), sh: s.sh.slice(), blP: s.blP.slice(), blT: s.blT.slice(), used: [s.used[0].slice(), s.used[1].slice()], spPly: s.spPly.slice(), fac: s.fac, turn: s.turn, first: s.first, ply: s.ply, winner: s.winner, winLine: null, last: s.last, ev: [] }; }
+const blockedFor = (s, c, p) => s.blP[c] === p && s.ply <= s.blT[c];
+const canPlace = (s, c, p) => s.b[c] === 0 && !blockedFor(s, c, p);
+const movesMade = (s, p) => p === s.first ? Math.ceil(s.ply / 2) : Math.floor(s.ply / 2);
+const specUnlockIn = (s, p) => Math.max(0, LOCK[p === s.first ? 0 : 1] - movesMade(s, p), s.spPly[p] >= s.ply - 2 ? 1 : 0);   // 특수 돌은 연달아 못 씀
+const specAvail = (s, p, id) => specUnlockIn(s, p) === 0 && !s.used[p].includes(id) && SPMAP[id] && SPMAP[id].fac === s.fac[p];
+function fiveAt(s, c) {
+  const v = s.b[c]; if (!v) return null; const x = c % N, y = (c / N) | 0;
+  for (const [dx, dy] of LINES) { const cells = [c];
+    for (let k = 1; k < 6; k++) { const nx = x + dx * k, ny = y + dy * k; if (!inb(nx, ny) || s.b[idx(nx, ny)] !== v) break; cells.push(idx(nx, ny)); }
+    for (let k = 1; k < 6; k++) { const nx = x - dx * k, ny = y - dy * k; if (!inb(nx, ny) || s.b[idx(nx, ny)] !== v) break; cells.push(idx(nx, ny)); }
+    if (cells.length >= 5) return cells; }
+  return null;
+}
+function makesFive(s, c, p) { if (s.b[c]) return false; s.b[c] = p + 1; const f = fiveAt(s, c); s.b[c] = 0; return !!f; }
+function targets(s, p, c, need) {
+  const x = c % N, y = (c / N) | 0, o = 1 - p, out = [];
+  const enemy = n => s.b[n] === o + 1 && !s.sh[n];
+  // 돌을 놓은 상태라고 가정 (빈칸 계산에서 c는 이미 찬 칸)
+  const freeX = n => n !== c && canPlace(s, n, p) && !threatWith(s, c, n, p);
+  const D = need.startsWith('orth') ? ORTH : DIAG, R2 = need.includes('2') ? 2 : 1;
+  if (need.endsWith('Enemy')) for (const [dx, dy] of D) for (let r = 1; r <= R2; r++) { const nx = x + dx * r, ny = y + dy * r; if (inb(nx, ny) && enemy(idx(nx, ny))) out.push(idx(nx, ny)); }
+  if (need.endsWith('Empty')) for (const [dx, dy] of D) for (let r = 1; r <= R2; r++) { const nx = x + dx * r, ny = y + dy * r; if (inb(nx, ny) && freeX(idx(nx, ny))) out.push(idx(nx, ny)); }
+  return out;
+}
+// 추가 돌(n)이 4목 이상(다음 수에 5목 위협)을 바로 만드는지 — 만들면 그 칸에는 못 놓음
+function threatWith(s, c, n, p) {
+  const had = s.b[c]; s.b[c] = p + 1; s.b[n] = p + 1; let bad = false; const x = n % N, y = (n / N) | 0;
+  for (const [dx, dy] of LINES) { for (let o = -4; o <= 0 && !bad; o++) { let own = 0, ok = true;
+      for (let k = 0; k < 5; k++) { const cx = x + (o + k) * dx, cy = y + (o + k) * dy; if (!inb(cx, cy)) { ok = false; break; } const v = s.b[idx(cx, cy)]; if (v === p + 1) own++; else if (v !== 0) { ok = false; break; } }
+      if (ok && own >= 4) bad = true; } if (bad) break; }
+  s.b[n] = 0; s.b[c] = had; return bad;
+}
+function anyFive(s, p) { for (let c = 0; c < NN; c++) if (s.b[c] === p + 1 && fiveAt(s, c)) return true; return false; }
+function moveStone(s, a, b) { s.b[b] = s.b[a]; s.k[b] = s.k[a]; s.sh[b] = s.sh[a]; s.b[a] = 0; s.k[a] = ''; s.sh[a] = 0; }
+function legal(s, mv) {
+  const p = s.turn; if (s.winner >= 0 || mv.c == null || mv.c < 0 || mv.c >= NN || !canPlace(s, mv.c, p)) return false;
+  if (!mv.sp) return true;
+  if (!specAvail(s, p, mv.sp)) return false;
+  const need = SPMAP[mv.sp].need; if (!need) return true;
+  if (makesFive(s, mv.c, p)) return true;   // 5목이 되면 능력은 쓰지 않고 바로 이김
+  return targets(s, p, mv.c, need).includes(mv.tg);
+}
+function apply(s, mv) {
+  const p = s.turn, o = 1 - p, c = mv.c, ev = s.ev = [];
+  s.b[c] = p + 1; s.k[c] = mv.sp || ''; s.last = c; ev.push({ t: 'place', c, p, sp: mv.sp || '' });
+  if (mv.sp) { s.used[p].push(mv.sp); s.spPly[p] = s.ply; }
+  const f = fiveAt(s, c); if (f) { s.winner = p; s.winLine = f; s.ply++; return s; }
+  if (mv.sp) ability(s, p, c, mv.sp, mv.tg, ev);
+  if (s.winner < 0 && anyFive(s, p)) { s.winner = p; }
+  if (s.winner < 0 && !s.b.includes(0)) s.winner = 2;
+  s.turn = o; s.ply++;
+  return s;
+}
+function ability(s, p, c, sp, tg, ev) {
+  const x = c % N, y = (c / N) | 0, o = 1 - p, en = n => s.b[n] === o + 1 && !s.sh[n];
+  const push = (from, to) => { moveStone(s, from, to); if (fiveAt(s, to)) { moveStone(s, to, from); return false; } ev.push({ t: 'move', from, to }); return true; };
+  const block = n => { if (s.b[n] === 0) { s.blP[n] = o; s.blT[n] = s.ply + 2 * BLOCK_TURNS - 1; ev.push({ t: 'block', c: n, p: o }); } };
+  switch (sp) {
+    case 'macro': case 'lysis': if (tg != null && en(tg)) { s.b[tg] = 0; s.k[tg] = ''; s.sh[tg] = 0; ev.push({ t: 'remove', c: tg, by: sp }); } break;
+    case 'neutro': case 'flagella': for (const [dx, dy] of (sp === 'neutro' ? ORTH : DIAG)) { const nx = x + dx, ny = y + dy; if (!inb(nx, ny) || !en(idx(nx, ny))) continue;
+        const a = [nx + dx, ny + dy], b2 = [nx + 2 * dx, ny + 2 * dy]; const aOk = inb(a[0], a[1]) && s.b[idx(a[0], a[1])] === 0;
+        if (aOk && inb(b2[0], b2[1]) && s.b[idx(b2[0], b2[1])] === 0) { if (!push(idx(nx, ny), idx(b2[0], b2[1]))) push(idx(nx, ny), idx(a[0], a[1])); } else if (aOk) push(idx(nx, ny), idx(a[0], a[1])); } break;
+    case 'antibody': case 'toxin': for (const [dx, dy] of (sp === 'antibody' ? ORTH : DIAG)) for (let r = 1; r <= 2; r++) { const nx = x + dx * r, ny = y + dy * r; if (inb(nx, ny)) block(idx(nx, ny)); } break;
+    case 'memory': case 'spore': if (tg != null && s.b[tg] === 0) { s.b[tg] = p + 1; s.k[tg] = ''; ev.push({ t: 'extra', c: tg, p, from: c }); } break;
+    case 'vaccine': case 'biofilm': s.sh[c] = 1; ev.push({ t: 'shield', c }); for (const [dx, dy] of (sp === 'vaccine' ? ORTH : DIAG)) for (let r = 1; r <= 2; r++) { const nx = x + dx * r, ny = y + dy * r; if (inb(nx, ny) && s.b[idx(nx, ny)] === p + 1 && !s.sh[idx(nx, ny)]) { s.sh[idx(nx, ny)] = 1; ev.push({ t: 'shield', c: idx(nx, ny) }); } } break;
+  }
+}
+/* ---------------- AI ---------------- */
+const WIN5 = (() => { const a = []; for (const [dx, dy] of LINES) for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { if (!inb(x + 4 * dx, y + 4 * dy)) continue; for (let k = 0; k < 5; k++) a.push(idx(x + k * dx, y + k * dy)); } return Int16Array.from(a); })();
+const WV = [0, 3, 26, 210, 1900];
+function analyze(s) {
+  const sc = [0, 0], four = [new Set(), new Set()];
+  for (let w = 0; w < WIN5.length; w += 5) { let a = 0, b = 0, e = -1, bl0 = 0, bl1 = 0;
+    for (let k = 0; k < 5; k++) { const c = WIN5[w + k], v = s.b[c]; if (v === 1) a++; else if (v === 2) b++; else { e = c; if (s.blP[c] >= 0 && s.ply <= s.blT[c]) { if (s.blP[c] === 0) bl0++; else bl1++; } } }
+    if (a && b) continue;
+    if (a) { let v = WV[Math.min(a, 4)]; if (bl0) v *= 0.4; sc[0] += v; if (a === 4 && !bl0) four[0].add(e); }
+    else if (b) { let v = WV[Math.min(b, 4)]; if (bl1) v *= 0.4; sc[1] += v; if (b === 4 && !bl1) four[1].add(e); }
+  }
+  return { sc, four };
+}
+function hasDisrupt(s, p) { return s.fac && SPEC[s.fac[p]].some(sp => DISRUPT[sp.id] && !s.used[p].includes(sp.id)) && specUnlockIn(s, p) <= 1; }
+function evalPos(s, p) {
+  if (s.winner === p) return 1e9; if (s.winner === 1 - p) return -1e9; if (s.winner === 2) return 0;
+  const A = analyze(s), o = 1 - p, toMove = s.turn;
+  let v = A.sc[p] - A.sc[o] * (toMove === o ? 1.3 : 0.9);
+  if (toMove === o && A.four[o].size) return -1e8 + v;
+  if (toMove === p && A.four[p].size) return 1e8 + v;
+  if (toMove === p && A.four[o].size >= 2) return (hasDisrupt(s, p) ? -40000 : -5e7) + v;   // 상대 쌍사(막을 곳 2군데) → 못 막음
+  if (A.four[p].size >= 2) v += hasDisrupt(s, o) ? 30000 : 5e6; else if (A.four[p].size === 1) v += 700;
+  // 방패 돌 가치: 상대에게 없애기·밀기 능력이 남았을 때만
+  if (hasDisrupt(s, o)) { let n = 0; for (let c = 0; c < NN; c++) if (s.sh[c] && s.b[c] === p + 1) n++; v += n * 45; }
+  // 아껴 둔 특수 돌의 가치 (일찍 낭비하지 않게)
+  v += (5 - s.used[p].length) * 70 - (5 - s.used[o].length) * 70;
+  return v;
+}
+function candidates(s, p, r = 2) {
+  const out = [], seen = new Uint8Array(NN); let any = false;
+  for (let c = 0; c < NN; c++) { if (!s.b[c]) continue; any = true; const x = c % N, y = (c / N) | 0;
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const nx = x + dx, ny = y + dy; if (!inb(nx, ny)) continue; const n = idx(nx, ny); if (!seen[n] && canPlace(s, n, p)) { seen[n] = 1; out.push(n); } } }
+  if (!any) { const m = idx(7, 7); return canPlace(s, m, p) ? [m] : []; }
+  if (!out.length) for (let c = 0; c < NN; c++) if (canPlace(s, c, p)) out.push(c);
+  return out;
+}
+const AI_CFG = { easy: { th: 2500, k: 0, noise: 0.4, spRate: 0.3 }, normal: { th: 380, k: 6, noise: 0.06, spRate: 1 }, hard: { th: 220, k: 10, noise: 0, spRate: 1 } };
+function reply2(t, p) {   // p가 둔 뒤 상대가 가장 아프게 받아칠 때의 점수 (p 기준)
+  const o = 1 - p; if (t.winner >= 0) return evalPos(t, p);
+  let worst = Infinity;
+  for (const oc of candidates(t, o, 1)) { if (makesFive(t, oc, o)) return -1e9; const t2 = cloneS(t); apply(t2, { c: oc }); const v2 = evalPos(t2, p); if (v2 < worst) worst = v2; }
+  return worst === Infinity ? evalPos(t, p) : worst;
+}
+function aiMove(s, p, diff, rnd = Math.random) {
+  const cfg = AI_CFG[diff] || AI_CFG.normal, o = 1 - p;
+  const cand = candidates(s, p);
+  for (const c of cand) if (makesFive(s, c, p)) return { c };
+  const scored = cand.map(c => { const t = cloneS(s); apply(t, { c }); return { mv: { c }, v: evalPos(t, p), t }; }).sort((a, b) => b.v - a.v);
+  if (!scored.length) return null;
+  // 특수 돌 후보 (1수 앞 점수 기준 상위 몇 개)
+  let sp = [];
+  if (specUnlockIn(s, p) === 0 && rnd() < cfg.spRate) {
+    const avail = SPEC[s.fac[p]].filter(x => !s.used[p].includes(x.id));
+    if (avail.length) {
+      const spots = new Set(scored.slice(0, 10).map(x => x.mv.c));
+      const A = analyze(s); for (const c of A.four[o]) { const x = c % N, y = (c / N) | 0; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (inb(x + dx, y + dy) && canPlace(s, idx(x + dx, y + dy), p)) spots.add(idx(x + dx, y + dy)); }
+      for (const d of avail) for (const c of spots) {
+        const tgs = d.need ? targets(s, p, c, d.need) : [null]; if (d.need && !tgs.length) continue;
+        for (const tg of tgs) { const t = cloneS(s); apply(t, { c, sp: d.id, tg }); sp.push({ mv: { c, sp: d.id, tg }, v: evalPos(t, p), t }); }
+      }
+      sp.sort((a, b) => b.v - a.v); sp = sp.slice(0, cfg.k ? 5 : 1);
+    }
+  }
+  if (!cfg.k) {   // 쉬움: 1수 앞만 보고, 가끔 실수
+    let pick = scored[0];
+    if (rnd() < cfg.noise) { const alt = scored[Math.floor(rnd() * Math.min(scored.length, 5))]; if (alt.v > -1e7 || rnd() < 0.4) pick = alt; }
+    if (sp.length && (sp[0].v - scored[0].v > cfg.th || (scored[0].v < -1e7 && sp[0].v > scored[0].v + 1e6))) return sp[0].mv;
+    return pick.mv;
+  }
+  const pool = scored.slice(0, cfg.k).concat(sp);
+  let best = null;
+  for (const it of pool) { let v = reply2(it.t, p); if (it.mv.sp) v -= cfg.th; if (cfg.noise) v += (rnd() - 0.5) * cfg.noise * 400;
+    if (!best || v > best.v) best = { mv: it.mv, v }; }
+  return best.mv;
+}
+/*LOGIC-END*/
+
+/* =========================================================
+   화면 · 3D · 입력 · 온라인
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmtT = ms => { ms = Math.max(0, ms); const s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+
+let SAVE = { games: 0, wins: 0, winImm: 0, winPat: 0, aiWins: { easy: 0, normal: 0, hard: 0 }, nick: '', fac: 'immune', time: 3, diff: 'normal' };
+try { const s = JSON.parse(localStorage.getItem('bioOmok1') || 'null'); if (s && typeof s === 'object') SAVE = Object.assign(SAVE, s); } catch (e) {}
+const OPT = Object.assign({ sfx: 0.8, music: 0.5 }, SAVE.opt || {});
+const save = () => { SAVE.opt = OPT; try { localStorage.setItem('bioOmok1', JSON.stringify(SAVE)); } catch (e) {} };
+
+/* ---------------- 소리 ---------------- */
+const SND = (() => {
+  let ac = null, g = null, mg = null, mus = null;
+  const init = () => { if (ac) { if (ac.state === 'suspended') ac.resume(); return; } try { ac = new (window.AudioContext || window.webkitAudioContext)(); g = ac.createGain(); mg = ac.createGain(); g.connect(ac.destination); mg.connect(ac.destination); vol(); music(); } catch (e) { ac = null; } };
+  const vol = () => { if (g) { g.gain.value = OPT.sfx * 0.6; mg.gain.value = OPT.music * 0.2; } };
+  const tone = (f, d, type = 'square', v = 0.15, f2, dest) => { if (!ac) return; const t = ac.currentTime, o = ac.createOscillator(), a = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t + d); a.gain.setValueAtTime(v, t); a.gain.exponentialRampToValueAtTime(0.001, t + d); o.connect(a); a.connect(dest || g); o.start(t); o.stop(t + d + 0.02); };
+  const noise = (d, v = 0.2, lp = 2000, hp = 0) => { if (!ac) return; const t = ac.currentTime, n = ac.createBufferSource(), b = ac.createBuffer(1, Math.ceil(ac.sampleRate * d), ac.sampleRate), a = b.getChannelData(0); for (let i = 0; i < a.length; i++) a[i] = Math.random() * 2 - 1; n.buffer = b; const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; const x = ac.createGain(); x.gain.setValueAtTime(v, t); x.gain.exponentialRampToValueAtTime(0.001, t + d); n.connect(f); if (hp) { const h = ac.createBiquadFilter(); h.type = 'highpass'; h.frequency.value = hp; f.connect(h); h.connect(x); } else f.connect(x); x.connect(g); n.start(t); };
+  function music() { if (!ac || mus) return; const sc = [0, 2, 3, 7, 9], root = 48; let i = 0; const r = mulberry32(11), mel = Array.from({ length: 32 }, () => r() < 0.5 ? sc[Math.floor(r() * 5)] + (r() < 0.3 ? 12 : 0) : null), mf = n => 440 * Math.pow(2, (n - 69) / 12);
+    mus = setInterval(() => { if (!ac || ac.state !== 'running' || document.hidden) return; const m = mel[i % 32]; if (m != null) tone(mf(root + 24 + m), 0.22, 'triangle', 0.055, null, mg);
+      if (i % 4 === 0) tone(mf(root + [0, 5, 3, 7][Math.floor(i / 16) % 4]), 0.5, 'sine', 0.08, null, mg);
+      if (i % 8 === 6) tone(mf(root + 12 + [0, 5, 3, 7][Math.floor(i / 16) % 4]), 0.18, 'square', 0.025, null, mg);
+      i++; }, 60000 / 92 / 2); }
+  return { init, vol,
+    place(p) { tone(p ? 520 : 700, 0.07, 'triangle', 0.16); noise(0.05, 0.12, 3500, 800); },
+    special() { tone(300, 0.3, 'sawtooth', 0.07, 900); noise(0.25, 0.08, 2500); },
+    remove() { noise(0.3, 0.25, 1600); tone(420, 0.25, 'square', 0.08, 90); },
+    push() { noise(0.25, 0.12, 700); }, block() { noise(0.6, 0.1, 1200, 300); tone(200, 0.4, 'sine', 0.06, 140); },
+    shield() { [880, 1320, 1760].forEach((f, i) => setTimeout(() => tone(f, 0.18, 'sine', 0.07), i * 60)); },
+    win() { [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => tone(f, 0.25, 'square', 0.09), i * 90)); },
+    lose() { [440, 370, 311, 262].forEach((f, i) => setTimeout(() => tone(f, 0.3, 'triangle', 0.1), i * 140)); },
+    click() { tone(700, 0.04, 'square', 0.05); }, tick() { tone(1200, 0.03, 'square', 0.04); }, bad() { tone(160, 0.12, 'square', 0.07); } };
+})();
+
+/* ---------------- 게임 상태 ---------------- */
+const G = { mode: 'title', s: null, names: ['', ''], human: [true, true], diff: 'normal', time: 3, clock: [0, 0], sel: null, pend: null, hover: -1, phase: 'title', anim: 0, aiBusy: false, me: 0, over: null };
+const isMine = p => G.mode === 'online' ? p === G.me : G.mode === 'solo' ? p === G.me : true;
+const myTurnNow = () => G.s && G.phase === 'play' && G.s.winner < 0 && isMine(G.s.turn);
+const bottomP = () => G.mode === 'local' ? 0 : G.me;
+
+function startGame(mode, o) {
+  G.mode = mode; G.diff = o.diff || 'normal'; G.time = o.time; G.me = o.me || 0;
+  G.s = newState(o.fac0, o.first); G.names = o.names; G.clock = [o.time * 60000, o.time * 60000];
+  G.sel = null; G.pend = null; G.hover = -1; G.over = null; G.phase = 'play'; G.anim = 0; G.aiBusy = false; G.lastTick = 0;
+  clearBoard(); show('play'); renderCards(); updUI();
+  const fp = G.s.first; banner(`${G.names[fp]} 먼저!`, FACS[G.s.fac[fp]].col);
+  setTimeout(() => maybeAI(), 900);
+}
+function doMove(mv, remote) {
+  const s = G.s; if (!s || G.phase !== 'play' || !legal(s, mv)) return false;
+  const p = s.turn;
+  if (G.mode === 'online' && !remote) NET.send({ t: 'mv', ply: s.ply, c: mv.c, sp: mv.sp || '', tg: mv.tg == null ? -1 : mv.tg, clk: Math.round(G.clock[p]) });
+  apply(s, mv); G.sel = null; G.pend = null; G.hover = -1;
+  playEvents(s.ev, mv);
+  if (s.winner >= 0) { G.anim = 0.6; setTimeout(() => endGame(s.winner === 2 ? -1 : s.winner, s.winner === 2 ? 'draw' : 'five'), 900); }
+  renderCards(); updUI();
+  setTimeout(() => maybeAI(), 50);
+  return true;
+}
+function maybeAI() {
+  const s = G.s; if (!s || G.phase !== 'play' || s.winner >= 0 || G.mode !== 'solo' || s.turn === G.me || G.aiBusy) return;
+  G.aiBusy = true; const t0 = performance.now(), p = s.turn;
+  setTimeout(() => {
+    if (G.s !== s || G.phase !== 'play') { G.aiBusy = false; return; }
+    const mv = aiMove(s, p, G.diff);
+    const el = performance.now() - t0; G.aiBusy = false;
+    if (mv) doMove(mv); else endGame(1 - p, 'draw');
+    void el;
+  }, 520 + Math.random() * 380);
+}
+function endGame(winner, why) {
+  if (G.phase !== 'play') return;
+  G.phase = 'over'; G.over = { winner, why }; G.sel = null; G.pend = null; updUI(); renderCards();
+  const s = G.s, mine = winner >= 0 && isMine(winner) && G.mode !== 'local';
+  if (G.mode !== 'local') { SAVE.games++; if (mine) { SAVE.wins++; if (s.fac[winner] === 'immune') SAVE.winImm++; else SAVE.winPat++; if (G.mode === 'solo') SAVE.aiWins[G.diff] = (SAVE.aiWins[G.diff] || 0) + 1; } save(); }
+  if (window.BioGoal && G.mode === 'solo') try { BioGoal.result('bio-omok', mine ? (G.diff === 'easy' ? 1 : G.diff === 'normal' ? 2 : 3) : 0, { text: mine ? `AI(${{ easy: '쉬움', normal: '보통', hard: '어려움' }[G.diff]}) 승리` : '패배' }); } catch (e) {}
+  if (winner >= 0) { R.cheer = 3; if (s.winLine) winFx(s.winLine, winner); }
+  const whyTxt = { five: '5목 완성!', time: '시간 초과', resign: '기권', left: '상대가 나감', draw: '판이 가득 찼어요' }[why] || '';
+  const wname = winner >= 0 ? G.names[winner] : '';
+  if (G.mode === 'local' || winner < 0) SND.win(); else if (mine) SND.win(); else SND.lose();
+  banner(winner < 0 ? '무승부' : (G.mode === 'local' ? wname + ' 승리!' : mine ? '승리!' : '패배…'), winner < 0 ? '#fff' : FACS[s.fac[winner]].col);
+  setTimeout(() => {
+    const title = winner < 0 ? '무승부' : G.mode === 'local' ? `${esc(wname)} 승리!` : mine ? '승리!' : '패배';
+    modal(`<h2>${title}</h2><p style="text-align:center;font-weight:900">${whyTxt}${winner >= 0 ? ` · <span style="color:${FACS[s.fac[winner]].col}">${FACS[s.fac[winner]].full}</span>` : ''}</p>
+      <div class="plist">${[0, 1].map(p => `<div class="pl"><i style="background:${FACS[s.fac[p]].col}"></i>${esc(G.names[p])}<small>${FACS[s.fac[p]].name} · 특수 돌 ${s.used[p].length}/5 사용 · 남은 시간 ${fmtT(G.clock[p])}</small></div>`).join('')}</div>
+      <div class="btns">${G.mode === 'online' ? (NET.role === 'host' ? '<button class="gb y" data-act="again">다시 하기</button>' : '<p class="note">방장이 다시 시작할 수 있어요</p>') : '<button class="gb y" data-act="again">다시 하기</button>'}<button class="gb d" data-act="close">판 보기</button><button class="gb d" data-act="title">메인 화면</button></div>`, true);
+  }, winner >= 0 && why === 'five' ? 1600 : 700);
+}
+
+/* =========================================================
+   3D 그래픽 — 카툰 질감
+   ========================================================= */
+const R = { cheer: 0, shake: 0, fx: [], tweens: [], stones: new Map() };
+let TOON, OUT, VCMAT;
+const CELL = 1, HALFB = (N - 1) / 2;
+const cellPos = c => new THREE.Vector3((c % N) - HALFB, 0, ((c / N) | 0) - HALFB);
+function toon(col, o) { return new THREE.MeshToonMaterial(Object.assign({ color: col, gradientMap: TOON }, o || {})); }
+function cTex(w, h, draw, rep) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); } return t; }
+// 여러 조각을 한 덩어리로 합치기 (돌 하나 = 그리기 2번) — 휴대폰에서도 가볍게
+function mergeParts(parts) {
+  let n = 0; const gs = parts.map(pt => { const g = (pt.g.index ? pt.g.toNonIndexed() : pt.g.clone()); g.applyMatrix4(pt.m); n += g.attributes.position.count; return g; });
+  const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3); let o = 0;
+  gs.forEach((g, i) => { const c = new THREE.Color(parts[i].c).convertSRGBToLinear(), P = g.attributes.position.array, Nn = g.attributes.normal.array; pos.set(P, o * 3); nor.set(Nn, o * 3);
+    for (let k = 0; k < g.attributes.position.count; k++) { col[(o + k) * 3] = c.r; col[(o + k) * 3 + 1] = c.g; col[(o + k) * 3 + 2] = c.b; } o += g.attributes.position.count; g.dispose(); });
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeBoundingSphere(); return g;
+}
+const M4 = (x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = sx, sz = sx) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), new THREE.Vector3(sx, sy, sz));
+const GG = {};
+const geo = (k, f) => GG[k] || (GG[k] = f());
+function initGfx() {
+  const dev = window.BioDevice || { maxDpr: 2 };
+  R.r = new THREE.WebGLRenderer({ canvas: $('#gl'), antialias: true });
+  R.r.setPixelRatio(Math.min(devicePixelRatio || 1, dev.maxDpr || 2));
+  R.r.shadowMap.enabled = true; R.r.shadowMap.type = THREE.PCFSoftShadowMap; R.r.outputEncoding = THREE.sRGBEncoding;
+  TOON = new THREE.DataTexture(new Uint8Array([95, 175, 245]), 3, 1, THREE.LuminanceFormat); TOON.minFilter = TOON.magFilter = THREE.NearestFilter; TOON.needsUpdate = true;
+  OUT = new THREE.MeshBasicMaterial({ color: '#1a1040', side: THREE.BackSide });
+  VCMAT = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: TOON });
+  R.scene = new THREE.Scene(); R.scene.background = new THREE.Color('#1c1446'); R.scene.fog = new THREE.Fog('#1c1446', 30, 60);
+  R.cam = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
+  R.scene.add(new THREE.HemisphereLight('#d8e0ff', '#4a3a7a', 0.5));
+  const key = new THREE.DirectionalLight('#fff4e4', 0.7); key.position.set(-6, 16, 8); key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
+  Object.assign(key.shadow.camera, { left: -11, right: 11, top: 11, bottom: -11, near: 1, far: 40 }); key.shadow.bias = -0.0006; R.scene.add(key);
+  const rimA = new THREE.PointLight('#3ec8ff', 0.5, 26); rimA.position.set(-10, 4, -6); const rimB = new THREE.PointLight('#ff4d8a', 0.5, 26); rimB.position.set(10, 4, -6); R.scene.add(rimA, rimB);
+  buildArena();
+  R.stoneG = new THREE.Group(); R.scene.add(R.stoneG);
+  R.markG = new THREE.Group(); R.scene.add(R.markG);
+  R.fxGeo = new THREE.IcosahedronGeometry(1, 0);
+  // 마우스 올린 칸의 미리보기 돌 · 대상 표시 링
+  R.ghost = new THREE.Group(); R.scene.add(R.ghost); R.ghostKey = '';
+  R.ray = new THREE.Raycaster(); R.plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.12);
+  const ringG = new THREE.TorusGeometry(0.42, 0.05, 6, 28);
+  R.tgRings = Array.from({ length: 16 }, () => { const m = new THREE.Mesh(ringG, new THREE.MeshBasicMaterial({ color: '#ffd23a' })); m.rotation.x = Math.PI / 2; m.visible = false; R.scene.add(m); return m; });
+  R.lastRing = new THREE.Mesh(new THREE.RingGeometry(0.46, 0.54, 30), new THREE.MeshBasicMaterial({ color: '#ffd23a', transparent: true, opacity: 0.9, depthWrite: false })); R.lastRing.rotation.x = -Math.PI / 2; R.lastRing.visible = false; R.scene.add(R.lastRing);
+  R.camLook = new THREE.Vector3(); addEventListener('resize', resize); resize();
+}
+function buildArena() {
+  const s = R.scene, B = N + 1.2;
+  // 판: 세포 조직 슬랩 (분홍빛 조직 + 세포 무늬 + 격자)
+  const top = cTex(1024, 1024, (g, w, h) => {
+    const gr = g.createRadialGradient(w / 2, h / 2, 50, w / 2, h / 2, w * 0.7); gr.addColorStop(0, '#ffe9d6'); gr.addColorStop(1, '#f6c8b4'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    const r0 = mulberry32(5); for (let i = 0; i < 160; i++) { const x = r0() * w, y = r0() * h, r = 14 + r0() * 30; g.fillStyle = `rgba(230,140,140,${0.05 + r0() * 0.06})`; g.beginPath(); g.ellipse(x, y, r, r * (0.7 + r0() * 0.3), r0() * 3, 0, 7); g.fill(); g.fillStyle = 'rgba(200,100,140,.08)'; g.beginPath(); g.arc(x + r * 0.15, y, r * 0.28, 0, 7); g.fill(); }
+    const m = w / B * 0.6 + 0, step = (w - 2 * (w / B) * 0.6) / (N - 1);
+    g.strokeStyle = 'rgba(90,40,90,.72)'; g.lineWidth = 3;
+    for (let i = 0; i < N; i++) { const p = m + i * step; g.beginPath(); g.moveTo(m, p); g.lineTo(w - m, p); g.stroke(); g.beginPath(); g.moveTo(p, m); g.lineTo(p, h - m); g.stroke(); }
+    g.lineWidth = 6; g.strokeRect(m, m, w - 2 * m, h - 2 * m);
+    g.fillStyle = 'rgba(90,40,90,.85)'; for (const a of [3, 7, 11]) for (const b of [3, 7, 11]) { if ((a === 7) !== (b === 7) && !(a === 7 && b === 7)) continue; g.beginPath(); g.arc(m + a * step, m + b * step, 9, 0, 7); g.fill(); }
+  });
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(B, 0.5, B), [toon('#c86a8a'), toon('#c86a8a'), toon('#ffffff', { map: top }), toon('#a84a6a'), toon('#c86a8a'), toon('#c86a8a')]);
+  slab.position.y = -0.25; slab.receiveShadow = true; s.add(slab);
+  // 테두리: 세포막 고무 링 + 구슬 조명
+  for (const [x, z, w, d] of [[0, -B / 2 - 0.25, B + 1, 0.5], [0, B / 2 + 0.25, B + 1, 0.5], [-B / 2 - 0.25, 0, 0.5, B], [B / 2 + 0.25, 0, 0.5, B]]) { const r = new THREE.Mesh(new THREE.BoxGeometry(w, 0.7, d), toon('#5a3ac8')); r.position.set(x, -0.1, z); r.castShadow = r.receiveShadow = true; s.add(r); }
+  const bulbG = new THREE.SphereGeometry(0.1, 8, 6);
+  for (let i = 0; i < 40; i++) { const t = i / 40, side = Math.floor(t * 4), u = (t * 4) % 1, L = B / 2 + 0.25; const x = [-L + u * 2 * L, L, L - u * 2 * L, -L][side], z = [-L, -L + u * 2 * L, L, L - u * 2 * L][side];
+    const b = new THREE.Mesh(bulbG, new THREE.MeshBasicMaterial({ color: i % 2 ? '#3ec8ff' : '#ff4d8a' })); b.position.set(x, 0.27, z); s.add(b); }
+  // 진영 깃발 받침 (판 양쪽)
+  const carT = cTex(512, 512, (g, w, h) => { g.fillStyle = '#2a1f68'; g.fillRect(0, 0, w, h); const cols = ['#ff5aa8', '#3ee6c8', '#ffd23a', '#8a7aff']; const r0 = mulberry32(3);
+    for (let i = 0; i < 60; i++) { const x = r0() * w, y = r0() * h, r = 8 + r0() * 22; g.strokeStyle = cols[i % 4]; g.lineWidth = 4; g.globalAlpha = 0.5; g.beginPath(); g.arc(x, y, r, 0, 7); g.stroke(); g.globalAlpha = 0.3; g.fillStyle = cols[(i + 1) % 4]; g.beginPath(); g.arc(x + r * 0.2, y - r * 0.1, r * 0.35, 0, 7); g.fill(); } g.globalAlpha = 1; }, [8, 8]);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), toon('#fff', { map: carT })); floor.rotation.x = -Math.PI / 2; floor.position.y = -0.62; floor.receiveShadow = true; s.add(floor);
+  // 관중석 (세포 친구들): 판을 둘러싸고
+  const crowdN = 120;
+  R.crowd = new THREE.InstancedMesh(new THREE.SphereGeometry(0.55, 14, 10), toon('#ffffff'), crowdN);
+  R.crowdEye = new THREE.InstancedMesh(new THREE.SphereGeometry(0.13, 8, 6), new THREE.MeshBasicMaterial({ color: '#ffffff' }), crowdN * 2);
+  R.crowdPup = new THREE.InstancedMesh(new THREE.SphereGeometry(0.075, 6, 5), new THREE.MeshBasicMaterial({ color: '#1a1040' }), crowdN * 2);
+  R.crowdData = []; const ccols = ['#ff7ac0', '#5cc8ff', '#ffd23a', '#7ee07a', '#b07aff', '#ff8a5a', '#3ee6c8', '#f2f7ff', '#7b3ad6'];
+  for (let i = 0; i < crowdN; i++) { const ring = i % 3, a = (i / crowdN) * Math.PI * 2 * 3 + ring * 0.2, rad = 15 + ring * 1.6;
+    const x = Math.cos(a) * rad, z = Math.sin(a) * rad * 0.95; R.crowdData.push({ x, y: -0.1 + ring * 0.9, z, yaw: Math.atan2(-x, -z), ph: Math.random() * 6 }); R.crowd.setColorAt(i, new THREE.Color(ccols[i % ccols.length])); }
+  R.crowd.instanceColor.needsUpdate = true; s.add(R.crowd, R.crowdEye, R.crowdPup);
+  for (let ring = 0; ring < 3; ring++) { const st = new THREE.Mesh(new THREE.TorusGeometry(15 + ring * 1.6, 0.6, 6, 60), toon('#3a2e88')); st.rotation.x = Math.PI / 2; st.scale.z = 1 + ring * 1.3; st.position.y = -0.6 + ring * 0.3; s.add(st); }
+  // 혈관 튜브 · 적혈구 · 거품
+  R.rbcs = []; const tubeM = new THREE.MeshToonMaterial({ color: '#ff6a88', gradientMap: TOON, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false });
+  const rbcG = new THREE.TorusGeometry(0.4, 0.2, 8, 18), rbcM = toon('#e8304a');
+  for (const [z, y] of [[-24, 6], [-20, 10]]) { const tube = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 90, 20, 1, true), tubeM); tube.rotation.z = Math.PI / 2; tube.position.set(0, y, z); s.add(tube);
+    for (let k = 0; k < 16; k++) { const r = new THREE.Mesh(rbcG, rbcM); r.position.set(-40 + k * 5.3, y + (Math.random() - 0.5), z + (Math.random() - 0.5)); r.rotation.set(Math.random() * 3, Math.random() * 3, 0); s.add(r); R.rbcs.push(r); } }
+  R.bubbles = []; const bm = new THREE.MeshBasicMaterial({ color: '#c8f0ff', transparent: true, opacity: 0.22 });
+  for (let i = 0; i < 50; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.08 + Math.random() * 0.18, 8, 6), bm); b.position.set((Math.random() - 0.5) * 50, Math.random() * 10, (Math.random() - 0.5) * 50); if (Math.hypot(b.position.x, b.position.z) < 11) b.position.x += 14; s.add(b); R.bubbles.push(b); }
+  // 큰 세포 장식 (뒤쪽)
+  const decoCols = ['#ff5aa8', '#3ee6c8', '#ffd23a', '#8a7aff'];
+  for (let i = 0; i < 6; i++) { const a = -2.3 + i * 0.75, x = Math.sin(a) * 26, z = -Math.cos(a) * 26; const c = new THREE.Mesh(new THREE.SphereGeometry(2 + (i % 3) * 0.5, 20, 14), toon(decoCols[i % 4])); c.position.set(x, 5 + (i % 2) * 2.5, z); s.add(c);
+    const nu = new THREE.Mesh(new THREE.SphereGeometry(0.9, 14, 10), toon(decoCols[(i + 2) % 4])); nu.position.set(x * 0.94, 5.4 + (i % 2) * 2.5, z * 0.94); s.add(nu); }
+}
+/* ---------------- 돌 캐릭터 ---------------- */
+const SG = { body: () => new THREE.SphereGeometry(0.4, 28, 18), eyeW: () => new THREE.SphereGeometry(0.085, 10, 8), pup: () => new THREE.SphereGeometry(0.05, 8, 6), hl: () => new THREE.SphereGeometry(0.02, 6, 5),
+  smile: () => new THREE.TorusGeometry(0.075, 0.018, 5, 12, Math.PI), brow: () => new THREE.BoxGeometry(0.11, 0.03, 0.03), disk: () => new THREE.CylinderGeometry(0.45, 0.47, 0.07, 28),
+  cone: () => new THREE.ConeGeometry(0.06, 0.18, 6), ball: () => new THREE.SphereGeometry(0.1, 10, 8), small: () => new THREE.SphereGeometry(0.045, 6, 5), cyl: () => new THREE.CylinderGeometry(0.025, 0.025, 0.2, 6) };
+const sg = k => geo('s_' + k, SG[k]);
+const FY = 0.62;   // 몸 납작 비율
+function stoneParts(fac, kind) {
+  const d = kind ? SPMAP[kind] : FACS[fac].normal, P = [], add = (g, m, c) => P.push({ g, m, c });
+  
+  add(sg('disk'), M4(0, 0.035, 0), FACS[fac].col);
+  add(sg('body'), M4(0, 0.29, 0, 0, 0, 0, 1, FY, 1), d.col);
+  // 얼굴 (카메라 쪽 +z, 살짝 위)
+  const fz = 0.33, fy = 0.36, angry = fac === 'pathogen';
+  for (const sx of [-1, 1]) { add(sg('eyeW'), M4(sx * 0.13, fy, fz), '#ffffff'); add(sg('pup'), M4(sx * 0.13, fy - 0.005, fz + 0.05), angry ? '#c8102e' : '#1a1040'); add(sg('hl'), M4(sx * 0.13 - 0.02, fy + 0.025, fz + 0.095), '#ffffff');
+    if (angry || kind === 'neutro' || kind === 'macro') add(sg('brow'), M4(sx * 0.13, fy + 0.1, fz + 0.03, 0, 0, sx * (angry ? 0.5 : -0.3)), '#1a1040');
+    add(sg('small'), M4(sx * 0.24, fy - 0.07, fz - 0.06, 0, 0, 0, 1, 0.6, 0.4), '#ff7a9a'); }
+  add(sg('smile'), M4(0, fy - 0.075, fz + 0.04, 0, 0, angry ? 0 : Math.PI), '#1a1040');
+  const c2 = d.col2;
+  if (!kind && fac === 'immune') { add(sg('ball'), M4(0.12, 0.47, -0.12, 0, 0, 0, 1.6, 0.8, 1.4), c2); add(sg('ball'), M4(-0.1, 0.45, -0.18, 0, 0, 0, 1.1, 0.6, 1), c2); }
+  if (!kind && fac === 'pathogen') for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2 + 0.4; if (Math.sin(a) > 0.75) continue; const x = Math.cos(a) * 0.36, z = Math.sin(a) * 0.36;
+      add(sg('cyl'), M4(x * 1.05, 0.38, z * 1.05, Math.sin(a) * 0.8, 0, -Math.cos(a) * 0.8, 0.8, 0.6, 0.8), c2); add(sg('ball'), M4(x * 1.3, 0.46, z * 1.3, 0, 0, 0, 0.55), c2); }
+  switch (kind) {
+    case 'macro': for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + 0.5; if (Math.sin(a) > 0.6) continue; add(sg('ball'), M4(Math.cos(a) * 0.36, 0.24, Math.sin(a) * 0.36, 0, 0, 0, 1.4), d.col); } add(sg('ball'), M4(0, 0.47, -0.1, 0, 0, 0, 1.5, 0.7, 1.3), c2); break;
+    case 'neutro': for (const sx of [-1, 1]) add(geo('fin', () => new THREE.ConeGeometry(0.1, 0.3, 4)), M4(sx * 0.42, 0.33, -0.05, 0, sx * 0.3, -sx * Math.PI / 2), '#ffffff'); for (let i = 0; i < 3; i++) add(sg('ball'), M4(-0.12 + i * 0.12, 0.47, -0.15, 0, 0, 0, 0.7, 0.5, 0.7), '#8a5ae0'); break;
+    case 'antibody': for (const sx of [-1, 1]) { add(sg('cyl'), M4(sx * 0.14, 0.55, -0.05, 0, 0, sx * -0.3, 1, 1.2, 1), c2); for (const s2 of [-1, 1]) add(sg('cyl'), M4(sx * 0.17 + s2 * 0.05, 0.69, -0.05, 0, 0, -s2 * 0.6, 1, 0.8, 1), c2); } break;
+    case 'memory': { const st = geo('star', () => { const sh = new THREE.Shape(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 0.07 : 0.16, a = i / 10 * Math.PI * 2 + Math.PI / 2; i ? sh.lineTo(Math.cos(a) * r, Math.sin(a) * r) : sh.moveTo(Math.cos(a) * r, Math.sin(a) * r); } return new THREE.ExtrudeGeometry(sh, { depth: 0.05, bevelEnabled: false }); });
+      add(st, M4(0, 0.62, -0.02), c2); add(sg('cyl'), M4(0, 0.5, -0.02, 0, 0, 0, 1, 0.6, 1), c2); break; }
+    case 'vaccine': add(geo('crossA', () => new THREE.BoxGeometry(0.28, 0.08, 0.08)), M4(0, 0.55, -0.02), c2); add(geo('crossB', () => new THREE.BoxGeometry(0.08, 0.28, 0.08)), M4(0, 0.55, -0.02), c2); add(geo('vring', () => new THREE.TorusGeometry(0.41, 0.035, 6, 30)), M4(0, 0.29, 0, Math.PI / 2), c2); break;
+    case 'lysis': add(geo('ico', () => new THREE.IcosahedronGeometry(0.17, 0)), M4(0, 0.6, -0.04), c2); add(sg('cyl'), M4(0, 0.47, -0.04), '#ffffff');
+      for (let i = 0; i < 4; i++) { const a = i / 4 * Math.PI * 2 + 0.78; add(sg('cyl'), M4(Math.cos(a) * 0.4, 0.12, Math.sin(a) * 0.4, Math.sin(a) * 0.9, 0, -Math.cos(a) * 0.9, 1, 1.1, 1), '#ffffff'); } break;
+    case 'flagella': { const tail = geo('tail', () => { const pts = []; for (let i = 0; i <= 14; i++) pts.push(new THREE.Vector3(Math.sin(i * 0.9) * 0.08, 0.28 + Math.cos(i * 0.6) * 0.03, -0.38 - i * 0.035)); return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 30, 0.025, 6); });
+      add(tail, M4(0, 0, 0), c2); for (let i = 0; i < 8; i++) { const a = Math.PI + (i / 8 - 0.5) * 3; add(sg('cyl'), M4(Math.cos(a) * 0.42, 0.3, Math.sin(a) * 0.42, 0, -a, Math.PI / 2, 0.6, 0.5, 0.6), c2); } break; }
+    case 'toxin': for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + 0.3; if (Math.sin(a) > 0.6) continue; add(sg('cone'), M4(Math.cos(a) * 0.38, 0.14, Math.sin(a) * 0.38, Math.PI, 0, 0, 1.2), c2); add(sg('ball'), M4(Math.cos(a) * 0.38, 0.06, Math.sin(a) * 0.38, 0, 0, 0, 0.6), c2); }
+      add(sg('ball'), M4(0, 0.48, -0.1, 0, 0, 0, 1.6, 0.6, 1.4), c2); break;
+    case 'spore': for (let i = 0; i < 22; i++) { const a = i * 2.39996, y = 0.1 + (i / 22) * 0.4, r = 0.4 * Math.sqrt(Math.max(0, 1 - Math.pow((y - 0.29) / (0.4 * FY + 0.02), 2))); if (Math.sin(a) > 0.45 && y > 0.22 && y < 0.48) continue; add(sg('small'), M4(Math.cos(a) * r, y, Math.sin(a) * r, 0, 0, 0, 1 + (i % 3) * 0.3), c2); } break;
+    case 'biofilm': for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; if (Math.sin(a) > 0.6) continue; add(sg('ball'), M4(Math.cos(a) * 0.33, 0.1, Math.sin(a) * 0.33, 0, 0, 0, 1.4, 0.7, 1.4), d.col); } add(sg('ball'), M4(0.05, 0.48, -0.12, 0, 0, 0, 1.2, 0.6, 1.1), c2); break;
+  }
+  return P;
+}
+function stoneGeo(fac, kind) { return geo('st_' + fac + '_' + kind, () => mergeParts(stoneParts(fac, kind))); }
+const OUTG = () => geo('outBody', () => { const g = new THREE.SphereGeometry(0.4, 20, 14); g.applyMatrix4(M4(0, 0.29, 0, 0, 0, 0, 1.07, FY * 1.09, 1.07)); return g; });
+function stoneMesh(fac, kind) {
+  const g = new THREE.Group(), m = new THREE.Mesh(stoneGeo(fac, kind), VCMAT); m.castShadow = true; g.add(m); g.add(new THREE.Mesh(OUTG(), OUT));
+  if (kind === 'biofilm') { const sl = new THREE.Mesh(geo('slime', () => new THREE.SphereGeometry(0.47, 20, 14)), new THREE.MeshToonMaterial({ color: '#7af0e0', gradientMap: TOON, transparent: true, opacity: 0.35, depthWrite: false })); sl.position.y = 0.26; sl.scale.y = 0.7; g.add(sl); }
+  g.userData.inner = m; return g;
+}
+function shieldBubble() { const b = new THREE.Mesh(geo('bub', () => new THREE.SphereGeometry(0.52, 20, 14)), new THREE.MeshBasicMaterial({ color: '#8af0ff', transparent: true, opacity: 0.22, depthWrite: false })); b.position.y = 0.26; b.scale.y = 0.85; return b; }
+function blockMark(p) {
+  const fac = G.s.fac[1 - p], col = fac === 'immune' ? '#ffd84a' : '#9be04a';
+  const g = new THREE.Group(), t = new THREE.Mesh(geo('blk', () => new THREE.PlaneGeometry(0.86, 0.86)), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.38, depthWrite: false })); t.rotation.x = -Math.PI / 2; t.position.y = 0.02; g.add(t);
+  for (const r of [Math.PI / 4, -Math.PI / 4]) { const x = new THREE.Mesh(geo('blkx', () => new THREE.BoxGeometry(0.6, 0.04, 0.09)), new THREE.MeshBasicMaterial({ color: fac === 'immune' ? '#ff9a3a' : '#4a8a1a' })); x.rotation.y = r; x.position.y = 0.04; g.add(x); }
+  return g;
+}
+/* ---------------- 판 동기화 · 애니메이션 ---------------- */
+function clearBoard() { for (const [, m] of R.stones) R.stoneG.remove(m); R.stones.clear(); while (R.markG.children.length) R.markG.remove(R.markG.children[0]); R.blockMarks = new Map(); R.lastRing.visible = false; if (R.winBeam) { R.scene.remove(R.winBeam); R.winBeam = null; } }
+function tween(obj, dur, fn, done) { R.tweens.push({ obj, t: 0, dur, fn, done }); }
+function addStone(c, fac, kind, delay = 0) {
+  const m = stoneMesh(fac, kind), p = cellPos(c); m.position.copy(p); m.position.y = 3; m.scale.setScalar(0.001); R.stoneG.add(m); R.stones.set(c, m); m.userData.ph = Math.random() * 6; m.userData.c = c;
+  tween(m, 0.42 + delay, t => { const k = clamp((t * (0.42 + delay) - delay) / 0.42, 0, 1); m.scale.set(1 + Math.sin(k * Math.PI) * 0.15 * (k > 0.7 ? 1 : 0), k < 0.8 ? 1 : 1 - Math.sin((k - 0.8) / 0.2 * Math.PI) * 0.25, 1).multiplyScalar(k > 0 ? 1 : 0.001); m.position.y = 3 * Math.pow(1 - k, 2); }, () => { m.position.y = 0; m.scale.setScalar(1); });
+  return m;
+}
+function playEvents(ev, mv) {
+  const s = G.s;
+  for (const e of ev) {
+    if (e.t === 'place') { addStone(e.c, s.fac[e.p], e.sp); SND.place(e.p); if (e.sp) { const d = SPMAP[e.sp]; SND.special(); setTimeout(() => popAt(cellPos(e.c), d.name + ' · ' + d.act + '!', d.col), 250); fxBurst(cellPos(e.c), d.col, 22, 3); } else fxBurst(cellPos(e.c), FACS[s.fac[e.p]].col, 6, 1.5); }
+    if (e.t === 'remove') { const m = R.stones.get(e.c); R.stones.delete(e.c); if (m) { const from = cellPos(mv.c), to = cellPos(e.c);
+        if (e.by === 'lysis') zapLine(from, to, '#ff5a7a'); setTimeout(() => { SND.remove(); fxBurst(to, '#ffffff', 26, 4); fxBurst(to, SPMAP[e.by].col, 16, 3); R.shake = 0.25;
+          tween(m, 0.3, t => { m.scale.setScalar(1 + t * 0.4); m.rotation.y = t * 6; m.position.y = t * 0.6; }, () => R.stoneG.remove(m)); }, 380); } }
+    if (e.t === 'move') { const m = R.stones.get(e.from); if (m) { R.stones.delete(e.from); R.stones.set(e.to, m); m.userData.c = e.to; const a = cellPos(e.from), b = cellPos(e.to);
+        setTimeout(() => { SND.push(); tween(m, 0.35, t => { const k = 1 - Math.pow(1 - t, 3); m.position.set(a.x + (b.x - a.x) * k, Math.sin(t * Math.PI) * 0.4, a.z + (b.z - a.z) * k); m.rotation.z = Math.sin(t * Math.PI) * 0.5; }, () => { m.position.copy(b); m.rotation.z = 0; }); fxBurst(a, '#ffffff', 6, 1.5); }, 300); } }
+    if (e.t === 'block') { setTimeout(() => SND.block(), 300); const bm = blockMark(e.p); bm.position.copy(cellPos(e.c)); bm.scale.setScalar(0.01); R.markG.add(bm); R.blockMarks.set(e.c, bm); tween(bm, 0.4, t => bm.scale.setScalar(t)); }
+    if (e.t === 'extra') { setTimeout(() => { addStone(e.c, s.fac[e.p], ''); SND.place(e.p); fxBurst(cellPos(e.c), '#ffffff', 10, 2); }, 330); }
+    if (e.t === 'shield') { setTimeout(() => { const m = R.stones.get(e.c); if (m && !m.userData.bub) { const b = shieldBubble(); m.add(b); m.userData.bub = b; b.scale.setScalar(0.01); tween(b, 0.35, t => b.scale.set(t, t * 0.85, t)); } SND.shield(); }, 360); }
+  }
+  R.lastRing.visible = true; R.lastRing.position.copy(cellPos(mv.c)).setY(0.02); R.lastRing.material.color.set(FACS[s.fac[1 - s.turn]] ? FACS[s.fac[s.winner >= 0 && s.winner < 2 ? s.winner : 1 - s.turn]].col : '#fff');
+}
+function syncBlocks() { if (!R.blockMarks) return; for (const [c, m] of R.blockMarks) { if (!blockedFor(G.s, c, G.s.blP[c]) || G.s.b[c]) { R.markG.remove(m); R.blockMarks.delete(c); } } }
+function fullSync() {   // 상태와 화면이 어긋났을 때(다시 접속 등) 통째로 다시 그리기
+  clearBoard(); const s = G.s;
+  for (let c = 0; c < NN; c++) if (s.b[c]) { const m = stoneMesh(s.fac[s.b[c] - 1], s.k[c]); m.position.copy(cellPos(c)); m.userData.ph = Math.random() * 6; R.stoneG.add(m); R.stones.set(c, m); if (s.sh[c]) { const b = shieldBubble(); m.add(b); m.userData.bub = b; } }
+  for (let c = 0; c < NN; c++) if (!s.b[c] && s.blP[c] >= 0 && blockedFor(s, c, s.blP[c])) { const bm = blockMark(s.blP[c]); bm.position.copy(cellPos(c)); R.markG.add(bm); R.blockMarks.set(c, bm); }
+}
+function fxBurst(p, col, n, sp, size = 0.07) {
+  for (let i = 0; i < n; i++) { if (R.fx.length > 260) { const o = R.fx.shift(); R.scene.remove(o.m); o.m.material.dispose(); }
+    const m = new THREE.Mesh(R.fxGeo, new THREE.MeshBasicMaterial({ color: col, transparent: true })); m.scale.setScalar(size * (0.6 + Math.random() * 0.8)); m.position.set(p.x, 0.4, p.z); R.scene.add(m);
+    R.fx.push({ m, vx: (Math.random() * 2 - 1) * sp, vy: (0.5 + Math.random()) * sp, vz: (Math.random() * 2 - 1) * sp, t: 0, life: 0.5 + Math.random() * 0.5, rot: Math.random() * 8 }); }
+}
+function zapLine(a, b, col) { const pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8, mid = i % 8 !== 0; pts.push(new THREE.Vector3(a.x + (b.x - a.x) * t + (mid ? (Math.random() - 0.5) * 0.25 : 0), 0.5 + (mid ? Math.random() * 0.3 : 0), a.z + (b.z - a.z) * t + (mid ? (Math.random() - 0.5) * 0.25 : 0))); }
+  const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: col, transparent: true })); R.scene.add(l); R.fx.push({ m: l, t: 0, life: 0.45, line: true }); }
+function winFx(line, p) {
+  const sorted = line.map(cellPos).sort((a, b) => a.x - b.x || a.z - b.z), a = sorted[0], b = sorted[sorted.length - 1], len = a.distanceTo(b) + 0.9;
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, len, 10), new THREE.MeshBasicMaterial({ color: FACS[G.s.fac[p]].col, transparent: true, opacity: 0.85 }));
+  beam.position.set((a.x + b.x) / 2, 0.75, (a.z + b.z) / 2); beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); R.scene.add(beam); R.winBeam = beam;
+  line.forEach((c, i) => { const m = R.stones.get(c); if (m) setTimeout(() => { m.userData.jump = 1; fxBurst(cellPos(c), FACS[G.s.fac[p]].col, 12, 2.5); }, i * 90); });
+}
+function stepFx(dt) {
+  for (const f of R.fx) { f.t += dt; if (!f.line) { f.vy -= 9 * dt; f.m.position.x += f.vx * dt; f.m.position.y = Math.max(0.03, f.m.position.y + f.vy * dt); f.m.position.z += f.vz * dt; f.m.rotation.x += f.rot * dt; } f.m.material.opacity = 1 - f.t / f.life; }
+  for (const f of R.fx) if (f.t >= f.life) { R.scene.remove(f.m); if (f.line) f.m.geometry.dispose(); f.m.material.dispose(); }
+  R.fx = R.fx.filter(f => f.t < f.life);
+  for (const tw of R.tweens) { tw.t = Math.min(1, tw.t + dt / tw.dur); tw.fn(tw.t); if (tw.t >= 1 && tw.done) tw.done(); }
+  R.tweens = R.tweens.filter(tw => tw.t < 1);
+}
+/* ---------------- 카메라 (보드가 빈 영역에 꽉 차게) ---------------- */
+function freeRect() {
+  const w = innerWidth, h = innerHeight, por = document.documentElement.classList.contains('portrait');
+  if (document.body.dataset.screen !== 'play') return { x: 0, y: h * 0.06, w, h: h * 0.55 };
+  const a = $('#card0').getBoundingClientRect(), b = $('#card1').getBoundingClientRect(), L = bottomP() === 0 ? a : b, Rr = bottomP() === 0 ? b : a;
+  if (por) { const top = Rr.bottom + 6, bot = L.top - 6; return { x: 4, y: top, w: w - 8, h: Math.max(100, bot - top) }; }
+  const x0 = L.right + 6, x1 = Rr.left - 6; return { x: x0, y: 8, w: Math.max(100, x1 - x0), h: h - 16 };
+}
+function resize() {
+  const w = innerWidth, h = innerHeight; R.r.setSize(w, h, false);
+  const html = document.documentElement, portrait = h > w * 1.02; html.classList.toggle('portrait', portrait); html.classList.toggle('short', !portrait && h < 560);
+  fitCam();
+}
+function fitCam() {
+  const w = innerWidth, h = innerHeight, fr = freeRect(), cam = R.cam, por = document.documentElement.classList.contains('portrait');
+  cam.aspect = w / h; cam.fov = 36; const el = (por ? 74 : 62) * Math.PI / 180, B = HALFB + 0.9;
+  cam.setViewOffset(w, h, w / 2 - (fr.x + fr.w / 2), h / 2 - (fr.y + fr.h / 2), w, h); cam.updateProjectionMatrix();
+  const corners = [[-B, 0, -B], [B, 0, -B], [-B, 0, B], [B, 0, B], [-B, 0.8, B], [B, 0.8, B]].map(a => new THREE.Vector3(...a));
+  let lo = 8, hi = 120;
+  for (let it = 0; it < 26; it++) { const d = (lo + hi) / 2; cam.position.set(0, Math.sin(el) * d, Math.cos(el) * d); cam.lookAt(0, 0, 0); cam.updateMatrixWorld();
+    let ok = true; for (const c of corners) { const v = c.clone().project(cam), sx = (v.x + 1) / 2 * w, sy = (1 - v.y) / 2 * h; if (sx < fr.x + 4 || sx > fr.x + fr.w - 4 || sy < fr.y + 4 || sy > fr.y + fr.h - 4) { ok = false; break; } }
+    if (ok) hi = d; else lo = d; }
+  R.camD = hi; R.camEl = el; R.scene.fog.near = hi + 8; R.scene.fog.far = hi + 45; cam.position.set(0, Math.sin(el) * hi, Math.cos(el) * hi); cam.lookAt(0, 0, 0);
+}
+const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _sv = new THREE.Vector3(), _pv = new THREE.Vector3(), _ov = new THREE.Vector3(), _one = new THREE.Vector3(1, 1, 1), _e = new THREE.Euler();
+function animArena(dt, now) {
+  for (const r of R.rbcs) { r.position.x += dt * 2; if (r.position.x > 45) r.position.x = -45; r.rotation.y += dt; }
+  for (const b of R.bubbles) { b.position.y += dt * 0.3; if (b.position.y > 10) b.position.y = 0; }
+  if (R.cheer > 0) R.cheer -= dt;
+  R.crowdData.forEach((c, i) => { const ch = R.cheer > 0, jump = ch ? Math.abs(Math.sin(now / 130 + c.ph)) * 0.7 : Math.abs(Math.sin(now / 700 + c.ph)) * 0.08;
+    _pv.set(c.x, c.y + 0.55 + jump, c.z); _q.setFromEuler(_e.set(0, c.yaw, 0)); _sv.set(1, 1, 1); _m4.compose(_pv, _q, _sv); R.crowd.setMatrixAt(i, _m4);
+    for (const e of [-1, 1]) { const j = i * 2 + (e > 0 ? 1 : 0); _ov.set(e * 0.2, 0.15, 0.47).applyQuaternion(_q).add(_pv); _m4.compose(_ov, _q, _one); R.crowdEye.setMatrixAt(j, _m4); _ov.add(_sv.set(0, 0, 0.08).applyQuaternion(_q)); _m4.compose(_ov, _q, _one); R.crowdPup.setMatrixAt(j, _m4); } });
+  R.crowd.instanceMatrix.needsUpdate = R.crowdEye.instanceMatrix.needsUpdate = R.crowdPup.instanceMatrix.needsUpdate = true;
+  // 돌이 숨쉬듯 살짝 통통
+  for (const [, m] of R.stones) { const ph = m.userData.ph || 0; if (m.userData.jump) { m.userData.jump += dt * 3; m.position.y = Math.abs(Math.sin(m.userData.jump * 3)) * 0.35; } else if (m.userData.inner) { const k = Math.sin(now / 520 + ph) * 0.025; m.userData.inner.scale.set(1 - k, 1 + k, 1 - k); } }
+  if (R.lastRing.visible) R.lastRing.scale.setScalar(1 + Math.sin(now / 250) * 0.06);
+}
+/* ---------------- 미리보기 돌 · 대상 표시 ---------------- */
+function updGhost(now) {
+  const s = G.s, show = s && myTurnNow() && !G.anim;
+  let c = G.pend ? G.pend.c : G.hover;
+  R.tgRings.forEach(r => r.visible = false);
+  if (!show || c < 0) { R.ghost.visible = false; return; }
+  const p = s.turn, sp = G.pend ? G.pend.sp : G.sel, key = s.fac[p] + (sp || '');
+  if (R.ghostKey !== key) { while (R.ghost.children.length) R.ghost.remove(R.ghost.children[0]); const m = new THREE.Mesh(stoneGeo(s.fac[p], sp || ''), new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: TOON, transparent: true, opacity: 0.55, depthWrite: false })); R.ghost.add(m); R.ghostKey = key; R.ghostMat = m.material; }
+  const ok = placeOk(c, sp);
+  R.ghost.visible = true; R.ghost.position.copy(cellPos(c)); R.ghost.position.y = G.pend ? 0 : 0.08 + Math.sin(now / 200) * 0.04; R.ghostMat.color.set(ok ? '#ffffff' : '#ff5a5a');
+  if (sp && SPMAP[sp].need && ok && !makesFive(s, c, p)) { const tg = targets(s, p, c, SPMAP[sp].need); tg.slice(0, 16).forEach((t, i) => { const r = R.tgRings[i]; r.visible = true; r.position.copy(cellPos(t)); r.position.y = 0.08; r.material.color.set(SPMAP[sp].need.includes('Enemy') ? '#ff4d5e' : '#ffd23a'); r.scale.setScalar(1 + Math.sin(now / 160) * 0.1); }); }
+  // 놓으면 영향을 받는 칸 미리 보기 (밀기·그물·방패)
+}
+function placeOk(c, sp) { const s = G.s, p = s.turn; if (c < 0 || !canPlace(s, c, p)) return false; if (!sp) return true; if (!specAvail(s, p, sp)) return false; const need = SPMAP[sp].need; return !need || makesFive(s, c, p) || targets(s, p, c, need).length > 0; }
+
+/* ---------------- 아이콘 ---------------- */
+const ICON = {};
+function makeIcons() {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const r = new THREE.WebGLRenderer({ canvas: c, alpha: true, antialias: true, preserveDrawingBuffer: true }); r.setClearColor(0, 0); r.outputEncoding = THREE.sRGBEncoding;
+  const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight('#ffffff', '#8a7ac0', 1.1)); const dl = new THREE.DirectionalLight('#fff', 0.6); dl.position.set(2, 4, 4); sc.add(dl);
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.01, 20); cam.position.set(0, 1.25, 1.9); cam.lookAt(0, 0.3, 0);
+  const one = (key, fac, kind) => { const m = stoneMesh(fac, kind); m.rotation.y = 0.15; sc.add(m); r.render(sc, cam); ICON[key] = c.toDataURL(); sc.remove(m); };
+  for (const f in FACS) { one('n_' + f, f, ''); SPEC[f].forEach(sp => one(sp.id, f, sp.id)); }
+  r.dispose();
+}
+/* ---------------- HUD ---------------- */
+function renderCards() {
+  const s = G.s; if (!s) return; const bp = bottomP();
+  for (const p of [0, 1]) {
+    const el = $('#card' + p), fac = s.fac[p], F = FACS[fac], unlock = specUnlockIn(s, p), mine = isMine(p);
+    el.className = 'pc glass ' + (p === bp ? 'L' : 'R') + (s.turn === p && G.phase === 'play' && s.winner < 0 ? ' turn' : '');
+    el.style.setProperty('--fc', F.col);
+    const tray = SPEC[fac].map(sp => { const used = s.used[p].includes(sp.id), sel = G.sel === sp.id && s.turn === p, lock = !used && unlock > 0;
+      const dis = used || !mine || s.turn !== p || G.phase !== 'play';
+      return `<button class="sp${used ? ' used' : ''}${sel ? ' sel' : ''}${lock ? ' lock' : ''}" data-p="${p}" data-sp="${sp.id}" ${lock ? `data-lock="${unlock}수 후"` : ''} ${dis && !lock ? 'disabled' : ''} title="${esc(sp.name + ' — ' + sp.desc)}"><img src="${ICON[sp.id] || ''}" alt=""><span class="t"><span>${sp.name}</span><small>${sp.act}</small></span></button>`; }).join('');
+    el.innerHTML = `<div class="ph"><img src="${ICON['n_' + fac] || ''}" alt=""><div class="nm"><b>${esc(G.names[p])}</b><small>${F.full}${G.mode === 'solo' && !mine ? ' · AI ' + { easy: '쉬움', normal: '보통', hard: '어려움' }[G.diff] : ''}</small></div><div class="clk" id="clk${p}">${fmtT(G.clock[p])}</div></div><div class="tray">${tray}</div>`;
+  }
+  setTimeout(fitCam, 0);
+}
+function updClocks() { for (const p of [0, 1]) { const el = $('#clk' + p); if (!el) continue; el.textContent = fmtT(G.clock[p]); el.classList.toggle('low', G.clock[p] < 15000 && G.s.turn === p && G.phase === 'play'); } }
+function updUI() {
+  const s = G.s; if (!s) return;
+  const info = $('#spInfo'), cf = $('#confirm'), por = document.documentElement.classList.contains('portrait');
+  const L = $('#card' + bottomP()).getBoundingClientRect();
+  const bottomY = por ? (innerHeight - L.top + 8) : 14;
+  if (G.sel && myTurnNow()) { const d = SPMAP[G.sel]; info.style.display = 'flex'; $('#spName').textContent = `${d.name} · ${d.act}`;
+    $('#spDesc').textContent = G.pend ? (d.need.includes('Enemy') ? '빨간 고리가 있는 상대 돌을 고르세요' : '노란 고리가 있는 빈칸을 고르세요') : d.desc; }
+  else info.style.display = 'none';
+  const touchPend = G.touchSel >= 0 && myTurnNow() && !G.pend;
+  cf.style.display = touchPend ? 'flex' : 'none';
+  cf.style.bottom = bottomY + 'px'; info.style.bottom = (bottomY + (touchPend ? 64 : 0)) + 'px';
+  const w = $('#wait');
+  if (G.phase === 'play' && s.winner < 0 && !isMine(s.turn)) { w.style.display = 'block'; w.textContent = G.mode === 'solo' ? 'AI가 생각하는 중…' : `${G.names[s.turn]}의 차례`; w.style.top = 'auto'; w.style.bottom = (por ? innerHeight - L.top + 10 : 20) + 'px'; }
+  else w.style.display = 'none';
+}
+function popAt(p, txt, col) { const v = new THREE.Vector3(p.x, 0.8, p.z).project(R.cam); const el = document.createElement('div'); el.className = 'pop'; el.textContent = txt; el.style.color = col;
+  el.style.left = clamp((v.x + 1) / 2 * innerWidth, 90, innerWidth - 90) + 'px'; el.style.top = clamp((1 - v.y) / 2 * innerHeight, 60, innerHeight - 60) + 'px'; document.body.appendChild(el); setTimeout(() => el.remove(), 1300); }
+function banner(txt, col) { const b = $('#banner'); b.textContent = txt; b.style.color = col; b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); }
+function toast(t) { const el = $('#toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = 'none', 2600); }
+function show(id) { document.body.dataset.screen = id; $('#title').classList.toggle('on', id === 'title'); $('#hud').classList.toggle('on', id === 'play'); $('#sheet').classList.remove('on'); $('#modal').classList.remove('on'); setTimeout(resize, 0); }
+function modal(html, noClose, wide) { $('#modalBox').onclick = null; $('#modalBox').innerHTML = html + (noClose ? '' : '<div class="btns"><button class="gb d" data-act="close">닫기</button></div>'); $('#modalBox').classList.toggle('wide', !!wide); $('#modal').classList.add('on'); $('#sheet').classList.remove('on'); }
+const facCard = (f, on) => `<button class="fac ${f === 'immune' ? 'imm' : 'pat'}${on ? ' on' : ''}" data-fac="${f}"><img src="${ICON['n_' + f]}" alt=""><b style="color:${FACS[f].col}">${FACS[f].full}</b><small>${SPEC[f].map(s => s.name).join(' · ')}</small><div class="mini">${SPEC[f].map(s => `<img src="${ICON[s.id]}" alt="">`).join('')}</div></button>`;
+const segH = (name, list, cur) => `<div class="seg" data-seg="${name}">${list.map(([v, l]) => `<button data-v="${v}" class="${String(v) === String(cur) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+const TIMES = [1, 2, 3, 4, 5].map(m => [m, m + '분']);
+function bindSegs(box, st, onChange) { box.querySelectorAll('[data-seg]').forEach(sg => sg.addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; sg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); st[sg.dataset.seg] = isNaN(+b.dataset.v) ? b.dataset.v : +b.dataset.v; SND.click(); onChange && onChange(); }));
+  box.querySelectorAll('.facs').forEach(fs => fs.addEventListener('click', e => { const b = e.target.closest('[data-fac]'); if (!b) return; fs.querySelectorAll('.fac').forEach(x => x.classList.toggle('on', x === b)); st.fac = b.dataset.fac; SND.click(); onChange && onChange(); })); }
+function soloModal() {
+  const st = { fac: SAVE.fac, diff: SAVE.diff, time: SAVE.time, first: 'rand' };
+  modal(`<h2>혼자 하기</h2><div class="lab2">진영 고르기</div><div class="facs">${facCard('immune', st.fac === 'immune')}${facCard('pathogen', st.fac === 'pathogen')}</div>
+    <div class="fld"><label>AI 실력</label>${segH('diff', [['easy', '쉬움'], ['normal', '보통'], ['hard', '어려움']], st.diff)}</div>
+    <div class="fld"><label>내 생각 시간 (한 판 전체)</label>${segH('time', TIMES, st.time)}</div>
+    <div class="fld"><label>먼저 두기</label>${segH('first', [['rand', '랜덤'], ['me', '내가 먼저'], ['ai', 'AI 먼저']], st.first)}</div>
+    <div class="btns"><button class="gb y" id="goSolo">시작</button><button class="gb d" data-act="close">취소</button></div>`, true);
+  bindSegs($('#modalBox'), st);
+  $('#goSolo').onclick = () => { SAVE.fac = st.fac; SAVE.diff = st.diff; SAVE.time = st.time; save(); const me = 0, first = st.first === 'me' ? 0 : st.first === 'ai' ? 1 : (Math.random() < 0.5 ? 0 : 1);
+    startGame('solo', { fac0: st.fac, first, time: st.time, diff: st.diff, me, names: [(SAVE.nick || '나').slice(0, 8), 'AI'] }); };
+}
+function localModal() {
+  const st = { fac: 'immune', time: SAVE.time, first: 'rand' };
+  modal(`<h2>같이 하기</h2><p class="note">한 기기로 번갈아 둬요. 1번 선수가 진영을 고르면 2번 선수는 반대 진영이에요.</p>
+    <div class="fld"><label for="ln0">1번 선수</label><input id="ln0" maxlength="8" value="선수 1"></div><div class="fld"><label for="ln1">2번 선수</label><input id="ln1" maxlength="8" value="선수 2"></div>
+    <div class="lab2">1번 선수 진영</div><div class="facs">${facCard('immune', true)}${facCard('pathogen', false)}</div>
+    <div class="fld"><label>각자 생각 시간</label>${segH('time', TIMES, st.time)}</div>
+    <div class="fld"><label>먼저 두기</label>${segH('first', [['rand', '랜덤'], ['0', '1번 먼저'], ['1', '2번 먼저']], st.first)}</div>
+    <div class="btns"><button class="gb y" id="goLocal">시작</button><button class="gb d" data-act="close">취소</button></div>`, true);
+  bindSegs($('#modalBox'), st);
+  $('#goLocal').onclick = () => { const names = [0, 1].map(i => ($('#ln' + i).value || '').trim().slice(0, 8) || '선수 ' + (i + 1)); const first = st.first === 'rand' ? (Math.random() < 0.5 ? 0 : 1) : +st.first;
+    SAVE.time = st.time; save(); startGame('local', { fac0: st.fac, first, time: st.time, names }); };
+}
+function dexModal() {
+  const card = sp => `<div class="dx"><img src="${ICON[sp.id]}" alt=""><div><b>${sp.name} <span class="tg" style="background:${sp.col}">${sp.act}</span></b><small>${sp.desc}</small><small class="f">${sp.fact}</small></div></div>`;
+  modal(`<h2>도감</h2><h3 style="color:var(--imm)">면역 진영 특수 돌</h3><div class="dex">${SPEC.immune.map(card).join('')}</div><h3 style="color:var(--pat)">병원체 진영 특수 돌</h3><div class="dex">${SPEC.pathogen.map(card).join('')}</div>
+    <h3>짝꿍 능력 (같은 줄끼리 힘이 같도록 맞췄어요)</h3><table class="bal"><tr><th>종류</th><th>면역</th><th>병원체</th></tr>
+    ${['상대 돌 1개 없애기', '상대 돌 밀어내기', '상대가 못 놓는 칸 만들기', '내 돌 하나 더', '내 돌 보호막'].map((t, i) => `<tr><td>${t}</td><td>${SPEC.immune[i].name}</td><td>${SPEC.pathogen[i].name}</td></tr>`).join('')}</table>`, false, true);
+}
+function helpModal() {
+  modal(`<h2>게임 방법</h2>
+  <p><b>목표</b> — 가로·세로·대각선으로 내 돌 <b>5개 이상</b>을 한 줄로 이으면 이겨요.</p>
+  <p><b>진영</b> — 면역 진영과 병원체 진영 중 하나를 골라요. 진영마다 <b>특수 돌 5개</b>가 있고 한 판에 <b>한 번씩</b> 쓸 수 있어요.</p>
+  <p><b>특수 돌 쓰기</b> — 내 카드에서 특수 돌을 누른 뒤 판에 놓아요. 없애기·하나 더 놓기 능력은 놓은 다음 고리가 표시된 칸을 한 번 더 골라요. 특수 돌로 5목이 되면 능력 없이 바로 이겨요.</p>
+  <p><b>공평하게</b> — 먼저 두는 쪽은 <b>자기 3수</b>, 나중에 두는 쪽은 <b>1수</b>를 둔 뒤부터 특수 돌을 쓸 수 있어요. 방패(백신·바이오필름)를 두른 돌은 없애기·밀기가 통하지 않아요. 밀린 돌로 상대가 5목이 되는 일은 없어요.</p>
+  <p><b>시간</b> — 한 판 동안 쓸 수 있는 생각 시간(1~5분)이 있어요. 내 차례에만 줄어들고, 0이 되면 져요.</p>
+  <p><b>조작</b> — PC는 마우스로 칸을 누르면 바로 놓여요. 휴대폰·태블릿은 칸을 누르면 미리보기가 생기고, 같은 칸을 한 번 더 누르거나 "여기에 두기"를 누르면 놓여요.</p>`);
+}
+function optModal() { modal(`<h2>설정</h2><label class="row">효과음 <input type="range" id="oSfx" min="0" max="1" step="0.05" value="${OPT.sfx}"></label><label class="row">배경 음악 <input type="range" id="oMus" min="0" max="1" step="0.05" value="${OPT.music}"></label>`);
+  $('#oSfx').oninput = e => { OPT.sfx = +e.target.value; SND.vol(); save(); }; $('#oMus').oninput = e => { OPT.music = +e.target.value; SND.vol(); save(); }; }
+
+/* =========================================================
+   온라인 1:1 (PeerJS / 교실 서버 중계, 같은 브라우저 탭은 BroadcastChannel)
+   ========================================================= */
+const NET = (() => {
+  const PREFIX = 'bioomok-v1-', BC = 'bioomok-bc-v1-', VER = 1;
+  const genCode = () => { const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 4; i++) s += c[Math.floor(Math.random() * c.length)]; return s; };
+  const opts = () => ({ debug: 0, config: { iceServers: [{ urls: ['stun:stun.l.google.com:19302'] }, { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' }] } });
+  const N = { role: null, code: '', myId: 'o' + Math.random().toString(36).slice(2, 10), peer: null, hostConn: null, bc: null, conns: new Map(), seen: new Map(), lastHost: 0, players: [], on: {}, started: false, cfg: { fac: 'immune', time: 3 } };
+  N.listen = (t, f) => (N.on[t] = N.on[t] || []).push(f);
+  N.emit = (t, m) => (N.on[t] || []).forEach(f => f(m));
+  function openPeer(id) { return new Promise((ok, no) => { if (!window.Peer) return no(new Error('no-peer')); let p; try { p = id ? new Peer(id, opts()) : new Peer(opts()); } catch (e) { return no(e); }
+    const wait = window.BioRelay && BioRelay.wait ? BioRelay.wait(9000) : 9000;
+    const to = setTimeout(() => { try { p.destroy(); } catch (e) {} no(new Error('timeout')); }, typeof wait === 'number' ? wait : 9000);
+    p.on('open', () => { clearTimeout(to); ok(p); }); p.on('error', e => { clearTimeout(to); no(e); }); }); }
+  function openBc(code) { try { N.bc = new BroadcastChannel(BC + code); N.bc.onmessage = e => { const m = e.data; if (!m) return;
+      if (N.role === 'host' && m.from && m.from !== N.myId) onHost(m, null);
+      else if (N.role === 'guest' && !m.from && (!m.to || m.to === N.myId) && m.src !== N.myId) onGuest(m); }; } catch (e) { N.bc = null; } }
+  const sendC = (c, m) => { if (c && c.open) try { c.send(m); } catch (e) {} };
+  function broadcast(m, except) { for (const [pid, c] of N.conns) if (pid !== except) sendC(c, m); if (N.bc) try { N.bc.postMessage(m); } catch (e) {} }
+  function sendTo(pid, m) { const c = N.conns.get(pid); if (c) sendC(c, m); else if (N.bc) try { N.bc.postMessage(Object.assign({ to: pid }, m)); } catch (e) {} }
+  function toHost(m) { m.from = N.myId; if (N.hostConn && N.hostConn.open) sendC(N.hostConn, m); if (N.bc) try { N.bc.postMessage(m); } catch (e) {} }
+  N.send = m => { if (N.role === 'host') broadcast(m); else if (N.role === 'guest') toHost(Object.assign({}, m)); };
+  N.host = async nick => {
+    N.leave(); N.role = 'host'; N.players = [{ id: N.myId, name: nick }];
+    for (let k = 0; k < 3 && !N.peer; k++) { N.code = genCode(); try { N.peer = await openPeer(PREFIX + N.code); } catch (e) { if (!(e && e.type === 'unavailable-id')) break; } }
+    if (!N.code) N.code = genCode(); openBc(N.code);
+    if (N.peer) { N.peer.on('connection', c => { c.on('data', m => onHost(m, c)); c.on('close', () => { if (c.pid) drop(c.pid); }); }); try { if (window.BioRelay && BioRelay.setInfo) BioRelay.setInfo(N.peer, { name: nick + '의 오목판', playing: false }); } catch (e) {} }
+    N.online = !!N.peer; N.emit('lobby'); return N.code;
+  };
+  const lobbyMsg = () => ({ t: 'lobby', players: N.players, code: N.code, cfg: N.cfg });
+  N.pushLobby = () => { broadcast(lobbyMsg()); N.emit('lobby'); };
+  function onHost(m, c) {
+    if (!m || !m.t) return; const pid = m.from; if (!pid) return; N.seen.set(pid, performance.now());
+    const reply = r => c ? sendC(c, r) : sendTo(pid, r);
+    if (m.t === 'hello') {
+      if (m.v !== VER) return reply({ t: 'deny', why: '게임 버전이 달라요. 새로고침해 주세요.' });
+      if (c) { c.pid = pid; N.conns.set(pid, c); }
+      if (!N.players.find(p => p.id === pid)) {
+        if (N.started) return reply({ t: 'deny', why: '이미 게임이 시작됐어요.' });
+        if (N.players.length >= 2) return reply({ t: 'deny', why: '방이 가득 찼어요 (1:1).' });
+        N.players.push({ id: pid, name: String(m.name || '선수').slice(0, 8) }); }
+      N.pushLobby(); return;
+    }
+    if (m.t === 'bye') return drop(pid);
+    if (m.t === 'ping') return;
+    if (!N.players.find(p => p.id === pid)) return;
+    const r = Object.assign({}, m); delete r.from; r.src = pid;
+    N.emit(m.t, r); broadcast(r, pid);
+  }
+  function drop(pid) { N.conns.delete(pid); N.seen.delete(pid); const i = N.players.findIndex(p => p.id === pid); if (i >= 0) { N.players.splice(i, 1); broadcast(lobbyMsg()); N.emit('left', { id: pid }); N.emit('lobby'); } }
+  N.join = async (code, nick) => {
+    N.leave(); code = String(code || '').trim().toUpperCase(); if (!/^[A-Z0-9]{3,6}$/.test(code)) { toast('방 코드를 확인하세요'); return; }
+    N.code = code; N.role = 'guest'; openBc(code);
+    const hello = () => toHost({ t: 'hello', v: VER, name: nick }); hello();
+    openPeer().then(p => { if (N.role !== 'guest') { try { p.destroy(); } catch (e) {} return; } N.peer = p; N.hostConn = p.connect(PREFIX + code, { reliable: true }); N.hostConn.on('open', hello); N.hostConn.on('data', onGuest); N.hostConn.on('close', () => { if (N.role === 'guest') N.emit('lost', {}); }); }).catch(() => {});
+    setTimeout(() => { if (N.role === 'guest' && !N.lastHost) { toast(`방 [${code}]을 찾지 못했어요`); N.leave(); N.emit('fail', {}); } }, 12000);
+  };
+  function onGuest(m) { if (!m || !m.t) return; if (m.src === N.myId) return; N.lastHost = performance.now(); if (m.t === 'deny') { toast('참가할 수 없어요: ' + m.why); N.leave(); N.emit('fail', {}); return; } if (m.t === 'lobby') { N.players = m.players; N.cfg = m.cfg || N.cfg; N.emit('lobby'); return; } N.emit(m.t, m); }
+  N.leave = () => { if (N.role === 'guest') toHost({ t: 'bye' }); if (N.role === 'host') broadcast({ t: 'deny', why: '방장이 방을 닫았어요.' }); try { if (N.peer) N.peer.destroy(); } catch (e) {} try { if (N.bc) N.bc.close(); } catch (e) {}
+    N.peer = null; N.hostConn = null; N.bc = null; N.conns.clear(); N.seen.clear(); N.role = null; N.code = ''; N.lastHost = 0; N.players = []; N.started = false; };
+  setInterval(() => { if (N.role === 'guest') toHost({ t: 'ping' }); if (N.role === 'host') { const now = performance.now(); for (const [pid, t] of N.seen) if (now - t > 15000) drop(pid); } }, 3000);
+  addEventListener('beforeunload', () => N.leave());
+  return N;
+})();
+function onlineModal() {
+  const nick = (SAVE.nick || '선수' + Math.floor(Math.random() * 90 + 10)).slice(0, 8);
+  modal(`<h2>온라인 대전</h2><div class="fld"><label for="onNick">닉네임</label><input id="onNick" maxlength="8" value="${esc(nick)}"></div>
+    <div class="btns" style="margin-top:6px"><button class="gb y" id="onHost" style="flex:1">방 만들기</button></div>
+    <div class="fld"><label for="onCode">친구 방 코드</label><input id="onCode" maxlength="6" placeholder="ABCD" autocomplete="off"></div>
+    <div class="btns" style="margin-top:0"><button class="gb g" id="onJoin" style="flex:1">코드로 참가</button></div>
+    <p class="note">1:1 대전이에요. 방장이 진영과 시간을 정하면, 친구는 반대 진영이 돼요.</p>`);
+}
+function lobbyModal() {
+  if (!NET.role) return;
+  const host = NET.role === 'host', cfg = NET.cfg, other = cfg.fac === 'immune' ? 'pathogen' : 'immune';
+  modal(`<h2>대기실</h2>${host ? `<p class="note" style="text-align:center">친구에게 이 코드를 알려 주세요</p><div class="code">${NET.code}</div>${NET.online === false ? '<p class="note" style="text-align:center">인터넷 서버에 연결하지 못했어요. 지금은 같은 브라우저의 다른 탭에서만 들어올 수 있어요.</p>' : ''}` : `<p style="text-align:center">방 <b class="fd" style="color:var(--acc);letter-spacing:.2em">${NET.code}</b></p>`}
+    <div class="plist">${NET.players.map((p, i) => { const f = i === 0 ? cfg.fac : other; return `<div class="pl"><i style="background:${FACS[f].col}"></i>${esc(p.name)}${p.id === NET.myId ? ' (나)' : ''}<small>${FACS[f].full}${i === 0 ? ' · 방장' : ''}</small></div>`; }).join('')}${NET.players.length < 2 ? '<div class="pl" style="opacity:.6">상대를 기다리는 중…</div>' : ''}</div>
+    ${host ? `<div class="lab2">방장 진영</div><div class="facs">${facCard('immune', cfg.fac === 'immune')}${facCard('pathogen', cfg.fac === 'pathogen')}</div><div class="fld"><label>각자 생각 시간</label>${segH('time', TIMES, cfg.time)}</div>` : `<p style="text-align:center;font-weight:700">생각 시간 <b style="color:var(--acc)">${cfg.time}분</b> · 먼저 두기는 랜덤</p>`}
+    <div class="btns">${host ? `<button class="gb y" data-act="netStart" ${NET.players.length < 2 ? 'disabled' : ''}>시작</button>` : '<p class="note">방장이 시작하기를 기다리는 중…</p>'}<button class="gb d" data-act="netLeave">나가기</button></div>`, true);
+  if (host) bindSegs($('#modalBox'), cfg, () => { NET.pushLobby(); });
+}
+function hostStart() { if (NET.role !== 'host' || NET.players.length < 2) return; NET.started = true;
+  const m = { t: 'start', players: NET.players.map(p => ({ id: p.id, name: p.name })), fac0: NET.cfg.fac, time: NET.cfg.time, first: Math.random() < 0.5 ? 0 : 1 }; NET.send(m); startOnline(m); }
+function startOnline(m) { const me = m.players.findIndex(p => p.id === NET.myId); G.netPlayers = m.players; startGame('online', { fac0: m.fac0, first: m.first, time: m.time, me: me < 0 ? 0 : me, names: m.players.map(p => p.name) }); }
+NET.listen('lobby', () => { if (document.body.dataset.screen !== 'play') lobbyModal(); });
+NET.listen('start', m => { NET.started = true; startOnline(m); });
+NET.listen('mv', m => { if (G.mode !== 'online' || !G.s || m.ply !== G.s.ply || G.s.turn === G.me) return; const p = G.s.turn; if (typeof m.clk === 'number') G.clock[p] = m.clk;
+  if (!doMove({ c: m.c, sp: m.sp || null, tg: m.tg < 0 ? null : m.tg }, true)) toast('상대 수를 받지 못했어요'); });
+NET.listen('flag', m => { if (G.mode === 'online' && G.phase === 'play') { G.clock[m.p] = 0; endGame(1 - m.p, 'time'); } });
+NET.listen('resign', m => { if (G.mode === 'online' && G.phase === 'play') endGame(1 - m.p, 'resign'); });
+NET.listen('left', m => { if (G.mode === 'online' && G.phase === 'play') { toast('상대가 나갔어요'); endGame(G.me, 'left'); } });
+NET.listen('lost', () => { if (G.mode === 'online' && G.phase === 'play') { toast('방장과 연결이 끊겼어요'); endGame(G.me, 'left'); } });
+NET.listen('fail', () => { if (document.body.dataset.screen !== 'play') onlineModal(); });
+
+/* ---------------- 입력 ---------------- */
+G.touchSel = -1;
+function cellFromEvent(e) {
+  const r = $('#gl').getBoundingClientRect(), v = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  R.ray.setFromCamera(v, R.cam); const hit = new THREE.Vector3(); if (!R.ray.ray.intersectPlane(R.plane, hit)) return -1;
+  const x = Math.round(hit.x + HALFB), y = Math.round(hit.z + HALFB); if (!inb(x, y) || Math.abs(hit.x + HALFB - x) > 0.62 || Math.abs(hit.z + HALFB - y) > 0.62) return -1; return idx(x, y);
+}
+function tryPlace(c) {
+  const s = G.s, p = s.turn;
+  if (G.pend) {   // 대상 고르기 단계
+    const need = SPMAP[G.pend.sp].need, tg = targets(s, p, G.pend.c, need);
+    if (tg.includes(c)) { const mv = { c: G.pend.c, sp: G.pend.sp, tg: c }; G.pend = null; doMove(mv); }
+    else { SND.bad(); toast('고리가 표시된 칸을 고르세요'); }
+    return;
+  }
+  const sp = G.sel;
+  if (!placeOk(c, sp)) { SND.bad(); if (s.b[c]) return; if (blockedFor(s, c, p)) toast('상대 능력 때문에 지금은 놓을 수 없는 칸이에요'); else if (sp) toast(SPMAP[sp].need && SPMAP[sp].need.includes('Enemy') ? '근처에 없앨 수 있는 상대 돌이 없어요' : '능력을 쓸 빈칸이 없어요'); return; }
+  if (sp && SPMAP[sp].need && !makesFive(s, c, p)) { G.pend = { c, sp }; G.touchSel = -1; SND.click(); updUI(); return; }
+  doMove({ c, sp: sp || null });
+}
+function bindInput() {
+  const cv = $('#gl');
+  cv.addEventListener('pointermove', e => { if (e.pointerType !== 'mouse' || !myTurnNow()) return; G.hover = cellFromEvent(e); });
+  cv.addEventListener('pointerleave', () => { if (!G.pend) G.hover = -1; });
+  let down = null;
+  cv.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; SND.init(); });
+  cv.addEventListener('pointerup', e => {
+    if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 14) { down = null; return; } down = null;
+    if (!myTurnNow() || G.anim) return; const c = cellFromEvent(e); if (c < 0) return;
+    if (e.pointerType === 'mouse' || G.pend) { tryPlace(c); G.touchSel = -1; }
+    else { if (G.touchSel === c) { G.touchSel = -1; tryPlace(c); } else { G.touchSel = c; G.hover = c; SND.click(); } }
+    updUI();
+  });
+  $('#cfOk').onclick = () => { const c = G.touchSel; G.touchSel = -1; if (c >= 0) tryPlace(c); updUI(); };
+  $('#cfNo').onclick = () => { G.touchSel = -1; G.hover = -1; updUI(); };
+  $('#spCancel').onclick = () => { G.sel = null; G.pend = null; renderCards(); updUI(); };
+  $('#hud').addEventListener('click', e => { const b = e.target.closest('.sp'); if (!b || b.disabled) return; const p = +b.dataset.p, id = b.dataset.sp, s = G.s;
+    if (!myTurnNow() || s.turn !== p) return; if (b.classList.contains('lock')) { toast(`특수 돌은 ${specUnlockIn(s, p)}수 더 둔 뒤에 쓸 수 있어요`); SND.bad(); return; }
+    G.sel = G.sel === id ? null : id; G.pend = null; SND.click(); renderCards(); updUI(); });
+  addEventListener('keydown', e => { if (e.key === 'Escape') { if (G.pend || G.sel) { G.sel = null; G.pend = null; renderCards(); updUI(); } else $('#modal').classList.remove('on'); }
+    if (/^[1-5]$/.test(e.key) && myTurnNow() && e.target.tagName !== 'INPUT') { const sp = SPEC[G.s.fac[G.s.turn]][+e.key - 1]; if (specAvail(G.s, G.s.turn, sp.id)) { G.sel = G.sel === sp.id ? null : sp.id; G.pend = null; renderCards(); updUI(); } } });
+  document.addEventListener('click', e => { const a = e.target.closest('[data-act]'); if (!a || a.disabled) return; SND.init(); SND.click(); const k = a.dataset.act;
+    if (k === 'solo') soloModal(); else if (k === 'local') localModal(); else if (k === 'online') onlineModal();
+    else if (k === 'again') { $('#modal').classList.remove('on'); if (G.mode === 'online') hostStart(); else if (G.mode === 'solo') startGame('solo', { fac0: G.s.fac[0], first: 1 - G.s.first, time: G.time, diff: G.diff, me: 0, names: G.names }); else startGame('local', { fac0: G.s.fac[0], first: 1 - G.s.first, time: G.time, names: G.names }); }
+    else if (k === 'title') { if (NET.role) NET.leave(); G.phase = 'title'; G.mode = 'title'; show('title'); titleStat(); }
+    else if (k === 'hub') { if (NET.role) NET.leave(); location.href = '../index.html'; }
+    else if (k === 'resign') { $('#sheet').classList.remove('on'); if (G.phase !== 'play') return; const p = G.mode === 'local' ? G.s.turn : G.me; if (G.mode === 'online') NET.send({ t: 'resign', p }); endGame(1 - p, 'resign'); }
+    else if (k === 'dex') dexModal(); else if (k === 'help') helpModal(); else if (k === 'opt') optModal();
+    else if (k === 'close') $('#modal').classList.remove('on');
+    else if (k === 'netStart') hostStart();
+    else if (k === 'netLeave') { NET.leave(); $('#modal').classList.remove('on'); }
+  });
+  $('#modal').addEventListener('click', async e => {
+    const id = e.target.id; if (id !== 'onHost' && id !== 'onJoin') return;
+    const nick = ($('#onNick').value || '').trim().slice(0, 8) || '선수'; SAVE.nick = nick; save(); e.target.disabled = true;
+    if (id === 'onHost') { e.target.textContent = '방 만드는 중…'; NET.cfg = { fac: SAVE.fac, time: SAVE.time }; await NET.host(nick); lobbyModal(); }
+    else { const code = $('#onCode').value; e.target.textContent = '연결 중…'; await NET.join(code, nick); if (NET.role) lobbyModal(); else { e.target.disabled = false; e.target.textContent = '코드로 참가'; } } });
+  $('#gMenu').addEventListener('click', () => { SND.init(); $('#sheet').classList.toggle('on'); });
+  $('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') $('#sheet').classList.remove('on'); });
+}
+function titleStat() { $('#tStat').textContent = SAVE.games ? `${SAVE.games}판 · ${SAVE.wins}승 (면역 ${SAVE.winImm} · 병원체 ${SAVE.winPat}) · AI 어려움 ${SAVE.aiWins.hard || 0}승` : '면역세포와 병원체, 어느 편에서 5목을 완성할까요?'; }
+
+/* ---------------- 메인 루프 ---------------- */
+let last = performance.now(), lastSec = -1;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (G.anim > 0) G.anim = Math.max(0, G.anim - dt);
+  const s = G.s;
+  if (s && G.phase === 'play' && s.winner < 0) {
+    const p = s.turn; G.clock[p] -= (now - (G.lastTick || now));
+    const sec = Math.ceil(G.clock[p] / 1000); if (sec !== lastSec) { lastSec = sec; updClocks(); if (sec <= 10 && sec > 0 && isMine(p)) SND.tick(); }
+    if (G.clock[p] <= 0) {
+      if (G.mode !== 'online') { G.clock[p] = 0; endGame(1 - p, 'time'); }
+      else if (p === G.me) { G.clock[p] = 0; NET.send({ t: 'flag', p }); endGame(1 - p, 'time'); }
+      else if (G.clock[p] < -3000) { NET.send({ t: 'flag', p }); G.clock[p] = 0; endGame(1 - p, 'time'); }
+    }
+    syncBlocks();
+  }
+  G.lastTick = now;
+  updGhost(now); animArena(dt, now); stepFx(dt);
+  if (document.body.dataset.screen === 'title') { const t = now / 9000; R.cam.clearViewOffset(); R.cam.fov = 40; R.cam.aspect = innerWidth / innerHeight; R.cam.updateProjectionMatrix(); R.cam.position.set(Math.sin(t) * 20, 11, Math.cos(t) * 20); R.cam.lookAt(0, -2, 0); R.scene.fog.near = 30; R.scene.fog.far = 60; }
+  else if (R.camD) { const sh = R.shake > 0 ? (R.shake -= dt, R.shake) : 0; R.cam.position.set((Math.random() - 0.5) * sh * 0.4, Math.sin(R.camEl) * R.camD, Math.cos(R.camEl) * R.camD); R.cam.lookAt(0, 0, 0); }
+  R.r.render(R.scene, R.cam);
+}
+/* ---------------- 시작 ---------------- */
+try {
+  initGfx(); makeIcons(); bindInput(); titleStat(); show('title');
+  // 타이틀 장식: 판 위에 돌 몇 개
+  G.s = newState('immune', 0); [[7, 7, 0, ''], [8, 8, 1, ''], [6, 8, 0, 'macro'], [9, 7, 1, 'lysis'], [7, 9, 0, 'antibody'], [8, 6, 1, 'spore'], [5, 9, 0, ''], [9, 9, 1, 'toxin']].forEach(([x, y, p, k]) => { G.s.b[idx(x, y)] = p + 1; G.s.k[idx(x, y)] = k; }); fullSync(); G.s = null;
+  requestAnimationFrame(frame);
+} catch (e) { console.error(e); $('#err').textContent = '시작 오류: ' + e.message; $('#err').style.display = 'block'; }
+window.BO = { G, NET, R, newState, apply, legal, aiMove, targets, startGame, doMove, hostStart, SPEC, endGame, fullSync };
+</script>
+<script src="../goal.js"></script>
+<script src="../ilog.js"></script>
+</body>
+</html>
