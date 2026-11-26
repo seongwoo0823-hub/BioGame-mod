@@ -19,6 +19,7 @@
 | 바이오 볼링 BIO BOWLING | 면역세포 볼링공(8종)으로 병원체 핀(6종)을 쓰러뜨리는 3D 볼링 (화살표 조준 · 힘 게이지 · 휘기 · 한 기기 2~4명 · 온라인 4명) | `games/bio-bowling.html` |
 | 바이오 포격전 BIO BARRAGE | 면역팀 vs 병원체팀 턴제 포격전 (옆 시점 3D · 부서지는 지형 · 무기 16종 · 바람 · AI 3단계 · 같이 하기 · 온라인 4명) | `games/bio-barrage.html` |
 | 바이오 밸리 타이쿤 BIO VALLEY | 팝업북 종이공예 3D 생명과학 타이쿤 (빈 땅에서 도로·숙소·생산·가공·연구 · 시작 지형 5가지 · 주민·트럭·오염·행복 · 기술 16개 · 자동 저장) | `games/bio-valley.html` |
+| 바이오 알 도둑 BIO EGG THIEF | 카툰 3D 알 훔치기 (알 7종 · 생물 28종 · 돌연변이 5종 · 경비 세포 · 봇 연구원 습격·잠금 · 융합·러닝 벨트·트레일·환생 · 이벤트 4종 · 자동 저장) | `games/bio-egg.html` |
 | 면역 방어선 IMMUNE LINE | 면역세포를 배치해 병원체를 막는 복셀 레인 디펜스 (면역세포 16 · 병원체 14 · 보스 5 · 5월드 25스테이지 · 무한 모드 · 설계서 docs/immune-line-prompt.md) | `games/immune-line.html` |
 | 생물의 번제 BIO OFFERING | 방 탐험 로그라이크 슈터 (6구역 · 병원체 40 · 보스 21 · 아이템 138) | `games/cell-raid.html` |
 

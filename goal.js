@@ -23,6 +23,7 @@
     'bio-bowling':   {tpl: '{t}점 이상 내기', t: 120, unit: '점'},
     'bio-barrage':   {tpl: 'AI {t}단계(1 쉬움·2 보통·3 어려움) 이기기', t: 2, unit: '단계'},
     'bio-valley':    {tpl: '마을 인구 {t}명 만들기', t: 100, unit: '명'},
+    'bio-egg':       {tpl: '초당 수입 {t} 만들기', t: 1000, unit: '/초'},
     'immune-line':   {tpl: '스테이지 {t}개 클리어하기', t: 5, unit: '개'},
     'lab-forge':     {tpl: '실험기구를 +{t}까지 강화하기', t: 10, unit: '단계', pre: true},
   };
