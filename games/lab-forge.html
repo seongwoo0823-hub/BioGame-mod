@@ -174,16 +174,20 @@ const DESTROY_FROM = 18, DESTROY_CHANCE = 0.30, PROTECT_PRICE = 1000000, NEW_TOO
 const MATS = [
   {name: '규사 조각', col: '#d8f2ff', zone: '유리 초자 광산'},
   {name: '티타늄 광석', col: '#9aa6b8', zone: '정밀 합금 광산'},
+  {name: '네오디뮴 광석', col: '#ffb347', zone: '희토류 자석 광산'},
   {name: '고순도 실리콘', col: '#6a7cff', zone: '반도체 웨이퍼 광산'},
+  {name: '그래핀 결정', col: '#6fd88a', zone: '그래핀 나노 광산'},
   {name: '초전도 결정', col: '#3ff0e0', zone: '초전도체 광산'},
   {name: '반물질 코어', col: '#ff4fd8', zone: '양자 코어 광산'}
 ];
 const ZONES = [
   {name: '1구역 · 유리 초자 광산', ore: 0xd8f2ff, ore2: 0x9fd8f0, ground: 0xcfe8f2, hp: 3, tier: 0},
-  {name: '2구역 · 정밀 합금 광산', ore: 0x9aa6b8, ore2: 0x6e7a8c, ground: 0xb8b0a0, hp: 14, tier: 1},
-  {name: '3구역 · 반도체 웨이퍼 광산', ore: 0x6a7cff, ore2: 0x3a48c8, ground: 0x9aa0c8, hp: 48, tier: 2},
-  {name: '4구역 · 초전도체 광산', ore: 0x3ff0e0, ore2: 0x10a8a0, ground: 0x7fb8c0, hp: 170, tier: 3},
-  {name: '5구역 · 양자 코어 광산', ore: 0xff4fd8, ore2: 0x9a20a8, ground: 0x5a4a7a, hp: 600, tier: 4}
+  {name: '2구역 · 정밀 합금 광산', ore: 0x9aa6b8, ore2: 0x6e7a8c, ground: 0xb8b0a0, hp: 10, tier: 1},
+  {name: '3구역 · 희토류 자석 광산', ore: 0xffb347, ore2: 0xc0602a, ground: 0xd8b890, hp: 26, tier: 2},
+  {name: '4구역 · 반도체 웨이퍼 광산', ore: 0x6a7cff, ore2: 0x3a48c8, ground: 0x9aa0c8, hp: 60, tier: 3},
+  {name: '5구역 · 그래핀 나노 광산', ore: 0x6fd88a, ore2: 0x2a7a48, ground: 0x9ab8a0, hp: 150, tier: 4},
+  {name: '6구역 · 초전도체 광산', ore: 0x3ff0e0, ore2: 0x10a8a0, ground: 0x7fb8c0, hp: 330, tier: 5},
+  {name: '7구역 · 양자 코어 광산', ore: 0xff4fd8, ore2: 0x9a20a8, ground: 0x5a4a7a, hp: 700, tier: 6}
 ];
 const PETS = [
   {name: '신입 석사 1학기', w: 70, spd: 0.05, mag: 1.5, col: '#9ad0ff'},
@@ -224,12 +228,13 @@ const SLOT_TABLE = [ // 지원금 슬롯: 합계 100%
   {k: 'money', v: 50000, p: 5, label: '연구비 50,000원', sym: '5만'},
   {k: 'ticket', p: 2.5, label: '장비 보호권 1개 (대박!)', sym: '보호'}
 ];
-const tierOf = L => Math.min(4, Math.floor((L - 1) / 6));               // 강화에 쓰는 재료 종류
-const needMat = L => 3 + ((L - 1) % 6) * 2;                             // 필요한 재료 수
+const TIER_START = [1, 6, 10, 14, 18, 22, 26];                          // 광산(재료) 7개가 맡는 강화 단계의 시작
+const tierOf = L => { let t = 0; for (let i = 1; i < TIER_START.length; i++) if (L >= TIER_START[i]) t = i; return t; };   // 강화에 쓰는 재료 종류
+const needMat = L => 3 + (L - TIER_START[tierOf(L)]) * 2;                // 필요한 재료 수
 const BOOSTS = [ // 강화 촉매: 재료로 사고, 강화 1번에 1개 써서 성공 확률을 배로 올려요 (최대 100%)
-  {x: 2, mat: 0, cost: 20, name: '규사 촉매'}, {x: 4, mat: 1, cost: 30, name: '티타늄 촉매'}, {x: 6, mat: 2, cost: 40, name: '실리콘 촉매'},
-  {x: 8, mat: 3, cost: 50, name: '초전도 촉매'}, {x: 10, mat: 4, cost: 60, name: '반물질 촉매'}];
-let boostSel = -1; try { boostSel = +(localStorage.getItem('labForgeBoost') ?? -1); if (!(boostSel >= -1 && boostSel < 5)) boostSel = -1; } catch (e) {}
+  {x: 2, mat: 0, cost: 20, name: '규사 촉매'}, {x: 3, mat: 1, cost: 30, name: '티타늄 촉매'}, {x: 4, mat: 2, cost: 35, name: '네오디뮴 촉매'}, {x: 6, mat: 3, cost: 40, name: '실리콘 촉매'},
+  {x: 7, mat: 4, cost: 45, name: '그래핀 촉매'}, {x: 8, mat: 5, cost: 50, name: '초전도 촉매'}, {x: 10, mat: 6, cost: 60, name: '반물질 촉매'}];
+let boostSel = -1; try { boostSel = +(localStorage.getItem('labForgeBoost') ?? -1); if (!(boostSel >= -1 && boostSel < BOOSTS.length)) boostSel = -1; } catch (e) {}
 const boostRate = (r, b) => Math.min(100, (b >= 0 && S.boosts[b] > 0 ? r * BOOSTS[b].x : r) * (isProf() ? PROF_BONUS.enh : 1));
 const needMoney = L => Math.round(500 * Math.pow(1.38, L - 1) / 100) * 100; // 필요한 연구비
 const sellPrice = L => Math.round(2000 * Math.pow(1.6, L - 1) / 100) * 100;
@@ -241,10 +246,14 @@ const fmtRate = p => p >= 1 ? p.toFixed(1) + '%' : p.toPrecision(3).replace(/0+$
 /* ======================= 저장 ======================= */
 const SAVE_KEY = 'labForgeSave';
 let S = null, uid = 1;
-function freshSave() { return {money: 20000, tickets: 0, mats: [0, 0, 0, 0, 0], inv: [{id: 1, L: 1}], store: [], eq: 1, pets: [], team: [], coats: [], coat: -1, autoMine: false, autoMineOn: true, boosts: [0, 0, 0, 0, 0], packs: [], autoPet: false, autoSlot: false, best: 1, uid: 2, stats: {mined: 0, tries: 0, destroyed: 0}}; }
+function freshSave() { return {money: 20000, tickets: 0, mats: [0, 0, 0, 0, 0, 0, 0], inv: [{id: 1, L: 1}], store: [], eq: 1, pets: [], team: [], coats: [], coat: -1, autoMine: false, autoMineOn: true, boosts: [0, 0, 0, 0, 0, 0, 0], packs: [], autoPet: false, autoSlot: false, best: 1, uid: 2, stats: {mined: 0, tries: 0, destroyed: 0}}; }
 function load() { try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.inv) return Object.assign(freshSave(), d); } catch (e) {} return freshSave(); }
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} }
-S = load(); uid = S.uid; if (!Array.isArray(S.packs)) S.packs = []; if (!Array.isArray(S.boosts) || S.boosts.length !== 5) S.boosts = [0, 0, 0, 0, 0];
+S = load(); uid = S.uid; if (!Array.isArray(S.packs)) S.packs = []; // 광산 5개 → 7개: 예전 재료·촉매 자리 옮기기 (규사·티타늄·실리콘·초전도·반물질)
+{ const MOVE = [0, 1, 3, 5, 6], mv = a => { const n = [0, 0, 0, 0, 0, 0, 0]; a.forEach((v, i) => { if (MOVE[i] !== undefined) n[MOVE[i]] = +v || 0; }); return n; };
+  if (!Array.isArray(S.mats)) S.mats = [0, 0, 0, 0, 0, 0, 0]; else if (S.mats.length === 5) S.mats = mv(S.mats);
+  if (!Array.isArray(S.boosts)) S.boosts = [0, 0, 0, 0, 0, 0, 0]; else if (S.boosts.length === 5) { S.boosts = mv(S.boosts); if (boostSel >= 0) boostSel = MOVE[boostSel]; }
+  while (S.mats.length < 7) S.mats.push(0); while (S.boosts.length < 7) S.boosts.push(0); }
 // 예전 저장 옮기기: 펫 번호 배열 → {id, k, lv}, 한 명 장착 → 팀
 if (S.pets.length && typeof S.pets[0] === 'number') { const old = S.pets, eq = S.petEq; S.pets = old.map(k => ({id: ++uid, k, lv: 0})); S.team = eq >= 0 && S.pets[eq] ? [S.pets[eq].id] : []; S.uid = uid; }
 delete S.petEq; S.team = (S.team || []).filter(id => S.pets.some(p => p.id === id)).slice(0, TEAM_MAX);
@@ -320,8 +329,8 @@ const WORLD = 46; // 반폭
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(WORLD * 2 + 8, WORLD * 2 + 8), new THREE.MeshLambertMaterial({color: 0x7ccf86})); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
 // 캠퍼스 광장
 const plaza = new THREE.Mesh(new THREE.CylinderGeometry(13, 13, 0.12, 48), new THREE.MeshLambertMaterial({color: 0xeae2cc})); plaza.position.y = 0.06; plaza.receiveShadow = true; scene.add(plaza);
-// 구역 위치 (오각형)
-ZONES.forEach((z, i) => { const a = -Math.PI / 2 + i * Math.PI * 2 / 5; z.x = Math.cos(a) * 31; z.z = Math.sin(a) * 31; z.a = a; });
+// 구역 위치 (칠각형)
+ZONES.forEach((z, i) => { const a = -Math.PI / 2 + i * Math.PI * 2 / ZONES.length; z.x = Math.cos(a) * 31; z.z = Math.sin(a) * 31; z.a = a; });
 // 길
 ZONES.forEach(z => { const L = 31 - 8, mx = Math.cos(z.a) * (13 + L / 2 - 4), mz = Math.sin(z.a) * (13 + L / 2 - 4); const p = new THREE.Mesh(new THREE.BoxGeometry(L, 0.08, 2.6), new THREE.MeshLambertMaterial({color: 0xe6d6a8})); p.position.set(mx, 0.04, mz); p.rotation.y = -z.a; p.receiveShadow = true; scene.add(p); });
 // 구역 바닥 · 표지판 · 광석
@@ -330,7 +339,7 @@ function oreMesh(z) {
   const c1 = '#' + new THREE.Color(z.ore).getHexString(), c2 = '#' + new THREE.Color(z.ore2).getHexString();
   const P = [[0, 0, 0, 0.9, 0.7, 0.9, c2], [0, 0.7, 0, 0.7, 0.3, 0.7, c1]];
   for (let k = 0; k < 3; k++) P.push([(Math.random() - .5) * 0.6, 0.15 + Math.random() * 0.6, 0.46, 0.18, 0.18, 0.04, '#ffffff']);
-  if (z.tier >= 3) P.push([0, 1.0, 0, 0.3, 0.4, 0.3, c1]);
+  if (z.tier >= 4) P.push([0, 1.0, 0, 0.3, 0.4, 0.3, c1]);
   return vox(P);
 }
 ZONES.forEach((z, zi) => {
@@ -427,7 +436,7 @@ refreshPet(); refreshHeld();
 /* ======================= 드랍 · 파티클 · 글자 ======================= */
 const drops = [];
 const coinCol = {1000: '#ffd25e', 10000: '#5ef2c8', 50000: '#ff7eb6'};
-const ZONE_MONEY_MULT = [1, 2, 4, 8, 16];             // 바깥 구역일수록 연구비 2배씩
+const ZONE_MONEY_MULT = [1, 2, 3, 5, 8, 12, 16];      // 바깥 구역일수록 연구비가 많아요
 const AUTO_MINE_PRICE = 10000000;                      // 석사 자동 채굴 (1,000만 원)
 function spawnDrop(x, z, kind, v, mult) {
   let m;
@@ -556,7 +565,7 @@ function hit(o, tool, byPet) {
     o.dead = 6 + z.tier * 1.5; o.m.visible = false; AU.crack(z.tier); S.stats.mined++;
     burst(o.x, 0.6, o.z, ['#' + new THREE.Color(z.ore).getHexString(), '#' + new THREE.Color(z.ore2).getHexString(), '#ffffff'], 18, 0.9);
     const n = 1 + Math.floor(Math.random() * 3); for (let k = 0; k < n; k++) spawnDrop(o.x, o.z, 'mat', z.tier);
-    const r = Math.random(), mm = ZONE_MONEY_MULT[z.tier];   // 연구비: 1,000원 38% · 10,000원 10% · 50,000원 2% × 구역 배수(2배씩)
+    const r = Math.random(), mm = ZONE_MONEY_MULT[z.tier];   // 연구비: 1,000원 38% · 10,000원 10% · 50,000원 2% × 구역 배수
     if (r < 0.02) spawnDrop(o.x, o.z, 'money', 50000, mm); else if (r < 0.12) spawnDrop(o.x, o.z, 'money', 10000, mm); else if (r < 0.5) spawnDrop(o.x, o.z, 'money', 1000, mm);
   }
 }
@@ -665,7 +674,7 @@ function boostHtml() {
     return `<div class="prow"><span class="dot" style="background:${m.col}"></span><div style="flex:1"><b>${b.name} <span style="color:#ffd25e">성공 확률 ×${b.x}</span></b> <b class="cnt">보유 ${S.boosts[i]}</b><small>${m.name} ${b.cost}개 → 촉매 1개 · 가진 재료 ${S.mats[b.mat]}개 (${can}개 만들 수 있음)</small></div><button class="btn pri sm" data-bb="${i}" data-n="1" ${can ? '' : 'disabled'}>1개</button><button class="btn sm" data-bb="${i}" data-n="5" ${can >= 5 ? '' : 'disabled'}>5개</button></div>`; }).join('')}</div>`;
 }
 function matHtml() {
-  return `<p class="sub">남은 재료 <b>${MAT_FUSE}개</b>를 합치면 바로 위 단계 재료 <b>1개</b>가 <b>확정</b>으로 나와요.</p><div class="plist">${MATS.slice(0, 4).map((m, i) => { const can = Math.floor(S.mats[i] / MAT_FUSE);
+  return `<p class="sub">남은 재료 <b>${MAT_FUSE}개</b>를 합치면 바로 위 단계 재료 <b>1개</b>가 <b>확정</b>으로 나와요.</p><div class="plist">${MATS.slice(0, -1).map((m, i) => { const can = Math.floor(S.mats[i] / MAT_FUSE);
     return `<div class="prow"><span class="dot" style="background:${m.col}"></span><div style="flex:1"><b>${m.name} ${S.mats[i]}개</b> → <b style="color:${MATS[i + 1].col}">${MATS[i + 1].name}</b><small>${MAT_FUSE}개 → 1개 · 지금 ${can}번 가능</small></div><button class="btn pri sm" data-mf="${i}" data-n="1" ${can ? '' : 'disabled'}>1번</button><button class="btn sm" data-mf="${i}" data-n="10" ${can >= 10 ? '' : 'disabled'}>10번</button><button class="btn gold sm" data-mf="${i}" data-n="all" ${can ? '' : 'disabled'}>최대</button></div>`; }).join('')}</div>`;
 }
 function buyAutoMine(after) {
@@ -720,8 +729,8 @@ function enhance(id, useTicket) {
     if (useTicket && S.tickets > 0) { S.tickets--; save(); return {ok: false, protected: true, L}; }
     if (Math.random() < DESTROY_CHANCE) {
       // 파괴: 단계에 비례해 재료 환급
-      const refund = [0, 0, 0, 0, 0]; for (let k = 1; k <= L; k++) refund[tierOf(k)] += Math.ceil(needMat(k) * 0.6);
-      for (let i = 0; i < 5; i++) S.mats[i] += refund[i];
+      const refund = [0, 0, 0, 0, 0, 0, 0]; for (let k = 1; k <= L; k++) refund[tierOf(k)] += Math.ceil(needMat(k) * 0.6);
+      for (let i = 0; i < 7; i++) S.mats[i] += refund[i];
       S.inv = S.inv.filter(x => x !== t); if (S.eq === t.id) { S.eq = (S.inv[0] || {}).id ?? -1; refreshHeld(); }
       S.stats.destroyed++; save(); return {ok: false, destroyed: true, L, refund};
     }
@@ -941,7 +950,7 @@ function spin(auto) {
     spinning = false; const res = $('sRes'); let msg = '', big = false;
     if (out.k === 'none') { msg = '꽝… 다음 기회에!'; if (!auto) AU.fail(); }
     else if (out.k === 'money') { const v = Math.round(out.v * packMult()); S.money += v; msg = `연구비 ${won(v)} 당첨!${packMult() > 1 ? ' (효율 팩 ×' + packMult() + ')' : ''}`; AU.coin(out.v >= 10000); if (out.v >= 50000) big = true; }
-    else if (out.k === 'mats') { const got = [0, 0, 0, 0, 0], maxT = Math.max(0, Math.min(4, tierOf(Math.max(1, (eqTool() || {L: 1}).L)) + 1)); for (let k = 0; k < 5; k++) got[Math.floor(Math.random() * (maxT + 1))]++; for (let i = 0; i < 5; i++) S.mats[i] += got[i]; msg = '강화 재료 5개: ' + got.map((n, i) => n ? MATS[i].name + ' ' + n : '').filter(Boolean).join(', '); AU.success(); }
+    else if (out.k === 'mats') { const got = [0, 0, 0, 0, 0, 0, 0], maxT = Math.max(0, Math.min(6, tierOf(Math.max(1, (eqTool() || {L: 1}).L)) + 1)); for (let k = 0; k < 5; k++) got[Math.floor(Math.random() * (maxT + 1))]++; for (let i = 0; i < 7; i++) S.mats[i] += got[i]; msg = '강화 재료 5개: ' + got.map((n, i) => n ? MATS[i].name + ' ' + n : '').filter(Boolean).join(', '); AU.success(); }
     else { S.tickets++; msg = '🛡 장비 보호권 당첨!! 대박!'; big = true; }
     hudDirty = true; save();
     if (!res) { autoSlot = false; return; }
@@ -969,11 +978,11 @@ function helpModal() {
   modal(`<h2>📖 게임 방법</h2><div class="sub" style="font-size:13.5px;line-height:1.7">
     <b>이동</b>: WASD·방향키, 화면 누르기(그곳으로 걸어감), 휴대폰은 왼쪽 아래 조이스틱.<br>
     <b>채굴</b>: 장착한 실험기구로 가까운 광석을 자동으로 캐요. 채굴 간격은 1.2초 × 0.82^(단계−1)로 단계마다 짧아지고(최소 0.05초) 한 번에 깎는 양도 늘어요.<br>
-    <b>5개 광산</b>: 1구역 규사 조각(+1~6 강화) · 2구역 티타늄 광석(+7~12) · 3구역 고순도 실리콘(+13~18) · 4구역 초전도 결정(+19~24) · 5구역 반물질 코어(+25~30). 바깥 구역일수록 광석이 단단해요.<br>
+    <b>7개 광산</b>: 1구역 규사 조각(+1~5 강화) · 2구역 티타늄 광석(+6~9) · 3구역 네오디뮴 광석(+10~13) · 4구역 고순도 실리콘(+14~17) · 5구역 그래핀 결정(+18~21) · 6구역 초전도 결정(+22~25) · 7구역 반물질 코어(+26~30). 바깥 구역일수록 광석이 단단해요.<br>
     <b>대장간</b>: 기구를 누르면 필요한 재료·연구비·확률이 자동으로 채워져요. +18부터는 실패하면 30% 확률로 파괴되고 재료를 일부 돌려받아요. 🛡 보호권을 쓰면 파괴되지 않아요(100만 원).<br>
     <b>석사 리크루팅</b>: 3칸 슬롯으로 뽑아요(1만 원). 석사는 최대 4명까지 줄지어 따라오며 이동 속도와 자석 범위를 늘려요. 같은 석사는 개수로 묶여 보이고, 강화하면 오라가 생기며, 같은 등급 3명을 합성하면 확률적으로 상위 석사가 나와요.<br>
     <b>실험복 부티크</b>: 실험복 5종(가격 8배씩) + 최종 단계 <b>교수 전직</b>(강화 확률 ×1.3 · 채굴 위력 ×1.5 · 이동 ×1.2 · 연구비·재료 ×1.5). 입으면 모습과 오라가 바뀌고 채굴 범위가 넓어져요.<br>
-    <b>연구비</b>: 바깥 구역일수록 2배씩 많이 나와요 (1구역 ×1 → 5구역 ×16).<br>
+    <b>연구비</b>: 바깥 구역일수록 2배씩 많이 나와요 (1구역 ×1 → 7구역 ×16).<br>
     <b>석사 자동 채굴</b>: 1,000만 원(대장간 상점·리크루팅 머신 팀 탭). 함께 다니는 석사들이 근처 광석을 직접 캐요.<br>
     <b>재료 합성</b>: 대장간 [재료 합성]에서 재료 10개 → 위 단계 재료 1개(확정).<br>
     <b>지원금 슬롯</b>: 1천 원. 연구비·재료·보호권이 나와요. 자동 스핀(100만 원)·자동 리크루팅(100만 원)을 사면 계속 돌려 줘요.<br><b>채굴장 효율 팩</b>: 대장간 상점에서 ×3·×6·×9·×12 (30만·100만·300만·1,000만 원). 가장 높은 팩이 연구비와 재료에 적용돼요.<br>
