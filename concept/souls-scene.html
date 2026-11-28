@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>에피토프 콘셉트</title>
+<script type="importmap">{ "imports": { "three": "../vendor/three-r187/three.module.js" } }</script>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#f2ead8}
+#gl{position:fixed;inset:0;width:100%;height:100%}
+.hud{position:fixed;inset:0;pointer-events:none}
+.bars{position:absolute;left:34px;top:30px;display:flex;flex-direction:column;gap:6px}
+.bar{height:12px;border:2px solid rgba(20,12,8,.85);background:rgba(10,8,8,.55);border-radius:2px;position:relative;box-shadow:0 0 0 1px rgba(255,230,190,.25)}
+.bar i{position:absolute;inset:0;right:auto}
+.hp{width:420px} .hp i{width:72%;background:linear-gradient(#ff7a6a,#c02a2a)} .hp b{position:absolute;left:72%;top:0;bottom:0;width:9%;background:#f0c070;opacity:.8}
+.fp{width:250px} .fp i{width:85%;background:linear-gradient(#7ab8ff,#2a5ac8)}
+.st{width:330px} .st i{width:46%;background:linear-gradient(#a8f07a,#3a9a2a)}
+.slots{position:absolute;left:46px;bottom:40px;width:210px;height:210px}
+.slot{position:absolute;width:74px;height:74px;border:2px solid rgba(255,230,190,.55);background:radial-gradient(circle,rgba(40,30,30,.75),rgba(0,0,0,.6));border-radius:10px;display:grid;place-items:center;font-size:34px;box-shadow:inset 0 0 12px rgba(0,0,0,.8)}
+.slot small{position:absolute;bottom:2px;right:6px;font-size:13px;font-weight:800;color:#fff;text-shadow:0 1px 2px #000}
+.slot.u{left:68px;top:0}.slot.l{left:0;top:68px}.slot.r{left:136px;top:68px}.slot.d{left:68px;top:136px}
+.itemname{position:absolute;left:46px;bottom:12px;font-size:15px;font-weight:700;letter-spacing:1px;text-shadow:0 1px 3px #000}
+.souls{position:absolute;right:46px;bottom:40px;padding:8px 18px 8px 14px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.6));font-size:24px;font-weight:800;letter-spacing:1px;display:flex;gap:10px;align-items:center}
+.souls em{font-style:normal;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,#ffd27a 40%,#c8702a);box-shadow:0 0 12px #ffb04a}
+.boss{position:absolute;left:50%;bottom:86px;transform:translateX(-50%);width:min(900px,70vw)}
+.boss p{margin:0 0 6px;font-size:21px;font-weight:700;letter-spacing:2px;text-shadow:0 2px 4px #000}
+.boss p small{font-size:14px;opacity:.75;margin-left:10px;letter-spacing:1px}
+.boss .bar{height:13px} .boss .bar i{width:58%;background:linear-gradient(#ff6aa8,#9a1a5a)} .boss .bar b{position:absolute;left:58%;width:6%;top:0;bottom:0;background:#ffd0a0}
+.dmg{position:absolute;font-size:30px;font-weight:900;color:#fff4d0;text-shadow:0 0 6px #ff6a3a,0 2px 0 #4a1a0a}
+.lock{position:absolute;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,#fff 30%,rgba(255,255,255,.2) 60%,transparent 70%);transform:translate(-50%,-50%);box-shadow:0 0 14px #fff}
+.prompt{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);padding:10px 34px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.7),transparent);font-size:20px;letter-spacing:2px;border-top:1px solid rgba(255,230,190,.35);border-bottom:1px solid rgba(255,230,190,.35)}
+.prompt kbd{display:inline-block;padding:1px 9px;border:2px solid #f2ead8;border-radius:6px;margin-right:10px;font-size:16px}
+.area{position:absolute;left:50%;top:22%;transform:translateX(-50%);text-align:center;letter-spacing:6px}
+.area h1{margin:0;font-size:44px;font-weight:600;text-shadow:0 2px 12px #000}
+.area div{height:2px;margin:10px auto;width:520px;background:linear-gradient(90deg,transparent,#f2ead8,transparent)}
+.death{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(transparent 38%,rgba(0,0,0,.75) 45%,rgba(0,0,0,.75) 58%,transparent 64%)}
+.death h1{font-size:86px;margin:0;color:#c8283a;letter-spacing:14px;font-weight:500;text-shadow:0 0 30px rgba(255,40,60,.5)}
+.death p{margin:0;text-align:center;letter-spacing:4px;opacity:.8}
+.tag{position:absolute;right:20px;top:16px;font-size:13px;opacity:.6;letter-spacing:2px}
+</style></head>
+<body>
+<canvas id="gl"></canvas>
+<div class="hud" id="hud"></div>
+<script type="module">
+import * as THREE from 'three';
+import { Kit, meshOf, toon } from '../games/bio-egg/models.js';
+const scene = new THREE.Scene();
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gl'), antialias: true });
+renderer.setPixelRatio(1); renderer.setSize(innerWidth, innerHeight); renderer.shadowMap.enabled = true;
+const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 400);
+const R = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(9);
+const mk = (fn, mat) => { const k = new Kit({ outline: 0.04 }); fn(k); return meshOf(k.build(), mat); };
+
+// ---------------- 의인화 인간형 몸 ----------------
+function humanoid(o) {
+  const g = new THREE.Group(), s = o.s || 1;
+  const torso = mk((k) => o.torso(k)); g.add(torso);
+  const head = mk((k) => o.head(k)); head.position.y = o.neck || 1.62; g.add(head);
+  const limb = (col, len, w, extra) => mk((k) => { k.add('cap', col, { p: [0, -len / 2, 0], s: [w, len, w] }); extra && extra(k, len); });
+  const arms = [-1, 1].map((sd) => { const a = limb(o.arm, 0.62, o.armW || 0.2, o.hand ? (k, l) => o.hand(k, l, sd) : null); a.position.set(sd * (o.shoulder || 0.36), o.shY || 1.38, 0); g.add(a); return a; });
+  const legs = [-1, 1].map((sd) => { const l = limb(o.leg, 0.72, o.legW || 0.24, (k, len) => k.add('box', o.boot || o.leg, { p: [0, -len + 0.02, 0.06], s: [0.26, 0.16, 0.36] })); l.position.set(sd * 0.15, 0.8, 0); g.add(l); return l; });
+  g.scale.setScalar(s); g.userData = { arms, legs, head, torso };
+  return g;
+}
+const hold = (arm, obj, rx = 0) => { obj.position.set(0, -0.62, 0.05); obj.rotation.x = rx; arm.add(obj); };
+
+// 플레이어: 호중구 기사
+function player() {
+  const h = humanoid({
+    arm: '#e8e4f2', leg: '#5a5a7a', boot: '#3a3048',
+    torso: (k) => { k.add('cap', '#f4f0fa', { p: [0, 1.1, 0], s: [0.62, 0.42, 0.44] }); k.add('box', '#c8b8f0', { p: [0, 1.16, 0.2], s: [0.4, 0.34, 0.06], outline: false });
+      for (const [x, y] of [[-0.1, 1.24], [0.08, 1.2], [0, 1.08], [0.12, 1.06]]) k.sph('#8a5ad8', [x, y, 0.24], 0.07, { outline: false });   // 여러 갈래 핵
+      k.add('cyl', '#b89a5a', { p: [0, 0.86, 0], s: [0.34, 0.08, 0.3] });
+      k.add('box', '#8ac8ff', { p: [0, 0.92, -0.27], s: [0.56, 1.0, 0.05], r: [0.18, 0, 0] }); k.add('box', '#6aa8e8', { p: [0, 0.44, -0.36], s: [0.6, 0.12, 0.05], r: [0.18, 0, 0], outline: false });   // 망토
+      for (const sd of [-1, 1]) k.add('sph', '#ffffff', { p: [sd * 0.4, 1.42, 0], s: [0.2, 0.15, 0.2] }); },
+    head: (k) => { k.sph('#fbf7ff', [0, 0.18, 0], [0.3, 0.3, 0.3]); k.add('box', '#2a2440', { p: [0, 0.16, 0.24], s: [0.36, 0.14, 0.1], outline: false });
+      k.sph('#9af0ff', [-0.09, 0.16, 0.29], 0.045, { outline: false }); k.sph('#9af0ff', [0.09, 0.16, 0.29], 0.045, { outline: false });
+      k.add('cone', '#ff6a8a', { p: [0, 0.56, -0.04], s: [0.06, 0.3, 0.14], r: [-0.4, 0, 0] }); },
+  });
+  const sword = mk((k) => { k.add('box', '#7af0ff', { p: [0, 0, 0.6], s: [0.09, 0.03, 1.1] }); k.add('box', '#e8c870', { p: [0, 0, 0.02], s: [0.36, 0.06, 0.08] }); k.add('cyl', '#5a3a2a', { p: [0, 0, -0.14], s: [0.05, 0.25, 0.05], r: [Math.PI / 2, 0, 0] }); }, toon('blade', { emissive: '#3ac8ff', ei: 0.7 }));
+  const shield = mk((k) => { k.add('cyl', '#e8eef8', { p: [0, 0, 0], s: [0.42, 0.06, 0.42], r: [Math.PI / 2, 0, 0] }); k.add('tor', '#b89a5a', { p: [0, 0, 0.03], s: [0.42, 0.42, 0.3] });
+    k.add('box', '#5a8aff', { p: [0, -0.08, 0.06], s: [0.07, 0.3, 0.03], outline: false }); for (const sd of [-1, 1]) k.add('box', '#5a8aff', { p: [sd * 0.09, 0.12, 0.06], s: [0.07, 0.24, 0.03], r: [0, 0, -sd * 0.6], outline: false }); });
+  hold(h.userData.arms[1], sword, -Math.PI / 2); hold(h.userData.arms[0], shield); shield.rotation.y = Math.PI / 2;
+  return h;
+}
+// 보스: 역병 군주 바이로스 (바이러스)
+function virusLord() {
+  const h = humanoid({
+    s: 3.1, arm: '#4a2a6a', leg: '#3a2050', boot: '#1a1028', armW: 0.24, legW: 0.28, shoulder: 0.42,
+    torso: (k) => { k.add('cap', '#5a2a7a', { p: [0, 1.1, 0], s: [0.72, 0.5, 0.5] }); k.add('box', '#2a1438', { p: [0, 1.15, 0.22], s: [0.5, 0.4, 0.06], outline: false });
+      for (let i = 0; i < 5; i++) k.sph(i % 2 ? '#ff4ab0' : '#7affc8', [Math.sin(i * 1.3) * 0.12, 0.96 + i * 0.08, 0.27], 0.04, { outline: false });   // RNA 문양
+      k.add('cone', '#2a1438', { p: [0, 0.82, -0.3], s: [0.75, 1.5, 0.12], r: [0.1, 0, Math.PI] });
+      for (const sd of [-1, 1]) { k.add('dode', '#7a3a9a', { p: [sd * 0.48, 1.44, 0], s: 0.22 }); for (let j = 0; j < 3; j++) k.add('cone', '#ff4ab0', { p: [sd * (0.5 + j * 0.06), 1.62 - j * 0.05, (j - 1) * 0.12], s: [0.04, 0.2, 0.04], r: [0, 0, -sd * 0.6] }); } },
+    neck: 1.66,
+    head: (k) => { k.add('ico', '#d84aa8', { p: [0, 0.3, 0], s: 0.34 });
+      for (let i = 0; i < 14; i++) { const t = Math.acos(1 - 2 * (i + 0.5) / 14), ph = i * 2.4, d = [Math.sin(t) * Math.cos(ph), Math.cos(t), Math.sin(t) * Math.sin(ph)]; if (d[1] < -0.4) continue;
+        k.add('cyl', '#f08ac8', { p: [d[0] * 0.42, 0.3 + d[1] * 0.42, d[2] * 0.42], s: [0.025, 0.18, 0.025], r: [Math.atan2(Math.hypot(d[0], d[2]), d[1]) * (d[2] >= 0 ? 1 : -1), 0, -Math.atan2(d[0], Math.abs(d[2]) + 1e-3) * 0.7] });
+        k.sph('#ffe07a', [d[0] * 0.52, 0.3 + d[1] * 0.52, d[2] * 0.52], 0.05, { outline: false }); }
+      k.add('box', '#1a0a20', { p: [0, 0.26, 0.28], s: [0.4, 0.12, 0.06], outline: false }); },
+  });
+  // 눈빛
+  const eyes = mk((k) => { k.sph('#ffee6a', [-0.1, 0.27, 0.32], 0.05, { outline: false }); k.sph('#ffee6a', [0.1, 0.27, 0.32], 0.05, { outline: false }); }, toon('eyeglow', { emissive: '#ffd84a', ei: 1 })); h.userData.head.add(eyes);
+  const halberd = mk((k) => { for (let i = 0; i < 18; i++) { const t = i / 18; k.sph(i % 2 ? '#ff4ab0' : '#7affc8', [Math.sin(t * 18) * 0.05, 0, -0.9 + t * 2.4 + 0.0], 0.05, { outline: false }); }
+    k.add('cyl', '#2a1438', { p: [0, 0, 0.3], s: [0.035, 2.6, 0.035], r: [Math.PI / 2, 0, 0] });
+    k.add('cone', '#c8c0d8', { p: [0, 0.12, 1.75], s: [0.08, 0.5, 0.36], r: [Math.PI / 2, 0, 0] }); k.add('box', '#c8c0d8', { p: [0, -0.24, 1.48], s: [0.05, 0.42, 0.26] }); });
+  hold(h.userData.arms[1], halberd, -Math.PI / 2);
+  return h;
+}
+// 잡몹들
+function ecoli() { const h = humanoid({ arm: '#a8d86a', leg: '#6a8a3a', boot: '#3a4a20', torso: (k) => { k.add('cap', '#b8e07a', { p: [0, 1.1, 0], s: [0.5, 0.6, 0.4] }); k.add('box', '#7a5a3a', { p: [0, 1.1, 0.17], s: [0.42, 0.12, 0.08], outline: false }); for (let i = 0; i < 6; i++) k.add('cap', '#e8f0a0', { p: [Math.sin(i) * 0.2, 1.0 - i * 0.02, -0.25 - i * 0.04], s: [0.03, 0.5, 0.03], r: [0.6 + i * 0.1, 0, Math.sin(i * 2) * 0.5] }); },
+  head: (k) => { k.add('cap', '#c8ea8a', { p: [0, 0.2, 0], s: [0.3, 0.26, 0.3] }); k.add('cyl', '#8a8a9a', { p: [0, 0.38, 0], s: [0.24, 0.12, 0.24] }); k.add('cone', '#8a8a9a', { p: [0, 0.5, 0], s: [0.06, 0.16, 0.06] }); k.eyes([0, 0.18, 0.24], 0.08, 0.045, { pupil: '#a01a1a' }); } });
+  const spear = mk((k) => { k.add('cyl', '#7a5a3a', { p: [0, 0, 0.4], s: [0.03, 1.8, 0.03], r: [Math.PI / 2, 0, 0] }); k.add('cone', '#c8c8d0', { p: [0, 0, 1.38], s: [0.07, 0.26, 0.07], r: [Math.PI / 2, 0, 0] }); });
+  hold(h.userData.arms[1], spear, -1.2); return h; }
+function staph() { const h = humanoid({ s: 1.4, arm: '#f0c040', leg: '#c8902a', boot: '#6a4a1a', armW: 0.28, legW: 0.3, torso: (k) => { for (let i = 0; i < 16; i++) { const a = i * 2.4, r = 0.1 + (i % 4) * 0.08; k.sph(i % 3 ? '#f2c84a' : '#ffd86a', [Math.cos(a) * r, 0.9 + (i / 16) * 0.6, Math.sin(a) * r * 0.8], 0.2); } },
+  head: (k) => { k.sph('#ffd86a', [0, 0.14, 0], 0.22); k.sph('#f2c84a', [0.16, 0.26, -0.06], 0.12); k.sph('#f2c84a', [-0.16, 0.24, -0.04], 0.11); k.eyes([0, 0.14, 0.19], 0.08, 0.05, { pupil: '#8a1a1a' }); k.add('box', '#5a2a1a', { p: [0, 0.02, 0.2], s: [0.16, 0.04, 0.03], outline: false }); } });
+  const club = mk((k) => { k.add('cyl', '#8a5a3a', { p: [0, 0, 0.4], s: [0.05, 0.9, 0.05], r: [Math.PI / 2, 0, 0] }); for (let i = 0; i < 5; i++) k.sph('#c89a5a', [Math.cos(i * 1.3) * 0.08, Math.sin(i * 1.3) * 0.08, 0.88], 0.12); });
+  hold(h.userData.arms[1], club, -0.4); return h; }
+function fungusMage() { const h = humanoid({ arm: '#6a4a7a', leg: '#4a3058', boot: '#2a1a30', torso: (k) => { k.add('cone', '#5a3a6a', { p: [0, 0.9, 0], s: [0.5, 1.1, 0.5] }); k.add('cap', '#7a5a8a', { p: [0, 1.25, 0], s: [0.44, 0.3, 0.36] }); for (let i = 0; i < 5; i++) k.sph('#c8ff7a', [Math.cos(i * 1.2) * 0.3, 0.5 + i * 0.1, Math.sin(i * 1.2) * 0.3], 0.04, { outline: false }); },
+  head: (k) => { k.sph('#e8dcc8', [0, 0.12, 0], 0.22); k.add('sph', '#c84a3a', { p: [0, 0.34, 0], s: [0.52, 0.26, 0.52] }); for (let i = 0; i < 6; i++) k.sph('#fff', [Math.cos(i) * 0.3, 0.46, Math.sin(i) * 0.3], 0.05, { outline: false }); k.eyes([0, 0.1, 0.18], 0.07, 0.04, { pupil: '#3a8a1a' }); } });
+  const staff = mk((k) => { k.add('cyl', '#5a3a2a', { p: [0, 0, 0.3], s: [0.03, 1.6, 0.03], r: [Math.PI / 2, 0, 0] }); k.sph('#b8ff6a', [0, 0, 1.15], 0.13, { outline: false }); }, toon('spore', { emissive: '#8aff4a', ei: 0.6 }));
+  hold(h.userData.arms[1], staff, -2.2); return h; }
+
+// ---------------- 장면 ----------------
+const HUD = document.getElementById('hud');
+const baseHud = (boss, item = 'ATP 플라스크') => `<div class="bars"><div class="bar hp"><i></i><b></b></div><div class="bar fp"><i></i></div><div class="bar st"><i></i></div></div>
+ <div class="slots"><div class="slot u">🧪<small>항체 화살</small></div><div class="slot l">🛡️</div><div class="slot r">🗡️</div><div class="slot d">⚗️<small>5</small></div></div><div class="itemname">${item}</div>
+ <div class="souls"><em></em>12,480</div><div class="tag">콘셉트 렌더 · 실제 게임 화면 아님</div>${boss || ''}`;
+function particles(n, col, box, size = 0.08, glow = true) { const g = new THREE.Group(); const m = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.85 }); const geo = new THREE.SphereGeometry(1, 6, 4);
+  for (let i = 0; i < n; i++) { const p = new THREE.Mesh(geo, m); p.position.set((R() - 0.5) * box[0], R() * box[1], (R() - 0.5) * box[2]); p.scale.setScalar(size * (0.5 + R())); g.add(p); } scene.add(g); return g; }
+function lights(sky, ground, sunCol, sunI, sunPos) { scene.add(new THREE.HemisphereLight(sky, ground, 1.1)); const d = new THREE.DirectionalLight(sunCol, sunI); d.position.set(...sunPos); d.castShadow = true; d.shadow.mapSize.set(2048, 2048); const c = d.shadow.camera; c.left = c.bottom = -30; c.right = c.top = 30; scene.add(d); }
+function proj(obj, y) { const v = new THREE.Vector3(); obj.getWorldPosition(v); v.y += y; v.project(camera); return [(v.x * .5 + .5) * innerWidth, (-v.y * .5 + .5) * innerHeight]; }
+
+function bossScene() {
+  scene.background = new THREE.Color('#2a1630'); scene.fog = new THREE.Fog('#3a1a3a', 22, 70);
+  lights('#c8a0ff', '#3a1a2a', '#ffb88a', 2.2, [-8, 18, 10]);
+  const floor = mk((k) => { k.add('cyl', '#7a5a7a', { p: [0, -0.1, 0], s: [22, 0.2, 22] }); for (let i = 0; i < 40; i++) { const a = R() * 6.28, r = R() * 20; k.add('cyl', R() < .5 ? '#6a4a6a' : '#8a6a88', { p: [Math.cos(a) * r, 0.01, Math.sin(a) * r], s: [0.8 + R(), 0.02, 0.8 + R()], outline: false }); } }); floor.children[0].receiveShadow = true; scene.add(floor);
+  for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, x = Math.cos(a) * 17, z = Math.sin(a) * 17; const p = mk((k) => { k.add('cyl', '#c87aa0', { p: [0, 5, 0], s: [1.1, 10, 1.1] }); for (let j = 0; j < 4; j++) k.add('tor', '#e8a0c0', { p: [0, 1 + j * 2.6, 0], s: [1.15, 1.15, 0.9], r: [Math.PI / 2, 0, 0] }); k.add('dode', '#a85a80', { p: [0, 10.4, 0], s: 1.5 }); }); p.position.set(x, 0, z); scene.add(p); }
+  for (let i = 0; i < 7; i++) { const o = mk((k) => k.sph(['#8a3a6a', '#5a2a5a', '#a84a5a'][i % 3], [0, 0, 0], 1), toon('org' + i % 3, { emissive: '#ff4a8a', ei: 0.15 })); o.position.set((R() - .5) * 60, 8 + R() * 14, -25 - R() * 20); o.scale.setScalar(2 + R() * 4); scene.add(o); }
+  const fog = new THREE.Mesh(new THREE.CylinderGeometry(19.5, 19.5, 6, 64, 1, true), new THREE.MeshBasicMaterial({ color: '#ffb0e0', transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false })); fog.position.y = 3; scene.add(fog);
+  particles(160, '#ffa0e0', [40, 14, 40], 0.06);
+  const pl = player(); pl.position.set(2.2, 0, 4); pl.rotation.y = Math.PI + 0.25; scene.add(pl);
+  const A = pl.userData.arms; A[0].rotation.set(-1.3, 0, 0.3); A[1].rotation.set(-0.5, 0, -0.5); pl.userData.legs[0].rotation.x = 0.45; pl.userData.legs[1].rotation.x = -0.35; pl.userData.torso.rotation.y = 0.2;
+  const boss = virusLord(); boss.position.set(-0.8, 0, -6.5); boss.rotation.y = 0.15; scene.add(boss);
+  const B = boss.userData.arms; B[1].rotation.set(-2.7, 0, -0.2); B[0].rotation.set(-0.6, 0, 0.5); boss.userData.legs[0].rotation.x = -0.3; boss.userData.legs[1].rotation.x = 0.3;
+  // 바닥 독 웅덩이 · 마법 탄
+  for (let i = 0; i < 4; i++) { const pd = new THREE.Mesh(new THREE.CircleGeometry(1 + R() * 1.2, 24), new THREE.MeshBasicMaterial({ color: '#c84aff', transparent: true, opacity: 0.45 })); pd.rotation.x = -Math.PI / 2; pd.position.set(-4 + R() * 8, 0.03, -3 + R() * 5); scene.add(pd); }
+  const orbs = particles(8, '#ff6ad8', [2, 1, 2], 0.25); orbs.position.set(3.5, 2.5, -2.5);
+  camera.position.set(5.6, 3.6, 12.5); camera.lookAt(0.2, 3.2, -4);
+  renderer.render(scene, camera);
+  const [bx, by] = proj(boss.userData.torso, 1.2 * 3.1), [dx, dy] = proj(boss.userData.head, 0.3);
+  HUD.innerHTML = baseHud(`<div class="boss"><p>역병 군주 바이로스<small>캡시드의 왕</small></p><div class="bar"><i></i><b></b></div></div>`) + `<div class="lock" style="left:${bx}px;top:${by}px"></div><div class="dmg" style="left:${dx + 60}px;top:${dy - 20}px">243</div>`;
+}
+function exploreScene() {
+  scene.background = new THREE.Color('#9ac8e0'); scene.fog = new THREE.Fog('#b8d8e0', 25, 90);
+  lights('#e8f4ff', '#6a8a5a', '#fff0d0', 2.6, [12, 22, 6]);
+  const g = mk((k) => { k.add('box', '#7aa85a', { p: [0, -0.2, 0], s: [120, 0.4, 120] }); k.add('box', '#c8b088', { p: [0, 0.01, -10], s: [4.5, 0.04, 70], outline: false }); for (let i = 0; i < 60; i++) k.add('cyl', '#b89a78', { p: [(R() - .5) * 4, 0.04, -40 + R() * 60], s: [0.3 + R() * .4, 0.03, 0.3 + R() * .4], outline: false }); }); g.children[0].receiveShadow = true; scene.add(g);
+  // 혈관 성벽 · 탑
+  for (const sd of [-1, 1]) for (let i = 0; i < 6; i++) { const w = mk((k) => { k.add('box', '#d88a8a', { p: [0, 2.5, 0], s: [1.6, 5, 9] }); for (let j = 0; j < 4; j++) k.add('box', '#e8a8a0', { p: [0, 5.3, -3.6 + j * 2.4], s: [1.8, 0.8, 1.2] }); k.add('cyl', '#b8505a', { p: [0, 1.2, 0], s: [0.5, 9.2, 0.5], r: [Math.PI / 2, 0, 0] }); }); w.position.set(sd * 9, 0, 6 - i * 9); scene.add(w); }
+  const tower = mk((k) => { k.add('cyl', '#e0a0a0', { p: [0, 8, 0], s: [3, 16, 3] }); k.add('cone', '#a83a4a', { p: [0, 18, 0], s: [3.6, 5, 3.6] }); k.add('sph', '#ffd27a', { p: [0, 12, 2.6], s: [0.7, 1, 0.3] }); }); tower.position.set(4, 0, -48); scene.add(tower);
+  for (let i = 0; i < 18; i++) { const t = mk((k) => { k.add('cyl', '#8a5a3a', { p: [0, 1.4, 0], s: [0.3, 2.8, 0.3] }); k.sph(R() < .5 ? '#4aa85a' : '#6ac86a', [0, 3.4, 0], 1.6); k.sph('#5ab86a', [0.6, 4.2, 0.2], 1); }); t.position.set((R() < .5 ? -1 : 1) * (13 + R() * 14), 0, 10 - R() * 60); scene.add(t); }
+  // 줄기세포 등불 (화톳불)
+  const lamp = mk((k) => { k.add('cyl', '#9a9088', { p: [0, 0.25, 0], s: [1.2, 0.5, 1.2] }); for (let i = 0; i < 6; i++) k.add('cap', '#7a5a3a', { p: [Math.cos(i) * 0.6, 0.5, Math.sin(i) * 0.6], s: [0.12, 0.9, 0.12], r: [Math.sin(i) * 0.6, 0, -Math.cos(i) * 0.6] }); }); lamp.position.set(-2.2, 0, 3); scene.add(lamp);
+  const core = mk((k) => { k.sph('#fff0b0', [0, 0, 0], 0.5); k.sph('#ffd27a', [0.2, 0.1, 0.2], 0.22, { outline: false }); }, toon('lamp', { emissive: '#ffb04a', ei: 1.2 })); core.position.set(-2.2, 1.25, 3); scene.add(core);
+  const pt = new THREE.PointLight('#ffb04a', 30, 10); pt.position.set(-2.2, 1.6, 3); scene.add(pt);
+  particles(40, '#ffd27a', [1.5, 3, 1.5], 0.04).position.set(-2.2, 0.8, 3);
+  const pl = player(); pl.position.set(0.9, 0, 5.4); pl.rotation.y = Math.PI - 0.4; scene.add(pl); pl.userData.arms[0].rotation.set(-0.3, 0, 0.2); pl.userData.arms[1].rotation.set(-0.2, 0, -0.2);
+  const e1 = ecoli(); e1.position.set(1.6, 0, -1.5); e1.rotation.y = -0.2; scene.add(e1); e1.userData.arms[1].rotation.set(-1.2, 0, 0); e1.userData.legs[0].rotation.x = 0.4; e1.userData.legs[1].rotation.x = -0.4;
+  const e2 = ecoli(); e2.position.set(-1.2, 0, -3.5); e2.rotation.y = 0.3; scene.add(e2);
+  const s = staph(); s.position.set(3.4, 0, -6.5); s.rotation.y = -0.4; scene.add(s); s.userData.arms[1].rotation.set(-2.4, 0, 0);
+  const f = fungusMage(); f.position.set(-3, 0, -9); f.rotation.y = 0.5; scene.add(f); f.userData.arms[1].rotation.set(-2.6, 0, -0.3);
+  particles(30, '#c8ff7a', [3, 3, 3], 0.05).position.set(-3, 1.5, -9);
+  camera.position.set(3.2, 3.4, 12.5); camera.lookAt(-0.2, 1.5, -3);
+  renderer.render(scene, camera);
+  HUD.innerHTML = baseHud('') + `<div class="area"><h1>혈관 성벽 외곽</h1><div></div></div><div class="prompt"><kbd>E</kbd>줄기세포 등불을 밝힌다</div>`;
+}
+function deathScene() { bossScene(); HUD.innerHTML += `<div class="death"><div><h1>세 포 사 멸</h1><p>잃어버린 항원 조각 12,480 — 쓰러진 자리에서 되찾을 수 있다</p></div></div>`; }
+const mode = new URLSearchParams(location.search).get('s') || 'boss';
+({ boss: bossScene, explore: exploreScene, death: deathScene })[mode]();
+window.DONE = true;
+</script></body></html>
